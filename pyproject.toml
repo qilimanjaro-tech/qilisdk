@@ -1,0 +1,135 @@
+[project]
+name = "qilisdk"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=2.2.2",
+]
+
+[project.optional-dependencies]
+qibo-backend = [
+    "qibo>=0.2.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.4",
+    "ruff>=0.9.5",
+    "towncrier>=24.8.0",
+]
+
+[tool.ruff]
+line-length = 120
+output-format = "concise"
+target-version = "py310"
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "F",
+    "E",
+    "W",
+    "I",
+    "YTT",
+    "ANN",
+    "ASYNC",
+    "S",
+    "BLE",
+    "CPY",
+    "C4",
+    "DTZ",
+    "T10",
+    "FA",
+    "ICN",
+    "LOG",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "PYI",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SLOT",
+    "SIM",
+    "TID",
+    "TC",
+    "PTH",
+    "TD",
+    "PL",
+    "NPY",
+    "FURB",
+    "DOC",
+    "RUF"
+]
+ignore = [
+    "E111",
+    "E114",
+    "E117",
+    "E501",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+    "E741",
+    "W191",
+    "RET504",
+    "SIM117",
+    "PLC0414",
+    "PLC2701",
+    "PLR0904",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0914",
+    "PLR0915",
+    "PLR0917",
+    "PLR1702"]
+dummy-variable-rgx = "^_$"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+ignore_missing_imports = true
+exclude = ["\\.ipynb$"]
+
+[tool.tox]
+requires = ["tox>=4"]
+env_list = ["3.10", "3.11", "3.12", "3.13"]
+
+[tool.tox.run_env_base]
+description = "run unit tests"
+deps = [
+    "pytest",
+    "pytest-sugar"
+]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+
+[tool.towncrier]
+package = "qilisdk"
+directory = "changes"
+filename = "CHANGELOG.md"
+issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qililab/pulls/{issue})"
