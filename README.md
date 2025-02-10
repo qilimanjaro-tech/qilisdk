@@ -151,6 +151,10 @@ Inside this file, you briefly describe the new feature:
 ```rst
 Added a new `cool_feature` in the `qilisdk.extras` module.
 ```
+Instead of manually creating the file, you can run:
+```bash
+towncrier create --no-edit
+```
 
 When we cut a new release, we update the version in `pyproject.toml` file and run:
 ```bash
@@ -198,7 +202,7 @@ print(result)
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE). You’re free to use, modify, and distribute qilisdk under the terms of MIT.
+This project is licensed under the [Apache License](LICENSE).
 
 ---
 
@@ -211,4 +215,3 @@ This project is licensed under the [MIT License](LICENSE). You’re free to use,
 ---
 
 Feel free to open [issues](https://github.com/qilimanjaro-tech/qilisdk/issues) or [pull requests](https://github.com/qilimanjaro-tech/qilisdk/pulls) if you have questions or contributions. Happy coding!
-```
