@@ -21,6 +21,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
+    "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
@@ -102,6 +103,9 @@ ignore = [
     "PLR0917",
     "PLR1702"]
 dummy-variable-rgx = "^_$"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
