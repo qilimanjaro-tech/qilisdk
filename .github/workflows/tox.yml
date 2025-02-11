@@ -13,48 +13,31 @@ on:
 
 jobs:
   tox:
-    if: github.event.pull_request.draft == false
+    name: test with ${{ matrix.env }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    env:
-      HOME_REPO: /home/repo
-
     strategy:
       fail-fast: false
       matrix:
         env:
-          - "3.13"
-          - "3.12"
-          - "3.11"
           - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
-
+        uses: astral-sh/setup-uv@v3
       - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.13 tox --with .
-
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh
       - name: Install Python
         if: matrix.env != '3.13'
         run: uv python install --python-preference only-managed ${{ matrix.env }}
-
       - name: Setup test suite
-        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.env }}
+        run: tox run -vv --notest --skip-missing-interpreters false
         env:
-          UV_PYTHON_PREFERENCE: "only-managed"
-
+          TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
       - name: Run test suite
-        run: tox run --skip-pkg-install -e ${{ matrix.env }}
+        run: tox run --skip-pkg-install
         env:
-          PYTEST_ADDOPTS: "-vv --durations=20"
-          DIFF_AGAINST: HEAD
-          UV_PYTHON_PREFERENCE: "only-managed"
+          TOX_GH_MAJOR_MINOR: ${{ matrix.env }}

@@ -172,6 +172,12 @@ commands = [["pytest", "tests", "-m", "qibo_backend"]]
 extras = ["qibo-backend"]
 commands = [["pytest", "tests", "-m", "qibo_backend"]]
 
+[tool.tox.gh.python]
+"3.10" = ["3.10"]
+"3.11" = ["3.11"]
+"3.12" = ["3.12"]
+"3.13" = ["3.13"]
+
 [tool.towncrier]
 package = "qilisdk"
 directory = "changes"
