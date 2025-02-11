@@ -14,18 +14,19 @@ qibo-backend = [
     "qibo>=0.2.4",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [dependency-groups]
 dev = [
+    "ipykernel>=6.29.5",
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
@@ -106,6 +107,10 @@ dummy-variable-rgx = "^_$"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

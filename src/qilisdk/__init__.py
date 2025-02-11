@@ -11,3 +11,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import sys
+from typing import List
+
+from ._optionals import ImportedSymbols, OptionalFeature, import_optional_dependencies
+from .common.hamiltonian import Hamiltonian
+
+__all__ = [
+    # Put your always-available, core symbols here if needed
+    "Hamiltonian"
+]
+
+# Define your optional features
+OPTIONAL_FEATURES: List[OptionalFeature] = [
+    OptionalFeature(
+        feature_name="qibo-backend",
+        dependencies=["qibo"],
+        import_path="qilisdk.extras.qibo_backend",
+        symbols=["QiboBackend"],  # or multiple symbols
+    ),
+    # Add more OptionalFeature() entries for other extras if needed
+]
+
+current_module = sys.modules[__name__]
+
+# Dynamically import (or stub) each feature's symbols and attach them
+for feature in OPTIONAL_FEATURES:
+    imported: ImportedSymbols = import_optional_dependencies(feature)
+    for symbol_name, symbol_obj in imported.symbol_map.items():
+        setattr(current_module, symbol_name, symbol_obj)
+        __all__ += [symbol_name]  # noqa: PLE0604
