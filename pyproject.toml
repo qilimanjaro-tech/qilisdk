@@ -133,7 +133,7 @@ markers = [
 
 [tool.tox]
 requires = ["tox>=4"]
-envlist = ["py310", "py311", "py312", "py313"]
+envlist = ["3.10", "3.11", "3.12", "3.13"]
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
