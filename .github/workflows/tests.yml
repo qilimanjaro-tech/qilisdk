@@ -13,7 +13,7 @@ on:
 
 jobs:
   tests:
-    name: Test with Python ${{ matrix.python-version }}
+    name: Testing for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 5

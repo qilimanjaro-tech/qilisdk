@@ -1,4 +1,4 @@
-name: ToxSingle
+name: Tests with Tox
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   tox:
-    name: Tox
+    name: Test with Tox
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
@@ -33,5 +33,5 @@ jobs:
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
 
-      - name: Run test suite
+      - name: Run tests
         run: tox run-parallel
