@@ -20,6 +20,7 @@ dev = [
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
+    "pytest-sugar>=1.0.0",
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
 ]
@@ -121,21 +122,55 @@ docstring-code-line-length = "dynamic"
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = false
 ignore_missing_imports = true
 exclude = ["\\.ipynb$"]
 
+[tool.pytest.ini_options]
+markers = [
+    "core: tests that only exercise the core library",
+    "qibo_backend: tests that require the qibo backend"
+]
+
 [tool.tox]
 requires = ["tox>=4"]
-env_list = ["3.10", "3.11", "3.12", "3.13"]
+envlist = ["py310", "py311", "py312", "py313"]
 
-[tool.tox.run_env_base]
-description = "run unit tests"
-deps = [
-    "pytest",
-    "pytest-sugar"
-]
-commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+[tool.tox.env_run_base]
+dependency_groups = ["dev"]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests"]]
+
+[tool.tox.env.py310-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py311-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py312-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py313-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py310-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py311-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py312-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py313-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
 
 [tool.towncrier]
 package = "qilisdk"
