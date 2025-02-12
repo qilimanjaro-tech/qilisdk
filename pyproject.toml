@@ -1,10 +1,27 @@
 [project]
 name = "qilisdk"
 version = "0.1.0"
-description = "Add your description here"
+description = "qilisdk is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
 requires-python = ">=3.10"
+keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Quantum Computing",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
+]
 dependencies = [
     "numpy>=2.2.2",
 ]
@@ -14,17 +31,20 @@ qibo-backend = [
     "qibo>=0.2.4",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [dependency-groups]
 dev = [
+    "ipykernel>=6.29.5",
     "mypy>=1.15.0",
+    "pre-commit>=4.1.0",
     "pytest>=8.3.4",
+    "pytest-sugar>=1.0.0",
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
@@ -103,6 +123,13 @@ ignore = [
     "PLR1702"]
 dummy-variable-rgx = "^_$"
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -112,21 +139,61 @@ docstring-code-line-length = "dynamic"
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = false
 ignore_missing_imports = true
 exclude = ["\\.ipynb$"]
 
+[tool.pytest.ini_options]
+markers = [
+    "core: tests that only exercise the core library",
+    "qibo_backend: tests that require the qibo backend"
+]
+
 [tool.tox]
 requires = ["tox>=4"]
-env_list = ["3.10", "3.11", "3.12", "3.13"]
+envlist = ["3.10", "3.11", "3.12", "3.13"]
 
-[tool.tox.run_env_base]
-description = "run unit tests"
-deps = [
-    "pytest",
-    "pytest-sugar"
-]
-commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+[tool.tox.env_run_base]
+dependency_groups = ["dev"]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests"]]
+
+[tool.tox.env.py310-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py311-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py312-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py313-core]
+extras = []
+commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+
+[tool.tox.env.py310-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py311-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py312-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.env.py313-qibo_backend]
+extras = ["qibo-backend"]
+commands = [["pytest", "tests", "-m", "qibo_backend"]]
+
+[tool.tox.gh.python]
+"3.10" = ["3.10"]
+"3.11" = ["3.11"]
+"3.12" = ["3.12"]
+"3.13" = ["3.13"]
 
 [tool.towncrier]
 package = "qilisdk"
