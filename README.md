@@ -4,7 +4,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
 
-**qilisdk** is a Python library that provides convenient tools and APIs for XYZ (fill in your library's main purpose). Its modular core allows you to install only what you need, while optional extras add specialized functionality.
+**qilisdk** is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms.
 
 > **Note**: The instructions below focus on developing and contributing to qilisdk. For installation and usage as an end user, see the [Usage](#usage) section (placeholder).
 
@@ -56,15 +56,20 @@ This section covers how to set up a local development environment for qilisdk, r
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-3. **Sync dependencies**:
-   - We maintain a `pyproject.toml` (and potentially a `uv` config file, e.g., `uv.lock.toml`) listing all dev/test requirements.
+3. **Install [tox](https://tox.wiki/en/latest/index.html) globaly** (if not already):
+  ```bash
+  uv tool install tox --with tox-uv
+  ```
+
+4. **Sync dependencies**:
+   - We maintain a `pyproject.toml` listing all dev and optional requirements.
    - To install the dev environment locally, run:
      ```bash
      uv sync
      ```
      This sets up a virtual environment and installs all pinned dependencies (including `tox`, `ruff`, `mypy`, `towncrier`, etc.).
 
-4. **Activate the virtual environment**:
+5. **Activate the virtual environment**:
    - uv typically creates and manages its own environment, e.g., `.venv/`.
    - Run:
      ```bash
@@ -80,16 +85,16 @@ We use **tox** to test qilisdk across multiple Python versions. After installing
 
 - **Run the default test suite** in all configured environments:
   ```bash
-  tox
+  tox run -p
   ```
   This will:
-  - Create isolated environments (e.g., `py38`, `py39`, `py310`, etc.).
+  - Create isolated environments (e.g., `py310`, `py311`, `py312`, etc.).
   - Install qilisdk (in editable mode) plus test dependencies.
   - Run tests via [pytest](https://pytest.org/).
 
 - **Run tests in a single environment**:
   ```bash
-  tox -e py312
+  tox run -p -e py312
   ```
   This is handy if you only want to test on Python 3.12 locally.
 
@@ -141,7 +146,7 @@ mypy qilisdk tests
 
 ### Changelog Management
 
-We manage our changelog using [**towncrier**](https://github.com/twisted/towncrier). Instead of editing `CHANGELOG.md` directly, **each pull request** includes a small “news fragment” file in the `changes/` directory describing the user-facing changes.
+We manage our changelog using [**towncrier**](https://github.com/twisted/towncrier). Instead of editing `CHANGELOG.md` directly, **each pull request** includes a small *news fragment* file in the `changes/` directory describing the user-facing changes.
 
 For example, if you create a PR with id #123 adding a new feature, you add:
 ```
@@ -155,7 +160,6 @@ Instead of manually creating the file, you can run:
 ```bash
 towncrier create --no-edit
 ```
-
 When we cut a new release, we update the version in `pyproject.toml` file and run:
 ```bash
 towncrier
@@ -174,9 +178,9 @@ We welcome contributions! Here’s the workflow:
    ruff check --fix
    ruff format
    mypy qilisdk
-   tox
+   tox -p
    ```
-5. **Commit** and push your branch to your fork.
+5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
 6. **Open a Pull Request** against the `main` branch here.
 
 Our CI will run tests, linting, and type checks. Please make sure your branch passes these checks before requesting a review.
