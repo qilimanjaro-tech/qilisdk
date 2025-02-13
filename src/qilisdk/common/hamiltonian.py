@@ -13,4 +13,539 @@
 # limitations under the License.
 
 
-class Hamiltonian: ...
+import copy
+from typing import Dict, Generator, List, NoReturn, Tuple, Union
+
+import numpy as np
+
+
+class PauliOperator:
+    """Abstract Representation of a generic Pauli operator
+
+    Args:
+        - qubit_id (int): the qubit that the operator will be acting on
+        - name (str): the name of the Pauli operator
+        - matrix : the matrix representation of the Pauli operator
+
+    Attributes:
+        - qubit_id (int): the qubit that the operator will be acting on
+        - name (str): the name of the Pauli operator
+        - matrix : the matrix representation of the Pauli operator
+    """
+
+    def __init__(self, qubit_id: int, name: str, matrix: List[List]) -> None:
+        self.qubit_id = qubit_id
+        self.__matrix = matrix
+        self._name = name
+        self.coeff = 1 + 0j
+
+    @property
+    def name(self) -> str:
+        """The name of the Pauli operator.
+
+        Returns:
+            str: the name of the pauli operator.
+        """
+        return self._name
+
+    @property
+    def matrix(self) -> List[List[Union[int, float, complex]]]:
+        """The matrix representation of the Pauli operator.
+
+        Returns:
+            List[List[Union[int, float, complex]]]: the matrix representation of the pauli operator.
+        """
+        return self.__matrix
+
+    def parse(self) -> Generator[Tuple[int, List["PauliOperator"]], None, None]:
+        """Yields the operator in the format (1, [<operator>])."""
+        yield 1, [self]
+
+    def __copy__(self) -> "PauliOperator":
+        return PauliOperator(name=self.name, qubit_id=self.qubit_id, matrix=self.matrix)
+
+    def __repr__(self) -> str:
+        return f"{self.name}({self.qubit_id})"
+
+    def __str__(self) -> str:
+        return f"{self.name}({self.qubit_id})"
+
+    # Arithmetic Operators
+    def _to_hamiltonian(self) -> "Hamiltonian":
+        """Helper function to convert to Hamiltonian representation.
+
+        Returns:
+            Hamiltonian: a hamiltonian with the pauli operator stored in it.
+        """
+        return Hamiltonian({((self.qubit_id, self.name),): 1})
+
+    def __add__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", "PauliOperator"]:
+        if isinstance(other, (int, float)) and other == 0:
+            return self
+
+        return self._to_hamiltonian() + other
+
+    __radd__ = __add__
+    __iadd__ = __add__
+
+    def __sub__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", "PauliOperator", int]:
+
+        if isinstance(other, PauliOperator) and other.name == self.name and other.qubit_id == self.qubit_id:
+            return 0
+
+        return self._to_hamiltonian() - other
+
+    def __rsub__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", "PauliOperator", int]:
+
+        if isinstance(other, PauliOperator) and other.name == self.name and other.qubit_id == self.qubit_id:
+            return 0
+
+        return other - self._to_hamiltonian()
+
+    __isub__ = __sub__
+
+    def __mul__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", int, "PauliOperator"]:
+        if isinstance(other, (int, float)):
+            if other == 0:
+                return 0
+            if other == 1:
+                return self
+
+        return self._to_hamiltonian() * other
+
+    def __rmul__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", int, "PauliOperator"]:
+        if isinstance(other, (int, float)):
+            if other == 0:
+                return 0
+            if other == 1:
+                return self
+
+        return other * self._to_hamiltonian()
+
+    __imul__ = __mul__
+
+    def __truediv__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", "PauliOperator"]:
+        return self._to_hamiltonian() / other
+
+    def __rtruediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> NoReturn:
+        raise ValueError("Division by operators is not supported")
+
+    __itruediv__ = __truediv__
+
+
+class Z(PauliOperator):
+    """The Pauli Z operator"""
+
+    def __init__(self, qubit_id: int) -> None:
+        """constructs a new Pauli Z operator
+
+        Args:
+            qubit_id (int): the qubit that the operator will act on.
+        """
+        matrix = [[1, 0], [0, -1]]
+        name = self.__class__.__name__
+        super().__init__(qubit_id=qubit_id, name=name, matrix=matrix)
+
+    def __copy__(self) -> "Z":
+        return Z(qubit_id=self.qubit_id)
+
+
+class X(PauliOperator):
+    """The Pauli X operator"""
+
+    def __init__(self, qubit_id: int) -> None:
+        """Constructs a new Pauli X operator
+
+        Args:
+            - qubit_id (int): the qubit that the operator will act on.
+        """
+        matrix = [[0, 1], [1, 0]]
+        name = self.__class__.__name__
+        super().__init__(qubit_id=qubit_id, name=name, matrix=matrix)
+
+    def __copy__(self) -> "X":
+        return X(qubit_id=self.qubit_id)
+
+
+class Y(PauliOperator):
+    """The Pauli Y operator"""
+
+    def __init__(self, qubit_id: int) -> None:
+        """Constructs a new Pauli Y operator
+
+        Args:
+            qubit_id (int): the qubit that the operator will act on.
+        """
+        matrix = [[0, 1j], [1j, 0]]
+        name = self.__class__.__name__
+        super().__init__(qubit_id=qubit_id, name=name, matrix=matrix)
+
+    def __copy__(self) -> "Y":
+        return Y(qubit_id=self.qubit_id)
+
+
+class I(PauliOperator):  # noqa: E742
+    """The Identity operator"""
+
+    def __init__(self, qubit_id: int) -> None:
+        """Create a new Identity operator
+
+        Args:
+            qubit_id (int): the qubit that the operator will act on.
+        """
+        matrix = [[1, 0], [0, 1]]
+        name = self.__class__.__name__
+        super().__init__(qubit_id=qubit_id, name=name, matrix=matrix)
+
+    def __copy__(self) -> "I":
+        return I(qubit_id=self.qubit_id)
+
+
+_PAULI_MAP = {"Z": Z, "X": X, "Y": Y, "I": I}
+
+_PAULI_PRODUCT_TABLE = {
+    ("X", "X"): (1, I),
+    ("X", "Y"): (1j, Z),
+    ("X", "Z"): (-1j, Y),
+    ("Y", "X"): (-1j, Z),
+    ("Y", "Y"): (1, I),
+    ("Y", "Z"): (1j, X),
+    ("Z", "X"): (1j, Y),
+    ("Z", "Y"): (-1j, X),
+    ("Z", "Z"): (1, I),
+}
+
+
+def _multiply_pauli(op1: "PauliOperator", op2: "PauliOperator") -> Tuple[Union[int, float, complex], "PauliOperator"]:
+    """Multiply two Pauli Operators
+
+    Raises:
+        ValueError: If the two Operators are not acting on the same qubit
+        NotImplementedError: Multiplication between the two operators is not supported.
+
+    Returns:
+        Tuple[Union[int, float, complex], "PauliOperator"]: A tuple containing the resulting
+        coefficient and Pauli operator.
+    """
+    if op1.qubit_id != op2.qubit_id:
+        raise ValueError("Operators must act on the same qubit")
+
+    if op1.name == "I":
+        return 1, op2
+    if op2.name == "I":
+        return 1, op1
+
+    result = _PAULI_PRODUCT_TABLE.get((op1.name, op2.name))
+    if result is not None:
+        coefficient, operator_fn = result
+        if operator_fn is I:
+            return coefficient, I(0)
+        return coefficient, operator_fn(op1.qubit_id)
+
+    raise NotImplementedError(f"Operation between operator {op1.name} and operator {op2.name} is not supported.")
+
+
+def _multiply_sets(set1: Tuple[Tuple[int, str]], set2: Tuple[Tuple[int, str]]) -> Tuple[complex, Tuple[Tuple]]:
+
+    list1 = list(set1)
+    list2 = list(set2)
+
+    list1.extend(list2)
+
+    combined_list = sorted(list1, key=lambda x: x[0])  # noqa: FURB118
+
+    sum_dict: dict[int, List] = {}
+
+    for qid, op in combined_list:
+        if qid not in sum_dict:
+            sum_dict[qid] = []
+        sum_dict[qid].append(_PAULI_MAP[op](qid))
+
+    simplified_list = []
+    accumulated_phase = 1 + 0j
+    for v in sum_dict.values():
+        op1 = v[0]
+        phase = 1 + 0j
+        if len(v) > 1:
+            for i in range(1, len(v)):
+                aux_phase, op1 = _multiply_pauli(op1, v[i])
+                phase *= aux_phase
+
+        if op1.name != "I":
+            simplified_list.append((op1.qubit_id, op1.name))
+        accumulated_phase *= phase
+
+    if len(simplified_list) == 0:
+        simplified_list.append((0, "I"))
+    return accumulated_phase, tuple(simplified_list)
+
+
+class Hamiltonian:
+    """
+    Assumes elements have the following encoding:
+        {
+            ((qubit_id, pauli_operator), ...) : coefficient,
+        }
+
+        example:
+        {
+            ((0, 'Z'), (1, 'Y')): 1,
+            ((1, 'X'),): 1j,
+        }
+    """
+
+    def __init__(self, elements: Dict[Tuple[Tuple[int, str]], Union[int, float, complex]]) -> None:
+        self.__elements = {}
+        for operators, coeff in elements.items():
+            self.__elements[operators] = coeff
+
+    @property
+    def elements(self) -> Dict[Tuple[Tuple[int, str]], Union[int, float, complex]]:
+        """Returns the dictionary of the elements
+
+        Returns:
+            Dict: a dictionary of the hamiltonian elements and their coefficient
+        """
+        return self.__elements
+
+    def variables(self) -> Generator[PauliOperator, None, None]:
+        """A generator object that returns all the pauli operators in the Hamiltonian.
+            Note: the pauli operators repeat in case they appear more than once in the Hamiltonian.
+        Yields:
+            PauliOperator: A pauli operator object.
+        """
+        for key in self.elements:
+            for qid, operator in key:
+                yield _PAULI_MAP[operator](qid)
+
+    def parse(self) -> Generator[Tuple[complex, List[PauliOperator]], None, None]:
+        """A generator that parses the Hamiltonian object term by term.
+
+        Yields:
+            Tuple[Union[int, float, complex], List[PauliOperators]]: the coefficient and the list
+            of pauli operators of the term.
+        """
+        for key, value in self.elements.items():
+            yield value, [_PAULI_MAP[op](qid) for qid, op in key]
+
+    def _filter(self) -> None:
+        """Simplify the hamiltonian expression by removing values close to zero."""
+        pop_keys = []
+        for key, value in self.elements.items():
+            if np.real_if_close(value) == 0:
+                pop_keys.append(key)
+
+        for key in pop_keys:
+            self.elements.pop(key)
+
+    def __copy__(self) -> "Hamiltonian":
+        return Hamiltonian(elements=self.elements.copy())
+
+    def __repr__(self) -> str:
+        out = ""
+        for operators, _coeff in self.elements.items():
+            coeff = np.real_if_close(_coeff)
+            if out == "":  # noqa: PLC1901
+                if isinstance(coeff, (complex)) or np.iscomplex(coeff):
+                    out += f"({coeff}) "
+                elif coeff != 1:
+                    if coeff == -1:
+                        out += "-"
+                    else:
+                        out += f"{coeff} "
+            elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
+                out += f"+ ({coeff}) "
+            elif coeff != 1 and coeff != -1:
+                out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
+            else:
+                out += "+ " if coeff > 0 else "- "
+
+            for qid, o in operators:
+                out += f"{o}({qid}) "
+        return out
+
+    def __str__(self) -> str:
+        out = ""
+        for operators, _coeff in self.elements.items():
+            coeff = np.real_if_close(_coeff)
+            if out == "":  # noqa: PLC1901
+                if isinstance(coeff, (complex)) or np.iscomplex(coeff):
+                    out += f"({coeff}) "
+                elif coeff != 1:
+                    if coeff == -1:
+                        out += "-"
+                    else:
+                        out += f"{coeff} "
+            elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
+                out += f"+ ({coeff}) "
+            elif coeff != 1 and coeff != -1:
+                out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
+            else:
+                out += "+ " if coeff > 0 else "- "
+
+            for qid, o in operators:
+                out += f"{o}({qid}) "
+        return out
+
+    def __getitem__(self, index: Tuple[Tuple[int, str]]) -> Union[int, float, complex]:
+        return self.elements[index]
+
+    def __setitem__(self, key: Tuple[Tuple[int, str]], value: complex) -> None:
+        self.elements[key] = value
+
+    def __add__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        out = copy.copy(self)
+
+        if isinstance(other, Hamiltonian):
+            for key, value in other.elements.items():
+                if key in out.elements:
+                    out[key] += value
+                else:
+                    out[key] = value
+        elif isinstance(other, PauliOperator):
+            encoded = ((other.qubit_id, other.name),)
+            if encoded in out.elements:
+                out[encoded] += 1
+            else:
+                out[encoded] = 1
+        elif isinstance(other, (int, float, complex)):
+            if ((0, "I"),) in out.elements:
+                out[(0, "I"),] += other
+            else:
+                out[(0, "I"),] = other
+        else:
+            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+
+        out._filter()
+        return out
+
+    def __mul__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        out = Hamiltonian({})
+
+        if isinstance(other, Hamiltonian):
+            # unfold parenthesis
+            for key1 in self.elements:
+                for key2 in other.elements:
+                    phase, new_key = _multiply_sets(key1, key2)
+                    if new_key in out.elements:
+                        out[new_key] += phase * self[key1] * other[key2]
+                    else:
+                        out[new_key] = phase * self[key1] * other[key2]
+        elif isinstance(other, PauliOperator):
+            key2 = ((other.qubit_id, other.name),)
+            for key1 in self.elements:
+                phase, new_key = _multiply_sets(key1, key2)
+                if new_key in out.elements:
+                    out[new_key] += phase * self[key1]
+                else:
+                    out[new_key] = phase * self[key1]
+        elif isinstance(other, (int, float, complex)):
+            out = copy.copy(self)
+            for key in out.elements:
+                out[key] *= other
+            return out
+        else:
+            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+
+        out._filter()
+        return out
+
+    def __truediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        if not isinstance(other, (float, int, complex)):
+            raise ValueError("Division of operators is not supported")
+
+        return self * (1 / other)
+
+    def __sub__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        return self + (-1 * other)
+
+    def __radd__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        out = copy.copy(self)
+
+        if isinstance(other, Hamiltonian):
+            for key, value in other.elements.items():
+                if key in out.elements:
+                    out[key] += value
+                else:
+                    out[key] = value
+        elif isinstance(other, PauliOperator):
+            encoded = ((other.qubit_id, other.name),)
+            if encoded in out.elements:
+                out[encoded] += 1
+            else:
+                out[encoded] = 1
+        elif isinstance(other, (int, float, complex)):
+            if ((0, "I"),) in out.elements:
+                out[(0, "I"),] += other
+            else:
+                out[(0, "I"),] = other
+        else:
+            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+
+        out._filter()
+        return out
+
+    def __rmul__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        out = Hamiltonian({})
+
+        if isinstance(other, Hamiltonian):
+            # unfold parenthesis
+            for key1 in self.elements:
+                for key2 in other.elements:
+                    phase, new_key = _multiply_sets(key2, key1)
+                    if new_key in out.elements:
+                        out[new_key] += phase * self[key1] * other[key2]
+                    else:
+                        out[new_key] = phase * self[key1] * other[key2]
+        elif isinstance(other, PauliOperator):
+            key2 = ((other.qubit_id, other.name),)
+            for key1 in self.elements:
+                phase, new_key = _multiply_sets(key2, key1)
+                if new_key in out.elements:
+                    out[new_key] += phase * self[key1]
+                else:
+                    out[new_key] = phase * self[key1]
+        elif isinstance(other, (int, float, complex)):
+            out = copy.copy(self)
+            for key in out.elements:
+                out[key] *= other
+            return out
+        else:
+            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+
+        out._filter()
+        return out
+
+    def __rtruediv__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator]:
+        if not isinstance(other, (float, int, complex)):
+            raise ValueError("Division of operators is not supported")
+
+        return (1 / other) * self
+
+    def __rfloordiv__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator]:
+        if not isinstance(other, (float, int, complex)):
+            raise ValueError("Division of operators is not supported")
+
+        return (1 / other) * self
+
+    def __rsub__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+        return other + (-1 * self)
+
+    __iadd__ = __add__
+    __imul__ = __mul__
+    __itruediv__ = __truediv__
+    __isub__ = __sub__
