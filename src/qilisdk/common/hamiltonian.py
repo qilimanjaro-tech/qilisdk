@@ -79,7 +79,9 @@ class PauliOperator:
         """
         return Hamiltonian({((self.qubit_id, self.name),): 1})
 
-    def __add__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", "PauliOperator"]:
+    def __add__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", "PauliOperator", Union[int, float, complex]]:
         if isinstance(other, (int, float)) and other == 0:
             return self
 
@@ -90,7 +92,7 @@ class PauliOperator:
 
     def __sub__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", "PauliOperator", int]:
+    ) -> Union["Hamiltonian", "PauliOperator", Union[int, float, complex]]:
 
         if isinstance(other, PauliOperator) and other.name == self.name and other.qubit_id == self.qubit_id:
             return 0
@@ -99,7 +101,7 @@ class PauliOperator:
 
     def __rsub__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", "PauliOperator", int]:
+    ) -> Union["Hamiltonian", "PauliOperator", Union[int, float, complex]]:
 
         if isinstance(other, PauliOperator) and other.name == self.name and other.qubit_id == self.qubit_id:
             return 0
@@ -110,7 +112,7 @@ class PauliOperator:
 
     def __mul__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", int, "PauliOperator"]:
+    ) -> Union["Hamiltonian", Union[int, float, complex], "PauliOperator"]:
         if isinstance(other, (int, float)):
             if other == 0:
                 return 0
@@ -121,7 +123,7 @@ class PauliOperator:
 
     def __rmul__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", int, "PauliOperator"]:
+    ) -> Union["Hamiltonian", Union[int, float, complex], "PauliOperator"]:
         if isinstance(other, (int, float)):
             if other == 0:
                 return 0
@@ -365,7 +367,7 @@ class Hamiltonian:
                         out += f"{coeff} "
             elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
                 out += f"+ ({coeff}) "
-            elif coeff != 1 and coeff != -1:
+            elif coeff not in (1, -1):  # noqa: PLR6201
                 out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
             else:
                 out += "+ " if coeff > 0 else "- "
@@ -388,7 +390,7 @@ class Hamiltonian:
                         out += f"{coeff} "
             elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
                 out += f"+ ({coeff}) "
-            elif coeff != 1 and coeff != -1:
+            elif coeff not in (1, -1):  # noqa: PLR6201
                 out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
             else:
                 out += "+ " if coeff > 0 else "- "
@@ -403,7 +405,9 @@ class Hamiltonian:
     def __setitem__(self, key: Tuple[Tuple[int, str]], value: complex) -> None:
         self.elements[key] = value
 
-    def __add__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __add__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         out = copy.copy(self)
 
         if isinstance(other, Hamiltonian):
@@ -427,9 +431,13 @@ class Hamiltonian:
             raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
+        if len(out.elements) == 0:
+            return 0
         return out
 
-    def __mul__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __mul__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         out = Hamiltonian({})
 
         if isinstance(other, Hamiltonian):
@@ -458,6 +466,8 @@ class Hamiltonian:
             raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
+        if len(out.elements) == 0:
+            return 0
         return out
 
     def __truediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
@@ -469,7 +479,9 @@ class Hamiltonian:
     def __sub__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
         return self + (-1 * other)
 
-    def __radd__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __radd__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         out = copy.copy(self)
 
         if isinstance(other, Hamiltonian):
@@ -493,9 +505,13 @@ class Hamiltonian:
             raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
+        if len(out.elements) == 0:
+            return 0
         return out
 
-    def __rmul__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __rmul__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         out = Hamiltonian({})
 
         if isinstance(other, Hamiltonian):
@@ -524,6 +540,8 @@ class Hamiltonian:
             raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
+        if len(out.elements) == 0:
+            return 0
         return out
 
     def __rtruediv__(
