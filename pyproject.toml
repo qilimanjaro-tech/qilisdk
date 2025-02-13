@@ -33,6 +33,7 @@ qibo-backend = [
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.125.3",
     "ipykernel>=6.29.5",
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
