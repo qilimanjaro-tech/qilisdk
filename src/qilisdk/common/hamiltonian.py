@@ -14,7 +14,7 @@
 
 
 import copy
-from typing import Dict, Generator, List, NoReturn, Tuple, Union
+from typing import Generator, Union
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class PauliOperator:
         - matrix : the matrix representation of the Pauli operator
     """
 
-    def __init__(self, qubit_id: int, name: str, matrix: List[List]) -> None:
+    def __init__(self, qubit_id: int, name: str, matrix: list[list]) -> None:
         self.qubit_id = qubit_id
         self.__matrix = matrix
         self._name = name
@@ -49,15 +49,15 @@ class PauliOperator:
         return self._name
 
     @property
-    def matrix(self) -> List[List[Union[int, float, complex]]]:
+    def matrix(self) -> list[list[Union[int, float, complex]]]:
         """The matrix representation of the Pauli operator.
 
         Returns:
-            List[List[Union[int, float, complex]]]: the matrix representation of the pauli operator.
+            list[list[Union[int, float, complex]]]: the matrix representation of the pauli operator.
         """
         return self.__matrix
 
-    def parse(self) -> Generator[Tuple[int, List["PauliOperator"]], None, None]:
+    def parse(self) -> Generator[tuple[int, list["PauliOperator"]], None, None]:
         """Yields the operator in the format (1, [<operator>])."""
         yield 1, [self]
 
@@ -139,7 +139,7 @@ class PauliOperator:
     ) -> Union["Hamiltonian", "PauliOperator"]:
         return self._to_hamiltonian() / other
 
-    def __rtruediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> NoReturn:
+    def __rtruediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]):  # noqa: ANN204
         raise ValueError("Division by operators is not supported")
 
     __itruediv__ = __truediv__
@@ -228,7 +228,7 @@ _PAULI_PRODUCT_TABLE = {
 }
 
 
-def _multiply_pauli(op1: "PauliOperator", op2: "PauliOperator") -> Tuple[Union[int, float, complex], "PauliOperator"]:
+def _multiply_pauli(op1: "PauliOperator", op2: "PauliOperator") -> tuple[Union[int, float, complex], "PauliOperator"]:
     """Multiply two Pauli Operators
 
     Raises:
@@ -236,7 +236,7 @@ def _multiply_pauli(op1: "PauliOperator", op2: "PauliOperator") -> Tuple[Union[i
         NotImplementedError: Multiplication between the two operators is not supported.
 
     Returns:
-        Tuple[Union[int, float, complex], "PauliOperator"]: A tuple containing the resulting
+        tuple[Union[int, float, complex], "PauliOperator"]: A tuple containing the resulting
         coefficient and Pauli operator.
     """
     if op1.qubit_id != op2.qubit_id:
@@ -257,7 +257,9 @@ def _multiply_pauli(op1: "PauliOperator", op2: "PauliOperator") -> Tuple[Union[i
     raise NotImplementedError(f"Operation between operator {op1.name} and operator {op2.name} is not supported.")
 
 
-def _multiply_sets(set1: Tuple[Tuple[int, str]], set2: Tuple[Tuple[int, str]]) -> Tuple[complex, Tuple[Tuple]]:
+def _multiply_sets(
+    set1: tuple[tuple[int, str], ...], set2: tuple[tuple[int, str], ...]
+) -> tuple[complex, tuple[tuple[int, str], ...]]:
 
     list1 = list(set1)
     list2 = list(set2)
@@ -266,7 +268,7 @@ def _multiply_sets(set1: Tuple[Tuple[int, str]], set2: Tuple[Tuple[int, str]]) -
 
     combined_list = sorted(list1, key=lambda x: x[0])  # noqa: FURB118
 
-    sum_dict: dict[int, List] = {}
+    sum_dict: dict[int, list] = {}
 
     for qid, op in combined_list:
         if qid not in sum_dict:
@@ -306,17 +308,17 @@ class Hamiltonian:
         }
     """
 
-    def __init__(self, elements: Dict[Tuple[Tuple[int, str]], Union[int, float, complex]]) -> None:
+    def __init__(self, elements: dict[tuple[tuple[int, str], ...], Union[int, float, complex]]) -> None:
         self.__elements = {}
         for operators, coeff in elements.items():
             self.__elements[operators] = coeff
 
     @property
-    def elements(self) -> Dict[Tuple[Tuple[int, str]], Union[int, float, complex]]:
+    def elements(self) -> dict[tuple[tuple[int, str], ...], Union[int, float, complex]]:
         """Returns the dictionary of the elements
 
         Returns:
-            Dict: a dictionary of the hamiltonian elements and their coefficient
+            dict: a dictionary of the hamiltonian elements and their coefficient
         """
         return self.__elements
 
@@ -330,11 +332,11 @@ class Hamiltonian:
             for qid, operator in key:
                 yield _PAULI_MAP[operator](qid)
 
-    def parse(self) -> Generator[Tuple[complex, List[PauliOperator]], None, None]:
+    def parse(self) -> Generator[tuple[complex, list[PauliOperator]], None, None]:
         """A generator that parses the Hamiltonian object term by term.
 
         Yields:
-            Tuple[Union[int, float, complex], List[PauliOperators]]: the coefficient and the list
+            tuple[Union[int, float, complex], list[PauliOperators]]: the coefficient and the list
             of pauli operators of the term.
         """
         for key, value in self.elements.items():
@@ -399,10 +401,10 @@ class Hamiltonian:
                 out += f"{o}({qid}) "
         return out
 
-    def __getitem__(self, index: Tuple[Tuple[int, str]]) -> Union[int, float, complex]:
+    def __getitem__(self, index: tuple[tuple[int, str], ...]) -> Union[int, float, complex]:
         return self.elements[index]
 
-    def __setitem__(self, key: Tuple[Tuple[int, str]], value: complex) -> None:
+    def __setitem__(self, key: tuple[tuple[int, str], ...], value: complex) -> None:
         self.elements[key] = value
 
     def __add__(
