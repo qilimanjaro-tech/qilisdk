@@ -18,6 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, M, S, T, X, Y, Z
+from qilisdk.digital.exceptions import GateHasNoParameter, ParametersNotEqualError
 
 
 # ------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ def assert_matrix_equal(actual: np.ndarray, expected: np.ndarray, rtol=1e-7, ato
 
 
 # ------------------------------------------------------------------------------
-# 1. Test Non-Parameterized Single-Qubit Gates
+# Non-Parameterized Single-Qubit Gates
 # ------------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("gate_class", "expected_name", "expected_matrix"),
@@ -56,8 +57,8 @@ def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_m
     assert gate.nqubits == 1
 
     # Check that it has no parameters
-    assert gate.is_parameterized() is False
-    assert gate.nparameters() == 0
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
     assert gate.parameter_names == []
     assert gate.parameters == {}
 
@@ -70,6 +71,9 @@ def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_m
     assert_matrix_equal(gate._matrix, expected_matrix)
 
 
+# ------------------------------------------------------------------------------
+# Measurement Gate
+# ------------------------------------------------------------------------------
 def test_measurement_gate():
     """
     Special test for the M (Measurement) gate, which has no matrix representation
@@ -80,8 +84,8 @@ def test_measurement_gate():
 
     assert gate.name == "M"
     assert gate.nqubits == 1
-    assert gate.is_parameterized() is False
-    assert gate.nparameters() == 0
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
     assert gate.parameter_names == []
     assert gate.parameters == {}
     assert gate.target_qubits == (qubit_index,)
@@ -92,7 +96,7 @@ def test_measurement_gate():
 
 
 # ------------------------------------------------------------------------------
-# 2. Test Parameterized Gates with Fixed Angles (basic approach)
+# Rotation Gates
 # ------------------------------------------------------------------------------
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_rx_gate(angle: float):
@@ -100,8 +104,8 @@ def test_rx_gate(angle: float):
     gate = RX(qubit_index, theta=angle)
 
     assert gate.name == "RX"
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
     assert gate.parameter_names == ["theta"]
     assert list(gate.parameters.keys()) == ["theta"]
     assert list(gate.parameters.values()) == [angle]
@@ -120,8 +124,8 @@ def test_ry_gate(angle: float):
     gate = RY(qubit_index, theta=angle)
 
     assert gate.name == "RY"
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
 
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
@@ -135,8 +139,8 @@ def test_rz_gate(angle: float):
     gate = RZ(qubit_index, theta=angle)
 
     assert gate.name == "RZ"
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
 
     # The file's RZ uses the same form as RY in the code.
     # That might be a placeholder, but let's test correctness.
@@ -155,8 +159,8 @@ def test_u1_gate(angle: float):
     gate = U1(qubit_index, theta=angle)
 
     assert gate.name == "U1"
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
 
     expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=complex)
     assert_matrix_equal(gate._matrix, expected_matrix)
@@ -183,8 +187,8 @@ def test_u2_gate(phi, lam):
     # Basic checks
     assert gate.name == "U2"
     assert gate.nqubits == 1
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 2
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 2
     assert gate.parameter_names == ["phi", "lam"]
     assert gate.target_qubits == (qubit_index,)
     assert gate.control_qubits == ()
@@ -226,8 +230,8 @@ def test_u3_gate(theta, phi, lam):
     # Basic checks
     assert gate.name == "U3"
     assert gate.nqubits == 1
-    assert gate.is_parameterized() is True
-    assert gate.nparameters() == 3
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 3
     assert gate.parameter_names == ["theta", "phi", "lam"]
     assert gate.target_qubits == (qubit_index,)
     assert gate.control_qubits == ()
@@ -276,8 +280,8 @@ def test_cnot_gate(control: int, target: int):
     # Check name, nqubits, parameters
     assert gate.name == "CNOT"
     assert gate.nqubits == 2
-    assert gate.is_parameterized() is False
-    assert gate.nparameters() == 0
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
     assert gate.parameter_names == []
     assert gate.parameters == {}
 
@@ -317,8 +321,8 @@ def test_cz_gate(control, target):
 
     assert gate.name == "CZ"
     assert gate.nqubits == 2
-    assert gate.is_parameterized() is False
-    assert gate.nparameters() == 0
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
 
     # Check qubits
     assert gate.control_qubits == (control,)
@@ -332,17 +336,61 @@ def test_cz_gate(control, target):
 
 
 # ------------------------------------------------------------------------------
-# 4. Miscellaneous Tests
+# Tests for set_parameters() and set_parameter_values()
 # ------------------------------------------------------------------------------
-def test_class_methods():
+@pytest.mark.parametrize(
+    ("gate_class", "ctor_kwargs", "valid_dict", "invalid_dict", "valid_list", "invalid_list"),
+    [
+        # Single-parameter gates
+        (RX, {"theta": 0.0}, {"theta": np.pi}, {"phi": np.e}, [1.23], [1.23, 2.34]),
+        (RY, {"theta": 0.0}, {"theta": 1.11}, {"lam": 3.33}, [2.22], []),
+        (RZ, {"theta": 0.0}, {"theta": -0.99}, {"lam": 0.77}, [1.11], [1.11, 2.22]),
+        (U1, {"theta": 0.0}, {"theta": 4.56}, {"phi": 1.23}, [5.67], []),
+        # Two-parameter gate (U2 => phi, lam)
+        (
+            U2,
+            {"phi": 0.0, "lam": 0.0},
+            {"phi": 1.23, "lam": 2.34},  # valid dict
+            {"theta": 3.45},  # invalid dict -> "theta" not recognized
+            [4.56, 5.67],  # valid list, matching 2 parameters
+            [1.23],
+        ),  # invalid list (only 1 param)
+        # Three-parameter gate (U3 => theta, phi, lam)
+        (
+            U3,
+            {"theta": 0.0, "phi": 0.0, "lam": 0.0},
+            {"theta": 1.11, "phi": 2.22, "lam": 3.33},  # valid dict
+            {"junk": 9.99},  # invalid dict
+            [4.44, 5.55, 6.66],  # valid list
+            [7.77, 8.88],
+        ),  # invalid list (2 instead of 3)
+    ],
+)
+def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dict, valid_list, invalid_list):
     """
-    Quick check of class-level methods: is_parameterized, nparameters, etc.
+    Tests set_parameters() and set_parameter_values() for different gate classes.
+    Checks both correct usage (happy path) and exceptions for invalid inputs.
     """
-    assert X.is_parameterized() is False
-    assert X.nparameters() == 0
 
-    assert RX.is_parameterized() is True
-    assert RX.nparameters() == 1
+    # Create the gate, specifying qubit index = 0 (arbitrary)
+    gate = gate_class(0, **ctor_kwargs)
 
-    assert U1.is_parameterized() is True
-    assert U1.nparameters() == 1
+    # 1) set_parameters() with valid_dict
+    gate.set_parameters(valid_dict)
+    # Verify the gate's 'parameters' match the new values
+    for param_name, param_value in valid_dict.items():
+        assert gate.parameters[param_name] == param_value, f"Parameter '{param_name}' not updated to {param_value}"
+
+    # 2) set_parameters() with an invalid dict (unknown parameter name)
+    with pytest.raises(GateHasNoParameter):
+        gate.set_parameters(invalid_dict)
+
+    # 3) set_parameter_values() with a valid list
+    gate.set_parameter_values(valid_list)
+    param_names = gate.parameter_names
+    for i, val in enumerate(valid_list):
+        assert gate.parameters[param_names[i]] == val, f"Parameter '{param_names[i]}' not updated to {val}"
+
+    # 4) set_parameter_values() with an invalid list (length mismatch)
+    with pytest.raises(ParametersNotEqualError):
+        gate.set_parameter_values(invalid_list)

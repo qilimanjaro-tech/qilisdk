@@ -17,6 +17,8 @@ from typing import ClassVar
 
 import numpy as np
 
+from .exceptions import GateHasNoParameter, ParametersNotEqualError
+
 
 class Gate(ABC):
     """
@@ -95,6 +97,24 @@ class Gate(ABC):
         return self._NQUBITS
 
     @property
+    def is_parameterized(self) -> bool:
+        """_summary_
+
+        Returns:
+            bool: _description_
+        """
+        return self.nparameters > 0
+
+    @property
+    def nparameters(self) -> int:
+        """_summary_
+
+        Returns:
+            bool: _description_
+        """
+        return len(self._PARAMETER_NAMES)
+
+    @property
     def parameter_names(self) -> list[str]:
         """_summary_
 
@@ -121,23 +141,35 @@ class Gate(ABC):
         """
         return dict(zip(self._PARAMETER_NAMES, self._parameter_values))
 
-    @classmethod
-    def is_parameterized(cls) -> bool:
+    def set_parameters(self, parameters: dict[str, float]) -> None:
         """_summary_
 
-        Returns:
-            bool: _description_
-        """
-        return len(cls._PARAMETER_NAMES) > 0
+        Args:
+            parameters (dict[str, float]): _description_
 
-    @classmethod
-    def nparameters(cls) -> int:
+        Raises:
+            GateHasNoParameter: _description_
+        """
+        if any(name not in self._PARAMETER_NAMES for name in parameters):
+            raise GateHasNoParameter
+
+        for name, value in parameters.items():
+            self._parameter_values[self._PARAMETER_NAMES.index(name)] = value
+
+    def set_parameter_values(self, values: list[float]) -> None:
         """_summary_
 
-        Returns:
-            bool: _description_
+        Args:
+            values (list[float]): _description_
+
+        Raises:
+            ParametersNotEqualError: _description_
         """
-        return len(cls._PARAMETER_NAMES)
+        if len(values) != len(self._parameter_values):
+            raise ParametersNotEqualError
+
+        for i, value in enumerate(values):
+            self._parameter_values[i] = value
 
 
 class X(Gate):
