@@ -27,6 +27,7 @@ def test_circuit_initialization():
     assert c.nqubits == 3
     assert c.nparameters == 0  # No gates yet
     assert c.get_parameter_values() == []
+    assert c.gates == []
 
 
 def test_add_non_parameterized_gate():
@@ -41,6 +42,9 @@ def test_add_non_parameterized_gate():
     # The gate should be in _gates, but not in _parameterized_gates
     assert x_gate in c._gates
     assert x_gate not in c._parameterized_gates
+
+    # Property should also work
+    assert x_gate in c.gates
 
     # No parameters
     assert c.nparameters == 0
@@ -58,6 +62,9 @@ def test_add_parameterized_gate():
     # rx_gate should be in both _gates and _parameterized_gates
     assert rx_gate in c._gates
     assert rx_gate in c._parameterized_gates
+
+    # Property should also work
+    assert rx_gate in c.gates
 
     # Should have exactly 1 parameter
     assert c.nparameters == 1

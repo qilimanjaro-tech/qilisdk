@@ -32,6 +32,10 @@ class Circuit:
     def nparameters(self) -> int:
         return len([value for gate in self._gates if gate.is_parameterized for value in gate.parameter_values])
 
+    @property
+    def gates(self) -> list[Gate]:
+        return self._gates
+
     def get_parameter_values(self) -> list[float]:
         return [value for gate in self._gates if gate.is_parameterized for value in gate.parameter_values]
 
