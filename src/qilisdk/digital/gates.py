@@ -22,23 +22,7 @@ from .exceptions import GateHasNoParameter, ParametersNotEqualError
 
 class Gate(ABC):
     """
-    Represents a quantum gate.
-
-    Class Attributes:
-        name: Name of the gate (e.g., "X", "CNOT", etc.).
-        nqubits: The number of qubits this gate acts on.
-        parameter_names: The symbolic parameter names for gates that require parameters
-                        (e.g., ["theta", "phi"]).
-
-    Instance Attributes:
-        _control_qubits: A tuple of qubit indices designated as 'control' qubits.
-        _target_qubits: A tuple of qubit indices designated as 'target' qubits.
-        _matrix: The unitary matrix representation of the gate (if available).
-        parameters: A list of numeric values associated with the gate's parameters.
-
-    Methods:
-        get_gate: (Optional) Method to implement for retrieving the gate in a
-                  specific backend format.
+    Represents a quantum gate that can be used in quantum circuits.
     """
 
     _NAME: ClassVar[str]
@@ -53,102 +37,113 @@ class Gate(ABC):
 
     @property
     def name(self) -> str:
-        """_summary_
+        """
+        Retrieve the name of the gate.
 
         Returns:
-            str: _description_
+            str: The name of the gate.
         """
         return self._NAME
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
-        """_summary_
+        """
+        Retrieve the indices of the control qubits.
 
         Returns:
-            tuple[int, ...]: _description_
+            tuple[int, ...]: A tuple containing the indices of the control qubits.
         """
         return self._control_qubits
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
-        """_summary_
+        """
+        Retrieve the indices of the target qubits.
 
         Returns:
-            tuple[int, ...]: _description_
+            tuple[int, ...]: A tuple containing the indices of the target qubits.
         """
         return self._target_qubits
 
     @property
     def qubits(self) -> tuple[int, ...]:
-        """_summary_
+        """
+        Retrieve all qubits associated with the gate, including both control and target qubits.
 
         Returns:
-            tuple[int, ...]: _description_
+            tuple[int, ...]: A tuple of all qubit indices on which the gate operates.
         """
         return self._control_qubits + self._target_qubits
 
     @property
     def nqubits(self) -> int:
-        """_summary_
+        """
+        Retrieve the number of qubits the gate acts upon.
 
         Returns:
-            int: _description_
+            int: The number of qubits for this gate.
         """
         return self._NQUBITS
 
     @property
     def is_parameterized(self) -> bool:
-        """_summary_
+        """
+        Determine whether the gate requires parameters.
 
         Returns:
-            bool: _description_
+            bool: True if the gate is parameterized; otherwise, False.
         """
         return self.nparameters > 0
 
     @property
     def nparameters(self) -> int:
-        """_summary_
+        """
+        Retrieve the number of parameters for the gate.
 
         Returns:
-            bool: _description_
+            int: The count of parameters needed by the gate.
         """
         return len(self._PARAMETER_NAMES)
 
     @property
     def parameter_names(self) -> list[str]:
-        """_summary_
+        """
+        Retrieve the symbolic names of the gate's parameters.
 
         Returns:
-            list[str]: _description_
+            list[str]: A list containing the names of the parameters.
         """
         return self._PARAMETER_NAMES
 
     @property
     def parameter_values(self) -> list[float]:
-        """_summary_
+        """
+        Retrieve the numerical values assigned to the gate's parameters.
 
         Returns:
-            list[str]: _description_
+            list[float]: A list containing the parameter values.
         """
         return self._parameter_values
 
     @property
     def parameters(self) -> dict[str, float]:
-        """_summary_
+        """
+        Retrieve a mapping of parameter names to their corresponding values.
 
         Returns:
-            dict[str, float]: _description_
+            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
         return dict(zip(self._PARAMETER_NAMES, self._parameter_values))
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
-        """_summary_
+        """
+        Set the parameters for the gate using a dictionary mapping names to values.
 
         Args:
-            parameters (dict[str, float]): _description_
+            parameters (dict[str, float]): A dictionary where keys are parameter names and values are the new parameter values.
 
         Raises:
-            GateHasNoParameter: _description_
+            GateHasNoParameter: If any provided parameter name is not valid for this gate.
         """
         if any(name not in self._PARAMETER_NAMES for name in parameters):
             raise GateHasNoParameter
@@ -157,13 +152,14 @@ class Gate(ABC):
             self._parameter_values[self._PARAMETER_NAMES.index(name)] = value
 
     def set_parameter_values(self, values: list[float]) -> None:
-        """_summary_
+        """
+        Set the numerical values for the gate's parameters.
 
         Args:
-            values (list[float]): _description_
+            values (list[float]): A list containing new parameter values.
 
         Raises:
-            ParametersNotEqualError: _description_
+            ParametersNotEqualError: If the number of provided values does not match the expected parameter count.
         """
         if len(values) != len(self._parameter_values):
             raise ParametersNotEqualError
@@ -178,7 +174,7 @@ class X(Gate):
 
     The associated matrix is:
         [[0, 1],
-         [1, 0]]
+        [1, 0]]
     """
 
     _NAME: ClassVar[str] = "X"
@@ -186,6 +182,12 @@ class X(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a Pauli-X gate.
+
+        Args:
+            qubit (int): The target qubit index for the X gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -205,6 +207,12 @@ class Y(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a Pauli-Y gate.
+
+        Args:
+            qubit (int): The target qubit index for the Y gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[0, -1j], [1j, 0]], dtype=complex)
@@ -224,6 +232,12 @@ class Z(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a Pauli-Z gate.
+
+        Args:
+            qubit (int): The target qubit index for the Z gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[1, 0], [0, -1]], dtype=complex)
@@ -243,6 +257,12 @@ class H(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a Hadamard gate.
+
+        Args:
+            qubit (int): The target qubit index for the Hadamard gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
@@ -262,6 +282,12 @@ class S(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize an S gate.
+
+        Args:
+            qubit (int): The target qubit index for the S gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[1, 0], [0, 1j]], dtype=complex)
@@ -281,6 +307,12 @@ class T(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a T gate.
+
+        Args:
+            qubit (int): The target qubit index for the T gate.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
@@ -297,6 +329,12 @@ class M(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
+        """
+        Initialize a measurement operation.
+
+        Args:
+            qubit (int): The qubit index to be measured.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
 
@@ -315,6 +353,13 @@ class RX(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
+        """
+        Initialize an RX gate.
+
+        Args:
+            qubit (int): The target qubit index for the rotation.
+            theta (float): The rotation angle in radians.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
@@ -338,6 +383,13 @@ class RY(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
+        """
+        Initialize an RY gate.
+
+        Args:
+            qubit (int): The target qubit index for the rotation.
+            theta (float): The rotation angle in radians.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
@@ -361,6 +413,13 @@ class RZ(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
+        """
+        Initialize an RZ gate.
+
+        Args:
+            qubit (int): The target qubit index for the rotation.
+            theta (float): The rotation angle in radians.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
@@ -384,6 +443,13 @@ class U1(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
+        """
+        Initialize a U1 gate.
+
+        Args:
+            qubit (int): The target qubit index for the U1 gate.
+            theta (float): The phase rotation angle in radians.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
@@ -404,6 +470,14 @@ class U2(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "lam"]
 
     def __init__(self, qubit: int, *, phi: float, lam: float) -> None:
+        """
+        Initialize a U2 gate.
+
+        Args:
+            qubit (int): The target qubit index for the U2 gate.
+            phi (float): The first phase parameter.
+            lam (float): The second phase parameter.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [phi, lam]
@@ -430,6 +504,15 @@ class U3(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "lam"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, lam: float) -> None:
+        """
+        Initialize a U3 gate.
+
+        Args:
+            qubit (int): The target qubit index for the U3 gate.
+            theta (float): The rotation angle.
+            phi (float): The first phase parameter.
+            lam (float): The second phase parameter.
+        """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta, phi, lam]
@@ -458,6 +541,13 @@ class CNOT(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
+        """
+        Initialize a CNOT gate.
+
+        Args:
+            control (int): The index of the control qubit.
+            target (int): The index of the target qubit.
+        """
         super().__init__()
         self._control_qubits = (control,)
         self._target_qubits = (target,)
@@ -480,6 +570,13 @@ class CZ(Gate):
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
+        """
+        Initialize a CZ gate.
+
+        Args:
+            control (int): The index of the control qubit.
+            target (int): The index of the target qubit.
+        """
         super().__init__()
         self._control_qubits = (control,)
         self._target_qubits = (target,)
