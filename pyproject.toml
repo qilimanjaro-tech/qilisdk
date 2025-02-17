@@ -23,12 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-    "numpy>=2.2.2",
+    "numpy",
 ]
 
 [project.optional-dependencies]
 qibo-backend = [
-    "qibo>=0.2.4",
+    "qibo>=0.2.16",
 ]
 
 [dependency-groups]
