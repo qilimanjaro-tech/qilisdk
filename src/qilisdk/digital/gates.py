@@ -174,7 +174,7 @@ class Gate(ABC):
 
 class X(Gate):
     """
-    Represents the Pauli-X gate, a single-qubit gate with no parameters.
+    The Pauli-X gate.
 
     The associated matrix is:
         [[0, 1],
@@ -193,7 +193,7 @@ class X(Gate):
 
 class Y(Gate):
     """
-    Represents the Pauli-Y gate, a single-qubit gate with no parameters.
+    The Pauli-Y gate.
 
     The associated matrix is:
         [[0, -i],
@@ -212,7 +212,7 @@ class Y(Gate):
 
 class Z(Gate):
     """
-    Represents the Pauli-Z gate, a single-qubit gate with no parameters.
+    The Pauli-Z gate.
 
     The associated matrix is:
         [[1, 0],
@@ -227,6 +227,25 @@ class Z(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+
+
+class H(Gate):
+    """
+    The Hadamard gate.
+
+    The associated matrix is:
+        1/sqrt(2) * [[1, 1],
+                     [1, -1]]
+    """
+
+    _NAME: ClassVar[str] = "H"
+    _NQUBITS: ClassVar[int] = 1
+    _PARAMETER_NAMES: ClassVar[list[str]] = []
+
+    def __init__(self, qubit: int) -> None:
+        super().__init__()
+        self._target_qubits = (qubit,)
+        self._matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
 
 
 class S(Gate):
