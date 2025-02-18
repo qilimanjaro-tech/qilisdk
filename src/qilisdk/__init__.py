@@ -15,12 +15,12 @@
 import sys
 from typing import List
 
-from qilisdk.common import Algorithm, Hamiltonian, Model, Optimizer, Result
+from qilisdk.common import Algorithm, Hamiltonian, Model, Optimizer, Results
 
 from ._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
 
 # Put your always-available, core symbols here
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Result"]
+__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Results"]
 
 # Define your optional features
 OPTIONAL_FEATURES: List[OptionalFeature] = [

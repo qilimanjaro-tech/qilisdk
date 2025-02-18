@@ -16,6 +16,6 @@ from .algorithm import Algorithm
 from .hamiltonian import Hamiltonian
 from .model import Model
 from .optimizer import Optimizer
-from .result import Result
+from .result import Results
 
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Result"]
+__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Results"]

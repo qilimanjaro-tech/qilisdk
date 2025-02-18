@@ -13,6 +13,27 @@
 # limitations under the License.
 
 from .circuit import Circuit
-from .gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from .digital_result import DigitalResults, SimulationDigitalResults
+from .gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
 
-__all__ = ["CNOT", "CZ", "RX", "RY", "RZ", "U1", "U2", "U3", "Circuit", "H", "M", "S", "T", "X", "Y", "Z"]
+__all__ = [
+    "CNOT",
+    "CZ",
+    "RX",
+    "RY",
+    "RZ",
+    "U1",
+    "U2",
+    "U3",
+    "Circuit",
+    "DigitalResults",
+    "Gate",
+    "H",
+    "M",
+    "S",
+    "SimulationDigitalResults",
+    "T",
+    "X",
+    "Y",
+    "Z",
+]

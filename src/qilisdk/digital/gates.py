@@ -168,6 +168,27 @@ class Gate(ABC):
             self._parameter_values[i] = value
 
 
+class M(Gate):
+    """
+    Measurement operation on a qubit. The measurement is performed in the computational basis and the
+    result is stored in a classical bit with the same label as the measured qubit.
+    """
+
+    _NAME: ClassVar[str] = "M"
+    _NQUBITS: ClassVar[int] = np.inf
+    _PARAMETER_NAMES: ClassVar[list[str]] = []
+
+    def __init__(self, *qubits: int) -> None:
+        """
+        Initialize a measurement operation.
+
+        Args:
+            qubit (int): The qubit index to be measured.
+        """
+        super().__init__()
+        self._target_qubits = qubits
+
+
 class X(Gate):
     """
     The Pauli-X gate.
@@ -316,27 +337,6 @@ class T(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._matrix = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
-
-
-class M(Gate):
-    """
-    Measurement operation on a qubit. The measurement is performed in the computational basis and the
-    result is stored in a classical bit with the same label as the measured qubit.
-    """
-
-    _NAME: ClassVar[str] = "M"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
-
-    def __init__(self, qubit: int) -> None:
-        """
-        Initialize a measurement operation.
-
-        Args:
-            qubit (int): The qubit index to be measured.
-        """
-        super().__init__()
-        self._target_qubits = (qubit,)
 
 
 class RX(Gate):
