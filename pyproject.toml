@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
     "numpy",
@@ -151,7 +150,7 @@ markers = [
 
 [tool.tox]
 requires = ["tox>=4"]
-envlist = ["3.10", "3.11", "3.12", "3.13"]
+envlist = ["3.10", "3.11", "3.12"]
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
@@ -170,10 +169,6 @@ commands = [["pytest", "tests", "-m", "not qibo_backend"]]
 extras = []
 commands = [["pytest", "tests", "-m", "not qibo_backend"]]
 
-[tool.tox.env.py313-core]
-extras = []
-commands = [["pytest", "tests", "-m", "not qibo_backend"]]
-
 [tool.tox.env.py310-qibo_backend]
 extras = ["qibo-backend"]
 commands = [["pytest", "tests", "-m", "qibo_backend"]]
@@ -186,15 +181,10 @@ commands = [["pytest", "tests", "-m", "qibo_backend"]]
 extras = ["qibo-backend"]
 commands = [["pytest", "tests", "-m", "qibo_backend"]]
 
-[tool.tox.env.py313-qibo_backend]
-extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "qibo_backend"]]
-
 [tool.tox.gh.python]
 "3.10" = ["3.10"]
 "3.11" = ["3.11"]
 "3.12" = ["3.12"]
-"3.13" = ["3.13"]
 
 [tool.towncrier]
 package = "qilisdk"
