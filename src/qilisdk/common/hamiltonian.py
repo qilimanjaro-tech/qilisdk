@@ -18,6 +18,8 @@ from typing import Generator, Union
 
 import numpy as np
 
+from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
+
 
 class PauliOperator:
     """Abstract Representation of a generic Pauli operator
@@ -35,7 +37,7 @@ class PauliOperator:
 
     def __init__(self, qubit_id: int, name: str, matrix: list[list]) -> None:
         self.qubit_id = qubit_id
-        self.__matrix = matrix
+        self._matrix = matrix
         self._name = name
         self.coeff = 1 + 0j
 
@@ -55,7 +57,7 @@ class PauliOperator:
         Returns:
             list[list[Union[int, float, complex]]]: the matrix representation of the pauli operator.
         """
-        return self.__matrix
+        return self._matrix
 
     def parse(self) -> Generator[tuple[int, list["PauliOperator"]], None, None]:
         """Yields the operator in the format (1, [<operator>])."""
@@ -136,11 +138,11 @@ class PauliOperator:
 
     def __truediv__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", "PauliOperator"]:
+    ) -> Union["Hamiltonian", "PauliOperator", Union[int, float, complex]]:
         return self._to_hamiltonian() / other
 
     def __rtruediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]):  # noqa: ANN204
-        raise ValueError("Division by operators is not supported")
+        raise NotSupportedOperation("Division by operators is not supported")
 
     __itruediv__ = __truediv__
 
@@ -309,9 +311,28 @@ class Hamiltonian:
     """
 
     def __init__(self, elements: dict[tuple[tuple[int, str], ...], Union[int, float, complex]]) -> None:
-        self.__elements = {}
+        self._elements = {}
         for operators, coeff in elements.items():
-            self.__elements[operators] = coeff
+            self._elements[operators] = coeff
+
+    @property
+    def n_qubits(self) -> int:
+        """Returns the number of qubits
+
+        Raises:
+            InvalidHamiltonianOperation: if the hamiltonian has no terms.
+
+        Returns:
+            int: the number of qubits
+        """
+        n_qubits = -1
+        for key in self._elements:
+            for qid, _ in key:
+                n_qubits = max(n_qubits, qid)
+
+        if n_qubits == -1:
+            raise InvalidHamiltonianOperation("Can't compute the number of qubits if the hamiltonian has no terms")
+        return n_qubits
 
     @property
     def elements(self) -> dict[tuple[tuple[int, str], ...], Union[int, float, complex]]:
@@ -320,7 +341,7 @@ class Hamiltonian:
         Returns:
             dict: a dictionary of the hamiltonian elements and their coefficient
         """
-        return self.__elements
+        return self._elements
 
     def variables(self) -> Generator[PauliOperator, None, None]:
         """A generator object that returns all the pauli operators in the Hamiltonian.
@@ -430,7 +451,7 @@ class Hamiltonian:
             else:
                 out[(0, "I"),] = other
         else:
-            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+            raise InvalidHamiltonianOperation(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
         if len(out.elements) == 0:
@@ -465,20 +486,24 @@ class Hamiltonian:
                 out[key] *= other
             return out
         else:
-            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+            raise InvalidHamiltonianOperation(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
         if len(out.elements) == 0:
             return 0
         return out
 
-    def __truediv__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __truediv__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         if not isinstance(other, (float, int, complex)):
-            raise ValueError("Division of operators is not supported")
+            raise InvalidHamiltonianOperation("Division of operators is not supported")
 
         return self * (1 / other)
 
-    def __sub__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __sub__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         return self + (-1 * other)
 
     def __radd__(
@@ -504,7 +529,7 @@ class Hamiltonian:
             else:
                 out[(0, "I"),] = other
         else:
-            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+            raise InvalidHamiltonianOperation(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
         if len(out.elements) == 0:
@@ -539,7 +564,7 @@ class Hamiltonian:
                 out[key] *= other
             return out
         else:
-            raise ValueError(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
+            raise InvalidHamiltonianOperation(f"invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
         out._filter()
         if len(out.elements) == 0:
@@ -548,21 +573,23 @@ class Hamiltonian:
 
     def __rtruediv__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", PauliOperator]:
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         if not isinstance(other, (float, int, complex)):
-            raise ValueError("Division of operators is not supported")
+            raise InvalidHamiltonianOperation("Division of operators is not supported")
 
         return (1 / other) * self
 
     def __rfloordiv__(
         self, other: Union[complex, "PauliOperator", "Hamiltonian"]
-    ) -> Union["Hamiltonian", PauliOperator]:
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         if not isinstance(other, (float, int, complex)):
-            raise ValueError("Division of operators is not supported")
+            raise NotSupportedOperation("Division of operators is not supported")
 
         return (1 / other) * self
 
-    def __rsub__(self, other: Union[complex, "PauliOperator", "Hamiltonian"]) -> Union["Hamiltonian", PauliOperator]:
+    def __rsub__(
+        self, other: Union[complex, "PauliOperator", "Hamiltonian"]
+    ) -> Union["Hamiltonian", PauliOperator, Union[int, float, complex]]:
         return other + (-1 * self)
 
     __iadd__ = __add__
