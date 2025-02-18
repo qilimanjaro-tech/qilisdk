@@ -22,6 +22,18 @@ class DigitalResults(Results):
         self._frequencies = frequencies
         self._nshots = nshots
 
+    @property
+    def nshots(self) -> int:
+        return self._nshots
+
+    @property
+    def frequencies(self) -> dict[str, int]:
+        return self._frequencies
+
+    @property
+    def samples(self) -> np.ndarray:
+        return self._samples
+
 
 class SimulationDigitalResults(DigitalResults):
     def __init__(
@@ -35,3 +47,11 @@ class SimulationDigitalResults(DigitalResults):
         super().__init__(samples=samples, frequencies=frequencies, nshots=nshots)
         self._state = state
         self._probabilities = probabilities
+
+    @property
+    def state(self) -> np.ndarray:
+        return self._state
+
+    @property
+    def probabilities(self) -> np.ndarray:
+        return self._probabilities
