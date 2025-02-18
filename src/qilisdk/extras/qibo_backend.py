@@ -43,8 +43,7 @@ from qilisdk.digital import (
 class QiboBackend:
     def __init__(self) -> None: ...
 
-    @staticmethod
-    def execute(circuit: Circuit, nshots: int = 1000) -> SimulationDigitalResults:
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> SimulationDigitalResults:  # noqa: PLR6301
         qibo_circuit = QiboBackend.to_qibo(circuit=circuit)
         qibo_results = qibo_circuit.execute(nshots=nshots)
         return SimulationDigitalResults(
