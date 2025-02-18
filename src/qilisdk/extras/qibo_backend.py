@@ -38,6 +38,7 @@ from qilisdk.digital import (
     Y,
     Z,
 )
+from qilisdk.digital.exceptions import UnsupportedGateError
 
 
 class QiboBackend:
@@ -77,7 +78,7 @@ class QiboBackend:
         for gate in circuit.gates:
             converter = to_qibo_converters.get(type(gate))
             if converter is None:
-                raise ValueError(f"Unsupported gate type: {type(gate).__name__}")
+                raise UnsupportedGateError(f"Unsupported gate type: {type(gate).__name__}")
             qibo_circuit.add(converter(gate))
         return qibo_circuit
 

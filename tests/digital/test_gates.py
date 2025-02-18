@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
-from qilisdk.digital.exceptions import GateHasNoParameter, ParametersNotEqualError
+from qilisdk.digital.exceptions import InvalidParameterNameError, ParametersNotEqualError
 
 
 # ------------------------------------------------------------------------------
@@ -383,7 +383,7 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
         assert gate.parameters[param_name] == param_value, f"Parameter '{param_name}' not updated to {param_value}"
 
     # 2) set_parameters() with an invalid dict (unknown parameter name)
-    with pytest.raises(GateHasNoParameter):
+    with pytest.raises(InvalidParameterNameError):
         gate.set_parameters(invalid_dict)
 
     # 3) set_parameter_values() with a valid list

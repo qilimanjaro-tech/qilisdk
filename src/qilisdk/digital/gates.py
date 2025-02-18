@@ -17,7 +17,7 @@ from typing import ClassVar
 
 import numpy as np
 
-from .exceptions import GateHasNoParameter, ParametersNotEqualError
+from .exceptions import InvalidParameterNameError, ParametersNotEqualError
 
 
 class Gate(ABC):
@@ -145,10 +145,10 @@ class Gate(ABC):
             parameters (dict[str, float]): A dictionary where keys are parameter names and values are the new parameter values.
 
         Raises:
-            GateHasNoParameter: If any provided parameter name is not valid for this gate.
+            InvalidParameterNameError: If any provided parameter name is not valid for this gate.
         """
         if any(name not in self._PARAMETER_NAMES for name in parameters):
-            raise GateHasNoParameter
+            raise InvalidParameterNameError
 
         for name, value in parameters.items():
             self._parameter_values[self._PARAMETER_NAMES.index(name)] = value
