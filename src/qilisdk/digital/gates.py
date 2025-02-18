@@ -175,7 +175,7 @@ class M(Gate):
     """
 
     _NAME: ClassVar[str] = "M"
-    _NQUBITS: ClassVar[int] = np.inf
+    _NQUBITS: ClassVar[int] = -1
     _PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, *qubits: int) -> None:
