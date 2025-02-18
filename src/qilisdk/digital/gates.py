@@ -25,6 +25,8 @@ class Gate(ABC):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
+    ANY_NUMBER_OF_QUBITS: int = -1
+
     _NAME: ClassVar[str]
     _NQUBITS: ClassVar[int]
     _PARAMETER_NAMES: ClassVar[list[str]]
@@ -83,7 +85,7 @@ class Gate(ABC):
         Returns:
             int: The number of qubits for this gate.
         """
-        return self._NQUBITS
+        return self._NQUBITS if self._NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
 
     @property
     def is_parameterized(self) -> bool:
