@@ -11,3 +11,6 @@ wheels/
 
 # Hypothesis-generated files
 .hypothesis
+
+# Folder for storing user files
+.tmp
