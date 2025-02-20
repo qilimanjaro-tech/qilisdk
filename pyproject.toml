@@ -20,19 +20,19 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-    "numpy>=2.2.2",
+    "numpy",
 ]
 
 [project.optional-dependencies]
 qibo-backend = [
-    "qibo>=0.2.4",
+    "qibo>=0.2.16",
 ]
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.125.3",
     "ipykernel>=6.29.5",
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
@@ -150,7 +150,7 @@ markers = [
 
 [tool.tox]
 requires = ["tox>=4"]
-envlist = ["3.10", "3.11", "3.12", "3.13"]
+envlist = ["3.10", "3.11", "3.12"]
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
@@ -169,10 +169,6 @@ commands = [["pytest", "tests", "-m", "not qibo_backend"]]
 extras = []
 commands = [["pytest", "tests", "-m", "not qibo_backend"]]
 
-[tool.tox.env.py313-core]
-extras = []
-commands = [["pytest", "tests", "-m", "not qibo_backend"]]
-
 [tool.tox.env.py310-qibo_backend]
 extras = ["qibo-backend"]
 commands = [["pytest", "tests", "-m", "qibo_backend"]]
@@ -185,15 +181,10 @@ commands = [["pytest", "tests", "-m", "qibo_backend"]]
 extras = ["qibo-backend"]
 commands = [["pytest", "tests", "-m", "qibo_backend"]]
 
-[tool.tox.env.py313-qibo_backend]
-extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "qibo_backend"]]
-
 [tool.tox.gh.python]
 "3.10" = ["3.10"]
 "3.11" = ["3.11"]
 "3.12" = ["3.12"]
-"3.13" = ["3.13"]
 
 [tool.towncrier]
 package = "qilisdk"

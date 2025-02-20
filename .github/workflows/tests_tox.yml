@@ -28,10 +28,10 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
 
       - name: Install Python
-        run: uv python install --python-preference only-managed 3.10 3.11 3.12 3.13
+        run: uv python install --python-preference only-managed 3.10 3.11 3.12
 
       - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.12 tox --with tox-uv
 
       - name: Run tests
         run: tox run-parallel

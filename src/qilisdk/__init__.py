@@ -15,20 +15,19 @@
 import sys
 from typing import List
 
-from qilisdk.common import Algorithm, Hamiltonian, Model, Optimizer, Result
+from qilisdk.common import Algorithm, Hamiltonian, Model, Optimizer, Results
 
-from ._optionals import ImportedSymbols, OptionalFeature, import_optional_dependencies
+from ._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
 
 # Put your always-available, core symbols here
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Result"]
+__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Results"]
 
 # Define your optional features
 OPTIONAL_FEATURES: List[OptionalFeature] = [
     OptionalFeature(
-        feature_name="qibo-backend",
+        name="qibo-backend",
         dependencies=["qibo"],
-        import_path="qilisdk.extras.qibo_backend",
-        symbols=["QiboBackend"],  # or multiple symbols
+        symbols=[Symbol(path="qilisdk.extras.qibo_backend", name="QiboBackend")],
     ),
     # Add more OptionalFeature() entries for other extras if needed
 ]
@@ -37,7 +36,7 @@ current_module = sys.modules[__name__]
 
 # Dynamically import (or stub) each feature's symbols and attach them
 for feature in OPTIONAL_FEATURES:
-    imported: ImportedSymbols = import_optional_dependencies(feature)
-    for symbol_name, symbol_obj in imported.symbol_map.items():
+    imported_feature: ImportedFeature = import_optional_dependencies(feature)
+    for symbol_name, symbol_obj in imported_feature.symbols.items():
         setattr(current_module, symbol_name, symbol_obj)
         __all__ += [symbol_name]  # noqa: PLE0604

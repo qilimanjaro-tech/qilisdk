@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .algorithm import Algorithm
-from .hamiltonian import Hamiltonian
-from .model import Model
-from .optimizer import Optimizer
-from .result import Results
 
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Results"]
+class QubitOutOfRangeError(Exception): ...
+
+
+class ParametersNotEqualError(Exception): ...
+
+
+class InvalidParameterNameError(Exception): ...
+
+
+class UnsupportedGateError(Exception): ...

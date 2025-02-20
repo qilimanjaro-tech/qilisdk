@@ -23,6 +23,12 @@ class OptionalDependencyError(ImportError):
 
 
 @dataclass(frozen=True)
+class Symbol:
+    path: str
+    name: str
+
+
+@dataclass(frozen=True)
 class OptionalFeature:
     """Holds metadata about an optional feature.
 
@@ -37,14 +43,13 @@ class OptionalFeature:
             Which symbols (classes, functions, etc.) to re-export
     """
 
-    feature_name: str
+    name: str
     dependencies: list[str]
-    import_path: str
-    symbols: list[str]
+    symbols: list[Symbol]
 
 
 @dataclass
-class ImportedSymbols:
+class ImportedFeature:
     """Holds the result of an optional import.
 
     Attributes:
@@ -56,11 +61,11 @@ class ImportedSymbols:
             that raises an error when called.
     """
 
-    feature_name: str
-    symbol_map: dict[str, Any | Callable]
+    name: str
+    symbols: dict[str, Any | Callable]
 
 
-def import_optional_dependencies(feature: OptionalFeature) -> ImportedSymbols:
+def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     """Tries to import a submodule at `feature.import_path` along with the required
     distributions. If successful, returns a dict mapping each symbol to the
     actual imported symbol. Otherwise returns stubs that raise an error on usage.
@@ -83,16 +88,18 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedSymbols:
         def make_stub(symbol_name: str) -> Callable:
             def _stub(*args: Any, **kwargs: Any) -> None:
                 raise OptionalDependencyError(
-                    f"Using {symbol_name} requires installing the '{feature.feature_name}' optional feature: `pip install qilisdk[{feature.feature_name}]`\n"
+                    f"Using {symbol_name} requires installing the '{feature.name}' optional feature: `pip install qilisdk[{feature.name}]`\n"
                 )
 
             _stub.__name__ = symbol_name
             return _stub
 
-        stubs = {symbol: make_stub(symbol) for symbol in feature.symbols}
-        return ImportedSymbols(feature_name=feature.feature_name, symbol_map=stubs)
+        stubs = {symbol.name: make_stub(symbol.name) for symbol in feature.symbols}
+        return ImportedFeature(name=feature.name, symbols=stubs)
 
     # All dependencies are present => import the real module
-    module = importlib.import_module(feature.import_path)
-    real_syms = {symbol: getattr(module, symbol) for symbol in feature.symbols}
-    return ImportedSymbols(feature_name=feature.feature_name, symbol_map=real_syms)
+    symbols = {}
+    for symbol in feature.symbols:
+        module = importlib.import_module(symbol.path)
+        symbols[symbol.name] = getattr(module, symbol.name)
+    return ImportedFeature(name=feature.name, symbols=symbols)
