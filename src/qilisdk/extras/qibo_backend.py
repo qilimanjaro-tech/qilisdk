@@ -57,28 +57,11 @@ class QiboBackend:
 
     @staticmethod
     def to_qibo(circuit: Circuit) -> QiboCircuit:
-        to_qibo_converters: dict[type[Gate], Callable[[Any], QiboGates.Gate]] = {
-            X: QiboBackend._to_qibo_X,
-            Y: QiboBackend._to_qibo_Y,
-            Z: QiboBackend._to_qibo_Z,
-            H: QiboBackend._to_qibo_H,
-            S: QiboBackend._to_qibo_S,
-            T: QiboBackend._to_qibo_T,
-            RX: QiboBackend._to_qibo_RX,
-            RY: QiboBackend._to_qibo_RY,
-            RZ: QiboBackend._to_qibo_RZ,
-            U1: QiboBackend._to_qibo_U1,
-            U2: QiboBackend._to_qibo_U2,
-            U3: QiboBackend._to_qibo_U3,
-            CNOT: QiboBackend._to_qibo_CNOT,
-            CZ: QiboBackend._to_qibo_CZ,
-            M: QiboBackend._to_qibo_M,
-        }
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
         for gate in circuit.gates:
-            converter = to_qibo_converters.get(type(gate))
+            converter: Callable[[Gate], QiboGates.Gate] = getattr(QiboBackend, "_to_qibo_" + gate._NAME, None)
             if converter is None:
-                raise UnsupportedGateError(f"Unsupported gate type: {type(gate).__name__}")
+                raise UnsupportedGateError(f"Unsupported gate type: {gate._NAME}")  # = type(gate).__name__}
             qibo_circuit.add(converter(gate))
         return qibo_circuit
 
@@ -116,11 +99,11 @@ class QiboBackend:
 
     @staticmethod
     def _to_qibo_RZ(gate: RZ) -> QiboGates.RZ:
-        return QiboGates.RZ(gate.target_qubits[0], theta=gate.parameters["theta"])
+        return QiboGates.RZ(gate.target_qubits[0], theta=gate.parameters["phi"])
 
     @staticmethod
     def _to_qibo_U1(gate: U1) -> QiboGates.U1:
-        return QiboGates.U1(gate.target_qubits[0], theta=gate.parameters["theta"])
+        return QiboGates.U1(gate.target_qubits[0], theta=gate.parameters["phi"])
 
     @staticmethod
     def _to_qibo_U2(gate: U2) -> QiboGates.U2:
