@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import ClassVar
+
 from qibo.gates import gates as QiboGates
 from qibo.models.circuit import Circuit as QiboCircuit
 
@@ -45,6 +47,7 @@ class QiboBackend:
     def execute(self, circuit: Circuit, nshots: int = 1000) -> SimulationDigitalResults:  # noqa: PLR6301
         qibo_circuit = QiboBackend.to_qibo(circuit=circuit)
         qibo_results = qibo_circuit.execute(nshots=nshots)
+
         return SimulationDigitalResults(
             state=qibo_results.state(),
             probabilities=qibo_results.probabilities(),
@@ -56,8 +59,10 @@ class QiboBackend:
     @staticmethod
     def to_qibo(circuit: Circuit) -> QiboCircuit:
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
+
         for gate in circuit.gates:
             qibo_circuit.add(QiboBackend.to_qibo_gate(gate))
+
         return qibo_circuit
 
     @staticmethod
@@ -74,37 +79,43 @@ class QiboBackend:
 
     @staticmethod
     def to_qibo_arg_map(name: str, gate_type: type[Gate]) -> str:
-        # General mapping qilisdk -> qibo args:
-        map = {
-            "qubit": "q",
-            "control": "q0",
-            "target": "q1",
-        }
+        arg_map = QiboBackend._equiv_qibo_arg
 
         # Specific exceptions mapping:
         if gate_type in [RZ, U1]:
-            map["phi"] = "theta"
+            arg_map["phi"] = "theta"
 
-        return map[name] if name in map else name
+        return arg_map[name] if name in map else name
 
+    @staticmethod
     def to_qibo_gate_map(type_gate: type[Gate]) -> type[QiboGates.Gate]:
-        map: dict[type[Gate], type[QiboGates.Gate]] = {
-            X: QiboGates.X,
-            Y: QiboGates.Y,
-            Z: QiboGates.Z,
-            H: QiboGates.H,
-            S: QiboGates.S,
-            T: QiboGates.T,
-            RX: QiboGates.RX,
-            RY: QiboGates.RY,
-            RZ: QiboGates.RZ,
-            U1: QiboGates.U1,
-            U2: QiboGates.U2,
-            U3: QiboGates.U3,
-            CNOT: QiboGates.CNOT,
-            CZ: QiboGates.CZ,
-            M: QiboGates.M,
-        }
-        if type_gate not in map:
+        if type_gate not in QiboBackend._equiv_qibo_gate_type:
             raise UnsupportedGateError(f"Unsupported gate type: {type_gate.__name__}")
-        return map[type_gate]
+
+        return QiboBackend._equiv_qibo_gate_type[type_gate]
+
+    # General mapping qilisdk -> qibo args:
+    _equiv_qibo_arg: ClassVar[dict[str, str]] = {
+        "qubit": "q",
+        "control": "q0",
+        "target": "q1",
+    }
+
+    # General mapping qilisdk -> qibo gate type:
+    _equiv_qibo_gate_type: ClassVar[dict[type[Gate], type[QiboGates.Gate]]] = {
+        X: QiboGates.X,
+        Y: QiboGates.Y,
+        Z: QiboGates.Z,
+        H: QiboGates.H,
+        S: QiboGates.S,
+        T: QiboGates.T,
+        RX: QiboGates.RX,
+        RY: QiboGates.RY,
+        RZ: QiboGates.RZ,
+        U1: QiboGates.U1,
+        U2: QiboGates.U2,
+        U3: QiboGates.U3,
+        CNOT: QiboGates.CNOT,
+        CZ: QiboGates.CZ,
+        M: QiboGates.M,
+    }

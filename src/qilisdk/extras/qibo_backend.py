@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Callable
 
 from qibo.gates import gates as QiboGates
 from qibo.models.circuit import Circuit as QiboCircuit
@@ -47,6 +47,7 @@ class QiboBackend:
     def execute(self, circuit: Circuit, nshots: int = 1000) -> SimulationDigitalResults:  # noqa: PLR6301
         qibo_circuit = QiboBackend.to_qibo(circuit=circuit)
         qibo_results = qibo_circuit.execute(nshots=nshots)
+
         return SimulationDigitalResults(
             state=qibo_results.state(),
             probabilities=qibo_results.probabilities(),
@@ -58,13 +59,16 @@ class QiboBackend:
     @staticmethod
     def to_qibo(circuit: Circuit) -> QiboCircuit:
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
+
         for gate in circuit.gates:
             converter: Callable[[Gate], QiboGates.Gate] = getattr(QiboBackend, "_to_qibo_" + gate._NAME, None)
             if converter is None:
                 raise UnsupportedGateError(f"Unsupported gate type: {gate._NAME}")  # = type(gate).__name__}
             qibo_circuit.add(converter(gate))
+
         return qibo_circuit
 
+    # Create converter method `_to_qibo_<Gate in qilisdk>` for each gate in qilisdk:
     @staticmethod
     def _to_qibo_X(gate: X) -> QiboGates.X:
         return QiboGates.X(gate.target_qubits[0])
