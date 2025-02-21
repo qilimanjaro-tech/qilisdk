@@ -403,59 +403,59 @@ class RY(Gate):
 
 class RZ(Gate):
     """
-    Represents the rotation around the Z-axis by an angle `theta`.
+    Represents the rotation around the Z-axis by an azimuthal angle `phi`.
 
     The associated matrix is:
-        [[exp(-i*theta/2),              0],
-         [0,               exp(i*theta/2)]]
+        [[exp(-i*phi/2),              0],
+         [0,               exp(i*phi/2)]]
     """
 
     _NAME: ClassVar[str] = "RZ"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, phi: float) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float): The rotation angle in radians.
+            phi (float): The rotation angle in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
+        self._parameter_values = [phi]
 
-        cos_half = np.cos(theta / 2)
-        sin_half = np.sin(theta / 2)
+        cos_half = np.cos(phi / 2)
+        sin_half = np.sin(phi / 2)
         self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class U1(Gate):
     """
-    Represents the U1 gate defined by an angle `theta`.
+    Represents the U1 gate defined by an azimuthal angle `phi`.
 
     The associated matrix is:
         [[1,            0],
-         [0, exp(i*theta)]]
+         [0, exp(i*phi)]]
     """
 
     _NAME: ClassVar[str] = "U1"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, phi: float) -> None:
         """
         Initialize a U1 gate.
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            theta (float): The phase rotation angle in radians.
+            phi (float): The phase rotation angle in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
-        self._matrix = np.array([[1, 0], [0, np.exp(1j * theta)]], dtype=complex)
+        self._parameter_values = [phi]
+        self._matrix = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
 class U2(Gate):
