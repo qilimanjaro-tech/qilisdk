@@ -36,6 +36,7 @@ class PauliOperator(ABC):
         - name (str): the name of the Pauli operator
         - matrix : the matrix representation of the Pauli operator
     """
+
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
 
@@ -86,34 +87,24 @@ class PauliOperator(ABC):
         """
         return Hamiltonian({((self.qubit, self.name),): 1})
 
-    def __add__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() + other
 
     __radd__ = __add__
     __iadd__ = __add__
 
-    def __sub__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __sub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() - other
 
-    def __rsub__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rsub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return other - self.to_hamiltonian()
 
     __isub__ = __sub__
 
-    def __mul__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __mul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() * other
 
-    def __rmul__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rmul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if isinstance(other, (int, float)):
             if other == 0:
                 return 0
@@ -124,9 +115,7 @@ class PauliOperator(ABC):
 
     __imul__ = __mul__
 
-    def __truediv__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __truediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() / other
 
     def __rtruediv__(self, _: complex | PauliOperator | Hamiltonian):  # noqa: ANN204
@@ -211,6 +200,7 @@ class Hamiltonian:
             ((1, 'X'),): 1j,
         }
     """
+
     _PAULI_MAP: ClassVar = {"Z": Z, "X": X, "Y": Y, "I": I}
     _PAULI_PRODUCT_TABLE: ClassVar = {
         ("X", "X"): (1, I),
@@ -278,7 +268,11 @@ class Hamiltonian:
             yield value, [Hamiltonian._PAULI_MAP[op](qid) for qid, op in key]
 
     def simplify(self) -> Hamiltonian:
-        """Simplify the hamiltonian expression by removing values close to zero."""
+        """Simplify the hamiltonian expression by removing values close to zero.
+
+        Returns:
+            Hamiltonian: The simplified Hamiltonian.
+        """
         pop_keys = []
         for key, value in self.elements.items():
             if np.real_if_close(value) == 0:
@@ -293,50 +287,52 @@ class Hamiltonian:
         return Hamiltonian(elements=self.elements.copy())
 
     def __repr__(self) -> str:
-        out = ""
-        for operators, _coeff in self.elements.items():
-            coeff = np.real_if_close(_coeff)
-            if out == "":  # noqa: PLC1901
-                if isinstance(coeff, (complex)) or np.iscomplex(coeff):
-                    out += f"({coeff}) "
-                elif coeff != 1:
-                    if coeff == -1:
-                        out += "-"
-                    else:
-                        out += f"{coeff} "
-            elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
-                out += f"+ ({coeff}) "
-            elif coeff not in (1, -1):  # noqa: PLR6201
-                out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
-            else:
-                out += "+ " if coeff > 0 else "- "
-
-            for qid, o in operators:
-                out += f"{o}({qid}) "
-        return out
+        return str(self)
 
     def __str__(self) -> str:
-        out = ""
-        for operators, _coeff in self.elements.items():
-            coeff = np.real_if_close(_coeff)
-            if out == "":  # noqa: PLC1901
-                if isinstance(coeff, (complex)) or np.iscomplex(coeff):
-                    out += f"({coeff}) "
-                elif coeff != 1:
-                    if coeff == -1:
-                        out += "-"
-                    else:
-                        out += f"{coeff} "
-            elif isinstance(coeff, (complex)) or np.iscomplex(coeff):
-                out += f"+ ({coeff}) "
-            elif coeff not in (1, -1):  # noqa: PLR6201
-                out += f"+ {coeff} " if coeff > 0 else f"- {np.abs(coeff)} "
-            else:
-                out += "+ " if coeff > 0 else "- "
+        parts = []
+        for i, (operators, raw_coeff) in enumerate(self.elements.items()):
+            coeff = np.real_if_close(raw_coeff)
+            is_complex = isinstance(coeff, complex) or np.iscomplex(coeff)
+            is_first = i == 0
 
-            for qid, o in operators:
-                out += f"{o}({qid}) "
-        return out
+            # Build the coefficient string (no trailing spaces)
+            if is_first:
+                # First term: no leading '+' sign.
+                if is_complex:
+                    coeff_str = f"({coeff})"
+                elif coeff == 1:
+                    coeff_str = ""  # Implicit +1
+                elif coeff == -1:
+                    coeff_str = "-"
+                else:
+                    coeff_str = str(coeff)
+            # Subsequent terms: show a sign.
+            elif is_complex:
+                # e.g. + (1+2j)
+                coeff_str = f"+ ({coeff})"
+            elif coeff == 1:
+                coeff_str = "+"
+            elif coeff == -1:
+                coeff_str = "-"
+            elif coeff > 0:
+                coeff_str = f"+ {coeff}"
+            else:
+                coeff_str = f"- {abs(coeff)}"
+
+            # Build the operators string (e.g. "Z(0) Y(1)")
+            ops_str = " ".join(f"{op}({qid})" for qid, op in operators)
+
+            # Combine with a single space if both strings exist
+            if coeff_str and ops_str:
+                # If coeff_str ends in a parenthesis or digit, we typically want space before ops_str
+                parts.append(f"{coeff_str} {ops_str}")
+            else:
+                # If coeff_str is empty (e.g., +1 on first term) or ops_str is empty,
+                # just concatenate them
+                parts.append(coeff_str + ops_str)
+
+        return " ".join(parts) if parts else "0"
 
     def __getitem__(self, index: tuple[tuple[int, str], ...]) -> complex:
         return self.elements[index]
@@ -344,9 +340,7 @@ class Hamiltonian:
     def __setitem__(self, key: tuple[tuple[int, str], ...], value: complex) -> None:
         self.elements[key] = value
 
-    def __add__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = copy.copy(self)
 
         if isinstance(other, Hamiltonian):
@@ -372,9 +366,7 @@ class Hamiltonian:
         out.simplify()
         return out
 
-    def __mul__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __mul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = Hamiltonian({})
 
         if isinstance(other, Hamiltonian):
@@ -405,22 +397,16 @@ class Hamiltonian:
         out.simplify()
         return out
 
-    def __truediv__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __truediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if not isinstance(other, Complex):
             raise InvalidHamiltonianOperation("Division of operators is not supported")
 
         return self * (1 / other)
 
-    def __sub__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __sub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self + (-1 * other)
 
-    def __radd__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __radd__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = copy.copy(self)
 
         if isinstance(other, Hamiltonian):
@@ -446,9 +432,7 @@ class Hamiltonian:
         out.simplify()
         return out
 
-    def __rmul__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rmul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = Hamiltonian({})
 
         if isinstance(other, Hamiltonian):
@@ -479,32 +463,26 @@ class Hamiltonian:
         out.simplify()
         return out
 
-    def __rtruediv__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rtruediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if not isinstance(other, Complex):
             raise InvalidHamiltonianOperation("Division of operators is not supported")
 
         return (1 / other) * self
 
-    def __rfloordiv__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rfloordiv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if not isinstance(other, Complex):
             raise NotSupportedOperation("Division of operators is not supported")
 
         return (1 / other) * self
 
-    def __rsub__(
-        self, other: Complex | PauliOperator | Hamiltonian
-    ) -> Hamiltonian:
+    def __rsub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return other + (-1 * self)
 
     __iadd__ = __add__
     __imul__ = __mul__
     __itruediv__ = __truediv__
     __isub__ = __sub__
-    
+
     @staticmethod
     def _multiply_sets(
         set1: tuple[tuple[int, str], ...], set2: tuple[tuple[int, str], ...]
@@ -570,4 +548,3 @@ class Hamiltonian:
             return coefficient, operator_fn(op1.qubit)
 
         raise NotImplementedError(f"Operation between operator {op1.name} and operator {op2.name} is not supported.")
-
