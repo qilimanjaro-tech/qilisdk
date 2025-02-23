@@ -13,9 +13,8 @@
 # limitations under the License.
 
 from .algorithm import Algorithm
-from .hamiltonian import Hamiltonian
 from .model import Model
 from .optimizer import Optimizer
 from .result import Results
 
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "Results"]
+__all__ = ["Algorithm", "Model", "Optimizer", "Results"]
