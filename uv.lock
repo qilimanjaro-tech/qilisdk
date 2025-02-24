@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -998,6 +997,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
+    { name = "scipy" },
 ]
 
 [package.optional-dependencies]
@@ -1021,8 +1021,8 @@ dev = [
 requires-dist = [
     { name = "numpy" },
     { name = "qibo", marker = "extra == 'qibo-backend'", specifier = ">=0.2.16" },
+    { name = "scipy", specifier = ">=1.15.1" },
 ]
-provides-extras = ["qibo-backend"]
 
 [package.metadata.requires-dev]
 dev = [
