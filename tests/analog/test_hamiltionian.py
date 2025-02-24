@@ -30,9 +30,9 @@ def test_addition(hamiltonian: Hamiltonian, expected_str: str):
         # Simple subtractions
         (Z(0) - Z(1), "Z(0) - Z(1)"),
         (Z(0) - Z(0), "0"),
-        ((Z(0) + 2) - 1, "Z(0) + 1"),
+        ((Z(0) + 2) - 1, "Z(0) + I(0)"),
         # Mixing scalars and operators on the right
-        (5 - X(0), "5 - X(0)"),
+        (5 - X(0), "- X(0) + 5 I(0)"),
         # Subtracting a Hamiltonian from a Pauli operator (or vice versa)
         ((Z(0) + Z(1)) - Z(1), "Z(0)"),
         # Subtracting a complex constant Hamiltonian

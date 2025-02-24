@@ -362,7 +362,7 @@ class Hamiltonian:
             # First term: no leading '+' if positive
             if is_first:
                 if negative:
-                    coeff_str = base_str if base_str.startswith("-") else f"- {base_str}"
+                    coeff_str = "-" if base_str == "-1" else base_str if base_str.startswith("-") else f"- {base_str}"
                 elif base_str == "1":
                     coeff_str = ""  # implies +1
                 else:
@@ -370,7 +370,9 @@ class Hamiltonian:
             # Subsequent terms: show '+' or '-'
             elif negative:
                 # Remove leading '-' if present
-                if base_str.startswith("-"):
+                if base_str == "-1":
+                    coeff_str = "-"
+                elif base_str.startswith("-"):
                     # e.g. base_str = '-3+2j' => we want " - 3+2j" or just "- 3+2j" ?
                     coeff_str = f"- {base_str[1:]}" if len(base_str) > 1 else "-"
                 else:
