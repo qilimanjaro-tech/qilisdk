@@ -59,13 +59,9 @@ def test_subtraction(hamiltonian: Hamiltonian, expected_str: str):
         (Z(0) * 3, "3 Z(0)"),
         # Hamiltonian multiplied by scalar
         ((Z(0) + Z(1)) * 2, "2 Z(0) + 2 Z(1)"),
-        # Hamiltonian-by-Hamiltonian (mixed qubits)
+        # Hamiltonian-by-Hamiltonian
         ((Z(0) + X(1)) * (Z(0) + X(1)), "2 I(0) + 2 Z(0) X(1)"),
-        # Explanation:
-        #  (Z(0)*Z(0) = I(0))
-        #  + (Z(0)*X(1) = Z(0)X(1))
-        #  + (X(1)*Z(0) = X(1)Z(0))
-        #  + (X(1)*X(1) = I(1) => I(0) if we unify identity to qubit 0)
+        ((Z(0) + X(1)) * (Z(1) + X(0)), "Z(0) Z(1) + 1j Y(0) - 1j Y(1) + X(0) X(1)"),
     ],
 )
 def test_multiplication(hamiltonian: Hamiltonian, expected_str: str):
