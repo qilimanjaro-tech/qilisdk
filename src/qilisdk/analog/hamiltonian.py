@@ -68,20 +68,6 @@ class PauliOperator(ABC):
         """
         return self._MATRIX
 
-    def parse(self) -> Generator[tuple[int, list[PauliOperator]], None, None]:
-        """Yields the operator in the format (1, [<operator>])."""
-        yield 1, [self]
-
-    def __copy__(self) -> PauliOperator:
-        return type(self)(self.qubit)
-
-    def __repr__(self) -> str:
-        return f"{self.name}({self.qubit})"
-
-    def __str__(self) -> str:
-        return f"{self.name}({self.qubit})"
-
-    # Arithmetic Operators
     def to_hamiltonian(self) -> Hamiltonian:
         """Helper function to convert to Hamiltonian representation.
 
@@ -89,6 +75,17 @@ class PauliOperator(ABC):
             Hamiltonian: a hamiltonian with the pauli operator stored in it.
         """
         return Hamiltonian({((self.qubit, self.name),): 1})
+
+    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
+    def parse(self) -> Generator[tuple[int, list[PauliOperator]], None, None]:
+        """Yields the operator in the format (1, [<operator>])."""
+        yield 1, [self]
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __str__(self) -> str:
+        return f"{self.name}({self.qubit})"
 
     def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() + other
@@ -164,9 +161,6 @@ class Y(PauliOperator):
             qubit (int): the qubit that the operator will act on.
         """
         super().__init__(qubit=qubit)
-
-    def __copy__(self) -> Y:
-        return Y(qubit=self.qubit)
 
 
 class I(PauliOperator):  # noqa: E742
@@ -245,6 +239,7 @@ class Hamiltonian:
         """
         return self._elements
 
+    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
     def variables(self) -> Generator[PauliOperator, None, None]:
         """A generator object that returns all the pauli operators in the Hamiltonian.
             Note: the pauli operators repeat in case they appear more than once in the Hamiltonian.
@@ -255,6 +250,8 @@ class Hamiltonian:
             for qid, pauli in key:
                 yield Hamiltonian._PAULI_MAP[pauli](qid)
 
+    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
+    # We should rename. Method named `parse` is used for parsing string inputs.
     def parse(self) -> Generator[tuple[complex, list[PauliOperator]], None, None]:
         """A generator that parses the Hamiltonian object term by term.
 
