@@ -17,12 +17,13 @@ import copy
 import operator
 from abc import ABC
 from collections import defaultdict
-from numbers import Complex
 from typing import ClassVar, Generator
 
 import numpy as np
 
 from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
+
+Complex = int | float | complex
 
 
 class PauliOperator(ABC):
@@ -107,12 +108,6 @@ class PauliOperator(ABC):
         return self.to_hamiltonian() * other
 
     def __rmul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if isinstance(other, (int, float)):
-            if other == 0:
-                return 0
-            if other == 1:
-                return self
-
         return other * self.to_hamiltonian()
 
     __imul__ = __mul__
@@ -217,7 +212,7 @@ class Hamiltonian:
     }
 
     def __init__(self, elements: dict[tuple[tuple[int, str], ...], complex] | None = None) -> None:
-        self._elements = defaultdict(complex)
+        self._elements: dict[tuple[tuple[int, str], ...], complex] = defaultdict(complex)
         if elements:
             for key, val in elements.items():
                 self._elements[key] += val
@@ -308,8 +303,9 @@ class Hamiltonian:
         if not self.elements:
             return "0"
 
+        eps = 1e-14
+
         def _format_coeff(c: complex) -> str:
-            eps = 1e-14
             re, im = c.real, c.imag
 
             # 1) Purely real?
@@ -336,28 +332,16 @@ class Hamiltonian:
         parts = []
         items = list(self.elements.items())
 
-        for i, (operators, raw_coeff) in enumerate(items):
-            # np.real_if_close can force near-real numbers to real floats,
-            # but it's still of type `np.complex128` or Python `complex`.
-            coeff = np.real_if_close(raw_coeff)
-
+        for i, (operators, coeff) in enumerate(items):
             is_first = i == 0
 
             # Prepare a base string for the numeric part *without any leading '+' or '-'
             base_str = _format_coeff(coeff)
 
-            # Now handle sign logic:
-            # For the first term, we only show a minus sign if `coeff` is negative or has a negative real part.
-            # For subsequent terms, we show "+ ..." if positive, "- ..." if negative, etc.
-
-            # 1) Figure out if the overall number is "negative" in a real sense:
-            #    - If purely real and negative => negative
-            #    - If purely imaginary and negative => negative
-            #    - If truly complex with nonzero real+imag, we follow your original approach
-            #      (treat real>0 => +, real<0 => -).
+            # Now handle sign logic.
             re, im = coeff.real, coeff.imag
             # We'll do a simple sign check: if re < 0, we call it negative. If re==0 and im<0, negative.
-            negative = im < 0 if abs(re) < 1e-14 else re < 0  # noqa: PLR2004
+            negative = im < 0 if abs(re) < eps else re < 0
 
             # First term: no leading '+' if positive
             if is_first:
