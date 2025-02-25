@@ -86,7 +86,7 @@ class QiboBackend:
         if gate_type in {RZ, U1}:
             arg_map["phi"] = "theta"
 
-        return arg_map[name] if name in arg_map else name
+        return arg_map.get(name, name)
 
     @staticmethod
     def to_qibo_gate_map(type_gate: type[Gate]) -> type[QiboGates.Gate]:
