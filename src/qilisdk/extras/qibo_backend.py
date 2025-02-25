@@ -61,9 +61,9 @@ class QiboBackend:
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
 
         for gate in circuit.gates:
-            converter: Callable[[Gate], QiboGates.Gate] = getattr(QiboBackend, "_to_qibo_" + gate._NAME, None)
+            converter: Callable[[Gate], QiboGates.Gate] = getattr(QiboBackend, "_to_qibo_" + type(gate).__name__, None)
             if converter is None:
-                raise UnsupportedGateError(f"Unsupported gate type: {gate._NAME}")  # = type(gate).__name__}
+                raise UnsupportedGateError(f"Unsupported gate type: {type(gate).__name__}")  # = gate._NAME
             qibo_circuit.add(converter(gate))
 
         return qibo_circuit
