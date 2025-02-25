@@ -82,7 +82,7 @@ class QiboBackend:
         arg_map = QiboBackend._equiv_qibo_arg
 
         # Specific exceptions mapping:
-        if gate_type in [RZ, U1]:
+        if gate_type in {RZ, U1}:
             arg_map["phi"] = "theta"
 
         return arg_map[name] if name in map else name
