@@ -137,7 +137,7 @@ def test_ry_gate(angle: float):
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_rz_gate(angle: float):
     qubit = 4
-    gate = RZ(qubit, theta=angle)
+    gate = RZ(qubit, phi=angle)
 
     assert gate.name == "RZ"
     assert gate.is_parameterized is True
@@ -157,7 +157,7 @@ def test_rz_gate(angle: float):
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_u1_gate(angle: float):
     qubit = 5
-    gate = U1(qubit, theta=angle)
+    gate = U1(qubit, phi=angle)
 
     assert gate.name == "U1"
     assert gate.is_parameterized is True
