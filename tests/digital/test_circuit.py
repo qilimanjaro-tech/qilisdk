@@ -91,7 +91,7 @@ def test_multiple_parameterized_gates():
 
     # RX has 1 parameter, RZ has 1 parameter
     rx_gate = RX(qubit=0, theta=0.1)
-    rz_gate = RZ(qubit=1, theta=0.2)
+    rz_gate = RZ(qubit=1, phi=0.2)
     c.add(rx_gate)
     c.add(rz_gate)
 
@@ -107,7 +107,7 @@ def test_set_parameter_values_correct():
     """
     c = Circuit(nqubits=2)
     rx_gate = RX(qubit=0, theta=0.0)
-    rz_gate = RZ(qubit=1, theta=0.0)
+    rz_gate = RZ(qubit=1, phi=0.0)
     c.add(rx_gate)
     c.add(rz_gate)
 

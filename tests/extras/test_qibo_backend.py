@@ -114,7 +114,7 @@ def test_to_qibo():
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(CNOT(0, 1))
-    circuit.add(RZ(2, theta=0.5))
+    circuit.add(RZ(2, phi=0.5))
 
     qibo_circuit = QiboBackend.to_qibo(circuit)
     assert qibo_circuit.nqubits == 3
