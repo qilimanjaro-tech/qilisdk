@@ -36,7 +36,6 @@ class Optimizer:
         Args:
             cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns
             the cost.
-            TODO: change the cost function for a model instance.
             init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines
             the number of parameters the optimizer will consider.
 
@@ -51,34 +50,75 @@ class Optimizer:
 
 class GradientDecent(Optimizer):
 
-    def optimize(
+    def __init__(
         self,
-        cost_function: Callable[[list[float]], float],
-        init_parameters: list[float],
+        method: str | Callable | None = None,
+        bounds: list[tuple[int, int]] | None = None,
         **kwargs: dict[str, Any],
+    ) -> None:
+        """Create a new Gradient Based optimizer instance.
+
+        Args:
+            method (str | Callable | None, optional):Type of solver.  Should be one of
+                    - 'Nelder-Mead
+                    - 'Powell'
+                    - 'CG'
+                    - 'BFGS'
+                    - 'Newton-CG'
+                    - 'L-BFGS-B'
+                    - 'TNC'
+                    - 'COBYLA'
+                    - 'COBYQA'
+                    - 'SLSQP'
+                    - 'trust-constr
+                    - 'dogleg'
+                    - 'trust-ncg'
+                    - 'trust-exact
+                    - 'trust-krylov
+                    - custom - a callable object, see `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ for description.
+
+                    If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,
+                    depending on whether or not the problem has constraints or bounds.
+            bounds (list[tuple[int, int]] | None, optional):
+                    Bounds on variables for Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell,
+                    trust-constr, COBYLA, and COBYQA methods. To specify it you can provide a sequence of ``(min, max)`` pairs
+                    for each element in parameter list.
+
+        Extra Args:
+            Any argument supported by `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ can be passed.
+            Note: the parameters, cost function and the ``args``that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.
+        """
+        super().__init__()
+        self.method = method
+        self.bounds = bounds
+        self.extra_arguments = kwargs
+
+    def optimize(
+        self, cost_function: Callable[[list[float]], float], init_parameters: list[float], **kwargs: dict[str, Any]
     ) -> list[float]:
         """optimize the cost function and return the optimal parameters.
 
         Args:
             cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns
             the cost.
-            TODO: change the cost function for a model instance.
             init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines
             the number of parameters the optimizer will consider.
-
-        Optional Args:
-            method (str | Callable): one of the methods offered by scipy optimize
-            cost_function_params (tuple(Any, ...)): a tuple of extra parameters to be passed to the cost function.
-            Note: any other parameter specified in scipy optimize can be used in this method.
-            (https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html)
 
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
-        method = kwargs.pop("method", "Powell")
-        cost_function_params = kwargs.pop("cost_function_params", ())
-
-        res = sci_opt.minimize(cost_function, args=cost_function_params, method=method, x0=init_parameters, **kwargs)
+        res = sci_opt.minimize(
+            cost_function,
+            x0=init_parameters,
+            method=self.method,
+            jac=self.extra_arguments.pop("jac", None),
+            hess=self.extra_arguments.pop("hess", None),
+            hessp=self.extra_arguments.pop("hessp", None),
+            bounds=self.extra_arguments.pop("bounds", None),
+            constraints=self.extra_arguments.pop("constraints", ()),
+            tol=self.extra_arguments.pop("tol", None),
+            options=self.extra_arguments.pop("options", None),
+        )
         self._optimal_parameters = res.x
 
         return res
