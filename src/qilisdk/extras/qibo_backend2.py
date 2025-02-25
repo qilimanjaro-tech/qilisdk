@@ -79,13 +79,14 @@ class QiboBackend:
 
     @staticmethod
     def to_qibo_arg_map(name: str, gate_type: type[Gate]) -> str:
+        # General mapping qilisdk -> qibo args:
         arg_map = QiboBackend._equiv_qibo_arg
 
         # Specific exceptions mapping:
         if gate_type in {RZ, U1}:
             arg_map["phi"] = "theta"
 
-        return arg_map[name] if name in map else name
+        return arg_map[name] if name in arg_map else name
 
     @staticmethod
     def to_qibo_gate_map(type_gate: type[Gate]) -> type[QiboGates.Gate]:
