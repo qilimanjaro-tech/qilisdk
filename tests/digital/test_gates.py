@@ -345,8 +345,8 @@ def test_cz_gate(control, target):
         # Single-parameter gates
         (RX, {"theta": 0.0}, {"theta": np.pi}, {"phi": np.e}, [1.23], [1.23, 2.34]),
         (RY, {"theta": 0.0}, {"theta": 1.11}, {"lam": 3.33}, [2.22], []),
-        (RZ, {"theta": 0.0}, {"theta": -0.99}, {"lam": 0.77}, [1.11], [1.11, 2.22]),
-        (U1, {"theta": 0.0}, {"theta": 4.56}, {"phi": 1.23}, [5.67], []),
+        (RZ, {"phi": 0.0}, {"phi": -0.99}, {"lam": 0.77}, [1.11], [1.11, 2.22]),
+        (U1, {"phi": 0.0}, {"phi": 4.56}, {"lam": 1.23}, [5.67], []),
         # Two-parameter gate (U2 => phi, lam)
         (
             U2,

@@ -50,8 +50,8 @@ from qilisdk.extras.qibo_backend import QiboBackend
         # Parameterized single-qubit gates
         (QiboBackend._to_qibo_RX, RX(qubit=0, theta=np.pi / 4), QiboGates.RX, (0,), (), {"theta": np.pi / 4}),
         (QiboBackend._to_qibo_RY, RY(qubit=1, theta=1.234), QiboGates.RY, (1,), (), {"theta": 1.234}),
-        (QiboBackend._to_qibo_RZ, RZ(qubit=2, phi=-0.5), QiboGates.RZ, (2,), (), {"phi": -0.5}),
-        (QiboBackend._to_qibo_U1, U1(qubit=0, phi=np.e), QiboGates.U1, (0,), (), {"phi": np.e}),
+        (QiboBackend._to_qibo_RZ, RZ(qubit=2, phi=-0.5), QiboGates.RZ, (2,), (), {"theta": -0.5}),
+        (QiboBackend._to_qibo_U1, U1(qubit=0, phi=np.e), QiboGates.U1, (0,), (), {"theta": np.e}),
         (QiboBackend._to_qibo_U2, U2(qubit=1, phi=0.1, lam=0.2), QiboGates.U2, (1,), (), {"phi": 0.1, "lam": 0.2}),
         (
             QiboBackend._to_qibo_U3,

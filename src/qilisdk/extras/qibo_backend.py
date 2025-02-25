@@ -106,11 +106,11 @@ class QiboBackend:
 
     @staticmethod
     def _to_qibo_RZ(gate: RZ) -> QiboGates.RZ:
-        return QiboGates.RZ(gate.target_qubits[0], phi=gate.parameters["phi"])
+        return QiboGates.RZ(gate.target_qubits[0], theta=gate.parameters["phi"])
 
     @staticmethod
     def _to_qibo_U1(gate: U1) -> QiboGates.U1:
-        return QiboGates.U1(gate.target_qubits[0], phi=gate.parameters["phi"])
+        return QiboGates.U1(gate.target_qubits[0], theta=gate.parameters["phi"])
 
     @staticmethod
     def _to_qibo_U2(gate: U2) -> QiboGates.U2:

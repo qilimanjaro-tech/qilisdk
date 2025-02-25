@@ -132,7 +132,7 @@ def test_set_parameter_values_incorrect():
     """
     c = Circuit(nqubits=2)
     rx_gate = RX(qubit=0, theta=0.0)
-    rz_gate = RZ(qubit=1, theta=0.0)
+    rz_gate = RZ(qubit=1, phi=0.0)
     c.add(rx_gate)
     c.add(rz_gate)
 
