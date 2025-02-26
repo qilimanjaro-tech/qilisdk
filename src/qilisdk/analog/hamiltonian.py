@@ -153,7 +153,7 @@ class Y(PauliOperator):
     """The Pauli Y operator"""
 
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1j], [1j, 0]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
     def __init__(self, qubit: int) -> None:
         """Constructs a new Pauli Y operator
