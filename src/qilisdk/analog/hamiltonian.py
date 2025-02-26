@@ -17,11 +17,14 @@ import copy
 import operator
 from abc import ABC
 from collections import defaultdict
-from typing import ClassVar, Generator
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 
 from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 Complex = int | float | complex
 
@@ -76,10 +79,8 @@ class PauliOperator(ABC):
         """
         return Hamiltonian({((self.qubit, self.name),): 1})
 
-    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
-    def parse(self) -> Generator[tuple[int, list[PauliOperator]], None, None]:
-        """Yields the operator in the format (1, [<operator>])."""
-        yield 1, [self]
+    def __hash__(self) -> int:
+        return hash(str(self))
 
     def __repr__(self) -> str:
         return str(self)
@@ -215,52 +216,20 @@ class Hamiltonian:
     def nqubits(self) -> int:
         """Returns the number of qubits
 
-        Raises:
-            InvalidHamiltonianOperation: if the hamiltonian has no terms.
-
         Returns:
             int: the number of qubits
         """
-        n_qubits = -1
-        for key in self._elements:
-            for qid, _ in key:
-                n_qubits = max(n_qubits, qid)
-
-        if n_qubits == -1:
-            raise InvalidHamiltonianOperation("Can't compute the number of qubits if the hamiltonian has no terms")
-        return n_qubits
+        qubits = {qid for key in self._elements for qid, _ in key}
+        return len(qubits)
 
     @property
     def elements(self) -> dict[tuple[tuple[int, str], ...], complex]:
-        """Returns the dictionary of the elements
+        """Returns a read-only view of the elements dictionary.
 
         Returns:
             dict: a dictionary of the hamiltonian elements and their coefficient
         """
         return self._elements
-
-    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
-    def variables(self) -> Generator[PauliOperator, None, None]:
-        """A generator object that returns all the pauli operators in the Hamiltonian.
-            Note: the pauli operators repeat in case they appear more than once in the Hamiltonian.
-        Yields:
-            PauliOperator: A pauli operator object.
-        """
-        for key in self.elements:
-            for qid, pauli in key:
-                yield Hamiltonian._PAULI_MAP[pauli](qid)
-
-    # TODO(fedonman, #3): Do we need this? Why is it a Generator?
-    # We should rename. Method named `parse` is used for parsing string inputs.
-    def parse(self) -> Generator[tuple[complex, list[PauliOperator]], None, None]:
-        """A generator that parses the Hamiltonian object term by term.
-
-        Yields:
-            tuple[complex, list[PauliOperators]]: the coefficient and the list
-            of pauli operators of the term.
-        """
-        for key, value in self.elements.items():
-            yield value, [Hamiltonian._PAULI_MAP[op](qid) for qid, op in key]
 
     def simplify(self) -> Hamiltonian:
         """Simplify the hamiltonian expression by removing values close to zero.
@@ -268,26 +237,38 @@ class Hamiltonian:
         Returns:
             Hamiltonian: The simplified Hamiltonian.
         """
-        keys_to_remove = [key for key, value in self.elements.items() if np.real_if_close(value) == 0]
+        keys_to_remove = [key for key, value in self._elements.items() if np.real_if_close(value) == 0]
         for key in keys_to_remove:
-            del self.elements[key]
+            del self._elements[key]
 
         identities_to_accumulate = [
             (key, value)
-            for key, value in self.elements.items()
+            for key, value in self._elements.items()
             if len(key) == 1 and key[0][0] != 0 and key[0][1] == "I"
         ]
         for key, value in identities_to_accumulate:
-            self.elements[(0, "I"),] += value
-            del self.elements[key]
+            self._elements[(0, "I"),] += value
+            del self._elements[key]
 
         return self
 
-    def __getitem__(self, index: tuple[tuple[int, str], ...]) -> complex:
-        return self.elements[index]
+    def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
+        for key, value in self._elements.items():
+            operators = [self._PAULI_MAP[operator](qubit) for (qubit, operator) in key]
+            yield value, operators
 
-    def __setitem__(self, key: tuple[tuple[int, str], ...], value: complex) -> None:
-        self.elements[key] = value
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Hamiltonian):
+            return False
+
+        return dict(self._elements) == dict(other._elements)
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        items_frozen = frozenset(self._elements.items())
+        return hash(items_frozen)
 
     def __copy__(self) -> Hamiltonian:
         return Hamiltonian(elements=self.elements.copy())
@@ -307,7 +288,7 @@ class Hamiltonian:
 
             # 1) Purely real?
             if abs(im) < eps:
-                # Check if real is integral
+                # Check if real is integer
                 re_int = np.round(re)
                 if abs(re - re_int) < eps:
                     return str(int(re_int))  # e.g. '2' instead of '2.0'
@@ -315,7 +296,7 @@ class Hamiltonian:
 
             # 2) Purely imaginary?
             if abs(re) < eps:
-                # Check if imaginary is integral
+                # Check if imaginary is integer
                 im_int = np.round(im)
                 if abs(im - im_int) < eps:
                     # e.g. 2 => '2j', -3 => '-3j'
@@ -328,6 +309,17 @@ class Hamiltonian:
 
         parts = []
         items = list(self.elements.items())
+
+        try:
+            # Find index of first item whose key has exactly one tuple and the operator == TARGET_OP
+            i = next(idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0] == (0, "I"))
+            # Remove that element from position i...
+            item = items.pop(i)
+            # ...and insert it at the front (index 0).
+            items.insert(0, item)
+        except StopIteration:
+            # If we never found a matching element, do nothing
+            pass
 
         for i, (operators, coeff) in enumerate(items):
             is_first = i == 0
@@ -342,8 +334,10 @@ class Hamiltonian:
 
             # First term: no leading '+' if positive
             if is_first:
-                if negative:
-                    coeff_str = "-" if base_str == "-1" else base_str if base_str.startswith("-") else f"- {base_str}"
+                if len(operators) == 1 and operators[0][1] == "I":
+                    coeff_str = base_str
+                elif base_str == "-1":
+                    coeff_str = "-"  # implies -1
                 elif base_str == "1":
                     coeff_str = ""  # implies +1
                 else:
@@ -363,7 +357,7 @@ class Hamiltonian:
                 coeff_str = "+" if base_str == "1" else f"+ {base_str}"
 
             # Build the operators string (e.g. "Z(0) Y(1)")
-            ops_str = " ".join(f"{op}({qid})" for qid, op in operators)
+            ops_str = " ".join(f"{op}({qid})" for qid, op in operators if op != "I")
 
             # Combine with a single space if both strings exist
             if coeff_str and ops_str:
@@ -447,19 +441,19 @@ class Hamiltonian:
         for k1, v1 in h1.elements.items():
             for k2, v2 in h2.elements.items():
                 phase, new_key = Hamiltonian._multiply_sets(k1, k2)
-                out.elements[new_key] += phase * v1 * v2
+                out._elements[new_key] += phase * v1 * v2  # noqa: SLF001
         return out.simplify()
 
     def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = copy.copy(self)
         if isinstance(other, Hamiltonian):
             for key, val in other.elements.items():
-                out.elements[key] += val
+                out._elements[key] += val
         elif isinstance(other, PauliOperator):
             encoded = ((other.qubit, other.name),)
-            out.elements[encoded] += 1
+            out._elements[encoded] += 1
         elif isinstance(other, Complex):
-            out.elements[(0, "I"),] += other
+            out._elements[(0, "I"),] += other
         else:
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
         return out.simplify()
@@ -480,8 +474,8 @@ class Hamiltonian:
             return Hamiltonian._multiply_hamiltonians(self, other.to_hamiltonian())
         if isinstance(other, Complex):
             out = copy.copy(self)
-            for k in out.elements:
-                out.elements[k] *= other
+            for k in out._elements:
+                out._elements[k] *= other
             return out.simplify()
         raise InvalidHamiltonianOperation(f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}.")
 
