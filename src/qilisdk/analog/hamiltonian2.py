@@ -16,7 +16,7 @@ from __future__ import annotations
 import copy
 from abc import ABC
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
 from typing_extensions import Self
@@ -43,11 +43,11 @@ def _get_pauli(name: str, qubit: int) -> PauliOperator:
     if name == "Z":
         op = PauliZ(qubit)
     elif name == "X":
-        op = PauliX(qubit)
+        op = PauliX(qubit)  # type: ignore[assignment]
     elif name == "Y":
-        op = PauliY(qubit)
+        op = PauliY(qubit)  # type: ignore[assignment]
     elif name == "I":
-        op = PauliI(qubit)
+        op = PauliI(qubit)  # type: ignore[assignment]
     else:
         raise ValueError(f"Unknown Pauli operator name: {name}")
 
@@ -89,7 +89,7 @@ class PauliOperator(ABC):
     __slots__ = ("_qubit",)
 
     def __init__(self, qubit: int) -> None:
-        object.__setattr__(self, "_qubit", qubit)  # or just self._qubit = qubit if not frozen
+        self._qubit = qubit
 
     @property
     def qubit(self) -> int:
@@ -196,7 +196,7 @@ class Hamiltonian:
         }
     """
 
-    _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, type[PauliOperator]]]] = {
+    _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, Callable[..., PauliOperator]]]] = {
         ("X", "X"): (1, I),
         ("X", "Y"): (1j, Z),
         ("X", "Z"): (-1j, Y),
