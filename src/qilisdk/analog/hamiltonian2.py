@@ -26,7 +26,6 @@ from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-# For Python <3.10, you might need: from typing import Union
 Complex = int | float | complex
 
 
@@ -287,7 +286,6 @@ class Hamiltonian:
 
             # 1) Purely real?
             if abs(im) < eps:
-                # Check if real is integer
                 re_int = np.round(re)
                 if abs(re - re_int) < eps:
                     return str(int(re_int))  # e.g. '2' instead of '2.0'
@@ -295,38 +293,34 @@ class Hamiltonian:
 
             # 2) Purely imaginary?
             if abs(re) < eps:
-                # Check if imaginary is integer
                 im_int = np.round(im)
                 if abs(im - im_int) < eps:
-                    # e.g. 2 => '2j', -3 => '-3j'
-                    return f"{int(im_int)}j"
+                    return f"{int(im_int)}j"  # e.g. 2 => '2j', -3 => '-3j'
                 return f"{im}j"  # e.g. '2.5j'
 
             # 3) General complex with nonzero real & imag
             s = str(c)  # e.g. '(3+2j)'
             return s
 
-        # We might want to place the single identity term (I(0),) at the front if it exists
+        # We want to place the single identity term (I(0),) at the front if it exists
         items = list(self._elements.items())
         try:
             i = next(
                 idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0].name == "I" and key[0].qubit == 0
             )
-            # Move that item to front
             item = items.pop(i)
             items.insert(0, item)
         except StopIteration:
             pass
 
         parts = []
-        for idx, (ops, coeff) in enumerate(items):
+        for idx, (operator, coeff) in enumerate(items):
             base_str = _format_coeff(coeff)
-            # figure out sign logic
             negative = (coeff.real < 0) if abs(coeff.real) >= eps else (coeff.imag < 0)
 
             if idx == 0:
                 # first term
-                if len(ops) == 1 and ops[0].name == "I":
+                if len(operator) == 1 and operator[0].name == "I":
                     coeff_str = base_str
                 elif base_str == "1":
                     coeff_str = ""
@@ -346,7 +340,7 @@ class Hamiltonian:
                 coeff_str = "+" if base_str == "1" else f"+ {base_str}"
 
             # Operators string
-            ops_str = " ".join(str(op) for op in ops if op.name != "I")
+            ops_str = " ".join(str(op) for op in operator if op.name != "I")
             if coeff_str and ops_str:
                 parts.append(f"{coeff_str} {ops_str}")
             else:
@@ -482,13 +476,8 @@ class Hamiltonian:
         # (other / self)
         if not isinstance(other, (int, float, complex)):
             raise InvalidHamiltonianOperation("Division by operators is not supported")
-        # basically scalar / Hamiltonian => scalar * (1/H) => not generally well-defined
-        # but we follow your code's approach
         out = copy.copy(self)
-        # Div in place by self => ???
-
-        # Typically this is not meaningful, but to keep consistent with your code:
-        return (1 / other) * out  # => out * (1 / other) ?
+        return (1 / other) * out
 
     def __rfloordiv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if not isinstance(other, (int, float, complex)):
@@ -513,7 +502,6 @@ class Hamiltonian:
             self._elements[other,] += 1
         elif isinstance(other, (int, float, complex)):
             if other == 0:
-                # short-circuit
                 return
             # Add the scalar to (I(0),)
             self._elements[I(0),] += other
