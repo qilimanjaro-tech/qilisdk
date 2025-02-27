@@ -207,10 +207,12 @@ class Hamiltonian:
         ("Z", "Z"): (1, I),
     }
 
+    ZERO: int = 0
+
     def __init__(self, elements: dict[tuple[PauliOperator, ...], complex] | None = None) -> None:
         # Internally store a normal dict, or you can use defaultdict(complex) if you prefer
         self._elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
-        self._elements[I(0),] = 0j
+        # self._elements[I(0),] = 0j
         if elements:
             for key, val in elements.items():
                 self._elements[key] += val
@@ -252,6 +254,15 @@ class Hamiltonian:
     # ------- Equality & hashing --------
 
     def __eq__(self, other: object) -> bool:
+        if other == Hamiltonian.ZERO:
+            return bool(
+                len(self._elements) == 0
+                or (len(self._elements) == 1 and (I(0),) in self._elements and self._elements[I(0),] == 0)
+            )
+        if isinstance(other, Complex):
+            return bool(len(self._elements) == 1 and (I(0),) in self._elements and self._elements[I(0),] == other)
+        if isinstance(other, PauliOperator):
+            other = other.to_hamiltonian()
         if not isinstance(other, Hamiltonian):
             return False
         return dict(self._elements) == dict(other._elements)
