@@ -119,3 +119,22 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
 )
 def test_str(hamiltonian: Hamiltonian, expected_str: str):
     assert str(hamiltonian) == expected_str
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian_str", "expected_hamiltonian"),
+    [
+        ("0", Hamiltonian()),
+        ("Z(0)", Z(0)),
+        ("X(0)", X(0)),
+        ("Y(0)", Y(0)),
+        ("Z(0) + 2", 2 + Z(0)),
+        ("Z(0) + 2j", 2j + Z(0)),
+        ("Z(0) - 2j", -2j + Z(0)),
+        ("Z(0) - 2j + 3", (3 - 2j) + Z(0)),
+        ("Z(0) - 2j + 3 + 2 Z(0)", (3 - 2j) + 3 * Z(0)),
+    ],
+)
+def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
+    hamiltonian = Hamiltonian.parse(hamiltonian_str)
+    assert hamiltonian == expected_hamiltonian

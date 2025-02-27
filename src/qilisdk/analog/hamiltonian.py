@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from abc import ABC
 from collections import defaultdict
 from typing import TYPE_CHECKING, Callable, ClassVar
@@ -350,6 +351,99 @@ class Hamiltonian:
                 parts.append(coeff_str + ops_str)
 
         return " ".join(parts)
+
+    @classmethod
+    def parse(cls, ham_str: str) -> Hamiltonian:
+        ham_str = ham_str.strip()
+        # Special case: "0" => empty Hamiltonian
+        if ham_str == "0":
+            return cls({})
+
+        elements = defaultdict(complex)
+
+        # If there's no initial +/- sign, prepend '+ ' for easier splitting
+        if not ham_str.startswith("+") and not ham_str.startswith("-"):
+            ham_str = "+ " + ham_str
+
+        # Replace " - " with " + - " so each term is split on " + "
+        ham_str = ham_str.replace(" - ", " + - ")
+
+        # Split on " + "
+        tokens = ham_str.split(" + ")
+        # Remove any empty tokens (can happen if the string started "+ ")
+        tokens = [t.strip() for t in tokens if t.strip()]
+
+        # Regex to match operator tokens like "Z(0)", "X(1)", "I(0)"
+        operator_pattern = re.compile(r"([XYZI])\((\d+)\)")
+
+        def parse_token(token: str) -> tuple[complex, list[PauliOperator]]:
+            def looks_like_number(text: str) -> bool:
+                # If it's empty, it's not a number
+                if not text:
+                    return False
+                # If the first char is digit, '(', '.', '+', '-', or '0',
+                # or if 'j' is present, assume it's numeric
+                first = text[0]
+                if first.isdigit() or first in {"(", ".", "+", "-"}:
+                    return True
+                return "j" in text
+
+            sign = 1
+            # Check leading sign
+            if token.startswith("-"):
+                sign = -1
+                token = token[1:].strip()
+            elif token.startswith("+"):
+                # optional leading '+'
+                token = token[1:].strip()
+
+            words = token.split()
+            if not words:
+                # e.g. just "-" or "+"
+                # means coefficient = ±1, no operators
+                return complex(sign), []
+
+            # Attempt to parse the first word as a numeric coefficient
+            maybe_coeff = words[0]
+            # Decide if 'maybe_coeff' is numeric or an operator
+            if looks_like_number(maybe_coeff):
+                # parse as a complex number
+                coeff_str = maybe_coeff
+                # If it's e.g. '(2.5+3j)', remove parentheses
+                if coeff_str.startswith("(") and coeff_str.endswith(")"):
+                    coeff_str = coeff_str[1:-1]
+                coeff_val = complex(coeff_str) * sign
+                words = words[1:]  # consume this word
+            else:
+                # No explicit coefficient => ±1
+                coeff_val = complex(sign)
+
+            # Now parse the remaining words as operators
+            ops = []
+            for w in words:
+                match = operator_pattern.fullmatch(w)
+                if not match:
+                    raise ValueError(f"Unrecognized operator format: '{w}'")
+                name, qubit_str = match.groups()
+                qubit = int(qubit_str)
+                op = _get_pauli(name, qubit)
+                ops.append(op)
+
+            return coeff_val, ops
+
+        for tok in tokens:
+            coeff, op_list = parse_token(tok)
+            if not op_list:
+                # purely scalar => store as (I(0),)
+                elements[I(0),] += coeff
+            else:
+                # Sort operators by qubit for canonical ordering
+                op_list.sort(key=lambda op: op.qubit)
+                elements[tuple(op_list)] += coeff
+
+        ham = cls(elements)
+        ham.simplify()
+        return ham
 
     # ------- Internal multiplication helpers --------
 
