@@ -324,7 +324,6 @@ class Hamiltonian:
         parts = []
         for idx, (operator, coeff) in enumerate(items):
             base_str = _format_coeff(coeff)
-            negative = (coeff.real < 0) if abs(coeff.real) >= eps else (coeff.imag < 0)
 
             if idx == 0:
                 # first term
@@ -336,16 +335,14 @@ class Hamiltonian:
                     coeff_str = "-"
                 else:
                     coeff_str = base_str
-            # subsequent term
-            elif negative:
-                if base_str == "-1":
-                    coeff_str = "-"
-                elif base_str.startswith("-"):
-                    coeff_str = f"- {base_str[1:]}" if len(base_str) > 1 else "-"
-                else:
-                    coeff_str = f"- {base_str}"
+            elif base_str == "1":
+                coeff_str = "+"
+            elif base_str == "-1":
+                coeff_str = "-"
+            elif base_str.startswith("-"):
+                coeff_str = f"- {base_str[1:]}"
             else:
-                coeff_str = "+" if base_str == "1" else f"+ {base_str}"
+                coeff_str = f"+ {base_str}"
 
             # Operators string
             ops_str = " ".join(str(op) for op in operator if op.name != "I")

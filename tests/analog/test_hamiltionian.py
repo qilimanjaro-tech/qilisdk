@@ -114,6 +114,7 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
         (Z(0) - 2j, "-2j + Z(0)"),
         (Z(0) - 3 + 2j, "(-3+2j) + Z(0)"),
         (Z(0) - 3 + 2j - 2 * Z(0), "(-3+2j) - Z(0)"),
+        (1 + Z(0) - 3 * Z(1) + Z(1) + Z(0) - 2j * Z(1), "1 + 2 Z(0) + (-2-2j) Z(1)"),
     ],
 )
 def test_str(hamiltonian: Hamiltonian, expected_str: str):
