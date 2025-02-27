@@ -234,7 +234,7 @@ class Hamiltonian:
         for key in keys_to_remove:
             del self._elements[key]
 
-        # 2) Accumulate identity operators that do NOT act on qubit=0 => I(0)
+        # 2) Accumulate identities that do NOT act on qubit=0 => I(0)
         to_accumulate = [
             (key, value)
             for key, value in self._elements.items()
@@ -286,22 +286,20 @@ class Hamiltonian:
         if not self._elements:
             return "0"
 
-        eps = 1e-14
-
         def _format_coeff(c: complex) -> str:
             re, im = c.real, c.imag
 
             # 1) Purely real?
-            if abs(im) < eps:
+            if abs(im) < Hamiltonian._EPS:
                 re_int = np.round(re)
-                if abs(re - re_int) < eps:
+                if abs(re - re_int) < Hamiltonian._EPS:
                     return str(int(re_int))  # e.g. '2' instead of '2.0'
                 return str(re)  # e.g. '2.5'
 
             # 2) Purely imaginary?
-            if abs(re) < eps:
+            if abs(re) < Hamiltonian._EPS:
                 im_int = np.round(im)
-                if abs(im - im_int) < eps:
+                if abs(im - im_int) < Hamiltonian._EPS:
                     return f"{int(im_int)}j"  # e.g. 2 => '2j', -3 => '-3j'
                 return f"{im}j"  # e.g. '2.5j'
 
@@ -312,9 +310,7 @@ class Hamiltonian:
         # We want to place the single identity term (I(0),) at the front if it exists
         items = list(self._elements.items())
         try:
-            i = next(
-                idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0].name == "I" and key[0].qubit == 0
-            )
+            i = next(idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0] == (I(0)))
             item = items.pop(i)
             items.insert(0, item)
         except StopIteration:
@@ -622,8 +618,7 @@ class Hamiltonian:
         if isinstance(other, PauliOperator):
             # Convert single PauliOperator -> Hamiltonian with 1 key
             # Then do the single-key Hamiltonian path below
-            tmp = Hamiltonian({(other,): 1})
-            other = tmp  # type: ignore
+            other = other.to_hamiltonian()
 
         if isinstance(other, Hamiltonian):
             if not other.elements:

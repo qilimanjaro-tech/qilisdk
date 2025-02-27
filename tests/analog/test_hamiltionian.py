@@ -69,14 +69,13 @@ def test_subtraction(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian
         ((Z(0) + X(0)) * (Z(0) - X(0)), -2j * Y(0)),
         (
             (Z(0) + 1) * (1j * X(0) * X(1) + 1),
-            # It's perfectly valid just to keep it as an expression, or expand it out.
-            # We'll keep it as an expression for brevity.
             (Z(0) + 1) * (1j * X(0) * X(1) + 1),
         ),
         (
             1 + Z(0) * Z(0) + Z(0) * X(1) + Z(0) * X(1) + X(1) * X(1) + X(1) * Z(1) + Y(1) * Z(1),
             3 + 2 * (Z(0) * X(1)) - 1j * Y(1) + 1j * X(1),
         ),
+        ((Z(0) + 1) * (1j * X(0) * X(1) + 1), 1 - Y(0) * X(1) + Z(0) + 1j * X(0) * X(1)),
     ],
 )
 def test_multiplication(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
