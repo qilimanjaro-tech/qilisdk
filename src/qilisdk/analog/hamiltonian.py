@@ -210,9 +210,7 @@ class Hamiltonian:
     ZERO: int = 0
 
     def __init__(self, elements: dict[tuple[PauliOperator, ...], complex] | None = None) -> None:
-        # Internally store a normal dict, or you can use defaultdict(complex) if you prefer
         self._elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
-        # self._elements[I(0),] = 0j
         if elements:
             for key, val in elements.items():
                 self._elements[key] += val
