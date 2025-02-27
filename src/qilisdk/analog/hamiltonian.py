@@ -14,10 +14,9 @@
 from __future__ import annotations
 
 import copy
-import operator
 from abc import ABC
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
 
@@ -29,22 +28,64 @@ if TYPE_CHECKING:
 Complex = int | float | complex
 
 
+###############################################################################
+# Flyweight Cache
+###############################################################################
+_OPERATOR_CACHE: dict[tuple[str, int], PauliOperator] = {}
+
+
+def _get_pauli(name: str, qubit: int) -> PauliOperator:
+    key = (name, qubit)
+    if key in _OPERATOR_CACHE:
+        return _OPERATOR_CACHE[key]
+
+    if name == "Z":
+        op = PauliZ(qubit)
+    elif name == "X":
+        op = PauliX(qubit)  # type: ignore[assignment]
+    elif name == "Y":
+        op = PauliY(qubit)  # type: ignore[assignment]
+    elif name == "I":
+        op = PauliI(qubit)  # type: ignore[assignment]
+    else:
+        raise ValueError(f"Unknown Pauli operator name: {name}")
+
+    _OPERATOR_CACHE[key] = op
+    return op
+
+
+###############################################################################
+# Public Factory Functions
+###############################################################################
+def Z(qubit: int) -> PauliOperator:
+    return _get_pauli("Z", qubit)
+
+
+def X(qubit: int) -> PauliOperator:
+    return _get_pauli("X", qubit)
+
+
+def Y(qubit: int) -> PauliOperator:
+    return _get_pauli("Y", qubit)
+
+
+def I(qubit: int = 0) -> PauliOperator:  # noqa: E743
+    return _get_pauli("I", qubit)
+
+
+###############################################################################
+# Abstract Base PauliOperator
+###############################################################################
 class PauliOperator(ABC):
-    """Abstract Representation of a generic Pauli operator
-
-    Args:
-        - qubit (int): the qubit that the operator will be acting on
-        - name (str): the name of the Pauli operator
-        - matrix : the matrix representation of the Pauli operator
-
-    Attributes:
-        - qubit (int): the qubit that the operator will be acting on
-        - name (str): the name of the Pauli operator
-        - matrix : the matrix representation of the Pauli operator
+    """
+    A generic Pauli operator that acts on one qubit.
+    Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.
     """
 
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
+
+    __slots__ = ("_qubit",)
 
     def __init__(self, qubit: int) -> None:
         self._qubit = qubit
@@ -55,38 +96,35 @@ class PauliOperator(ABC):
 
     @property
     def name(self) -> str:
-        """The name of the Pauli operator.
-
-        Returns:
-            str: the name of the pauli operator.
-        """
         return self._NAME
 
     @property
     def matrix(self) -> np.ndarray:
-        """The matrix representation of the Pauli operator.
-
-        Returns:
-            list[list[complex]]: the matrix representation of the pauli operator.
-        """
         return self._MATRIX
 
     def to_hamiltonian(self) -> Hamiltonian:
-        """Helper function to convert to Hamiltonian representation.
+        """Convert this single operator to a Hamiltonian with one term.
 
         Returns:
-            Hamiltonian: a hamiltonian with the pauli operator stored in it.
+            Hamiltonian: The converted Hamiltonian.
         """
-        return Hamiltonian({((self.qubit, self.name),): 1})
+        return Hamiltonian({(self,): 1})
 
     def __hash__(self) -> int:
-        return hash(str(self))
+        return hash((self._NAME, self._qubit))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PauliOperator):
+            return False
+        return (self._NAME == other._NAME) and (self._qubit == other._qubit)
 
     def __repr__(self) -> str:
-        return str(self)
+        return f"{self.name}({self.qubit})"
 
     def __str__(self) -> str:
         return f"{self.name}({self.qubit})"
+
+    # ----------- Arithmetic Operators ------------
 
     def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() + other
@@ -113,88 +151,51 @@ class PauliOperator(ABC):
     def __truediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() / other
 
-    def __rtruediv__(self, _: complex | PauliOperator | Hamiltonian):  # noqa: ANN204
+    def __rtruediv__(self, _: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         raise NotSupportedOperation("Division by operators is not supported")
 
     __itruediv__ = __truediv__
 
 
-class Z(PauliOperator):
-    """The Pauli Z operator"""
-
+###############################################################################
+# Concrete Flyweight Operator Classes
+###############################################################################
+class PauliZ(PauliOperator):
+    __slots__ = ()
     _NAME: ClassVar[str] = "Z"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=complex)
 
-    def __init__(self, qubit: int) -> None:
-        """constructs a new Pauli Z operator
 
-        Args:
-            qubit (int): the qubit that the operator will act on.
-        """
-        super().__init__(qubit=qubit)
-
-
-class X(PauliOperator):
-    """The Pauli X operator"""
-
+class PauliX(PauliOperator):
+    __slots__ = ()
     _NAME: ClassVar[str] = "X"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=complex)
 
-    def __init__(self, qubit: int) -> None:
-        """Constructs a new Pauli X operator
 
-        Args:
-            - qubit (int): the qubit that the operator will act on.
-        """
-        super().__init__(qubit=qubit)
-
-
-class Y(PauliOperator):
-    """The Pauli Y operator"""
-
+class PauliY(PauliOperator):
+    __slots__ = ()
     _NAME: ClassVar[str] = "Y"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
-    def __init__(self, qubit: int) -> None:
-        """Constructs a new Pauli Y operator
 
-        Args:
-            qubit (int): the qubit that the operator will act on.
-        """
-        super().__init__(qubit=qubit)
-
-
-class I(PauliOperator):  # noqa: E742
-    """The Identity operator"""
-
+class PauliI(PauliOperator):
+    __slots__ = ()
     _NAME: ClassVar[str] = "I"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
-
-    def __init__(self, qubit: int) -> None:
-        """Create a new Identity operator
-
-        Args:
-            qubit (int): the qubit that the operator will act on.
-        """
-        super().__init__(qubit=qubit)
 
 
 class Hamiltonian:
     """
-    Assumes elements have the following encoding:
+    The `elements` dictionary now maps from a tuple of PauliOperator objects
+    to a complex coefficient. For example:
         {
-            ((qubit, pauli_operator), ...) : coefficient,
-        }
-
-        example:
-        {
-            ((0, 'Z'), (1, 'Y')): 1,
-            ((1, 'X'),): 1j,
+            (Z(0), Y(1)):  1,
+            (X(1),):       1j,
         }
     """
 
-    _PAULI_MAP: ClassVar[dict[str, type[PauliOperator]]] = {"Z": Z, "X": X, "Y": Y, "I": I}
-    _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, type[PauliOperator]]]] = {
+    _EPS: float = 1e-14
+    _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, Callable[..., PauliOperator]]]] = {
         ("X", "X"): (1, I),
         ("X", "Y"): (1j, Z),
         ("X", "Z"): (-1j, Y),
@@ -206,61 +207,53 @@ class Hamiltonian:
         ("Z", "Z"): (1, I),
     }
 
-    def __init__(self, elements: dict[tuple[tuple[int, str], ...], complex] | None = None) -> None:
-        self._elements: dict[tuple[tuple[int, str], ...], complex] = defaultdict(complex)
+    def __init__(self, elements: dict[tuple[PauliOperator, ...], complex] | None = None) -> None:
+        # Internally store a normal dict, or you can use defaultdict(complex) if you prefer
+        self._elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
+        self._elements[I(0),] = 0j
         if elements:
             for key, val in elements.items():
                 self._elements[key] += val
+            self.simplify()
 
     @property
     def nqubits(self) -> int:
-        """Returns the number of qubits
-
-        Returns:
-            int: the number of qubits
-        """
-        qubits = {qid for key in self._elements for qid, _ in key}
+        """Number of distinct qubits across all terms."""
+        qubits = {op.qubit for key in self._elements for op in key}
         return len(qubits)
 
     @property
-    def elements(self) -> dict[tuple[tuple[int, str], ...], complex]:
-        """Returns a read-only view of the elements dictionary.
-
-        Returns:
-            dict: a dictionary of the hamiltonian elements and their coefficient
-        """
+    def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
+        """Returns the internal dictionary of elements (read-only)."""
         return self._elements
 
     def simplify(self) -> Hamiltonian:
-        """Simplify the hamiltonian expression by removing values close to zero.
-
-        Returns:
-            Hamiltonian: The simplified Hamiltonian.
-        """
-        keys_to_remove = [key for key, value in self._elements.items() if np.real_if_close(value) == 0]
+        # 1) Remove near-zero
+        keys_to_remove = [key for key, value in self._elements.items() if abs(value) < Hamiltonian._EPS]
         for key in keys_to_remove:
             del self._elements[key]
 
-        identities_to_accumulate = [
+        # 2) Accumulate identity operators that do NOT act on qubit=0 => I(0)
+        to_accumulate = [
             (key, value)
             for key, value in self._elements.items()
-            if len(key) == 1 and key[0][0] != 0 and key[0][1] == "I"
+            if len(key) == 1 and key[0].name == "I" and key[0].qubit != 0
         ]
-        for key, value in identities_to_accumulate:
-            self._elements[(0, "I"),] += value
+        for key, value in to_accumulate:
             del self._elements[key]
+            self._elements[I(0),] += value
 
         return self
 
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self._elements.items():
-            operators = [self._PAULI_MAP[operator](qubit) for (qubit, operator) in key]
-            yield value, operators
+            yield value, list(key)
+
+    # ------- Equality & hashing --------
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Hamiltonian):
             return False
-
         return dict(self._elements) == dict(other._elements)
 
     def __ne__(self, other: object) -> bool:
@@ -273,12 +266,16 @@ class Hamiltonian:
     def __copy__(self) -> Hamiltonian:
         return Hamiltonian(elements=self.elements.copy())
 
+    # ------- String representation --------
+
     def __repr__(self) -> str:
+        # Developer-friendly representation
+        # return f"Hamiltonian({dict(self._elements)})"
         return str(self)
 
     def __str__(self) -> str:
         # Return "0" if there are no terms
-        if not self.elements:
+        if not self._elements:
             return "0"
 
         eps = 1e-14
@@ -288,7 +285,6 @@ class Hamiltonian:
 
             # 1) Purely real?
             if abs(im) < eps:
-                # Check if real is integer
                 re_int = np.round(re)
                 if abs(re - re_int) < eps:
                     return str(int(re_int))  # e.g. '2' instead of '2.0'
@@ -296,70 +292,54 @@ class Hamiltonian:
 
             # 2) Purely imaginary?
             if abs(re) < eps:
-                # Check if imaginary is integer
                 im_int = np.round(im)
                 if abs(im - im_int) < eps:
-                    # e.g. 2 => '2j', -3 => '-3j'
-                    return f"{int(im_int)}j"
+                    return f"{int(im_int)}j"  # e.g. 2 => '2j', -3 => '-3j'
                 return f"{im}j"  # e.g. '2.5j'
 
             # 3) General complex with nonzero real & imag
             s = str(c)  # e.g. '(3+2j)'
             return s
 
-        parts = []
-        items = list(self.elements.items())
-
+        # We want to place the single identity term (I(0),) at the front if it exists
+        items = list(self._elements.items())
         try:
-            # Find index of first item whose key has exactly one tuple and the operator == TARGET_OP
-            i = next(idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0] == (0, "I"))
-            # Remove that element from position i...
+            i = next(
+                idx for idx, (key, _) in enumerate(items) if len(key) == 1 and key[0].name == "I" and key[0].qubit == 0
+            )
             item = items.pop(i)
-            # ...and insert it at the front (index 0).
             items.insert(0, item)
         except StopIteration:
-            # If we never found a matching element, do nothing
             pass
 
-        for i, (operators, coeff) in enumerate(items):
-            is_first = i == 0
-
-            # Prepare a base string for the numeric part *without any leading '+' or '-'
+        parts = []
+        for idx, (operator, coeff) in enumerate(items):
             base_str = _format_coeff(coeff)
+            negative = (coeff.real < 0) if abs(coeff.real) >= eps else (coeff.imag < 0)
 
-            # Now handle sign logic.
-            re, im = coeff.real, coeff.imag
-            # We'll do a simple sign check: if re < 0, we call it negative. If re==0 and im<0, negative.
-            negative = im < 0 if abs(re) < eps else re < 0
-
-            # First term: no leading '+' if positive
-            if is_first:
-                if len(operators) == 1 and operators[0][1] == "I":
+            if idx == 0:
+                # first term
+                if len(operator) == 1 and operator[0].name == "I":
                     coeff_str = base_str
-                elif base_str == "-1":
-                    coeff_str = "-"  # implies -1
                 elif base_str == "1":
-                    coeff_str = ""  # implies +1
+                    coeff_str = ""
+                elif base_str == "-1":
+                    coeff_str = "-"
                 else:
                     coeff_str = base_str
-            # Subsequent terms: show '+' or '-'
+            # subsequent term
             elif negative:
-                # Remove leading '-' if present
                 if base_str == "-1":
                     coeff_str = "-"
                 elif base_str.startswith("-"):
-                    # e.g. base_str = '-3+2j' => we want " - 3+2j" or just "- 3+2j" ?
                     coeff_str = f"- {base_str[1:]}" if len(base_str) > 1 else "-"
                 else:
                     coeff_str = f"- {base_str}"
             else:
-                # Positive
                 coeff_str = "+" if base_str == "1" else f"+ {base_str}"
 
-            # Build the operators string (e.g. "Z(0) Y(1)")
-            ops_str = " ".join(f"{op}({qid})" for qid, op in operators if op != "I")
-
-            # Combine with a single space if both strings exist
+            # Operators string
+            ops_str = " ".join(str(op) for op in operator if op.name != "I")
             if coeff_str and ops_str:
                 parts.append(f"{coeff_str} {ops_str}")
             else:
@@ -367,148 +347,219 @@ class Hamiltonian:
 
         return " ".join(parts)
 
+    # ------- Internal multiplication helpers --------
+
     @staticmethod
     def _multiply_sets(
-        set1: tuple[tuple[int, str], ...], set2: tuple[tuple[int, str], ...]
-    ) -> tuple[complex, tuple[tuple[int, str], ...]]:
-        list1 = list(set1)
-        list2 = list(set2)
-        list1.extend(list2)
+        set1: tuple[PauliOperator, ...], set2: tuple[PauliOperator, ...]
+    ) -> tuple[complex, tuple[PauliOperator, ...]]:
+        # Combine all operators into a single list
+        combined = list(set1) + list(set2)
 
-        # Sort by qubit so we can group by qubit easily
-        combined_list = sorted(list1, key=operator.itemgetter(0))
+        # Group by qubit
+        combined.sort(key=lambda op: op.qubit)
+        sum_dict: dict[int, list[PauliOperator]] = defaultdict(list)
+        for op in combined:
+            sum_dict[op.qubit].append(op)
 
-        sum_dict: dict[int, list[PauliOperator]] = {}
-        for qid, op_name in combined_list:
-            if qid not in sum_dict:
-                sum_dict[qid] = []
-            sum_dict[qid].append(Hamiltonian._PAULI_MAP[op_name](qid))
-
-        simplified_list: list[tuple[int, str]] = []
         accumulated_phase = complex(1)
+        final_ops: list[PauliOperator] = []
 
-        for operators in sum_dict.values():
-            op1 = operators[0]
+        for qubit_ops in sum_dict.values():
+            op1 = qubit_ops[0]
             phase = complex(1)
-            if len(operators) > 1:
-                # Multiply all operators acting on the same qubit
-                for op2 in operators[1:]:
-                    aux_phase, op1 = Hamiltonian._multiply_pauli(op1, op2)
-                    phase *= aux_phase
-
+            # Multiply together all operators on the same qubit
+            for op2 in qubit_ops[1:]:
+                aux_phase, op1 = Hamiltonian._multiply_pauli(op1, op2)
+                phase *= aux_phase
             if op1.name != "I":
-                simplified_list.append((op1.qubit, op1.name))
+                final_ops.append(op1)
             accumulated_phase *= phase
 
-        if not simplified_list:
-            simplified_list.append((0, "I"))
+        # If everything simplified to identity, we store I(0)
+        if not final_ops:
+            final_ops = [I(0)]
 
-        return accumulated_phase, tuple(simplified_list)
+        # Sort again by qubit (to keep canonical form)
+        final_ops.sort(key=lambda op: op.qubit)
+        return accumulated_phase, tuple(final_ops)
 
     @staticmethod
     def _multiply_pauli(op1: PauliOperator, op2: PauliOperator) -> tuple[complex, PauliOperator]:
-        """Multiply two Pauli Operators
-
-        Raises:
-            ValueError: If the two Operators are not acting on the same qubit
-            NotImplementedError: Multiplication between the two operators is not supported.
-
-        Returns:
-            tuple[complex, "PauliOperator"]: A tuple containing the resulting
-            coefficient and Pauli operator.
-        """
-
         if op1.qubit != op2.qubit:
-            raise ValueError("Operators must act on the same qubit")
+            raise ValueError("Operators must act on the same qubit for multiplication.")
 
-        if isinstance(op1, I):
-            return 1, op2
-        if isinstance(op2, I):
-            return 1, op1
+        # If either is identity, no phase
+        if op1.name == "I":
+            return (1, op2)
+        if op2.name == "I":
+            return (1, op1)
 
-        result = Hamiltonian._PAULI_PRODUCT_TABLE.get((op1.name, op2.name))
-        if result is not None:
-            coefficient, operator_cls = result
-            if operator_cls is I:
-                return coefficient, I(0)
-            return coefficient, operator_cls(op1.qubit)
+        # Look up the product in the table
+        key = (op1.name, op2.name)
+        result = Hamiltonian._PAULI_PRODUCT_TABLE.get(key)
+        if result is None:
+            raise NotSupportedOperation(f"Multiplying {op1} and {op2} not supported.")
+        phase, op_cls = result
 
-        raise NotImplementedError(f"Operation between operator {op1.name} and operator {op2.name} is not supported.")
+        # By convention, an I operator is always I(0) in this code
+        if op_cls is I:
+            return phase, I(0)
+        # Otherwise, keep the same qubit
+        return phase, op_cls(op1.qubit)
 
     @staticmethod
     def _multiply_hamiltonians(h1: Hamiltonian, h2: Hamiltonian) -> Hamiltonian:
         out = Hamiltonian()
-        for k1, v1 in h1.elements.items():
-            for k2, v2 in h2.elements.items():
-                phase, new_key = Hamiltonian._multiply_sets(k1, k2)
-                out._elements[new_key] += phase * v1 * v2  # noqa: SLF001
+        for key1, c1 in h1.elements.items():
+            for key2, c2 in h2.elements.items():
+                phase, new_key = Hamiltonian._multiply_sets(key1, key2)
+                out.elements[new_key] += phase * c1 * c2
         return out.simplify()
+
+    # ------- Public arithmetic operators --------
 
     def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         out = copy.copy(self)
-        if isinstance(other, Hamiltonian):
-            for key, val in other.elements.items():
-                out._elements[key] += val
-        elif isinstance(other, PauliOperator):
-            encoded = ((other.qubit, other.name),)
-            out._elements[encoded] += 1
-        elif isinstance(other, Complex):
-            out._elements[(0, "I"),] += other
-        else:
-            raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
+        out._add_inplace(other)
         return out.simplify()
 
     def __radd__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.__add__(other)
 
     def __sub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        return self + (-1 * other)
+        out = copy.copy(self)
+        out._sub_inplace(other)
+        return out.simplify()
 
     def __rsub__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        return other + (-1 * self)
+        # (other - self)
+        out = copy.copy(other if isinstance(other, Hamiltonian) else Hamiltonian() + other)
+        out._sub_inplace(self)
+        return out.simplify()
 
     def __mul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if isinstance(other, Hamiltonian):
-            return Hamiltonian._multiply_hamiltonians(self, other)
-        if isinstance(other, PauliOperator):
-            return Hamiltonian._multiply_hamiltonians(self, other.to_hamiltonian())
-        if isinstance(other, Complex):
-            out = copy.copy(self)
-            for k in out._elements:
-                out._elements[k] *= other
-            return out.simplify()
-        raise InvalidHamiltonianOperation(f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}.")
+        out = copy.copy(self)
+        out._mul_inplace(other)
+        return out.simplify()
 
     def __rmul__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         if isinstance(other, Hamiltonian):
-            # multiplication is non-commutative for Pauli ops, so we must consider key order carefully
-            return Hamiltonian._multiply_hamiltonians(other, self)
-        if isinstance(other, PauliOperator):
-            return Hamiltonian._multiply_hamiltonians(other.to_hamiltonian(), self)
-        if isinstance(other, Complex):
-            # scalar multiplication is commutative, so just do __mul__
-            return self.__mul__(other)
-        raise InvalidHamiltonianOperation(f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}.")
+            out = copy.copy(other)
+            out._mul_inplace(self)
+            return out.simplify()
+        return self.__mul__(other)
 
     def __truediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if not isinstance(other, Complex):
-            raise InvalidHamiltonianOperation("Division of operators is not supported")
-
-        return self * (1 / other)
+        out = copy.copy(self)
+        out._div_inplace(other)
+        return out.simplify()
 
     def __rtruediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if not isinstance(other, Complex):
-            raise InvalidHamiltonianOperation("Division of operators is not supported")
-
-        return (1 / other) * self
+        # (other / self)
+        if not isinstance(other, (int, float, complex)):
+            raise InvalidHamiltonianOperation("Division by operators is not supported")
+        out = copy.copy(self)
+        return (1 / other) * out
 
     def __rfloordiv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if not isinstance(other, Complex):
+        if not isinstance(other, (int, float, complex)):
             raise NotSupportedOperation("Division of operators is not supported")
-
         return (1 / other) * self
 
     __iadd__ = __add__
     __isub__ = __sub__
     __imul__ = __mul__
     __itruediv__ = __truediv__
+
+    def _add_inplace(self, other: Complex | PauliOperator | Hamiltonian) -> None:
+        if isinstance(other, Hamiltonian):
+            # If it's empty, do nothing
+            if not other.elements:
+                return
+            # Otherwise, add each term
+            for key, val in other.elements.items():
+                self._elements[key] += val
+        elif isinstance(other, PauliOperator):
+            # Just add 1 to that single operator key
+            self._elements[other,] += 1
+        elif isinstance(other, (int, float, complex)):
+            if other == 0:
+                return
+            # Add the scalar to (I(0),)
+            self._elements[I(0),] += other
+        else:
+            raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
+
+    def _sub_inplace(self, other: Complex | PauliOperator | Hamiltonian) -> None:
+        if isinstance(other, Hamiltonian):
+            for key, val in other.elements.items():
+                self._elements[key] -= val
+        elif isinstance(other, PauliOperator):
+            self._elements[other,] -= 1
+        elif isinstance(other, (int, float, complex)):
+            if other == 0:
+                return
+            self._elements[I(0),] -= other
+        else:
+            raise InvalidHamiltonianOperation(
+                f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
+            )
+
+    def _mul_inplace(self, other: Complex | PauliOperator | Hamiltonian) -> None:
+        if isinstance(other, (int, float, complex)):
+            # 0 short-circuit
+            if other == 0:
+                # everything becomes 0
+                self._elements.clear()
+                return None
+            # 1 short-circuit
+            if other == 1:
+                return None
+            # scale all coefficients
+            for k in self._elements:
+                self._elements[k] *= other
+            return None
+
+        if isinstance(other, PauliOperator):
+            # Convert single PauliOperator -> Hamiltonian with 1 key
+            # Then do the single-key Hamiltonian path below
+            tmp = Hamiltonian({(other,): 1})
+            other = tmp  # type: ignore
+
+        if isinstance(other, Hamiltonian):
+            if not other.elements:
+                # Multiply by "0" Hamiltonian => 0
+                self._elements.clear()
+                return None
+
+            # Check if 'other' is purely scalar identity => short-circuit
+            if len(other.elements) == 1:
+                ((ops2, c2),) = other.elements.items()  # single item
+                if len(ops2) == 1:
+                    op2 = ops2[0]
+                    if op2.name == "I" and op2.qubit == 0:
+                        # effectively scalar c2
+                        return self._mul_inplace(c2)
+
+            # Otherwise, we do the general multiply
+            new_dict: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
+            for ops1, c1 in self._elements.items():
+                for ops2, c2 in other.elements.items():
+                    phase, new_ops = self._multiply_sets(ops1, ops2)
+                    new_dict[new_ops] += phase * c1 * c2
+            self._elements = new_dict
+
+        else:
+            raise InvalidHamiltonianOperation(
+                f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}."
+            )
+        return None
+
+    def _div_inplace(self, other: Complex | PauliOperator | Hamiltonian) -> None:
+        # Only valid for scalars
+        if not isinstance(other, (int, float, complex)):
+            raise InvalidHamiltonianOperation("Division by operators is not supported")
+        if other == 0:
+            raise ZeroDivisionError("Cannot divide by zero.")
+        self._mul_inplace(1 / other)

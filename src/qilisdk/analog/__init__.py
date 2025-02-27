@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .hamiltonian import Hamiltonian, I, PauliOperator, X, Y, Z
+from .hamiltonian import Hamiltonian, I, X, Y, Z
 
-__all__ = ["Hamiltonian", "I", "PauliOperator", "X", "Y", "Z"]
+__all__ = ["Hamiltonian", "I", "X", "Y", "Z"]
