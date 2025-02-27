@@ -359,7 +359,7 @@ class Hamiltonian:
         if ham_str == "0":
             return cls({})
 
-        elements = defaultdict(complex)
+        elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
         if not ham_str.startswith("+") and not ham_str.startswith("-"):
