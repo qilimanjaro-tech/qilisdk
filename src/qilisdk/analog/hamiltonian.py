@@ -278,8 +278,6 @@ class Hamiltonian:
     # ------- String representation --------
 
     def __repr__(self) -> str:
-        # Developer-friendly representation
-        # return f"Hamiltonian({dict(self._elements)})"
         return str(self)
 
     def __str__(self) -> str:
