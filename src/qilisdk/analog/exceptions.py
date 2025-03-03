@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .algorithm import Algorithm
-from .model import Model
-from .optimizer import Optimizer
-from .result import Results
 
-__all__ = ["Algorithm", "Model", "Optimizer", "Results"]
+class InvalidHamiltonianOperation(Exception): ...
+
+
+class NotSupportedOperation(Exception): ...

@@ -68,6 +68,11 @@ This section covers how to set up a local development environment for qilisdk, r
      uv sync
      ```
      This sets up a virtual environment and installs all pinned dependencies (including `tox`, `ruff`, `mypy`, `towncrier`, etc.).
+   - To install extra dependencies such as `qibo-backend`, run:
+     ```bash
+     uv sync --extra qibo-backend -extra ...
+     ```
+     This sets up a virtual environment and installs all pinned dependencies (previous), plus the specified extras.
 
 5. **Activate the virtual environment**:
    - uv typically creates and manages its own environment, e.g., `.venv/`.
