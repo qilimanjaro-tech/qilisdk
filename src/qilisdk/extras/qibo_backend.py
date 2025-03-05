@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Callable
 
 from qibo.gates import gates as QiboGates
 from qibo.models.circuit import Circuit as QiboCircuit
@@ -47,6 +47,7 @@ class QiboBackend:
     def execute(self, circuit: Circuit, nshots: int = 1000) -> SimulationDigitalResults:  # noqa: PLR6301
         qibo_circuit = QiboBackend.to_qibo(circuit=circuit)
         qibo_results = qibo_circuit.execute(nshots=nshots)
+
         return SimulationDigitalResults(
             state=qibo_results.state(),
             probabilities=qibo_results.probabilities(),
@@ -57,31 +58,20 @@ class QiboBackend:
 
     @staticmethod
     def to_qibo(circuit: Circuit) -> QiboCircuit:
-        to_qibo_converters: dict[type[Gate], Callable[[Any], QiboGates.Gate]] = {
-            X: QiboBackend._to_qibo_X,
-            Y: QiboBackend._to_qibo_Y,
-            Z: QiboBackend._to_qibo_Z,
-            H: QiboBackend._to_qibo_H,
-            S: QiboBackend._to_qibo_S,
-            T: QiboBackend._to_qibo_T,
-            RX: QiboBackend._to_qibo_RX,
-            RY: QiboBackend._to_qibo_RY,
-            RZ: QiboBackend._to_qibo_RZ,
-            U1: QiboBackend._to_qibo_U1,
-            U2: QiboBackend._to_qibo_U2,
-            U3: QiboBackend._to_qibo_U3,
-            CNOT: QiboBackend._to_qibo_CNOT,
-            CZ: QiboBackend._to_qibo_CZ,
-            M: QiboBackend._to_qibo_M,
-        }
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
+
         for gate in circuit.gates:
-            converter = to_qibo_converters.get(type(gate))
+            gate_type = type(gate).__name__
+
+            converter: Callable[[Gate], QiboGates.Gate] | None = getattr(QiboBackend, "_to_qibo_" + gate_type, None)
             if converter is None:
-                raise UnsupportedGateError(f"Unsupported gate type: {type(gate).__name__}")
+                raise UnsupportedGateError(f"Unsupported gate type: {gate_type}")  # = gate._NAME
+
             qibo_circuit.add(converter(gate))
+
         return qibo_circuit
 
+    # Create converter method `_to_qibo_<Gate in qilisdk>` for each gate in qilisdk:
     @staticmethod
     def _to_qibo_X(gate: X) -> QiboGates.X:
         return QiboGates.X(gate.target_qubits[0])
