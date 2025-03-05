@@ -198,6 +198,8 @@ class X(Gate):
     The associated matrix is:
         [[0, 1],
         [1, 0]]
+
+    This is a pi radians rotation around the X-axis.
     """
 
     _NAME: ClassVar[str] = "X"
@@ -223,6 +225,8 @@ class Y(Gate):
     The associated matrix is:
         [[0, -i],
          [i, 0]]
+
+    This is a pi radians rotation around the Y-axis.
     """
 
     _NAME: ClassVar[str] = "Y"
@@ -248,6 +252,8 @@ class Z(Gate):
     The associated matrix is:
         [[1, 0],
          [0, -1]]
+
+    This is a pi radians rotation around the Z-axis.
     """
 
     _NAME: ClassVar[str] = "Z"
@@ -273,6 +279,8 @@ class H(Gate):
     The associated matrix is:
         1/sqrt(2) * [[1, 1],
                      [1, -1]]
+
+    This is a pi radians rotation around the (X+Z)-axis.
     """
 
     _NAME: ClassVar[str] = "H"
@@ -293,11 +301,13 @@ class H(Gate):
 
 class S(Gate):
     """
-    Represents the S gate, a single-qubit gate with no parameters.
+    Represents the S gate, which induces a pi/2 phase.
 
     The associated matrix is:
         [[1, 0],
          [0, i]]
+
+    This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis.
     """
 
     _NAME: ClassVar[str] = "S"
@@ -318,11 +328,13 @@ class S(Gate):
 
 class T(Gate):
     """
-    Represents the T gate, a single-qubit gate with no parameters.
+    Represents the T gate, which induces a pi/4 phase.
 
     The associated matrix is:
         [[1,           0],
          [0, exp(i*pi/4)]]
+
+    This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis.
     """
 
     _NAME: ClassVar[str] = "T"
@@ -348,6 +360,8 @@ class RX(Gate):
     The associated matrix is:
         [[cos(theta/2),     -i*sin(theta/2)],
          [-i*sin(theta/2),     cos(theta/2)]]
+
+    This is an exponential of the Pauli-X operator: `RX(theta) = exp(-i*theta*X/2)`.
     """
 
     _NAME: ClassVar[str] = "RX"
@@ -360,7 +374,7 @@ class RX(Gate):
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float): The rotation angle in radians.
+            theta (float): The rotation angle (polar) in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
@@ -378,6 +392,8 @@ class RY(Gate):
     The associated matrix is:
         [[cos(theta/2), -sin(theta/2)],
          [sin(theta/2),  cos(theta/2)]]
+
+    This is an exponential of the Pauli-Y operator: `RY(theta) = exp(-i*theta*Y/2)`.
     """
 
     _NAME: ClassVar[str] = "RY"
@@ -390,7 +406,7 @@ class RY(Gate):
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float): The rotation angle in radians.
+            theta (float): The rotation angle (polar) in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
@@ -408,6 +424,15 @@ class RZ(Gate):
     The associated matrix is:
         [[exp(-i*phi/2),              0],
          [0,               exp(i*phi/2)]]
+
+    This is an exponential of the Pauli-Z operator: `RZ(phi) = exp(-i*phi*Z/2)`.
+
+    Which is equivalent to the U1 gate plus a global phase: `RZ(phi) = exp(-i*phi/2)U1(phi)`.
+
+    Other unitaries you can get from this one are:
+        - `RZ(phi=pi) = exp(-i*pi/2) Z = -i Z`
+        - `RZ(phi=pi/2) = exp(-i*pi/4) S`
+        - `RZ(phi=pi/4) = exp(-i*pi/8) T`
     """
 
     _NAME: ClassVar[str] = "RZ"
@@ -420,7 +445,7 @@ class RZ(Gate):
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            phi (float): The rotation angle in radians.
+            phi (float): The rotation angle (azimuthal) in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
@@ -438,6 +463,13 @@ class U1(Gate):
     The associated matrix is:
         [[1,            0],
          [0, exp(i*phi)]]
+
+    Which is equivalent to the RZ gate plus a global phase: `U1(phi) = exp(i*phi/2)RZ(phi)`.
+
+    Other unitaries you can get from this one are:
+        - `U1(phi=np.pi) = Z`
+        - `U1(phi=np.pi/2) = S`
+        - `U1(phi=np.pi/4) = T`
     """
 
     _NAME: ClassVar[str] = "U1"
@@ -450,7 +482,7 @@ class U1(Gate):
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            phi (float): The phase rotation angle in radians.
+            phi (float): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
@@ -460,11 +492,19 @@ class U1(Gate):
 
 class U2(Gate):
     """
-    Represents the U2 gate defined by the angles `phi` and `lambda`.
+    Represents the U2 gate defined by the angles `phi` and `lam`.
 
     The associated matrix is:
-        1/sqrt(2)*[[exp(-i*(phi+lambda)/2), -exp(-i*(phi-lambda)/2)],
-                   [exp(i*(phi-lambda)/2),    exp(i*(phi+lambda)/2)]]
+        1/sqrt(2)*[[1,                   -exp(i*lam/2)],
+                   [exp(i*phi/2),    exp(i*(phi+lam)/2)]]
+
+    Which is equivalent to two azimuthal rotations of `phi` and `lam`, with a pi/2 polar rotation in between:
+        `U2(phi, lam) = U1(phi) H U1(lam) = exp(i*(phi+lam)/2) RZ(phi/2) RY(pi/2) RZ(lam)`
+
+    Other unitaries you can get from this one are:
+        - `U2(phi=0, lam=np.pi) = H`
+        - `U2(phi=0, lam=0) = RY(theta=pi/2)`
+        - `U2(phi=-pi/2, lam=pi/2) = RX(theta=pi/2)`
     """
 
     _NAME: ClassVar[str] = "U2"
@@ -477,16 +517,16 @@ class U2(Gate):
 
         Args:
             qubit (int): The target qubit index for the U2 gate.
-            phi (float): The first phase parameter.
-            lam (float): The second phase parameter.
+            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            lam (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians..
         """
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [phi, lam]
         self._matrix = (1 / np.sqrt(2)) * np.array(
             [
-                [np.exp(-1j * (phi + lam) / 2), -np.exp(-1j * (phi - lam) / 2)],
-                [np.exp(1j * (phi - lam) / 2), np.exp(1j * (phi + lam) / 2)],
+                [1, -np.exp(1j * lam / 2)],
+                [np.exp(1j * phi / 2), np.exp(1j * (phi + lam) / 2)],
             ],
             dtype=complex,
         )
@@ -536,6 +576,9 @@ class CNOT(Gate):
          [0, 1, 0, 0],
          [0, 0, 0, 1],
          [0, 0, 1, 0]]
+
+    Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
+        `CNOT(control, target) = H(target) CZ(control, target) H(target)`
     """
 
     _NAME: ClassVar[str] = "CNOT"
@@ -565,6 +608,12 @@ class CZ(Gate):
          [0, 1, 0, 0],
          [0, 0, 1, 0],
          [0, 0, 0, -1]]
+
+    This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
+        `CZ(control, target) = CZ(target, control)`
+
+    It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
+        `CZ(control, target) = H(target) CNOT(control, target) H(target)`
     """
 
     _NAME: ClassVar[str] = "CZ"
