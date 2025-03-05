@@ -201,8 +201,8 @@ def test_u2_gate(phi, lam):
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
     a = 1
-    b = -np.exp(1j *  lam / 2)
-    c = np.exp(1j * phi  / 2)
+    b = -np.exp(1j * lam / 2)
+    c = np.exp(1j * phi / 2)
     d = np.exp(1j * (phi + lam))
 
     expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
