@@ -179,8 +179,8 @@ def test_u2_gate(phi, lam):
     """
     Parametrized test for the U2 gate.
     Based on the docstring and the code:
-        U2(phi, lam) = 1/sqrt(2) * [[ e^{-i(phi+lam)/2},    - e^{-i(phi-lam)/2} ],
-                                    [ e^{i(phi-lam)/2},      e^{i(phi+lam)/2}   ]]
+        U2(phi, lam) = 1/sqrt(2) * [[ 1,    - e^{-i*lam/2} ],
+                                    [ e^{i*phi/2},      e^{i*(phi+lam)}   ]]
     """
     qubit = 7
     gate = U2(qubit, phi=phi, lam=lam)
@@ -200,10 +200,10 @@ def test_u2_gate(phi, lam):
 
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
-    a = np.exp(-1j * (phi + lam) / 2)
-    b = -np.exp(-1j * (phi - lam) / 2)
-    c = np.exp(1j * (phi - lam) / 2)
-    d = np.exp(1j * (phi + lam) / 2)
+    a = 1
+    b = -np.exp(1j *  lam / 2)
+    c = np.exp(1j * phi  / 2)
+    d = np.exp(1j * (phi + lam))
 
     expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
     assert_matrix_equal(gate._matrix, expected_matrix)
@@ -221,9 +221,9 @@ def test_u3_gate(theta, phi, lam):
     """
     Parametrized test for the U3 gate.
 
-    NOTE: The docstring describes a matrix that depends on cos(theta/2) etc.,
-    but the code as given uses 1/sqrt(2)*[...] and not those trig functions.
-    We'll test the matrix that is actually coded.
+    Based on the docstring and the code:
+        U2(phi, lam) = 1/sqrt(2) * [[cos(theta/2), -exp(i*lambda/2*sin(theta/2))],
+                                    [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+lambda))*cos(theta/2)]]
     """
     qubit = 8
     gate = U3(qubit, theta=theta, phi=phi, lam=lam)
