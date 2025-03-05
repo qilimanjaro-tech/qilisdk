@@ -199,7 +199,7 @@ class X(Gate):
         [[0, 1],
         [1, 0]]
 
-    This is a pi radians rotation around the X-axis.
+    This is a pi radians rotation around the X-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "X"
@@ -226,7 +226,7 @@ class Y(Gate):
         [[0, -i],
          [i, 0]]
 
-    This is a pi radians rotation around the Y-axis.
+    This is a pi radians rotation around the Y-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "Y"
@@ -253,7 +253,7 @@ class Z(Gate):
         [[1, 0],
          [0, -1]]
 
-    This is a pi radians rotation around the Z-axis.
+    This is a pi radians rotation around the Z-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "Z"
@@ -280,7 +280,7 @@ class H(Gate):
         1/sqrt(2) * [[1, 1],
                      [1, -1]]
 
-    This is a pi radians rotation around the (X+Z)-axis.
+    This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "H"
@@ -307,7 +307,7 @@ class S(Gate):
         [[1, 0],
          [0, i]]
 
-    This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis.
+    This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "S"
@@ -334,7 +334,7 @@ class T(Gate):
         [[1,           0],
          [0, exp(i*pi/4)]]
 
-    This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis.
+    This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.
     """
 
     _NAME: ClassVar[str] = "T"
@@ -355,7 +355,7 @@ class T(Gate):
 
 class RX(Gate):
     """
-    Represents the rotation around the X-axis by an angle `theta`.
+    Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.
 
     The associated matrix is:
         [[cos(theta/2),     -i*sin(theta/2)],
@@ -387,7 +387,7 @@ class RX(Gate):
 
 class RY(Gate):
     """
-    Represents the rotation around the Y-axis by an angle `theta`.
+    Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.
 
     The associated matrix is:
         [[cos(theta/2), -sin(theta/2)],
@@ -419,7 +419,7 @@ class RY(Gate):
 
 class RZ(Gate):
     """
-    Represents the rotation around the Z-axis by an azimuthal angle `phi`.
+    Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
 
     The associated matrix is:
         [[exp(-i*phi/2),              0],
