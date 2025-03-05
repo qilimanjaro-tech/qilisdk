@@ -496,10 +496,13 @@ class U2(Gate):
 
     The associated matrix is:
         1/sqrt(2)*[[1,                   -exp(i*lam/2)],
-                   [exp(i*phi/2),    exp(i*(phi+lam)/2)]]
+                   [exp(i*phi/2),    exp(i*(phi+lam))]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `lam`, with a pi/2 polar rotation in between:
-        `U2(phi, lam) = U1(phi) H U1(lam) = exp(i*(phi+lam)/2) RZ(phi/2) RY(pi/2) RZ(lam)`
+        `U2(phi, lam) = exp(i*(phi+lam)/2) RZ(phi) RY(pi/2) RZ(lam)`
+
+    This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
+        `U2(phi, lam) = U2_qiskit/pennylane(phi, lam) = exp(i*(phi+lam)/2) U2_qibo(phi, lam)`
 
     Other unitaries you can get from this one are:
         - `U2(phi=0, lam=np.pi) = H`
@@ -526,7 +529,7 @@ class U2(Gate):
         self._matrix = (1 / np.sqrt(2)) * np.array(
             [
                 [1, -np.exp(1j * lam / 2)],
-                [np.exp(1j * phi / 2), np.exp(1j * (phi + lam) / 2)],
+                [np.exp(1j * phi / 2), np.exp(1j * (phi + lam))],
             ],
             dtype=complex,
         )
@@ -537,8 +540,19 @@ class U3(Gate):
     Represents the U3 gate defined by the angles `theta`, `phi` and `lambda`.
 
     The associated matrix is:
-        [[cos(theta/2)*exp(-i*(phi+lambda)/2), -sin(theta/2)*exp(-i*(phi-lambda)/2)],
-         [sin(theta/2)*exp(i*(phi-lambda)/2),    cos(theta/2)*exp(i*(phi+lambda)/2)]]
+        [[cos(theta/2), -exp(i*lambda/2*sin(theta/2))],
+         [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+lambda))*cos(theta/2)]]
+
+    Which is equivalent to two azimuthal rotations of `phi` and `lam`, with a 'theta' polar rotation in between:
+        `U3(theta, phi, lam) = exp(i*(phi+lam)/2) RZ(phi) RY(theta) RZ(lam)`
+
+    This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:
+        `U3(theta, phi, lam) = U3_qiskit/pennylane(theta, phi, lam) = exp(-i*(phi+lam)/2) U3_QASM/qibo(theta, phi, lam)`
+
+    Other unitaries you can get from this one are:
+        - `U3(theta=pi/2, phi, lam) = U2(phi, lam)`
+        - `U3(theta, phi=0, lam=0) = RY(theta)`
+        - `U3(theta, phi=-pi/2, lam=pi/2) = RX(theta)`
     """
 
     _NAME: ClassVar[str] = "U3"
@@ -551,9 +565,9 @@ class U3(Gate):
 
         Args:
             qubit (int): The target qubit index for the U3 gate.
-            theta (float): The rotation angle.
-            phi (float): The first phase parameter.
-            lam (float): The second phase parameter.
+            theta (float): The rotation angle (polar), in between both phase rotations (azimuthal).
+            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            lam (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
