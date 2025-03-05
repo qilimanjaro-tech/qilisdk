@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.common import Algorithm, Hamiltonian, Model, Optimizer, Results
+from qilisdk.analog import Hamiltonian
+from qilisdk.common import Algorithm, Model, Optimizer, Results
 from qilisdk.extras.qibo_backend import QiboBackend
 
 __all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "QiboBackend", "Results"]
