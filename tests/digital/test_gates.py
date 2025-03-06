@@ -223,7 +223,7 @@ def test_u3_gate(theta, phi, gamma):
     Parametrized test for the U3 gate.
 
     Based on the docstring and the code:
-        U2(phi, gamma) = 1/sqrt(2) * [[cos(theta/2), -exp(i*gamma)*sin(theta/2)],
+        U2(phi, gamma) = [[cos(theta/2), -exp(i*gamma)*sin(theta/2)],
                                     [exp(i*phi)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
     """
     qubit = 8
