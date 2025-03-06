@@ -124,7 +124,7 @@ class QiboBackend:
 
     @staticmethod
     def _to_qibo_U2(gate: U2) -> QiboGates.U2:
-        return QiboGates.U2(gate.target_qubits[0], phi=gate.parameters["phi"], lam=gate.parameters["lam"])
+        return QiboGates.U2(gate.target_qubits[0], phi=gate.parameters["phi"], lam=gate.parameters["gamma"])
 
     @staticmethod
     def _to_qibo_U3(gate: U3) -> QiboGates.U3:
@@ -132,7 +132,7 @@ class QiboBackend:
             gate.target_qubits[0],
             theta=gate.parameters["theta"],
             phi=gate.parameters["phi"],
-            lam=gate.parameters["lam"],
+            lam=gate.parameters["gamma"],
         )
 
     @staticmethod
