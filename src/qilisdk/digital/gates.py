@@ -403,90 +403,90 @@ class RY(Gate):
 
 class RZ(Gate):
     """
-    Represents the rotation around the Z-axis by an angle `theta`.
+    Represents the rotation around the Z-axis by an azimuthal angle `phi`.
 
     The associated matrix is:
-        [[exp(-i*theta/2),              0],
-         [0,               exp(i*theta/2)]]
+        [[exp(-i*phi/2),              0],
+         [0,               exp(i*phi/2)]]
     """
 
     _NAME: ClassVar[str] = "RZ"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, phi: float) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float): The rotation angle in radians.
+            phi (float): The rotation angle in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
+        self._parameter_values = [phi]
 
-        cos_half = np.cos(theta / 2)
-        sin_half = np.sin(theta / 2)
+        cos_half = np.cos(phi / 2)
+        sin_half = np.sin(phi / 2)
         self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class U1(Gate):
     """
-    Represents the U1 gate defined by an angle `theta`.
+    Represents the U1 gate defined by an azimuthal angle `phi`.
 
     The associated matrix is:
         [[1,            0],
-         [0, exp(i*theta)]]
+         [0, exp(i*phi)]]
     """
 
     _NAME: ClassVar[str] = "U1"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, phi: float) -> None:
         """
         Initialize a U1 gate.
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            theta (float): The phase rotation angle in radians.
+            phi (float): The phase rotation angle in radians.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
-        self._matrix = np.array([[1, 0], [0, np.exp(1j * theta)]], dtype=complex)
+        self._parameter_values = [phi]
+        self._matrix = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
 class U2(Gate):
     """
-    Represents the U2 gate defined by the angles `phi` and `lambda`.
+    Represents the U2 gate defined by the angles `phi` and `gamma`.
 
     The associated matrix is:
-        1/sqrt(2)*[[exp(-i*(phi+lambda)/2), -exp(-i*(phi-lambda)/2)],
-                   [exp(i*(phi-lambda)/2),    exp(i*(phi+lambda)/2)]]
+        1/sqrt(2)*[[exp(-i*(phi+gamma)/2), -exp(-i*(phi-gamma)/2)],
+                   [exp(i*(phi-gamma)/2),    exp(i*(phi+gamma)/2)]]
     """
 
     _NAME: ClassVar[str] = "U2"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "lam"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
-    def __init__(self, qubit: int, *, phi: float, lam: float) -> None:
+    def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
         """
         Initialize a U2 gate.
 
         Args:
             qubit (int): The target qubit index for the U2 gate.
             phi (float): The first phase parameter.
-            lam (float): The second phase parameter.
+            gamma (float): The second phase parameter.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [phi, lam]
+        self._parameter_values = [phi, gamma]
         self._matrix = (1 / np.sqrt(2)) * np.array(
             [
-                [np.exp(-1j * (phi + lam) / 2), -np.exp(-1j * (phi - lam) / 2)],
-                [np.exp(1j * (phi - lam) / 2), np.exp(1j * (phi + lam) / 2)],
+                [np.exp(-1j * (phi + gamma) / 2), -np.exp(-1j * (phi - gamma) / 2)],
+                [np.exp(1j * (phi - gamma) / 2), np.exp(1j * (phi + gamma) / 2)],
             ],
             dtype=complex,
         )
@@ -494,18 +494,18 @@ class U2(Gate):
 
 class U3(Gate):
     """
-    Represents the U3 gate defined by the angles `theta`, `phi` and `lambda`.
+    Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.
 
     The associated matrix is:
-        [[cos(theta/2)*exp(-i*(phi+lambda)/2), -sin(theta/2)*exp(-i*(phi-lambda)/2)],
-         [sin(theta/2)*exp(i*(phi-lambda)/2),    cos(theta/2)*exp(i*(phi+lambda)/2)]]
+        [[cos(theta/2)*exp(-i*(phi+gamma)/2), -sin(theta/2)*exp(-i*(phi-gamma)/2)],
+         [sin(theta/2)*exp(i*(phi-gamma)/2),    cos(theta/2)*exp(i*(phi+gamma)/2)]]
     """
 
     _NAME: ClassVar[str] = "U3"
     _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "lam"]
+    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
-    def __init__(self, qubit: int, *, theta: float, phi: float, lam: float) -> None:
+    def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
         """
         Initialize a U3 gate.
 
@@ -513,15 +513,15 @@ class U3(Gate):
             qubit (int): The target qubit index for the U3 gate.
             theta (float): The rotation angle.
             phi (float): The first phase parameter.
-            lam (float): The second phase parameter.
+            gamma (float): The second phase parameter.
         """
         super().__init__()
         self._target_qubits = (qubit,)
-        self._parameter_values = [theta, phi, lam]
+        self._parameter_values = [theta, phi, gamma]
         self._matrix = np.array(
             [
-                [np.cos(theta / 2), -np.exp(1j * lam) * np.sin(theta / 2)],
-                [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + lam)) * np.cos(theta / 2)],
+                [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
+                [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
             ],
             dtype=complex,
         )
