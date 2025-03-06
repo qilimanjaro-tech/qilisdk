@@ -86,6 +86,9 @@ class QiboBackend:
         if gate_type in {RZ, U1}:
             arg_map["phi"] = "theta"
 
+        if gate_type in {U2, U3}:
+            arg_map["gamma"] = "lam"
+
         return arg_map.get(name, name)
 
     @staticmethod
