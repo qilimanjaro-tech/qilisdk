@@ -111,7 +111,7 @@ class GradientDecent(Optimizer):
             cost_function,
             x0=init_parameters,
             method=self.method,
-            jac=self.extra_arguments.pop("jac", None),
+            jac=self.extra_arguments.get("jac", None),
             hess=self.extra_arguments.pop("hess", None),
             hessp=self.extra_arguments.pop("hessp", None),
             bounds=self.extra_arguments.pop("bounds", None),
