@@ -178,7 +178,7 @@ def test_u1_gate(angle: float):
 def test_u2_gate(phi, gamma):
     """
     Parametrized test for the U2 gate.
-    
+
     Based on the docstring and the code:
         U2(phi, gamma) = 1/sqrt(2) * [[ 1,    - e^{-i*gamma/2} ],
                                     [ e^{i*phi/2},      e^{i*(phi+gamma)}   ]]
