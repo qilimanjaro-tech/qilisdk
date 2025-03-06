@@ -180,8 +180,8 @@ def test_u2_gate(phi, gamma):
     Parametrized test for the U2 gate.
 
     Based on the docstring and the code:
-        U2(phi, gamma) = 1/sqrt(2) * [[ 1,    - e^{-i*gamma/2} ],
-                                    [ e^{i*phi/2},      e^{i*(phi+gamma)}   ]]
+        U2(phi, gamma) = 1/sqrt(2) * [[ 1,    - e^{-i*gamma} ],
+                                    [ e^{i*phi},      e^{i*(phi+gamma)}   ]]
     """
     qubit = 7
     gate = U2(qubit, phi=phi, gamma=gamma)
@@ -202,8 +202,8 @@ def test_u2_gate(phi, gamma):
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
     a = 1
-    b = -np.exp(1j * gamma / 2)
-    c = np.exp(1j * phi / 2)
+    b = -np.exp(1j * gamma)
+    c = np.exp(1j * phi)
     d = np.exp(1j * (phi + gamma))
 
     expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
@@ -223,8 +223,8 @@ def test_u3_gate(theta, phi, gamma):
     Parametrized test for the U3 gate.
 
     Based on the docstring and the code:
-        U2(phi, lam) = 1/sqrt(2) * [[cos(theta/2), -exp(i*lambda/2*sin(theta/2))],
-                                    [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+lambda))*cos(theta/2)]]
+        U2(phi, gamma) = 1/sqrt(2) * [[cos(theta/2), -exp(i*gamma)*sin(theta/2)],
+                                    [exp(i*phi)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
     """
     qubit = 8
     gate = U3(qubit, theta=theta, phi=phi, gamma=gamma)

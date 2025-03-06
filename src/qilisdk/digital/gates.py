@@ -495,8 +495,8 @@ class U2(Gate):
     Represents the U2 gate defined by the angles `phi` and `gamma`.
 
     The associated matrix is:
-        1/sqrt(2)*[[1,                   -exp(i*gamma/2)],
-                   [exp(i*phi/2),    exp(i*(phi+gamma))]]
+        1/sqrt(2)*[[1,                   -exp(i*gamma)],
+                   [exp(i*phi),    exp(i*(phi+gamma))]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:
         `U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)`
@@ -528,8 +528,8 @@ class U2(Gate):
         self._parameter_values = [phi, gamma]
         self._matrix = (1 / np.sqrt(2)) * np.array(
             [
-                [1, -np.exp(1j * gamma / 2)],
-                [np.exp(1j * phi / 2), np.exp(1j * (phi + gamma))],
+                [1, -np.exp(1j * gamma)],
+                [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
             ],
             dtype=complex,
         )
