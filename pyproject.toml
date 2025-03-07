@@ -29,6 +29,9 @@ dependencies = [
 qibo-backend = [
     "qibo>=0.2.16",
 ]
+cuda-backend = [
+    "cudaq>=0.9.1",
+]
 
 [dependency-groups]
 dev = [
