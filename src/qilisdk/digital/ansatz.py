@@ -99,11 +99,15 @@ class HardwareEfficientAnsatz(Ansatz):
     def construct_circuit(
         self, params: list[float]
     ) -> Circuit:
+        
         """construct the circuit with the given list of parameters.
 
         Args:
             params (list[float]): the list of parameters for the unitary gates.
 
+        Raises:
+            ValueError: if the number of parameters provided are less than the parameters expected by the ansatz.
+        
         Returns:
             Circuit: the constructed circuit with the updated parameters
         """
