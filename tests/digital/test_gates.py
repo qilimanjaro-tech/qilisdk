@@ -137,7 +137,7 @@ def test_ry_gate(angle: float):
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_rz_gate(angle: float):
     qubit = 4
-    gate = RZ(qubit, theta=angle)
+    gate = RZ(qubit, phi=angle)
 
     assert gate.name == "RZ"
     assert gate.is_parameterized is True
@@ -157,7 +157,7 @@ def test_rz_gate(angle: float):
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_u1_gate(angle: float):
     qubit = 5
-    gate = U1(qubit, theta=angle)
+    gate = U1(qubit, phi=angle)
 
     assert gate.name == "U1"
     assert gate.is_parameterized is True
@@ -170,40 +170,41 @@ def test_u1_gate(angle: float):
 # ------------------------------------------------------------------------------
 # U2 Gate Tests
 # ------------------------------------------------------------------------------
-@given(phi=strategies.floats(-1e3, 1e3), lam=strategies.floats(-1e3, 1e3))
-@example(phi=0.0, lam=0.0)
-@example(phi=np.pi / 4, lam=np.pi / 4)
-@example(phi=np.pi / 2, lam=-np.pi / 2)
-@example(phi=np.pi, lam=2 * np.pi)
-def test_u2_gate(phi, lam):
+@given(phi=strategies.floats(-1e3, 1e3), gamma=strategies.floats(-1e3, 1e3))
+@example(phi=0.0, gamma=0.0)
+@example(phi=np.pi / 4, gamma=np.pi / 4)
+@example(phi=np.pi / 2, gamma=-np.pi / 2)
+@example(phi=np.pi, gamma=2 * np.pi)
+def test_u2_gate(phi, gamma):
     """
     Parametrized test for the U2 gate.
+
     Based on the docstring and the code:
-        U2(phi, lam) = 1/sqrt(2) * [[ e^{-i(phi+lam)/2},    - e^{-i(phi-lam)/2} ],
-                                    [ e^{i(phi-lam)/2},      e^{i(phi+lam)/2}   ]]
+        U2(phi, gamma) = 1/sqrt(2) * [[ 1,    - e^{-i*gamma} ],
+                                    [ e^{i*phi},      e^{i*(phi+gamma)}   ]]
     """
     qubit = 7
-    gate = U2(qubit, phi=phi, lam=lam)
+    gate = U2(qubit, phi=phi, gamma=gamma)
 
     # Basic checks
     assert gate.name == "U2"
     assert gate.nqubits == 1
     assert gate.is_parameterized is True
     assert gate.nparameters == 2
-    assert gate.parameter_names == ["phi", "lam"]
+    assert gate.parameter_names == ["phi", "gamma"]
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
     # Check parameter values
     assert gate.parameters["phi"] == phi
-    assert gate.parameters["lam"] == lam
+    assert gate.parameters["gamma"] == gamma
 
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
-    a = np.exp(-1j * (phi + lam) / 2)
-    b = -np.exp(-1j * (phi - lam) / 2)
-    c = np.exp(1j * (phi - lam) / 2)
-    d = np.exp(1j * (phi + lam) / 2)
+    a = 1
+    b = -np.exp(1j * gamma)
+    c = np.exp(1j * phi)
+    d = np.exp(1j * (phi + gamma))
 
     expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
     assert_matrix_equal(gate._matrix, expected_matrix)
@@ -212,41 +213,41 @@ def test_u2_gate(phi, lam):
 # ------------------------------------------------------------------------------
 # U3 Gate Tests
 # ------------------------------------------------------------------------------
-@given(theta=strategies.floats(-1e3, 1e3), phi=strategies.floats(-1e3, 1e3), lam=strategies.floats(-1e3, 1e3))
-@example(theta=0.0, phi=0.0, lam=0.0)
-@example(theta=np.pi / 4, phi=np.pi / 4, lam=np.pi / 4)
-@example(theta=np.pi / 2, phi=0, lam=np.pi)
-@example(theta=-np.pi, phi=np.e, lam=-1.11)
-def test_u3_gate(theta, phi, lam):
+@given(theta=strategies.floats(-1e3, 1e3), phi=strategies.floats(-1e3, 1e3), gamma=strategies.floats(-1e3, 1e3))
+@example(theta=0.0, phi=0.0, gamma=0.0)
+@example(theta=np.pi / 4, phi=np.pi / 4, gamma=np.pi / 4)
+@example(theta=np.pi / 2, phi=0, gamma=np.pi)
+@example(theta=-np.pi, phi=np.e, gamma=-1.11)
+def test_u3_gate(theta, phi, gamma):
     """
     Parametrized test for the U3 gate.
 
-    NOTE: The docstring describes a matrix that depends on cos(theta/2) etc.,
-    but the code as given uses 1/sqrt(2)*[...] and not those trig functions.
-    We'll test the matrix that is actually coded.
+    Based on the docstring and the code:
+        U2(phi, gamma) = [[cos(theta/2), -exp(i*gamma)*sin(theta/2)],
+                                    [exp(i*phi)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
     """
     qubit = 8
-    gate = U3(qubit, theta=theta, phi=phi, lam=lam)
+    gate = U3(qubit, theta=theta, phi=phi, gamma=gamma)
 
     # Basic checks
     assert gate.name == "U3"
     assert gate.nqubits == 1
     assert gate.is_parameterized is True
     assert gate.nparameters == 3
-    assert gate.parameter_names == ["theta", "phi", "lam"]
+    assert gate.parameter_names == ["theta", "phi", "gamma"]
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
     # Check parameter values
     assert gate.parameters["theta"] == theta
     assert gate.parameters["phi"] == phi
-    assert gate.parameters["lam"] == lam
+    assert gate.parameters["gamma"] == gamma
 
     # Reconstruct the expected matrix.
     a = np.cos(theta / 2)
-    b = -np.exp(1j * lam) * np.sin(theta / 2)
+    b = -np.exp(1j * gamma) * np.sin(theta / 2)
     c = np.exp(1j * phi) * np.sin(theta / 2)
-    d = np.exp(1j * (phi + lam)) * np.cos(theta / 2)
+    d = np.exp(1j * (phi + gamma)) * np.cos(theta / 2)
 
     expected_matrix = np.array([[a, b], [c, d]], dtype=complex)
 
@@ -344,23 +345,23 @@ def test_cz_gate(control, target):
     [
         # Single-parameter gates
         (RX, {"theta": 0.0}, {"theta": np.pi}, {"phi": np.e}, [1.23], [1.23, 2.34]),
-        (RY, {"theta": 0.0}, {"theta": 1.11}, {"lam": 3.33}, [2.22], []),
-        (RZ, {"theta": 0.0}, {"theta": -0.99}, {"lam": 0.77}, [1.11], [1.11, 2.22]),
-        (U1, {"theta": 0.0}, {"theta": 4.56}, {"phi": 1.23}, [5.67], []),
-        # Two-parameter gate (U2 => phi, lam)
+        (RY, {"theta": 0.0}, {"theta": 1.11}, {"gamma": 3.33}, [2.22], []),
+        (RZ, {"phi": 0.0}, {"phi": -0.99}, {"theta": 0.77}, [1.11], [1.11, 2.22]),
+        (U1, {"phi": 0.0}, {"phi": 4.56}, {"theta": 1.23}, [5.67], []),
+        # Two-parameter gate (U2 => phi, gamma)
         (
             U2,
-            {"phi": 0.0, "lam": 0.0},
-            {"phi": 1.23, "lam": 2.34},  # valid dict
+            {"phi": 0.0, "gamma": 0.0},
+            {"phi": 1.23, "gamma": 2.34},  # valid dict
             {"theta": 3.45},  # invalid dict -> "theta" not recognized
             [4.56, 5.67],  # valid list, matching 2 parameters
             [1.23],
         ),  # invalid list (only 1 param)
-        # Three-parameter gate (U3 => theta, phi, lam)
+        # Three-parameter gate (U3 => theta, phi, gamma)
         (
             U3,
-            {"theta": 0.0, "phi": 0.0, "lam": 0.0},
-            {"theta": 1.11, "phi": 2.22, "lam": 3.33},  # valid dict
+            {"theta": 0.0, "phi": 0.0, "gamma": 0.0},
+            {"theta": 1.11, "phi": 2.22, "gamma": 3.33},  # valid dict
             {"junk": 9.99},  # invalid dict
             [4.44, 5.55, 6.66],  # valid list
             [7.77, 8.88],
