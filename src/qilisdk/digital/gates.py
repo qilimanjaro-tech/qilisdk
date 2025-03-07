@@ -27,8 +27,8 @@ class Gate(ABC):
 
     ANY_NUMBER_OF_QUBITS: int = -1
 
-    _NAME: ClassVar[str]
-    _NQUBITS: ClassVar[int]
+    NAME: ClassVar[str]
+    NQUBITS: ClassVar[int]
     PARAMETER_NAMES: ClassVar[list[str]]
 
     def __init__(self) -> None:
@@ -45,7 +45,7 @@ class Gate(ABC):
         Returns:
             str: The name of the gate.
         """
-        return self._NAME
+        return self.NAME
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -85,7 +85,7 @@ class Gate(ABC):
         Returns:
             int: The number of qubits for this gate.
         """
-        return self._NQUBITS if self._NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
+        return self.NQUBITS if self.NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
 
     @property
     def is_parameterized(self) -> bool:
@@ -176,8 +176,8 @@ class M(Gate):
     result is stored in a classical bit with the same label as the measured qubit.
     """
 
-    _NAME: ClassVar[str] = "M"
-    _NQUBITS: ClassVar[int] = -1
+    NAME: ClassVar[str] = "M"
+    NQUBITS: ClassVar[int] = -1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, *qubits: int) -> None:
@@ -200,8 +200,8 @@ class X(Gate):
         [1, 0]]
     """
 
-    _NAME: ClassVar[str] = "X"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "X"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -225,8 +225,8 @@ class Y(Gate):
          [i, 0]]
     """
 
-    _NAME: ClassVar[str] = "Y"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "Y"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -250,8 +250,8 @@ class Z(Gate):
          [0, -1]]
     """
 
-    _NAME: ClassVar[str] = "Z"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "Z"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -275,8 +275,8 @@ class H(Gate):
                      [1, -1]]
     """
 
-    _NAME: ClassVar[str] = "H"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "H"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -300,8 +300,8 @@ class S(Gate):
          [0, i]]
     """
 
-    _NAME: ClassVar[str] = "S"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "S"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -325,8 +325,8 @@ class T(Gate):
          [0, exp(i*pi/4)]]
     """
 
-    _NAME: ClassVar[str] = "T"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "T"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -350,8 +350,8 @@ class RX(Gate):
          [-i*sin(theta/2),     cos(theta/2)]]
     """
 
-    _NAME: ClassVar[str] = "RX"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "RX"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -380,8 +380,8 @@ class RY(Gate):
          [sin(theta/2),  cos(theta/2)]]
     """
 
-    _NAME: ClassVar[str] = "RY"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "RY"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -410,8 +410,8 @@ class RZ(Gate):
          [0,               exp(i*theta/2)]]
     """
 
-    _NAME: ClassVar[str] = "RZ"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "RZ"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -440,8 +440,8 @@ class U1(Gate):
          [0, exp(i*theta)]]
     """
 
-    _NAME: ClassVar[str] = "U1"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "U1"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -467,8 +467,8 @@ class U2(Gate):
                    [exp(i*(phi-lambda)/2),    exp(i*(phi+lambda)/2)]]
     """
 
-    _NAME: ClassVar[str] = "U2"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "U2"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "lam"]
 
     def __init__(self, qubit: int, *, phi: float, lam: float) -> None:
@@ -501,8 +501,8 @@ class U3(Gate):
          [sin(theta/2)*exp(i*(phi-lambda)/2),    cos(theta/2)*exp(i*(phi+lambda)/2)]]
     """
 
-    _NAME: ClassVar[str] = "U3"
-    _NQUBITS: ClassVar[int] = 1
+    NAME: ClassVar[str] = "U3"
+    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "lam"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, lam: float) -> None:
@@ -538,8 +538,8 @@ class CNOT(Gate):
          [0, 0, 1, 0]]
     """
 
-    _NAME: ClassVar[str] = "CNOT"
-    _NQUBITS: ClassVar[int] = 2
+    NAME: ClassVar[str] = "CNOT"
+    NQUBITS: ClassVar[int] = 2
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
@@ -567,8 +567,8 @@ class CZ(Gate):
          [0, 0, 0, -1]]
     """
 
-    _NAME: ClassVar[str] = "CZ"
-    _NQUBITS: ClassVar[int] = 2
+    NAME: ClassVar[str] = "CZ"
+    NQUBITS: ClassVar[int] = 2
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
