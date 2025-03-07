@@ -15,7 +15,7 @@
 from typing import ClassVar, Literal, Union
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, M
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
 
 
 class Ansatz:
@@ -97,27 +97,19 @@ class HardwareEfficientAnsatz(Ansatz):
         return self.nqubits * (self.layers + 1) * len(self.one_qubit_gate.PARAMETER_NAMES)
 
     def construct_circuit(
-        self, params: list[float]  # , density_matrix: bool = True, ini_state: list[int] | None = None
+        self, params: list[float]
     ) -> Circuit:
-        """_summary_
+        """construct the circuit with the given list of parameters.
 
         Args:
-            params (list[float]): _description_
-            density_matrix (bool, optional): _description_. Defaults to True.
-            ini_state (list[int] | None, optional): _description_. Defaults to None.
+            params (list[float]): the list of parameters for the unitary gates.
 
-        Raises:
-            ValueError: _description_
+        Returns:
+            Circuit: the constructed circuit with the updated parameters
         """
-        # if ini_state:
-        #     ini_state_circuit = self.create_initial_state(ini_state)
-        # else:
-        #     ini_state_circuit = self.create_initial_state([0] * self.n_qubits)
-        # if density_matrix:
-        #     ini_state_circuit = np.matmul(ini_state_circuit.reshape(-1, 1), ini_state_circuit.reshape(1, -1))
 
-        # self.init_state = ini_state_circuit
         parameters = list(params.copy())
+
         # Assert number of parameters is correct:
         if len(parameters) < self.nparameters:
             raise ValueError(f"Expecting {self.nparameters} but received {len(parameters)}")
@@ -125,9 +117,6 @@ class HardwareEfficientAnsatz(Ansatz):
         self._circuit = Circuit(self.nqubits)
         # Add initial layer of unitaries
         for i in range(self.nqubits):
-            # unit_params = tuple(
-            #     parameters.pop() for _ in range(self._PARAMETER_PER_GATE[self.gate_types["one_qubit_gate"]])
-            # )
             self._circuit.add(
                 self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
             )
@@ -141,16 +130,12 @@ class HardwareEfficientAnsatz(Ansatz):
         if construct_layer is not None:
             for _ in range(self.layers):
                 construct_layer(parameters)
-        for i in range(self.nqubits):
-            self._circuit.add(M(i))
-        
+        self._circuit.add(M(*list(range(self.nqubits))))
+
         return self._circuit
 
     def construct_layer_interposed(self, parameters: list[float]) -> None:
         for i in range(self.nqubits):
-            # unit_params = tuple(
-            #     params.pop() for _ in range(len(self.gate_types["one_qubit_gate"]._PARAMETER_NAMES))
-            # )
             self._circuit.add(
                 self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
             )
@@ -159,10 +144,8 @@ class HardwareEfficientAnsatz(Ansatz):
 
     def construct_layer_grouped(self, parameters: list[float]) -> None:
         for i in range(self.nqubits):
-            # unit_params = tuple(params.pop() for _ in range(len(self.gate_types["one_qubit_gate"]._PARAMETER_NAMES)))
             self._circuit.add(
                 self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
             )
-
         for i, j in self.connectivity:
             self._circuit.add(self.two_qubit_gate(i, j))
