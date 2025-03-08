@@ -437,7 +437,7 @@ class RZ(Gate):
 
     NAME: ClassVar[str] = "RZ"
     NQUBITS: ClassVar[int] = 1
-    PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
         """
@@ -474,7 +474,7 @@ class U1(Gate):
 
     NAME: ClassVar[str] = "U1"
     NQUBITS: ClassVar[int] = 1
-    PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
         """
@@ -512,7 +512,7 @@ class U2(Gate):
 
     NAME: ClassVar[str] = "U2"
     NQUBITS: ClassVar[int] = 1
-    PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "lam"]
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
     def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
         """
@@ -557,7 +557,7 @@ class U3(Gate):
 
     NAME: ClassVar[str] = "U3"
     NQUBITS: ClassVar[int] = 1
-    PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "lam"]
+    PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
         """
