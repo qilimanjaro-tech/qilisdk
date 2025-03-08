@@ -66,7 +66,7 @@ def test_parameterized_gate_to_qasm():
     circuit.add(RX(0, theta=math.pi))
     qasm_str = to_qasm2(circuit)
     # Expect the RX gate to be converted to "rx(3.14) q[0];"
-    assert re.search(r"^\s*rx\(\s*3\.14\s*\)\s+q\[0\];\s*$", qasm_str, re.MULTILINE)
+    assert re.search(rf"^\s*rx\(\s*{math.pi}\s*\)\s+q\[0\];\s*$", qasm_str, re.MULTILINE)
 
 
 def test_two_qubit_gate_to_qasm():
