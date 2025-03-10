@@ -27,9 +27,9 @@ class Gate(ABC):
 
     ANY_NUMBER_OF_QUBITS: int = -1
 
-    _NAME: ClassVar[str]
-    _NQUBITS: ClassVar[int]
-    _PARAMETER_NAMES: ClassVar[list[str]]
+    NAME: ClassVar[str]
+    NQUBITS: ClassVar[int]
+    PARAMETER_NAMES: ClassVar[list[str]]
 
     def __init__(self) -> None:
         self._control_qubits: tuple[int, ...] = ()
@@ -45,7 +45,7 @@ class Gate(ABC):
         Returns:
             str: The name of the gate.
         """
-        return self._NAME
+        return self.NAME
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -85,7 +85,7 @@ class Gate(ABC):
         Returns:
             int: The number of qubits for this gate.
         """
-        return self._NQUBITS if self._NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
+        return self.NQUBITS if self.NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
 
     @property
     def is_parameterized(self) -> bool:
@@ -105,7 +105,7 @@ class Gate(ABC):
         Returns:
             int: The count of parameters needed by the gate.
         """
-        return len(self._PARAMETER_NAMES)
+        return len(self.PARAMETER_NAMES)
 
     @property
     def parameter_names(self) -> list[str]:
@@ -115,7 +115,7 @@ class Gate(ABC):
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return self._PARAMETER_NAMES
+        return self.PARAMETER_NAMES
 
     @property
     def parameter_values(self) -> list[float]:
@@ -135,7 +135,7 @@ class Gate(ABC):
         Returns:
             dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
-        return dict(zip(self._PARAMETER_NAMES, self._parameter_values))
+        return dict(zip(self.PARAMETER_NAMES, self._parameter_values))
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -147,11 +147,11 @@ class Gate(ABC):
         Raises:
             InvalidParameterNameError: If any provided parameter name is not valid for this gate.
         """
-        if any(name not in self._PARAMETER_NAMES for name in parameters):
+        if any(name not in self.PARAMETER_NAMES for name in parameters):
             raise InvalidParameterNameError
 
         for name, value in parameters.items():
-            self._parameter_values[self._PARAMETER_NAMES.index(name)] = value
+            self._parameter_values[self.PARAMETER_NAMES.index(name)] = value
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
@@ -176,9 +176,9 @@ class M(Gate):
     result is stored in a classical bit with the same label as the measured qubit.
     """
 
-    _NAME: ClassVar[str] = "M"
-    _NQUBITS: ClassVar[int] = -1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "M"
+    NQUBITS: ClassVar[int] = -1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, *qubits: int) -> None:
         """
@@ -202,9 +202,9 @@ class X(Gate):
     This is a pi radians rotation around the X-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "X"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "X"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -229,9 +229,9 @@ class Y(Gate):
     This is a pi radians rotation around the Y-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "Y"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "Y"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -256,9 +256,9 @@ class Z(Gate):
     This is a pi radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "Z"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "Z"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -283,9 +283,9 @@ class H(Gate):
     This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "H"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "H"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -310,9 +310,9 @@ class S(Gate):
     This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "S"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "S"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -337,9 +337,9 @@ class T(Gate):
     This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    _NAME: ClassVar[str] = "T"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "T"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
         """
@@ -364,9 +364,9 @@ class RX(Gate):
     This is an exponential of the Pauli-X operator: `RX(theta) = exp(-i*theta*X/2)`.
     """
 
-    _NAME: ClassVar[str] = "RX"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    NAME: ClassVar[str] = "RX"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
         """
@@ -396,9 +396,9 @@ class RY(Gate):
     This is an exponential of the Pauli-Y operator: `RY(theta) = exp(-i*theta*Y/2)`.
     """
 
-    _NAME: ClassVar[str] = "RY"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
+    NAME: ClassVar[str] = "RY"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
         """
@@ -435,9 +435,9 @@ class RZ(Gate):
         - `RZ(phi=pi/4) = exp(-i*pi/8) T`
     """
 
-    _NAME: ClassVar[str] = "RZ"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
+    NAME: ClassVar[str] = "RZ"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
         """
@@ -472,9 +472,9 @@ class U1(Gate):
         - `U1(phi=np.pi/4) = T`
     """
 
-    _NAME: ClassVar[str] = "U1"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
+    NAME: ClassVar[str] = "U1"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
         """
@@ -510,9 +510,9 @@ class U2(Gate):
         - `U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)`
     """
 
-    _NAME: ClassVar[str] = "U2"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
+    NAME: ClassVar[str] = "U2"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
     def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
         """
@@ -555,9 +555,9 @@ class U3(Gate):
         - `U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)`
     """
 
-    _NAME: ClassVar[str] = "U3"
-    _NQUBITS: ClassVar[int] = 1
-    _PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
+    NAME: ClassVar[str] = "U3"
+    NQUBITS: ClassVar[int] = 1
+    PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
         """
@@ -595,9 +595,9 @@ class CNOT(Gate):
         `CNOT(control, target) = H(target) CZ(control, target) H(target)`
     """
 
-    _NAME: ClassVar[str] = "CNOT"
-    _NQUBITS: ClassVar[int] = 2
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "CNOT"
+    NQUBITS: ClassVar[int] = 2
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
         """
@@ -630,9 +630,9 @@ class CZ(Gate):
         `CZ(control, target) = H(target) CNOT(control, target) H(target)`
     """
 
-    _NAME: ClassVar[str] = "CZ"
-    _NQUBITS: ClassVar[int] = 2
-    _PARAMETER_NAMES: ClassVar[list[str]] = []
+    NAME: ClassVar[str] = "CZ"
+    NQUBITS: ClassVar[int] = 2
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
         """

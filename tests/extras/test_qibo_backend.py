@@ -146,9 +146,9 @@ def test_to_qibo_unsupported_gate():
 
     # Create a dummy gate type that QiboBackend doesn't support
     class MyCustomGate(Gate):
-        _NAME = "MyGate"
-        _NQUBITS = 1
-        _PARAMETER_NAMES = []
+        NAME = "MyGate"
+        NQUBITS = 1
+        PARAMETER_NAMES = []
 
         def __init__(self, qubit: int):
             super().__init__()
