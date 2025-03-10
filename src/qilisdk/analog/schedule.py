@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict
+from typing import Callable
 from warnings import warn
 
 from qilisdk.analog.hamiltonian import Hamiltonian
@@ -22,17 +22,17 @@ class Schedule:
         self,
         T: float,
         dt: float,
-        hamiltonians: Dict[str, Hamiltonian] | None = None,
-        schedule: Dict[int, Dict[str, float]] | None = None,
+        hamiltonians: dict[str, Hamiltonian] | None = None,
+        schedule: dict[int, dict[str, float]] | None = None,
     ) -> None:
         """Initializes a Schedule object.
 
         Args:
             T (float): the total annealing time.
             dt (float): the time step of the annealing. Note that `T` needs to be divisible by `dt`
-            hamiltonians (Dict[str, Hamiltonian], optional): A dictionary containg the list of the hamiltonians
+            hamiltonians (dict[str, Hamiltonian], optional): A dictionary containg the list of the hamiltonians
                 known by the schedule. Each hamiltonian is identified by a string. Defaults to None.
-            schedule (Dict[int, Dict[str, float]], optional): A dictionary containing the coefficients of the
+            schedule (dict[int, dict[str, float]], optional): A dictionary containing the coefficients of the
                 hamiltonians at each time step. Defaults to None.
                 Note: you don't need to specify the coefficient of the hamiltonian if it has not
                 changed over the last time step.
@@ -42,8 +42,8 @@ class Schedule:
             ValueError: if the schedule provided references hamiltonians that have not been defined in the schedule.
         """
 
-        self._hamiltonians = hamiltonians if hamiltonians is not None else {}
-        self._schedule = schedule if schedule is not None else {0: {}}
+        self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
+        self._schedule: dict[int, dict[str, float]] = schedule if schedule is not None else {0: {}}
         self._T = T
         self._dt = dt
         self.iter_time_step = 0
@@ -92,24 +92,31 @@ class Schedule:
             self._hamiltonians[label] = hamiltonian
             self._schedule[0][label] = 0
         else:
-            warn(f"label {label} is already assigned to a hamiltonian, ignoring operation", RuntimeWarning)
+            warn(
+                (
+                    f"label {label} is already assigned to a hamiltonian, "
+                    + "ignoring new hamiltonian and updating schedule of existing hamiltonian."
+                ),
+                RuntimeWarning,
+            )
 
         if schedule is not None:
             for t in range(int(self.T / self.dt) + 1):
                 self.update_hamiltonian_coefficient_at_time_step(t, label, schedule(t, **kwargs))
 
-    def add_schedule_step(self, time_step: int, hamiltonian_coefficient_list: Dict[str, float]) -> None:
+    def add_schedule_step(self, time_step: int, hamiltonian_coefficient_list: dict[str, float]) -> None:
         """add a new time step entry.
 
         Args:
             time_step (int): the time at which the hamiltonian coefficients are updated.
                 The global time at which this event occurs is `dt * time_step`.
-            hamiltonian_coefficient_list (Dict[str, float]): a dictionary of the hamiltonians
+            hamiltonian_coefficient_list (dict[str, float]): a dictionary of the hamiltonians
                 and their corresponding coefficients at the given time step.
                 Note: if a hamiltonian is not present in the dictionary then it's assumed that
                 their coefficient value has not changed.
         Raises:
-            ValueError: if the hamiltonian_coefficient_list references a hamiltonian that was not defined in the schedule.
+            ValueError: if the hamiltonian_coefficient_list references a hamiltonian that was not
+            defined in the schedule.
         """
         if time_step in self._schedule:
             warn(
