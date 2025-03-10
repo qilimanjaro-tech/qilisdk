@@ -220,9 +220,10 @@ class Hamiltonian:
 
     @property
     def nqubits(self) -> int:
-        """Number of distinct qubits across all terms."""
+        """Number of qubits acting on the hamiltonian."""
         qubits = {op.qubit for key in self._elements for op in key}
-        return len(qubits)
+
+        return max(qubits) + 1
 
     @property
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:

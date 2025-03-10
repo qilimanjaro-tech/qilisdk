@@ -20,6 +20,7 @@ from scipy.sparse import csc_array, csr_matrix, issparse, kron, sparray, spmatri
 from scipy.sparse.linalg import expm
 
 Complex = int | float | complex
+TWO = 2
 
 
 class QuantumObject:
@@ -31,6 +32,18 @@ class QuantumObject:
             self._data = data
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
+        invalid_shape = (
+            len(self._data.shape) > TWO
+            or (self._data.shape[0] == 1 and self._data.shape[1] % 2 != 0)
+            or (self._data.shape[1] == 1 and self._data.shape[0] % 2 != 0)
+            or (self._data.shape[0] != self._data.shape[1])
+            or (self._data.shape[1] == self._data.shape[0] and self._data.shape[0] % 2 != 0)
+        )
+        if invalid_shape:
+            raise ValueError(
+                "Dimension of data is wrong. expected data to have shape similar to (2**N, 2**N), (1, 2**N), (2**N, 1)",
+                f"but received {self._data.shape}",
+            )
 
     @property
     def data(self) -> csr_matrix:
@@ -39,6 +52,16 @@ class QuantumObject:
     @property
     def dense(self) -> np.ndarray:
         return self._data.toarray()
+
+    @property
+    def nqubits(self) -> int:
+        if self._data.shape[0] == self._data.shape[1]:
+            return np.log2(self._data.shape[0])
+        if self._data.shape[0] == 1:
+            return np.log2(self._data.shape[1])
+        if self._data.shape[1] == 1:
+            return np.log2(self._data.shape[0])
+        return -1
 
     def dag(self) -> QuantumObject:
         """Computes the Adjoint (dagger) of Quantum Object.

@@ -17,4 +17,5 @@ class Backend: ...
 
 
 class AnalogBackend(Backend):
-    def evolve(self) -> list[float | int | complex]: ...
+    def evolve(self) -> list[float | int | complex]:
+        raise NotImplementedError

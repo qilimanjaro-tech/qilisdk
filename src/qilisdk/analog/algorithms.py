@@ -13,8 +13,11 @@
 # limitations under the License.
 
 
+import numpy as np
+from scipy.sparse import identity, spmatrix
+
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.analog.quantum_objects import QuantumObject, tensor
 from qilisdk.analog.schedule import Schedule
 from qilisdk.common.backend import AnalogBackend
 from qilisdk.digital.circuit import Circuit
@@ -55,11 +58,24 @@ class TimeEvolution(AnalogAlgorithm):
         self.observables = []
         for obs in observables:
             if isinstance(obs, PauliOperator):
+                _obs_ham = Hamiltonian({(obs,): 1})
+                if _obs_ham.nqubits < self.schedule.nqubits:
+                    _obs = _add_padding(_obs_ham.to_matrix(), self.schedule.nqubits - _obs_ham.nqubits)
+                else:
+                    _obs = QuantumObject(_obs_ham.to_matrix())
                 self.observables.append(QuantumObject(obs.matrix))  # append Identities to this.
             elif isinstance(obs, Hamiltonian):
-                self.observables.append(QuantumObject(obs.to_matrix()))  # check the number of qubits.
+                if obs.nqubits < self.schedule.nqubits:
+                    _obs = _add_padding(obs.to_matrix(), self.schedule.nqubits - obs.nqubits)
+                else:
+                    _obs = QuantumObject(obs.to_matrix())
+                self.observables.append(_obs)
             elif isinstance(obs, QuantumObject):
-                self.observables.append(obs)  # check the number of qubits.
+                if obs.nqubits < self.schedule.nqubits:
+                    _obs = _add_padding(obs.data, self.schedule.nqubits - obs.nqubits)
+                else:
+                    _obs = obs
+                self.observables.append(_obs)  # check the number of qubits.
             else:
                 raise ValueError(
                     "Only PauliOperators, Hamiltonians, and QuantumObjects are considered valid observables."
@@ -68,3 +84,9 @@ class TimeEvolution(AnalogAlgorithm):
 
     def evolve(self) -> list[Complex]:
         return self.backend.evolve()
+
+
+def _add_padding(matrix: np.ndarray | spmatrix, num_missing_dim: int) -> QuantumObject:
+    if num_missing_dim == 0:
+        return QuantumObject(matrix)
+    return tensor([QuantumObject(matrix), QuantumObject(identity(2**num_missing_dim))])
