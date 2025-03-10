@@ -56,13 +56,13 @@ class Schedule:
                     self._schedule[0][l] = 0
 
         for time_step in self._schedule.values():
-            if not all(s in hamiltonians for s in time_step):
+            if not all(s in self._hamiltonians for s in time_step):
                 raise ValueError(
                     "All hamiltonians defined in the schedule need to be declared in the hamiltonians dictionary."
                 )
 
     @property
-    def hamiltonians(self) -> Hamiltonian:
+    def hamiltonians(self) -> dict[str, Hamiltonian]:
         return self._hamiltonians
 
     @property
@@ -70,11 +70,11 @@ class Schedule:
         return dict(sorted(self._schedule.items()))
 
     @property
-    def T(self) -> int:
+    def T(self) -> float:
         return self._T
 
     @property
-    def dt(self) -> int:
+    def dt(self) -> float:
         return self._dt
 
     def add_hamiltonian(
@@ -149,7 +149,7 @@ class Schedule:
         self._schedule[time_step][hamiltonian_label] = new_coefficient
 
     def __getitem__(self, time_step: int) -> Hamiltonian:
-        ham = 0
+        ham = Hamiltonian()
         read_labels = []
 
         if time_step not in self._schedule:
