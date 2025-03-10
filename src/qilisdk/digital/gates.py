@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from abc import ABC
 from typing import ClassVar
 
 import numpy as np
+from scipy.linalg import expm
 
 from .exceptions import InvalidParameterNameError, ParametersNotEqualError
 
@@ -25,10 +27,7 @@ class Gate(ABC):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    ANY_NUMBER_OF_QUBITS: int = -1
-
     NAME: ClassVar[str]
-    NQUBITS: ClassVar[int]
     PARAMETER_NAMES: ClassVar[list[str]]
 
     def __init__(self) -> None:
@@ -46,6 +45,16 @@ class Gate(ABC):
             str: The name of the gate.
         """
         return self.NAME
+
+    @property
+    def matrix(self) -> np.ndarray:
+        """
+        Retrieve the matrix of the gate.
+
+        Returns:
+            np.ndarray: The matrix of the gate.
+        """
+        return self._matrix
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -85,7 +94,7 @@ class Gate(ABC):
         Returns:
             int: The number of qubits for this gate.
         """
-        return self.NQUBITS if self.NQUBITS != self.ANY_NUMBER_OF_QUBITS else len(self.qubits)
+        return len(self.qubits)
 
     @property
     def is_parameterized(self) -> bool:
@@ -170,6 +179,132 @@ class Gate(ABC):
             self._parameter_values[i] = value
 
 
+class Unitary(Gate):
+    def controlled(self, *control_qubits: int) -> Controlled:
+        """
+        Creates a controlled version of this unitary gate.
+
+        This method returns a new instance of a Controlled gate where the provided qubits serve as the
+        control qubits and the current unitary gate is used as the target. The resulting gate operates
+        on both the control and target qubits.
+
+        Args:
+            *control_qubits (int): One or more integer indices specifying the control qubits.
+
+        Returns:
+            Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
+        """
+        return Controlled(*control_qubits, gate=self)
+
+    def adjoint(self) -> Adjoint:
+        """
+        Returns the adjoint (conjugate transpose) of this unitary gate.
+
+        This method constructs and returns a new gate whose matrix is the conjugate transpose of the current
+        gate's matrix. The adjoint (or Hermitian conjugate) is commonly used to reverse the effect of a unitary operation.
+
+        Returns:
+            Adjoint: A new Adjoint gate instance representing the adjoint of this gate.
+        """
+        return Adjoint(self)
+
+    def exponential(self) -> Exponential:
+        """
+        Returns the exponential of this unitary gate.
+
+        This method computes the matrix exponential of the current gate's matrix, resulting in a new gate.
+        The matrix exponential is useful for representing continuous time evolution in quantum systems and
+        appears in various quantum mechanics and quantum computing applications.
+
+        Returns:
+            Exponential: A new Exponential gate instance whose matrix is the matrix exponential of the current gate's matrix.
+        """
+        return Exponential(self)
+
+
+class Controlled(Gate):
+    def __init__(self, *control_qubits: int, gate: Unitary) -> None:
+        super().__init__()
+        self._gate = gate
+        self._control_qubits = control_qubits
+        self._target_qubits = gate.qubits
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        I_full = np.eye(1 << self.nqubits, dtype=complex)
+        # Construct projector P_control = |1...1><1...1| on the n control qubits.
+        P = np.array([[0, 0], [0, 1]], dtype=complex)
+        for _ in range(len(self.control_qubits) - 1):
+            P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=complex))
+        # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
+        I_target = np.eye(1 << len(self.target_qubits), dtype=complex)
+        # The controlled gate is then:
+        controlled = I_full + np.kron(P, self._gate.matrix - I_target)
+        return controlled
+
+    @property
+    def name(self) -> str:
+        return "C" * len(self.control_qubits) + self._gate.name
+
+
+class Adjoint(Gate):
+    """
+    Represents the adjoint (conjugate transpose) of a unitary gate.
+    """
+
+    def __init__(self, gate: Unitary) -> None:
+        super().__init__()
+        self._gate = gate
+        self._target_qubits = gate.target_qubits
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        return self._gate.matrix.conj().T
+
+    @property
+    def name(self) -> str:
+        """
+        Get the name of the adjoint gate.
+
+        The name is constructed by appending an adjoint symbol (†) to the name of the underlying gate.
+        For example, if the underlying gate's name is "X", this property returns "X†".
+
+        Returns:
+            str: The name of the adjoint gate.
+        """
+        return self._gate.name + "†"
+
+
+class Exponential(Gate):
+    """
+    Represents the exponential of a unitary gate.
+    The matrix of this gate is computed as the matrix exponential (e^(gate.matrix))
+    of the underlying gate's matrix.
+    """
+
+    def __init__(self, gate: Unitary) -> None:
+        super().__init__()
+        self._gate = gate
+        self._target_qubits = gate.target_qubits
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        return expm(self._gate.matrix)
+
+    @property
+    def name(self) -> str:
+        """
+        Get the name of the exponential gate.
+
+        The name is constructed by wrapping the underlying gate's name within "exp(...)".
+        For example, if the underlying gate's name is "X", the exponential gate's name is "exp(X)".
+
+        Returns:
+            str: The generated name of the exponential gate.
+        """
+        return f"e^{self._gate.name}"
+
+
 class M(Gate):
     """
     Measurement operation on a qubit. The measurement is performed in the computational basis and the
@@ -177,7 +312,6 @@ class M(Gate):
     """
 
     NAME: ClassVar[str] = "M"
-    NQUBITS: ClassVar[int] = -1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, *qubits: int) -> None:
@@ -191,7 +325,7 @@ class M(Gate):
         self._target_qubits = qubits
 
 
-class X(Gate):
+class X(Unitary):
     """
     The Pauli-X gate.
 
@@ -203,7 +337,6 @@ class X(Gate):
     """
 
     NAME: ClassVar[str] = "X"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -218,7 +351,7 @@ class X(Gate):
         self._matrix = np.array([[0, 1], [1, 0]], dtype=complex)
 
 
-class Y(Gate):
+class Y(Unitary):
     """
     The Pauli-Y gate.
 
@@ -230,7 +363,6 @@ class Y(Gate):
     """
 
     NAME: ClassVar[str] = "Y"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -245,7 +377,7 @@ class Y(Gate):
         self._matrix = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
-class Z(Gate):
+class Z(Unitary):
     """
     The Pauli-Z gate.
 
@@ -257,7 +389,6 @@ class Z(Gate):
     """
 
     NAME: ClassVar[str] = "Z"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -272,7 +403,7 @@ class Z(Gate):
         self._matrix = np.array([[1, 0], [0, -1]], dtype=complex)
 
 
-class H(Gate):
+class H(Unitary):
     """
     The Hadamard gate.
 
@@ -284,7 +415,6 @@ class H(Gate):
     """
 
     NAME: ClassVar[str] = "H"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -299,7 +429,7 @@ class H(Gate):
         self._matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
 
 
-class S(Gate):
+class S(Unitary):
     """
     Represents the S gate, which induces a pi/2 phase.
 
@@ -311,7 +441,6 @@ class S(Gate):
     """
 
     NAME: ClassVar[str] = "S"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -326,7 +455,7 @@ class S(Gate):
         self._matrix = np.array([[1, 0], [0, 1j]], dtype=complex)
 
 
-class T(Gate):
+class T(Unitary):
     """
     Represents the T gate, which induces a pi/4 phase.
 
@@ -338,7 +467,6 @@ class T(Gate):
     """
 
     NAME: ClassVar[str] = "T"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, qubit: int) -> None:
@@ -353,7 +481,7 @@ class T(Gate):
         self._matrix = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
 
 
-class RX(Gate):
+class RX(Unitary):
     """
     Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.
 
@@ -365,7 +493,6 @@ class RX(Gate):
     """
 
     NAME: ClassVar[str] = "RX"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -385,7 +512,7 @@ class RX(Gate):
         self._matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
 
 
-class RY(Gate):
+class RY(Unitary):
     """
     Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.
 
@@ -397,7 +524,6 @@ class RY(Gate):
     """
 
     NAME: ClassVar[str] = "RY"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -417,7 +543,7 @@ class RY(Gate):
         self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
-class RZ(Gate):
+class RZ(Unitary):
     """
     Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
 
@@ -436,7 +562,6 @@ class RZ(Gate):
     """
 
     NAME: ClassVar[str] = "RZ"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
@@ -456,7 +581,7 @@ class RZ(Gate):
         self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
-class U1(Gate):
+class U1(Unitary):
     """
     Represents the U1 gate defined by an azimuthal angle `phi`.
 
@@ -473,7 +598,6 @@ class U1(Gate):
     """
 
     NAME: ClassVar[str] = "U1"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
@@ -490,7 +614,7 @@ class U1(Gate):
         self._matrix = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
-class U2(Gate):
+class U2(Unitary):
     """
     Represents the U2 gate defined by the angles `phi` and `gamma`.
 
@@ -511,7 +635,6 @@ class U2(Gate):
     """
 
     NAME: ClassVar[str] = "U2"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
     def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
@@ -535,7 +658,7 @@ class U2(Gate):
         )
 
 
-class U3(Gate):
+class U3(Unitary):
     """
     Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.
 
@@ -556,7 +679,6 @@ class U3(Gate):
     """
 
     NAME: ClassVar[str] = "U3"
-    NQUBITS: ClassVar[int] = 1
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
@@ -581,6 +703,8 @@ class U3(Gate):
         )
 
 
+# TODO(vyron): we don't need this anymore
+# QHC-907
 class CNOT(Gate):
     """
     Represents the CNOT gate.
@@ -596,7 +720,6 @@ class CNOT(Gate):
     """
 
     NAME: ClassVar[str] = "CNOT"
-    NQUBITS: ClassVar[int] = 2
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
@@ -613,6 +736,8 @@ class CNOT(Gate):
         self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 
 
+# TODO(vyron): we don't need this anymore
+# QHC-907
 class CZ(Gate):
     """
     Represents the CZ gate.
@@ -631,7 +756,6 @@ class CZ(Gate):
     """
 
     NAME: ClassVar[str] = "CZ"
-    NQUBITS: ClassVar[int] = 2
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
     def __init__(self, control: int, target: int) -> None:
