@@ -64,7 +64,7 @@ def test_construct_circuit_grouped_structure():
     layers = 1
     ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
     params = [0.5] * ansatz.nparameters
-    circuit = ansatz.construct_circuit(params)
+    circuit = ansatz.get_circuit(params)
     # Check the measurement gate is added at the end.
     assert isinstance(circuit.gates[-1], M)
     # Check total number of gates.
@@ -87,7 +87,7 @@ def test_construct_circuit_interposed_structure():
     layers = 1
     ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="interposed")
     params = [0.5] * ansatz.nparameters
-    circuit = ansatz.construct_circuit(params)
+    circuit = ansatz.get_circuit(params)
     assert len(circuit.gates) == 13
 
 
@@ -102,7 +102,7 @@ def test_insufficient_parameters():
     )
     params = [0.1] * (ansatz.nparameters - 1)
     with pytest.raises(ValueError, match="Expecting"):
-        ansatz.construct_circuit(params)
+        ansatz.get_circuit(params)
 
 
 def test_invalid_connectivity():
@@ -175,9 +175,9 @@ def test_circuit_reset_on_multiple_constructs():
     layers = 1
     ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
     params1 = [0.5] * ansatz.nparameters
-    circuit1 = ansatz.construct_circuit(params1)
+    circuit1 = ansatz.get_circuit(params1)
     params2 = [0.5] * ansatz.nparameters
-    circuit2 = ansatz.construct_circuit(params2)
+    circuit2 = ansatz.get_circuit(params2)
     # Verify that a new Circuit instance is created on each call.
     assert circuit1 is not circuit2
     # Also check that the new circuit's gate list is not a concatenation of previous gates.
@@ -192,7 +192,7 @@ def test_measurement_gate_added():
     n_qubits = 3
     ansatz = create_ansatz(n_qubits=n_qubits, connectivity="Linear", structure="grouped")
     params = [0.5] * ansatz.nparameters
-    circuit = ansatz.construct_circuit(params)
+    circuit = ansatz.get_circuit(params)
     # Check that the last gate is a measurement gate (instance of M)
     meas_gate = circuit.gates[-1]
     assert isinstance(meas_gate, M)
