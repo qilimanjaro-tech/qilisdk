@@ -14,7 +14,7 @@
 import numpy as np
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
-from .gates import Gate
+from .gates import Gate, M
 
 
 class Circuit:
@@ -98,6 +98,8 @@ class Circuit:
         """
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
+        if isinstance(gate, M) and gate.target_qubits == ():
+            gate = M(*range(self.nqubits))
         if gate.is_parameterized:
             self._parameterized_gates.append(gate)
         self._gates.append(gate)

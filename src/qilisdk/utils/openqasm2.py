@@ -55,9 +55,12 @@ def to_qasm2(circuit: Circuit) -> str:
     for gate in circuit.gates:
         # Special conversion for measurement.
         if isinstance(gate, M):
-            # Generate a measurement for each target qubit.
-            for q in gate.target_qubits:
-                qasm_lines.append(f"measure q[{q}] -> c[{q}];")
+            if len(gate.target_qubits) == circuit.nqubits:
+                qasm_lines.append("measure q -> c;")
+            else:
+                # Generate a measurement for each target qubit.
+                measurements = (f"measure q[{q}] -> c[{q}];" for q in gate.target_qubits)
+                qasm_lines.extend(measurements)
         else:
             # Map the internal gate name to its QASM equivalent.
             qasm_name = OPENQASM2_MAP.get(type(gate), gate.name.lower())
@@ -132,6 +135,13 @@ def from_qasm2(qasm_str: str) -> Circuit:
                 if circuit is None:
                     raise ValueError("Quantum register must be declared before measurement.")
                 circuit.add(M(q_index))
+            else:
+                # Special case: "measure q -> c;" means measure all qubits
+                m_all = re.match(r"measure\s+q\s*->\s*c\s*;", line)
+                if m_all:
+                    if circuit is None:
+                        raise ValueError("Quantum register must be declared before measurement.")
+                    circuit.add(M(*list(range(circuit.nqubits))))
             continue
         # Process gate instructions.
         # Pattern breakdown:
