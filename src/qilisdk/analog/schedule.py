@@ -47,6 +47,9 @@ class Schedule:
         self._T = T
         self._dt = dt
         self.iter_time_step = 0
+        self._nqubits = 0
+        for ham in self._hamiltonians.values():
+            self._nqubits = max(self._nqubits, ham.nqubits)
 
         if 0 not in self._schedule:
             self._schedule[0] = dict.fromkeys(self._hamiltonians, 0.0)
@@ -77,6 +80,10 @@ class Schedule:
     def dt(self) -> float:
         return self._dt
 
+    @property
+    def nqubits(self) -> int:
+        return self._nqubits
+
     def add_hamiltonian(
         self, label: str, hamiltonian: Hamiltonian, schedule: Callable | None = None, **kwargs: dict
     ) -> None:
@@ -91,6 +98,7 @@ class Schedule:
         if label not in self._hamiltonians:
             self._hamiltonians[label] = hamiltonian
             self._schedule[0][label] = 0
+            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
         else:
             warn(
                 (
