@@ -197,7 +197,7 @@ class Unitary(Gate):
     """
 
     def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, float] = {}) -> None:
-        # Check for duplicate integers in control_qubits.
+        # Check for duplicate integers in target_qubits.
         if len(target_qubits) != len(set(target_qubits)):
             raise ValueError("Duplicate target qubits found.")
 
@@ -215,7 +215,7 @@ class Unitary(Gate):
 
     @property
     def parameters(self) -> dict[str, float]:
-        return self._parameters
+        return dict(self._parameters)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -408,8 +408,8 @@ class Exponential(Modified[TUnitary]):
         """
         Get the name of the exponential gate.
 
-        The name is constructed by wrapping the underlying gate's name within "exp(...)".
-        For example, if the underlying gate's name is "X", the exponential gate's name is "exp(X)".
+        The name is constructed by prepending the underlying gate's name within "e^".
+        For example, if the underlying gate's name is "X", the exponential gate's name is "e^X".
 
         Returns:
             str: The generated name of the exponential gate.
