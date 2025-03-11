@@ -62,8 +62,8 @@ from qilisdk.extras.qibo_backend import QiboBackend
         ),
         # ----------------------------------------------------------------
         # Two-qubit gates
-        (QiboBackend._to_qibo_Controlled, CNOT(control=0, target=1), QiboGates.CNOT, (1,), (0,), {}),
-        (QiboBackend._to_qibo_Controlled, CZ(control=1, target=2), QiboGates.CZ, (2,), (1,), {}),
+        (QiboBackend._to_qibo_CNOT, CNOT(control=0, target=1), QiboGates.CNOT, (1,), (0,), {}),
+        (QiboBackend._to_qibo_CZ, CZ(control=1, target=2), QiboGates.CZ, (2,), (1,), {}),
         # ----------------------------------------------------------------
         # Measurement gate (supports multiple qubits, but we'll test single-qubit for simplicity)
         (QiboBackend._to_qibo_M, M(0), QiboGates.M, (0,), (), {}),

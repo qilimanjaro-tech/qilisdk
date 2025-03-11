@@ -859,12 +859,18 @@ class U3(Unitary):
         )
 
 
-def CNOT(control: int, target: int) -> Controlled[X]:
-    return X(target).controlled(control)
+class CNOT(Controlled[X]):
+    def __init__(self, control: int, target: int) -> None:
+        super().__init__(control, unitary_gate=X(target))
+
+    @property
+    def name(self) -> str:
+        return "CNOT"
 
 
-def CZ(control: int, target: int) -> Controlled[Z]:
-    return Z(target).controlled(control)
+class CZ(Controlled[Z]):
+    def __init__(self, control: int, target: int) -> None:
+        super().__init__(control, unitary_gate=Z(target))
 
 
 # TODO(vyron): we don't need this anymore

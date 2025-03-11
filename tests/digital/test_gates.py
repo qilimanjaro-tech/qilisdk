@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
-from qilisdk.digital.exceptions import InvalidParameterNameError, ParametersNotEqualError
+from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 
 
 # ------------------------------------------------------------------------------
@@ -93,7 +93,8 @@ def test_measurement_gate():
     assert gate.control_qubits == ()
 
     # The base Gate sets `_matrix` to an empty array by default (since M has no matrix).
-    assert gate._matrix.size == 0
+    with pytest.raises(GateHasNoMatrixError):
+        gate.matrix
 
 
 # ------------------------------------------------------------------------------
