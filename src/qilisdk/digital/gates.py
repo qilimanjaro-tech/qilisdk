@@ -48,6 +48,16 @@ class Gate(ABC):
         return self.NAME
 
     @property
+    def matrix(self) -> np.ndarray:
+        """
+        Retrieve the matrix of the gate.
+
+        Returns:
+            np.ndarray: The matrix of the gate.
+        """
+        return self._matrix
+
+    @property
     def control_qubits(self) -> tuple[int, ...]:
         """
         Retrieve the indices of the control qubits.
@@ -153,6 +163,9 @@ class Gate(ABC):
         for name, value in parameters.items():
             self._parameter_values[self.PARAMETER_NAMES.index(name)] = value
 
+        if hasattr(self, "_generate_matrix"):
+            self._matrix = self._generate_matrix()
+
     def set_parameter_values(self, values: list[float]) -> None:
         """
         Set the numerical values for the gate's parameters.
@@ -168,6 +181,9 @@ class Gate(ABC):
 
         for i, value in enumerate(values):
             self._parameter_values[i] = value
+
+        if hasattr(self, "_generate_matrix"):
+            self._matrix = self._generate_matrix()
 
 
 class M(Gate):
@@ -379,10 +395,13 @@ class RX(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
+        self._matrix = self._generate_matrix()
 
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self._parameter_values[0]
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        self._matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
 
 
 class RY(Gate):
@@ -411,10 +430,13 @@ class RY(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta]
+        self._matrix = self._generate_matrix()
 
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self.parameters["theta"]
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class RZ(Gate):
@@ -450,10 +472,13 @@ class RZ(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [phi]
+        self._matrix = self._generate_matrix()
 
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
         cos_half = np.cos(phi / 2)
         sin_half = np.sin(phi / 2)
-        self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class U1(Gate):
@@ -487,7 +512,11 @@ class U1(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [phi]
-        self._matrix = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
+        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
 class U2(Gate):
@@ -526,12 +555,13 @@ class U2(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [phi, gamma]
-        self._matrix = (1 / np.sqrt(2)) * np.array(
-            [
-                [1, -np.exp(1j * gamma)],
-                [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
-            ],
-            dtype=complex,
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
+        gamma = self.parameters["gamma"]
+        return (1 / np.sqrt(2)) * np.array(
+            [[1, -np.exp(1j * gamma)], [np.exp(1j * phi), np.exp(1j * (phi + gamma))]], dtype=complex
         )
 
 
@@ -572,7 +602,13 @@ class U3(Gate):
         super().__init__()
         self._target_qubits = (qubit,)
         self._parameter_values = [theta, phi, gamma]
-        self._matrix = np.array(
+        self._matrix = self._generate_matrix()
+
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self.parameters["theta"]
+        phi = self.parameters["phi"]
+        gamma = self.parameters["gamma"]
+        return np.array(
             [
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
