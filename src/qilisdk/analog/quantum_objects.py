@@ -36,7 +36,7 @@ class QuantumObject:
             len(self._data.shape) > TWO
             or (self._data.shape[0] == 1 and self._data.shape[1] % 2 != 0)
             or (self._data.shape[1] == 1 and self._data.shape[0] % 2 != 0)
-            or (self._data.shape[0] != self._data.shape[1])
+            or (self._data.shape[0] != self._data.shape[1] and self._data.shape[0] != 1 and self._data.shape[1] != 1)
             or (self._data.shape[1] == self._data.shape[0] and self._data.shape[0] % 2 != 0)
         )
         if invalid_shape:
@@ -56,11 +56,11 @@ class QuantumObject:
     @property
     def nqubits(self) -> int:
         if self._data.shape[0] == self._data.shape[1]:
-            return np.log2(self._data.shape[0])
+            return int(np.log2(self._data.shape[0]))
         if self._data.shape[0] == 1:
-            return np.log2(self._data.shape[1])
+            return int(np.log2(self._data.shape[1]))
         if self._data.shape[1] == 1:
-            return np.log2(self._data.shape[0])
+            return int(np.log2(self._data.shape[0]))
         return -1
 
     def dag(self) -> QuantumObject:

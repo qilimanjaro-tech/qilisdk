@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -174,6 +173,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/e9/a8/fb783cb0abe2b5fde
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/75/49e5bfe642f71f272236b5b2d2691cf915a7283cc0ceda56357b61daa538/comm-0.2.2-py3-none-any.whl", hash = "sha256:e6fb86cb70ff661ee8c9c14e7d36d6de3b4066f1441be4063df9c5009f0a64d3", size = 7180 },
 ]
+
+[[package]]
+name = "cudaq"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/a9/c47e6be5a4e42bcc5c7b79cedbf4e55d543d2882af733b3a6c6e6d934498/cudaq-0.9.1.tar.gz", hash = "sha256:c978560491e851082ca95ff796f55bde1a935dfb56099d3e185b06d26c5d8b1d", size = 9005 }
 
 [[package]]
 name = "debugpy"
@@ -1001,6 +1006,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+cudaq-backend = [
+    { name = "cudaq" },
+]
 qibo-backend = [
     { name = "qibo" },
 ]
@@ -1019,10 +1027,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cudaq", marker = "extra == 'cudaq-backend'", specifier = ">=0.9.1" },
     { name = "numpy" },
     { name = "qibo", marker = "extra == 'qibo-backend'", specifier = ">=0.2.16" },
 ]
-provides-extras = ["qibo-backend"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -14,6 +14,8 @@
 from typing import Callable
 from warnings import warn
 
+from sympy import Q
+
 from qilisdk.analog.hamiltonian import Hamiltonian
 
 
@@ -183,6 +185,14 @@ class Schedule:
                         ham += self._schedule[current_time][label] * self._hamiltonians[label]
                         break
         return ham
+
+    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> float:
+        time_idx = int(time_step / self.dt)
+        while time_idx >= 0:
+            if time_idx in self._schedule and hamiltonian_key in self._schedule[time_idx]:
+                return self._schedule[time_idx][hamiltonian_key]
+            time_idx -= 1
+        return 0
 
     def __len__(self) -> int:
         return int(self.T / self.dt)
