@@ -860,6 +860,19 @@ class U3(Unitary):
 
 
 class CNOT(Controlled[X]):
+    """
+    Represents the CNOT gate.
+
+    The associated matrix is:
+        [[1, 0, 0, 0],
+         [0, 1, 0, 0],
+         [0, 0, 0, 1],
+         [0, 0, 1, 0]]
+
+    Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
+        `CNOT(control, target) = H(target) CZ(control, target) H(target)`
+    """
+
     def __init__(self, control: int, target: int) -> None:
         super().__init__(control, unitary_gate=X(target))
 
@@ -869,74 +882,21 @@ class CNOT(Controlled[X]):
 
 
 class CZ(Controlled[Z]):
+    """
+    Represents the CZ gate.
+
+    The associated matrix is:
+        [[1, 0, 0, 0],
+         [0, 1, 0, 0],
+         [0, 0, 1, 0],
+         [0, 0, 0, -1]]
+
+    This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
+        `CZ(control, target) = CZ(target, control)`
+
+    It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
+        `CZ(control, target) = H(target) CNOT(control, target) H(target)`
+    """
+
     def __init__(self, control: int, target: int) -> None:
         super().__init__(control, unitary_gate=Z(target))
-
-
-# TODO(vyron): we don't need this anymore
-# QHC-907
-# class CNOT(Gate):
-#     """
-#     Represents the CNOT gate.
-
-#     The associated matrix is:
-#         [[1, 0, 0, 0],
-#          [0, 1, 0, 0],
-#          [0, 0, 0, 1],
-#          [0, 0, 1, 0]]
-
-#     Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
-#         `CNOT(control, target) = H(target) CZ(control, target) H(target)`
-#     """
-
-#     NAME: ClassVar[str] = "CNOT"
-#     PARAMETER_NAMES: ClassVar[list[str]] = []
-
-#     def __init__(self, control: int, target: int) -> None:
-#         """
-#         Initialize a CNOT gate.
-
-#         Args:
-#             control (int): The index of the control qubit.
-#             target (int): The index of the target qubit.
-#         """
-#         super().__init__()
-#         self._control_qubits = (control,)
-#         self._target_qubits = (target,)
-#         self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
-
-
-# TODO(vyron): we don't need this anymore
-# QHC-907
-# class CZ(Gate):
-#     """
-#     Represents the CZ gate.
-
-#     The associated matrix is:
-#         [[1, 0, 0, 0],
-#          [0, 1, 0, 0],
-#          [0, 0, 1, 0],
-#          [0, 0, 0, -1]]
-
-#     This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
-#         `CZ(control, target) = CZ(target, control)`
-
-#     It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
-#         `CZ(control, target) = H(target) CNOT(control, target) H(target)`
-#     """
-
-#     NAME: ClassVar[str] = "CZ"
-#     PARAMETER_NAMES: ClassVar[list[str]] = []
-
-#     def __init__(self, control: int, target: int) -> None:
-#         """
-#         Initialize a CZ gate.
-
-#         Args:
-#             control (int): The index of the control qubit.
-#             target (int): The index of the target qubit.
-#         """
-#         super().__init__()
-#         self._control_qubits = (control,)
-#         self._target_qubits = (target,)
-#         self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex)
