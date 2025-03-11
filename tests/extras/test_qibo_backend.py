@@ -14,7 +14,6 @@ from qilisdk.digital import (
     U2,
     U3,
     Circuit,
-    Gate,
     H,
     M,
     S,
@@ -63,8 +62,8 @@ from qilisdk.extras.qibo_backend import QiboBackend
         ),
         # ----------------------------------------------------------------
         # Two-qubit gates
-        (QiboBackend._to_qibo_CNOT, CNOT(control=0, target=1), QiboGates.CNOT, (1,), (0,), {}),
-        (QiboBackend._to_qibo_CZ, CZ(control=1, target=2), QiboGates.CZ, (2,), (1,), {}),
+        (QiboBackend._to_qibo_Controlled, CNOT(control=0, target=1), QiboGates.CNOT, (1,), (0,), {}),
+        (QiboBackend._to_qibo_Controlled, CZ(control=1, target=2), QiboGates.CZ, (2,), (1,), {}),
         # ----------------------------------------------------------------
         # Measurement gate (supports multiple qubits, but we'll test single-qubit for simplicity)
         (QiboBackend._to_qibo_M, M(0), QiboGates.M, (0,), (), {}),
@@ -145,14 +144,13 @@ def test_to_qibo_unsupported_gate():
     """
 
     # Create a dummy gate type that QiboBackend doesn't support
-    class MyCustomGate(Gate):
-        NAME = "MyGate"
-        NQUBITS = 1
-        PARAMETER_NAMES = []
-
+    class MyCustomGate(X):
         def __init__(self, qubit: int):
-            super().__init__()
-            self._target_qubits = (qubit,)
+            super().__init__(qubit)
+
+        @property
+        def name(self) -> str:
+            return "MyCustomGate"
 
     circuit = Circuit(nqubits=1)
     custom_gate = MyCustomGate(0)

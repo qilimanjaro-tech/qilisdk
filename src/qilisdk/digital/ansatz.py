@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from typing import ClassVar, Literal, Union
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
+from qilisdk.digital.gates import U1, U2, U3, Controlled, M, X, Z
 
 
 class Ansatz(ABC):
@@ -24,9 +24,9 @@ class Ansatz(ABC):
         "U2": U2,
         "U3": U3,
     }
-    _TWO_QUBITS_GATES: ClassVar[dict[str, type[Union[CNOT, CZ]]]] = {
-        "CZ": CZ,
-        "CNOT": CNOT,
+    _TWO_QUBITS_GATES: ClassVar[dict[str, type[Union[Controlled[X], Controlled[Z]]]]] = {
+        "CZ": Controlled,
+        "CNOT": Controlled,
     }
 
     def __init__(self, nqubits: int, layers: int = 1) -> None:
@@ -90,7 +90,7 @@ class HardwareEfficientAnsatz(Ansatz):
 
         self.gate_types: dict[str, str] = {"one_qubit_gate": one_qubit_gate, "two_qubit_gates": two_qubit_gate}
         self.one_qubit_gate: type[Union[U1, U2, U3]] = self._ONE_QUBIT_GATES[one_qubit_gate]
-        self.two_qubit_gate: type[Union[CNOT, CZ]] = self._TWO_QUBITS_GATES[two_qubit_gate]
+        self.two_qubit_gate: type[Union[Controlled[X], Controlled[Z]]] = self._TWO_QUBITS_GATES[two_qubit_gate]
 
         if structure not in {"grouped", "interposed"}:
             raise ValueError(f"provided structure {structure} is not supported.")
@@ -115,9 +115,7 @@ class HardwareEfficientAnsatz(Ansatz):
         self._circuit = Circuit(self.nqubits)
         # Add initial layer of unitaries
         for i in range(self.nqubits):
-            self._circuit.add(
-                self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
-            )
+            self._circuit.add(self.one_qubit_gate(i, **dict(zip(self.one_qubit_gate.PARAMETER_NAMES, parameters))))
 
         construct_layer_handler = self.construct_layer_handlers[self.structure]
         for _ in range(self.layers):

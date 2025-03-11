@@ -13,13 +13,21 @@
 # limitations under the License.
 from __future__ import annotations
 
-from abc import ABC
-from typing import ClassVar
+from abc import ABC, abstractmethod
+from typing import ClassVar, Generic, TypeVar
 
 import numpy as np
 from scipy.linalg import expm
+from typing_extensions import Self
 
-from .exceptions import InvalidParameterNameError, ParametersNotEqualError
+from .exceptions import (
+    GateHasNoMatrixError,
+    GateNotParameterizedError,
+    InvalidParameterNameError,
+    ParametersNotEqualError,
+)
+
+TUnitary = TypeVar("TUnitary", bound="Unitary")
 
 
 class Gate(ABC):
@@ -27,16 +35,10 @@ class Gate(ABC):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    NAME: ClassVar[str]
-    PARAMETER_NAMES: ClassVar[list[str]]
-
-    def __init__(self) -> None:
-        self._control_qubits: tuple[int, ...] = ()
-        self._target_qubits: tuple[int, ...] = ()
-        self._matrix: np.ndarray = np.array([])
-        self._parameter_values: list[float] = []
+    PARAMETER_NAMES: ClassVar[list[str]] = []
 
     @property
+    @abstractmethod
     def name(self) -> str:
         """
         Retrieve the name of the gate.
@@ -44,17 +46,21 @@ class Gate(ABC):
         Returns:
             str: The name of the gate.
         """
-        return self.NAME
+        ...
 
     @property
+    @abstractmethod
     def matrix(self) -> np.ndarray:
         """
         Retrieve the matrix of the gate.
 
+        Raises:
+            GateHasNoMatrixError: If gate has no matrix.
+
         Returns:
             np.ndarray: The matrix of the gate.
         """
-        return self._matrix
+        ...
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -64,7 +70,7 @@ class Gate(ABC):
         Returns:
             tuple[int, ...]: A tuple containing the indices of the control qubits.
         """
-        return self._control_qubits
+        return ()
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
@@ -74,7 +80,7 @@ class Gate(ABC):
         Returns:
             tuple[int, ...]: A tuple containing the indices of the target qubits.
         """
-        return self._target_qubits
+        return ()
 
     @property
     def qubits(self) -> tuple[int, ...]:
@@ -84,7 +90,7 @@ class Gate(ABC):
         Returns:
             tuple[int, ...]: A tuple of all qubit indices on which the gate operates.
         """
-        return self._control_qubits + self._target_qubits
+        return self.control_qubits + self.target_qubits
 
     @property
     def nqubits(self) -> int:
@@ -97,24 +103,14 @@ class Gate(ABC):
         return len(self.qubits)
 
     @property
-    def is_parameterized(self) -> bool:
+    def parameters(self) -> dict[str, float]:
         """
-        Determine whether the gate requires parameters.
+        Retrieve a mapping of parameter names to their corresponding values.
 
         Returns:
-            bool: True if the gate is parameterized; otherwise, False.
+            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
-        return self.nparameters > 0
-
-    @property
-    def nparameters(self) -> int:
-        """
-        Retrieve the number of parameters for the gate.
-
-        Returns:
-            int: The count of parameters needed by the gate.
-        """
-        return len(self.PARAMETER_NAMES)
+        return {}
 
     @property
     def parameter_names(self) -> list[str]:
@@ -124,7 +120,7 @@ class Gate(ABC):
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return self.PARAMETER_NAMES
+        return list(self.parameters.keys())
 
     @property
     def parameter_values(self) -> list[float]:
@@ -134,17 +130,27 @@ class Gate(ABC):
         Returns:
             list[float]: A list containing the parameter values.
         """
-        return self._parameter_values
+        return list(self.parameters.values())
 
     @property
-    def parameters(self) -> dict[str, float]:
+    def nparameters(self) -> int:
         """
-        Retrieve a mapping of parameter names to their corresponding values.
+        Retrieve the number of parameters for the gate.
 
         Returns:
-            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
+            int: The count of parameters needed by the gate.
         """
-        return dict(zip(self.PARAMETER_NAMES, self._parameter_values))
+        return len(self.parameters)
+
+    @property
+    def is_parameterized(self) -> bool:
+        """
+        Determine whether the gate requires parameters.
+
+        Returns:
+            bool: True if the gate is parameterized; otherwise, False.
+        """
+        return self.nparameters != 0
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -154,13 +160,14 @@ class Gate(ABC):
             parameters (dict[str, float]): A dictionary where keys are parameter names and values are the new parameter values.
 
         Raises:
+            GateNotParameterizedError: If gate is not parameterized.
             InvalidParameterNameError: If any provided parameter name is not valid for this gate.
         """
-        if any(name not in self.PARAMETER_NAMES for name in parameters):
-            raise InvalidParameterNameError
+        if not self.is_parameterized:
+            raise GateNotParameterizedError
 
-        for name, value in parameters.items():
-            self._parameter_values[self.PARAMETER_NAMES.index(name)] = value
+        if any(name not in self.parameters for name in parameters):
+            raise InvalidParameterNameError
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
@@ -170,17 +177,60 @@ class Gate(ABC):
             values (list[float]): A list containing new parameter values.
 
         Raises:
+            GateNotParameterizedError: If gate is not parameterized.
             ParametersNotEqualError: If the number of provided values does not match the expected parameter count.
         """
-        if len(values) != len(self._parameter_values):
+        if not self.is_parameterized:
+            raise GateNotParameterizedError
+
+        if len(values) != len(self.parameters):
             raise ParametersNotEqualError
 
-        for i, value in enumerate(values):
-            self._parameter_values[i] = value
+    def __repr__(self) -> str:
+        qubits_str = f"({self.qubits[0]})" if self.nqubits == 1 else str(self.qubits)
+        return f"{self.name}{qubits_str}"
 
 
 class Unitary(Gate):
-    def controlled(self, *control_qubits: int) -> Controlled:
+    """
+    Represents a quantum gate that can be used in quantum circuits.
+    """
+
+    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, float] = {}) -> None:
+        # Check for duplicate integers in control_qubits.
+        if len(target_qubits) != len(set(target_qubits)):
+            raise ValueError("Duplicate target qubits found.")
+
+        self._target_qubits: tuple[int, ...] = target_qubits
+        self._parameters: dict[str, float] = parameters
+        self._matrix: np.ndarray = self._generate_matrix()
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._matrix
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        return self._target_qubits
+
+    @property
+    def parameters(self) -> dict[str, float]:
+        return self._parameters
+
+    def set_parameters(self, parameters: dict[str, float]) -> None:
+        super().set_parameters(parameters=parameters)
+        self._parameters.update(parameters)
+        self._matrix = self._generate_matrix()
+
+    def set_parameter_values(self, values: list[float]) -> None:
+        super().set_parameter_values(values=values)
+
+        for key, value in zip(self.parameters, values):
+            self._parameters[key] = value
+
+        self._matrix = self._generate_matrix()
+
+    def controlled(self: Self, *control_qubits: int) -> Controlled[Self]:
         """
         Creates a controlled version of this unitary gate.
 
@@ -194,9 +244,9 @@ class Unitary(Gate):
         Returns:
             Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
         """
-        return Controlled(*control_qubits, gate=self)
+        return Controlled(*control_qubits, unitary_gate=self)
 
-    def adjoint(self) -> Adjoint:
+    def adjoint(self: Self) -> Adjoint[Self]:
         """
         Returns the adjoint (conjugate transpose) of this unitary gate.
 
@@ -206,9 +256,9 @@ class Unitary(Gate):
         Returns:
             Adjoint: A new Adjoint gate instance representing the adjoint of this gate.
         """
-        return Adjoint(self)
+        return Adjoint(unitary_gate=self)
 
-    def exponential(self) -> Exponential:
+    def exponential(self: Self) -> Exponential[Self]:
         """
         Returns the exponential of this unitary gate.
 
@@ -219,15 +269,77 @@ class Unitary(Gate):
         Returns:
             Exponential: A new Exponential gate instance whose matrix is the matrix exponential of the current gate's matrix.
         """
-        return Exponential(self)
+        return Exponential(unitary_gate=self)
+
+    @abstractmethod
+    def _generate_matrix(self) -> np.ndarray: ...
 
 
-class Controlled(Gate):
-    def __init__(self, *control_qubits: int, gate: Unitary) -> None:
-        super().__init__()
-        self._gate = gate
+class Modified(Gate, Generic[TUnitary]):
+    def __init__(self, unitary_gate: TUnitary) -> None:
+        self._unitary_gate: TUnitary = unitary_gate
+        self._matrix: np.ndarray
+
+    @property
+    def unitary_gate(self) -> TUnitary:
+        return self._unitary_gate
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._matrix
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        return self._unitary_gate.target_qubits
+
+    @property
+    def parameters(self) -> dict[str, float]:
+        return self._unitary_gate.parameters
+
+    @property
+    def parameter_names(self) -> list[str]:
+        return self._unitary_gate.parameter_names
+
+    @property
+    def parameter_values(self) -> list[float]:
+        return self._unitary_gate.parameter_values
+
+    @property
+    def nparameters(self) -> int:
+        return self._unitary_gate.nparameters
+
+    @property
+    def is_parameterized(self) -> bool:
+        return self._unitary_gate.is_parameterized
+
+    def set_parameters(self, parameters: dict[str, float]) -> None:
+        self._unitary_gate.set_parameters(parameters=parameters)
+        self._matrix = self._generate_matrix()
+
+    def set_parameter_values(self, values: list[float]) -> None:
+        self._unitary_gate.set_parameter_values(values=values)
+        self._matrix = self._generate_matrix()
+
+    @abstractmethod
+    def _generate_matrix(self) -> np.ndarray: ...
+
+    def is_modified_from(self, gate_type: type[TUnitary]) -> bool:
+        return isinstance(self.unitary_gate, gate_type)
+
+
+class Controlled(Modified[TUnitary]):
+    def __init__(self, *control_qubits: int, unitary_gate: TUnitary) -> None:
+        super().__init__(unitary_gate=unitary_gate)
+
+        # Check for duplicate integers in control_qubits.
+        if len(control_qubits) != len(set(control_qubits)):
+            raise ValueError("Duplicate control qubits found.")
+
+        # Check if any integer in control_qubits is also in unitary_gate.target_qubits.
+        if set(control_qubits) & set(unitary_gate.target_qubits):
+            raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
+
         self._control_qubits = control_qubits
-        self._target_qubits = gate.qubits
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
@@ -239,27 +351,29 @@ class Controlled(Gate):
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
         I_target = np.eye(1 << len(self.target_qubits), dtype=complex)
         # The controlled gate is then:
-        controlled = I_full + np.kron(P, self._gate.matrix - I_target)
+        controlled = I_full + np.kron(P, self.unitary_gate.matrix - I_target)
         return controlled
 
     @property
+    def control_qubits(self) -> tuple[int, ...]:
+        return self._control_qubits
+
+    @property
     def name(self) -> str:
-        return "C" * len(self.control_qubits) + self._gate.name
+        return "C" * len(self.control_qubits) + self.unitary_gate.name
 
 
-class Adjoint(Gate):
+class Adjoint(Modified[TUnitary]):
     """
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, gate: Unitary) -> None:
-        super().__init__()
-        self._gate = gate
-        self._target_qubits = gate.target_qubits
+    def __init__(self, unitary_gate: TUnitary) -> None:
+        super().__init__(unitary_gate=unitary_gate)
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        return self._gate.matrix.conj().T
+        return self.unitary_gate.matrix.conj().T
 
     @property
     def name(self) -> str:
@@ -272,24 +386,22 @@ class Adjoint(Gate):
         Returns:
             str: The name of the adjoint gate.
         """
-        return self._gate.name + "†"
+        return self.unitary_gate.name + "†"
 
 
-class Exponential(Gate):
+class Exponential(Modified[TUnitary]):
     """
     Represents the exponential of a unitary gate.
     The matrix of this gate is computed as the matrix exponential (e^(gate.matrix))
     of the underlying gate's matrix.
     """
 
-    def __init__(self, gate: Unitary) -> None:
-        super().__init__()
-        self._gate = gate
-        self._target_qubits = gate.target_qubits
+    def __init__(self, unitary_gate: TUnitary) -> None:
+        super().__init__(unitary_gate=unitary_gate)
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        return expm(self._gate.matrix)
+        return expm(self.unitary_gate.matrix)
 
     @property
     def name(self) -> str:
@@ -302,7 +414,7 @@ class Exponential(Gate):
         Returns:
             str: The generated name of the exponential gate.
         """
-        return f"e^{self._gate.name}"
+        return f"e^{self.unitary_gate.name}"
 
 
 class M(Gate):
@@ -311,9 +423,6 @@ class M(Gate):
     result is stored in a classical bit with the same label as the measured qubit.
     """
 
-    NAME: ClassVar[str] = "M"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, *qubits: int) -> None:
         """
         Initialize a measurement operation.
@@ -321,8 +430,19 @@ class M(Gate):
         Args:
             qubit (int): The qubit index to be measured.
         """
-        super().__init__()
         self._target_qubits = qubits
+
+    @property
+    def name(self) -> str:
+        return "M"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        raise GateHasNoMatrixError
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        return self._target_qubits
 
 
 class X(Unitary):
@@ -336,9 +456,6 @@ class X(Unitary):
     This is a pi radians rotation around the X-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "X"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize a Pauli-X gate.
@@ -346,9 +463,14 @@ class X(Unitary):
         Args:
             qubit (int): The target qubit index for the X gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "X"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[0, 1], [1, 0]], dtype=complex)
 
 
 class Y(Unitary):
@@ -362,9 +484,6 @@ class Y(Unitary):
     This is a pi radians rotation around the Y-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "Y"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize a Pauli-Y gate.
@@ -372,9 +491,14 @@ class Y(Unitary):
         Args:
             qubit (int): The target qubit index for the Y gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = np.array([[0, -1j], [1j, 0]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "Y"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
 class Z(Unitary):
@@ -388,9 +512,6 @@ class Z(Unitary):
     This is a pi radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "Z"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize a Pauli-Z gate.
@@ -398,9 +519,14 @@ class Z(Unitary):
         Args:
             qubit (int): The target qubit index for the Z gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "Z"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[1, 0], [0, -1]], dtype=complex)
 
 
 class H(Unitary):
@@ -414,9 +540,6 @@ class H(Unitary):
     This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "H"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize a Hadamard gate.
@@ -424,9 +547,14 @@ class H(Unitary):
         Args:
             qubit (int): The target qubit index for the Hadamard gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "H"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
 
 
 class S(Unitary):
@@ -440,9 +568,6 @@ class S(Unitary):
     This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "S"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize an S gate.
@@ -450,9 +575,14 @@ class S(Unitary):
         Args:
             qubit (int): The target qubit index for the S gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = np.array([[1, 0], [0, 1j]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "S"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[1, 0], [0, 1j]], dtype=complex)
 
 
 class T(Unitary):
@@ -466,9 +596,6 @@ class T(Unitary):
     This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.
     """
 
-    NAME: ClassVar[str] = "T"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
     def __init__(self, qubit: int) -> None:
         """
         Initialize a T gate.
@@ -476,9 +603,14 @@ class T(Unitary):
         Args:
             qubit (int): The target qubit index for the T gate.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._matrix = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "T"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
 
 
 class RX(Unitary):
@@ -492,7 +624,6 @@ class RX(Unitary):
     This is an exponential of the Pauli-X operator: `RX(theta) = exp(-i*theta*X/2)`.
     """
 
-    NAME: ClassVar[str] = "RX"
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -503,13 +634,17 @@ class RX(Unitary):
             qubit (int): The target qubit index for the rotation.
             theta (float): The rotation angle (polar) in radians.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
+        super().__init__(target_qubits=(qubit,), parameters={"theta": theta})
 
+    @property
+    def name(self) -> str:
+        return "RX"
+
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self.parameters["theta"]
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        self._matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
 
 
 class RY(Unitary):
@@ -523,7 +658,6 @@ class RY(Unitary):
     This is an exponential of the Pauli-Y operator: `RY(theta) = exp(-i*theta*Y/2)`.
     """
 
-    NAME: ClassVar[str] = "RY"
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
     def __init__(self, qubit: int, *, theta: float) -> None:
@@ -534,13 +668,17 @@ class RY(Unitary):
             qubit (int): The target qubit index for the rotation.
             theta (float): The rotation angle (polar) in radians.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [theta]
+        super().__init__(target_qubits=(qubit,), parameters={"theta": theta})
 
+    @property
+    def name(self) -> str:
+        return "RY"
+
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self.parameters["theta"]
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class RZ(Unitary):
@@ -561,7 +699,6 @@ class RZ(Unitary):
         - `RZ(phi=pi/4) = exp(-i*pi/8) T`
     """
 
-    NAME: ClassVar[str] = "RZ"
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
@@ -572,13 +709,17 @@ class RZ(Unitary):
             qubit (int): The target qubit index for the rotation.
             phi (float): The rotation angle (azimuthal) in radians.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [phi]
+        super().__init__(target_qubits=(qubit,), parameters={"phi": phi})
 
+    @property
+    def name(self) -> str:
+        return "RZ"
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
         cos_half = np.cos(phi / 2)
         sin_half = np.sin(phi / 2)
-        self._matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
 class U1(Unitary):
@@ -597,7 +738,6 @@ class U1(Unitary):
         - `U1(phi=np.pi/4) = T`
     """
 
-    NAME: ClassVar[str] = "U1"
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
     def __init__(self, qubit: int, *, phi: float) -> None:
@@ -608,10 +748,15 @@ class U1(Unitary):
             qubit (int): The target qubit index for the U1 gate.
             phi (float): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [phi]
-        self._matrix = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
+        super().__init__(target_qubits=(qubit,), parameters={"phi": phi})
+
+    @property
+    def name(self) -> str:
+        return "U1"
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
+        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
 class U2(Unitary):
@@ -634,7 +779,6 @@ class U2(Unitary):
         - `U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)`
     """
 
-    NAME: ClassVar[str] = "U2"
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
     def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
@@ -646,10 +790,16 @@ class U2(Unitary):
             phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians..
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [phi, gamma]
-        self._matrix = (1 / np.sqrt(2)) * np.array(
+        super().__init__(target_qubits=(qubit,), parameters={"phi": phi, "gamma": gamma})
+
+    @property
+    def name(self) -> str:
+        return "U2"
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.parameters["phi"]
+        gamma = self.parameters["gamma"]
+        return (1 / np.sqrt(2)) * np.array(
             [
                 [1, -np.exp(1j * gamma)],
                 [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
@@ -678,7 +828,6 @@ class U3(Unitary):
         - `U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)`
     """
 
-    NAME: ClassVar[str] = "U3"
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
     def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
@@ -691,10 +840,17 @@ class U3(Unitary):
             phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
         """
-        super().__init__()
-        self._target_qubits = (qubit,)
-        self._parameter_values = [theta, phi, gamma]
-        self._matrix = np.array(
+        super().__init__(target_qubits=(qubit,), parameters={"theta": theta, "phi": phi, "gamma": gamma})
+
+    @property
+    def name(self) -> str:
+        return "U3"
+
+    def _generate_matrix(self) -> np.ndarray:
+        theta = self.parameters["theta"]
+        phi = self.parameters["phi"]
+        gamma = self.parameters["gamma"]
+        return np.array(
             [
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
@@ -703,70 +859,78 @@ class U3(Unitary):
         )
 
 
-# TODO(vyron): we don't need this anymore
-# QHC-907
-class CNOT(Gate):
-    """
-    Represents the CNOT gate.
+def CNOT(control: int, target: int) -> Controlled[X]:
+    return X(target).controlled(control)
 
-    The associated matrix is:
-        [[1, 0, 0, 0],
-         [0, 1, 0, 0],
-         [0, 0, 0, 1],
-         [0, 0, 1, 0]]
 
-    Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
-        `CNOT(control, target) = H(target) CZ(control, target) H(target)`
-    """
-
-    NAME: ClassVar[str] = "CNOT"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
-
-    def __init__(self, control: int, target: int) -> None:
-        """
-        Initialize a CNOT gate.
-
-        Args:
-            control (int): The index of the control qubit.
-            target (int): The index of the target qubit.
-        """
-        super().__init__()
-        self._control_qubits = (control,)
-        self._target_qubits = (target,)
-        self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+def CZ(control: int, target: int) -> Controlled[Z]:
+    return Z(target).controlled(control)
 
 
 # TODO(vyron): we don't need this anymore
 # QHC-907
-class CZ(Gate):
-    """
-    Represents the CZ gate.
+# class CNOT(Gate):
+#     """
+#     Represents the CNOT gate.
 
-    The associated matrix is:
-        [[1, 0, 0, 0],
-         [0, 1, 0, 0],
-         [0, 0, 1, 0],
-         [0, 0, 0, -1]]
+#     The associated matrix is:
+#         [[1, 0, 0, 0],
+#          [0, 1, 0, 0],
+#          [0, 0, 0, 1],
+#          [0, 0, 1, 0]]
 
-    This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
-        `CZ(control, target) = CZ(target, control)`
+#     Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
+#         `CNOT(control, target) = H(target) CZ(control, target) H(target)`
+#     """
 
-    It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
-        `CZ(control, target) = H(target) CNOT(control, target) H(target)`
-    """
+#     NAME: ClassVar[str] = "CNOT"
+#     PARAMETER_NAMES: ClassVar[list[str]] = []
 
-    NAME: ClassVar[str] = "CZ"
-    PARAMETER_NAMES: ClassVar[list[str]] = []
+#     def __init__(self, control: int, target: int) -> None:
+#         """
+#         Initialize a CNOT gate.
 
-    def __init__(self, control: int, target: int) -> None:
-        """
-        Initialize a CZ gate.
+#         Args:
+#             control (int): The index of the control qubit.
+#             target (int): The index of the target qubit.
+#         """
+#         super().__init__()
+#         self._control_qubits = (control,)
+#         self._target_qubits = (target,)
+#         self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 
-        Args:
-            control (int): The index of the control qubit.
-            target (int): The index of the target qubit.
-        """
-        super().__init__()
-        self._control_qubits = (control,)
-        self._target_qubits = (target,)
-        self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex)
+
+# TODO(vyron): we don't need this anymore
+# QHC-907
+# class CZ(Gate):
+#     """
+#     Represents the CZ gate.
+
+#     The associated matrix is:
+#         [[1, 0, 0, 0],
+#          [0, 1, 0, 0],
+#          [0, 0, 1, 0],
+#          [0, 0, 0, -1]]
+
+#     This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
+#         `CZ(control, target) = CZ(target, control)`
+
+#     It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
+#         `CZ(control, target) = H(target) CNOT(control, target) H(target)`
+#     """
+
+#     NAME: ClassVar[str] = "CZ"
+#     PARAMETER_NAMES: ClassVar[list[str]] = []
+
+#     def __init__(self, control: int, target: int) -> None:
+#         """
+#         Initialize a CZ gate.
+
+#         Args:
+#             control (int): The index of the control qubit.
+#             target (int): The index of the target qubit.
+#         """
+#         super().__init__()
+#         self._control_qubits = (control,)
+#         self._target_qubits = (target,)
+#         self._matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex)

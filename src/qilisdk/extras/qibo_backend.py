@@ -19,8 +19,6 @@ from qibo.gates import gates as QiboGates
 from qibo.models.circuit import Circuit as QiboCircuit
 
 from qilisdk.digital import (
-    CNOT,
-    CZ,
     RX,
     RY,
     RZ,
@@ -28,6 +26,7 @@ from qilisdk.digital import (
     U2,
     U3,
     Circuit,
+    Controlled,
     Gate,
     H,
     M,
@@ -70,8 +69,7 @@ class QiboBackend:
             U1: QiboBackend._to_qibo_U1,
             U2: QiboBackend._to_qibo_U2,
             U3: QiboBackend._to_qibo_U3,
-            CNOT: QiboBackend._to_qibo_CNOT,
-            CZ: QiboBackend._to_qibo_CZ,
+            Controlled: QiboBackend._to_qibo_Controlled,
             M: QiboBackend._to_qibo_M,
         }
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
@@ -136,12 +134,14 @@ class QiboBackend:
         )
 
     @staticmethod
-    def _to_qibo_CNOT(gate: CNOT) -> QiboGates.CNOT:
-        return QiboGates.CNOT(gate.control_qubits[0], gate.target_qubits[0])
-
-    @staticmethod
-    def _to_qibo_CZ(gate: CZ) -> QiboGates.CZ:
-        return QiboGates.CZ(gate.control_qubits[0], gate.target_qubits[0])
+    def _to_qibo_Controlled(gate: Controlled) -> QiboGates.CNOT | QiboGates.CZ:
+        if gate.is_modified_from(X) and gate.nqubits == 2:  # noqa: PLR2004
+            return QiboGates.CNOT(**gate.qubits)
+        if gate.is_modified_from(Z) and gate.nqubits == 2:  # noqa: PLR2004
+            return QiboGates.CZ(**gate.qubits)
+        if gate.is_modified_from(Z) and len(gate.control_qubits) == 3:  # noqa: PLR2004
+            return QiboGates.CCZ(**gate.qubits)
+        raise UnsupportedGateError("Unsupported gate", gate)
 
     @staticmethod
     def _to_qibo_M(gate: M) -> QiboGates.M:
