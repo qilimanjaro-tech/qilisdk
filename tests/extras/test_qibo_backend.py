@@ -14,7 +14,6 @@ from qilisdk.digital import (
     U2,
     U3,
     Circuit,
-    Gate,
     H,
     M,
     S,
@@ -145,14 +144,13 @@ def test_to_qibo_unsupported_gate():
     """
 
     # Create a dummy gate type that QiboBackend doesn't support
-    class MyCustomGate(Gate):
-        _NAME = "MyGate"
-        _NQUBITS = 1
-        _PARAMETER_NAMES = []
-
+    class MyCustomGate(X):
         def __init__(self, qubit: int):
-            super().__init__()
-            self._target_qubits = (qubit,)
+            super().__init__(qubit)
+
+        @property
+        def name(self) -> str:
+            return "MyCustomGate"
 
     circuit = Circuit(nqubits=1)
     custom_gate = MyCustomGate(0)
