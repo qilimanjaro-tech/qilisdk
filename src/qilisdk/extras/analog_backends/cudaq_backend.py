@@ -20,6 +20,7 @@ from cudaq.operator import OperatorSum, ScalarOperator
 from cudaq.operator import Schedule as cuda_schedule
 from cudaq.operator import evolve, spin
 
+from qilisdk.analog.analog_result import AnalogResults
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.analog.schedule import Schedule
@@ -39,8 +40,12 @@ class CudaqBackend(AnalogBackend):
         return out
 
     def evolve(
-        self, schedule: Schedule, initial_state: QuantumObject, observables: list[PauliOperator | Hamiltonian]
-    ) -> list[int | float | complex]:
+        self,
+        schedule: Schedule,
+        initial_state: QuantumObject,
+        observables: list[PauliOperator | Hamiltonian],
+        **kwargs: dict,
+    ) -> AnalogResults:
         cudaq.set_target("dynamics")
 
         cuda_ham = None
@@ -80,6 +85,17 @@ class CudaqBackend(AnalogBackend):
             State.from_data(np.array(initial_state.dense, dtype=np.complex128)),
             observables=cuda_obs,
             collapse_operators=[],
-            store_intermediate_results=False,
+            store_intermediate_results=kwargs.get("store_intermediate_results", False),
         )
-        return [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+        return AnalogResults(
+            final_expected_values=np.array(
+                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+            ),
+            expected_values=(
+                np.array(
+                    [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()]
+                )
+                if evolution_result.expectation_values() is not None
+                else None
+            ),
+        )
