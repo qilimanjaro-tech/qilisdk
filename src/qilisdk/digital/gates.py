@@ -27,7 +27,7 @@ from .exceptions import (
     ParametersNotEqualError,
 )
 
-TUnitary = TypeVar("TUnitary", bound="Unitary")
+TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
 
 class Gate(ABC):
@@ -191,7 +191,7 @@ class Gate(ABC):
         return f"{self.name}{qubits_str}"
 
 
-class Unitary(Gate):
+class BasicGate(Gate):
     """
     Represents a quantum gate that can be used in quantum circuits.
     """
@@ -275,13 +275,13 @@ class Unitary(Gate):
     def _generate_matrix(self) -> np.ndarray: ...
 
 
-class Modified(Gate, Generic[TUnitary]):
-    def __init__(self, unitary_gate: TUnitary) -> None:
-        self._unitary_gate: TUnitary = unitary_gate
+class Modified(Gate, Generic[TBasicGate]):
+    def __init__(self, unitary_gate: TBasicGate) -> None:
+        self._unitary_gate: TBasicGate = unitary_gate
         self._matrix: np.ndarray
 
     @property
-    def unitary_gate(self) -> TUnitary:
+    def unitary_gate(self) -> TBasicGate:
         return self._unitary_gate
 
     @property
@@ -323,12 +323,12 @@ class Modified(Gate, Generic[TUnitary]):
     @abstractmethod
     def _generate_matrix(self) -> np.ndarray: ...
 
-    def is_modified_from(self, gate_type: type[TUnitary]) -> bool:
+    def is_modified_from(self, gate_type: type[TBasicGate]) -> bool:
         return isinstance(self.unitary_gate, gate_type)
 
 
-class Controlled(Modified[TUnitary]):
-    def __init__(self, *control_qubits: int, unitary_gate: TUnitary) -> None:
+class Controlled(Modified[TBasicGate]):
+    def __init__(self, *control_qubits: int, unitary_gate: TBasicGate) -> None:
         super().__init__(unitary_gate=unitary_gate)
 
         # Check for duplicate integers in control_qubits.
@@ -363,12 +363,12 @@ class Controlled(Modified[TUnitary]):
         return "C" * len(self.control_qubits) + self.unitary_gate.name
 
 
-class Adjoint(Modified[TUnitary]):
+class Adjoint(Modified[TBasicGate]):
     """
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, unitary_gate: TUnitary) -> None:
+    def __init__(self, unitary_gate: TBasicGate) -> None:
         super().__init__(unitary_gate=unitary_gate)
         self._matrix = self._generate_matrix()
 
@@ -389,14 +389,14 @@ class Adjoint(Modified[TUnitary]):
         return self.unitary_gate.name + "†"
 
 
-class Exponential(Modified[TUnitary]):
+class Exponential(Modified[TBasicGate]):
     """
     Represents the exponential of a unitary gate.
     The matrix of this gate is computed as the matrix exponential (e^(gate.matrix))
     of the underlying gate's matrix.
     """
 
-    def __init__(self, unitary_gate: TUnitary) -> None:
+    def __init__(self, unitary_gate: TBasicGate) -> None:
         super().__init__(unitary_gate=unitary_gate)
         self._matrix = self._generate_matrix()
 
@@ -445,7 +445,7 @@ class M(Gate):
         return self._target_qubits
 
 
-class X(Unitary):
+class X(BasicGate):
     """
     The Pauli-X gate.
 
@@ -473,7 +473,7 @@ class X(Unitary):
         return np.array([[0, 1], [1, 0]], dtype=complex)
 
 
-class Y(Unitary):
+class Y(BasicGate):
     """
     The Pauli-Y gate.
 
@@ -501,7 +501,7 @@ class Y(Unitary):
         return np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
-class Z(Unitary):
+class Z(BasicGate):
     """
     The Pauli-Z gate.
 
@@ -529,7 +529,7 @@ class Z(Unitary):
         return np.array([[1, 0], [0, -1]], dtype=complex)
 
 
-class H(Unitary):
+class H(BasicGate):
     """
     The Hadamard gate.
 
@@ -557,7 +557,7 @@ class H(Unitary):
         return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
 
 
-class S(Unitary):
+class S(BasicGate):
     """
     Represents the S gate, which induces a pi/2 phase.
 
@@ -585,7 +585,7 @@ class S(Unitary):
         return np.array([[1, 0], [0, 1j]], dtype=complex)
 
 
-class T(Unitary):
+class T(BasicGate):
     """
     Represents the T gate, which induces a pi/4 phase.
 
@@ -613,7 +613,7 @@ class T(Unitary):
         return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
 
 
-class RX(Unitary):
+class RX(BasicGate):
     """
     Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.
 
@@ -647,7 +647,7 @@ class RX(Unitary):
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
 
 
-class RY(Unitary):
+class RY(BasicGate):
     """
     Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.
 
@@ -681,7 +681,7 @@ class RY(Unitary):
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
-class RZ(Unitary):
+class RZ(BasicGate):
     """
     Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
 
@@ -722,7 +722,7 @@ class RZ(Unitary):
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
-class U1(Unitary):
+class U1(BasicGate):
     """
     Represents the U1 gate defined by an azimuthal angle `phi`.
 
@@ -759,7 +759,7 @@ class U1(Unitary):
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
-class U2(Unitary):
+class U2(BasicGate):
     """
     Represents the U2 gate defined by the angles `phi` and `gamma`.
 
@@ -808,7 +808,7 @@ class U2(Unitary):
         )
 
 
-class U3(Unitary):
+class U3(BasicGate):
     """
     Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.
 
