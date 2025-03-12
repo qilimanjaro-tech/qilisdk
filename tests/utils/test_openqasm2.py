@@ -39,9 +39,7 @@ def test_empty_circuit_to_qasm():
     circuit = create_empty_circuit(nqubits=3)
     qasm_str = to_qasm2(circuit)
     # Check header lines and qreg declaration.
-    assert "OPENQASM 2.0;" in qasm_str
-    assert 'include "qelib1.inc";' in qasm_str
-    assert "qreg q[3];" in qasm_str
+    assert 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3]' in qasm_str
     # No classical register since no measurement.
     assert "creg" not in qasm_str
     # No gate instructions should be present.

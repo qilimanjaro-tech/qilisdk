@@ -40,6 +40,9 @@ def to_qasm2(circuit: Circuit) -> str:
     """
     Convert the circuit to an OpenQASM 2.0 formatted string.
 
+    Args:
+        circuit: The circuit to convert to OpenQASM 2.0.
+
     Returns:
         str: The OpenQASM 2.0 representation of the circuit.
     """
@@ -81,6 +84,7 @@ def to_qasm2_file(circuit: Circuit, filename: str) -> None:
     Save the QASM representation to a file.
 
     Args:
+        circuit: The circuit to convert to OpenQASM 2.0.
         filename (str): The path to the file where the QASM code will be saved.
     """
     qasm_code = to_qasm2(circuit)
