@@ -29,7 +29,7 @@ def create_circuit_with_gates() -> Circuit:
     circuit.add(H(0))
     circuit.add(RX(1, theta=math.pi))
     circuit.add(CNOT(0, 1))
-    circuit.add(M())
+    circuit.add(M(*range(3)))
     return circuit
 
 
@@ -92,7 +92,7 @@ def test_measurement_to_qasm():
 def test_measurement_all_qubits_to_qasm():
     """Test conversion of a circuit with a single one-qubit gate (Hadamard)."""
     circuit = Circuit(2)
-    circuit.add(M())
+    circuit.add(M(*range(2)))
     qasm_str = to_qasm2(circuit)
     # Expect a classical register declaration since a measurement is present.
     assert "creg c[2];" in qasm_str
