@@ -91,6 +91,7 @@ def to_qasm2_file(circuit: Circuit, filename: str) -> None:
     Path(filename).write_text(qasm_code, encoding="utf-8")
 
 
+# TODO(vyron): Add full support for OpenQASM 2.0 grammar.
 def from_qasm2(qasm_str: str) -> Circuit:
     """
     Parse an OpenQASM 2.0 string and create a corresponding Circuit instance.
