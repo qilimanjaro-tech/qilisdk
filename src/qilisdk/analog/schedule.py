@@ -14,8 +14,6 @@
 from typing import Callable
 from warnings import warn
 
-from sympy import Q
-
 from qilisdk.analog.hamiltonian import Hamiltonian
 
 
