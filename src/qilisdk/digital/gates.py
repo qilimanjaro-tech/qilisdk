@@ -563,7 +563,7 @@ class S(BasicGate):
         [[1, 0],
          [0, i]]
 
-    This gate is also known as the square root of Z gate: `S**2=Z`, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.
+    This gate is also known as the square root of Z gate: ``S**2=Z``, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.
     """
 
     def __init__(self, qubit: int) -> None:
@@ -591,7 +591,7 @@ class T(BasicGate):
         [[1,           0],
          [0, exp(i*pi/4)]]
 
-    This gate is also known as the fourth-root of Z gate: `T**4=Z`, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.
+    This gate is also known as the fourth-root of Z gate: ``T**4=Z``, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.
     """
 
     def __init__(self, qubit: int) -> None:
@@ -619,7 +619,8 @@ class RX(BasicGate):
         [[cos(theta/2),     -i*sin(theta/2)],
          [-i*sin(theta/2),     cos(theta/2)]]
 
-    This is an exponential of the Pauli-X operator: `RX(theta) = exp(-i*theta*X/2)`.
+    This is an exponential of the Pauli-X operator:
+        ``RX(theta) = exp(-i*theta*X/2)``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
@@ -653,7 +654,8 @@ class RY(BasicGate):
         [[cos(theta/2), -sin(theta/2)],
          [sin(theta/2),  cos(theta/2)]]
 
-    This is an exponential of the Pauli-Y operator: `RY(theta) = exp(-i*theta*Y/2)`.
+    This is an exponential of the Pauli-Y operator:
+        ``RY(theta) = exp(-i*theta*Y/2)``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
@@ -687,14 +689,16 @@ class RZ(BasicGate):
         [[exp(-i*phi/2),              0],
          [0,               exp(i*phi/2)]]
 
-    This is an exponential of the Pauli-Z operator: `RZ(phi) = exp(-i*phi*Z/2)`.
+    This is an exponential of the Pauli-Z operator:
+        ``RZ(phi) = exp(-i*phi*Z/2)``
 
-    Which is equivalent to the U1 gate plus a global phase: `RZ(phi) = exp(-i*phi/2)U1(phi)`.
+    Which is equivalent to the U1 gate plus a global phase:
+        ``RZ(phi) = exp(-i*phi/2)U1(phi)``
 
     Other unitaries you can get from this one are:
-        - `RZ(phi=pi) = exp(-i*pi/2) Z = -i Z`
-        - `RZ(phi=pi/2) = exp(-i*pi/4) S`
-        - `RZ(phi=pi/4) = exp(-i*pi/8) T`
+        - ``RZ(phi=pi) = exp(-i*pi/2) Z = -i Z``
+        - ``RZ(phi=pi/2) = exp(-i*pi/4) S``
+        - ``RZ(phi=pi/4) = exp(-i*pi/8) T``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
@@ -728,12 +732,13 @@ class U1(BasicGate):
         [[1,            0],
          [0, exp(i*phi)]]
 
-    Which is equivalent to the RZ gate plus a global phase: `U1(phi) = exp(i*phi/2)RZ(phi)`.
+    Which is equivalent to the RZ gate plus a global phase:
+        ``U1(phi) = exp(i*phi/2)RZ(phi)``
 
     Other unitaries you can get from this one are:
-        - `U1(phi=np.pi) = Z`
-        - `U1(phi=np.pi/2) = S`
-        - `U1(phi=np.pi/4) = T`
+        - ``U1(phi=np.pi) = Z``
+        - ``U1(phi=np.pi/2) = S``
+        - ``U1(phi=np.pi/4) = T``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
@@ -766,15 +771,15 @@ class U2(BasicGate):
                    [exp(i*phi),    exp(i*(phi+gamma))]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:
-        `U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)`
+        ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)``
 
     This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
-        `U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)`
+        ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
 
     Other unitaries you can get from this one are:
-        - `U2(phi=0, gamma=np.pi) = H`
-        - `U2(phi=0, gamma=0) = RY(theta=pi/2)`
-        - `U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)`
+        - ``U2(phi=0, gamma=np.pi) = H``
+        - ``U2(phi=0, gamma=0) = RY(theta=pi/2)``
+        - ``U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
@@ -815,15 +820,16 @@ class U3(BasicGate):
          [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a 'theta' polar rotation in between:
-        `U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)`
+        ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``
 
     This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:
-        `U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)`
+        ``U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)``
 
     Other unitaries you can get from this one are:
-        - `U3(theta=pi/2, phi, gamma) = U2(phi, gamma)`
-        - `U3(theta, phi=0, gamma=0) = RY(theta)`
-        - `U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)`
+        - ``U3(theta=pi/2, phi, gamma) = U2(phi, gamma)``
+        - ``U3(theta=0, phi=0, gamma) = U1(gamma)`` and ``U3(theta=0, phi, gamma=0) = U1(phi)``
+        - ``U3(theta, phi=0, gamma=0) = RY(theta)``
+        - ``U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)``
     """
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
@@ -868,7 +874,7 @@ class CNOT(Controlled[X]):
          [0, 0, 1, 0]]
 
     Which is equivalent to the CZ gate surrounded by two H's gates on the target qubit:
-        `CNOT(control, target) = H(target) CZ(control, target) H(target)`
+        ``CNOT(control, target) = H(target) CZ(control, target) H(target)``
     """
 
     def __init__(self, control: int, target: int) -> None:
@@ -890,10 +896,10 @@ class CZ(Controlled[Z]):
          [0, 0, 0, -1]]
 
     This gate is totally symmetric respect control and target, meaning that both are control and target in reality:
-        `CZ(control, target) = CZ(target, control)`
+        ``CZ(control, target) = CZ(target, control)``
 
     It is also equivalent to the CNOT gate surrounded by two H's gates on the target qubit:
-        `CZ(control, target) = H(target) CNOT(control, target) H(target)`
+        ``CZ(control, target) = H(target) CNOT(control, target) H(target)``
     """
 
     def __init__(self, control: int, target: int) -> None:
