@@ -63,6 +63,10 @@ class QuantumObject:
             return int(np.log2(self._data.shape[0]))
         return -1
 
+    @property
+    def shape(self) -> np.ndarray:
+        return self._data.shape
+
     def dag(self) -> QuantumObject:
         """Computes the Adjoint (dagger) of Quantum Object.
 
@@ -86,7 +90,7 @@ class QuantumObject:
         Returns:
             QuantumState: A new QuantumState representing the reduced density matrix.
         """
-        rho = self.data
+        rho = self.dense
         total_dim = np.prod(dims)
         if rho.shape != (total_dim, total_dim):
             raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")

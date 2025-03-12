@@ -15,16 +15,24 @@ from pprint import pformat
 
 import numpy as np
 
+from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.common import Results
 
 
 class AnalogResults(Results):
+
     def __init__(
-        self, final_expected_values: np.ndarray | None = None, expected_values: np.ndarray | None = None
+        self,
+        final_expected_values: np.ndarray | None = None,
+        expected_values: np.ndarray | None = None,
+        final_state: QuantumObject | None = None,
+        intermediate_states: list[QuantumObject] | None = None,
     ) -> None:
         super().__init__()
         self._final_expected_values = final_expected_values if final_expected_values is not None else np.array([])
         self._expected_values = expected_values if expected_values is not None else np.array([])
+        self._final_state = final_state
+        self._intermediate_states = intermediate_states
 
     @property
     def final_expected_values(self) -> np.ndarray:
@@ -34,11 +42,21 @@ class AnalogResults(Results):
     def expected_values(self) -> np.ndarray:
         return self._expected_values
 
+    @property
+    def final_state(self) -> QuantumObject | None:
+        return self._final_state
+
+    @property
+    def intermediate_states(self) -> list[QuantumObject] | None:
+        return self._intermediate_states
+
     def __repr__(self) -> str:
         class_name = self.__class__.__name__
         return (
             f"{class_name}(\n"
             f"  final_expected_values={pformat(self.final_expected_values)},\n"
             f"  expected_values={pformat(self.expected_values)}\n"
+            f"  final_state={pformat(self.final_state)}\n"
+            f"  intermediate_states={pformat(self.intermediate_states)}\n"
             ")"
         )

@@ -98,4 +98,14 @@ class CudaqBackend(AnalogBackend):
                 if evolution_result.expectation_values() is not None
                 else None
             ),
+            final_state=(
+                QuantumObject(np.array(evolution_result.final_state())).dag()
+                if evolution_result.final_state() is not None
+                else None
+            ),
+            intermediate_states=(
+                [QuantumObject(np.array(state)).dag() for state in evolution_result.intermediate_states()]
+                if evolution_result.intermediate_states() is not None
+                else None
+            ),
         )
