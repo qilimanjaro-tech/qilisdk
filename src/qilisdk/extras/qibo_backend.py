@@ -28,6 +28,7 @@ from qilisdk.digital import (
     U2,
     U3,
     Circuit,
+    Controlled,
     Gate,
     H,
     M,
@@ -73,6 +74,7 @@ class QiboBackend:
             CNOT: QiboBackend._to_qibo_CNOT,
             CZ: QiboBackend._to_qibo_CZ,
             M: QiboBackend._to_qibo_M,
+            Controlled: QiboBackend._to_qibo_Controlled,
         }
         qibo_circuit = QiboCircuit(nqubits=circuit.nqubits)
         for gate in circuit.gates:
@@ -137,12 +139,18 @@ class QiboBackend:
 
     @staticmethod
     def _to_qibo_CNOT(gate: CNOT) -> QiboGates.CNOT:
-        return QiboGates.CNOT(gate.control_qubits[0], gate.target_qubits[0])
+        return QiboGates.CNOT(*gate.qubits)
 
     @staticmethod
     def _to_qibo_CZ(gate: CZ) -> QiboGates.CZ:
-        return QiboGates.CZ(gate.control_qubits[0], gate.target_qubits[0])
+        return QiboGates.CZ(*gate.qubits)
 
     @staticmethod
     def _to_qibo_M(gate: M) -> QiboGates.M:
-        return QiboGates.M(*gate.target_qubits)
+        return QiboGates.M(*gate.qubits)
+
+    @staticmethod
+    def _to_qibo_Controlled(gate: Controlled) -> QiboGates.CCZ:
+        if gate.is_modified_from(Z) and len(gate.control_qubits) == 3:  # noqa: PLR2004
+            return QiboGates.CCZ(*gate.qubits)
+        raise UnsupportedGateError("Unsupported gate", gate)
