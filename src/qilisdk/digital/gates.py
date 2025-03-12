@@ -46,7 +46,6 @@ class Gate(ABC):
         Returns:
             str: The name of the gate.
         """
-        ...
 
     @property
     @abstractmethod
@@ -60,7 +59,6 @@ class Gate(ABC):
         Returns:
             np.ndarray: The matrix of the gate.
         """
-        ...
 
     @property
     def control_qubits(self) -> tuple[int, ...]:

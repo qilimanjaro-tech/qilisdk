@@ -16,8 +16,9 @@ import numpy as np
 import pytest
 from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
+from scipy.linalg import expm
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Controlled, Exponential, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 
 
@@ -280,6 +281,10 @@ def test_cnot_gate(control: int, target: int):
     """
     gate = CNOT(control, target)
 
+    # Check class hierarchy and generics
+    assert isinstance(gate, Controlled)
+    assert gate.is_modified_from(X)
+
     # Check name, nqubits, parameters
     assert gate.name == "CNOT"
     assert gate.nqubits == 2
@@ -397,3 +402,199 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
     # 4) set_parameter_values() with an invalid list (length mismatch)
     with pytest.raises(ParametersNotEqualError):
         gate.set_parameter_values(invalid_list)
+
+
+# ------------------------------------------------------------------------------
+# Controlled() Modification Tests - Hardcoded Expected Matrices
+# ------------------------------------------------------------------------------
+def test_controlled_gate_single_control():
+    """
+    Test that a single-controlled gate created from a basic X gate behaves as expected.
+    """
+    qubit = 1
+    base_gate = X(qubit)
+    control = 0
+    controlled_gate = base_gate.controlled(control)
+
+    # Check class hierarchy and generics
+    assert isinstance(controlled_gate, Controlled)
+    assert controlled_gate.is_modified_from(X)
+
+    # Check qubit assignments.
+    assert controlled_gate.control_qubits == (control,)
+    assert controlled_gate.target_qubits == (qubit,)
+    assert controlled_gate.qubits == (control, qubit)
+    # For a single control, the name should be "C" + base_gate.name (e.g. "CX").
+    assert controlled_gate.name == "C" + base_gate.name
+    # Total qubits should be 1 control + 1 target = 2.
+    assert controlled_gate.nqubits == 2
+
+    # Hardcoded expected matrix for a single-controlled X gate (CNOT).
+    # It is given by I₄ + kron(P, (X - I₂)), where
+    # P = [[0, 0],
+    #      [0, 1]] and I₂ is the 2x2 identity.
+    # This results in:
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+
+    assert_matrix_equal(controlled_gate.matrix, expected_matrix)
+
+
+def test_controlled_gate_multiple_controls():
+    """
+    Test that a controlled gate with two control qubits created from a basic H gate
+    sets the properties and computes the expected matrix correctly.
+    """
+    qubit = 2
+    base_gate = H(qubit)
+    controls = (0, 1)
+    controlled_gate = base_gate.controlled(*controls)
+
+    # Check class hierarchy and generics
+    assert isinstance(controlled_gate, Controlled)
+    assert controlled_gate.is_modified_from(H)
+
+    # Check qubit assignments.
+    assert controlled_gate.control_qubits == controls
+    assert controlled_gate.target_qubits == (qubit,)
+    assert controlled_gate.qubits == (*controls, qubit)
+    # For 2 controls, the name should be "CC" + base_gate.name (e.g. "CCH").
+    assert controlled_gate.name == "CC" + base_gate.name
+    # Total qubits should be 2 controls + 1 target = 3.
+    assert controlled_gate.nqubits == 3
+
+    # Hardcoded expected matrix for a two-controlled H gate.
+    # The overall dimension is 2^(2+1)=8. The controlled gate matrix is:
+    # I₈ + kron(P, (H - I₂)) where P = kron([[0,0],[0,1]], [[0,0],[0,1]])
+    # For two controls, P is a 4x4 matrix that is all zeros except for a 1 in the bottom-right position.
+    # Thus, the lower-right 2x2 block of I₈ is replaced with H.
+    expected_matrix = np.eye(8, dtype=complex)
+    H_matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+    # The block corresponding to the control state |11> is at indices 6 and 7.
+    expected_matrix[6:8, 6:8] = H_matrix
+    assert_matrix_equal(controlled_gate.matrix, expected_matrix)
+
+
+def test_controlled_gate_parameter_update():
+    """
+    Test that updating the parameters through the controlled gate correctly propagates
+    to the underlying unitary gate and updates the overall matrix.
+    """
+    qubit = 1
+    base_gate = RX(qubit, theta=0.0)
+    controlled_gate = base_gate.controlled(0)
+
+    # Check class hierarchy and generics
+    assert isinstance(controlled_gate, Controlled)
+    assert controlled_gate.is_modified_from(RX)
+
+    new_theta = np.pi / 2
+    controlled_gate.set_parameters({"theta": new_theta})
+    # Underlying gate parameters should be updated.
+    assert controlled_gate.parameters["theta"] == new_theta
+
+    # Compute the updated RX matrix.
+    cos_half = np.cos(new_theta / 2)
+    sin_half = np.sin(new_theta / 2)
+    rx_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+
+    # For a single control, the expected controlled matrix is:
+    # I₄ with the lower-right 2x2 block replaced by the updated RX matrix.
+    expected_matrix = np.eye(4, dtype=complex)
+    expected_matrix[2:4, 2:4] = rx_matrix
+    assert_matrix_equal(controlled_gate.matrix, expected_matrix)
+
+
+# ------------------------------------------------------------------------------
+# Adjoint() Modification Tests
+# ------------------------------------------------------------------------------
+def test_adjoint_gate():
+    """
+    Test that the adjoint gate returns the conjugate transpose of the original gate's matrix
+    and that its name is suffixed with the adjoint symbol (†).
+    """
+    qubit = 3
+    theta = np.pi / 3
+    base_gate = RX(qubit, theta=theta)
+    adj_gate = base_gate.adjoint()
+
+    # Check class hierarchy and generics
+    assert isinstance(adj_gate, Adjoint)
+    assert adj_gate.is_modified_from(RX)
+
+    # The adjoint gate name should be the original name with a '†' appended.
+    assert adj_gate.name == base_gate.name + "†"
+    # The target qubits should remain unchanged.
+    assert adj_gate.target_qubits == base_gate.target_qubits
+
+    # The matrix should be the conjugate transpose of the base matrix.
+    expected_matrix = base_gate.matrix.conj().T
+    assert_matrix_equal(adj_gate.matrix, expected_matrix)
+
+
+def test_adjoint_gate_parameter_update():
+    """
+    Test that updating parameters via the adjoint gate propagates correctly and updates its matrix.
+    """
+    qubit = 2
+    base_gate = RX(qubit, theta=0.0)
+    adj_gate = base_gate.adjoint()
+
+    # Check class hierarchy and generics
+    assert isinstance(adj_gate, Adjoint)
+    assert adj_gate.is_modified_from(RX)
+
+    new_theta = np.pi / 4
+    adj_gate.set_parameters({"theta": new_theta})
+    # Underlying gate parameters should be updated.
+    assert adj_gate.parameters["theta"] == new_theta
+    # The adjoint matrix should update to be the conjugate transpose of the new base matrix.
+    expected_matrix = base_gate.matrix.conj().T
+    assert_matrix_equal(adj_gate.matrix, expected_matrix)
+
+
+# ------------------------------------------------------------------------------
+# Exponential() Modification Tests
+# ------------------------------------------------------------------------------
+def test_exponential_gate():
+    """
+    Test that the exponential gate computes the matrix exponential of the original gate's matrix
+    and that its name is prefixed with 'e^'.
+    """
+    qubit = 4
+    theta = np.pi / 4
+    base_gate = RY(qubit, theta=theta)
+    exp_gate = base_gate.exponential()
+
+    # Check class hierarchy and generics
+    assert isinstance(exp_gate, Exponential)
+    assert exp_gate.is_modified_from(RY)
+
+    # Check that the name is "e^" followed by the base gate's name.
+    assert exp_gate.name == f"e^{base_gate.name}"
+    # The target qubits should remain unchanged.
+    assert exp_gate.target_qubits == base_gate.target_qubits
+
+    # Verify that the matrix is the exponential of the base matrix.
+    expected_matrix = expm(base_gate.matrix)
+    assert_matrix_equal(exp_gate.matrix, expected_matrix)
+
+
+def test_exponential_gate_parameter_update():
+    """
+    Test that updating parameters via the exponential gate propagates correctly and updates its matrix.
+    """
+    qubit = 3
+    base_gate = RY(qubit, theta=0.0)
+    exp_gate = base_gate.exponential()
+
+    # Check class hierarchy and generics
+    assert isinstance(exp_gate, Exponential)
+    assert exp_gate.is_modified_from(RY)
+
+    new_theta = np.pi / 6
+    exp_gate.set_parameters({"theta": new_theta})
+    # Underlying gate parameters should be updated.
+    assert exp_gate.parameters["theta"] == new_theta
+    # The matrix should update to the exponential of the new base matrix.
+    expected_matrix = expm(base_gate.matrix)
+    assert_matrix_equal(exp_gate.matrix, expected_matrix)
