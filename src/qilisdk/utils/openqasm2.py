@@ -135,6 +135,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
             # e.g., "measure q[0] -> c[0];"
             m = re.match(r"measure\s+q\[(\d+)\]\s*->\s*c\[\d+\];", line)
             if m:
+                # TODO(vyron): Check consecutive lines of measurement and combine into single M.
                 q_index = int(m.group(1))
                 if circuit is None:
                     raise ValueError("Quantum register must be declared before measurement.")
