@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from abc import ABC, abstractmethod
 from typing import Any, Callable
 
-from scipy import optimize as sci_opt
+from scipy import optimize as scipy_optimize
 
 
-class Optimizer:
+class Optimizer(ABC):
     def __init__(self) -> None:
         self._optimal_parameters: list[float] = []
 
@@ -28,32 +28,24 @@ class Optimizer:
             raise ValueError("No function has been optimized yet")
         return self._optimal_parameters
 
-    def optimize(
-        self, cost_function: Callable[[list[float]], float], init_parameters: list[float], **kwargs: dict[str, Any]
-    ) -> list[float]:
-        """optimize the cost function and return the optimal parameters.
+    @abstractmethod
+    def optimize(self, cost_function: Callable[[list[float]], float], init_parameters: list[float]) -> list[float]:
+        """Optimize the cost function and return the optimal parameters.
 
         Args:
-            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns
-            the cost.
-            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines
-            the number of parameters the optimizer will consider.
-
-        Raises:
-            NotImplementedError: because this is an abstract class.
+            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.
+            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.
 
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
-        raise NotImplementedError
+        ...
 
 
-class GradientDecent(Optimizer):
-
+class SciPyOptimizer(Optimizer):
     def __init__(
         self,
         method: str | Callable | None = None,
-        bounds: list[tuple[int, int]] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create a new Gradient Based optimizer instance.
@@ -90,26 +82,21 @@ class GradientDecent(Optimizer):
         """
         super().__init__()
         self.method = method
-        self.bounds = bounds
         self.extra_arguments = kwargs
 
-    def optimize(
-        self, cost_function: Callable[[list[float]], float], init_parameters: list[float], **kwargs: dict[str, Any]
-    ) -> list[float]:
+    def optimize(self, cost_function: Callable[[list[float]], float], initial_parameters: list[float]) -> list[float]:
         """optimize the cost function and return the optimal parameters.
 
         Args:
-            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns
-            the cost.
-            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines
-            the number of parameters the optimizer will consider.
+            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.
+            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.
 
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
-        res = sci_opt.minimize(
+        res = scipy_optimize.minimize(
             cost_function,
-            x0=init_parameters,
+            x0=initial_parameters,
             method=self.method,
             jac=self.extra_arguments.get("jac", None),
             hess=self.extra_arguments.get("hess", None),
