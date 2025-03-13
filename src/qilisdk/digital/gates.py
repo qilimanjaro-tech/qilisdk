@@ -476,6 +476,8 @@ class Y(BasicGate):
     The Pauli-Y gate.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[0, -i],
          [i, 0]]
 
@@ -504,6 +506,8 @@ class Z(BasicGate):
     The Pauli-Z gate.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1, 0],
          [0, -1]]
 
@@ -532,6 +536,8 @@ class H(BasicGate):
     The Hadamard gate.
 
     The associated matrix is:
+
+    .. code-block:: text
         1/sqrt(2) * [[1, 1],
                      [1, -1]]
 
@@ -560,6 +566,8 @@ class S(BasicGate):
     Represents the S gate, which induces a pi/2 phase.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1, 0],
          [0, i]]
 
@@ -588,6 +596,8 @@ class T(BasicGate):
     Represents the T gate, which induces a pi/4 phase.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1,           0],
          [0, exp(i*pi/4)]]
 
@@ -616,6 +626,8 @@ class RX(BasicGate):
     Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[cos(theta/2),     -i*sin(theta/2)],
          [-i*sin(theta/2),     cos(theta/2)]]
 
@@ -651,6 +663,8 @@ class RY(BasicGate):
     Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[cos(theta/2), -sin(theta/2)],
          [sin(theta/2),  cos(theta/2)]]
 
@@ -686,6 +700,8 @@ class RZ(BasicGate):
     Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[exp(-i*phi/2),              0],
          [0,               exp(i*phi/2)]]
 
@@ -729,6 +745,8 @@ class U1(BasicGate):
     Represents the U1 gate defined by an azimuthal angle `phi`.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1,            0],
          [0, exp(i*phi)]]
 
@@ -767,6 +785,8 @@ class U2(BasicGate):
     Represents the U2 gate defined by the angles `phi` and `gamma`.
 
     The associated matrix is:
+
+    .. code-block:: text
         1/sqrt(2)*[[1,                   -exp(i*gamma)],
                    [exp(i*phi),    exp(i*(phi+gamma))]]
 
@@ -816,6 +836,8 @@ class U3(BasicGate):
     Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],
          [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
 
@@ -868,6 +890,8 @@ class CNOT(Controlled[X]):
     Represents the CNOT gate.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1, 0, 0, 0],
          [0, 1, 0, 0],
          [0, 0, 0, 1],
@@ -890,6 +914,8 @@ class CZ(Controlled[Z]):
     Represents the CZ gate.
 
     The associated matrix is:
+
+    .. code-block:: text
         [[1, 0, 0, 0],
          [0, 1, 0, 0],
          [0, 0, 1, 0],
