@@ -39,7 +39,6 @@ class Optimizer(ABC):
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
-        ...
 
 
 class SciPyOptimizer(Optimizer):
