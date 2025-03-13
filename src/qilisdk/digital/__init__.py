@@ -14,7 +14,28 @@
 
 from .circuit import Circuit
 from .digital_result import DigitalResults, SimulationDigitalResults
-from .gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
+from .gates import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    BasicGate,
+    Controlled,
+    Exponential,
+    Gate,
+    H,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 
 __all__ = [
     "CNOT",
@@ -25,8 +46,12 @@ __all__ = [
     "U1",
     "U2",
     "U3",
+    "Adjoint",
+    "BasicGate",
     "Circuit",
+    "Controlled",
     "DigitalResults",
+    "Exponential",
     "Gate",
     "H",
     "M",
