@@ -17,20 +17,7 @@ from enum import Enum
 
 import cudaq
 
-from qilisdk.digital import (
-    CNOT,
-    RX,
-    RY,
-    RZ,
-    Circuit,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital import CNOT, RX, RY, RZ, Circuit, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 
 
@@ -82,8 +69,15 @@ class CudaBackend:
                 target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
                 target_kernel.x(qubit)
                 kernel.control(target_kernel, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
+            elif isinstance(gate, Controlled):
+                target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+                if gate.is_modified_from(X):
+                    target_kernel.x(qubit)
+                kernel.control(
+                    target_kernel, [qubits[idx] for idx in gate.control_qubits], qubits[gate.target_qubits[0]]
+                )
             elif isinstance(gate, M):
-                if len(gate.target_qubits) == circuit.nqubits:
+                if gate.nqubits == circuit.nqubits:
                     kernel.mz(qubits)
                 else:
                     kernel.mz([qubits[idx] for idx in gate.target_qubits])
