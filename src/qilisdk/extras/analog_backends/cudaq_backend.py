@@ -82,7 +82,7 @@ class CudaqBackend(AnalogBackend):
             cuda_ham,
             dict.fromkeys(range(schedule.nqubits), 2),
             cuda_sched,
-            State.from_data(np.array(initial_state.dense, dtype=np.complex128)),
+            State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
             observables=cuda_obs,
             collapse_operators=[],
             store_intermediate_results=kwargs.get("store_intermediate_results", False),

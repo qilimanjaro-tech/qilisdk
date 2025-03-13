@@ -200,6 +200,55 @@ class QuantumObject:
         """
         return QuantumObject(expm(self._data))
 
+    def is_ket(self) -> bool:
+        return self.data.shape == (2, 1)
+
+    def is_bra(self) -> bool:
+        return self.data.shape == (1, 2)
+
+    def is_scalar(self) -> bool:
+        return self.data.shape == (1, 1)
+
+    def is_dm(self, tol: float = 1e-8) -> bool:
+        """
+        Checks if a given matrix is a valid density matrix.
+
+        Parameters:
+            rho (numpy.ndarray): The matrix to check.
+            tol (float): Numerical tolerance for checking conditions.
+
+        Returns:
+            bool: True if rho is a valid density matrix, False otherwise.
+        """
+        rho = self.dense
+        # Check if rho is a square matrix
+        if rho.shape[0] != rho.shape[1]:
+            return False
+
+        # Check Hermitian condition: rho should be equal to its conjugate transpose
+        if not np.allclose(rho, rho.conj().T, atol=tol):
+            return False
+
+        # Check if eigenvalues are non-negative (positive semi-definite)
+        eigenvalues = np.linalg.eigvalsh(rho)  # More stable for Hermitian matrices
+        if np.any(eigenvalues < -tol):  # Allow small numerical errors
+            return False
+
+        # Check if the trace is 1
+        return np.isclose(np.trace(rho), 1, atol=tol)
+
+    def is_herm(self, tol: float = 1e-8) -> bool:
+        return np.allclose(self.dense, self.dense.conj().T, atol=tol)
+
+    def to_dm(self) -> QuantumObject:
+        if self.is_scalar():
+            raise ValueError("Cannot make a density matrix from scalar.")
+        if self.is_dm():
+            return self
+        if self.is_bra():
+            return self.dag() @ self
+        return self @ self.dag()
+
 
 def basis(N: int, n: int) -> QuantumObject:
     """Generates the vector representation of a Fock state.
@@ -215,12 +264,28 @@ def basis(N: int, n: int) -> QuantumObject:
 
 
 def ket(*state: int) -> QuantumObject:
+    """Generate a ket state for a set of qubits.
+
+    Raises:
+        ValueError: if the qubit states provided are not 0 or 1.
+
+    Returns:
+        QuantumObject: a Quantum Object representing the state.
+    """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
     return tensor([QuantumObject(csc_array(([1], ([s], [0])), shape=(2, 1))) for s in state])
 
 
 def bra(*state: int) -> QuantumObject:
+    """Generate a bra state for a set of qubits.
+
+    Raises:
+        ValueError: if the qubit states provided are not 0 or 1.
+
+    Returns:
+        QuantumObject: a Quantum Object representing the state.
+    """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
     return tensor([QuantumObject(csc_array(([1], ([0], [s])), shape=(1, 2))) for s in state])
