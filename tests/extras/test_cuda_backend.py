@@ -139,7 +139,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
-    backend = CudaBackend(simulation_method=SimulationMethod.TENSORNET)
+    backend = CudaBackend(simulation_method=SimulationMethod.TENSOR_NETWORK)
     circuit = Circuit(nqubits=1)
     result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("tensornet")

@@ -47,7 +47,7 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 
 class SimulationMethod(str, Enum):
     STATE_VECTOR = "state_vector"
-    TENSORNET = "tensornet"
+    TENSOR_NETWORK = "tensor_network"
     MATRIX_PRODUCT_STATE = "matrix_product_state"
 
 
@@ -75,7 +75,7 @@ class CudaBackend:
                 cudaq.set_target("qpp-cpu")
             else:
                 cudaq.set_target("nvidia")
-        elif self.simulation_method == SimulationMethod.TENSORNET:
+        elif self.simulation_method == SimulationMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
         else:
             cudaq.set_target("tensornet-mps")
