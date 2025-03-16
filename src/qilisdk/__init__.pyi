@@ -14,6 +14,6 @@
 
 from qilisdk.analog import Hamiltonian
 from qilisdk.common import Algorithm, Model, Optimizer, Results
-from qilisdk.extras.qibo_backend import QiboBackend
+from qilisdk.extras.cuda_backend import CudaBackend
 
-__all__ = ["Algorithm", "Hamiltonian", "Model", "Optimizer", "QiboBackend", "Results"]
+__all__ = ["Algorithm", "CudaBackend", "Hamiltonian", "Model", "Optimizer", "Results"]

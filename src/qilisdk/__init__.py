@@ -25,9 +25,9 @@ __all__ = ["Algorithm", "Model", "Optimizer", "Results"]
 # Define your optional features
 OPTIONAL_FEATURES: List[OptionalFeature] = [
     OptionalFeature(
-        name="qibo-backend",
-        dependencies=["qibo"],
-        symbols=[Symbol(path="qilisdk.extras.qibo_backend", name="QiboBackend")],
+        name="cuda-backend",
+        dependencies=["cudaq"],
+        symbols=[Symbol(path="qilisdk.extras.cuda_backend", name="CudaBackend")],
     ),
     # Add more OptionalFeature() entries for other extras if needed
 ]

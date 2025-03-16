@@ -79,7 +79,7 @@ class CudaBackend:
                     raise UnsupportedGateError
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
-        print(cudaq.draw(kernel))  # noqa: T201
+        # print(cudaq.draw(kernel))
         results = cudaq.sample(kernel, shots_count=shots)
         return results
 
@@ -92,7 +92,7 @@ class CudaBackend:
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
             raise UnsupportedGateError
-        handler(target_kernel, gate, qubit)
+        handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
     def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
@@ -100,7 +100,7 @@ class CudaBackend:
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
             raise UnsupportedGateError
-        handler(target_kernel, gate, qubit)
+        handler(target_kernel, gate.basic_gate, qubit)
         kernel.adjoint(target_kernel, target_qubit)
 
     @staticmethod
