@@ -3,24 +3,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from qilisdk.digital import (
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Adjoint,
-    Circuit,
-    Controlled,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, DigitalResult, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import BasicGate
 from qilisdk.extras.cuda_backend import CudaBackend, SimulationMethod
@@ -127,44 +110,55 @@ basic_gate_test_cases = [
 @patch("cudaq.num_available_gpus", return_value=0)
 @patch("cudaq.set_target")
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
     backend = CudaBackend(simulation_method=SimulationMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
-    result = backend.execute(circuit, shots=10)
+    result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("qpp-cpu")
-    assert result == "dummy_result"
+    assert isinstance(result, DigitalResult)
+    assert result.samples == {"0": 1000}
+    assert result.nshots == 10
 
 
 @patch("cudaq.num_available_gpus", return_value=1)
 @patch("cudaq.set_target")
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
     backend = CudaBackend(simulation_method=SimulationMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
-    backend.execute(circuit, shots=10)
+    result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("nvidia")
+    assert isinstance(result, DigitalResult)
+    assert result.samples == {"0": 1000}
+    assert result.nshots == 10
 
 
 @patch("cudaq.set_target")
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
     backend = CudaBackend(simulation_method=SimulationMethod.TENSORNET)
     circuit = Circuit(nqubits=1)
-    backend.execute(circuit, shots=10)
+    result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("tensornet")
+    assert isinstance(result, DigitalResult)
+    assert result.samples == {"0": 1000}
+    assert result.nshots == 10
 
 
 @patch("cudaq.set_target")
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
     backend = CudaBackend(simulation_method=SimulationMethod.MATRIX_PRODUCT_STATE)
     circuit = Circuit(nqubits=1)
-    backend.execute(circuit, shots=10)
+    result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("tensornet-mps")
+    assert isinstance(result, DigitalResult)
+    assert result.samples == {"0": 1000}
+    assert result.nshots == 10
 
 
 # --- Parameterized tests for basic gate execution ---
@@ -172,7 +166,7 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
 
 @pytest.mark.parametrize(("gate_instance", "expected_call"), basic_gate_test_cases)
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, expected_call):
     # Reset the main dummy kernel for a clean slate.
@@ -180,7 +174,7 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
     backend = CudaBackend()
     circuit = Circuit(nqubits=1)
     circuit._gates.append(gate_instance)
-    backend.execute(circuit, shots=10)
+    backend.execute(circuit, nshots=10)
     calls = dummy_make_kernel.main_kernel.calls
     assert expected_call in calls
 
@@ -189,7 +183,7 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
 # In controlled mode the main kernel should receive a ('control', 'q0', 'q1') call.
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -197,7 +191,7 @@ def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kern
     circuit = Circuit(nqubits=2)
     controlled_gate = Controlled(1, basic_gate=gate_instance)
     circuit._gates.append(controlled_gate)
-    backend.execute(circuit, shots=10)
+    backend.execute(circuit, nshots=10)
     calls = dummy_make_kernel.main_kernel.calls
     assert ("control", "q1", "q0") in calls
 
@@ -206,7 +200,7 @@ def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kern
 # In adjoint mode the main kernel should receive an ('adjoint', 'q0') call.
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -214,7 +208,7 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
-    backend.execute(circuit, shots=10)
+    backend.execute(circuit, nshots=10)
     calls = dummy_make_kernel.main_kernel.calls
     assert ("adjoint", "q0") in calls
 
@@ -223,7 +217,7 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -231,14 +225,14 @@ def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel
     circuit = Circuit(nqubits=2)
     measurement_gate = M(0, 1)
     circuit._gates.append(measurement_gate)
-    backend.execute(circuit, shots=10)
+    backend.execute(circuit, nshots=10)
     calls = dummy_make_kernel.main_kernel.calls
     # Full measurement: kernel.mz is called once with the full qubit list.
     assert ("mz", dummy_make_kernel.main_kernel.qubits) in calls
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -246,7 +240,7 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
     circuit._gates.append(measurement_gate)
-    backend.execute(circuit, shots=10)
+    backend.execute(circuit, nshots=10)
     calls = dummy_make_kernel.main_kernel.calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[1]) in calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[2]) in calls
@@ -256,18 +250,18 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_unsupported_gate(mock_set_target, mock_sample, mock_make_kernel):
     backend = CudaBackend()
     circuit = Circuit(nqubits=1)
     circuit._gates.append(DummyGate(0))
     with pytest.raises(UnsupportedGateError):
-        backend.execute(circuit, shots=10)
+        backend.execute(circuit, nshots=10)
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_controlled_multiple_controls_error(mock_set_target, mock_sample, mock_make_kernel):
     backend = CudaBackend()
@@ -275,11 +269,11 @@ def test_controlled_multiple_controls_error(mock_set_target, mock_sample, mock_m
     controlled_gate = Controlled(0, 1, basic_gate=X(2))
     circuit._gates.append(controlled_gate)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(circuit, shots=10)
+        backend.execute(circuit, nshots=10)
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value="dummy_result")
+@patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_kernel):
     backend = CudaBackend()
@@ -287,4 +281,4 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
     adjoint_gate = Adjoint(DummyGate(0))
     circuit._gates.append(adjoint_gate)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(circuit, shots=10)
+        backend.execute(circuit, nshots=10)

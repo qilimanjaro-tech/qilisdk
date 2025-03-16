@@ -19,7 +19,26 @@ from typing import Callable, Type, TypeVar
 import cudaq
 import numpy as np
 
-from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Circuit, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital import (
+    RX,
+    RY,
+    RZ,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    BasicGate,
+    Circuit,
+    Controlled,
+    DigitalResult,
+    H,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.digital.exceptions import UnsupportedGateError
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -61,7 +80,7 @@ class CudaBackend:
         else:
             cudaq.set_target("tensornet-mps")
 
-    def execute(self, circuit: Circuit, shots: int = 1000):  # noqa: ANN201
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
         self._apply_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(circuit.nqubits)
@@ -79,9 +98,8 @@ class CudaBackend:
                     raise UnsupportedGateError
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
-        # print(cudaq.draw(kernel))
-        results = cudaq.sample(kernel, shots_count=shots)
-        return results
+        cudaq_result = cudaq.sample(kernel, shots_count=nshots)
+        return DigitalResult(nshots=nshots, samples=dict(cudaq_result.items()))
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
