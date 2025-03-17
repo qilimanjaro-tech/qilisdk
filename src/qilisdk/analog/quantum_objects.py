@@ -14,10 +14,12 @@
 from __future__ import annotations
 
 import string
+from typing import Literal
 
 import numpy as np
 from scipy.sparse import csc_array, csr_matrix, issparse, kron, sparray, spmatrix
 from scipy.sparse.linalg import expm
+from scipy.sparse.linalg import norm as scipy_norm
 
 Complex = int | float | complex
 TWO = 2
@@ -29,7 +31,7 @@ class QuantumObject:
         if isinstance(data, np.ndarray):
             self._data = csr_matrix(data)
         elif issparse(data):
-            self._data = data
+            self._data = data.tocsr()
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
         invalid_shape = (
@@ -66,7 +68,7 @@ class QuantumObject:
         return -1
 
     @property
-    def shape(self) -> np.ndarray:
+    def shape(self) -> tuple[int, ...]:
         return self._data.shape
 
     def dag(self) -> QuantumObject:
@@ -167,16 +169,30 @@ class QuantumObject:
     def __rmul__(self, other: QuantumObject | Complex) -> QuantumObject:
         return self.__mul__(other)
 
-    def norm(self) -> float:
+    def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """Compute the norm of the Quantum Object
+
+        Args:
+            order (int, "fro", "tr"): Order of the norm. Only used if the Quantum Object is a density matrix.
 
         Returns:
             float: the norm.
         """
+        if self.is_scalar():
+            return self.dense[0][0]
+        if self.is_dm() or self.shape[0] == self.shape[1]:
+            if order == "tr":
+                return self._data.trace()
+            return scipy_norm(self._data, ord=order)
+        if self.is_bra():
+            return np.sqrt(self._data @ self._data.conj().T).toarray()[0, 0]
         return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
 
-    def unit(self) -> QuantumObject:
+    def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
         """Normalizes the quantum Object
+
+        Args:
+            order (int, "fro", "tr"): Order of the norm. Only used if the Quantum Object is a density matrix.
 
         Raises:
             ValueError: If the norm of the Quantum Object is 0
@@ -184,7 +200,7 @@ class QuantumObject:
         Returns:
             QuantumObject: The normalized Quantum Object.
         """
-        norm = self.norm()
+        norm = self.norm(order=order)
         if norm == 0:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
         return QuantumObject(self._data / norm)
@@ -201,10 +217,10 @@ class QuantumObject:
         return QuantumObject(expm(self._data))
 
     def is_ket(self) -> bool:
-        return self.data.shape == (2, 1)
+        return self.shape[0] % 2 == 0 and self.shape[1] == 1
 
     def is_bra(self) -> bool:
-        return self.data.shape == (1, 2)
+        return self.shape[1] % 2 == 0 and self.shape[0] == 1
 
     def is_scalar(self) -> bool:
         return self.data.shape == (1, 1)
@@ -220,25 +236,24 @@ class QuantumObject:
         Returns:
             bool: True if rho is a valid density matrix, False otherwise.
         """
-        rho = self.dense
         # Check if rho is a square matrix
-        if rho.shape[0] != rho.shape[1]:
+        if self.shape[0] != self.shape[1]:
             return False
 
         # Check Hermitian condition: rho should be equal to its conjugate transpose
-        if not np.allclose(rho, rho.conj().T, atol=tol):
+        if not np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol):
             return False
 
         # Check if eigenvalues are non-negative (positive semi-definite)
-        eigenvalues = np.linalg.eigvalsh(rho)  # More stable for Hermitian matrices
+        eigenvalues = np.linalg.eigvalsh(self.dense)  # More stable for Hermitian matrices
         if np.any(eigenvalues < -tol):  # Allow small numerical errors
             return False
 
         # Check if the trace is 1
-        return np.isclose(np.trace(rho), 1, atol=tol)
+        return np.isclose(self._data.trace(), 1, atol=tol)
 
     def is_herm(self, tol: float = 1e-8) -> bool:
-        return np.allclose(self.dense, self.dense.conj().T, atol=tol)
+        return np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol)
 
     def to_dm(self) -> QuantumObject:
         if self.is_scalar():
@@ -246,8 +261,8 @@ class QuantumObject:
         if self.is_dm():
             return self
         if self.is_bra():
-            return self.dag() @ self
-        return self @ self.dag()
+            return (self.dag() @ self).unit()
+        return (self @ self.dag()).unit()
 
 
 def basis(N: int, n: int) -> QuantumObject:

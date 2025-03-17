@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from enum import Enum
 from typing import Callable, ClassVar
 
 import cudaq
+import cupy as cp
 import numpy as np
 from cudaq import State
 from cudaq.operator import OperatorSum, ScalarOperator
@@ -27,8 +29,19 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.common.backend import AnalogBackend
 
 
+class Precision(Enum):
+    COMPLEX64 = cp.complex64
+    COMPLEX128 = cp.complex128
+
+
 class CudaqBackend(AnalogBackend):
     _PAULI_MAP: ClassVar[dict] = {PauliZ: spin.z, PauliX: spin.x, PauliY: spin.y, PauliI: spin.i}
+
+    def __init__(self, simulation_target: str | None = None, simulation_precision: Precision = Precision.COMPLEX128):
+        super().__init__()
+        self._simulation_target = simulation_target if simulation_target is not None else "tensornet"
+        self.simulation_precision = simulation_precision
+        cudaq.set_target(self._simulation_target)
 
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
         out = None
@@ -39,6 +52,13 @@ class CudaqBackend(AnalogBackend):
                 out += offset * np.prod([self._PAULI_MAP[pauli.__class__](pauli.qubit) for pauli in terms])
         return out
 
+    def set_target(self, simulation_target: str) -> None:
+        self._simulation_target = simulation_target
+        cudaq.set_target(self._simulation_target)
+
+    def get_target(self) -> str:
+        return self._simulation_target
+
     def evolve(
         self,
         schedule: Schedule,
@@ -46,7 +66,8 @@ class CudaqBackend(AnalogBackend):
         observables: list[PauliOperator | Hamiltonian],
         **kwargs: dict,
     ) -> AnalogResults:
-        cudaq.set_target("dynamics")
+        if self.get_target() != "dynamics":
+            raise ValueError('evolve can only be called with "dynamics" simulation target.')
 
         cuda_ham = None
         steps = np.linspace(0, schedule.T, int(schedule.T / schedule.dt))
@@ -82,7 +103,7 @@ class CudaqBackend(AnalogBackend):
             cuda_ham,
             dict.fromkeys(range(schedule.nqubits), 2),
             cuda_sched,
-            State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
+            State.from_data(cp.array(initial_state.to_dm().dense, dtype=self.simulation_precision.value)),
             observables=cuda_obs,
             collapse_operators=[],
             store_intermediate_results=kwargs.get("store_intermediate_results", False),
