@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -1138,7 +1137,7 @@ dev = [
 requires-dist = [
     { name = "cudaq", marker = "extra == 'cuda-backend'", specifier = ">=0.9.1" },
     { name = "numpy" },
-    { name = "scipy" },
+    { name = "scipy", specifier = ">=1.15.1" },
 ]
 provides-extras = ["cuda-backend"]
 
