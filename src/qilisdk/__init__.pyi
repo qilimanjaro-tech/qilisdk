@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from qilisdk.analog import Hamiltonian
-from qilisdk.common import Algorithm, Model, Optimizer, Results
+from qilisdk.common import Algorithm, Model, Optimizer, Result
+from qilisdk.digital import DigitalSimulationMethod
 from qilisdk.extras.cuda_backend import CudaBackend
 
-__all__ = ["Algorithm", "CudaBackend", "Hamiltonian", "Model", "Optimizer", "Results"]
+__all__ = ["Algorithm", "CudaBackend", "DigitalSimulationMethod", "Hamiltonian", "Model", "Optimizer", "Result"]

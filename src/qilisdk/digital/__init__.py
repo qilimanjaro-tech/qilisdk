@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from .circuit import Circuit
+from .digital_backend import DigitalBackend, DigitalSimulationMethod
 from .digital_result import DigitalResult
 from .gates import (
     CNOT,
@@ -50,7 +51,9 @@ __all__ = [
     "BasicGate",
     "Circuit",
     "Controlled",
+    "DigitalBackend",
     "DigitalResult",
+    "DigitalSimulationMethod",
     "Exponential",
     "Gate",
     "H",

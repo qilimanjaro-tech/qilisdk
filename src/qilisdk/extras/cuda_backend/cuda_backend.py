@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from enum import Enum
 from typing import Callable, Type, TypeVar
 
 import cudaq
@@ -39,21 +38,35 @@ from qilisdk.digital import (
     Y,
     Z,
 )
+from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
+
+from .cuda_digital_result import CudaDigitalResult
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
 
 
-class SimulationMethod(str, Enum):
-    STATE_VECTOR = "state_vector"
-    TENSOR_NETWORK = "tensor_network"
-    MATRIX_PRODUCT_STATE = "matrix_product_state"
+class CudaBackend(DigitalBackend):
+    """
+    Digital backend implementation using CUDA-based simulation.
 
+    This backend translates a quantum circuit into a CUDA-compatible kernel and executes it
+    using the cudaq library. It supports different simulation methods including state vector,
+    tensor network, and matrix product state simulations. Gate operations in the circuit are
+    mapped to CUDA operations via dedicated handler functions.
+    """
 
-class CudaBackend:
-    def __init__(self, simulation_method: SimulationMethod = SimulationMethod.STATE_VECTOR) -> None:
-        self.simulation_method = simulation_method
+    def __init__(self, simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR) -> None:
+        """
+        Initialize the CudaBackend.
+
+        Args:
+            simulation_method (SimulationMethod, optional): The simulation method to use.
+                Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
+                Defaults to STATE_VECTOR.
+        """
+        super().__init__(simulation_method=simulation_method)
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: CudaBackend._handle_X,
             Y: CudaBackend._handle_Y,
@@ -70,17 +83,40 @@ class CudaBackend:
         }
 
     def _apply_simulation_method(self) -> None:
-        if self.simulation_method == SimulationMethod.STATE_VECTOR:
+        """
+        Configure the cudaq simulation target based on the selected simulation method.
+
+        For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
+        For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
+        """
+        if self.simulation_method == DigitalSimulationMethod.STATE_VECTOR:
             if cudaq.num_available_gpus() == 0:
                 cudaq.set_target("qpp-cpu")
             else:
                 cudaq.set_target("nvidia")
-        elif self.simulation_method == SimulationMethod.TENSOR_NETWORK:
+        elif self.simulation_method == DigitalSimulationMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
         else:
             cudaq.set_target("tensornet-mps")
 
     def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
+        """
+        Execute a quantum circuit and return the measurement results.
+
+        This method applies the selected simulation method, translates the circuit's gates into
+        CUDA operations via their respective handlers, runs the simulation, and returns the result
+        as a CudaDigitalResult.
+
+        Args:
+            circuit (Circuit): The quantum circuit to be executed.
+            nshots (int, optional): The number of measurement shots to perform. Defaults to 1000.
+
+        Returns:
+            DigitalResult: A result object containing the measurement samples and computed probabilities.
+
+        Raises:
+            UnsupportedGateError: If the circuit contains a gate for which no handler is registered.
+        """
         self._apply_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(circuit.nqubits)
@@ -99,11 +135,26 @@ class CudaBackend:
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
         cudaq_result = cudaq.sample(kernel, shots_count=nshots)
-        return DigitalResult(nshots=nshots, samples=dict(cudaq_result.items()))
+        return CudaDigitalResult(nshots=nshots, samples=dict(cudaq_result.items()))
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
     ) -> None:
+        """
+        Handle a controlled gate operation.
+
+        This method processes a controlled gate by creating a temporary kernel for the basic gate,
+        applying its handler, and then integrating it into the main kernel as a controlled operation.
+
+        Args:
+            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
+            gate (Controlled): The controlled gate to be handled.
+            control_qubit (cudaq.QuakeValue): The control qubit for the gate.
+            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+
+        Raises:
+            UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
+        """
         if len(gate.control_qubits) != 1:
             raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
@@ -114,6 +165,20 @@ class CudaBackend:
         kernel.control(target_kernel, control_qubit, target_qubit)
 
     def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
+        """
+        Handle an adjoint (inverse) gate operation.
+
+        This method creates a temporary kernel for the basic gate wrapped by the adjoint,
+        applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+
+        Args:
+            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
+            gate (Adjoint): The adjoint gate to be handled.
+            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+
+        Raises:
+            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
+        """
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
@@ -123,6 +188,18 @@ class CudaBackend:
 
     @staticmethod
     def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:
+        """
+        Handle a measurement gate.
+
+        Depending on whether the measurement targets all qubits or a subset,
+        this method applies measurement operations accordingly.
+
+        Args:
+            kernel (cudaq.Kernel): The CUDA kernel being constructed.
+            gate (M): The measurement gate.
+            circuit (Circuit): The circuit containing the measurement gate.
+            qubits (cudaq.QuakeValue): The allocated qubits for the circuit.
+        """
         if gate.nqubits == circuit.nqubits:
             kernel.mz(qubits)
         else:
@@ -131,48 +208,60 @@ class CudaBackend:
 
     @staticmethod
     def _handle_X(kernel: cudaq.Kernel, gate: X, qubit: cudaq.QuakeValue) -> None:
+        """Handle an X gate operation."""
         kernel.x(qubit)
 
     @staticmethod
     def _handle_Y(kernel: cudaq.Kernel, gate: Y, qubit: cudaq.QuakeValue) -> None:
+        """Handle an Y gate operation."""
         kernel.y(qubit)
 
     @staticmethod
     def _handle_Z(kernel: cudaq.Kernel, gate: Z, qubit: cudaq.QuakeValue) -> None:
+        """Handle an Z gate operation."""
         kernel.z(qubit)
 
     @staticmethod
     def _handle_H(kernel: cudaq.Kernel, gate: H, qubit: cudaq.QuakeValue) -> None:
+        """Handle an H gate operation."""
         kernel.h(qubit)
 
     @staticmethod
     def _handle_S(kernel: cudaq.Kernel, gate: S, qubit: cudaq.QuakeValue) -> None:
+        """Handle an S gate operation."""
         kernel.s(qubit)
 
     @staticmethod
     def _handle_T(kernel: cudaq.Kernel, gate: T, qubit: cudaq.QuakeValue) -> None:
+        """Handle an T gate operation."""
         kernel.t(qubit)
 
     @staticmethod
     def _handle_RX(kernel: cudaq.Kernel, gate: RX, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RX gate operation."""
         kernel.rx(*gate.parameter_values, qubit)
 
     @staticmethod
     def _handle_RY(kernel: cudaq.Kernel, gate: RY, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RY gate operation."""
         kernel.ry(*gate.parameter_values, qubit)
 
     @staticmethod
     def _handle_RZ(kernel: cudaq.Kernel, gate: RZ, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RZ gate operation."""
         kernel.rz(*gate.parameter_values, qubit)
 
     @staticmethod
     def _handle_U1(kernel: cudaq.Kernel, gate: U1, qubit: cudaq.QuakeValue) -> None:
+        """Handle an U1 gate operation."""
         kernel.u3(theta=0.0, phi=gate.phi, delta=0.0, target=qubit)
 
     @staticmethod
     def _handle_U2(kernel: cudaq.Kernel, gate: U2, qubit: cudaq.QuakeValue) -> None:
+        """Handle an U2 gate operation."""
         kernel.u3(theta=np.pi / 2, phi=gate.phi, delta=gate.gamma, target=qubit)
 
     @staticmethod
     def _handle_U3(kernel: cudaq.Kernel, gate: U3, qubit: cudaq.QuakeValue) -> None:
+        """Handle an U3 gate operation."""
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)

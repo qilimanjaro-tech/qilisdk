@@ -22,8 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "numpy",
-    "scipy>=1.15.1"
+    "numpy>=2.2.4",
+    "scipy>=1.15.1",
 ]
 
 [project.optional-dependencies]
