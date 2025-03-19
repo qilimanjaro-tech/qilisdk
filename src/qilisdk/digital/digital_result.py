@@ -11,71 +11,97 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import abstractmethod
 from pprint import pformat
 
-import numpy as np
-
-from qilisdk.common import Results
+from qilisdk.common import Result
 
 
-class DigitalResults(Results):
-    def __init__(self, samples: np.ndarray, frequencies: dict[str, int], nshots: int) -> None:
-        self._samples = samples
-        self._frequencies = frequencies
+class DigitalResult(Result):
+    """
+    Abstract class representing the result of a quantum circuit measurement.
+
+    DigitalResult encapsulates the outcome of a digital measurement performed on a quantum circuit.
+    It includes the total number of measurement shots and mandates that subclasses implement
+    properties and methods to expose the number of qubits involved, the raw measurement samples,
+    and methods to compute the probabilities of measurement outcomes.
+
+    Attributes:
+        nshots (int): The number of measurement shots performed in the experiment.
+        nqubits (int): The number of qubits measured.
+        samples (dict[str, int]): A dictionary where keys are bitstrings representing measurement outcomes and values are the number of times each outcome was observed.
+    """
+
+    def __init__(self, nshots: int) -> None:
+        """
+        Initializes a DigitalResult instance.
+
+        Args:
+            nshots (int): The total number of measurement shots performed.
+        """
         self._nshots = nshots
 
     @property
     def nshots(self) -> int:
+        """
+        Gets the number of measurement shots.
+
+        Returns:
+            int: The total number of measurement shots performed.
+        """
         return self._nshots
 
     @property
-    def frequencies(self) -> dict[str, int]:
-        return self._frequencies
+    @abstractmethod
+    def nqubits(self) -> int:
+        """
+        Gets the number of qubits involved in the measurement.
+
+        Returns:
+            int: The number of qubits measured.
+        """
 
     @property
-    def samples(self) -> np.ndarray:
-        return self._samples
+    @abstractmethod
+    def samples(self) -> dict[str, int]:
+        """
+        Gets the raw measurement samples.
+
+        Returns:
+            dict[str, int]: A dictionary where keys are bitstrings representing measurement outcomes
+            and values are the number of times each outcome was observed.
+        """
+
+    @abstractmethod
+    def get_probabilities(self) -> dict[str, float]:
+        """
+        Computes the probabilities for each measurement outcome.
+
+        Returns:
+            dict[str, float]: A dictionary mapping each bitstring outcome to its corresponding probability.
+        """
+
+    @abstractmethod
+    def get_probability(self, bitstring: str) -> float:
+        """
+        Computes the probability of a specific measurement outcome.
+
+        Args:
+            bitstring (str): The bitstring representing the measurement outcome of interest.
+
+        Returns:
+            float: The probability of the specified bitstring occurring.
+        """
 
     def __repr__(self) -> str:
+        """
+        Returns a string representation of the DigitalResult instance for debugging purposes.
+
+        The representation includes the class name, the number of measurement shots, and a formatted
+        display of the measurement samples.
+
+        Returns:
+            str: A string representation of the DigitalResult instance for debugging.
+        """
         class_name = self.__class__.__name__
-        return (
-            f"{class_name}(\n"
-            f"  nshots={self.nshots},\n"
-            f"  frequencies={pformat(self.frequencies)},\n"
-            f"  samples={pformat(self.samples)}\n"
-            ")"
-        )
-
-
-class SimulationDigitalResults(DigitalResults):
-    def __init__(
-        self,
-        state: np.ndarray,
-        probabilities: np.ndarray,
-        samples: np.ndarray,
-        frequencies: dict[str, int],
-        nshots: int,
-    ) -> None:
-        super().__init__(samples=samples, frequencies=frequencies, nshots=nshots)
-        self._state = state
-        self._probabilities = probabilities
-
-    @property
-    def state(self) -> np.ndarray:
-        return self._state
-
-    @property
-    def probabilities(self) -> np.ndarray:
-        return self._probabilities
-
-    def __repr__(self) -> str:
-        class_name = self.__class__.__name__
-        return (
-            f"{class_name}(\n"
-            f"  nshots={self.nshots},\n"
-            f"  frequencies={pformat(self.frequencies)},\n"
-            f"  samples={pformat(self.samples)},\n"
-            f"  state={pformat(self.state)},\n"
-            f"  probabilities={pformat(self.probabilities)}\n"
-            ")"
-        )
+        return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"

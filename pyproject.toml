@@ -22,12 +22,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "numpy",
+    "numpy>=2.2.4",
+    "scipy>=1.15.1",
 ]
 
 [project.optional-dependencies]
-qibo-backend = [
-    "qibo>=0.2.16",
+cuda-backend = [
+    "cudaq>=0.9.1",
 ]
 cudaq-backend = [
     "cudaq>=0.9.1",
@@ -126,6 +127,7 @@ ignore = [
     "PLR1702",
     "TD003"]
 dummy-variable-rgx = "^_$"
+exclude = [".tmp"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
@@ -149,7 +151,7 @@ exclude = ["\\.ipynb$"]
 [tool.pytest.ini_options]
 markers = [
     "core: tests that only exercise the core library",
-    "qibo_backend: tests that require the qibo backend"
+    "cuda_backend: tests that require the qibo backend"
 ]
 
 [tool.tox]
@@ -158,32 +160,32 @@ envlist = ["3.10", "3.11", "3.12"]
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
-extras = ["qibo-backend"]
+extras = ["cuda-backend"]
 commands = [["pytest", "tests"]]
 
 [tool.tox.env.py310-core]
 extras = []
-commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+commands = [["pytest", "tests", "-m", "not cuda_backend"]]
 
 [tool.tox.env.py311-core]
 extras = []
-commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+commands = [["pytest", "tests", "-m", "not cuda_backend"]]
 
 [tool.tox.env.py312-core]
 extras = []
-commands = [["pytest", "tests", "-m", "not qibo_backend"]]
+commands = [["pytest", "tests", "-m", "not cuda_backend"]]
 
-[tool.tox.env.py310-qibo_backend]
+[tool.tox.env.py310-cuda_backend]
 extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "qibo_backend"]]
+commands = [["pytest", "tests", "-m", "cuda_backend"]]
 
-[tool.tox.env.py311-qibo_backend]
+[tool.tox.env.py311-cuda_backend]
 extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "qibo_backend"]]
+commands = [["pytest", "tests", "-m", "cuda_backend"]]
 
-[tool.tox.env.py312-qibo_backend]
+[tool.tox.env.py312-cuda_backend]
 extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "qibo_backend"]]
+commands = [["pytest", "tests", "-m", "cuda_backend"]]
 
 [tool.tox.gh.python]
 "3.10" = ["3.10"]
