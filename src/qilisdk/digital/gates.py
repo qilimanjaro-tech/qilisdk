@@ -242,7 +242,7 @@ class BasicGate(Gate):
         Returns:
             Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
         """
-        return Controlled(*control_qubits, unitary_gate=self)
+        return Controlled(*control_qubits, basic_gate=self)
 
     def adjoint(self: Self) -> Adjoint[Self]:
         """
@@ -254,7 +254,7 @@ class BasicGate(Gate):
         Returns:
             Adjoint: A new Adjoint gate instance representing the adjoint of this gate.
         """
-        return Adjoint(unitary_gate=self)
+        return Adjoint(basic_gate=self)
 
     def exponential(self: Self) -> Exponential[Self]:
         """
@@ -267,20 +267,20 @@ class BasicGate(Gate):
         Returns:
             Exponential: A new Exponential gate instance whose matrix is the matrix exponential of the current gate's matrix.
         """
-        return Exponential(unitary_gate=self)
+        return Exponential(basic_gate=self)
 
     @abstractmethod
     def _generate_matrix(self) -> np.ndarray: ...
 
 
 class Modified(Gate, Generic[TBasicGate]):
-    def __init__(self, unitary_gate: TBasicGate) -> None:
-        self._unitary_gate: TBasicGate = unitary_gate
+    def __init__(self, basic_gate: TBasicGate) -> None:
+        self._basic_gate: TBasicGate = basic_gate
         self._matrix: np.ndarray
 
     @property
-    def unitary_gate(self) -> TBasicGate:
-        return self._unitary_gate
+    def basic_gate(self) -> TBasicGate:
+        return self._basic_gate
 
     @property
     def matrix(self) -> np.ndarray:
@@ -288,53 +288,53 @@ class Modified(Gate, Generic[TBasicGate]):
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
-        return self._unitary_gate.target_qubits
+        return self._basic_gate.target_qubits
 
     @property
     def parameters(self) -> dict[str, float]:
-        return self._unitary_gate.parameters
+        return self._basic_gate.parameters
 
     @property
     def parameter_names(self) -> list[str]:
-        return self._unitary_gate.parameter_names
+        return self._basic_gate.parameter_names
 
     @property
     def parameter_values(self) -> list[float]:
-        return self._unitary_gate.parameter_values
+        return self._basic_gate.parameter_values
 
     @property
     def nparameters(self) -> int:
-        return self._unitary_gate.nparameters
+        return self._basic_gate.nparameters
 
     @property
     def is_parameterized(self) -> bool:
-        return self._unitary_gate.is_parameterized
+        return self._basic_gate.is_parameterized
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
-        self._unitary_gate.set_parameters(parameters=parameters)
+        self._basic_gate.set_parameters(parameters=parameters)
         self._matrix = self._generate_matrix()
 
     def set_parameter_values(self, values: list[float]) -> None:
-        self._unitary_gate.set_parameter_values(values=values)
+        self._basic_gate.set_parameter_values(values=values)
         self._matrix = self._generate_matrix()
 
     @abstractmethod
     def _generate_matrix(self) -> np.ndarray: ...
 
     def is_modified_from(self, gate_type: type[TBasicGate]) -> bool:
-        return isinstance(self.unitary_gate, gate_type)
+        return isinstance(self.basic_gate, gate_type)
 
 
 class Controlled(Modified[TBasicGate]):
-    def __init__(self, *control_qubits: int, unitary_gate: TBasicGate) -> None:
-        super().__init__(unitary_gate=unitary_gate)
+    def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
+        super().__init__(basic_gate=basic_gate)
 
         # Check for duplicate integers in control_qubits.
         if len(control_qubits) != len(set(control_qubits)):
             raise ValueError("Duplicate control qubits found.")
 
         # Check if any integer in control_qubits is also in unitary_gate.target_qubits.
-        if set(control_qubits) & set(unitary_gate.target_qubits):
+        if set(control_qubits) & set(basic_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
         self._control_qubits = control_qubits
@@ -349,7 +349,7 @@ class Controlled(Modified[TBasicGate]):
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
         I_target = np.eye(1 << len(self.target_qubits), dtype=complex)
         # The controlled gate is then:
-        controlled = I_full + np.kron(P, self.unitary_gate.matrix - I_target)
+        controlled = I_full + np.kron(P, self.basic_gate.matrix - I_target)
         return controlled
 
     @property
@@ -358,7 +358,7 @@ class Controlled(Modified[TBasicGate]):
 
     @property
     def name(self) -> str:
-        return "C" * len(self.control_qubits) + self.unitary_gate.name
+        return "C" * len(self.control_qubits) + self.basic_gate.name
 
 
 class Adjoint(Modified[TBasicGate]):
@@ -366,12 +366,12 @@ class Adjoint(Modified[TBasicGate]):
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, unitary_gate: TBasicGate) -> None:
-        super().__init__(unitary_gate=unitary_gate)
+    def __init__(self, basic_gate: TBasicGate) -> None:
+        super().__init__(basic_gate=basic_gate)
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        return self.unitary_gate.matrix.conj().T
+        return self.basic_gate.matrix.conj().T
 
     @property
     def name(self) -> str:
@@ -384,7 +384,7 @@ class Adjoint(Modified[TBasicGate]):
         Returns:
             str: The name of the adjoint gate.
         """
-        return self.unitary_gate.name + "†"
+        return self.basic_gate.name + "†"
 
 
 class Exponential(Modified[TBasicGate]):
@@ -394,12 +394,12 @@ class Exponential(Modified[TBasicGate]):
     of the underlying gate's matrix.
     """
 
-    def __init__(self, unitary_gate: TBasicGate) -> None:
-        super().__init__(unitary_gate=unitary_gate)
+    def __init__(self, basic_gate: TBasicGate) -> None:
+        super().__init__(basic_gate=basic_gate)
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        return expm(self.unitary_gate.matrix)
+        return expm(self.basic_gate.matrix)
 
     @property
     def name(self) -> str:
@@ -412,7 +412,7 @@ class Exponential(Modified[TBasicGate]):
         Returns:
             str: The generated name of the exponential gate.
         """
-        return f"e^{self.unitary_gate.name}"
+        return f"e^{self.basic_gate.name}"
 
 
 class M(Gate):
@@ -651,6 +651,10 @@ class RX(BasicGate):
     def name(self) -> str:
         return "RX"
 
+    @property
+    def theta(self) -> float:
+        return self.parameters["theta"]
+
     def _generate_matrix(self) -> np.ndarray:
         theta = self.parameters["theta"]
         cos_half = np.cos(theta / 2)
@@ -687,6 +691,10 @@ class RY(BasicGate):
     @property
     def name(self) -> str:
         return "RY"
+
+    @property
+    def theta(self) -> float:
+        return self.parameters["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.parameters["theta"]
@@ -733,6 +741,10 @@ class RZ(BasicGate):
     def name(self) -> str:
         return "RZ"
 
+    @property
+    def theta(self) -> float:
+        return self.parameters["theta"]
+
     def _generate_matrix(self) -> np.ndarray:
         phi = self.parameters["phi"]
         cos_half = np.cos(phi / 2)
@@ -774,6 +786,10 @@ class U1(BasicGate):
     @property
     def name(self) -> str:
         return "U1"
+
+    @property
+    def phi(self) -> float:
+        return self.parameters["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.parameters["phi"]
@@ -818,6 +834,14 @@ class U2(BasicGate):
     @property
     def name(self) -> str:
         return "U2"
+
+    @property
+    def phi(self) -> float:
+        return self.parameters["phi"]
+
+    @property
+    def gamma(self) -> float:
+        return self.parameters["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.parameters["phi"]
@@ -872,6 +896,18 @@ class U3(BasicGate):
     def name(self) -> str:
         return "U3"
 
+    @property
+    def theta(self) -> float:
+        return self.parameters["theta"]
+
+    @property
+    def phi(self) -> float:
+        return self.parameters["phi"]
+
+    @property
+    def gamma(self) -> float:
+        return self.parameters["gamma"]
+
     def _generate_matrix(self) -> np.ndarray:
         theta = self.parameters["theta"]
         phi = self.parameters["phi"]
@@ -902,7 +938,7 @@ class CNOT(Controlled[X]):
     """
 
     def __init__(self, control: int, target: int) -> None:
-        super().__init__(control, unitary_gate=X(target))
+        super().__init__(control, basic_gate=X(target))
 
     @property
     def name(self) -> str:
@@ -929,4 +965,4 @@ class CZ(Controlled[Z]):
     """
 
     def __init__(self, control: int, target: int) -> None:
-        super().__init__(control, unitary_gate=Z(target))
+        super().__init__(control, basic_gate=Z(target))

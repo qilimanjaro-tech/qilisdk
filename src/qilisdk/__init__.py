@@ -15,19 +15,19 @@
 import sys
 from typing import List
 
-from qilisdk.common import Algorithm, Model, Optimizer, Results
+from qilisdk.common import Algorithm, Model, Optimizer, Result
 
 from ._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
 
 # Put your always-available, core symbols here
-__all__ = ["Algorithm", "Model", "Optimizer", "Results"]
+__all__ = ["Algorithm", "Model", "Optimizer", "Result"]
 
 # Define your optional features
 OPTIONAL_FEATURES: List[OptionalFeature] = [
     OptionalFeature(
-        name="qibo-backend",
-        dependencies=["qibo"],
-        symbols=[Symbol(path="qilisdk.extras.qibo_backend", name="QiboBackend")],
+        name="cuda-backend",
+        dependencies=["cudaq"],
+        symbols=[Symbol(path="qilisdk.extras.cuda_backend", name="CudaBackend")],
     ),
     # Add more OptionalFeature() entries for other extras if needed
 ]
