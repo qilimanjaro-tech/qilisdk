@@ -26,7 +26,6 @@ class AnalogAlgorithm:
 
 
 class TimeEvolution(AnalogAlgorithm):
-
     def __init__(
         self,
         backend: AnalogBackend,

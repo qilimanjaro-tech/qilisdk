@@ -26,7 +26,6 @@ TWO = 2
 
 
 class QuantumObject:
-
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         if isinstance(data, np.ndarray):
             self._data = csr_matrix(data)

@@ -21,7 +21,6 @@ from qilisdk.common.backend import Backend
 
 
 class AnalogBackend(Backend):
-
     @abstractmethod
     def evolve(
         self,

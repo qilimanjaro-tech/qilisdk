@@ -20,7 +20,6 @@ from qilisdk.common import Result
 
 
 class AnalogResult(Result):
-
     def __init__(
         self,
         final_expected_values: np.ndarray | None = None,
