@@ -14,21 +14,18 @@
 from __future__ import annotations
 
 import warnings
-from enum import Enum
-from typing import Callable, ClassVar, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, ClassVar, Type, TypeVar
 
 import cudaq
 import numpy as np
 from cudaq import State
-from cudaq.operator import OperatorSum, ScalarOperator
+from cudaq.operator import OperatorSum, ScalarOperator, evolve, spin
 from cudaq.operator import Schedule as cuda_schedule
-from cudaq.operator import evolve, spin
 
 from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.analog.analog_result import AnalogResult
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.analog.schedule import Schedule
 from qilisdk.digital import (
     RX,
     RY,
@@ -53,6 +50,9 @@ from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMet
 from qilisdk.digital.exceptions import UnsupportedGateError
 
 from .cuda_digital_result import CudaDigitalResult
+
+if TYPE_CHECKING:
+    from qilisdk.analog.schedule import Schedule
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
