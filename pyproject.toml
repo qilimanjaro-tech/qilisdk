@@ -28,10 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cuda-backend = [
-    "cudaq>=0.9.1",
-]
-cudaq-backend = [
-    "cudaq>=0.9.1",
+    "cudaq>=0.10.0",
 ]
 
 [dependency-groups]

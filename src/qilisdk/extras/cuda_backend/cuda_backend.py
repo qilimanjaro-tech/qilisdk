@@ -18,7 +18,6 @@ from enum import Enum
 from typing import Callable, ClassVar, Type, TypeVar
 
 import cudaq
-import cupy as cp
 import numpy as np
 from cudaq import State
 from cudaq.operator import OperatorSum, ScalarOperator
@@ -271,7 +270,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             hamiltonian=cuda_ham,
             dimensions=dict.fromkeys(range(schedule.nqubits), 2),
             schedule=cuda_sched,
-            initial_state=State.from_data(cp.array(initial_state.to_dm().dense, dtype=cp.complex128)),
+            initial_state=State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
             observables=cuda_obs,
             collapse_operators=[],
             store_intermediate_results=store_intermediate_results,
