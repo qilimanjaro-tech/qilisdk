@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from qilisdk.analog.analog_result import AnalogResults
+from qilisdk.analog.analog_backend import AnalogBackend
+from qilisdk.analog.analog_result import AnalogResult
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.backend import AnalogBackend
 
 Complex = int | float | complex
 
@@ -50,7 +50,11 @@ class TimeEvolution(AnalogAlgorithm):
         self.observables = observables
         self.n_shots = n_shots
 
-    def evolve(self, **kwargs: dict) -> AnalogResults:
+    def evolve(self, store_intermediate_results: bool = False, **kwargs: dict) -> AnalogResult:
         return self.backend.evolve(
-            schedule=self.schedule, initial_state=self.initial_state, observables=self.observables, **kwargs
+            schedule=self.schedule,
+            initial_state=self.initial_state,
+            observables=self.observables,
+            store_intermediate_results=store_intermediate_results,
+            **kwargs,
         )

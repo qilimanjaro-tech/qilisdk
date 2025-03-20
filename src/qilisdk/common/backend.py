@@ -12,22 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.analog.analog_result import AnalogResults
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.analog.schedule import Schedule
-
 
 class Backend: ...
-
-
-class AnalogBackend(Backend):
-
-    def evolve(
-        self,
-        schedule: Schedule,
-        initial_state: QuantumObject,
-        observables: list[PauliOperator | Hamiltonian],
-        **Kwargs: dict,
-    ) -> AnalogResults:
-        raise NotImplementedError

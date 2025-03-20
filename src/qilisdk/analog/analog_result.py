@@ -16,10 +16,10 @@ from pprint import pformat
 import numpy as np
 
 from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.common import Results
+from qilisdk.common import Result
 
 
-class AnalogResults(Results):
+class AnalogResult(Result):
 
     def __init__(
         self,
