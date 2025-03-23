@@ -1,26 +1,39 @@
+# Copyright 2025 Qilimanjaro Quantum Tech
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import annotations
 
 import copy
-import enum
 from abc import ABC
+from enum import Enum
 from math import prod
 
 import numpy as np
 
 # Utils ###
+Number = int | float
 
 
-def _check_constant(c):
+def _check_and_convert(c: object) -> Variable | Term:
     if isinstance(c, (Variable, Term)):
         return c
-    if isinstance(c, (float, int)):
+    if isinstance(c, (float, int)) or (isinstance(c, np.generic) and np.issubdtype(c, np.number)):
         return ConstantVar(c)
-    if isinstance(c, np.generic) and np.issubdtype(c, np.number):
-        return ConstantVar(c)
-    return c
+    raise ValueError(f"{c} type is not supported.")
 
 
-def _multiply_operators(op1, op2):
+def _multiply_operations(op1: Operation, op2: Operation) -> Operation:
     if op1 not in {Operation.ADD, Operation.SUB} or op2 not in {Operation.ADD, Operation.SUB}:
         raise ValueError("only subtraction and additions are supported")
     if op1 is Operation.SUB and op2 is Operation.SUB:
@@ -30,7 +43,7 @@ def _multiply_operators(op1, op2):
     return Operation.ADD
 
 
-def apply_operation(v1, op, v2):
+def _apply_operation(v1: Variable, op: Operation, v2: Variable) -> Term:
     if op is Operation.ADD:
         return v1 + v2
     if op is Operation.SUB:
@@ -58,7 +71,7 @@ def apply_comparison(v1, op, v2):
     return None
 
 
-def apply_operation_on_constants(const_list: list[tuple["Operation", int, "ConstantVar"]], operation):
+def apply_operation_on_constants(const_list: list[tuple[Operation, int, ConstantVar]], operation: Operation):
     total_const = None  # 0 if (operation is Operation.SUB or operation is Operation.ADD) else 1
     min_i = 10000
 
@@ -68,7 +81,7 @@ def apply_operation_on_constants(const_list: list[tuple["Operation", int, "Const
         #     v = apply_operation(0, op, con.value)
         if total_const is None:
             total_const = 0 if (op is Operation.SUB or op is Operation.ADD) else 1
-        total_const = apply_operation(total_const, op, v)
+        total_const = _apply_operation(total_const, op, v)
         min_i = min(min_i, i)
     if operation is Operation.SUB and min_i > 0:
         total_const *= -1
@@ -87,81 +100,52 @@ def compare_vars(v1: "Variable", v2: "Variable"):
     return not (isinstance(v1, ConstantVar) and v1.value is not v2.value)
 
 
-class Side(enum.Enum):
+class Side(Enum):
     RIGHT = "right"
     LEFT = "left"
 
 
-# Domains ###
+class Domain(str, Enum):
+    Integer = "Integer Domain"
+    PositiveInteger = "Positive Integer Domain"
+    Real = "Real Domain"
+    Binary = "Binary Domain"
+    Spin = "Spin Domain"
+
+    def check_value(self, value: float) -> bool:
+        if self == Domain.Binary:
+            return isinstance(value, int) and value in {0, 1}
+        if self == Domain.Spin:
+            return isinstance(value, int) and value in {-1, 1}
+        if self == Domain.Real:
+            return isinstance(value, (int, float))
+        if self == Domain.Integer:
+            return isinstance(value, int)
+        if self == Domain.PositiveInteger:
+            return isinstance(value, int) and value >= 0
+        return False
+
+    def min(self) -> float:
+        if self in {Domain.Binary, Domain.PositiveInteger}:
+            return 0
+        if self == Domain.Spin:
+            return -1
+        return -1e30
+
+    def max(self) -> float:
+        if self in {Domain.Binary, Domain.Spin}:
+            return 1
+        return 1e30
 
 
-class Domain:
-    _min = -1e30
-    _max = 1e30
-
-    @staticmethod
-    def check_value(value) -> bool:
-        raise NotImplementedError("Calling the generic Domain class")
-
-    @classmethod
-    def max(self):
-        return self._max
-
-    @classmethod
-    def min(self):
-        return self._min
-
-
-class IntegerDomain(Domain):
-    @staticmethod
-    def check_value(value) -> bool:
-        return isinstance(value, int)
-
-
-class RealDomain(Domain):
-    @staticmethod
-    def check_value(value) -> bool:
-        return isinstance(value, (float, int))
-
-
-class BinaryDomain(Domain):
-    _min = 0
-    _max = 1
-
-    @staticmethod
-    def check_value(value) -> bool:
-        return value in {0, 1}
-
-
-class SpinDomain(Domain):
-    _min = -1
-    _max = 1
-
-    @staticmethod
-    def check_value(value) -> bool:
-        return value in {-1, 1}
-
-
-class PositiveIntegerDomain(IntegerDomain):
-    _min = 0
-
-    # Variables ###
-    @staticmethod
-    def check_value(value) -> bool:
-        return isinstance(value, int) and value >= 0
-
-
-# Operations ###
-
-
-class Operation(enum.Enum):
+class Operation(Enum):
     MUL = "*"
     ADD = "+"
     DIV = "/"
     SUB = "-"
 
 
-class ComparisonOperators(enum.Enum):
+class ComparisonOperators(Enum):
     LT = "<"
     LE = "<="
     EQ = "=="
@@ -669,22 +653,21 @@ class domain_wall(Encoding):
 class Variable:
     """This class represents the general structure of any variable that can be included in the model."""
 
-    def __init__(self, label: str, domain: Domain, bounds: tuple[int, int] = (None, None)):
+    def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         self._label = label
         self._domain = domain
-        self._bounds = None
-        lb = bounds[0]
-        ub = bounds[1]
-        if lb is None:
-            lb = domain.min()
-        if ub is None:
-            ub = domain.max()
-        if lb > ub:
+
+        lower_bound, upper_bound = bounds
+        if lower_bound is None:
+            lower_bound = domain.min()
+        if upper_bound is None:
+            upper_bound = domain.max()
+        if lower_bound > upper_bound:
             raise ValueError("lower bound can't be larger than the upper bound.")
-        self.bounds = (lb, ub)
+        self._bounds = (lower_bound, upper_bound)
 
     @property
-    def bounds(self):
+    def bounds(self) -> tuple[float, float]:
         """Property that stores a tuple representing the bounds of the values a variable is allowed to take.º
 
         Returns:
@@ -693,7 +676,7 @@ class Variable:
         return self._bounds
 
     @property
-    def lower_bound(self):
+    def lower_bound(self) -> float:
         """The lower bound of the variable.
 
         Returns:
@@ -702,7 +685,7 @@ class Variable:
         return self._bounds[0]
 
     @property
-    def upper_bound(self):
+    def upper_bound(self) -> float:
         """The upper bound of the variable.
 
         Returns:
@@ -711,7 +694,7 @@ class Variable:
         return self._bounds[1]
 
     @property
-    def label(self):
+    def label(self) -> str:
         """the label (name) of the variable.
 
         Returns:
@@ -720,7 +703,7 @@ class Variable:
         return self._label
 
     @property
-    def domain(self):
+    def domain(self) -> Domain:
         """The domain of values that the variable is allowed to take.
 
         Returns:
@@ -728,18 +711,14 @@ class Variable:
         """
         return self._domain
 
-    @bounds.setter
-    def bounds(self, bounds: tuple[int, int]):
-        if not isinstance(bounds, (tuple)) or len(bounds) != 2:
-            raise ValueError("bounds parameter should be a tuple with two items.")
-
+    def set_bounds(self, bounds: tuple[float, float]) -> None:
         if not self.domain.check_value(bounds[0]):
             raise ValueError(
-                f"the lower bound ({bounds[0]}) does not respect the domain of the variable ({self.domain.__class__.__name__()})"
+                f"the lower bound ({bounds[0]}) does not respect the domain of the variable ({self.domain})"
             )
         if not self.domain.check_value(bounds[1]):
             raise ValueError(
-                f"the upper bound ({bounds[1]}) does not respect the domain of the variable ({self.domain.__class__.__name__()})"
+                f"the upper bound ({bounds[1]}) does not respect the domain of the variable ({self.domain})"
             )
         if bounds[0] > bounds[1]:
             raise ValueError(f"the lower bound ({bounds[0]}) should not be greater than the upper bound ({bounds[1]})")
@@ -748,10 +727,8 @@ class Variable:
     def num_binary_equivalent(self):
         raise NotImplementedError
 
-    def variables(self):
-        """
-        TODO: Fix the problem in model line 800 instead of having this method.
-        """
+    def variables(self):  # noqa: ANN201
+        # TODO (ameer): Fix the problem in model line 800 instead of having this method.
         yield self
 
     def replace_variables(self, var_dict):
@@ -766,62 +743,55 @@ class Variable:
             self._domain = var_dict[self.label].domain
             self.bounds = var_dict[self.label].bounds
 
-    def __copy__(self):
+    def __copy__(self) -> Variable:
         return Variable(label=self.label, domain=self.domain)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self._label}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._label}"
 
-    def __add__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __add__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other + self
 
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
         out = Term(elements=[self, other], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
+        if out.operation is Operation.ADD:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __mul__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
-            return Term(elements=[other, self], operation=Operation.MUL)
+    def __mul__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other * self
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
         return Term(elements=[self, other], operation=Operation.MUL)
 
-    def __truediv__(self, other):
-        other = _check_constant(other)
+    def __truediv__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
+            # if other.value == 1:
+            #     return self
             if other.value == 0:
                 raise ValueError("Division by zero is not allowed")
 
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
 
-        return Term(elements=[self, _check_constant(other)], operation=Operation.DIV)
+        return Term(elements=[self, other], operation=Operation.DIV)
 
-    def __sub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __sub__(self, other: Number | Variable | Term):
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         out = Term(elements=[self, -1 * other], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
@@ -829,53 +799,59 @@ class Variable:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __iadd__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __iadd__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other + self
 
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
+        # if isinstance(other, ConstantVar) and other.value == 0:
+        #     return self
         out = Term(elements=[self, other], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
         if isinstance(out, Term) and out.operation is Operation.ADD:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __imul__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
-            return Term(elements=[other, self], operation=Operation.MUL)
+    def __imul__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other * self
-        return Term(elements=[self, other], operation=Operation.MUL)
 
-    def __itruediv__(self, other):
-        other = _check_constant(other)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
+            # if other.value == 1:
+            #     return self
+            # if other.value == 0:
+            #     return 0
+            return Term(elements=[other, self], operation=Operation.MUL)
+
+        return Term(elements=[self, other], operation=Operation.MUL)
+
+    def __itruediv__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
+        if isinstance(other, ConstantVar):
+            # if other.value == 1:
+            #     return self
             if other.value == 0:
                 raise ValueError("Division by zero is not allowed")
 
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
 
-        return Term(elements=[self, _check_constant(other)], operation=Operation.DIV)
+        return Term(elements=[self, other], operation=Operation.DIV)
 
-    def __isub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __isub__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
+        # if isinstance(other, ConstantVar):
+        #     if other.value == 0:
+        #         return self
 
         out = Term(elements=[self, -1 * other], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
@@ -883,14 +859,15 @@ class Variable:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __radd__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __radd__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other + self
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
+        # if isinstance(other, ConstantVar):
+        #     if other.value == 0:
+        #         return self
 
         out = Term(elements=[other, self], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
@@ -898,29 +875,37 @@ class Variable:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __rmul__(self, other):
-        other = _check_constant(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
+    def __rmul__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other * self
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+
+        # if isinstance(other, ConstantVar):
+        #     if other.value == 1:
+        #         return self
+        #     if other.value == 0:
+        #         return 0
+
         return Term(elements=[other, self], operation=Operation.MUL)
 
-    def __rtruediv__(self, other):
-        return Term(elements=[_check_constant(other), self], operation=Operation.DIV)
+    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return Term(elements=[other, self], operation=Operation.DIV)
 
-    def __rfloordiv__(self, other):
-        return Term(elements=[_check_constant(other), self], operation=Operation.DIV)
+    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return Term(elements=[other, self], operation=Operation.DIV)
 
-    def __rsub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
+    def __rsub__(self, other: Number | Variable | Term) -> Term:
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        # if isinstance(other, ConstantVar):
+        #     if other.value == 0:
+        #         return self
 
         out = Term(elements=[other, -1 * self], operation=Operation.ADD)
         out = out.simplify_constants(maintain_index=True)
@@ -939,27 +924,27 @@ class Variable:
         return out
 
     def __lt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.LT)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LT)
 
     def __le__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.LE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LE)
 
     def __eq__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.EQ)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.EQ)
 
     def __ne__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.NE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.NE)
 
     def __gt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.GT)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GT)
 
     def __ge__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.GE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GE)
 
 
 class BinaryVar(Variable):
-    def __init__(self, label: str):
-        super().__init__(label=label, domain=BinaryDomain)
+    def __init__(self, label: str) -> None:
+        super().__init__(label=label, domain=Domain.Binary)
 
     def num_binary_equivalent(self):
         return 1
@@ -970,84 +955,83 @@ class BinaryVar(Variable):
     def __copy__(self):
         return BinaryVar(label=self.label)
 
-    def __mul__(self, other):
-        if isinstance(other, BinaryVar):
-            if compare_vars(self, other):
-                return self
-        return super().__mul__(other)
+    # def __mul__(self, other: Number | Variable | Term) -> Term:
+    #     if isinstance(other, BinaryVar) and compare_vars(self, other):
+    #         return self
+    #     return super().__mul__(other)
 
-    def __imul__(self, other):
-        if isinstance(other, BinaryVar):
-            if compare_vars(self, other):
-                return self
-        return super().__imul__(other)
+    # def __imul__(self, other: Number | Variable | Term) -> Term:
+    #     if isinstance(other, BinaryVar):
+    #         if compare_vars(self, other):
+    #             return self
+    #     return super().__imul__(other)
 
-    def __rmul__(self, other):
-        if isinstance(other, BinaryVar):
-            if compare_vars(self, other):
-                return self
-        return super().__rmul__(other)
+    # def __rmul__(self, other):
+    #     if isinstance(other, BinaryVar):
+    #         if compare_vars(self, other):
+    #             return self
+    #     return super().__rmul__(other)
 
 
 class SpinVar(Variable):
     def __init__(self, label: str):
-        super().__init__(label=label, domain=SpinDomain, bounds=(-1, 1))
+        super().__init__(label=label, domain=Domain.Spin, bounds=(-1, 1))
 
     def num_binary_equivalent(self):
         return 1
 
 
-class ContinuousVar(Variable):
-    def __init__(self, label: str, domain: Domain, bounds: tuple[int, int], encoding: Encoding = HOBO):
-        super().__init__(label=label, domain=domain, bounds=bounds)
+# class ContinuousVar(Variable):
+#     def __init__(self, label: str, domain: Domain, bounds: tuple[int, int], encoding: Encoding = HOBO):
+#         super().__init__(label=label, domain=domain, bounds=bounds)
 
-        if not issubclass(encoding, Encoding):
-            raise ValueError("only encodings specified by the Encoding class are allowed.")
-        self._encoding = encoding
+#         if not issubclass(encoding, Encoding):
+#             raise ValueError("only encodings specified by the Encoding class are allowed.")
+#         self._encoding = encoding
 
-        self.__term, self.__bin_vars = self.encode()
+#         self.__term, self.__bin_vars = self.encode()
 
-    @property
-    def encoding(self):
-        return self._encoding
+#     @property
+#     def encoding(self):
+#         return self._encoding
 
-    @property
-    def term(self):
-        return self.__term
+#     @property
+#     def term(self):
+#         return self.__term
 
-    @property
-    def bin_vars(self):
-        return self.__bin_vars
+#     @property
+#     def bin_vars(self):
+#         return self.__bin_vars
 
-    def __copy__(self):
-        return ContinuousVar(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
+#     def __copy__(self):
+#         return ContinuousVar(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
 
-    def __getitem__(self, item):
-        return self.__bin_vars[item]
+#     def __getitem__(self, item):
+#         return self.__bin_vars[item]
 
-    def evaluate(self, binary_list, precision=100):
-        return self.encoding.evaluate(self, binary_list, precision=precision)
+#     def evaluate(self, binary_list, precision=100):
+#         return self.encoding.evaluate(self, binary_list, precision=precision)
 
-    def encode(self, precision=100):
-        self.__term, self.__bin_vars = self.encoding.encode(self, precision=precision)
-        return self.__term, self.__bin_vars
+#     def encode(self, precision=100):
+#         self.__term, self.__bin_vars = self.encoding.encode(self, precision=precision)
+#         return self.__term, self.__bin_vars
 
-    def num_binary_equivalent(self, precision=100):
-        return self.encoding.num_binary_equivalent(self, precision=precision)
+#     def num_binary_equivalent(self, precision=100):
+#         return self.encoding.num_binary_equivalent(self, precision=precision)
 
-    def check_valid(self, binary_list):
-        return self.encoding.check_valid(binary_list)
+#     def check_valid(self, binary_list):
+#         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self, precision: int = 100) -> ConstraintTerm | None:
-        return self.encoding.encoding_constraint(self, precision=precision)
+#     def encoding_constraint(self, precision: int = 100) -> ConstraintTerm | None:
+#         return self.encoding.encoding_constraint(self, precision=precision)
 
-    def term_equals_to(self, number: int, precision: int = 100):
-        return self.encoding.term_equals_to(self, number, precision)
+#     def term_equals_to(self, number: int, precision: int = 100):
+#         return self.encoding.term_equals_to(self, number, precision)
 
 
 class ConstantVar(Variable):
-    def __init__(self, value):
-        super().__init__(str(value), RealDomain)
+    def __init__(self, value: Number):
+        super().__init__(label=str(value), domain=Domain.Real)
         self._value = value
 
     @property
@@ -1066,139 +1050,139 @@ class ConstantVar(Variable):
     def __str__(self):
         return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
 
-    def __add__(self, other):
-        other = _check_constant(other)
+    # def __add__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = self.value + other.value
-            return ConstantVar(val)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = self.value + other.value
+    #         return ConstantVar(val)
 
-        return super().__add__(other)
+    #     return super().__add__(other)
 
-    def __mul__(self, other):
-        other = _check_constant(other)
+    # def __mul__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
-            val = self.value * other.value
-            return ConstantVar(val)
-        if self.value == 1:
-            return other
-        if self.value == 0:
-            return 0
-        return super().__mul__(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 1:
+    #             return self
+    #         if other.value == 0:
+    #             return 0
+    #         val = self.value * other.value
+    #         return ConstantVar(val)
+    #     if self.value == 1:
+    #         return other
+    #     if self.value == 0:
+    #         return 0
+    #     return super().__mul__(other)
 
-    def __truediv__(self, other):
-        if isinstance(other, ConstantVar):
-            val = self.value / other.value
-            return ConstantVar(val)
-        return super().__truediv__(other)
+    # def __truediv__(self, other):
+    #     if isinstance(other, ConstantVar):
+    #         val = self.value / other.value
+    #         return ConstantVar(val)
+    #     return super().__truediv__(other)
 
-    def __sub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = self.value - other.value
-            return ConstantVar(val)
-        return super().__sub__(other)
+    # def __sub__(self, other):
+    #     other = _check_and_convert(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = self.value - other.value
+    #         return ConstantVar(val)
+    #     return super().__sub__(other)
 
-    def __iadd__(self, other):
-        other = _check_constant(other)
+    # def __iadd__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = self.value + other.value
-            return ConstantVar(val)
-        if self.value == 0:
-            return other
-        return super().__iadd__(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = self.value + other.value
+    #         return ConstantVar(val)
+    #     if self.value == 0:
+    #         return other
+    #     return super().__iadd__(other)
 
-    def __imul__(self, other):
-        other = _check_constant(other)
+    # def __imul__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
-            val = self.value * other.value
-            return ConstantVar(val)
-        if self.value == 1:
-            return other
-        if self.value == 0:
-            return 0
-        return super().__imul__(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 1:
+    #             return self
+    #         if other.value == 0:
+    #             return 0
+    #         val = self.value * other.value
+    #         return ConstantVar(val)
+    #     if self.value == 1:
+    #         return other
+    #     if self.value == 0:
+    #         return 0
+    #     return super().__imul__(other)
 
-    def __itruediv__(self, other):
-        if isinstance(other, ConstantVar):
-            val = self.value / other.value
-            return ConstantVar(val)
-        return super().__itruediv__(other)
+    # def __itruediv__(self, other):
+    #     if isinstance(other, ConstantVar):
+    #         val = self.value / other.value
+    #         return ConstantVar(val)
+    #     return super().__itruediv__(other)
 
-    def __isub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = self.value - other.value
-            return ConstantVar(val)
-        return super().__isub__(other)
+    # def __isub__(self, other):
+    #     other = _check_and_convert(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = self.value - other.value
+    #         return ConstantVar(val)
+    #     return super().__isub__(other)
 
-    def __radd__(self, other):
-        other = _check_constant(other)
+    # def __radd__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = other.value + self.value
-            return ConstantVar(val)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = other.value + self.value
+    #         return ConstantVar(val)
 
-        return super().__radd__(other)
+    #     return super().__radd__(other)
 
-    def __rmul__(self, other):
-        other = _check_constant(other)
+    # def __rmul__(self, other):
+    #     other = _check_and_convert(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                return 0
-            val = other.value * self.value
-            return ConstantVar(val)
-        if self.value == 1:
-            return other
-        if self.value == 0:
-            return 0
-        return super().__rmul__(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 1:
+    #             return self
+    #         if other.value == 0:
+    #             return 0
+    #         val = other.value * self.value
+    #         return ConstantVar(val)
+    #     if self.value == 1:
+    #         return other
+    #     if self.value == 0:
+    #         return 0
+    #     return super().__rmul__(other)
 
-    def __rtruediv__(self, other):
-        if isinstance(other, ConstantVar):
-            val = other.value / self.value
-            return ConstantVar(val)
+    # def __rtruediv__(self, other):
+    #     if isinstance(other, ConstantVar):
+    #         val = other.value / self.value
+    #         return ConstantVar(val)
 
-        return super().__rtruediv__(other)
+    #     return super().__rtruediv__(other)
 
-    def __rfloordiv__(self, other):
-        if isinstance(other, ConstantVar):
-            val = other.value / self.value
-            return ConstantVar(val)
-        return super().__rfloordiv__(other)
+    # def __rfloordiv__(self, other):
+    #     if isinstance(other, ConstantVar):
+    #         val = other.value / self.value
+    #         return ConstantVar(val)
+    #     return super().__rfloordiv__(other)
 
-    def __rsub__(self, other):
-        other = _check_constant(other)
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return self
-            val = other.value - self.value
-            return ConstantVar(val)
-        return super().__rsub__(other)
+    # def __rsub__(self, other):
+    #     other = _check_and_convert(other)
+    #     if isinstance(other, ConstantVar):
+    #         if other.value == 0:
+    #             return self
+    #         val = other.value - self.value
+    #         return ConstantVar(val)
+    #     return super().__rsub__(other)
 
 
 # Terms ###
@@ -1206,12 +1190,8 @@ class ConstantVar(Variable):
 
 class Term:
     def __init__(self, elements: list[Variable | Term], operation: Operation) -> None:
-        self._elements = []
-        for e in elements:
-            self.elements.append(copy.copy(_check_constant(e)))
-        if not isinstance(operation, Operation):
-            raise ValueError(f"parameter operation expected type {Operation} but received type {operation.__class__}")
-        self._op = operation
+        self._elements = list(elements)
+        self._operation = operation
 
     @property
     def elements(self):
@@ -1219,7 +1199,7 @@ class Term:
 
     @property
     def operation(self):
-        return self._op
+        return self._operation
 
     def variables(self):
         for e in self.elements:
@@ -1280,14 +1260,14 @@ class Term:
         out = 0 if self.operation is Operation.ADD else 1
         for e in self.elements:
             if isinstance(e, Term):
-                out = apply_operation(out, self.operation, e.evaluate(var_values))
+                out = _apply_operation(out, self.operation, e.evaluate(var_values))
             elif isinstance(e, ConstantVar):
-                out = apply_operation(out, self.operation, e.value)
+                out = _apply_operation(out, self.operation, e.value)
             elif isinstance(e, Variable):
                 v = var_values[e.label]
                 if isinstance(v, list):
                     if isinstance(e, ContinuousVar):
-                        out = apply_operation(out, self.operation, e.evaluate(v, precision=precision))
+                        out = _apply_operation(out, self.operation, e.evaluate(v, precision=precision))
                     else:
                         raise ValueError("Providing a list of values for the a Binary variable.")
                 else:
@@ -1295,7 +1275,7 @@ class Term:
                         raise ValueError(
                             f"value {v} doesn't respect the domain of the variable {e} ({e.domain.__class__.__name__()})"
                         )
-                    out = apply_operation(out, self.operation, v)
+                    out = _apply_operation(out, self.operation, v)
             else:
                 raise ValueError(f"Evaluating term with elements of type {e.__class__} is not supported.")
 
@@ -1311,15 +1291,15 @@ class Term:
         out = 0 if self.operation is Operation.ADD else 1
         for e in self.elements:
             if isinstance(e, Term):
-                out = apply_operation(out, self.operation, e.to_binary())
+                out = _apply_operation(out, self.operation, e.to_binary())
             elif isinstance(e, ConstantVar):
-                out = apply_operation(out, self.operation, e.value)
+                out = _apply_operation(out, self.operation, e.value)
             elif isinstance(e, Variable):
                 if isinstance(e, ContinuousVar):
                     x, _ = e.encode()
-                    out = apply_operation(out, self.operation, x)
+                    out = _apply_operation(out, self.operation, x)
                 else:
-                    out = apply_operation(out, self.operation, e)
+                    out = _apply_operation(out, self.operation, e)
             else:
                 raise ValueError(f"Evaluating term with elements of type {e.__class__} is not supported.")
 
@@ -1388,14 +1368,14 @@ class Term:
             self.elements.pop(i)
         return constants
 
-    def simplify_constants(self, maintain_index=False):
+    def simplify_constants(self, maintain_index: bool = False) -> Term:
         constants = []
         pop_list = []
         out = Term(elements=self.elements, operation=self.operation)
         for i, e in enumerate(out.elements):
             # collect constants
             if isinstance(e, Term):
-                if e.operation in [Operation.ADD, Operation.SUB] and out.operation in [Operation.ADD, Operation.SUB]:
+                if e.operation in {Operation.ADD, Operation.SUB} and out.operation in {Operation.ADD, Operation.SUB}:
                     constants.extend(e.collect_constants())
                 else:
                     out.elements[i] = out.elements[i].simplify_constants()
@@ -1413,9 +1393,9 @@ class Term:
         # operate on the constants
         i, out_const = apply_operation_on_constants(constants, out.operation)
         if out_const.value == 0:
-            if out.operation in [Operation.ADD, Operation.SUB]:
-                if len(out.elements) == 1:
-                    return out.elements[0]
+            if out.operation in {Operation.ADD, Operation.SUB}:
+                # if len(out.elements) == 1:
+                #     return out.elements[0]
                 return out
             if out.operation == Operation.MUL:
                 return 0
@@ -1426,14 +1406,14 @@ class Term:
         if len(constants) > 0:
             out.elements.insert(i if maintain_index else 0, out_const)
 
-        if len(out.elements) == 1:
-            return out.elements[0]
+        # if len(out.elements) == 1:
+        #     return out.elements[0]
 
         return out
 
     def parse_parentheses(self, parent_operation=Operation.ADD):
         parsed_list = []
-        op = _multiply_operators(self.operation, parent_operation)
+        op = _multiply_operations(self.operation, parent_operation)
         for i, element in enumerate(self.elements):
             if isinstance(element, Term) and element.operation in [Operation.ADD, Operation.SUB]:
                 if i == 0:
@@ -1472,15 +1452,15 @@ class Term:
             # two parentheses
             for op1, el1 in self_elements:
                 for op2, el2 in other_elements:
-                    output = apply_operation((output), _multiply_operators(op1, op2), (el1 * el2))
+                    output = _apply_operation((output), _multiply_operations(op1, op2), (el1 * el2))
         elif self_is_parentheses:
             for op1, el1 in self_elements:
                 for mul in other_elements:
-                    output = apply_operation((output), op1, (el1 * mul))
+                    output = _apply_operation((output), op1, (el1 * mul))
         elif other_is_parentheses:
             for op2, el2 in other_elements:
                 for mul in self_elements:
-                    output = apply_operation((output), op2, (el2 * mul))
+                    output = _apply_operation((output), op2, (el2 * mul))
 
         return output
 
@@ -1508,16 +1488,14 @@ class Term:
 
         return hash_name, coeff, var_list
 
-    def simplify_variable_coefficients(self):
+    def simplify_variable_coefficients(self) -> Term:
         """
         Assumptions:
           1. The operation is an addition
           2. only takes into account terms that are from the form: coefficient * variables
         """
-        if self.operation is None:
-            return None
-        if self.operation not in [Operation.ADD, Operation.SUB]:
-            raise ValueError("the simplification is only supported for addition")
+        if self.operation is None or self.operation not in {Operation.ADD, Operation.SUB}:
+            return self
 
         out = Term(self.elements, self.operation)
 
@@ -1543,15 +1521,13 @@ class Term:
             out.elements.pop(i)
 
         for k, v in hash_list.items():
-            term = _check_constant(v[0])
+            term = _check_and_convert(v[0])
             for var in v[1]:
                 term *= var
 
-            term = _check_constant(term)
+            term = _check_and_convert(term)
             out.elements.append(term)
 
-        if len(out.elements) == 1:
-            return out.elements[0]
         return out
 
     def simplify_binary(self):
@@ -1645,7 +1621,7 @@ class Term:
         return output_string
 
     def __add__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1675,7 +1651,7 @@ class Term:
         return out
 
     def __mul__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1705,7 +1681,7 @@ class Term:
         return Term(elements=[out, other], operation=Operation.MUL)
 
     def __truediv__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
@@ -1716,10 +1692,10 @@ class Term:
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
 
-        return Term(elements=[self, _check_constant(other)], operation=Operation.DIV)
+        return Term(elements=[self, _check_and_convert(other)], operation=Operation.DIV)
 
     def __sub__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1728,7 +1704,7 @@ class Term:
         return out + (-1 * other)
 
     def __iadd__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1758,7 +1734,7 @@ class Term:
         return out
 
     def __imul__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1785,7 +1761,7 @@ class Term:
         return Term(elements=[out, other], operation=Operation.MUL)
 
     def __itruediv__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
@@ -1795,10 +1771,10 @@ class Term:
 
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
-        return Term(elements=[self, _check_constant(other)], operation=Operation.DIV)
+        return Term(elements=[self, _check_and_convert(other)], operation=Operation.DIV)
 
     def __isub__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1807,7 +1783,7 @@ class Term:
         return out + (-1 * other)
 
     def __radd__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1837,7 +1813,7 @@ class Term:
         return out
 
     def __rmul__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1860,13 +1836,13 @@ class Term:
         return Term(elements=[other, out], operation=Operation.MUL)
 
     def __rtruediv__(self, other):
-        return Term(elements=[_check_constant(other), self], operation=Operation.DIV)
+        return Term(elements=[_check_and_convert(other), self], operation=Operation.DIV)
 
     def __rfloordiv__(self, other):
-        return Term(elements=[_check_constant(other), self], operation=Operation.DIV)
+        return Term(elements=[_check_and_convert(other), self], operation=Operation.DIV)
 
     def __rsub__(self, other):
-        other = _check_constant(other)
+        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
 
         if isinstance(other, ConstantVar):
@@ -1884,31 +1860,31 @@ class Term:
         return out
 
     def __lt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.LT)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LT)
 
     def __le__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.LE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LE)
 
     def __eq__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.EQ)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.EQ)
 
     def __ne__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.NE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.NE)
 
     def __gt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.GT)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GT)
 
     def __ge__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_constant(other), operation=ComparisonOperators.GE)
+        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GE)
 
 
 class ConstraintTerm:
     def __init__(self, rhs: Variable | Term, lhs: Variable | Term, operation: ComparisonOperators) -> None:
-        self._lhs = _check_constant(lhs)
+        self._lhs = _check_and_convert(lhs)
         if isinstance(self._lhs, Term):
             self._lhs = self._lhs.simplify()
 
-        self._rhs = _check_constant(rhs)
+        self._rhs = _check_and_convert(rhs)
         if isinstance(self._rhs, Term):
             self._rhs = self._rhs.simplify()
 
