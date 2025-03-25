@@ -1375,9 +1375,8 @@ class Term:
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 1:
+            return out
             # if other.value == 0:
             #     return 0
 
@@ -1385,7 +1384,7 @@ class Term:
             if isinstance(other, Term) and other.operation == out.operation:
                 out.elements.extend(other.elements)
             else:
-                if isinstance(other, Term) and other.operation in [Operation.ADD, Operation.SUB]:
+                if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
                     return out.unfold_parentheses(other)
                 out.elements.append(other)
             out = out.simplify_binary()
@@ -1397,11 +1396,11 @@ class Term:
             out._elements[0] *= other
             return out
 
-        if out.operation in [Operation.ADD, Operation.SUB]:
+        if out.operation in {Operation.ADD, Operation.SUB}:
             return out.unfold_parentheses(other)
         return Term(elements=[out, other], operation=Operation.MUL)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Number):
             other = ConstantVar(other)
 
@@ -1416,26 +1415,24 @@ class Term:
 
         return Term(elements=[self, other], operation=Operation.DIV)
 
-    def __sub__(self, other):
+    def __sub__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         return out + (-1 * other)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         if out.operation is Operation.ADD:
             if isinstance(other, Term) and other.operation == out.operation:
                 out.elements.extend(other.elements)
@@ -1459,7 +1456,7 @@ class Term:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __imul__(self, other):
+    def __imul__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
@@ -1475,7 +1472,7 @@ class Term:
             if isinstance(other, Term) and other.operation == out.operation:
                 out.elements.extend(other.elements)
             else:
-                if isinstance(other, Term) and other.operation in [Operation.ADD, Operation.SUB]:
+                if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
                     return out.unfold_parentheses(other)
                 out.elements.append(other)
             out = out.simplify_constants()
@@ -1484,11 +1481,11 @@ class Term:
         if out.operation is Operation.DIV:
             out._elements[0] *= other
             return out
-        if out.operation in [Operation.ADD, Operation.SUB]:
+        if out.operation in {Operation.ADD, Operation.SUB}:
             return out.unfold_parentheses(other)
         return Term(elements=[out, other], operation=Operation.MUL)
 
-    def __itruediv__(self, other):
+    def __itruediv__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Number):
             other = ConstantVar(other)
 
@@ -1502,26 +1499,24 @@ class Term:
             return self * other
         return Term(elements=[self, other], operation=Operation.DIV)
 
-    def __isub__(self, other):
+    def __isub__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         return out + (-1 * other)
 
-    def __radd__(self, other):
+    def __radd__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         if out.operation is Operation.ADD:
             if isinstance(other, Term) and other.operation == out.operation:
                 other.elements.extend(out.elements)
@@ -1545,87 +1540,82 @@ class Term:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 1:
+            return out
             # if other.value == 0:
             #     return 0
         if out.operation is Operation.MUL:
             if isinstance(other, Term) and other.operation == out.operation:
                 other.elements.extend(out.elements)
                 return other
-            if isinstance(other, Term) and other.operation in [Operation.ADD, Operation.SUB]:
+            if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
                 return out.unfold_parentheses(other)
             t = Term(elements=[other, *out.elements], operation=Operation.MUL)
             t = t.simplify_constants()
             return t
 
-        if out.operation in [Operation.ADD, Operation.SUB]:
+        if out.operation in {Operation.ADD, Operation.SUB}:
             return out.unfold_parentheses(other)
         return Term(elements=[other, out], operation=Operation.MUL)
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return Term(elements=[other, self], operation=Operation.DIV)
 
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return Term(elements=[other, self], operation=Operation.DIV)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
 
         if isinstance(other, Number):
             other = ConstantVar(other)
 
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         return other + (-1 * out)
 
-    def __pow__(self, a):
-        if not isinstance(a, int):
-            raise ValueError("only integer powers are allowed.")
-
+    def __pow__(self, a: int) -> Term:
         out = Term(self.elements, self.operation)
         for _ in range(a - 1):
             out *= out
         return out
 
-    def __lt__(self, other):
+    def __lt__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
 
-    def __le__(self, other):
+    def __le__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
 
-    def __ne__(self, other):
+    def __ne__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
 
-    def __gt__(self, other):
+    def __gt__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
 
-    def __ge__(self, other):
+    def __ge__(self, other: Number | Variable | Term) -> ConstraintTerm:
         if isinstance(other, Number):
             other = ConstantVar(other)
         return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
@@ -1651,10 +1641,7 @@ class ConstraintTerm:
             self._lhs -= self._rhs
             self._rhs = ConstantVar(0)
             self._lhs = self._lhs.simplify()
-        if isinstance(self._lhs, Term):
-            constants = self._lhs.collect_constants()
-        else:
-            constants = []
+        constants = self._lhs.collect_constants() if isinstance(self._lhs, Term) else []
         if len(constants) > 1:
             raise RuntimeError("Simplification step failed.")
         if len(constants) == 1:
@@ -1740,7 +1727,7 @@ class ConstraintTerm:
 
         return ConstraintTerm(rhs=rhs, lhs=lhs, operation=self.operation)
 
-    def evaluate(self, var_values, precision: int = 100, return_values=False):
+    def evaluate(self, var_values, precision: int = 100, return_values: bool =False):
         lhs = 0
         rhs = 0
 
