@@ -15,25 +15,22 @@
 from __future__ import annotations
 
 import copy
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
 from math import prod
 
 import numpy as np
 
-# Utils ###
 Number = int | float
 
 
-def _check_and_convert(c: object) -> Variable | Term:
-    if isinstance(c, (Variable, Term)):
-        return c
-    if isinstance(c, (float, int)) or (isinstance(c, np.generic) and np.issubdtype(c, np.number)):
-        return ConstantVar(c)
-    raise ValueError(f"{c} type is not supported.")
+def _check_and_convert(value: Number | Variable | Term) -> Variable | Term:
+    if isinstance(value, Number):
+        return ConstantVar(value)
+    return value
 
 
-def _multiply_operations(op1: Operation, op2: Operation) -> Operation:
+def _multiply_operations(op1: Operation, op2: Operation) -> Operation: 
     if op1 not in {Operation.ADD, Operation.SUB} or op2 not in {Operation.ADD, Operation.SUB}:
         raise ValueError("only subtraction and additions are supported")
     if op1 is Operation.SUB and op2 is Operation.SUB:
@@ -55,18 +52,18 @@ def _apply_operation(v1: Variable, op: Operation, v2: Variable) -> Term:
     return None
 
 
-def apply_comparison(v1, op, v2):
-    if op is ComparisonOperators.EQ:
+def apply_comparison(v1, op: ComparisonOperation, v2):
+    if op is ComparisonOperation.EQ:
         return v1 == v2
-    if op is ComparisonOperators.GE:
+    if op is ComparisonOperation.GE:
         return v1 >= v2
-    if op is ComparisonOperators.GT:
+    if op is ComparisonOperation.GT:
         return v1 > v2
-    if op is ComparisonOperators.LE:
+    if op is ComparisonOperation.LE:
         return v1 <= v2
-    if op is ComparisonOperators.LT:
+    if op is ComparisonOperation.LT:
         return v1 < v2
-    if op is ComparisonOperators.NE:
+    if op is ComparisonOperation.NE:
         return v1 != v2
     return None
 
@@ -145,7 +142,7 @@ class Operation(Enum):
     SUB = "-"
 
 
-class ComparisonOperators(Enum):
+class ComparisonOperation(Enum):
     LT = "<"
     LE = "<="
     EQ = "=="
@@ -154,56 +151,56 @@ class ComparisonOperators(Enum):
     GE = ">="
 
 
-# Encoding ###
-
-
 class Encoding(ABC):
-    __name = ""
-
     @property
-    def name(self):
-        return self.__name
+    @abstractmethod
+    def name(self) -> str:
+        """Encoding's name
+
+        Returns:
+            str: The name of the encoding.
+        """
 
     @staticmethod
-    def encode(var: "ContinuousVar", precision: int = 100) -> "Term":
+    @abstractmethod
+    def encode(var: ContinuousVar, precision: int = 100) -> Term:
         """Given a continuous variable return a Term that only consists of
             binary variables that represent the continuous variable in the given encoding.
 
         Args:
             var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
+            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
 
         Returns:
             Term: a term that only contains binary variables
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
-    def encoding_constraint(var: "ContinuousVar", precision: int = 100) -> ConstraintTerm | None:
+    @abstractmethod
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
         """Given a continuous variable return a Constraint Term that ensures that the encoding is respected.
 
         Args:
             var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
+            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
 
         Returns:
             Constraint Term: a constraint term that ensures the encoding is respected.
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
-    def evaluate(var: "ContinuousVar", binary_list: list[int], precision: int = 100) -> float:
+    @abstractmethod
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
             var (ContinuousVar): the variable to be evaluated
             binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
+            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
 
         Returns:
             float: the value of the continuous variable given the specified binary values.
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
     def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
@@ -211,7 +208,7 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): the continuous variable.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
+            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
 
         Returns:
             int: the number of binary variables needed to encode it.
@@ -231,40 +228,25 @@ class Encoding(ABC):
         raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100):
+    @abstractmethod
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100):
         """returns a term that is 1 if the variable is equal to the number, else 0.
 
         Args:
             var (ContinuousVar): the continuous variable.
             number (int): the number to equate the variable to.
-
-        Raises:
-            NotImplementedError: _description_
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
 
 class HOBO(Encoding):
-    __name = "HOBO"
-
     @property
-    def name(self):
-        return self.__name
+    def name(self) -> str:
+        return "HOBO"
 
     @staticmethod
-    def encode(var: "ContinuousVar", precision: int = 100) -> Term:
-        """Given a continuous variable return a Term that only consists of
-            binary variables that represent the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            Term: a term that only contains binary variables
-        """
+    def encode(var: ContinuousVar, precision: int = 100) -> Term:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         abs_bound = np.abs(bounds[1] - bounds[0])
@@ -281,17 +263,7 @@ class HOBO(Encoding):
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: "ContinuousVar", binary_list: list[int], precision: int = 100) -> float:
-        """Given a binary string, evaluate the value of the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            float: the value of the continuous variable given the specified binary values.
-        """
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
         if not HOBO.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
         term, binary_var = HOBO.encode(var)
@@ -301,7 +273,7 @@ class HOBO(Encoding):
 
         binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
 
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             term *= 1 / precision
 
         out = term.evaluate(binary_dict)
@@ -313,13 +285,13 @@ class HOBO(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: "ContinuousVar", precision: int = 100) -> ConstraintTerm | None:
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
             var (ContinuousVar): the variable to be evaluated
             binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
+            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
 
         Returns:
             float: the value of the continuous variable given the specified binary values.
@@ -328,18 +300,8 @@ class HOBO(Encoding):
 
     @staticmethod
     def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
-        """Give a continuous variable return the number of binary variables needed to encode it.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            int: the number of binary variables needed to encode it.
-        """
-
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.floor(np.log2(np.abs(bounds[1] - bounds[0]))))
@@ -351,21 +313,11 @@ class HOBO(Encoding):
         return True, 0
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100):
-        """returns a term that is 1 if the variable is equal to the number, else 0.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            number (int): the number to equate the variable to.
-
-        Raises:
-            NotImplementedError: _description_
-        """
-
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> int:
         encoded_num = []
 
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         abs_bound = np.abs(bounds[1] - bounds[0])
@@ -393,28 +345,15 @@ class HOBO(Encoding):
         return prod(var[i] if encoded_num[i] == 0 else (1 - var[i]) for i in range(var.num_binary_equivalent()))
 
 
-class one_hot(Encoding):
-    __name = "ONE HOT"
-
+class OneHot(Encoding):
     @property
-    def name(self):
-        return self.__name
+    def name(self) -> str:
+        return "ONE HOT"
 
     @staticmethod
-    def encode(var: "ContinuousVar", precision: int = 100) -> "Term":
-        """Given a continuous variable return a Term that only consists of
-            binary variables that represent the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            Term: a term that only contains binary variables
-        """
-
+    def encode(var: ContinuousVar, precision: int = 100) -> Term:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
@@ -428,28 +367,18 @@ class one_hot(Encoding):
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: "ContinuousVar", binary_list: list[int], precision: int = 100) -> float:
-        """Given a binary string, evaluate the value of the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            float: the value of the continuous variable given the specified binary values.
-        """
-        if not one_hot.check_valid(binary_list=binary_list)[0]:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+        if not OneHot.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the one hot encoding.")
 
-        term, binary_var = one_hot.encode(var)
+        term, binary_var = OneHot.encode(var)
 
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
         binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
 
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             term *= 1 / precision
 
         out = term.evaluate(binary_dict)
@@ -462,20 +391,9 @@ class one_hot(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: "ContinuousVar", precision: int = 100) -> ConstraintTerm | None:
-        """Given a binary string, evaluate the value of the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            float: the value of the continuous variable given the specified binary values.
-        """
-
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
@@ -484,19 +402,9 @@ class one_hot(Encoding):
         return sum(binary_vars) == 1
 
     @staticmethod
-    def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
-        """Give a continuous variable return the number of binary variables needed to encode it.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            int: the number of binary variables needed to encode it.
-        """
-
+    def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
@@ -509,33 +417,21 @@ class one_hot(Encoding):
         return num_ones == 1, (num_ones - 1) ** 2
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100):
-        """returns a term that is 1 if the variable is equal to the number, else 0.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            number (int): the number to equate the variable to.
-
-        Raises:
-            NotImplementedError: _description_
-        """
-
-        if var.domain is RealDomain:
+    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100) -> int:
+        if var.domain is Domain.Real:
             return prod((1 - var[i]) if i != number * precision else var[i] for i in range(var.num_binary_equivalent()))
         return prod((1 - var[i]) if i != number else var[i] for i in range(var.num_binary_equivalent()))
 
 
-class domain_wall(Encoding):
-    __name = "Domain Wall"
-
+class DomainWall(Encoding):
     @property
-    def name(self):
-        return self.__name
+    def name(self) -> str:
+        return "Domain Wall"
 
     @staticmethod
-    def encode(var: "ContinuousVar", precision: int = 100) -> "Term":
+    def encode(var: ContinuousVar, precision: int = 100) -> Term:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
@@ -549,17 +445,17 @@ class domain_wall(Encoding):
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: "ContinuousVar", binary_list: list[int], precision: int = 100) -> float:
-        if not domain_wall.check_valid(binary_list=binary_list)[0]:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+        if not DomainWall.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
-        term, binary_var = domain_wall.encode(var)
+        term, binary_var = DomainWall.encode(var)
 
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
         binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
 
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             term *= 1 / precision
 
         out = term.evaluate(binary_dict)
@@ -571,20 +467,9 @@ class domain_wall(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: "ContinuousVar", precision: int = 100) -> ConstraintTerm | None:
-        """Given a binary string, evaluate the value of the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is RealDomain)
-
-        Returns:
-            float: the value of the continuous variable given the specified binary values.
-        """
-
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
@@ -593,9 +478,9 @@ class domain_wall(Encoding):
         return sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)) == 0
 
     @staticmethod
-    def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
+    def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
@@ -608,14 +493,7 @@ class domain_wall(Encoding):
         return value == 0, value
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100):
-        """returns a term that is 1 if the variable is equal to the number, else 0.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            number (int): the number to equate the variable to.
-        """
-
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> int:
         encoded_num = []
         aux_number = number
 
@@ -626,7 +504,7 @@ class domain_wall(Encoding):
                 encoded_num.append(0)
 
         bounds = var.bounds
-        if var.domain is RealDomain:
+        if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         aux_number -= bounds[0]
@@ -913,33 +791,30 @@ class Variable:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __pow__(self, a):
-        if not isinstance(a, int):
-            raise ValueError("only integer powers are allowed.")
-
+    def __pow__(self, a: int) -> Term:
         out = copy.copy(self)
 
         for _ in range(a - 1):
             out *= out
         return out
 
-    def __lt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LT)
+    def __lt__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
 
-    def __le__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LE)
+    def __le__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
 
-    def __eq__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.EQ)
+    def __eq__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
 
-    def __ne__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.NE)
+    def __ne__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
 
-    def __gt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GT)
+    def __gt__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
 
-    def __ge__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GE)
+    def __ge__(self, other: Number | Variable | Term) -> ConstraintTerm:
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
 
 
 class BinaryVar(Variable):
@@ -949,28 +824,11 @@ class BinaryVar(Variable):
     def num_binary_equivalent(self):
         return 1
 
-    def evaluate(self, binary_list, precision=100):
+    def evaluate(self, binary_list, precision: int = 100):
         return binary_list[self.label]
 
     def __copy__(self):
         return BinaryVar(label=self.label)
-
-    # def __mul__(self, other: Number | Variable | Term) -> Term:
-    #     if isinstance(other, BinaryVar) and compare_vars(self, other):
-    #         return self
-    #     return super().__mul__(other)
-
-    # def __imul__(self, other: Number | Variable | Term) -> Term:
-    #     if isinstance(other, BinaryVar):
-    #         if compare_vars(self, other):
-    #             return self
-    #     return super().__imul__(other)
-
-    # def __rmul__(self, other):
-    #     if isinstance(other, BinaryVar):
-    #         if compare_vars(self, other):
-    #             return self
-    #     return super().__rmul__(other)
 
 
 class SpinVar(Variable):
@@ -981,52 +839,48 @@ class SpinVar(Variable):
         return 1
 
 
-# class ContinuousVar(Variable):
-#     def __init__(self, label: str, domain: Domain, bounds: tuple[int, int], encoding: Encoding = HOBO):
-#         super().__init__(label=label, domain=domain, bounds=bounds)
+class ContinuousVar(Variable):
+    def __init__(self, label: str, domain: Domain, bounds: tuple[int, int], encoding: Encoding = HOBO):
+        super().__init__(label=label, domain=domain, bounds=bounds)
+        self._encoding = encoding
+        self._term, self._bin_vars = self.encode()
 
-#         if not issubclass(encoding, Encoding):
-#             raise ValueError("only encodings specified by the Encoding class are allowed.")
-#         self._encoding = encoding
+    @property
+    def encoding(self):
+        return self._encoding
 
-#         self.__term, self.__bin_vars = self.encode()
+    @property
+    def term(self):
+        return self._term
 
-#     @property
-#     def encoding(self):
-#         return self._encoding
+    @property
+    def bin_vars(self):
+        return self._bin_vars
 
-#     @property
-#     def term(self):
-#         return self.__term
+    def __copy__(self):
+        return ContinuousVar(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
 
-#     @property
-#     def bin_vars(self):
-#         return self.__bin_vars
+    def __getitem__(self, item):
+        return self._bin_vars[item]
 
-#     def __copy__(self):
-#         return ContinuousVar(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
+    def evaluate(self, binary_list, precision: int = 100):
+        return self.encoding.evaluate(self, binary_list, precision=precision)
 
-#     def __getitem__(self, item):
-#         return self.__bin_vars[item]
+    def encode(self, precision: int = 100):
+        self._term, self._bin_vars = self.encoding.encode(self, precision=precision)
+        return self._term, self._bin_vars
 
-#     def evaluate(self, binary_list, precision=100):
-#         return self.encoding.evaluate(self, binary_list, precision=precision)
+    def num_binary_equivalent(self, precision: int = 100):
+        return self.encoding.num_binary_equivalent(self, precision=precision)
 
-#     def encode(self, precision=100):
-#         self.__term, self.__bin_vars = self.encoding.encode(self, precision=precision)
-#         return self.__term, self.__bin_vars
+    def check_valid(self, binary_list):
+        return self.encoding.check_valid(binary_list)
 
-#     def num_binary_equivalent(self, precision=100):
-#         return self.encoding.num_binary_equivalent(self, precision=precision)
+    def encoding_constraint(self, precision: int = 100) -> ConstraintTerm | None:
+        return self.encoding.encoding_constraint(self, precision=precision)
 
-#     def check_valid(self, binary_list):
-#         return self.encoding.check_valid(binary_list)
-
-#     def encoding_constraint(self, precision: int = 100) -> ConstraintTerm | None:
-#         return self.encoding.encoding_constraint(self, precision=precision)
-
-#     def term_equals_to(self, number: int, precision: int = 100):
-#         return self.encoding.term_equals_to(self, number, precision)
+    def term_equals_to(self, number: int, precision: int = 100):
+        return self.encoding.term_equals_to(self, number, precision)
 
 
 class ConstantVar(Variable):
@@ -1047,142 +901,8 @@ class ConstantVar(Variable):
     def __repr__(self):
         return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
-
-    # def __add__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = self.value + other.value
-    #         return ConstantVar(val)
-
-    #     return super().__add__(other)
-
-    # def __mul__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 1:
-    #             return self
-    #         if other.value == 0:
-    #             return 0
-    #         val = self.value * other.value
-    #         return ConstantVar(val)
-    #     if self.value == 1:
-    #         return other
-    #     if self.value == 0:
-    #         return 0
-    #     return super().__mul__(other)
-
-    # def __truediv__(self, other):
-    #     if isinstance(other, ConstantVar):
-    #         val = self.value / other.value
-    #         return ConstantVar(val)
-    #     return super().__truediv__(other)
-
-    # def __sub__(self, other):
-    #     other = _check_and_convert(other)
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = self.value - other.value
-    #         return ConstantVar(val)
-    #     return super().__sub__(other)
-
-    # def __iadd__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = self.value + other.value
-    #         return ConstantVar(val)
-    #     if self.value == 0:
-    #         return other
-    #     return super().__iadd__(other)
-
-    # def __imul__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 1:
-    #             return self
-    #         if other.value == 0:
-    #             return 0
-    #         val = self.value * other.value
-    #         return ConstantVar(val)
-    #     if self.value == 1:
-    #         return other
-    #     if self.value == 0:
-    #         return 0
-    #     return super().__imul__(other)
-
-    # def __itruediv__(self, other):
-    #     if isinstance(other, ConstantVar):
-    #         val = self.value / other.value
-    #         return ConstantVar(val)
-    #     return super().__itruediv__(other)
-
-    # def __isub__(self, other):
-    #     other = _check_and_convert(other)
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = self.value - other.value
-    #         return ConstantVar(val)
-    #     return super().__isub__(other)
-
-    # def __radd__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = other.value + self.value
-    #         return ConstantVar(val)
-
-    #     return super().__radd__(other)
-
-    # def __rmul__(self, other):
-    #     other = _check_and_convert(other)
-
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 1:
-    #             return self
-    #         if other.value == 0:
-    #             return 0
-    #         val = other.value * self.value
-    #         return ConstantVar(val)
-    #     if self.value == 1:
-    #         return other
-    #     if self.value == 0:
-    #         return 0
-    #     return super().__rmul__(other)
-
-    # def __rtruediv__(self, other):
-    #     if isinstance(other, ConstantVar):
-    #         val = other.value / self.value
-    #         return ConstantVar(val)
-
-    #     return super().__rtruediv__(other)
-
-    # def __rfloordiv__(self, other):
-    #     if isinstance(other, ConstantVar):
-    #         val = other.value / self.value
-    #         return ConstantVar(val)
-    #     return super().__rfloordiv__(other)
-
-    # def __rsub__(self, other):
-    #     other = _check_and_convert(other)
-    #     if isinstance(other, ConstantVar):
-    #         if other.value == 0:
-    #             return self
-    #         val = other.value - self.value
-    #         return ConstantVar(val)
-    #     return super().__rsub__(other)
 
 
 # Terms ###
@@ -1254,7 +974,7 @@ class Term:
         for i, _ in enumerate(self.elements):
             self.elements[i].replace_variables(var_dict)
 
-    def evaluate(self, var_values, precision=100):
+    def evaluate(self, var_values, precision: int = 100):
         if self.operation not in {Operation.ADD, Operation.MUL}:
             raise ValueError("Can not evaluate any operation that is not Addition of Multiplication")
         out = 0 if self.operation is Operation.ADD else 1
@@ -1415,7 +1135,7 @@ class Term:
         parsed_list = []
         op = _multiply_operations(self.operation, parent_operation)
         for i, element in enumerate(self.elements):
-            if isinstance(element, Term) and element.operation in [Operation.ADD, Operation.SUB]:
+            if isinstance(element, Term) and element.operation in {Operation.ADD, Operation.SUB}:
                 if i == 0:
                     parsed_list.extend(element.parse_parentheses())
                 else:
@@ -1427,19 +1147,19 @@ class Term:
                 parsed_list.append((op, element))
         return parsed_list
 
-    def unfold_parentheses(self, other):
+    def unfold_parentheses(self, other: Term) -> Term:
         self_elements = []
         self_is_parentheses = False
         other_elements = []
         other_is_parentheses = False
 
-        if self.operation in [Operation.ADD, Operation.SUB]:
+        if self.operation in {Operation.ADD, Operation.SUB}:
             self_elements = self.parse_parentheses()
             self_is_parentheses = True
         else:
             self_elements = [self]
         if isinstance(other, Term):
-            if other.operation in [Operation.ADD, Operation.SUB]:
+            if other.operation in {Operation.ADD, Operation.SUB}:
                 other_elements = other.parse_parentheses()
                 other_is_parentheses = True
             else:
@@ -1597,7 +1317,7 @@ class Term:
         #     return f"({str(self.lhs)}) {self.operation.value} ({str(self.rhs)})"
         # return f"{str(self.lhs)} {self.operation.value} {str(self.rhs)}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         output_string = ""
         if len(self.elements) > 1:
             for i in range(len(self.elements) - 1):
@@ -1620,13 +1340,12 @@ class Term:
             output_string = f"{self.elements[0]}" if len(self.elements) > 0 else ""
         return output_string
 
-    def __add__(self, other):
-        other = _check_and_convert(other)
+    def __add__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 0:
-                return out
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        if isinstance(other, ConstantVar) and other.value == 0:
+            return out
         if out.operation is Operation.ADD:
             if isinstance(other, Term) and other.operation == out.operation:
                 out.elements.extend(other.elements)
@@ -1650,15 +1369,17 @@ class Term:
             out = out.simplify_variable_coefficients()
         return out
 
-    def __mul__(self, other):
-        other = _check_and_convert(other)
+    def __mul__(self, other: Number | Variable | Term) -> Term:
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
                 return out
-            if other.value == 0:
-                return 0
+            # if other.value == 0:
+            #     return 0
 
         if out.operation is Operation.MUL:
             if isinstance(other, Term) and other.operation == out.operation:
@@ -1681,7 +1402,8 @@ class Term:
         return Term(elements=[out, other], operation=Operation.MUL)
 
     def __truediv__(self, other):
-        other = _check_and_convert(other)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
@@ -1692,11 +1414,13 @@ class Term:
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
 
-        return Term(elements=[self, _check_and_convert(other)], operation=Operation.DIV)
+        return Term(elements=[self, other], operation=Operation.DIV)
 
     def __sub__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 0:
@@ -1704,8 +1428,10 @@ class Term:
         return out + (-1 * other)
 
     def __iadd__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 0:
@@ -1734,8 +1460,10 @@ class Term:
         return out
 
     def __imul__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
@@ -1761,7 +1489,8 @@ class Term:
         return Term(elements=[out, other], operation=Operation.MUL)
 
     def __itruediv__(self, other):
-        other = _check_and_convert(other)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
@@ -1771,11 +1500,13 @@ class Term:
 
             _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
             return self * other
-        return Term(elements=[self, _check_and_convert(other)], operation=Operation.DIV)
+        return Term(elements=[self, other], operation=Operation.DIV)
 
     def __isub__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 0:
@@ -1783,8 +1514,10 @@ class Term:
         return out + (-1 * other)
 
     def __radd__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 0:
@@ -1813,14 +1546,16 @@ class Term:
         return out
 
     def __rmul__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 1:
                 return out
-            if other.value == 0:
-                return 0
+            # if other.value == 0:
+            #     return 0
         if out.operation is Operation.MUL:
             if isinstance(other, Term) and other.operation == out.operation:
                 other.elements.extend(out.elements)
@@ -1836,14 +1571,20 @@ class Term:
         return Term(elements=[other, out], operation=Operation.MUL)
 
     def __rtruediv__(self, other):
-        return Term(elements=[_check_and_convert(other), self], operation=Operation.DIV)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return Term(elements=[other, self], operation=Operation.DIV)
 
     def __rfloordiv__(self, other):
-        return Term(elements=[_check_and_convert(other), self], operation=Operation.DIV)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return Term(elements=[other, self], operation=Operation.DIV)
 
     def __rsub__(self, other):
-        other = _check_and_convert(other)
         out = Term(self.elements, self.operation)
+
+        if isinstance(other, Number):
+            other = ConstantVar(other)
 
         if isinstance(other, ConstantVar):
             if other.value == 0:
@@ -1860,31 +1601,49 @@ class Term:
         return out
 
     def __lt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LT)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
 
     def __le__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.LE)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
 
     def __eq__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.EQ)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
 
     def __ne__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.NE)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
 
     def __gt__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GT)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
 
     def __ge__(self, other):
-        return ConstraintTerm(lhs=self, rhs=_check_and_convert(other), operation=ComparisonOperators.GE)
+        if isinstance(other, Number):
+            other = ConstantVar(other)
+        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
 
 
 class ConstraintTerm:
-    def __init__(self, rhs: Variable | Term, lhs: Variable | Term, operation: ComparisonOperators) -> None:
-        self._lhs = _check_and_convert(lhs)
+    def __init__(self, rhs: Number | Variable | Term, lhs: Number | Variable | Term, operation: ComparisonOperation) -> None:
+        if isinstance(lhs, Number):
+            lhs = ConstantVar(lhs)
+        
+        self._lhs = lhs
         if isinstance(self._lhs, Term):
             self._lhs = self._lhs.simplify()
 
-        self._rhs = _check_and_convert(rhs)
+        if isinstance(rhs, Number):
+            rhs = ConstantVar(rhs)
+
+        self._rhs = rhs
         if isinstance(self._rhs, Term):
             self._rhs = self._rhs.simplify()
 
@@ -1901,9 +1660,9 @@ class ConstraintTerm:
         if len(constants) == 1:
             self._rhs -= constants[0][2]
 
-        if not isinstance(operation, ComparisonOperators):
+        if not isinstance(operation, ComparisonOperation):
             raise ValueError(
-                f"parameter operation expected type {ComparisonOperators} but received type {operation.__class__}"
+                f"parameter operation expected type {ComparisonOperation} but received type {operation.__class__}"
             )
 
         self._op = operation
@@ -1981,7 +1740,7 @@ class ConstraintTerm:
 
         return ConstraintTerm(rhs=rhs, lhs=lhs, operation=self.operation)
 
-    def evaluate(self, var_values, precision=100, return_values=False):
+    def evaluate(self, var_values, precision: int = 100, return_values=False):
         lhs = 0
         rhs = 0
 
@@ -2047,5 +1806,5 @@ class ConstraintTerm:
     def __repr__(self):
         return f"{self.lhs!s} {self.operation.value} {self.rhs!s}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.lhs!s} {self.operation.value} {self.rhs!s}"
