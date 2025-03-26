@@ -549,9 +549,8 @@ class Model:
         for sc in slack_constraints:
             self.add_constraint(sc[0], sc[1])
 
-    def to_ham(self):
-        out = QUBO(self.label)
-        out.from_model(self)
+    def to_ham(self) -> QUBO:
+        return QUBO.from_model(self)
 
 
 class QUBO(Model):
@@ -617,7 +616,7 @@ class QUBO(Model):
             raise ValueError(f"QUBO constraints only allow linear terms but received {term}.")
         return const, terms
 
-    def __transform_constraint(
+    def _transform_constraint(
         self,
         label: str,
         term: ConstraintTerm,
@@ -756,7 +755,7 @@ class QUBO(Model):
         if transform_to_qubo:
             c = c.to_binary()
 
-            c = self.__transform_constraint(label, c, penalization=penalization, parameters=parameters)
+            c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
             if c is None:
                 return
 
@@ -823,14 +822,16 @@ class QUBO(Model):
     def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
         self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
+    @classmethod
     def from_model(
-        self,
+        cls,
         model: Model,
         lagrange_multiplier_dict: dict[str, float] | None = None,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
-    ):
-        self.set_objective(term=model.objective.term, label=model.objective.label, sense=model.objective.sense)
+    ) -> QUBO:
+        instance = QUBO(label=model.label)
+        instance.set_objective(term=model.objective.term, label=model.objective.label, sense=model.objective.sense)
         for constraint in model.constraints:
             if lagrange_multiplier_dict is not None and constraint.label in lagrange_multiplier_dict:
                 lagrange_multiplier = lagrange_multiplier_dict[constraint.label]
@@ -838,13 +839,14 @@ class QUBO(Model):
             else:
                 lagrange_multiplier = 100
 
-            self.add_constraint(
+            instance.add_constraint(
                 label=constraint.label,
                 term=constraint.term,
                 lagrange_multiplier=lagrange_multiplier,
                 penalization=penalization,
                 parameters=parameters,
             )
+        return instance
 
     def to_ham(self):
         spins = {}
