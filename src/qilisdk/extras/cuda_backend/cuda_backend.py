@@ -13,13 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
-import warnings
-from typing import TYPE_CHECKING, Callable, ClassVar, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
 from cudaq import State
-from cudaq.operator import OperatorSum, ScalarOperator, evolve, spin
+from cudaq.operator import ElementaryOperator, OperatorSum, ScalarOperator, evolve, spin
 from cudaq.operator import Schedule as cuda_schedule
 
 from qilisdk.analog.analog_backend import AnalogBackend
@@ -57,6 +56,9 @@ if TYPE_CHECKING:
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
 
+TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
+PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+
 
 class CudaBackend(DigitalBackend, AnalogBackend):
     """
@@ -68,18 +70,18 @@ class CudaBackend(DigitalBackend, AnalogBackend):
     mapped to CUDA operations via dedicated handler functions.
     """
 
-    _PAULI_MAP: ClassVar[dict] = {PauliZ: spin.z, PauliX: spin.x, PauliY: spin.y, PauliI: spin.i}
-
-    def __init__(self, simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR) -> None:
+    def __init__(
+        self, digital_simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR
+    ) -> None:
         """
         Initialize the CudaBackend.
 
         Args:
-            simulation_method (SimulationMethod, optional): The simulation method to use.
+            digital_simulation_method (SimulationMethod, optional): The simulation method to use for executing circuits.
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        super().__init__(simulation_method=simulation_method)
+        super().__init__(digital_simulation_method=digital_simulation_method)
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: CudaBackend._handle_X,
             Y: CudaBackend._handle_Y,
@@ -94,20 +96,26 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             U2: CudaBackend._handle_U2,
             U3: CudaBackend._handle_U3,
         }
+        self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
+            PauliX: CudaBackend._handle_PauliX,
+            PauliY: CudaBackend._handle_PauliY,
+            PauliZ: CudaBackend._handle_PauliZ,
+            PauliI: CudaBackend._handle_PauliI,
+        }
 
-    def _apply_simulation_method(self) -> None:
+    def _apply_digital_simulation_method(self) -> None:
         """
         Configure the cudaq simulation target based on the selected simulation method.
 
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         """
-        if self.simulation_method == DigitalSimulationMethod.STATE_VECTOR:
+        if self.digital_simulation_method == DigitalSimulationMethod.STATE_VECTOR:
             if cudaq.num_available_gpus() == 0:
                 cudaq.set_target("qpp-cpu")
             else:
                 cudaq.set_target("nvidia")
-        elif self.simulation_method == DigitalSimulationMethod.TENSOR_NETWORK:
+        elif self.digital_simulation_method == DigitalSimulationMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
         else:
             cudaq.set_target("tensornet-mps")
@@ -130,7 +138,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         Raises:
             UnsupportedGateError: If the circuit contains a gate for which no handler is registered.
         """
-        self._apply_simulation_method()
+        self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(circuit.nqubits)
 
@@ -200,12 +208,9 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         kernel.adjoint(target_kernel, target_qubit)
 
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
-        out = None
+        out = OperatorSum()
         for offset, terms in hamiltonian:
-            if out is None:
-                out = offset * np.prod([self._PAULI_MAP[pauli.__class__](pauli.qubit) for pauli in terms])
-            else:
-                out += offset * np.prod([self._PAULI_MAP[pauli.__class__](pauli.qubit) for pauli in terms])
+            out += offset * np.prod([self._pauli_operator_handlers[pauli](pauli.qubit) for pauli in terms])
         return out
 
     def evolve(
@@ -214,7 +219,6 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-        **kwargs: dict,
     ) -> AnalogResult:
         """computes the time evolution under of an initial state under the given schedule.
 
@@ -230,53 +234,45 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         Returns:
             AnalogResult: The results of the evolution.
         """
-        warnings.warn(
-            f"The evolve method only works with the 'dynamics' simulation method. Ignoring user selected method '{self.simulation_method.value}'"
-        )
-
         cudaq.set_target("dynamics")
 
-        cuda_ham = None
+        cuda_hamiltonian = None
         steps = np.linspace(0, schedule.T, int(schedule.T / schedule.dt))
 
         def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
-
             def compute_value(param_name: str, step_idx: int) -> float:
-
                 return schedule.get_coefficient(time_steps[int(step_idx)], param_name)
 
             return cuda_schedule(list(range(len(time_steps))), list(schedule.hamiltonians), compute_value)
 
-        cuda_sched = parameter_values(steps)
+        cuda_schedule = parameter_values(steps)
 
         def get_schedule(key: str) -> Callable:
             return lambda **args: args[key]
 
-        cuda_ham = sum(
+        cuda_hamiltonian = sum(
             ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
             for key, ham in schedule.hamiltonians.items()
         )
 
-        cuda_obs = []
-        for obs in observables:
-            if isinstance(obs, PauliOperator):
-                cuda_obs.append(self._PAULI_MAP[obs.__class__](obs.qubit))
-            elif isinstance(obs, Hamiltonian):
-                cuda_obs.append(self._hamiltonian_to_cuda(obs))
+        cuda_observables = []
+        for observable in observables:
+            if isinstance(observable, PauliOperator):
+                cuda_observables.append(self._pauli_operator_handlers[observable](observable.qubit))
+            elif isinstance(observable, Hamiltonian):
+                cuda_observables.append(self._hamiltonian_to_cuda(observable))
             else:
-                raise ValueError(f"unsupported observable type of {obs.__class__}")
+                raise ValueError(f"unsupported observable type of {observable.__class__}")
 
         evolution_result = evolve(
-            hamiltonian=cuda_ham,
+            hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(schedule.nqubits), 2),
-            schedule=cuda_sched,
+            schedule=cuda_schedule,
             initial_state=State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
-            observables=cuda_obs,
+            observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=store_intermediate_results,
         )
-
-        self._apply_simulation_method()
 
         return AnalogResult(
             final_expected_values=np.array(
@@ -381,3 +377,19 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         """Handle an U3 gate operation."""
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
+
+    @staticmethod
+    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
+        return spin.x(target=operator.qubit)
+
+    @staticmethod
+    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
+        return spin.y(target=operator.qubit)
+
+    @staticmethod
+    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
+        return spin.z(target=operator.qubit)
+
+    @staticmethod
+    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
+        return spin.i(target=operator.qubit)
