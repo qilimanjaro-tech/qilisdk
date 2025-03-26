@@ -357,7 +357,7 @@ class Model:
         self._encoding_constraints = {}
         self._objective = None
         self._label = label
-        self._variables = {}  # var_label : var
+        self._variables: dict[str, Variable] = {}  # var_label : var
         self._real_variables = {}  # var_label : {'var' : var, 'precision': precision}
         self._recentered = {}  # var_label : ('var' : var, 'precision': precision, 'shift': lower_bound)
 
@@ -885,7 +885,6 @@ class QUBO(Model):
         return ham
 
     def __copy__(self) -> QUBO:
-
         out = QUBO(label=self.label)
         obj = copy.copy(self.objective)
         out.set_objective(term=obj.term, label=obj.label, sense=obj.sense)
