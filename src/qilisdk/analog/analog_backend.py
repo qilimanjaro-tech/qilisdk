@@ -28,7 +28,6 @@ class AnalogBackend(Backend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-        **Kwargs: dict,
     ) -> AnalogResult:
         """
         Computes the time evolution under of an initial state under the given schedule.

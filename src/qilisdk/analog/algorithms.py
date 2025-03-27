@@ -43,17 +43,14 @@ class TimeEvolution(AnalogAlgorithm):
         """
         super().__init__(backend)
         self.initial_state = initial_state
-        if not isinstance(self.initial_state, QuantumObject):
-            raise NotImplementedError("currently only QuantumObjects are accepted as initial states.")
         self.schedule = schedule
         self.observables = observables
         self.n_shots = n_shots
 
-    def evolve(self, store_intermediate_results: bool = False, **kwargs: dict) -> AnalogResult:
+    def evolve(self, store_intermediate_results: bool = False) -> AnalogResult:
         return self.backend.evolve(
             schedule=self.schedule,
             initial_state=self.initial_state,
             observables=self.observables,
             store_intermediate_results=store_intermediate_results,
-            **kwargs,
         )
