@@ -17,6 +17,7 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
+from functools import reduce
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
@@ -223,7 +224,7 @@ class Hamiltonian:
         """Number of qubits acting on the hamiltonian."""
         qubits = {op.qubit for key in self._elements for op in key}
 
-        return max(qubits) + 1
+        return max(qubits) + 1 if qubits else 0
 
     @property
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
@@ -249,37 +250,42 @@ class Hamiltonian:
         return self
 
     def _apply_operator_on_qubit(self, terms: list[PauliOperator]) -> spmatrix:
-        """get the resulting matrix representation of the operator resulting from the multiplication a set of pauli operators applied on various qubits.
+        """Get the matrix representation of a single term by taking the tensor product
+        of operators acting on each qubit. For qubits with no operator in `terms`,
+        the identity is used.
 
         Args:
-            terms (list[PauliOperator]): a set of pauli operators.
+            terms (list[PauliOperator]): A list of Pauli operators in the term.
 
         Returns:
-            spmatrix: the matrix representation of the resulting operator.
+            spmatrix: The full matrix representation of the term.
         """
-        element = identity(2**self.nqubits)
-        for t in terms:
-            aux_term = None
-            for q in range(self.nqubits):
-                current = identity(2) if q != t.qubit else csc_array(np.array(t.matrix))
-                aux_term = current if aux_term is None else kron(aux_term, current)
-
-            element = element.dot(aux_term)
-        return element.tocsc()
+        # Build a list of factors for each qubit
+        factors = []
+        for q in range(self.nqubits):
+            # Look for an operator acting on qubit q
+            op = next((t for t in terms if t.qubit == q), None)
+            if op is not None:
+                # Wrap the operator's matrix as a sparse matrix.
+                factors.append(csc_array(np.array(op.matrix)))
+            else:
+                factors.append(identity(2, format="csc"))
+        # Compute the tensor (Kronecker) product over all qubits.
+        full_matrix = reduce(lambda A, B: kron(A, B, format="csc"), factors)
+        return full_matrix
 
     def to_matrix(self) -> spmatrix:
-        """Get the matrix representation of the hamiltonian.
+        """Return the full matrix representation of the Hamiltonian by summing over all terms.
 
         Returns:
-            spmatrix: The matrix representation of the hamiltonian.
+            spmatrix: The sparse matrix representation of the Hamiltonian.
         """
-        matrix = None
+        dim = 2**self.nqubits
+        # Initialize a zero matrix of the appropriate dimension.
+        result = csc_array(np.zeros((dim, dim), dtype=complex))
         for coeff, term in self:
-            if matrix is None:
-                matrix = coeff * self._apply_operator_on_qubit(term)
-            else:
-                matrix += coeff * self._apply_operator_on_qubit(term)
-        return matrix
+            result += coeff * self._apply_operator_on_qubit(term)
+        return result
 
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self._elements.items():

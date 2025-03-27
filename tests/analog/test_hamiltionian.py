@@ -1,6 +1,12 @@
+import numpy as np
 import pytest
 
 from qilisdk.analog import Hamiltonian, I, X, Y, Z
+
+
+# Helper function to convert sparse matrix to dense NumPy array.
+def dense(ham: Hamiltonian) -> np.ndarray:
+    return ham.to_matrix().toarray()
 
 
 # -----------------------------
@@ -137,3 +143,73 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
 def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
     hamiltonian = Hamiltonian.parse(hamiltonian_str)
     assert hamiltonian == expected_hamiltonian
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian", "expected"),
+    [
+        # Identity Hamiltonian on qubit 0.
+        (I(0).to_hamiltonian(), np.eye(2, dtype=complex)),
+        # 2 * Z operator: 2*[[1, 0],[0, -1]]
+        (2 * Z(0).to_hamiltonian(), 2 * np.array([[1, 0], [0, -1]], dtype=complex)),
+        # Sum of 0.5*Z and 1*X: 0.5*[[1, 0],[0, -1]] + [[0, 1],[1, 0]]
+        (
+            0.5 * Z(0) + X(0),
+            0.5 * np.array([[1, 0], [0, -1]], dtype=complex) + np.array([[0, 1], [1, 0]], dtype=complex),
+        ),
+    ],
+)
+def test_to_matrix_single_qubit(hamiltonian: Hamiltonian, expected: np.ndarray):
+    np.testing.assert_allclose(dense(hamiltonian), expected, atol=1e-8)
+
+
+def test_to_matrix_zero_hamiltonian():
+    """An empty Hamiltonian should produce a zero matrix."""
+    H = Hamiltonian()
+    expected = np.zeros((1, 1), dtype=complex)
+    np.testing.assert_allclose(dense(H), expected, atol=1e-8)
+
+
+# --- Two-Qubit Tests ---
+
+
+def test_to_matrix_two_qubit_single_term():
+    """
+    A two-qubit Hamiltonian with a single term (e.g. 2 * (Z(0) ⊗ X(1)))
+    should return the correct Kronecker product.
+    """
+    H = Hamiltonian({(Z(0), X(1)): 2})
+    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 2 * np.kron(Z_matrix, X_matrix)
+    np.testing.assert_allclose(dense(H), expected, atol=1e-8)
+
+
+def test_to_matrix_two_qubit_multiple_terms():
+    """
+    For a Hamiltonian defined as 0.5 * (Z(0) ⊗ I) + 1.5 * (I ⊗ X(1)),
+    the matrix representation should be the sum of the two Kronecker products.
+    """
+    H = 0.5 * Z(0).to_hamiltonian() + 1.5 * X(1).to_hamiltonian()
+    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    I_matrix = np.eye(2, dtype=complex)
+    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 0.5 * np.kron(Z_matrix, I_matrix) + 1.5 * np.kron(I_matrix, X_matrix)
+    np.testing.assert_allclose(dense(H), expected, atol=1e-8)
+
+
+# --- Three-Qubit Test ---
+
+
+def test_to_matrix_three_qubit():
+    """
+    Test a Hamiltonian acting on three qubits.
+    For example, a term 3*(Z(1) ⊗ X(2)) acting on qubits 1 and 2.
+    The full Hamiltonian should be embedded as I ⊗ Z ⊗ X.
+    """
+    H = Hamiltonian({(Z(1), X(2)): 3})
+    I2 = np.eye(2, dtype=complex)
+    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 3 * np.kron(I2, np.kron(Z_matrix, X_matrix))
+    np.testing.assert_allclose(dense(H), expected, atol=1e-8)

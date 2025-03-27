@@ -48,15 +48,15 @@ class Schedule:
         self._dt = dt
         self.iter_time_step = 0
         self._nqubits = 0
-        for ham in self._hamiltonians.values():
-            self._nqubits = max(self._nqubits, ham.nqubits)
+        for hamiltonian in self._hamiltonians.values():
+            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
 
         if 0 not in self._schedule:
             self._schedule[0] = dict.fromkeys(self._hamiltonians, 0.0)
         else:
-            for l in self._hamiltonians:
-                if l not in self._schedule[0]:
-                    self._schedule[0][l] = 0
+            for label in self._hamiltonians:
+                if label not in self._schedule[0]:
+                    self._schedule[0][label] = 0
 
         for time_step in self._schedule.values():
             if not all(s in self._hamiltonians for s in time_step):
