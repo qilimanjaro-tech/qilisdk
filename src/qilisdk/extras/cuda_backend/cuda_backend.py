@@ -210,7 +210,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
         out = OperatorSum()
         for offset, terms in hamiltonian:
-            out += offset * np.prod([self._pauli_operator_handlers[pauli](pauli.qubit) for pauli in terms])
+            out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli.qubit) for pauli in terms])
         return out
 
     def evolve(
@@ -258,7 +258,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         cuda_observables = []
         for observable in observables:
             if isinstance(observable, PauliOperator):
-                cuda_observables.append(self._pauli_operator_handlers[observable](observable.qubit))
+                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable.qubit))
             elif isinstance(observable, Hamiltonian):
                 cuda_observables.append(self._hamiltonian_to_cuda(observable))
             else:
