@@ -210,7 +210,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
         out = OperatorSum()
         for offset, terms in hamiltonian:
-            out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli.qubit) for pauli in terms])
+            out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
         return out
 
     def evolve(
@@ -245,7 +245,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
 
             return cuda_schedule(list(range(len(time_steps))), list(schedule.hamiltonians), compute_value)
 
-        cuda_schedule = parameter_values(steps)
+        _cuda_schedule = parameter_values(steps)
 
         def get_schedule(key: str) -> Callable:
             return lambda **args: args[key]
@@ -258,7 +258,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         cuda_observables = []
         for observable in observables:
             if isinstance(observable, PauliOperator):
-                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable.qubit))
+                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
             elif isinstance(observable, Hamiltonian):
                 cuda_observables.append(self._hamiltonian_to_cuda(observable))
             else:
@@ -267,7 +267,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(schedule.nqubits), 2),
-            schedule=cuda_schedule,
+            schedule=_cuda_schedule,
             initial_state=State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
             observables=cuda_observables,
             collapse_operators=[],
