@@ -38,7 +38,9 @@ class DigitalBackend(ABC):
     outcomes.
     """
 
-    def __init__(self, simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR) -> None:
+    def __init__(
+        self, digital_simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR
+    ) -> None:
         """
         Initialize the DigitalBackend.
 
@@ -47,20 +49,20 @@ class DigitalBackend(ABC):
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        self._simulation_method = simulation_method
+        self._digital_simulation_method = digital_simulation_method
 
     @property
-    def simulation_method(self) -> DigitalSimulationMethod:
+    def digital_simulation_method(self) -> DigitalSimulationMethod:
         """
         Get the simulation method currently configured for the backend.
 
         Returns:
             SimulationMethod: The simulation method to be used for circuit execution.
         """
-        return self._simulation_method
+        return self._digital_simulation_method
 
-    @simulation_method.setter
-    def simulation_method(self, value: DigitalSimulationMethod) -> None:
+    @digital_simulation_method.setter
+    def digital_simulation_method(self, value: DigitalSimulationMethod) -> None:
         """
         Set the simulation method for the backend.
 
@@ -68,7 +70,7 @@ class DigitalBackend(ABC):
             value (SimulationMethod): The simulation method to set. Options include
                 STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
         """
-        self._simulation_method = value
+        self._digital_simulation_method = value
 
     @abstractmethod
     def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
