@@ -91,11 +91,11 @@ def test_ptrace_valid():
     and then traces out the second qubit.
     """
     qket = ket(0, 0)
-    rho = qket.to_dm()
+    rho = qket.to_density_matrix()
     # dims for a 2-qubit system are [2, 2]; keep the first qubit (index 0).
     reduced = rho.ptrace([2, 2], keep=[0])
     # Expected reduced density matrix is the pure state |0⟩.
-    expected = ket(0).to_dm()
+    expected = ket(0).to_density_matrix()
     np.testing.assert_allclose(reduced.dense, expected.dense, atol=1e-8)
 
 
@@ -220,7 +220,7 @@ def test_norm_density_matrix():
 
     When order is 'tr', the norm should be the trace.
     """
-    qdm = ket(0).to_dm()  # density matrix for |0>
+    qdm = ket(0).to_density_matrix()  # density matrix for |0>
     assert np.isclose(qdm.norm(order="tr"), 1)
     # Also test norm with an integer order via scipy_norm.
     expected_norm = scipy_norm(qdm.data, ord=1)
@@ -265,7 +265,7 @@ def test_is_ket():
     """Test is_ket: should be True for a valid ket state and False for a density matrix."""
     qket = ket(0)
     assert qket.is_ket()
-    qdm = ket(0).to_dm()
+    qdm = ket(0).to_density_matrix()
     assert not qdm.is_ket()
 
 
@@ -273,7 +273,7 @@ def test_is_bra():
     """Test is_bra: should be True for a valid bra state and False for a density matrix."""
     qbra = bra(0)
     assert qbra.is_bra()
-    qdm = ket(0).to_dm()
+    qdm = ket(0).to_density_matrix()
     assert not qdm.is_bra()
 
 
@@ -287,7 +287,7 @@ def test_is_scalar():
 
 def test_is_dm():
     """Test is_dm: density matrices (from ket) should pass, while non-dm matrices should not."""
-    qdm = ket(0).to_dm()
+    qdm = ket(0).to_density_matrix()
     assert qdm.is_dm()
     non_dm = QuantumObject(np.array([[1, 2], [3, 4]]))
     assert not non_dm.is_dm()
@@ -305,15 +305,15 @@ def test_is_herm():
 
 def test_to_dm_from_dm():
     """to_dm() called on a density matrix should return a valid density matrix."""
-    qdm = ket(0).to_dm()
-    dm2 = qdm.to_dm()
+    qdm = ket(0).to_density_matrix()
+    dm2 = qdm.to_density_matrix()
     np.testing.assert_allclose(dm2.dense, qdm.dense, atol=1e-8)
 
 
 def test_to_dm_from_ket():
     """to_dm() should convert a ket state to a density matrix with trace 1."""
     qket_obj = ket(0)
-    qdm = qket_obj.to_dm()
+    qdm = qket_obj.to_density_matrix()
     assert np.isclose(qdm.data.trace(), 1)
 
 
@@ -321,7 +321,7 @@ def test_to_dm_from_scalar():
     """Attempting to call to_dm() on a scalar should raise a ValueError."""
     qscalar = QuantumObject(np.array([[1]]))
     with pytest.raises(ValueError):  # noqa: PT011
-        qscalar.to_dm()
+        qscalar.to_density_matrix()
 
 
 # --- Helper Function Tests ---
@@ -379,7 +379,7 @@ def test_tensor():
 
 def test_expect_density():
     """Test the expectation value for a density matrix using the identity operator."""
-    qdm = ket(0).to_dm()
+    qdm = ket(0).to_density_matrix()
     identity = QuantumObject(np.eye(2))
     exp_val = expect(identity, qdm)
     # For a valid density matrix, trace(identity * rho) should be 1.

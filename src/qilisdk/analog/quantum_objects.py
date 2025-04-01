@@ -26,7 +26,36 @@ TWO = 2
 
 
 class QuantumObject:
+    """
+    Represents a quantum state or operator using a sparse matrix representation.
+
+    The QuantumObject class is a wrapper around sparse matrices (or NumPy arrays,
+    which are converted to sparse matrices) that represent quantum states (kets, bras)
+    or operators. It provides utility methods for common quantum operations such as
+    taking the adjoint (dagger), computing tensor products, partial traces, and norms.
+
+    The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
+    efficient arithmetic and manipulation. The expected shapes for the data are:
+      - (2**N, 2**N) for operators or density matrices,
+      - (2**N, 1) for ket states,
+      - (1, 2**N) for bra states.
+    """
+
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
+        """
+        Initialize a QuantumObject with the given data.
+
+        Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
+        The input must represent a valid quantum state or operator with appropriate dimensions.
+
+        Args:
+            data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
+                representing a quantum state or operator.
+
+        Raises:
+            ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,
+                or if the data's shape does not correspond to a valid quantum state/operator.
+        """
         if isinstance(data, np.ndarray):
             self._data = csr_matrix(data)
         elif issparse(data):
@@ -50,14 +79,32 @@ class QuantumObject:
 
     @property
     def data(self) -> csr_matrix:
+        """
+        Get the internal sparse matrix representation of the QuantumObject.
+
+        Returns:
+            csr_matrix: The internal representation as a CSR matrix.
+        """
         return self._data
 
     @property
     def dense(self) -> np.ndarray:
+        """
+        Get the dense (NumPy array) representation of the QuantumObject.
+
+        Returns:
+            np.ndarray: The dense array representation.
+        """
         return self._data.toarray()
 
     @property
     def nqubits(self) -> int:
+        """
+        Compute the number of qubits represented by the QuantumObject.
+
+        Returns:
+            int: The number of qubits if determinable; otherwise, -1.
+        """
         if self._data.shape[0] == self._data.shape[1]:
             return int(np.log2(self._data.shape[0]))
         if self._data.shape[0] == 1:
@@ -68,30 +115,44 @@ class QuantumObject:
 
     @property
     def shape(self) -> tuple[int, ...]:
+        """
+        Get the shape of the QuantumObject's internal matrix.
+
+        Returns:
+            tuple[int, ...]: The shape of the internal matrix.
+        """
         return self._data.shape
 
     def dag(self) -> QuantumObject:
-        """Computes the Adjoint (dagger) of Quantum Object.
+        """
+        Compute the adjoint (conjugate transpose) of the QuantumObject.
 
         Returns:
-            QuantumObject: the adjoin of the Quantum Object.
+            QuantumObject: A new QuantumObject that is the adjoint of this object.
         """
         out = QuantumObject(self._data.conj().T)
         return out
 
     def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
         """
-        Perform a partial trace over subsystems not in `keep`.
+        Compute the partial trace over subsystems not in 'keep'.
 
-        Parameters:
-            dims (list of int): Dimensions of each subsystem.
-            keep (list of int): Indices of subsystems to retain.
+        This method calculates the reduced density matrix by tracing out
+        the subsystems that are not specified in the 'keep' parameter. The
+        input 'dims' represents the dimensions of each subsystem, and 'keep'
+        indicates the indices of the subsystems to be retained.
+
+        Args:
+            dims (list[int]): A list specifying the dimensions of each subsystem.
+            keep (list[int]): A list of indices corresponding to the subsystems to retain.
 
         Raises:
-            ValueError: if the dimensions provided in dims don't match the shape of the quantum object.
+            ValueError: If the product of the dimensions in dims does not match the
+                shape of the QuantumObject's dense representation.
 
         Returns:
-            QuantumState: A new QuantumState representing the reduced density matrix.
+            QuantumObject: A new QuantumObject representing the reduced density matrix
+                for the subsystems specified in 'keep'.
         """
         rho = self.dense
         total_dim = np.prod(dims)
@@ -141,6 +202,155 @@ class QuantumObject:
 
         return QuantumObject(reduced_matrix)
 
+    def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
+        """
+        Compute the norm of the QuantumObject.
+
+        For density matrices, the norm order can be specified. For state vectors,
+        the norm is computed accordingly.
+
+        Args:
+            order (int or {"fro", "tr"}, optional): The order of the norm.
+                If the QuantumObject represents a density matrix and 'tr' is specified,
+                the trace norm is returned. Defaults to 1.
+
+        Returns:
+            float: The computed norm of the QuantumObject.
+        """
+        if self.is_scalar():
+            return self.dense[0][0]
+        if self.is_dm() or self.shape[0] == self.shape[1]:
+            if order == "tr":
+                return self._data.trace()
+            return scipy_norm(self._data, ord=order)
+        if self.is_bra():
+            return np.sqrt(self._data @ self._data.conj().T).toarray()[0, 0]
+        return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
+
+    def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
+        """
+        Normalize the QuantumObject.
+
+        Scales the QuantumObject so that its norm becomes 1, according to the specified norm order.
+
+        Args:
+            order (int or {"fro", "tr"}, optional): The order of the norm to use for normalization.
+                If the QuantumObject represents a density matrix and 'tr' is specified,
+                the trace norm is used. Defaults to "tr".
+
+        Raises:
+            ValueError: If the norm of the QuantumObject is 0, making normalization impossible.
+
+        Returns:
+            QuantumObject: A new QuantumObject that is the normalized version of this object.
+        """
+        norm = self.norm(order=order)
+        if norm == 0:
+            raise ValueError("Cannot normalize a zero-norm Quantum Object")
+        return QuantumObject(self._data / norm)
+
+    def expm(self) -> QuantumObject:
+        """
+        Compute the matrix exponential of the QuantumObject.
+
+        Returns:
+            QuantumObject: A new QuantumObject representing the matrix exponential.
+        """
+        return QuantumObject(expm(self._data))
+
+    def is_ket(self) -> bool:
+        """
+        Check if the QuantumObject represents a ket (column vector) state.
+
+        Returns:
+            bool: True if the QuantumObject is a ket state, False otherwise.
+        """
+        return self.shape[0] % 2 == 0 and self.shape[1] == 1
+
+    def is_bra(self) -> bool:
+        """
+        Check if the QuantumObject represents a bra (row vector) state.
+
+        Returns:
+            bool: True if the QuantumObject is a bra state, False otherwise.
+        """
+        return self.shape[1] % 2 == 0 and self.shape[0] == 1
+
+    def is_scalar(self) -> bool:
+        """
+        Check if the QuantumObject is a scalar (1x1 matrix).
+
+        Returns:
+            bool: True if the QuantumObject is a scalar, False otherwise.
+        """
+        return self.data.shape == (1, 1)
+
+    def is_dm(self, tol: float = 1e-8) -> bool:
+        """
+        Determine if the QuantumObject is a valid density matrix.
+
+        A valid density matrix must be square, Hermitian, positive semi-definite,
+        and have a trace equal to 1.
+
+        Args:
+            tol (float, optional): The numerical tolerance for verifying Hermiticity,
+                eigenvalue non-negativity, and trace. Defaults to 1e-8.
+
+        Returns:
+            bool: True if the QuantumObject is a valid density matrix, False otherwise.
+        """
+        # Check if rho is a square matrix
+        if self.shape[0] != self.shape[1]:
+            return False
+
+        # Check Hermitian condition: rho should be equal to its conjugate transpose
+        if not np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol):
+            return False
+
+        # Check if eigenvalues are non-negative (positive semi-definite)
+        eigenvalues = np.linalg.eigvalsh(self.dense)  # More stable for Hermitian matrices
+        if np.any(eigenvalues < -tol):  # Allow small numerical errors
+            return False
+
+        # Check if the trace is 1
+        return np.isclose(self._data.trace(), 1, atol=tol)
+
+    def is_herm(self, tol: float = 1e-8) -> bool:
+        """
+        Check if the QuantumObject is Hermitian.
+
+        Args:
+            tol (float, optional): The numerical tolerance for verifying Hermiticity.
+                Defaults to 1e-8.
+
+        Returns:
+            bool: True if the QuantumObject is Hermitian, False otherwise.
+        """
+        return np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol)
+
+    def to_density_matrix(self) -> QuantumObject:
+        """
+        Convert the QuantumObject to a density matrix.
+
+        If the QuantumObject represents a state vector (ket or bra), this method
+        calculates the corresponding density matrix by taking the outer product.
+        If the QuantumObject is already a density matrix, it is returned unchanged.
+        The resulting density matrix is normalized.
+
+        Raises:
+            ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
+
+        Returns:
+            QuantumObject: A new QuantumObject representing the density matrix.
+        """
+        if self.is_scalar():
+            raise ValueError("Cannot make a density matrix from scalar.")
+        if self.is_dm():
+            return self
+        if self.is_bra():
+            return (self.dag() @ self).unit()
+        return (self @ self.dag()).unit()
+
     def __add__(self, other: QuantumObject | Complex) -> QuantumObject:
         if isinstance(other, QuantumObject):
             return QuantumObject(self._data + other._data)
@@ -168,123 +378,43 @@ class QuantumObject:
     def __rmul__(self, other: QuantumObject | Complex) -> QuantumObject:
         return self.__mul__(other)
 
-    def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
-        """Compute the norm of the Quantum Object
-
-        Args:
-            order (int, "fro", "tr"): Order of the norm. Only used if the Quantum Object is a density matrix.
-
-        Returns:
-            float: the norm.
-        """
-        if self.is_scalar():
-            return self.dense[0][0]
-        if self.is_dm() or self.shape[0] == self.shape[1]:
-            if order == "tr":
-                return self._data.trace()
-            return scipy_norm(self._data, ord=order)
-        if self.is_bra():
-            return np.sqrt(self._data @ self._data.conj().T).toarray()[0, 0]
-        return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
-
-    def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
-        """Normalizes the quantum Object
-
-        Args:
-            order (int, "fro", "tr"): Order of the norm. Only used if the Quantum Object is a density matrix.
-
-        Raises:
-            ValueError: If the norm of the Quantum Object is 0
-
-        Returns:
-            QuantumObject: The normalized Quantum Object.
-        """
-        norm = self.norm(order=order)
-        if norm == 0:
-            raise ValueError("Cannot normalize a zero-norm Quantum Object")
-        return QuantumObject(self._data / norm)
-
     def __repr__(self) -> str:
         return f"{self.dense}"
 
-    def expm(self) -> QuantumObject:
-        """Computes the matrix exponentiation of the Quantum Object
-
-        Returns:
-            QuantumObject: the matrix exponentiation of the Quantum Object.
-        """
-        return QuantumObject(expm(self._data))
-
-    def is_ket(self) -> bool:
-        return self.shape[0] % 2 == 0 and self.shape[1] == 1
-
-    def is_bra(self) -> bool:
-        return self.shape[1] % 2 == 0 and self.shape[0] == 1
-
-    def is_scalar(self) -> bool:
-        return self.data.shape == (1, 1)
-
-    def is_dm(self, tol: float = 1e-8) -> bool:
-        """
-        Checks if a given matrix is a valid density matrix.
-
-        Parameters:
-            rho (numpy.ndarray): The matrix to check.
-            tol (float): Numerical tolerance for checking conditions.
-
-        Returns:
-            bool: True if rho is a valid density matrix, False otherwise.
-        """
-        # Check if rho is a square matrix
-        if self.shape[0] != self.shape[1]:
-            return False
-
-        # Check Hermitian condition: rho should be equal to its conjugate transpose
-        if not np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol):
-            return False
-
-        # Check if eigenvalues are non-negative (positive semi-definite)
-        eigenvalues = np.linalg.eigvalsh(self.dense)  # More stable for Hermitian matrices
-        if np.any(eigenvalues < -tol):  # Allow small numerical errors
-            return False
-
-        # Check if the trace is 1
-        return np.isclose(self._data.trace(), 1, atol=tol)
-
-    def is_herm(self, tol: float = 1e-8) -> bool:
-        return np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol)
-
-    def to_dm(self) -> QuantumObject:
-        if self.is_scalar():
-            raise ValueError("Cannot make a density matrix from scalar.")
-        if self.is_dm():
-            return self
-        if self.is_bra():
-            return (self.dag() @ self).unit()
-        return (self @ self.dag()).unit()
-
 
 def basis(N: int, n: int) -> QuantumObject:
-    """Generates the vector representation of a Fock state.
+    """
+    Generate the basis vector representation of a Fock state.
+
+    This function creates a column vector (ket) representing the Fock state |n⟩
+    in a Hilbert space of dimension N.
 
     Args:
-        N (int): Number of Fock states in Hilbert space
-        n (int): Integer corresponding to desired number state, defaults to 0 if omitted.
+        N (int): The dimension of the Hilbert space (number of Fock states).
+        n (int): The desired number state.
 
     Returns:
-        QuantumObject: A QuantumObject representing the requested number state ``|n>``
+        QuantumObject: A QuantumObject representing the Fock state |n⟩.
     """
     return QuantumObject(csc_array(([1], ([n], [0])), shape=(N, 1)))
 
 
 def ket(*state: int) -> QuantumObject:
-    """Generate a ket state for a set of qubits.
+    """
+    Generate a ket state for a multi-qubit system.
+
+    This function creates a tensor product of individual qubit states (kets)
+    based on the input values. Each input must be either 0 or 1. For example,
+    ket(0, 1) creates a two-qubit ket state |0⟩ ⊗ |1⟩.
+
+    Args:
+        *state (int): A sequence of integers representing the state of each qubit (0 or 1).
 
     Raises:
-        ValueError: if the qubit states provided are not 0 or 1.
+        ValueError: If any of the provided qubit states is not 0 or 1.
 
     Returns:
-        QuantumObject: a Quantum Object representing the state.
+        QuantumObject: A QuantumObject representing the multi-qubit ket state.
     """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
@@ -292,13 +422,21 @@ def ket(*state: int) -> QuantumObject:
 
 
 def bra(*state: int) -> QuantumObject:
-    """Generate a bra state for a set of qubits.
+    """
+    Generate a bra state for a multi-qubit system.
+
+    This function creates a tensor product of individual qubit states (bras)
+    based on the input values. Each input must be either 0 or 1. For example,
+    bra(0, 1) creates a two-qubit bra state ⟨0| ⊗ ⟨1|.
+
+    Args:
+        *state (int): A sequence of integers representing the state of each qubit (0 or 1).
 
     Raises:
-        ValueError: if the qubit states provided are not 0 or 1.
+        ValueError: If any of the provided qubit states is not 0 or 1.
 
     Returns:
-        QuantumObject: a Quantum Object representing the state.
+        QuantumObject: A QuantumObject representing the multi-qubit bra state.
     """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
@@ -306,13 +444,17 @@ def bra(*state: int) -> QuantumObject:
 
 
 def tensor(operators: list[QuantumObject]) -> QuantumObject:
-    """Calculates the tensor product of input operators or states.
+    """
+    Calculate the tensor product of a list of QuantumObjects.
+
+    This function computes the tensor (Kronecker) product of all input QuantumObjects,
+    resulting in a composite QuantumObject that represents the combined state or operator.
 
     Args:
-        operators (list[QuantumObject]): a list of Quantum Objects for tensor product.
+        operators (list[QuantumObject]): A list of QuantumObjects to be combined via tensor product.
 
     Returns:
-        QuantumObject: A composite Quantum Object.
+        QuantumObject: A new QuantumObject representing the tensor product of the inputs.
     """
     out = operators[0].data
     if len(operators) > 1:
@@ -322,14 +464,19 @@ def tensor(operators: list[QuantumObject]) -> QuantumObject:
 
 
 def expect(operator: QuantumObject, state: QuantumObject) -> Complex:
-    """Calculates the expectation value for operator(s) and state(s).
+    """
+    Calculate the expectation value of an operator with respect to a quantum state.
+
+    Computes the expectation value ⟨state| operator |state⟩. The function handles both
+    pure state vectors and density matrices appropriately.
 
     Args:
-        operator (QuantumObject): operator for expectation value.
-        state (QuantumObject): quantum state or density matrix.
+        operator (QuantumObject): The quantum operator represented as a QuantumObject.
+        state (QuantumObject): The quantum state or density matrix represented as a QuantumObject.
 
     Returns:
-        float/int/complex : The expectation value. The output is real if the operator is Hermitian, complex otherwise.
+        Complex: The expectation value. The result is guaranteed to be real if the operator
+                 is Hermitian, and may be complex otherwise.
     """
     if state.data.shape[1] == state.data.shape[0]:
         return (operator @ state).dense.trace()

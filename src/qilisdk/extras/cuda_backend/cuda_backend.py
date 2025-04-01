@@ -271,7 +271,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(schedule.nqubits), 2),
             schedule=_cuda_schedule,
-            initial_state=State.from_data(np.array(initial_state.to_dm().dense, dtype=np.complex128)),
+            initial_state=State.from_data(np.array(initial_state.to_density_matrix().dense, dtype=np.complex128)),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=store_intermediate_results,
