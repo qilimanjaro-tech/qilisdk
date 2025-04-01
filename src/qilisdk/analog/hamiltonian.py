@@ -287,6 +287,36 @@ class Hamiltonian:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
 
+    # def _apply_operator_on_qubit(self, terms: list[PauliOperator]) -> spmatrix:
+    #     """get the resulting matrix representation of the operator resulting from the multiplication a set of pauli operators applied on various qubits.
+    #     Args:
+    #         terms (list[PauliOperator]): a set of pauli operators.
+    #     Returns:
+    #         spmatrix: the matrix representation of the resulting operator.
+    #     """
+    #     element = identity(2**self.nqubits)
+    #     for t in terms:
+    #         aux_term = None
+    #         for q in range(self.nqubits):
+    #             current = identity(2) if q != t.qubit else csc_array(np.array(t.matrix))
+    #             aux_term = current if aux_term is None else kron(aux_term, current)
+
+    #         element = element.dot(aux_term)
+    #     return element.tocsc()
+
+    # def to_matrix(self) -> spmatrix:
+    #     """Get the matrix representation of the hamiltonian.
+    #     Returns:
+    #         spmatrix: The matrix representation of the hamiltonian.
+    #     """
+    #     matrix = None
+    #     for coeff, term in self:
+    #         if matrix is None:
+    #             matrix = coeff * self._apply_operator_on_qubit(term)
+    #         else:
+    #             matrix += coeff * self._apply_operator_on_qubit(term)
+    #     return matrix
+
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self._elements.items():
             yield value, list(key)

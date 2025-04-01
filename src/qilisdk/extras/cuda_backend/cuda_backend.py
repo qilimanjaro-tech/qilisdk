@@ -207,10 +207,21 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.adjoint(target_kernel, target_qubit)
 
+    # def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> ProductOperator:
+    #     out = 0
+    #     for offset, terms in hamiltonian:
+    #         test = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+    #         print(type(test))
+    #         out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+    #     return out
+
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
-        out = OperatorSum()
+        out = None
         for offset, terms in hamiltonian:
-            out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+            if out is None:
+                out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+            else:
+                out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
         return out
 
     def evolve(
