@@ -10,13 +10,13 @@ a Circuit class (with attribute nqubits and a list of gates) and the following g
 - and default (single- or multi-qubit) gates.
 """
 
+from dataclasses import dataclass
 from math import ceil
 from typing import List
 
 # from .base_renderer import BaseRenderer, StyleConfig
 from .circuit import Circuit
-from .gates import M, Controlled, Exponential, Adjoint, Gate
-from dataclasses import dataclass
+from .gates import Controlled, M
 
 __all__ = [
     "TextRenderer",
@@ -146,7 +146,6 @@ modern = {
     "BERKELEY": "#4A5D6D",  # Dark Slate Blue
     "FREDKIN": "#4A5D6D",  # Dark Slate Blue
 }
-
 
 
 @dataclass
@@ -297,16 +296,15 @@ class TextRenderer:
             xskip.append(sum(self._layer_list[wire][:layer]))
         return max(xskip) if xskip else 0
 
-    def _manage_layers(
-        self, gate_width: float, wire_list: List[int], layer: int, xskip: float = 0
-    ) -> None:
+    def _manage_layers(self, gate_width: float, wire_list: List[int], layer: int, xskip: float = 0) -> None:
         """
         Update each wire's layer width according to the width of the gate just drawn.
         """
         for wire in wire_list:
             if len(self._layer_list[wire]) > layer:
-                if self._layer_list[wire][layer] < gate_width + self.style.gate_margin * 2:
-                    self._layer_list[wire][layer] = gate_width + self.style.gate_margin * 2
+                self._layer_list[wire][layer] = max(
+                    self._layer_list[wire][layer], gate_width + self.style.gate_margin * 2
+                )
             else:
                 temp = xskip - sum(self._layer_list[wire]) if xskip != 0 else 0
                 self._layer_list[wire].append(temp + gate_width + self.style.gate_margin * 2)
@@ -330,7 +328,7 @@ class TextRenderer:
         if not getattr(self.style, "wire_label", None):
             default_labels = [f"q{i}" for i in range(self._qwires)]
         else:
-            default_labels = self.style.wire_label[:self._qwires]
+            default_labels = self.style.wire_label[: self._qwires]
 
         max_label_len = max(len(label) for label in default_labels)
         for i, label in enumerate(default_labels):
@@ -376,13 +374,7 @@ class TextRenderer:
                 top_frame = top_frame[:mid_index] + "┴" + top_frame[mid_index + 1 :]
             if sorted_controls[0] < sorted_targets[-1]:
                 bot_frame = bot_frame[:mid_index] + "┬" + bot_frame[mid_index + 1 :]
-        assert (
-            len(top_frame)
-            == len(mid_frame)
-            == len(bot_frame)
-            == len(mid_connect)
-            == len(mid_connect_label)
-        )
+        assert len(top_frame) == len(mid_frame) == len(bot_frame) == len(mid_connect) == len(mid_connect_label)
         return (top_frame, mid_frame, mid_connect, mid_connect_label, bot_frame), len(top_frame)
 
     def _draw_measurement_gate(self, gate):
@@ -439,8 +431,8 @@ class TextRenderer:
                 if wire in getattr(gate, "control_qubits", []):
                     if wire == wire_list_control[0] or wire == wire_list_control[-1]:
                         self._render_strs["mid_frame"][wire] += node_conn
-                        self._render_strs["top_frame"][wire] += (bar_conn if not is_top else " " * len(bar_conn))
-                        self._render_strs["bot_frame"][wire] += (bar_conn if is_top else " " * len(bar_conn))
+                        self._render_strs["top_frame"][wire] += bar_conn if not is_top else " " * len(bar_conn)
+                        self._render_strs["bot_frame"][wire] += bar_conn if is_top else " " * len(bar_conn)
                     else:
                         self._render_strs["top_frame"][wire] += bar_conn
                         self._render_strs["mid_frame"][wire] += node_conn
@@ -521,9 +513,13 @@ class TextRenderer:
                     is_top = sorted_controls[-1] > sorted_targets[0]
                     is_bot = sorted_controls[0] < sorted_targets[-1]
                     if is_top:
-                        self._update_qbridge(gate, list(range(sorted_targets[0], sorted_controls[-1] + 1)), width, is_top)
+                        self._update_qbridge(
+                            gate, list(range(sorted_targets[0], sorted_controls[-1] + 1)), width, is_top
+                        )
                     if is_bot:
-                        self._update_qbridge(gate, list(range(sorted_controls[0], sorted_targets[-1] + 1)), width, not is_bot)
+                        self._update_qbridge(
+                            gate, list(range(sorted_controls[0], sorted_targets[-1] + 1)), width, not is_bot
+                        )
 
         max_layer_len = max(sum(layer) for layer in self._layer_list)
         self._adjust_layer_pad(list(range(self._qwires)), max_layer_len + getattr(self.style, "end_wire_ext", 0))
@@ -534,7 +530,7 @@ class TextRenderer:
         Print the rendered circuit to standard output.
         Qubit 0 is printed at the top.
         """
-        for i in range(0, self._qwires):
+        for i in range(self._qwires):
             print(self._render_strs["top_frame"][i])
             print(self._render_strs["mid_frame"][i])
             print(self._render_strs["bot_frame"][i])
@@ -547,7 +543,7 @@ class TextRenderer:
         if not filename.endswith(".txt"):
             filename += ".txt"
         with open(filename, "w", encoding="utf-8") as file:
-            for i in range(0, self._qwires):
+            for i in range(self._qwires):
                 file.write(self._render_strs["top_frame"][i] + "\n")
                 file.write(self._render_strs["mid_frame"][i] + "\n")
                 file.write(self._render_strs["bot_frame"][i] + "\n")
