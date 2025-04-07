@@ -23,6 +23,8 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
+from qilisdk.yaml import yaml
+
 from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
 
 if TYPE_CHECKING:
@@ -88,7 +90,7 @@ class PauliOperator(ABC):
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
 
-    __slots__ = ("_qubit",)
+    # __slots__ = ("_qubit",)
 
     def __init__(self, qubit: int) -> None:
         self._qubit = qubit
@@ -163,30 +165,35 @@ class PauliOperator(ABC):
 ###############################################################################
 # Concrete Flyweight Operator Classes
 ###############################################################################
+@yaml.register_class
 class PauliZ(PauliOperator):
-    __slots__ = ()
+    # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=complex)
 
 
+@yaml.register_class
 class PauliX(PauliOperator):
-    __slots__ = ()
+    # __slots__ = ()
     _NAME: ClassVar[str] = "X"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=complex)
 
 
+@yaml.register_class
 class PauliY(PauliOperator):
-    __slots__ = ()
+    # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
+@yaml.register_class
 class PauliI(PauliOperator):
-    __slots__ = ()
+    # __slots__ = ()
     _NAME: ClassVar[str] = "I"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
 
 
+@yaml.register_class
 class Hamiltonian:
     """
     The `elements` dictionary now maps from a tuple of PauliOperator objects
