@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Token(BaseModel):
@@ -27,13 +27,10 @@ class Token(BaseModel):
     }
     """
 
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
+
     access_token: str = Field(alias="accessToken")
     expires_in: int = Field(alias="expiresIn")
     issued_at: str = Field(alias="issuedAt")
     refresh_token: str = Field(alias="refreshToken")
     token_type: str = Field(alias="tokenType")
-
-    class Config:
-        # Allow populating the model by the field name ("access_token") OR the alias ("accessToken").
-        # This is especially handy if you want to do AuthResponse(**response_data) directly.
-        allow_population_by_field_name = True

@@ -14,13 +14,19 @@
 
 import keyring
 
-SERVICE_NAME = "QaaSBackendKeyring"
+SERVICE_NAME = "QaaSKeyring"
 
 
 def store_credentials(username: str, auth_key: str) -> None:
     """Store username and auth_key in the OS keyring."""
     keyring.set_password(SERVICE_NAME, "username", username)
     keyring.set_password(SERVICE_NAME, "apikey", auth_key)
+
+
+def delete_credentials() -> None:
+    """Store username and auth_key in the OS keyring."""
+    keyring.delete_password(SERVICE_NAME, "username")
+    keyring.delete_password(SERVICE_NAME, "apikey")
 
 
 def load_credentials() -> tuple[str, str] | None:
