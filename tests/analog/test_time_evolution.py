@@ -45,13 +45,10 @@ def fake_backend(initial_state):
     return backend
 
 
-def test_properties_assignment(fake_backend, schedule, observables, initial_state):
+def test_properties_assignment(schedule, observables, initial_state):
     """Test that the TimeEvolution instance assigns properties correctly."""
     n_shots = 500
-    te = TimeEvolution(
-        backend=fake_backend, schedule=schedule, observables=observables, initial_state=initial_state, n_shots=n_shots
-    )
-    assert te.backend == fake_backend
+    te = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state, n_shots=n_shots)
     assert te.schedule == schedule
     assert te.observables == observables
     assert te.initial_state == initial_state
@@ -64,8 +61,8 @@ def test_evolve_calls_backend(fake_backend, schedule, observables, initial_state
     Test that the evolve() method correctly calls the backend.evolve() method with the
     expected parameters and returns its result.
     """
-    te = TimeEvolution(backend=fake_backend, schedule=schedule, observables=observables, initial_state=initial_state)
-    result = te.evolve(store_intermediate_results=store_intermediate_results)
+    te = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state)
+    result = te.evolve(backend=fake_backend, store_intermediate_results=store_intermediate_results)
     fake_backend.evolve.assert_called_once_with(
         schedule=schedule,
         initial_state=initial_state,
@@ -79,8 +76,8 @@ def test_evolve_default_store_intermediate(fake_backend, schedule, initial_state
     """
     Test that evolve() without explicit store_intermediate_results uses the default value (False).
     """
-    te = TimeEvolution(backend=fake_backend, schedule=schedule, observables=observables, initial_state=initial_state)
-    te.evolve()  # No argument provided.
+    te = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state)
+    te.evolve(backend=fake_backend)  # No argument provided.
     fake_backend.evolve.assert_called_once_with(
         schedule=schedule,
         initial_state=initial_state,

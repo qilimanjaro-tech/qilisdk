@@ -22,7 +22,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "dill>=0.3.9",
     "numpy>=2.2.4",
+    "ruamel-yaml>=0.18.10",
     "scipy>=1.15.1",
 ]
 

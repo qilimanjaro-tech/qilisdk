@@ -15,8 +15,10 @@ from abc import abstractmethod
 from pprint import pformat
 
 from qilisdk.common import Result
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class DigitalResult(Result):
     """
     Abstract class representing the result of a quantum circuit measurement.

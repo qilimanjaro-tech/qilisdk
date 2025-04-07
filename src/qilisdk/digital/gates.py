@@ -20,6 +20,8 @@ import numpy as np
 from scipy.linalg import expm
 from typing_extensions import Self
 
+from qilisdk.yaml import yaml
+
 from .exceptions import (
     GateHasNoMatrixError,
     GateNotParameterizedError,
@@ -273,6 +275,7 @@ class BasicGate(Gate):
     def _generate_matrix(self) -> np.ndarray: ...
 
 
+@yaml.register_class
 class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
         self._basic_gate: TBasicGate = basic_gate
@@ -325,6 +328,7 @@ class Modified(Gate, Generic[TBasicGate]):
         return isinstance(self.basic_gate, gate_type)
 
 
+@yaml.register_class
 class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
@@ -361,6 +365,7 @@ class Controlled(Modified[TBasicGate]):
         return "C" * len(self.control_qubits) + self.basic_gate.name
 
 
+@yaml.register_class
 class Adjoint(Modified[TBasicGate]):
     """
     Represents the adjoint (conjugate transpose) of a unitary gate.
@@ -387,6 +392,7 @@ class Adjoint(Modified[TBasicGate]):
         return self.basic_gate.name + "†"
 
 
+@yaml.register_class
 class Exponential(Modified[TBasicGate]):
     """
     Represents the exponential of a unitary gate.
@@ -415,6 +421,7 @@ class Exponential(Modified[TBasicGate]):
         return f"e^{self.basic_gate.name}"
 
 
+@yaml.register_class
 class M(Gate):
     """
     Measurement operation on a qubit. The measurement is performed in the computational basis and the
@@ -443,6 +450,7 @@ class M(Gate):
         return self._target_qubits
 
 
+@yaml.register_class
 class X(BasicGate):
     """
     The Pauli-X gate.
@@ -471,6 +479,7 @@ class X(BasicGate):
         return np.array([[0, 1], [1, 0]], dtype=complex)
 
 
+@yaml.register_class
 class Y(BasicGate):
     """
     The Pauli-Y gate.
@@ -501,6 +510,7 @@ class Y(BasicGate):
         return np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
+@yaml.register_class
 class Z(BasicGate):
     """
     The Pauli-Z gate.
@@ -531,6 +541,7 @@ class Z(BasicGate):
         return np.array([[1, 0], [0, -1]], dtype=complex)
 
 
+@yaml.register_class
 class H(BasicGate):
     """
     The Hadamard gate.
@@ -561,6 +572,7 @@ class H(BasicGate):
         return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
 
 
+@yaml.register_class
 class S(BasicGate):
     """
     Represents the S gate, which induces a pi/2 phase.
@@ -591,6 +603,7 @@ class S(BasicGate):
         return np.array([[1, 0], [0, 1j]], dtype=complex)
 
 
+@yaml.register_class
 class T(BasicGate):
     """
     Represents the T gate, which induces a pi/4 phase.
@@ -621,6 +634,7 @@ class T(BasicGate):
         return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
 
 
+@yaml.register_class
 class RX(BasicGate):
     """
     Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.
@@ -662,6 +676,7 @@ class RX(BasicGate):
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
 
 
+@yaml.register_class
 class RY(BasicGate):
     """
     Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.
@@ -703,6 +718,7 @@ class RY(BasicGate):
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
+@yaml.register_class
 class RZ(BasicGate):
     """
     Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
@@ -752,6 +768,7 @@ class RZ(BasicGate):
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
 
 
+@yaml.register_class
 class U1(BasicGate):
     """
     Represents the U1 gate defined by an azimuthal angle `phi`.
@@ -796,6 +813,7 @@ class U1(BasicGate):
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
+@yaml.register_class
 class U2(BasicGate):
     """
     Represents the U2 gate defined by the angles `phi` and `gamma`.
@@ -855,6 +873,7 @@ class U2(BasicGate):
         )
 
 
+@yaml.register_class
 class U3(BasicGate):
     """
     Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.
@@ -921,6 +940,7 @@ class U3(BasicGate):
         )
 
 
+@yaml.register_class
 class CNOT(Controlled[X]):
     """
     Represents the CNOT gate.
@@ -945,6 +965,7 @@ class CNOT(Controlled[X]):
         return "CNOT"
 
 
+@yaml.register_class
 class CZ(Controlled[Z]):
     """
     Represents the CZ gate.

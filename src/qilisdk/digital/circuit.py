@@ -13,10 +13,13 @@
 # limitations under the License.
 import numpy as np
 
+from qilisdk.yaml import yaml
+
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
 from .gates import Gate
 
 
+@yaml.register_class
 class Circuit:
     def __init__(self, nqubits: int) -> None:
         """

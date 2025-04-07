@@ -17,8 +17,10 @@ import numpy as np
 
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.common import Result
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class AnalogResult(Result):
     """
     Encapsulates the outcome of an analog quantum simulation.
