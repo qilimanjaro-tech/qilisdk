@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+
 import json
 import logging
 from base64 import urlsafe_b64decode, urlsafe_b64encode
@@ -18,6 +20,16 @@ from datetime import datetime, timezone
 
 import httpx
 from pydantic import ValidationError
+
+from qilisdk.analog.analog_backend import AnalogBackend
+from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
+from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.analog.schedule import Schedule
+from qilisdk.common.algorithm import Algorithm
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.digital_backend import DigitalBackend
+from qilisdk.digital.digital_result import DigitalResult
 
 from .keyring import load_credentials_from_keyring, store_credentials_in_keyring
 from .models import Token
@@ -56,7 +68,7 @@ def base64_decode(encoded_data: str) -> str:
     return urlsafe_b64decode(encoded_data).decode("utf-8")
 
 
-class QaaSBackend:
+class QaaSBackend(DigitalBackend, AnalogBackend):
     """
     Manages communication with a hypothetical QaaS service via synchronous HTTP calls.
 
@@ -135,6 +147,71 @@ class QaaSBackend:
         # print(f"Logged in successfully as {final_username}")
         return cls(username=final_username, token=token_data)
 
+    def evolve(
+        self,
+        schedule: Schedule,
+        initial_state: QuantumObject,
+        observables: list[PauliOperator | Hamiltonian],
+        store_intermediate_results: bool = False,
+    ) -> AnalogResult:
+        raise NotImplementedError
+
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
+        raise NotImplementedError
+
+    @classmethod
+    def session(
+        cls,
+        username: str | None = None,
+        apikey: str | None = None,
+        store_in_keyring: bool = True,
+    ) -> QaaSSession:
+        backend = cls.login(username=username, apikey=apikey, store_in_keyring=store_in_keyring)
+        return QaaSSession(backend)
+
+    def start_session(self) -> str:
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                url = f"{self._api_url}/session/start"
+                response = client.post(
+                    url,
+                    headers={"Authorization": f"Bearer {self._token.token}"}
+                )
+                response.raise_for_status()
+                data = response.json()
+                session_id = data["session_id"]
+                return session_id
+        except httpx.RequestError:
+            raise
+
+    def execute_in_session(self, session_id: str, algorithm: str) -> dict:
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                url = f"{self._api_url}/session/execute"
+                response = client.post(
+                    url,
+                    json={"session_id": session_id, "algorithm": algorithm},
+                    headers={"Authorization": f"Bearer {self._token.token}"}
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.RequestError:
+            raise
+
+    def close_session(self, session_id: str) -> None:
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                url = f"{self._api_url}/session/close"
+                response = client.post(
+                    url,
+                    json={"session_id": session_id},
+                    headers={"Authorization": f"Bearer {self._token.token}"}
+                )
+                response.raise_for_status()
+        except httpx.RequestError:
+            raise
+
+
     # def execute(self, circuit_data: dict[str, Any]) -> dict[str, Any]:
     #     """
     #     Sends a circuit definition to the QaaS API for execution.
@@ -154,3 +231,27 @@ class QaaSBackend:
     #     except httpx.RequestError as exc:
     #         print(f"Execution error: {exc}")
     #         return {}
+
+
+class QaaSSession:
+    """
+    A separate session class that wraps a QaaSBackend instance and provides a context manager
+    interface.
+    """
+    def __init__(self, backend: QaaSBackend) -> None:
+        self._backend = backend
+        self._session_id: str | None = None
+
+    def __enter__(self) -> "QaaSSession":
+        self._session_id = self._backend.start_session()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:  # noqa: ANN001
+        if self._session_id is not None:
+            self._backend.close_session(self._session_id)
+            self._session_id = None
+
+    def execute(self, algorithm: Algorithm):
+        if self._session_id is None:
+            raise RuntimeError("Session not started.")
+        return self._backend.execute_in_session(self._session_id, algorithm)
