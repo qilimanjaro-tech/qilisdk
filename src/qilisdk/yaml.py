@@ -16,8 +16,6 @@
 
 import base64
 import types
-from collections import deque
-from uuid import UUID
 
 import numpy as np
 from dill import dumps, loads
@@ -37,16 +35,6 @@ def ndarray_constructor(constructor, node):
     shape = tuple(mapping["shape"])
     data = mapping["data"]
     return np.array(data, dtype=dtype).reshape(shape)
-
-
-def deque_representer(representer, data):
-    """Representer for deque"""
-    return representer.represent_sequence("!deque", list(data))
-
-
-def deque_constructor(constructor, node):
-    """Constructor for ndarray"""
-    return deque(constructor.construct_sequence(node))
 
 
 def function_representer(representer, data):
@@ -75,11 +63,8 @@ def lambda_constructor(constructor, node):
 
 
 yaml = YAML(typ="unsafe")
-yaml.register_class(UUID)
 yaml.representer.add_representer(np.ndarray, ndarray_representer)
 yaml.constructor.add_constructor("!ndarray", ndarray_constructor)
-yaml.representer.add_representer(deque, deque_representer)
-yaml.constructor.add_constructor("!deque", deque_constructor)
 yaml.representer.add_representer(types.FunctionType, function_representer)
 yaml.constructor.add_constructor("!function", function_constructor)
 yaml.representer.add_representer(types.LambdaType, lambda_representer)
