@@ -28,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cuda-backend = [
-    "cudaq>=0.9.1",
+    "cudaq==0.9.1",
 ]
 qaas-backend = [
     "httpx>=0.28.1",
