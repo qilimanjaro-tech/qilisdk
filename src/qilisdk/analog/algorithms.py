@@ -19,10 +19,12 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.analog.schedule import Schedule
 from qilisdk.common.algorithm import Algorithm
+from qilisdk.yaml import yaml
 
 Complex = int | float | complex
 
 
+@yaml.register_class
 class AnalogAlgorithm(Algorithm):
     """
     Abstract base class for analog quantum algorithms.
@@ -38,17 +40,8 @@ class AnalogAlgorithm(Algorithm):
             simulation operations.
     """
 
-    def __init__(self, backend: AnalogBackend) -> None:
-        """
-        Initialize the AnalogAlgorithm with the specified backend.
-
-        Args:
-            backend (AnalogBackend): The backend used to execute analog quantum operations.
-        """
-        self.backend = backend
-
     @abstractmethod
-    def evolve(self, store_intermediate_results: bool = False) -> AnalogResult:
+    def evolve(self, backend: AnalogBackend, store_intermediate_results: bool = False) -> AnalogResult:
         """
         Execute the analog quantum algorithm's evolution process.
 
@@ -67,10 +60,10 @@ class AnalogAlgorithm(Algorithm):
         """
 
 
+@yaml.register_class
 class TimeEvolution(AnalogAlgorithm):
     def __init__(
         self,
-        backend: AnalogBackend,
         schedule: Schedule,
         observables: list[PauliOperator | Hamiltonian],
         initial_state: QuantumObject,
@@ -86,13 +79,13 @@ class TimeEvolution(AnalogAlgorithm):
             initial_state (QuantumObject): The initial quantum state from which the simulation starts.
             n_shots (int, optional): The number of simulation repetitions (shots). Defaults to 1000.
         """
-        super().__init__(backend)
+        super().__init__()
         self.initial_state = initial_state
         self.schedule = schedule
         self.observables = observables
         self.n_shots = n_shots
 
-    def evolve(self, store_intermediate_results: bool = False) -> AnalogResult:
+    def evolve(self, backend: AnalogBackend, store_intermediate_results: bool = False) -> AnalogResult:
         """
         Execute the time evolution algorithm.
 
@@ -110,7 +103,7 @@ class TimeEvolution(AnalogAlgorithm):
             AnalogResult: The result of the evolution, including the final state
             and measured observables (and intermediate results if requested).
         """
-        return self.backend.evolve(
+        return backend.evolve(
             schedule=self.schedule,
             initial_state=self.initial_state,
             observables=self.observables,

@@ -17,8 +17,10 @@ from typing import Callable
 from warnings import warn
 
 from qilisdk.analog.hamiltonian import Hamiltonian
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class Schedule:
     """
     Represents a time-dependent schedule for Hamiltonian coefficients in an annealing process.

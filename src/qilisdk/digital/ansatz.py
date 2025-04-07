@@ -16,6 +16,7 @@ from typing import ClassVar, Literal, Union
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
+from qilisdk.yaml import yaml
 
 
 class Ansatz(ABC):
@@ -64,6 +65,7 @@ class Ansatz(ABC):
     def _construct_circuit(self, parameters: list[float]) -> Circuit: ...
 
 
+@yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
     def __init__(
         self,

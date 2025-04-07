@@ -21,10 +21,13 @@ from scipy.sparse import csc_array, csr_matrix, issparse, kron, sparray, spmatri
 from scipy.sparse.linalg import expm
 from scipy.sparse.linalg import norm as scipy_norm
 
+from qilisdk.yaml import yaml
+
 Complex = int | float | complex
 TWO = 2
 
 
+@yaml.register_class
 class QuantumObject:
     """
     Represents a quantum state or operator using a sparse matrix representation.
