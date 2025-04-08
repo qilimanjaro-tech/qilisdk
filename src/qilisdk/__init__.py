@@ -27,7 +27,7 @@ OPTIONAL_FEATURES: List[OptionalFeature] = [
     OptionalFeature(
         name="cuda-backend",
         dependencies=["cudaq"],
-        symbols=[Symbol(path="qilisdk.extras.cuda_backend", name="CudaBackend")],
+        symbols=[Symbol(path="qilisdk.extras.cuda.cuda_backend", name="CudaBackend")],
     ),
     OptionalFeature(
         name="qaas",
