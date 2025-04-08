@@ -12,10 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import Enum
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class Token(BaseModel):
+class QaaSModel(BaseModel):
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
+
+
+class LoginPayload(BaseModel): ...
+
+
+class Token(QaaSModel):
     """
     Represents the structure of the login response:
     {
@@ -27,10 +36,22 @@ class Token(BaseModel):
     }
     """
 
-    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
-
     access_token: str = Field(alias="accessToken")
     expires_in: int = Field(alias="expiresIn")
     issued_at: str = Field(alias="issuedAt")
     refresh_token: str = Field(alias="refreshToken")
     token_type: str = Field(alias="tokenType")
+
+
+class DeviceStatus(str, Enum):
+    """Device status typing for posting"""
+
+    ONLINE = "online"
+    MAINTENANCE = "maintenance"
+    OFFLINE = "offline"
+
+
+class Device(QaaSModel):
+    id: int = Field(...)
+    name: str = Field(...)
+    status: DeviceStatus = Field(...)

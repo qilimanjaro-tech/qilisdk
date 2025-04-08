@@ -26,7 +26,7 @@ from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.digital.digital_backend import DigitalBackend
 
 from .keyring import delete_credentials, load_credentials, store_credentials
-from .models import Token
+from .models import Device, Token
 from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
@@ -126,8 +126,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def logout() -> None:
         delete_credentials()
 
-    def list_devices(self) -> None:
-        raise NotImplementedError
+    def list_devices(self) -> list[Device]:
+        with httpx.Client(timeout=20.0) as client:
+            response = client.get(
+                QaaSBackend._api_url + "/devices",
+                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            devices = [Device(**item) for item in response_json["items"]]
+            return devices
 
     def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
         raise NotImplementedError
