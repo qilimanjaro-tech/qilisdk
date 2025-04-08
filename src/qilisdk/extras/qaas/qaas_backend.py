@@ -92,8 +92,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             # Insufficient credentials provided.
             return False
 
-        # 4) Send login request to QaaS
-        # Use a short-lived client just for this login call:
+        # Send login request to QaaS
         try:
             assertion = {
                 "username": username,
@@ -127,6 +126,9 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def logout() -> None:
         delete_credentials()
 
+    def list_devices(self) -> None:
+        raise NotImplementedError
+
     def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
         raise NotImplementedError
 
@@ -139,59 +141,5 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     ) -> AnalogResult:
         raise NotImplementedError
 
-    # Algorithms may need to call execute or evolve multiple times. This is why we should also allow users
-    # to run them as a "block" within our QaaS.
-
-    # 1st Proposal. If algorithms will use the same job execution flow, we can run them directly.
-
     def run(self, algorithm: Algorithm) -> None:
         raise NotImplementedError
-
-    # 2nd Proposal (if needed). Execute algorithms through a dedicated Session.
-
-    @classmethod
-    def session(
-        cls,
-        username: str | None = None,
-        apikey: str | None = None,
-        store_in_keyring: bool = True,
-    ) -> QaaSSession:
-        backend = cls()
-        return QaaSSession(backend)
-
-    def start_session(self) -> str:
-        # Do something to initiate a session and get back the session_id
-        ...
-
-    def run_in_session(self, session_id: str, algorithm: str) -> dict:
-        # Run an algorithm within the session
-        ...
-
-    def close_session(self, session_id: str) -> None:
-        # Do something to close the session
-        ...
-
-
-class QaaSSession:
-    """
-    A separate session class that wraps a QaaSBackend instance and provides a context manager
-    interface.
-    """
-
-    def __init__(self, backend: QaaSBackend) -> None:
-        self._backend = backend
-        self._session_id: str | None = None
-
-    def __enter__(self) -> "QaaSSession":
-        self._session_id = self._backend.start_session()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:  # noqa: ANN001
-        if self._session_id is not None:
-            self._backend.close_session(self._session_id)
-            self._session_id = None
-
-    def run(self, algorithm: Algorithm) -> None:
-        if self._session_id is None:
-            raise RuntimeError("Session not started.")
-        return self._backend.run_in_session(self._session_id, algorithm)
