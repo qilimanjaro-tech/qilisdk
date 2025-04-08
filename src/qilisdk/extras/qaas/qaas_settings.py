@@ -16,8 +16,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class QaaSSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="qaas_", env_file=".env", env_file_encoding="utf-8")
 
-    username: str = Field(..., description="QaaS username")
-    apikey: str = Field(..., description="QaaS API key")
+    username: str = Field(..., description="QaaS Username")
+    apikey: str = Field(..., description="QaaS API Key")

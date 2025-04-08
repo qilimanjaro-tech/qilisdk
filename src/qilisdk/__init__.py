@@ -29,6 +29,7 @@ OPTIONAL_FEATURES: List[OptionalFeature] = [
         dependencies=["cudaq"],
         symbols=[Symbol(path="qilisdk.extras.cuda_backend", name="CudaBackend")],
     ),
+    OptionalFeature(name="qaas", dependencies=["httpx", "keyring", "pydantic", "pydantic-settings"]),
     # Add more OptionalFeature() entries for other extras if needed
 ]
 

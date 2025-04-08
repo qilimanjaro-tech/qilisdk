@@ -1531,7 +1531,7 @@ dependencies = [
 cuda-backend = [
     { name = "cudaq" },
 ]
-qaas-backend = [
+qaas = [
     { name = "httpx" },
     { name = "keyring" },
     { name = "pydantic" },
@@ -1554,15 +1554,15 @@ dev = [
 requires-dist = [
     { name = "cudaq", marker = "extra == 'cuda-backend'", specifier = "==0.9.1" },
     { name = "dill", specifier = ">=0.3.9" },
-    { name = "httpx", marker = "extra == 'qaas-backend'", specifier = ">=0.28.1" },
-    { name = "keyring", marker = "extra == 'qaas-backend'", specifier = ">=25.6.0" },
+    { name = "httpx", marker = "extra == 'qaas'", specifier = ">=0.28.1" },
+    { name = "keyring", marker = "extra == 'qaas'", specifier = ">=25.6.0" },
     { name = "numpy", specifier = ">=2.2.4" },
-    { name = "pydantic", marker = "extra == 'qaas-backend'", specifier = ">=2.10.6" },
-    { name = "pydantic-settings", marker = "extra == 'qaas-backend'", specifier = ">=2.8.0" },
+    { name = "pydantic", marker = "extra == 'qaas'", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", marker = "extra == 'qaas'", specifier = ">=2.8.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.10" },
     { name = "scipy", specifier = ">=1.15.1" },
 ]
-provides-extras = ["cuda-backend", "qaas-backend"]
+provides-extras = ["cuda-backend", "qaas"]
 
 [package.metadata.requires-dev]
 dev = [
