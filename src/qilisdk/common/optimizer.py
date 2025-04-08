@@ -17,6 +17,8 @@ from typing import Any, Callable
 
 from scipy import optimize as scipy_optimize
 
+from qilisdk.yaml import yaml
+
 
 class Optimizer(ABC):
     def __init__(self) -> None:
@@ -41,6 +43,7 @@ class Optimizer(ABC):
         """
 
 
+@yaml.register_class
 class SciPyOptimizer(Optimizer):
     def __init__(
         self,
