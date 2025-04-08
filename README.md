@@ -32,7 +32,6 @@
 This section covers how to set up a local development environment for qilisdk, run tests, enforce code style, manage dependencies, and contribute to the project. We use a number of tools to maintain code quality and consistency:
 
 - **[uv](https://pypi.org/project/uv/)** for dependency management and packaging.
-- **[tox](https://tox.wiki/en/latest/)** for testing in multiple Python versions.
 - **[ruff](https://beta.ruff.rs/docs/)** for linting and code formatting.
 - **[mypy](http://mypy-lang.org/)** for static type checking.
 - **[towncrier](https://github.com/twisted/towncrier)** for automated changelog generation.
@@ -56,25 +55,20 @@ This section covers how to set up a local development environment for qilisdk, r
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-3. **Install [tox](https://tox.wiki/en/latest/index.html) globaly** (if not already):
-  ```bash
-  uv tool install tox --with tox-uv
-  ```
-
-4. **Sync dependencies**:
+3. **Sync dependencies**:
    - We maintain a `pyproject.toml` listing all dev and optional requirements.
    - To install the dev environment locally, run:
      ```bash
      uv sync
      ```
-     This sets up a virtual environment and installs all pinned dependencies (including `tox`, `ruff`, `mypy`, `towncrier`, etc.).
+     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `mypy`, `towncrier`, etc.).
    - To install extra dependencies such as `qibo-backend`, run:
      ```bash
      uv sync --extra qibo-backend -extra ...
      ```
      This sets up a virtual environment and installs all pinned dependencies (previous), plus the specified extras.
 
-5. **Activate the virtual environment**:
+4. **Activate the virtual environment**:
    - uv typically creates and manages its own environment, e.g., `.venv/`.
    - Run:
      ```bash
@@ -86,24 +80,7 @@ Now you can run all development commands (tests, linting, etc.) within this envi
 
 ### Testing
 
-We use **tox** to test qilisdk across multiple Python versions. After installing dependencies:
-
-- **Run the default test suite** in all configured environments:
-  ```bash
-  tox run -p
-  ```
-  This will:
-  - Create isolated environments (e.g., `py310`, `py311`, `py312`, etc.).
-  - Install qilisdk (in editable mode) plus test dependencies.
-  - Run tests via [pytest](https://pytest.org/).
-
-- **Run tests in a single environment**:
-  ```bash
-  tox run -p -e py312
-  ```
-  This is handy if you only want to test on Python 3.12 locally.
-
-Inside each environment, tox automatically invokes `pytest`. By default, tests are located in the `tests/` directory.
+TODO: to_be_filled
 
 ### Linting & Formatting
 
@@ -183,7 +160,7 @@ We welcome contributions! Here’s the workflow:
    ruff check --fix
    ruff format
    mypy qilisdk
-   tox -p
+   pytest tests
    ```
 5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
 6. **Open a Pull Request** against the `main` branch here.
@@ -219,7 +196,7 @@ This project is licensed under the [Apache License](LICENSE).
 
 - Thanks to all the contributors who help develop qilisdk!
 - [uv](https://pypi.org/project/uv/) for making dependency management smoother.
-- [tox](https://tox.wiki/en/latest/), [ruff](https://beta.ruff.rs/docs/), [mypy](http://mypy-lang.org/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
+- [ruff](https://beta.ruff.rs/docs/), [mypy](http://mypy-lang.org/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
 
 ---
 

@@ -22,7 +22,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "dill>=0.3.9",
     "numpy>=2.2.4",
+    "ruamel-yaml>=0.18.10",
     "scipy>=1.15.1",
 ]
 
@@ -151,46 +153,8 @@ markers = [
     "cuda_backend: tests that require the qibo backend"
 ]
 
-[tool.tox]
-requires = ["tox>=4"]
-envlist = ["3.10", "3.11", "3.12"]
-
-[tool.tox.env_run_base]
-dependency_groups = ["dev"]
-extras = ["cuda-backend"]
-commands = [["pytest", "tests"]]
-
-[tool.tox.env.py310-core]
-extras = []
-commands = [["pytest", "tests", "-m", "not cuda_backend"]]
-
-[tool.tox.env.py311-core]
-extras = []
-commands = [["pytest", "tests", "-m", "not cuda_backend"]]
-
-[tool.tox.env.py312-core]
-extras = []
-commands = [["pytest", "tests", "-m", "not cuda_backend"]]
-
-[tool.tox.env.py310-cuda_backend]
-extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "cuda_backend"]]
-
-[tool.tox.env.py311-cuda_backend]
-extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "cuda_backend"]]
-
-[tool.tox.env.py312-cuda_backend]
-extras = ["qibo-backend"]
-commands = [["pytest", "tests", "-m", "cuda_backend"]]
-
-[tool.tox.gh.python]
-"3.10" = ["3.10"]
-"3.11" = ["3.11"]
-"3.12" = ["3.12"]
-
 [tool.towncrier]
 package = "qilisdk"
 directory = "changes"
 filename = "CHANGELOG.md"
-issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qililab/pulls/{issue})"
+issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qilisdk/pulls/{issue})"
