@@ -31,7 +31,11 @@ class Optimizer(ABC):
         return self._optimal_parameters
 
     @abstractmethod
-    def optimize(self, cost_function: Callable[[list[float]], float], init_parameters: list[float]) -> list[float]:
+    def optimize(
+        self,
+        cost_function: Callable[[list[float]], float],
+        init_parameters: list[float],
+    ) -> list[float]:
         """Optimize the cost function and return the optimal parameters.
 
         Args:
@@ -45,6 +49,7 @@ class Optimizer(ABC):
 
 @yaml.register_class
 class SciPyOptimizer(Optimizer):
+
     def __init__(
         self,
         method: str | Callable | None = None,
@@ -86,7 +91,7 @@ class SciPyOptimizer(Optimizer):
         self.method = method
         self.extra_arguments = kwargs
 
-    def optimize(self, cost_function: Callable[[list[float]], float], initial_parameters: list[float]) -> list[float]:
+    def optimize(self, cost_function: Callable[[list[float]], float], init_parameters: list[float]) -> list[float]:
         """optimize the cost function and return the optimal parameters.
 
         Args:
@@ -98,7 +103,7 @@ class SciPyOptimizer(Optimizer):
         """
         res = scipy_optimize.minimize(
             cost_function,
-            x0=initial_parameters,
+            x0=init_parameters,
             method=self.method,
             jac=self.extra_arguments.get("jac", None),
             hess=self.extra_arguments.get("hess", None),

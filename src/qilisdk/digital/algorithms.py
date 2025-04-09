@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import abstractmethod
 from typing import Callable
 
 from qilisdk.common.algorithm import Algorithm
@@ -28,10 +27,20 @@ class DigitalAlgorithm(Algorithm):
 
 
 class VQE(DigitalAlgorithm):
-    def __init__(self, ansatz: Ansatz, initial_params: list[float], cost_function: Callable) -> None:
+
+    def __init__(
+        self, ansatz: Ansatz, initial_params: list[float], cost_function: Callable[[dict[str, float]], float]
+    ) -> None:
         self._ansatz = ansatz
         self._initial_params = initial_params
         self._cost_function = cost_function
 
-    def execute(self, backend: DigitalBackend, optimizer: Optimizer):
-        ...
+    def obtain_cost(self, params: list[float], backend: DigitalBackend, nshots: int = 1000) -> float:
+        circuit = self._ansatz.get_circuit(params)
+        results = backend.execute(circuit=circuit, nshots=nshots)
+        return self._cost_function(results.get_probabilities())
+
+    def execute(self, backend: DigitalBackend, optimizer: Optimizer, nshots: int = 1000) -> DigitalResult:
+        optimizer.optimize(lambda x: self.obtain_cost(x, backend=backend, nshots=nshots), self._initial_params)
+        circuit = self._ansatz.get_circuit(optimizer.optimal_parameters)
+        return backend.execute(circuit=circuit, nshots=nshots)
