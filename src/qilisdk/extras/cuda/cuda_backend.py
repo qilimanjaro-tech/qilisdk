@@ -22,7 +22,6 @@ from cudaq.operator import ElementaryOperator, OperatorSum, ScalarOperator, evol
 from cudaq.operator import Schedule as cuda_schedule
 
 from qilisdk.analog.analog_backend import AnalogBackend
-from qilisdk.analog.analog_result import AnalogResult
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.digital import (
@@ -36,7 +35,6 @@ from qilisdk.digital import (
     BasicGate,
     Circuit,
     Controlled,
-    DigitalResult,
     H,
     M,
     S,
@@ -48,10 +46,12 @@ from qilisdk.digital import (
 from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
 
+from .cuda_analog_result import CudaAnalogResult
 from .cuda_digital_result import CudaDigitalResult
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
+
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
@@ -120,7 +120,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         else:
             cudaq.set_target("tensornet-mps")
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> CudaDigitalResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -222,7 +222,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-    ) -> AnalogResult:
+    ) -> CudaAnalogResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -277,7 +277,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             store_intermediate_results=store_intermediate_results,
         )
 
-        return AnalogResult(
+        return CudaAnalogResult(
             final_expected_values=np.array(
                 [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
             ),
