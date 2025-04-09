@@ -76,11 +76,12 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         cls,
         username: str | None = None,
         apikey: str | None = None,
-    ) -> "QaaSBackend":
+    ) -> bool:
         # Use provided parameters or fall back to environment variables via Settings()
         if not username or not apikey:
             try:
-                settings = QaaSSettings()  # Load environment variables into the settings object.
+                # Load environment variables into the settings object.
+                settings = QaaSSettings()  # type: ignore[call-arg]
                 username = username or settings.username
                 apikey = apikey or settings.apikey
             except ValidationError:
@@ -123,7 +124,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         return True
 
     @classmethod
-    def logout() -> None:
+    def logout(cls) -> None:
         delete_credentials()
 
     def list_devices(self) -> list[Device]:
