@@ -13,8 +13,6 @@
 # limitations under the License.
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from qilisdk.common.optimizer import SciPyOptimizer
 
 
@@ -26,18 +24,17 @@ def test_optimize_sets_optimal_parameters():
     with patch("scipy.optimize.minimize") as mock_minimize:
         # Create a fake result with a known optimal parameter set.
         fake_result = MagicMock()
+        fake_result.fun = -0.5
         fake_result.x = [1.0, 2.0, 3.0]
         mock_minimize.return_value = fake_result
 
         optimizer = SciPyOptimizer(method="BFGS")
         initial_parameters = [0.0, 0.0, 0.0]
-        result = optimizer.optimize(dummy_cost, initial_parameters)
+        cost, parameters = optimizer.optimize(dummy_cost, initial_parameters)
 
         # Check that the optimizer returned the fake result.
-        assert result == fake_result
-
-        # Ensure that the optimal_parameters property returns the expected value.
-        assert optimizer.optimal_parameters == fake_result.x
+        assert cost == fake_result.fun
+        assert parameters == fake_result.x
 
         # Verify that the patched scipy.optimize.minimize was called with the correct parameters.
         mock_minimize.assert_called_once_with(
@@ -52,13 +49,6 @@ def test_optimize_sets_optimal_parameters():
             tol=None,
             options=None,
         )
-
-
-def test_optimal_parameters_without_optimization():
-    optimizer = SciPyOptimizer(method="BFGS")
-    # Accessing optimal_parameters before optimization should raise a ValueError.
-    with pytest.raises(ValueError):  # noqa: PT011
-        _ = optimizer.optimal_parameters
 
 
 def test_extra_arguments_are_propagated():

@@ -21,21 +21,12 @@ from qilisdk.yaml import yaml
 
 
 class Optimizer(ABC):
-    def __init__(self) -> None:
-        self._optimal_parameters: list[float] = []
-
-    @property
-    def optimal_parameters(self) -> list[float]:
-        if len(self._optimal_parameters) == 0:
-            raise ValueError("No function has been optimized yet")
-        return self._optimal_parameters
-
     @abstractmethod
     def optimize(
         self,
         cost_function: Callable[[list[float]], float],
         init_parameters: list[float],
-    ) -> list[float]:
+    ) -> tuple[float, list[float]]:
         """Optimize the cost function and return the optimal parameters.
 
         Args:
@@ -49,7 +40,6 @@ class Optimizer(ABC):
 
 @yaml.register_class
 class SciPyOptimizer(Optimizer):
-
     def __init__(
         self,
         method: str | Callable | None = None,
@@ -91,7 +81,9 @@ class SciPyOptimizer(Optimizer):
         self.method = method
         self.extra_arguments = kwargs
 
-    def optimize(self, cost_function: Callable[[list[float]], float], init_parameters: list[float]) -> list[float]:
+    def optimize(
+        self, cost_function: Callable[[list[float]], float], init_parameters: list[float]
+    ) -> tuple[float, list[float]]:
         """optimize the cost function and return the optimal parameters.
 
         Args:
@@ -113,6 +105,5 @@ class SciPyOptimizer(Optimizer):
             tol=self.extra_arguments.get("tol", None),
             options=self.extra_arguments.get("options", None),
         )
-        self._optimal_parameters = res.x
 
-        return res
+        return res.fun, res.x
