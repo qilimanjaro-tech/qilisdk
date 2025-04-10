@@ -11,20 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.yaml import yaml
 
-from qilisdk.analog import Hamiltonian
-from qilisdk.common import Algorithm, Model, Optimizer, Result
-from qilisdk.digital import DigitalSimulationMethod
-from qilisdk.extras.cuda import CudaBackend
-from qilisdk.extras.qaas.qaas_backend import QaaSBackend
 
-__all__ = [
-    "Algorithm",
-    "CudaBackend",
-    "DigitalSimulationMethod",
-    "Hamiltonian",
-    "Model",
-    "Optimizer",
-    "QaaSBackend",
-    "Result",
-]
+@yaml.register_class
+class CudaDigitalResult(DigitalResult): ...

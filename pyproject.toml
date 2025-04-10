@@ -29,8 +29,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-cuda-backend = [
-    "cudaq>=0.9.1",
+cuda = [
+    "cudaq==0.9.1",
+]
+qaas = [
+    "httpx>=0.28.1",
+    "keyring>=25.6.0",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.0",
 ]
 
 [dependency-groups]
@@ -150,7 +156,8 @@ exclude = ["\\.ipynb$"]
 [tool.pytest.ini_options]
 markers = [
     "core: tests that only exercise the core library",
-    "cuda_backend: tests that require the qibo backend"
+    "cuda: tests that require the cuda extra",
+    "qaas: tests that require the qaas extra"
 ]
 
 [tool.towncrier]
