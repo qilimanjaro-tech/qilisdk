@@ -12,19 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.analog import Hamiltonian
-from qilisdk.common import Algorithm, Model, Optimizer, Result
-from qilisdk.digital import DigitalSimulationMethod
-from qilisdk.extras.cuda import CudaBackend
-from qilisdk.extras.qaas.qaas_backend import QaaSBackend
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-__all__ = [
-    "Algorithm",
-    "CudaBackend",
-    "DigitalSimulationMethod",
-    "Hamiltonian",
-    "Model",
-    "Optimizer",
-    "QaaSBackend",
-    "Result",
-]
+
+class QaaSSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="qaas_", env_file=".env", env_file_encoding="utf-8")
+
+    username: str = Field(..., description="QaaS Username")
+    apikey: str = Field(..., description="QaaS API Key")

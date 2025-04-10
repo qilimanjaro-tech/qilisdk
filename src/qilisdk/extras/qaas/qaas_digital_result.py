@@ -12,19 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.analog import Hamiltonian
-from qilisdk.common import Algorithm, Model, Optimizer, Result
-from qilisdk.digital import DigitalSimulationMethod
-from qilisdk.extras.cuda import CudaBackend
-from qilisdk.extras.qaas.qaas_backend import QaaSBackend
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.yaml import yaml
 
-__all__ = [
-    "Algorithm",
-    "CudaBackend",
-    "DigitalSimulationMethod",
-    "Hamiltonian",
-    "Model",
-    "Optimizer",
-    "QaaSBackend",
-    "Result",
-]
+
+@yaml.register_class
+class QaaSDigitalResult(DigitalResult): ...

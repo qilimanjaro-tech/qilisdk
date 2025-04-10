@@ -25,7 +25,7 @@ from qilisdk.digital import (
 )
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import BasicGate
-from qilisdk.extras.cuda_backend import CudaBackend
+from qilisdk.extras.cuda import CudaBackend
 
 # --- Dummy classes and helper functions ---
 
