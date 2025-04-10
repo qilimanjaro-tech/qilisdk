@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import heapq
+import operator
 from pprint import pformat
 
 from qilisdk.common import Result
@@ -114,6 +116,20 @@ class DigitalResult(Result):
             float: The probability of the specified bitstring occurring.
         """
         return self._probabilities.get(bitstring, 0.0)
+
+    def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
+        """
+        Returns the n most probable bitstrings along with their probabilities.
+
+        Parameters:
+            n (int): The number of most probable bitstrings to return.
+
+        Returns:
+            list[tuple[str, float]]: A list of tuples (bitstring, probability) sorted in descending order by probability.
+        """
+        if n is None:
+            n = len(self._probabilities)
+        return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
     def __repr__(self) -> str:
         """
