@@ -15,7 +15,7 @@ import heapq
 import operator
 from pprint import pformat
 
-from qilisdk.common import Result
+from qilisdk.common.result import Result
 from qilisdk.yaml import yaml
 
 

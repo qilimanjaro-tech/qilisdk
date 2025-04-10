@@ -12,6 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .algorithms import TimeEvolution
 from .hamiltonian import Hamiltonian, I, X, Y, Z
+from .quantum_objects import QuantumObject, basis, bra, expect, ket, tensor
+from .schedule import Schedule
 
-__all__ = ["Hamiltonian", "I", "X", "Y", "Z"]
+__all__ = [
+    "Hamiltonian",
+    "I",
+    "QuantumObject",
+    "Schedule",
+    "TimeEvolution",
+    "X",
+    "Y",
+    "Z",
+    "basis",
+    "bra",
+    "expect",
+    "ket",
+    "tensor",
+]

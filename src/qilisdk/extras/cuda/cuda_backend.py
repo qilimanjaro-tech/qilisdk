@@ -31,10 +31,7 @@ from qilisdk.digital import (
     U1,
     U2,
     U3,
-    Adjoint,
-    BasicGate,
     Circuit,
-    Controlled,
     H,
     M,
     S,
@@ -45,6 +42,7 @@ from qilisdk.digital import (
 )
 from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
+from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 
 from .cuda_analog_result import CudaAnalogResult
 from .cuda_digital_result import CudaDigitalResult
