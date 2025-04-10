@@ -13,6 +13,8 @@
 # limitations under the License.
 from unittest.mock import MagicMock, patch
 
+import numpy as np
+
 from qilisdk.common.optimizer import SciPyOptimizer
 
 
@@ -25,16 +27,16 @@ def test_optimize_sets_optimal_parameters():
         # Create a fake result with a known optimal parameter set.
         fake_result = MagicMock()
         fake_result.fun = -0.5
-        fake_result.x = [1.0, 2.0, 3.0]
+        fake_result.x = np.array([1.0, 2.0, 3.0])
         mock_minimize.return_value = fake_result
 
         optimizer = SciPyOptimizer(method="BFGS")
         initial_parameters = [0.0, 0.0, 0.0]
-        cost, parameters = optimizer.optimize(dummy_cost, initial_parameters)
+        optimizer_result = optimizer.optimize(dummy_cost, initial_parameters)
 
         # Check that the optimizer returned the fake result.
-        assert cost == fake_result.fun
-        assert parameters == fake_result.x
+        assert optimizer_result.optimal_cost == fake_result.fun
+        assert optimizer_result.optimal_parameters == fake_result.x.tolist()
 
         # Verify that the patched scipy.optimize.minimize was called with the correct parameters.
         mock_minimize.assert_called_once_with(
@@ -48,13 +50,15 @@ def test_optimize_sets_optimal_parameters():
             constraints=(),
             tol=None,
             options=None,
+            callback=None,
         )
 
 
 def test_extra_arguments_are_propagated():
     with patch("scipy.optimize.minimize") as mock_minimize:
         fake_result = MagicMock()
-        fake_result.x = [0.5, 1.5]
+        fake_result.fun = -0.5
+        fake_result.x = np.array([0.5, 1.5])
         mock_minimize.return_value = fake_result
 
         # Pass extra keyword arguments.
@@ -74,4 +78,5 @@ def test_extra_arguments_are_propagated():
             constraints=(),
             tol=None,
             options=None,
+            callback=None,
         )

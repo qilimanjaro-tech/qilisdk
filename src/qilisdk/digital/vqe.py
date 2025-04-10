@@ -15,6 +15,7 @@ from pprint import pformat
 from typing import Callable
 
 from qilisdk.common.optimizer import Optimizer
+from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
@@ -33,20 +34,9 @@ class VQEResult(Result):
         optimal_parameters (list[float]): The optimal parameters found during the optimization.
     """
 
-    def __init__(self, optimal_cost: float, optimal_parameters: list[float]) -> None:
+    def __init__(self, optimizer_result: OptimizerResult) -> None:
         super().__init__()
-        self._optimal_cost = optimal_cost
-        self._optimal_parameters = optimal_parameters
-
-    @property
-    def optimal_parameters(self) -> list[float]:
-        """
-        Get the optimal ansatz parameters.
-
-        Returns:
-            list[float]: The optimal parameters.
-        """
-        return list(self._optimal_parameters)
+        self._optimizer_result: OptimizerResult = optimizer_result
 
     @property
     def optimal_cost(self) -> float:
@@ -56,7 +46,27 @@ class VQEResult(Result):
         Returns:
             float: The optimal cost.
         """
-        return self._optimal_cost
+        return self._optimizer_result.optimal_cost
+
+    @property
+    def optimal_parameters(self) -> list[float]:
+        """
+        Get the optimal ansatz parameters.
+
+        Returns:
+            list[float]: The optimal parameters.
+        """
+        return self._optimizer_result.optimal_parameters
+
+    @property
+    def intermediate_results(self) -> list[OptimizerIntermediateResult]:
+        """
+        Get the intermediate results.
+
+        Returns:
+            list[OptimizerResult]: The intermediate results.
+        """
+        return self._optimizer_result.intermediate_results
 
     def __repr__(self) -> str:
         """
@@ -67,8 +77,9 @@ class VQEResult(Result):
         """
         class_name = self.__class__.__name__
         return (
-            f"{class_name}(\n  Optimal Cost = {self._optimal_cost},"
-            + f"\n  Optimal Parameters={pformat(self._optimal_parameters)}\n )"
+            f"{class_name}(\n  Optimal Cost = {self.optimal_cost},"
+            + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
+            + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
         )
 
 
@@ -124,7 +135,13 @@ class VQE(DigitalAlgorithm):
         results = backend.execute(circuit=circuit, nshots=nshots)
         return self._cost_function(results)
 
-    def execute(self, backend: DigitalBackend, optimizer: Optimizer, nshots: int = 1000) -> DigitalResult:
+    def execute(
+        self,
+        backend: DigitalBackend,
+        optimizer: Optimizer,
+        nshots: int = 1000,
+        store_intermediate_results: bool = False,
+    ) -> VQEResult:
         """
         Run the VQE algorithm to obtain the optimal parameters and the corresponding cost.
 
@@ -140,10 +157,9 @@ class VQE(DigitalAlgorithm):
         Returns:
             VQEResult: An object containing the optimal cost and the optimal ansatz parameters.
         """
-        optimal_cost, optimal_parameters = optimizer.optimize(
-            lambda x: self.obtain_cost(x, backend=backend, nshots=nshots), self._initial_params
+        optimizer_result = optimizer.optimize(
+            lambda x: self.obtain_cost(x, backend=backend, nshots=nshots),
+            self._initial_params,
+            store_intermediate_results=store_intermediate_results,
         )
-        return VQEResult(
-            optimal_cost=optimal_cost,
-            optimal_parameters=optimal_parameters,
-        )
+        return VQEResult(optimizer_result=optimizer_result)

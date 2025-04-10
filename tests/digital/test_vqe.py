@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from qilisdk.common.optimizer_result import OptimizerResult
 from qilisdk.digital.vqe import VQE, VQEResult
 
 
@@ -51,7 +52,9 @@ def dummy_optimizer():
     (optimal_cost, optimal_parameters). For testing, we use (0.2, [0.9, 0.1]).
     """
     optimizer = MagicMock()
-    optimizer.optimize.side_effect = lambda func, init_params: (0.2, [0.9, 0.1])
+    optimizer.optimize.side_effect = lambda func, init_params, store_intermediate_results: OptimizerResult(
+        0.2, [0.9, 0.1]
+    )
     return optimizer
 
 
