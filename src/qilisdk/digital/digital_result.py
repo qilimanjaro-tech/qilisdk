@@ -97,7 +97,7 @@ class DigitalResult(Result):
             float: The probability of the specified bitstring occurring.
         """
 
-    def most_probable(self, n: int | None) -> list[tuple[str, float]]:
+    def most_probable(self, n: int | None = None) -> list[tuple[str, float]]:
         """
         Returns the n most probable bitstrings along with their probabilities.
 
