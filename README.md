@@ -1,16 +1,19 @@
-# qilisdk
+# QiliSDK
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
 
-**qilisdk** is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms.
+**QiliSDK** is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms.
 
 ---
 
 ## Table of Contents
-- [qilisdk](#qilisdk)
+- [QiliSDK](#qilisdk)
   - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+    - [Base Installation](#base-installation)
+    - [Optional Extras](#optional-extras)
   - [Usage](#usage)
     - [Digital Quantum Circuits](#digital-quantum-circuits)
     - [Hamiltonian and Analog Operations](#hamiltonian-and-analog-operations)
@@ -31,6 +34,44 @@
     - [Contributing](#contributing)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
+
+---
+
+## Installation
+
+QiliSDK is available via [PyPI](https://pypi.org/project/qilisdk/). You can install the core package as well as optional extras for additional features.
+
+### Base Installation
+
+Install the core QiliSDK package using pip:
+
+```bash
+pip install qilisdk
+```
+
+### Optional Extras
+
+QiliSDK supports optional modules for additional functionality:
+
+- **QaaS (Quantum-as-a-Service):**
+  To interface with Qilimanjaro’s cloud-based quantum services, install the QaaS extra:
+
+  ```bash
+  pip install qilisdk[qaas]
+  ```
+
+- **CUDA Acceleration:**
+  For GPU-accelerated quantum simulation using NVIDIA GPUs, install the CUDA extra:
+
+  ```bash
+  pip install qilisdk[cuda]
+  ```
+
+  You can also install both optional dependencies using a single command:
+
+  ```bash
+  pip install qilisdk[cuda,qaas]
+  ```
 
 ---
 
