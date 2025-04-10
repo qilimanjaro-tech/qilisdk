@@ -117,7 +117,7 @@ class DigitalResult(Result):
         """
         return self._probabilities.get(bitstring, 0.0)
 
-    def most_probable(self, n: int | None = None) -> list[tuple[str, float]]:
+    def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
         """
         Returns the n most probable bitstrings along with their probabilities.
 
