@@ -10,10 +10,7 @@ from qilisdk.digital import (
     U1,
     U2,
     U3,
-    Adjoint,
     Circuit,
-    Controlled,
-    DigitalResult,
     DigitalSimulationMethod,
     H,
     M,
@@ -23,9 +20,10 @@ from qilisdk.digital import (
     Y,
     Z,
 )
+from qilisdk.digital.digital_result import DigitalResult
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import BasicGate
-from qilisdk.extras.cuda import CudaBackend
+from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
+from qilisdk.extras.cuda.cuda_backend import CudaBackend
 
 # --- Dummy classes and helper functions ---
 

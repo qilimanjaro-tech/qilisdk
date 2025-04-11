@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .ansatz import HardwareEfficientAnsatz
 from .circuit import Circuit
-from .digital_backend import DigitalBackend, DigitalSimulationMethod
-from .digital_result import DigitalResult
+from .digital_backend import DigitalSimulationMethod
 from .gates import (
     CNOT,
     CZ,
@@ -24,10 +24,6 @@ from .gates import (
     U1,
     U2,
     U3,
-    Adjoint,
-    BasicGate,
-    Controlled,
-    Exponential,
     Gate,
     H,
     M,
@@ -37,6 +33,7 @@ from .gates import (
     Y,
     Z,
 )
+from .vqe import VQE
 
 __all__ = [
     "CNOT",
@@ -47,16 +44,12 @@ __all__ = [
     "U1",
     "U2",
     "U3",
-    "Adjoint",
-    "BasicGate",
+    "VQE",
     "Circuit",
-    "Controlled",
-    "DigitalBackend",
-    "DigitalResult",
     "DigitalSimulationMethod",
-    "Exponential",
     "Gate",
     "H",
+    "HardwareEfficientAnsatz",
     "M",
     "S",
     "T",

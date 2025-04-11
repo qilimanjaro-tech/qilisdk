@@ -30,13 +30,13 @@ from .models import Device, Token
 from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
-    from qilisdk.analog.analog_result import AnalogResult
     from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
     from qilisdk.analog.quantum_objects import QuantumObject
     from qilisdk.analog.schedule import Schedule
     from qilisdk.common.algorithm import Algorithm
     from qilisdk.digital.circuit import Circuit
 
+    from .qaas_analog_result import QaaSAnalogResult
     from .qaas_digital_result import QaaSDigitalResult
 
 logging.basicConfig(
@@ -147,7 +147,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-    ) -> AnalogResult:
+    ) -> QaaSAnalogResult:
         raise NotImplementedError
 
     def run(self, algorithm: Algorithm) -> None:
