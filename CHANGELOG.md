@@ -1,3 +1,12 @@
+# Qilisdk 0.1.1 (2025-04-11)
+
+### Misc
+
+- Improved README documentation with comprehensive usage examples, and restructured module imports to expose core user-facing symbols for a more intuitive experience.
+
+  [PR #25](https://github.com/qilimanjaro-tech/qilisdk/pulls/25)
+
+
 # Qilisdk 0.1.0 (2025-04-10)
 
 ### Features
