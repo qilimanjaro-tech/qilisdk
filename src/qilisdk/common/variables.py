@@ -17,84 +17,14 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from math import prod
+from typing import Iterator, Sequence
 
 import numpy as np
 
+from qilisdk.analog.exceptions import NotSupportedOperation
+
 Number = int | float
-
-
-def _check_and_convert(value: Number | Variable | Term) -> Variable | Term:
-    if isinstance(value, Number):
-        return ConstantVar(value)
-    return value
-
-
-def _multiply_operations(op1: Operation, op2: Operation) -> Operation: 
-    if op1 not in {Operation.ADD, Operation.SUB} or op2 not in {Operation.ADD, Operation.SUB}:
-        raise ValueError("only subtraction and additions are supported")
-    if op1 is Operation.SUB and op2 is Operation.SUB:
-        return Operation.ADD
-    if op1 is Operation.SUB or op2 is Operation.SUB:
-        return Operation.SUB
-    return Operation.ADD
-
-
-def _apply_operation(v1: Variable, op: Operation, v2: Variable) -> Term:
-    if op is Operation.ADD:
-        return v1 + v2
-    if op is Operation.SUB:
-        return v1 - v2
-    if op is Operation.MUL:
-        return v1 * v2
-    if op is Operation.DIV:
-        return v1 / v2
-    return None
-
-
-def apply_comparison(v1, op: ComparisonOperation, v2):
-    if op is ComparisonOperation.EQ:
-        return v1 == v2
-    if op is ComparisonOperation.GE:
-        return v1 >= v2
-    if op is ComparisonOperation.GT:
-        return v1 > v2
-    if op is ComparisonOperation.LE:
-        return v1 <= v2
-    if op is ComparisonOperation.LT:
-        return v1 < v2
-    if op is ComparisonOperation.NE:
-        return v1 != v2
-    return None
-
-
-def apply_operation_on_constants(const_list: list[tuple[Operation, int, ConstantVar]], operation: Operation):
-    total_const = None  # 0 if (operation is Operation.SUB or operation is Operation.ADD) else 1
-    min_i = 10000
-
-    for op, i, con in const_list:
-        v = con.value
-        # if op in [Operation.ADD, Operation.SUB]:
-        #     v = apply_operation(0, op, con.value)
-        if total_const is None:
-            total_const = 0 if (op is Operation.SUB or op is Operation.ADD) else 1
-        total_const = _apply_operation(total_const, op, v)
-        min_i = min(min_i, i)
-    if operation is Operation.SUB and min_i > 0:
-        total_const *= -1
-    return min_i, ConstantVar(total_const)
-
-
-def compare_vars(v1: "Variable", v2: "Variable"):
-    if v1.label != v2.label:
-        return False
-    if v1.__class__ is not v2.__class__:
-        return False
-    if v1.bounds != v2.bounds:
-        return False
-    if isinstance(v1, ContinuousVar) and v1.encoding is not v2.encoding:
-        return False
-    return not (isinstance(v1, ConstantVar) and v1.value is not v2.value)
+CONST_KEY = "_const_"
 
 
 class Side(Enum):
@@ -163,7 +93,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> Term:
+    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
         """Given a continuous variable return a Term that only consists of
             binary variables that represent the continuous variable in the given encoding.
 
@@ -177,7 +107,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
         """Given a continuous variable return a Constraint Term that ensures that the encoding is respected.
 
         Args:
@@ -229,7 +159,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100):
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
         """returns a term that is 1 if the variable is equal to the number, else 0.
 
         Args:
@@ -244,7 +174,7 @@ class HOBO(Encoding):
         return "HOBO"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> Term:
+    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -285,7 +215,7 @@ class HOBO(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
@@ -296,7 +226,7 @@ class HOBO(Encoding):
         Returns:
             float: the value of the continuous variable given the specified binary values.
         """
-        return None
+        raise NotImplementedError("HOBO encoding constraints are not supported at the moment")
 
     @staticmethod
     def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
@@ -313,8 +243,8 @@ class HOBO(Encoding):
         return True, 0
 
     @staticmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> int:
-        encoded_num = []
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
+        encoded_num: list[int] = []
 
         bounds = var.bounds
         if var.domain is Domain.Real:
@@ -325,7 +255,7 @@ class HOBO(Encoding):
 
         aux_num = number
 
-        aux_num -= bounds[0]
+        aux_num -= int(bounds[0])
 
         overflow_val = np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary
 
@@ -342,7 +272,12 @@ class HOBO(Encoding):
             else:
                 encoded_num.insert(0, 0)
 
-        return prod(var[i] if encoded_num[i] == 0 else (1 - var[i]) for i in range(var.num_binary_equivalent()))
+        out_term = Term([1], Operation.MUL)
+
+        for i in range(var.num_binary_equivalent()):
+            out_term *= var[i] if encoded_num[i] == 0 else (1 - var[i])
+
+        return out_term
 
 
 class OneHot(Encoding):
@@ -351,7 +286,7 @@ class OneHot(Encoding):
         return "ONE HOT"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> Term:
+    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -391,7 +326,7 @@ class OneHot(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
         bounds = var.bounds
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -399,7 +334,7 @@ class OneHot(Encoding):
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
-        return sum(binary_vars) == 1
+        return ComparisonTerm(1, sum(binary_vars), ComparisonOperation.EQ)
 
     @staticmethod
     def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
@@ -417,10 +352,15 @@ class OneHot(Encoding):
         return num_ones == 1, (num_ones - 1) ** 2
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100) -> int:
+    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100) -> Term:
+        out_term = Term([1], Operation.MUL)
         if var.domain is Domain.Real:
-            return prod((1 - var[i]) if i != number * precision else var[i] for i in range(var.num_binary_equivalent()))
-        return prod((1 - var[i]) if i != number else var[i] for i in range(var.num_binary_equivalent()))
+            for i in range(var.num_binary_equivalent()):
+                out_term *= (1 - var[i]) if i != number * precision else var[i]
+        else:
+            for i in range(var.num_binary_equivalent()):
+                out_term *= (1 - var[i]) if i != number else var[i]
+        return out_term
 
 
 class DomainWall(Encoding):
@@ -429,7 +369,7 @@ class DomainWall(Encoding):
         return "Domain Wall"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> Term:
+    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -438,7 +378,9 @@ class DomainWall(Encoding):
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
 
-        term = sum(binary_vars[i] for i in range(n_binary))
+        term = Term([0], Operation.ADD)
+        for i in range(n_binary):
+            term += binary_vars[i]
 
         term += bounds[0]
 
@@ -467,7 +409,7 @@ class DomainWall(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ConstraintTerm:
+    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
         bounds = var.bounds
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -475,7 +417,11 @@ class DomainWall(Encoding):
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
-        return sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)) == 0
+        return ComparisonTerm(
+            0,
+            sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)),
+            ComparisonOperation.EQ,
+        )
 
     @staticmethod
     def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
@@ -493,8 +439,8 @@ class DomainWall(Encoding):
         return value == 0, value
 
     @staticmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> int:
-        encoded_num = []
+    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
+        encoded_num: list[int] = []
         aux_number = number
 
         for i in range(var.num_binary_equivalent()):
@@ -507,7 +453,7 @@ class DomainWall(Encoding):
         if var.domain is Domain.Real:
             bounds = (precision * bounds[0], precision * bounds[1])
 
-        aux_number -= bounds[0]
+        aux_number -= int(bounds[0])
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
 
@@ -522,7 +468,12 @@ class DomainWall(Encoding):
         if num_sum < aux_number:
             raise ValueError(f"There are not enough qubits to encode the number {number}")
 
-        return prod(var[i] if encoded_num[i] == 0 else (1 - var[i]) for i in range(var.num_binary_equivalent()))
+        out_term = Term([1], Operation.MUL)
+
+        for i in range(var.num_binary_equivalent()):
+            out_term *= var[i] if encoded_num[i] == 0 else (1 - var[i])
+
+        return out_term
 
 
 # Variables ###
@@ -532,6 +483,21 @@ class Variable:
     """This class represents the general structure of any variable that can be included in the model."""
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
+        """initialize a new Variable object
+
+        Args:
+            label (str): The name of the variable.
+            domain (Domain): The domain of the values this variable can take.
+            bounds (tuple[float  |  None, float  |  None], optional): the bounds on the values of the variable
+                                                The bounds have the structure (lower_bound, Upper_bound) both values
+                                                included. Defaults to (None, None).
+                                                Note: if None is selected then the lowest/highest possible value of the
+                                                variable's domain is chosen.
+
+        Raises:
+            ValueError: the lower bound or the upper bound don't correspond to the variable domain.
+            ValueError: the lower bound is higher than the upper bound.
+        """
         self._label = label
         self._domain = domain
 
@@ -540,6 +506,15 @@ class Variable:
             lower_bound = domain.min()
         if upper_bound is None:
             upper_bound = domain.max()
+
+        if not self.domain.check_value(upper_bound):
+            raise ValueError(
+                f"the lower bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
+            )
+        if not self.domain.check_value(lower_bound):
+            raise ValueError(
+                f"the upper bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
+            )
         if lower_bound > upper_bound:
             raise ValueError("lower bound can't be larger than the upper bound.")
         self._bounds = (lower_bound, upper_bound)
@@ -589,37 +564,65 @@ class Variable:
         """
         return self._domain
 
-    def set_bounds(self, bounds: tuple[float, float]) -> None:
-        if not self.domain.check_value(bounds[0]):
-            raise ValueError(
-                f"the lower bound ({bounds[0]}) does not respect the domain of the variable ({self.domain})"
-            )
-        if not self.domain.check_value(bounds[1]):
-            raise ValueError(
-                f"the upper bound ({bounds[1]}) does not respect the domain of the variable ({self.domain})"
-            )
-        if bounds[0] > bounds[1]:
-            raise ValueError(f"the lower bound ({bounds[0]}) should not be greater than the upper bound ({bounds[1]})")
-        self._bounds = bounds
+    def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
+        """set the bounds of the variable.
 
-    def num_binary_equivalent(self):
+        Args:
+            lower_bound (float | None): The lower bound (if None the lowest allowed bound in the variable domain is
+            selected). Defaults to None.
+            upper_bound (float | None): The upper bound (if None the highest allowed bound in the variable domain is
+            selected). Defaults to None.
+        Raises:
+            ValueError: the lower bound or the upper bound don't correspond to the variable domain.
+            ValueError: the lower bound is higher than the upper bound.
+        """
+        if lower_bound is None:
+            lower_bound = self._domain.min()
+        if upper_bound is None:
+            upper_bound = self._domain.max()
+        if not self.domain.check_value(lower_bound):
+            raise ValueError(
+                f"the lower bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
+            )
+        if not self.domain.check_value(upper_bound):
+            raise ValueError(
+                f"the upper bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
+            )
+        if lower_bound > upper_bound:
+            raise ValueError(
+                f"the lower bound ({lower_bound}) should not be greater than the upper bound ({upper_bound})"
+            )
+        self._bounds = (lower_bound, upper_bound)
+
+    def num_binary_equivalent(self) -> int:
         raise NotImplementedError
 
-    def variables(self):  # noqa: ANN201
-        # TODO (ameer): Fix the problem in model line 800 instead of having this method.
-        yield self
+    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
+        raise NotImplementedError
 
-    def replace_variables(self, var_dict):
+    def compare(self, other: Variable) -> bool:
+        """Checks if two Variable objects are equal based on their hash values.
+
+        Args:
+            other (`Variable`): the `Variable` object to be compared with.
+
+        Returns:
+            bool: a boolean value that indicates whether the hash value of the current `Variable` object (`self`) is
+            equal to the hash value of the `other` `Variable` object passed as an argument.
+        """
+        return hash(self) == hash(other)
+
+    def replace_variable(self, var_dict: dict[str, Variable]) -> None:
         """Replaces the information of the variable with those coming from the dictionary
         if the variable label is in the dictionary
 
         Args:
             var_dict (dict): A dictionary that holds the labels of the variables to be
-                             changed alongside the new values they should take
+                            changed alongside the new values they should take
         """
-        if self.label in var_dict.keys():
+        if self.label in var_dict:
             self._domain = var_dict[self.label].domain
-            self.bounds = var_dict[self.label].bounds
+            self._bounds = var_dict[self.label].bounds
 
     def __copy__(self) -> Variable:
         return Variable(label=self.label, domain=self.domain)
@@ -634,271 +637,187 @@ class Variable:
         if isinstance(other, Term):
             return other + self
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
+        return Term(elements=[self, other], operation=Operation.ADD)
 
-        out = Term(elements=[self, other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
+    __radd__ = __add__
+    __iadd__ = __add__
 
     def __mul__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other * self
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
         return Term(elements=[self, other], operation=Operation.MUL)
-
-    def __truediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            # if other.value == 1:
-            #     return self
-            if other.value == 0:
-                raise ValueError("Division by zero is not allowed")
-
-            _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
-            return self * other
-
-        return Term(elements=[self, other], operation=Operation.DIV)
-
-    def __sub__(self, other: Number | Variable | Term):
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        out = Term(elements=[self, -1 * other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
-
-    def __iadd__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Term):
-            return other + self
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        # if isinstance(other, ConstantVar) and other.value == 0:
-        #     return self
-        out = Term(elements=[self, other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
-
-    def __imul__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Term):
-            return other * self
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            # if other.value == 1:
-            #     return self
-            # if other.value == 0:
-            #     return 0
-            return Term(elements=[other, self], operation=Operation.MUL)
-
-        return Term(elements=[self, other], operation=Operation.MUL)
-
-    def __itruediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            # if other.value == 1:
-            #     return self
-            if other.value == 0:
-                raise ValueError("Division by zero is not allowed")
-
-            _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
-            return self * other
-
-        return Term(elements=[self, other], operation=Operation.DIV)
-
-    def __isub__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        # if isinstance(other, ConstantVar):
-        #     if other.value == 0:
-        #         return self
-
-        out = Term(elements=[self, -1 * other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
-
-    def __radd__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Term):
-            return other + self
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        # if isinstance(other, ConstantVar):
-        #     if other.value == 0:
-        #         return self
-
-        out = Term(elements=[other, self], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
 
     def __rmul__(self, other: Number | Variable | Term) -> Term:
         if isinstance(other, Term):
             return other * self
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        # if isinstance(other, ConstantVar):
-        #     if other.value == 1:
-        #         return self
-        #     if other.value == 0:
-        #         return 0
-
         return Term(elements=[other, self], operation=Operation.MUL)
 
-    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return Term(elements=[other, self], operation=Operation.DIV)
+    __imul__ = __mul__
 
-    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return Term(elements=[other, self], operation=Operation.DIV)
+    def __sub__(self, other: Number | Variable | Term) -> Term:
+        return self + -1 * other
 
     def __rsub__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        # if isinstance(other, ConstantVar):
-        #     if other.value == 0:
-        #         return self
+        return -1 * self + other
 
-        out = Term(elements=[other, -1 * self], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
+    __isub__ = __sub__
+
+    def __neg__(self) -> Term:
+        return -1 * self
+
+    def __truediv__(self, other: Number) -> Term:
+        if not isinstance(other, Number):
+            raise NotImplementedError("Only division by numbers is currently supported")
+
+        if other == 0:
+            raise ValueError("Division by zero is not allowed")
+
+        other = 1 / other
+        return self * other
+
+    __itruediv__ = __truediv__
+
+    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
+        raise NotSupportedOperation("Only division by numbers is currently supported")
+
+    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
+        raise NotSupportedOperation("Only division by numbers is currently supported")
 
     def __pow__(self, a: int) -> Term:
-        out = copy.copy(self)
+        out: Variable | Term = copy.copy(self)
+
+        if a < 0:
+            raise NotImplementedError("Negative Power is not Supported.")
+
+        if a == 0:
+            return Term(elements=[1], operation=Operation.ADD)
 
         for _ in range(a - 1):
             out *= out
+
+        if isinstance(out, Variable):
+            out = Term(elements=[out], operation=Operation.ADD)
         return out
 
-    def __lt__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
+    def __lt__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
 
-    def __le__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
+    def __le__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
 
-    def __eq__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
+    def __eq__(self, other: Number | Variable | Term) -> ComparisonTerm:  # type: ignore[override]
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
 
-    def __ne__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
+    def __ne__(self, other: Number | Variable | Term) -> ComparisonTerm:  # type: ignore[override]
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
 
-    def __gt__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
+    def __gt__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
 
-    def __ge__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
+    def __ge__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
+
+    def __hash__(self) -> int:
+        return hash((self._label, self._domain.value, self._bounds))
 
 
 class BinaryVar(Variable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.Binary)
 
-    def num_binary_equivalent(self):
+    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, binary_list, precision: int = 100):
-        return binary_list[self.label]
+    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:  # noqa: PLR6301
+        if len(binary_list) != 1:
+            raise ValueError("Evaluating a Binary variable with a binary list of more than one item.")
+        return binary_list[0]
 
-    def __copy__(self):
+    def __copy__(self) -> BinaryVar:
         return BinaryVar(label=self.label)
 
 
 class SpinVar(Variable):
-    def __init__(self, label: str):
+    def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.Spin, bounds=(-1, 1))
 
-    def num_binary_equivalent(self):
+    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
+
+    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:  # noqa: PLR6301
+        if len(binary_list) != 1:
+            raise ValueError("Evaluating a Spin variable with a binary list of more than one item.")
+        return -1 if binary_list[0] == 0 else 1
 
 
 class ContinuousVar(Variable):
-    def __init__(self, label: str, domain: Domain, bounds: tuple[int, int], encoding: Encoding = HOBO):
+
+    def __init__(
+        self, label: str, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] = HOBO
+    ) -> None:
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
         self._term, self._bin_vars = self.encode()
 
     @property
-    def encoding(self):
+    def encoding(self) -> type[Encoding]:
         return self._encoding
 
     @property
-    def term(self):
+    def term(self) -> Term:
         return self._term
 
     @property
-    def bin_vars(self):
+    def bin_vars(self) -> list[BinaryVar]:
         return self._bin_vars
 
-    def __copy__(self):
+    def __copy__(self) -> ContinuousVar:
         return ContinuousVar(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> BinaryVar:
         return self._bin_vars[item]
 
-    def evaluate(self, binary_list, precision: int = 100):
+    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
         return self.encoding.evaluate(self, binary_list, precision=precision)
 
-    def encode(self, precision: int = 100):
+    def encode(self, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
         self._term, self._bin_vars = self.encoding.encode(self, precision=precision)
         return self._term, self._bin_vars
 
-    def num_binary_equivalent(self, precision: int = 100):
+    def num_binary_equivalent(self, precision: int = 100) -> int:
         return self.encoding.num_binary_equivalent(self, precision=precision)
 
-    def check_valid(self, binary_list):
+    def check_valid(self, binary_list: list[int]) -> tuple[bool, int]:
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self, precision: int = 100) -> ConstraintTerm | None:
+    def encoding_constraint(self, precision: int = 100) -> ComparisonTerm:
         return self.encoding.encoding_constraint(self, precision=precision)
 
-    def term_equals_to(self, number: int, precision: int = 100):
+    def term_equals_to(self, number: int, precision: int = 100) -> Term:
         return self.encoding.term_equals_to(self, number, precision)
 
 
 class ConstantVar(Variable):
-    def __init__(self, value: Number):
+    def __init__(self, value: Number) -> None:
         super().__init__(label=str(value), domain=Domain.Real)
         self._value = value
 
     @property
-    def value(self):
+    def value(self) -> Number:
         return self._value
 
-    def num_binary_equivalent(self):
+    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
+        return float(self.value)
+
+    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 0
 
-    def __copy__(self):
+    def __copy__(self) -> ConstantVar:
         return ConstantVar(self.value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
 
     def __str__(self) -> str:
@@ -909,99 +828,70 @@ class ConstantVar(Variable):
 
 
 class Term:
-    def __init__(self, elements: list[Variable | Term], operation: Operation) -> None:
-        self._elements = list(elements)
+    CONST = Variable(CONST_KEY, Domain.Real)
+
+    def __init__(self, elements: Sequence[Variable | Term | Number], operation: Operation) -> None:
         self._operation = operation
+        self._elements: dict[int, Number] = {}
+        self._map: dict[int, Variable | Term] = {}
+        for e in elements:
+            if isinstance(e, Variable):
+                if e in self:
+                    if self.is_constant(e):
+                        self[e] = self._apply_operation_on_constants([self[e], 1])
+                    elif isinstance(e, BinaryVar) and self.operation == Operation.MUL:
+                        self[e] = 1
+                    else:
+                        self[e] += 1
+                else:
+                    self[e] = 1
+            elif isinstance(e, Number):
+                if self.CONST in self:
+                    self[self.CONST] = self._apply_operation_on_constants([self[self.CONST], e])
+                else:
+                    self[self.CONST] = e
+            elif isinstance(e, Term):
+                if e.operation == self._operation:
+                    for key in e:
+                        if key in self:
+                            if isinstance(key, Variable) and self.is_constant(key):
+                                self[key] = self._apply_operation_on_constants([self[key], e[key]])
+                            else:
+                                self[key] += e[key]
+                        else:
+                            self[key] = e[key]
+                else:
+                    e_copy = copy.copy(e)
+                    if len(e_copy) > 0:
+                        coeff = 1.0
+                        if e_copy.operation == Operation.MUL and self.CONST in e_copy:
+                            coeff = e_copy.pop(self.CONST)
+                        simple_e = e_copy.simplify()
+                        simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
+                        if simple_e in self:
+                            self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
+                        else:
+                            self[simple_e] = coeff
+            else:
+                raise ValueError(
+                    f"Term accepts object of types Term or Variable but an object of type {e.__class__()} was given"
+                )
+        self.remove_zeros()
 
     @property
-    def elements(self):
-        return self._elements
-
-    @property
-    def operation(self):
+    def operation(self) -> Operation:
         return self._operation
 
-    def variables(self):
-        for e in self.elements:
-            if isinstance(e, ConstantVar):
-                pass
-            elif isinstance(e, Variable):
-                yield e
-            else:
-                yield from e.variables()
+    # TO  BE IMPLEMENTED #################################################
+    @property
+    def degree(self) -> int:
+        pass
 
-    def to_list(self):
-        output = []
-        if len(self.elements) > 1:
-            for i in range(len(self.elements) - 1):
-                if isinstance(self.elements[i], Term):
-                    output.append(self.elements[i].to_list())
-                else:
-                    output.append(self.elements[i])
-                output.append(self.operation)
-
-            if isinstance(self.elements[-1], Term):
-                output.append(self.elements[-1].to_list())
-            else:
-                output.append(self.elements[-1])
-        else:
-            output = [self.elements[0]] if len(self.elements) > 0 else []
-        return output
-
-    def degree(self):
-        if self.operation is Operation.MUL:
-            degree = 0
-            for t in self.elements:
-                if isinstance(t, ConstantVar):
-                    continue
-                if isinstance(t, Variable):
-                    degree += 1
-
-        elif self.operation is Operation.ADD:
-            degree = 0
-            for t in self.elements:
-                if isinstance(t, Term):
-                    aux_degree = t.degree()
-                    degree = max(degree, aux_degree)
-
-                elif isinstance(t, ConstantVar):
-                    continue
-                elif isinstance(t, Variable):
-                    degree = max(1, degree)
-        return degree
-
-    def replace_variables(self, var_dict):
+    def replace_variables(self, var_dict: dict[Variable, Variable]) -> None:
         for i, _ in enumerate(self.elements):
-            self.elements[i].replace_variables(var_dict)
+            self.elements[i].replace_variable(var_dict)
 
-    def evaluate(self, var_values, precision: int = 100):
-        if self.operation not in {Operation.ADD, Operation.MUL}:
-            raise ValueError("Can not evaluate any operation that is not Addition of Multiplication")
-        out = 0 if self.operation is Operation.ADD else 1
-        for e in self.elements:
-            if isinstance(e, Term):
-                out = _apply_operation(out, self.operation, e.evaluate(var_values))
-            elif isinstance(e, ConstantVar):
-                out = _apply_operation(out, self.operation, e.value)
-            elif isinstance(e, Variable):
-                v = var_values[e.label]
-                if isinstance(v, list):
-                    if isinstance(e, ContinuousVar):
-                        out = _apply_operation(out, self.operation, e.evaluate(v, precision=precision))
-                    else:
-                        raise ValueError("Providing a list of values for the a Binary variable.")
-                else:
-                    if not e.domain.check_value(v):
-                        raise ValueError(
-                            f"value {v} doesn't respect the domain of the variable {e} ({e.domain.__class__.__name__()})"
-                        )
-                    out = _apply_operation(out, self.operation, v)
-            else:
-                raise ValueError(f"Evaluating term with elements of type {e.__class__} is not supported.")
-
-        return out
-
-    def to_binary(self):
+    def to_binary(self) -> Term:
         """
         Replaces the variable in the expression for the term indicated in the dictionary
         """
@@ -1025,7 +915,7 @@ class Term:
 
         return out
 
-    def update_variables_precision(self, var_dict: dict):
+    def update_variables_precision(self, var_dict: dict[Variable, Variable]) -> None:
         """
         var_dict = {'<var_name>' : {'var' : <var>, 'precision': #number}}
 
@@ -1052,7 +942,7 @@ class Term:
                     exp /= var_dict[var.label]["precision"]
                     self._elements = exp.elements
 
-    def update_negative_variables_range(self, var_dict: dict):
+    def update_negative_variables_range(self, var_dict: dict[Variable, Variable]) -> None:
         """
         var_dict = {'<var_name>' : {'var' : <var>, 'precision': #number, 'original_bounds': (#number, #number)}}
 
@@ -1073,725 +963,340 @@ class Term:
                         out += var_dict[e.label]["precision"]
         self._elements = out.elements
 
-    def collect_constants(self):
-        constants = []
-        pop_list = []
-        for i, e in enumerate(self.elements):
-            if isinstance(e, Term):
-                if e.operation in [Operation.ADD, Operation.SUB] and self.operation in [Operation.ADD, Operation.SUB]:
-                    constants.extend(e.collect_constants())
-            elif isinstance(e, ConstantVar):
-                constants.append((self.operation if i != 0 else Operation.ADD, i, e))
-                pop_list.append(i)
+    # DONE ################################################################
 
-        for i in sorted(pop_list, reverse=True):
-            self.elements.pop(i)
-        return constants
-
-    def simplify_constants(self, maintain_index: bool = False) -> Term:
-        constants = []
-        pop_list = []
-        out = Term(elements=self.elements, operation=self.operation)
-        for i, e in enumerate(out.elements):
-            # collect constants
-            if isinstance(e, Term):
-                if e.operation in {Operation.ADD, Operation.SUB} and out.operation in {Operation.ADD, Operation.SUB}:
-                    constants.extend(e.collect_constants())
-                else:
-                    out.elements[i] = out.elements[i].simplify_constants()
-                    if isinstance(out.elements[i], ConstantVar):
-                        constants.append((out.operation if i != 0 else Operation.ADD, i, e))
-                        pop_list.append(i)
-            elif isinstance(e, ConstantVar):
-                constants.append((out.operation if i != 0 else Operation.ADD, i, e))
-                pop_list.append(i)
-
-        # remove constants from the term
-        for i in sorted(pop_list, reverse=True):
-            out.elements.pop(i)
-
-        # operate on the constants
-        i, out_const = apply_operation_on_constants(constants, out.operation)
-        if out_const.value == 0:
-            if out.operation in {Operation.ADD, Operation.SUB}:
-                # if len(out.elements) == 1:
-                #     return out.elements[0]
-                return out
-            if out.operation == Operation.MUL:
-                return 0
-        elif out_const.value == 1:
-            if out.operation == Operation.MUL:
-                return out
-
-        if len(constants) > 0:
-            out.elements.insert(i if maintain_index else 0, out_const)
-
-        # if len(out.elements) == 1:
-        #     return out.elements[0]
+    def _apply_operation_on_constants(self, const_list: list[Number]) -> Number:
+        out = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
+        for c in const_list:
+            if self.operation is Operation.ADD:
+                out += float(c)
+            elif self.operation is Operation.SUB:
+                out -= float(c)
+            elif self.operation is Operation.MUL:
+                out *= float(c)
+            elif self.operation is Operation.DIV:
+                out /= float(c)
 
         return out
 
-    def parse_parentheses(self, parent_operation=Operation.ADD):
-        parsed_list = []
-        op = _multiply_operations(self.operation, parent_operation)
-        for i, element in enumerate(self.elements):
-            if isinstance(element, Term) and element.operation in {Operation.ADD, Operation.SUB}:
-                if i == 0:
-                    parsed_list.extend(element.parse_parentheses())
+    def variables(self) -> list[Variable]:
+        """Returns the unique list of variables in the Term
+
+        Returns:
+            list[Variable]: The unique list of variables in the Term.
+        """
+        var = set()
+        for e in self:
+            if isinstance(e, Variable) and not self.is_constant(e):
+                var.add(e)
+            elif isinstance(e, Term):
+                var.update(e.variables())
+        return list(var)
+
+    def simplify(self) -> Term | Variable:
+        if len(self) == 1:
+            item = next(iter(self._elements.keys()))
+            if self._elements[item] == 1:
+                return self._map[item]
+        return self
+
+    def pop(self, item: Variable | Term) -> Number:
+        return self._elements.pop(hash(item))
+
+    def is_constant(self, variable: Variable) -> bool:
+        return variable.compare(self.CONST)
+
+    def to_list(self) -> list[Variable | Term | Number]:
+        out_list: list[Variable | Term | Number] = []
+        for e in self:
+            if isinstance(e, Variable) and self.is_constant(e):
+                out_list.append(self[e])
+            elif self.operation == Operation.MUL:
+                for _ in range(int(self[e])):
+                    out_list.append(e)
+            else:
+                out_list.append(self[e] * e if self[e] != 1 else e)
+        return out_list
+
+    def unfold_parentheses(self) -> Term:
+        out = copy.copy(self)
+        if out.operation != Operation.MUL:
+            return out
+
+        parentheses: list[tuple[Term, Number]] = []
+
+        for e in out:
+            if isinstance(e, Term) and e.operation == Operation.ADD:
+                parentheses.append((copy.copy(e), out[e]))
+
+        for term, _ in parentheses:
+            out.pop(term)
+
+        for term, coeff in parentheses:
+            final_out = []
+            for t in term:
+                final_out.append(t * out * coeff * term[t])
+            out = Term(final_out, Operation.ADD)
+
+        return out
+
+    def remove_zeros(self) -> None:
+        to_be_popped = []
+        if self.operation == Operation.MUL and self.CONST in self and self[self.CONST] == 0:
+            l = len(self)
+            for _ in range(l):
+                self._elements.popitem()
+        for e in self:
+            if self[e] == 0:
+                to_be_popped.append(hash(e))
+        for p in to_be_popped:
+            self._elements.pop(p)
+
+    def evaluate(self, var_values: dict[Variable, list[int]], precision: int = 100) -> float:
+        for var in self.variables():
+            if var not in var_values:
+                raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
+        output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
+        for e in self:
+            if isinstance(e, Term):
+
+                output = self._apply_operation_on_constants([output, e.evaluate(var_values, precision) * self[e]])
+            elif isinstance(e, Variable):
+                if e.compare(self.CONST):
+                    output = self._apply_operation_on_constants([output, self[e]])
                 else:
-                    parsed_list.extend(element.parse_parentheses(parent_operation=op))
-
-            elif i == 0:
-                parsed_list.append((Operation.ADD, element))
-            else:
-                parsed_list.append((op, element))
-        return parsed_list
-
-    def unfold_parentheses(self, other: Term) -> Term:
-        self_elements = []
-        self_is_parentheses = False
-        other_elements = []
-        other_is_parentheses = False
-
-        if self.operation in {Operation.ADD, Operation.SUB}:
-            self_elements = self.parse_parentheses()
-            self_is_parentheses = True
-        else:
-            self_elements = [self]
-        if isinstance(other, Term):
-            if other.operation in {Operation.ADD, Operation.SUB}:
-                other_elements = other.parse_parentheses()
-                other_is_parentheses = True
-            else:
-                other_elements = [other]
-        else:
-            other_elements = [other]
-
-        output = 0
-        if self_is_parentheses and other_is_parentheses:
-            # two parentheses
-            for op1, el1 in self_elements:
-                for op2, el2 in other_elements:
-                    output = _apply_operation((output), _multiply_operations(op1, op2), (el1 * el2))
-        elif self_is_parentheses:
-            for op1, el1 in self_elements:
-                for mul in other_elements:
-                    output = _apply_operation((output), op1, (el1 * mul))
-        elif other_is_parentheses:
-            for op2, el2 in other_elements:
-                for mul in self_elements:
-                    output = _apply_operation((output), op2, (el2 * mul))
-
+                    output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) * self[e]])
         return output
 
-    def create_hashable_term_name(self):
-        """
-        Assumptions:
-            1. the operation is a multiplication
-        """
-        if self.operation is not Operation.MUL:
-            raise ValueError(f"only terms with operation = {Operation.MUL.name} are allowed to be hashed")
+    def __copy__(self) -> Term:
+        return Term(copy.copy(self.to_list()), self.operation)
 
-        coeff = 1
-        var_list = []
-
-        for t in self.elements:
-            if isinstance(t, ConstantVar):
-                coeff = t.value
-            elif isinstance(t, Variable):
-                var_list.append(t)
-
-        var_list = sorted(var_list, key=lambda v: v.label, reverse=False)
-        hash_name = ""
-        for i in var_list:
-            hash_name += i.label
-
-        return hash_name, coeff, var_list
-
-    def simplify_variable_coefficients(self) -> Term:
-        """
-        Assumptions:
-          1. The operation is an addition
-          2. only takes into account terms that are from the form: coefficient * variables
-        """
-        if self.operation is None or self.operation not in {Operation.ADD, Operation.SUB}:
-            return self
-
-        out = Term(self.elements, self.operation)
-
-        hash_list = {}
-        pop_list = []
-        for i, e in enumerate(out.elements):
-            if isinstance(e, Term) and e.operation is Operation.MUL:
-                name, coeff, var_list = e.create_hashable_term_name()
-                if name not in hash_list:
-                    hash_list[name] = [coeff, var_list]
-                else:
-                    hash_list[name][0] += coeff
-                pop_list.append(i)
-            elif isinstance(e, Variable) and not isinstance(e, ConstantVar):
-                if e.label not in hash_list:
-                    hash_list[e.label] = [1, [e]]
-                else:
-                    hash_list[e.label][0] += 1
-                pop_list.append(i)
-        pop_list = sorted(pop_list, reverse=True)
-
-        for i in pop_list:
-            out.elements.pop(i)
-
-        for k, v in hash_list.items():
-            term = _check_and_convert(v[0])
-            for var in v[1]:
-                term *= var
-
-            term = _check_and_convert(term)
-            out.elements.append(term)
-
-        return out
-
-    def simplify_binary(self):
-        var_dict = {}
-        for e in self.elements:
-            if e.label not in var_dict:
-                var_dict[e.label] = []
-
-            var_dict[e.label].append(e)
-
-        out = 1
-        for k, v in var_dict.items():
-            if isinstance(v[0], BinaryVar):
-                out *= v[0]
-            else:
-                for e in v:
-                    out *= e
-        return out
-
-    def simplify(self):
-        out = Term(self.elements, self.operation)
-        if self.operation is Operation.ADD:
-            out = out.simplify_constants()
-            if isinstance(out, Term) and out.operation is Operation.ADD:
-                out = out.simplify_variable_coefficients()
-            if isinstance(out, Term):
-                for element in out.elements:
-                    if isinstance(element, Term):
-                        element = element.simplify()
-        if self.operation is Operation.MUL:
-            out = out.simplify_binary()
-            if isinstance(out, Term):
-                out = out.simplify_constants()
-
-        return out
-
-    def __copy__(self):
-        elements = []
-        for e in self.elements:
-            elements.append(copy.copy(e))
-
-        return Term(elements=elements, operation=self.operation)
-
-    def __repr__(self):
+    def __repr__(self) -> str:
+        if len(self) == 0:
+            return "0"
         output_string = ""
-        if len(self.elements) > 1:
-            for i in range(len(self.elements) - 1):
-                if (self.operation is Operation.MUL or self.operation is Operation.DIV) and isinstance(
-                    self.elements[i], Term
-                ):
-                    output_string += f"({self.elements[i]})"
+        for i, e in enumerate(self):
+            if isinstance(e, Term):
+                term_str = str(e).strip()
+                if len(term_str) > 0:
+                    if term_str[0] == "(" and term_str[-1] == ")":
+                        term_str = term_str.removeprefix("(").removesuffix(")")
+                    output_string += f"({term_str}) " if self[e] == 1 else f"({self[e]}) * ({term_str}) "
+            elif isinstance(e, Variable):
+                if self.is_constant(e):
+                    if self.operation in {Operation.ADD, Operation.SUB} and self[e] == 0:
+                        continue
+                    if self.operation in {Operation.MUL, Operation.DIV} and self[e] == 1:
+                        continue
+                    output_string += f"({self[e]}) "
+                elif (self.operation is Operation.MUL or self.operation is Operation.DIV) and self[e] > 1:
+                    output_string += f"({e}^{self[e]}) "
                 else:
-                    output_string += f"{self.elements[i]}"
-                output_string += f"{self.operation.value}"
-            if (self.operation is Operation.MUL or self.operation is Operation.DIV) and isinstance(
-                self.elements[-1], Term
-            ):
-                output_string += f"({self.elements[-1]})"
+                    output_string += f"{e} " if self[e] == 1 else f"({self[e]}) * {e} "
             else:
-                output_string += f"{self.elements[-1]}"
-        else:
-            output_string = f"{self.elements[0]}" if len(self.elements) > 0 else ""
+                output_string += f"{e} "
+            if i < len(self) - 1:
+                output_string += f"{self.operation.value} "
+
         return output_string
-        # if (self.operation is Operation.MUL and (isinstance(self.lhs, Term) or isinstance(self.rhs, Term))) or (
-        #     self.operation is Operation.DIV and (isinstance(self.lhs, Term) or isinstance(self.rhs, Term))
-        # ):
-        #     return f"({str(self.lhs)}) {self.operation.value} ({str(self.rhs)})"
-        # return f"{str(self.lhs)} {self.operation.value} {str(self.rhs)}"
 
-    def __str__(self) -> str:
-        output_string = ""
-        if len(self.elements) > 1:
-            for i in range(len(self.elements) - 1):
-                if (self.operation is Operation.MUL or self.operation is Operation.DIV) and isinstance(
-                    self.elements[i], Term
-                ):
-                    output_string += f"({self.elements[i]})"
-                else:
-                    output_string += f"{self.elements[i]}"
+    __str__ = __repr__
 
-                output_string += f"{self.operation.value}"
+    def __getitem__(self, item: Variable | Term) -> Number:
+        return self._elements[hash(item)]
 
-            if (self.operation is Operation.MUL or self.operation is Operation.DIV) and isinstance(
-                self.elements[-1], Term
-            ):
-                output_string += f"({self.elements[-1]})"
-            else:
-                output_string += f"{self.elements[-1]}"
-        else:
-            output_string = f"{self.elements[0]}" if len(self.elements) > 0 else ""
-        return output_string
+    def __setitem__(self, key: Variable | Term, item: Number) -> None:
+        self._map[hash(key)] = key
+        self._elements[hash(key)] = item
+
+    def __hash__(self) -> int:
+        return hash((frozenset(self._elements.items()), self.operation))
+
+    def __iter__(self) -> Iterator[Variable | Term]:
+        for e in self._elements:
+            yield self._map[e]
+
+    def __contains__(self, item: Variable | Term) -> bool:
+        item_hash = hash(item)
+        return any(item_hash == e for e in self._elements)
+
+    __next__ = __iter__
+
+    def __len__(self) -> int:
+        return len(self._elements)
 
     def __add__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        if out.operation is Operation.ADD:
-            if isinstance(other, Term) and other.operation == out.operation:
-                out.elements.extend(other.elements)
-            else:
-                out.elements.append(other)
+        out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        out.append(other)
+        return Term(out, Operation.ADD)
 
-            out = out.simplify_constants()
-            if isinstance(out, Term) and out.operation is Operation.ADD:
-                out = out.simplify_variable_coefficients()
-            return out
-        if isinstance(other, Term) and other.operation is Operation.ADD:
-            other.elements.insert(0, out)
-            other = other.simplify_constants()
-            if isinstance(other, Term) and other.operation is Operation.ADD:
-                other = other.simplify_variable_coefficients()
-            return other
-
-        out = Term(elements=[out, other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
-
-    def __mul__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar) and other.value == 1:
-            return out
-            # if other.value == 0:
-            #     return 0
-
-        if out.operation is Operation.MUL:
-            if isinstance(other, Term) and other.operation == out.operation:
-                out.elements.extend(other.elements)
-            else:
-                if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
-                    return out.unfold_parentheses(other)
-                out.elements.append(other)
-            out = out.simplify_binary()
-            if isinstance(out, Term):
-                out = out.simplify_constants()
-            return out
-
-        if out.operation is Operation.DIV:  # ASSUMPTION : division only consists of two elements
-            out._elements[0] *= other
-            return out
-
-        if out.operation in {Operation.ADD, Operation.SUB}:
-            return out.unfold_parentheses(other)
-        return Term(elements=[out, other], operation=Operation.MUL)
-
-    def __truediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                raise ValueError("Division by zero is not allowed")
-
-            _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
-            return self * other
-
-        return Term(elements=[self, other], operation=Operation.DIV)
-
-    def __sub__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        return out + (-1 * other)
-
-    def __iadd__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        if out.operation is Operation.ADD:
-            if isinstance(other, Term) and other.operation == out.operation:
-                out.elements.extend(other.elements)
-            else:
-                out.elements.append(other)
-            out = out.simplify_constants()
-
-            if isinstance(out, Term) and out.operation is Operation.ADD:
-                out = out.simplify_variable_coefficients()
-            return out
-        if isinstance(other, Term) and other.operation is Operation.ADD:
-            other.elements.insert(0, out)
-            other = other.simplify_constants()
-            if isinstance(other, Term) and other.operation is Operation.ADD:
-                other = other.simplify_variable_coefficients()
-            return other
-
-        out = Term(elements=[out, other], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
-
-    def __imul__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return out
-            if other.value == 0:
-                return 0
-
-        if out.operation is Operation.MUL:
-            if isinstance(other, Term) and other.operation == out.operation:
-                out.elements.extend(other.elements)
-            else:
-                if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
-                    return out.unfold_parentheses(other)
-                out.elements.append(other)
-            out = out.simplify_constants()
-            return out
-
-        if out.operation is Operation.DIV:
-            out._elements[0] *= other
-            return out
-        if out.operation in {Operation.ADD, Operation.SUB}:
-            return out.unfold_parentheses(other)
-        return Term(elements=[out, other], operation=Operation.MUL)
-
-    def __itruediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar):
-            if other.value == 1:
-                return self
-            if other.value == 0:
-                raise ValueError("Division by zero is not allowed")
-
-            _, other = apply_operation_on_constants([(Operation.DIV, 0, other)], Operation.DIV)  # convert it to 1/other
-            return self * other
-        return Term(elements=[self, other], operation=Operation.DIV)
-
-    def __isub__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
-
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        return out + (-1 * other)
+    __iadd__ = __add__
 
     def __radd__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
+        out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        out.insert(0, other)
+        return Term(out, Operation.ADD)
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
+    def __mul__(self, other: Number | Variable | Term) -> Term:
+        out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        out.append(other)
+        return Term(out, Operation.MUL).unfold_parentheses()
 
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        if out.operation is Operation.ADD:
-            if isinstance(other, Term) and other.operation == out.operation:
-                other.elements.extend(out.elements)
-                return other
-            t = Term(elements=[other, *out.elements], operation=Operation.ADD)
-            t = t.simplify_constants()
-
-            if isinstance(out, Term) and out.operation is Operation.ADD:
-                t = t.simplify_variable_coefficients()
-            return t
-        if isinstance(other, Term) and other.operation is Operation.ADD:
-            other.elements.append(out)
-            other.simplify_constants()
-            if isinstance(other, Term) and other.operation is Operation.ADD:
-                other = other.simplify_variable_coefficients()
-            return other
-
-        out = Term(elements=[other, out], operation=Operation.ADD)
-        out = out.simplify_constants(maintain_index=True)
-        if isinstance(out, Term) and out.operation is Operation.ADD:
-            out = out.simplify_variable_coefficients()
-        return out
+    __imul__ = __mul__
 
     def __rmul__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
+        out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        out.insert(0, other)
+        return Term(out, Operation.MUL).unfold_parentheses()
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
+    def __neg__(self) -> Term:
+        return -1 * self
 
-        if isinstance(other, ConstantVar) and other.value == 1:
-            return out
-            # if other.value == 0:
-            #     return 0
-        if out.operation is Operation.MUL:
-            if isinstance(other, Term) and other.operation == out.operation:
-                other.elements.extend(out.elements)
-                return other
-            if isinstance(other, Term) and other.operation in {Operation.ADD, Operation.SUB}:
-                return out.unfold_parentheses(other)
-            t = Term(elements=[other, *out.elements], operation=Operation.MUL)
-            t = t.simplify_constants()
-            return t
-
-        if out.operation in {Operation.ADD, Operation.SUB}:
-            return out.unfold_parentheses(other)
-        return Term(elements=[other, out], operation=Operation.MUL)
-
-    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return Term(elements=[other, self], operation=Operation.DIV)
-
-    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return Term(elements=[other, self], operation=Operation.DIV)
+    def __sub__(self, other: Number | Variable | Term) -> Term:
+        return self + -1 * other
 
     def __rsub__(self, other: Number | Variable | Term) -> Term:
-        out = Term(self.elements, self.operation)
+        return -1 * self + other
 
-        if isinstance(other, Number):
-            other = ConstantVar(other)
+    __isub__ = __sub__
 
-        if isinstance(other, ConstantVar) and other.value == 0:
-            return out
-        return other + (-1 * out)
+    def __truediv__(self, other: Number) -> Term:
+        if not isinstance(other, Number):
+            raise NotImplementedError("Only division by numbers is currently supported")
+
+        if other == 0:
+            raise ValueError("Division by zero is not allowed")
+
+        other = 1 / other
+        return self * other
+
+    __itruediv__ = __truediv__
+
+    def __rtruediv__(self, other: Number | Variable | Term) -> Term:
+        raise NotSupportedOperation("Only division by numbers is currently supported")
+
+    def __rfloordiv__(self, other: Number | Variable | Term) -> Term:
+        raise NotSupportedOperation("Only division by numbers is currently supported")
 
     def __pow__(self, a: int) -> Term:
-        out = Term(self.elements, self.operation)
+        out = copy.copy(self)
         for _ in range(a - 1):
             out *= out
         return out
 
-    def __lt__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
+    def __lt__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
 
-    def __le__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
+    def __le__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
 
-    def __eq__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
+    def __eq__(self, other: Number | Variable | Term) -> ComparisonTerm:  # type: ignore[override]
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
 
-    def __ne__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
+    def __ne__(self, other: Number | Variable | Term) -> ComparisonTerm:  # type: ignore[override]
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
 
-    def __gt__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
+    def __gt__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
 
-    def __ge__(self, other: Number | Variable | Term) -> ConstraintTerm:
-        if isinstance(other, Number):
-            other = ConstantVar(other)
-        return ConstraintTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
+    def __ge__(self, other: Number | Variable | Term) -> ComparisonTerm:
+        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
 
 
-class ConstraintTerm:
-    def __init__(self, rhs: Number | Variable | Term, lhs: Number | Variable | Term, operation: ComparisonOperation) -> None:
-        if isinstance(lhs, Number):
-            lhs = ConstantVar(lhs)
-        
-        self._lhs = lhs
-        if isinstance(self._lhs, Term):
-            self._lhs = self._lhs.simplify()
-
-        if isinstance(rhs, Number):
-            rhs = ConstantVar(rhs)
-
-        self._rhs = rhs
-        if isinstance(self._rhs, Term):
-            self._rhs = self._rhs.simplify()
-
-        if not isinstance(self._rhs, ConstantVar):
-            self._lhs -= self._rhs
-            self._rhs = ConstantVar(0)
-            self._lhs = self._lhs.simplify()
-        constants = self._lhs.collect_constants() if isinstance(self._lhs, Term) else []
-        if len(constants) > 1:
-            raise RuntimeError("Simplification step failed.")
-        if len(constants) == 1:
-            self._rhs -= constants[0][2]
-
-        if not isinstance(operation, ComparisonOperation):
-            raise ValueError(
-                f"parameter operation expected type {ComparisonOperation} but received type {operation.__class__}"
-            )
-
-        self._op = operation
+class ComparisonTerm:
+    def __init__(
+        self, rhs: Number | Variable | Term, lhs: Number | Variable | Term, operation: ComparisonOperation
+    ) -> None:
+        term = lhs - rhs
+        if not isinstance(term, Term):
+            term = Term([term], Operation.ADD)
+        const = term.pop(Term.CONST) if Term.CONST in term else 0
+        self._lhs = term
+        self._rhs = Term([const], Operation.ADD)
+        self._operation = operation
 
     @property
-    def rhs(self):
-        return self._rhs
+    def operation(self) -> ComparisonOperation:
+        return self._operation
 
     @property
-    def lhs(self):
+    def lhs(self) -> Term:
         return self._lhs
 
     @property
-    def operation(self):
-        return self._op
+    def rhs(self) -> Term:
+        return self._rhs
 
-    def variables(self):
-        if isinstance(self.lhs, ConstantVar):
-            pass
-        elif isinstance(self.lhs, Variable):
-            yield self.lhs
-        else:
-            yield from self.lhs.variables()
-        if isinstance(self.rhs, ConstantVar):
-            pass
-        elif isinstance(self.rhs, Variable):
-            yield self.rhs
-        else:
-            yield from self.rhs.variables()
+    def variables(self) -> list[Variable]:
+        """Returns the unique list of variables in the Term
 
-    def degree(self):
-        degree = 0
-        if isinstance(self.rhs, Term):
-            aux_degree = self.rhs.degree()
-            degree = max(degree, aux_degree)
-        elif isinstance(self.rhs, Variable) and not isinstance(self.rhs, ConstantVar):
-            degree = max(degree, 1)
+        Returns:
+            list[Variable]: The unique list of variables in the Term.
+        """
+        lhs_var = self._lhs.variables()
+        rhs_var = self._rhs.variables()
 
-        if isinstance(self.lhs, Term):
-            aux_degree = self.lhs.degree()
-            degree = max(degree, aux_degree)
-        elif isinstance(self.lhs, Variable) and not isinstance(self.lhs, ConstantVar):
-            degree = max(degree, 1)
+        var = set()
+        var.update(lhs_var)
+        var.update(rhs_var)
 
-        return degree
+        return list(var)
 
-    def to_list(self):
-        out_list = [None, None, None]
-        if isinstance(self.lhs, Term):
-            out_list[0] = self.lhs.to_list()
-        else:
-            out_list[0] = self.lhs
-        out_list[1] = self.operation
-        if isinstance(self.rhs, Term):
-            out_list[2] = self.rhs.to_list()
-        else:
-            out_list[2] = self.rhs
+    def degree(self) -> int:
+        raise NotImplementedError
 
-        return out_list
+    def to_list(self) -> list:
+        raise NotImplementedError
 
-    def to_binary(self):
-        if isinstance(self.lhs, Term):
-            lhs = self.lhs.to_binary()
-        elif isinstance(self.lhs, ContinuousVar):
-            lhs, _ = self.lhs.encode()
-        else:
-            lhs = self.lhs
+    def to_binary(self) -> ComparisonTerm:
+        raise NotImplementedError
 
-        if isinstance(self.rhs, Term):
-            rhs = self.rhs.to_binary()
-        elif isinstance(self.rhs, ContinuousVar):
-            rhs, _ = self.rhs.encode()
-        else:
-            rhs = self.rhs
+    def _apply_comparison_operation(self, v1: Number, v2: Number) -> bool:
+        if self.operation is ComparisonOperation.EQ:
+            return v1 == v2
+        if self.operation is ComparisonOperation.GE:
+            return v1 >= v2
+        if self.operation is ComparisonOperation.GT:
+            return v1 > v2
+        if self.operation is ComparisonOperation.LE:
+            return v1 <= v2
+        if self.operation is ComparisonOperation.LT:
+            return v1 < v2
+        if self.operation is ComparisonOperation.NE:
+            return v1 != v2
+        raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
-        return ConstraintTerm(rhs=rhs, lhs=lhs, operation=self.operation)
+    def evaluate(self, var_values: dict[Variable, list[int]], precision: int = 100) -> bool:
+        return self._apply_comparison_operation(
+            self._lhs.evaluate(var_values, precision), self._rhs.evaluate(var_values, precision)
+        )
 
-    def evaluate(self, var_values, precision: int = 100, return_values: bool =False):
-        lhs = 0
-        rhs = 0
-
-        if isinstance(self.lhs, Term):
-            lhs = self.lhs.evaluate(var_values=var_values, precision=precision)
-        elif isinstance(self.lhs, ConstantVar):
-            lhs = self.lhs.value
-        elif isinstance(self.lhs, Variable):
-            v = var_values[self.lhs.label]
-            if isinstance(v, list):
-                if isinstance(self.lhs, ContinuousVar):
-                    lhs = self.lhs.evaluate(v, precision=precision)
-                else:
-                    raise ValueError("Providing a list of values for the a Binary variable.")
-            else:
-                if not self.lhs.domain.check_value(v):
-                    raise ValueError(
-                        f"value {v} doesn't respect the domain of the variable {self.lhs} ({self.lhs.domain.__class__.__name__()})"
-                    )
-                lhs = v
-
-        if isinstance(self.rhs, Term):
-            rhs = self.rhs.evaluate(var_values=var_values, precision=precision)
-        elif isinstance(self.rhs, ConstantVar):
-            rhs = self.rhs.value
-        elif isinstance(self.rhs, Variable):
-            v = var_values[self.rhs.label]
-            if isinstance(v, list):
-                if isinstance(self.rhs, ContinuousVar):
-                    rhs = self.rhs.evaluate(v, precision=precision)
-                else:
-                    raise ValueError("Providing a list of values for the a Binary variable.")
-            else:
-                if not self.rhs.domain.check_value(v):
-                    raise ValueError(
-                        f"value {v} doesn't respect the domain of the variable {self.rhs} ({self.rhs.domain.__class__.__name__()})"
-                    )
-                rhs = v
-
-        if return_values:
-            return apply_comparison(lhs, self.operation, rhs), lhs, self.operation, rhs
-        return apply_comparison(lhs, self.operation, rhs)
-
-    def replace_variables(self, var_dict):
+    def replace_variables(self, var_dict: dict[Variable, Variable]) -> None:
         self.lhs.replace_variables(var_dict)
         self.rhs.replace_variables(var_dict)
 
-    def update_variables_precision(self, var_dict):
+    def update_variables_precision(self, var_dict: dict[Variable, Variable]) -> None:
         if isinstance(self.lhs, Term):
             self.lhs.update_variables_precision(var_dict)
         if isinstance(self.rhs, Term):
             self.rhs.update_variables_precision(var_dict)
 
-    def update_negative_variables_range(self, var_dict):
+    def update_negative_variables_range(self, var_dict: dict[Variable, Variable]) -> None:
         if isinstance(self.lhs, Term):
             self.lhs.update_negative_variables_range(var_dict)
         if isinstance(self.rhs, Term):
             self.rhs.update_negative_variables_range(var_dict)
 
-    def __copy__(self):
-        return ConstraintTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)
+    def __copy__(self) -> ComparisonTerm:
+        return ComparisonTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.lhs!s} {self.operation.value} {self.rhs!s}"
 
-    def __str__(self) -> str:
-        return f"{self.lhs!s} {self.operation.value} {self.rhs!s}"
+    __str__ = __repr__
+
+    def __bool__(self) -> bool:
+        raise TypeError(
+            "Symbolic Constraint Term objects do not have an inherent truth value. "
+            "Use a method like .evaluate() to obtain a Boolean value."
+        )

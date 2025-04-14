@@ -28,14 +28,13 @@ from .variables import (
     HOBO,
     BinaryVar,
     ComparisonOperation,
+    ComparisonTerm,
     ConstantVar,
-    ConstraintTerm,
     ContinuousVar,
     Domain,
     Operation,
     Term,
     Variable,
-    compare_vars,
 )
 
 # Utils ###
@@ -108,7 +107,13 @@ class Constraint:
                         if x.domain is Domain.Binary and y.domain is Domain.Binary:
                             z = BinaryVar(f"linearization_slack_{slack_count}")
                             slack_count += 1
-                            slack_constraints.extend(((f"{self.label}_{z}_{x}", z - x <= 0), (f"{self.label}_{z}_{y}", z - y <= 0), (f"{self.label}_{z}_{x}_{y}", z - x - y + 1 >= 0)))
+                            slack_constraints.extend(
+                                (
+                                    (f"{self.label}_{z}_{x}", z - x <= 0),
+                                    (f"{self.label}_{z}_{y}", z - y <= 0),
+                                    (f"{self.label}_{z}_{x}_{y}", z - x - y + 1 >= 0),
+                                )
+                            )
 
                             lhs.elements[j] = coeff * z
                         elif (
@@ -122,7 +127,14 @@ class Constraint:
                                 f"linearization_slack_{slack_count}", domain=Domain.Integer, bounds=y.bounds
                             )
                             slack_count += 1
-                            slack_constraints.extend(((f"{self.label}_{z}_{y}", z - y <= 0), (f"{self.label}_{z}_{x}", z - y.bounds[1] * x <= 0), (f"{self.label}_{z}_{x}_{y}", z - y - y.bounds[1] * (x - 1) >= 0), (f"{self.label}_{z}", z >= 0)))
+                            slack_constraints.extend(
+                                (
+                                    (f"{self.label}_{z}_{y}", z - y <= 0),
+                                    (f"{self.label}_{z}_{x}", z - y.bounds[1] * x <= 0),
+                                    (f"{self.label}_{z}_{x}_{y}", z - y - y.bounds[1] * (x - 1) >= 0),
+                                    (f"{self.label}_{z}", z >= 0),
+                                )
+                            )
 
                             lhs.elements[j] = coeff * z
 
@@ -186,7 +198,12 @@ class Constraint:
                                 s_p.append(aux_s_p)
                                 s_m.append(aux_s_m)
 
-                            slack_constraints.extend(((f"{self.label}_linearization_{z1}", z1 == sum(a[i] * lam[i] for i in range(n))), (f"{self.label}_linearization_{lam}", sum(lam[i] for i in range(n)) == 1)))
+                            slack_constraints.extend(
+                                (
+                                    (f"{self.label}_linearization_{z1}", z1 == sum(a[i] * lam[i] for i in range(n))),
+                                    (f"{self.label}_linearization_{lam}", sum(lam[i] for i in range(n)) == 1),
+                                )
+                            )
 
                             for k in range(h):
                                 if len(s_p[k]) > 0:
@@ -253,7 +270,15 @@ class Constraint:
                                     s_p.append(aux_s_p)
                                     s_m.append(aux_s_m)
 
-                                slack_constraints.extend(((f"{self.label}_linearization2_{z2}", z2 == sum(a[i] * lam[i] for i in range(n))), (f"{self.label}_linearization2_{lam}", sum(lam[i] for i in range(n)) == 1)))
+                                slack_constraints.extend(
+                                    (
+                                        (
+                                            f"{self.label}_linearization2_{z2}",
+                                            z2 == sum(a[i] * lam[i] for i in range(n)),
+                                        ),
+                                        (f"{self.label}_linearization2_{lam}", sum(lam[i] for i in range(n)) == 1),
+                                    )
+                                )
 
                                 for k in range(h):
                                     if len(s_p[k]) > 0:
@@ -453,7 +478,9 @@ class Model:
 
                 self._real_variables[k] = {"var": v, "precision": precision}
 
-                new_var = ContinuousVar(v.label, domain=Domain.Integer, bounds=(lower_bound, upper_bound), encoding=v.encoding)
+                new_var = ContinuousVar(
+                    v.label, domain=Domain.Integer, bounds=(lower_bound, upper_bound), encoding=v.encoding
+                )
                 self.variables[k] = new_var
 
         self.objective.term.replace_variables(self.variables)
@@ -660,9 +687,7 @@ class QUBO(Model):
             if ub_slack == 0:
                 return h**2
 
-            slack = ContinuousVar(
-                f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO
-            )
+            slack = ContinuousVar(f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO)
 
             slack_terms, _ = slack.encode()
             out = h + slack_terms
@@ -701,9 +726,7 @@ class QUBO(Model):
             if ub_slack == 0:
                 return h**2
 
-            slack = ContinuousVar(
-                f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO
-            )
+            slack = ContinuousVar(f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO)
 
             slack_terms, _ = slack.encode()
             out = h + slack_terms
@@ -717,7 +740,7 @@ class QUBO(Model):
         lagrange_multiplier: float = 100,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
-        transform_to_qubo: bool =True,
+        transform_to_qubo: bool = True,
     ) -> None:
         if label in self.lagrange_multipliers:
             raise ValueError(f"A constraint with the label {label} already exists.")
@@ -900,4 +923,3 @@ class QUBO(Model):
             if isinstance(v, ContinuousVar):
                 out.add_variable(v)
         return out
-
