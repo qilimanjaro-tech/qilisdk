@@ -17,7 +17,7 @@ import json
 import logging
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import httpx
 from pydantic import TypeAdapter, ValidationError
@@ -163,10 +163,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
             return devices
 
+    def _ensure_device_selected(self) -> Device:
+        if self._selected_device is None:
+            raise ValueError("Device not selected.")
+        return self._selected_device
+
     def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
+        device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.DIGITAL,
-            device_id=self.selected_device.id,
+            device_id=device.id,
             digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
         )
         with httpx.Client(timeout=20.0) as client:
@@ -177,7 +183,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return execute_response.digital_result
+            return cast("QaaSDigitalResult", execute_response.digital_result)
 
     def evolve(
         self,
@@ -186,10 +192,11 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
     ) -> QaaSAnalogResult:
+        device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.ANALOG,
-            device_id=self.selected_device.id,
-            digital_payload=AnalogPayload(
+            device_id=device.id,
+            analog_payload=AnalogPayload(
                 schedule=schedule,
                 initial_state=initial_state,
                 observables=observables,
@@ -204,15 +211,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return execute_response.analog_result
+            return cast("QaaSAnalogResult", execute_response.analog_result)
 
     def run_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
     ) -> QaaSVQEResult:
+        device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.VQE,
-            device_id=self.selected_device.id,
-            digital_payload=VQEPayload(
+            device_id=device.id,
+            vqe_payload=VQEPayload(
                 vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
             ),
         )
@@ -224,15 +232,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return execute_response.vqe_result
+            return cast("QaaSVQEResult", execute_response.vqe_result)
 
     def run_time_evolution(
         self, time_evolution: TimeEvolution, store_intermediate_results: bool = False
     ) -> QaaSTimeEvolutionResult:
+        device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.TIME_EVOLUTION,
-            device_id=self.selected_device.id,
-            digital_payload=TimeEvolutionPayload(
+            device_id=device.id,
+            time_evolution_payload=TimeEvolutionPayload(
                 time_evolution=time_evolution, store_intermediate_results=store_intermediate_results
             ),
         )
@@ -244,4 +253,4 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return execute_response.time_evolution_result
+            return cast("QaaSTimeEvolutionResult", execute_response.time_evolution_result)
