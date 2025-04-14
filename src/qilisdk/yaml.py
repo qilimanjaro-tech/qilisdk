@@ -65,10 +65,7 @@ def lambda_constructor(constructor, node):
 
 def pydantic_model_representer(representer, data):
     """Representer for Pydantic Models."""
-    value = {
-        "type": f"{data.__class__.__module__}.{data.__class__.__name__}",
-        "data": data.model_dump()
-    }
+    value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
     return representer.represent_mapping("!PydanticModel", value)
 
 
