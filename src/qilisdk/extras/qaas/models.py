@@ -16,9 +16,19 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
+from qilisdk.analog.hamiltonian import PauliOperator
+from qilisdk.common.optimizer import Optimizer
+from qilisdk.digital import VQE, Circuit
+
+from .qaas_analog_result import QaaSAnalogResult
+from .qaas_digital_result import QaaSDigitalResult
+from .qaas_time_evolution_result import QaaSTimeEvolutionResult
+from .qaas_vqe_result import QaaSVQEResult
+
 
 class QaaSModel(BaseModel):
-    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, arbitrary_types_allowed=True)
 
 
 class LoginPayload(BaseModel): ...
@@ -51,7 +61,64 @@ class DeviceStatus(str, Enum):
     OFFLINE = "offline"
 
 
+class DeviceType(str, Enum):
+    """Device type"""
+
+    QUANTUM_DIGITAL = "quantum_device"
+    QUANTUM_ANALOG = "quantum_analog_device"
+    SIMULATOR = "simulator_device"
+
+
 class Device(QaaSModel):
     id: int = Field(...)
     name: str = Field(...)
     status: DeviceStatus = Field(...)
+    type: DeviceType = Field(...)
+
+
+class ExecutePayloadType(str, Enum):
+    DIGITAL = "digital"
+    ANALOG = "analog"
+    VQE = "vqe"
+    TIME_EVOLUTION = "time_evolution"
+
+
+class DigitalPayload(QaaSModel):
+    circuit: Circuit = Field(...)
+    nshots: int = Field(...)
+
+
+class AnalogPayload(QaaSModel):
+    schedule: Schedule = Field(...)
+    initial_state: QuantumObject = Field(...)
+    observables: list[PauliOperator | Hamiltonian] = Field(...)
+    store_intermediate_results: bool = Field(...)
+
+
+class VQEPayload(QaaSModel):
+    vqe: VQE = Field(...)
+    optimizer: Optimizer = Field(...)
+    nshots: int = Field(...)
+    store_intermediate_results: bool = Field(...)
+
+
+class TimeEvolutionPayload(QaaSModel):
+    time_evolution: TimeEvolution = Field()
+    store_intermediate_results: bool = Field()
+
+
+class ExecutePayload(QaaSModel):
+    type: ExecutePayloadType = Field(...)
+    device_id: int = Field(...)
+    digital_payload: DigitalPayload | None = None
+    analog_payload: AnalogPayload | None = None
+    vqe_payload: VQEPayload | None = None
+    time_evolution_payload: TimeEvolutionPayload | None = None
+
+
+class ExecuteResponse(QaaSModel):
+    type: ExecutePayloadType = Field(...)
+    digital_result: QaaSDigitalResult | None = None
+    analog_result: QaaSAnalogResult | None = None
+    vqe_result: QaaSVQEResult | None = None
+    time_evolution_result: QaaSTimeEvolutionResult | None = None

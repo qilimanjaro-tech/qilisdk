@@ -83,6 +83,7 @@ class VQEResult(Result):
         )
 
 
+@yaml.register_class
 class VQE(DigitalAlgorithm):
     """
     Implements the Variational Quantum Eigensolver (VQE) algorithm.
