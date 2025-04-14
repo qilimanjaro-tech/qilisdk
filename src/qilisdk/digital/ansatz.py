@@ -103,6 +103,23 @@ class HardwareEfficientAnsatz(Ansatz):
             "grouped": self._construct_layer_grouped,
         }
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Exclude the mapping that contains bound methods (not serializable).
+        state.pop("construct_layer_handlers", None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Restore the object's state after deserialization and reinitialize any attributes that were omitted.
+        """
+        self.__dict__.update(state)
+        # Reconstruct the mapping with the proper bound methods.
+        self.construct_layer_handlers = {
+            "interposed": self._construct_layer_interposed,
+            "grouped": self._construct_layer_grouped,
+        }
+
     @property
     def nparameters(self) -> int:
         """

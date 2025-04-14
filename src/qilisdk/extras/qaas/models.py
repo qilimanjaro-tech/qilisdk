@@ -25,6 +25,7 @@ from .qaas_analog_result import QaaSAnalogResult
 from .qaas_digital_result import QaaSDigitalResult
 from .qaas_time_evolution_result import QaaSTimeEvolutionResult
 from .qaas_vqe_result import QaaSVQEResult
+from qilisdk.yaml import yaml
 
 
 class QaaSModel(BaseModel):
@@ -69,6 +70,7 @@ class DeviceType(str, Enum):
     SIMULATOR = "simulator_device"
 
 
+@yaml.register_class
 class Device(QaaSModel):
     id: int = Field(...)
     name: str = Field(...)
@@ -83,30 +85,31 @@ class ExecutePayloadType(str, Enum):
     TIME_EVOLUTION = "time_evolution"
 
 
+@yaml.register_class
 class DigitalPayload(QaaSModel):
     circuit: Circuit = Field(...)
     nshots: int = Field(...)
 
-
+@yaml.register_class
 class AnalogPayload(QaaSModel):
     schedule: Schedule = Field(...)
     initial_state: QuantumObject = Field(...)
     observables: list[PauliOperator | Hamiltonian] = Field(...)
     store_intermediate_results: bool = Field(...)
 
-
+@yaml.register_class
 class VQEPayload(QaaSModel):
     vqe: VQE = Field(...)
     optimizer: Optimizer = Field(...)
     nshots: int = Field(...)
     store_intermediate_results: bool = Field(...)
 
-
+@yaml.register_class
 class TimeEvolutionPayload(QaaSModel):
     time_evolution: TimeEvolution = Field()
     store_intermediate_results: bool = Field()
 
-
+@yaml.register_class
 class ExecutePayload(QaaSModel):
     type: ExecutePayloadType = Field(...)
     device_id: int = Field(...)
@@ -115,7 +118,7 @@ class ExecutePayload(QaaSModel):
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
 
-
+@yaml.register_class
 class ExecuteResponse(QaaSModel):
     type: ExecutePayloadType = Field(...)
     digital_result: QaaSDigitalResult | None = None
