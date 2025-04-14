@@ -16,10 +16,10 @@
 
 import base64
 import types
-from pydantic import BaseModel
 
 import numpy as np
 from dill import dumps, loads
+from pydantic import BaseModel
 from ruamel.yaml import YAML
 
 
@@ -62,6 +62,7 @@ def lambda_constructor(constructor, node):
     serialized_lambda = base64.b64decode(node.value)
     return loads(serialized_lambda)  # noqa: S301
 
+
 def pydantic_model_representer(representer, data):
     """Representer for Pydantic Models."""
     value = {
@@ -69,6 +70,7 @@ def pydantic_model_representer(representer, data):
         "data": data.model_dump()
     }
     return representer.represent_mapping("!PydanticModel", value)
+
 
 def pydantic_model_constructor(constructor, node):
     """Constructor for Pydantic Models."""
@@ -80,9 +82,11 @@ def pydantic_model_constructor(constructor, node):
     model_cls = getattr(mod, class_name)
     return model_cls.model_validate(data)
 
+
 def complex_representer(representer, data: complex):
     value = {"real": data.real, "imag": data.imag}
     return representer.represent_mapping("!complex", value)
+
 
 def complex_constructor(constructor, node):
     mapping = constructor.construct_mapping(node, deep=True)

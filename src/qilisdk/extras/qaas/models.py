@@ -20,12 +20,12 @@ from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
+from qilisdk.yaml import yaml
 
 from .qaas_analog_result import QaaSAnalogResult
 from .qaas_digital_result import QaaSDigitalResult
 from .qaas_time_evolution_result import QaaSTimeEvolutionResult
 from .qaas_vqe_result import QaaSVQEResult
-from qilisdk.yaml import yaml
 
 
 class QaaSModel(BaseModel):
@@ -90,12 +90,14 @@ class DigitalPayload(QaaSModel):
     circuit: Circuit = Field(...)
     nshots: int = Field(...)
 
+
 @yaml.register_class
 class AnalogPayload(QaaSModel):
     schedule: Schedule = Field(...)
     initial_state: QuantumObject = Field(...)
     observables: list[PauliOperator | Hamiltonian] = Field(...)
     store_intermediate_results: bool = Field(...)
+
 
 @yaml.register_class
 class VQEPayload(QaaSModel):
@@ -104,10 +106,12 @@ class VQEPayload(QaaSModel):
     nshots: int = Field(...)
     store_intermediate_results: bool = Field(...)
 
+
 @yaml.register_class
 class TimeEvolutionPayload(QaaSModel):
     time_evolution: TimeEvolution = Field()
     store_intermediate_results: bool = Field()
+
 
 @yaml.register_class
 class ExecutePayload(QaaSModel):
@@ -117,6 +121,7 @@ class ExecutePayload(QaaSModel):
     analog_payload: AnalogPayload | None = None
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
+
 
 @yaml.register_class
 class ExecuteResponse(QaaSModel):
