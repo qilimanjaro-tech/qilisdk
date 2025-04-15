@@ -94,7 +94,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> Term:
         """Given a continuous variable return a Term that only consists of
             binary variables that represent the continuous variable in the given encoding.
 
@@ -175,7 +175,7 @@ class HOBO(Encoding):
         return "HOBO"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
@@ -191,14 +191,15 @@ class HOBO(Encoding):
 
         term += bounds[0]
 
-        return term, binary_vars
+        return term
 
     @staticmethod
     def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
         # TODO (ameer): allow to map continuous values to binary string of given format.
         if not HOBO.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
-        term, binary_var = HOBO.encode(var)
+        term = HOBO.encode(var)
+        binary_var = term.variables()
 
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
@@ -290,7 +291,7 @@ class OneHot(Encoding):
         return "ONE HOT"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (precision * bounds[0], precision * bounds[1])
@@ -308,7 +309,8 @@ class OneHot(Encoding):
         if not OneHot.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the one hot encoding.")
 
-        term, binary_var = OneHot.encode(var)
+        term = OneHot.encode(var)
+        binary_var = term.variables()
 
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
@@ -373,7 +375,7 @@ class DomainWall(Encoding):
         return "Domain Wall"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
@@ -394,7 +396,8 @@ class DomainWall(Encoding):
     def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
         if not DomainWall.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
-        term, binary_var = DomainWall.encode(var)
+        term = DomainWall.encode(var)
+        binary_var = term.variables()
 
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
@@ -701,7 +704,7 @@ class Variable:
             return Term(elements=[1], operation=Operation.ADD)
 
         for _ in range(a - 1):
-            out *= out
+            out *= copy.copy(self)
 
         if isinstance(out, Variable):
             out = Term(elements=[out], operation=Operation.ADD)
@@ -771,7 +774,9 @@ class ContinuousVar(Variable):
     ) -> None:
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
-        self._term, self._bin_vars = self.encode()
+        self._term = self.encode()
+        self._bin_vars = self._term.variables()
+        self._bin_vars = self._term.variables()
 
     @property
     def encoding(self) -> type[Encoding]:
@@ -806,9 +811,9 @@ class ContinuousVar(Variable):
             return binary_list[0]
         return self.encoding.evaluate(self, binary_list, precision=precision)
 
-    def encode(self, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
-        self._term, self._bin_vars = self.encoding.encode(self, precision=precision)
-        return self._term, self._bin_vars
+    def encode(self, precision: float = 1e-2) -> Term:
+        self._term = self.encoding.encode(self, precision=precision)
+        return self._term
 
     def num_binary_equivalent(self, precision: float = 1e-2) -> int:
         return self.encoding.num_binary_equivalent(self, precision=precision)
@@ -868,7 +873,9 @@ class Term:
                         simple_e = e_copy.simplify()
                         simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
                         if simple_e in self:
-                            self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
+                            self[simple_e] = (
+                                self[simple_e] + coeff
+                            )  # self._apply_operation_on_constants([self[simple_e], coeff])
                         else:
                             self[simple_e] = coeff
             else:
@@ -885,11 +892,19 @@ class Term:
     @property
     def degree(self) -> int:
         degree = 0
+        if self.operation == Operation.MUL:
+            for element in self:
+                if isinstance(element, Term):
+                    degree += element.degree
+                elif isinstance(element, Variable) and not self.is_constant(element):
+                    degree += int(self[element])
+            return degree
+
         for element in self:
             if isinstance(element, Term):
                 degree = max(degree, element.degree)
             elif isinstance(element, Variable) and not self.is_constant(element):
-                degree = max(degree, int(self[element])) if self.operation == Operation.MUL else max(degree, 1)
+                degree = max(degree, 1)
         return degree
 
     def replace_variables(self, var_dict: dict[Variable, Variable]) -> None:
@@ -915,8 +930,11 @@ class Term:
                 if self.is_constant(e):
                     out_list.append(self[e])
                 if isinstance(e, ContinuousVar):
-                    x, _ = e.encode()
-                    out_list.append(self[e] * x)
+                    x = e.encode()
+                    if self.operation == Operation.MUL:
+                        out_list.append(x ** int(self[e]))
+                    else:
+                        out_list.append(self[e] * x)
                 else:
                     out_list.append(self[e] * e)
             else:
@@ -999,9 +1017,11 @@ class Term:
             out.pop(term)
 
         for term, coeff in parentheses:
+            if coeff > 1:
+                term **= int(coeff)
             final_out = []
             for t in term:
-                final_out.append(t * out * coeff * term[t])
+                final_out.append(t * out * term[t])
             out = Term(final_out, Operation.ADD)
 
         return out
@@ -1029,6 +1049,8 @@ class Term:
             elif isinstance(e, Variable):
                 if e.compare(self.CONST):
                     output = self._apply_operation_on_constants([output, self[e]])
+                elif self.operation == Operation.MUL:
+                    output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) ** self[e]])
                 else:
                     output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) * self[e]])
         return output
@@ -1149,10 +1171,22 @@ class Term:
         raise NotSupportedOperation("Only division by numbers is currently supported")
 
     def __pow__(self, a: int) -> Term:
-        out = copy.copy(self)
-        for _ in range(a - 1):
-            out *= out
-        return out
+        if self.operation == Operation.ADD:
+            out = copy.copy(self)
+            for _ in range(a - 1):
+                out_list = []
+                for element in self:
+                    out_list.append(out * copy.copy(element) * self[element])
+                out = Term(out_list, Operation.ADD)
+            return out
+        if self.operation == Operation.MUL:
+            out = copy.copy(self)
+            for element in out:
+                out[element] += a
+            return out
+        raise NotImplementedError(
+            "The power operation for terms that are not addition or multiplication is not supported."
+        )
 
     def __lt__(self, other: Number | Variable | Term) -> ComparisonTerm:
         return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)

@@ -17,12 +17,12 @@ from __future__ import annotations
 import copy
 import enum
 import warnings
-from typing import Literal
+from typing import Literal, Type
 
 # import cupy as np
 import numpy as np
 
-from qilisdk.analog.hamiltonian import Hamiltonian, Z
+from qilisdk.analog.hamiltonian import Z
 
 from .variables import (
     HOBO,
@@ -38,54 +38,59 @@ from .variables import (
 
 # Utils ###
 
-slack_count = 0
+
+class SlackCounter:
+    _instance: SlackCounter | None = None
+    _count: int = 0
+
+    def __new__(cls: Type[SlackCounter]) -> SlackCounter:  # noqa: PYI034
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def next(self) -> int:
+        """Return the next counter value and increment the counter."""
+        value = self._count
+        self._count += 1
+        return value
 
 
-def cast_to_list(terms):
+def cast_to_list(terms: ComparisonTerm | list[ComparisonTerm]) -> list[ComparisonTerm]:
     if isinstance(terms, list):
         return terms
-    if isinstance(terms, ConstraintTerm):
+    if isinstance(terms, ComparisonTerm):
         return [terms]
-    # if isinstance(terms, np.array):
-    #     return terms.to_list()
-    raise ValueError(f"terms provided to the constraints should be of type {ConstraintTerm}")
+    raise ValueError(f"terms provided to the constraints should be of type {ComparisonTerm}")
 
 
 class ObjectiveSense(enum.Enum):
-    Minimize = "minimize"
-    Maximize = "maximize"
+    MINIMIZE = "minimize"
+    MAXIMIZE = "maximize"
 
 
 class Constraint:
-    def __init__(self, label: str, term: ConstraintTerm = None) -> None:
+    def __init__(self, label: str, term: ComparisonTerm) -> None:
         self._label = label
-        if not isinstance(term, ConstraintTerm):
-            raise ValueError(f"the parameter term is expecting a {ConstraintTerm} but received {term.__class__}")
+        if not isinstance(term, ComparisonTerm):
+            raise ValueError(f"the parameter term is expecting a {ComparisonTerm} but received {term.__class__}")
 
         self._term = term
-        self._variables = {}
-        for v in term.variables():
-            if v.label in self._variables and not compare_vars(v, self._variables[v.label]):
-                raise ValueError(
-                    f"Error in ({self._label}: {self._term}): you can not include two different variables ({v}, {self.variables[v.label]}) with the same name in the model."
-                )
-            self._variables[v.label] = v
 
     @property
     def label(self) -> str:
         return self._label
 
     @property
-    def term(self) -> ConstraintTerm:
+    def term(self) -> ComparisonTerm:
         return self._term
 
     @property
-    def variables(self):
-        return self._variables
+    def variables(self) -> list[Variable]:
+        return self._term.variables()
 
-    def linearize(self):
+    def linearize(self) -> list[tuple[str, ComparisonTerm]]:
 
-        for v in self.variables.values():
+        for v in self.variables:
             if v.domain is Domain.REAL:
                 raise ValueError("Can not linearize models with real variables.")
             if v.domain is Domain.INTEGER and v.lower_bound < 0:
@@ -93,19 +98,21 @@ class Constraint:
 
         lhs = copy.copy(self.term.lhs)
         slack_constraints = []
-        if isinstance(lhs, Term) and lhs.operation is Operation.ADD:
-            for j, e in enumerate(lhs.elements):
+        slack_counter = SlackCounter()
+        MAX_DEGREE = 2
+
+        if lhs.operation is Operation.ADD:
+            for j, e in enumerate(lhs):
                 if isinstance(e, Term) and e.operation is Operation.MUL:
-                    _, coeff, var_list = e.create_hashable_term_name()
-                    if len(var_list) > 2:
+                    degree = e.degree
+                    if degree > MAX_DEGREE:
                         raise ValueError(f"cannot linearize constraints with degrees higher than quadratic.\n {self}")
-                    if len(var_list) == 2:
+                    if degree == MAX_DEGREE:
                         # quadratic term
                         x = var_list[0]
                         y = var_list[1]
                         if x.domain is Domain.BINARY and y.domain is Domain.BINARY:
-                            z = BinaryVar(f"linearization_slack_{slack_count}")
-                            slack_count += 1
+                            z = BinaryVar(f"linearization_slack_{slack_counter.next()}")
                             slack_constraints.extend(
                                 (
                                     (f"{self.label}_{z}_{x}", z - x <= 0),
@@ -123,9 +130,8 @@ class Constraint:
                             x = var_list[0] if var_list[0].domain is Domain.BINARY else var_list[1]
                             y = var_list[1] if var_list[0].domain is Domain.BINARY else var_list[0]
                             z = ContinuousVar(
-                                f"linearization_slack_{slack_count}", domain=Domain.INTEGER, bounds=y.bounds
+                                f"linearization_slack_{slack_counter.next()}", domain=Domain.INTEGER, bounds=y.bounds
                             )
-                            slack_count += 1
                             slack_constraints.extend(
                                 (
                                     (f"{self.label}_{z}_{y}", z - y <= 0),
@@ -301,7 +307,7 @@ class Constraint:
             slack_constraints.append(
                 (
                     self.label,
-                    ConstraintTerm(rhs=copy.copy(self.term.rhs), lhs=lhs, operation=self.term.operation),
+                    ComparisonTerm(rhs=copy.copy(self.term.rhs), lhs=lhs, operation=self.term.operation),
                 )
             )
 
@@ -316,17 +322,9 @@ class Constraint:
     def __str__(self) -> str:
         return f"{self.label}: {self.term}"
 
-    def simplify_terms(self) -> None:
-        if isinstance(self.term, Term):
-            self._term = ConstraintTerm(
-                lhs=self.term.lhs.simplify_constants(), rhs=self.term.rhs, operation=self.term.operation
-            )
-        if isinstance(self.term.lhs, Term) and self.term.lhs.operation is Operation.ADD:
-            self.term.lhs.simplify_variable_coefficients()
-
 
 class Objective:
-    def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.Minimize) -> None:
+    def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         if isinstance(term, Variable):
             term = Term(elements=[term], operation=Operation.ADD)
         if not isinstance(term, Term):
@@ -336,20 +334,13 @@ class Objective:
         self._term = term
         self._label = label
         self._sense = sense
-        self._variables = {}
-        for v in term.variables():
-            if v.label in self._variables and not compare_vars(v, self._variables[v.label]):
-                raise ValueError(
-                    f"Error in ({self._label}: {self._term}): you can not include two different variables ({v}, {self.variables[v.label]}) with the same name in the model."
-                )
-            self._variables[v.label] = v
 
     @property
     def label(self) -> str:
         return self._label
 
     @property
-    def term(self) -> ConstraintTerm:
+    def term(self) -> Term:
         return self._term
 
     @property
@@ -357,8 +348,8 @@ class Objective:
         return self._sense
 
     @property
-    def variables(self):
-        return self._variables
+    def variables(self) -> list[Variable]:
+        return self._term.variables()
 
     def __repr__(self) -> str:
         return f"{self.label}: {self.term}"
@@ -369,21 +360,19 @@ class Objective:
     def __copy__(self) -> Objective:
         return Objective(label=self.label, term=copy.copy(self.term), sense=self.sense)
 
-    def simplify_term(self) -> None:
-        self._term = self.term.simplify_constants()
-        if isinstance(self.term, Term) and self.term.operation is Operation.ADD:
-            self.term.simplify_variable_coefficients()
-
 
 class Model:
     def __init__(self, label: str) -> None:
-        self._constraints = []
-        self._encoding_constraints = {}
-        self._objective = None
+        self._constraints: list[Constraint] = []
+        self._encoding_constraints: dict[str, Constraint] = {}
+        self._objective = Objective("objective", Term([0], Operation.ADD))
         self._label = label
-        self._variables: dict[str, Variable] = {}  # var_label : var
-        self._real_variables = {}  # var_label : {'var' : var, 'precision': precision}
-        self._recentered = {}  # var_label : ('var' : var, 'precision': precision, 'shift': lower_bound)
+        self._real_variables: dict[Variable, dict[Literal["var", "precision"], Variable | float]] = (
+            {}
+        )  # var_label : {'var' : var, 'precision': precision}
+        self._recentered: dict[Variable, dict[Literal["var", "precision", "shift"], Variable | float]] = (
+            {}
+        )  # var_label : ('var' : var, 'precision': precision, 'shift': lower_bound)
 
     @property
     def label(self) -> str:
@@ -394,16 +383,23 @@ class Model:
         return self._constraints
 
     @property
-    def encoding_constraints(self):
+    def encoding_constraints(self) -> dict[str, Constraint]:
         return self._encoding_constraints
 
     @property
-    def objective(self):
+    def objective(self) -> Objective:
         return self._objective
 
     @property
-    def variables(self):
-        return self._variables
+    def variables(self) -> list[Variable]:
+        var = set()
+
+        for c in self._constraints:
+            var.update(c.variables)
+
+        var.update(self.objective.variables)
+
+        return list(var)
 
     def __repr__(self) -> str:
         output = f"Model name: {self.label} \n"
@@ -437,143 +433,125 @@ class Model:
         out.set_objective(term=obj.term, label=obj.label, sense=obj.sense)
         for c in self.constraints:
             out.add_constraint(label=c.label, term=copy.copy(c.term))
-        for v in self._variables.values():
-            if isinstance(v, ContinuousVar):
-                out.add_variable(v)
         return out
 
-    def add_variable(self, var: Variable) -> None:
-        self._variables[var.label] = var
-        if isinstance(var, ContinuousVar):
-            self._encoding_constraints[f"encoding_{var.label}"] = var.encoding_constraint()
-
-    def add_constraint(self, label: str, term: ConstraintTerm) -> None:
+    def add_constraint(self, label: str, term: ComparisonTerm) -> None:
         c = Constraint(label=label, term=copy.copy(term))
         self._constraints.append(c)
 
-        for k, v in c.variables.items():
-            if k in self._variables and not compare_vars(v, self._variables[k]):
-                raise ValueError("you can not include two different variables with the same name in the model.")
-            self._variables[k] = v
-
-    def set_objective(self, term: Term, label: str = "", sense: ObjectiveSense = ObjectiveSense.Minimize) -> None:
+    def set_objective(self, term: Term, label: str = "", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
 
-        for k, v in self._objective.variables.items():
-            if k in self._variables and not compare_vars(v, self._variables[k]):
-                raise ValueError("you can not include two different variables with the same name in the model.")
-            self._variables[k] = v
+    # def real_to_int(self, precision: int = 100) -> None:
+    #     maxint = 2**53
 
-    def real_to_int(self, precision: int = 100) -> None:
-        maxint = 2**53
+    #     for k, v in self.variables.items():
+    #         if v.domain is Domain.REAL:
+    #             lower_bound = int(v.lower_bound * precision)
+    #             upper_bound = int(v.upper_bound * precision)
 
-        for k, v in self.variables.items():
-            if v.domain is Domain.REAL:
-                lower_bound = int(v.lower_bound * precision)
-                upper_bound = int(v.upper_bound * precision)
+    #             lower_bound = max(-maxint, lower_bound)
+    #             upper_bound = min(maxint, upper_bound)
 
-                lower_bound = max(-maxint, lower_bound)
-                upper_bound = min(maxint, upper_bound)
+    #             self._real_variables[k] = {"var": v, "precision": precision}
 
-                self._real_variables[k] = {"var": v, "precision": precision}
+    #             new_var = ContinuousVar(
+    #                 v.label, domain=Domain.INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
+    #             )
+    #             self.variables[k] = new_var
 
-                new_var = ContinuousVar(
-                    v.label, domain=Domain.INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
-                )
-                self.variables[k] = new_var
+    #     self.objective.term.replace_variables(self.variables)
+    #     self.objective.term.update_variables_precision(self._real_variables)
+    #     self.objective.simplify_term()
+    #     for i, _ in enumerate(self.constraints):
+    #         self.constraints[i].term.replace_variables(self.variables)
+    #         self.constraints[i].term.update_variables_precision(self._real_variables)
+    #         self.constraints[i].simplify_terms()
 
-        self.objective.term.replace_variables(self.variables)
-        self.objective.term.update_variables_precision(self._real_variables)
-        self.objective.simplify_term()
-        for i, _ in enumerate(self.constraints):
-            self.constraints[i].term.replace_variables(self.variables)
-            self.constraints[i].term.update_variables_precision(self._real_variables)
-            self.constraints[i].simplify_terms()
+    # def real_to_pos_int(self, precision: int = 100):
+    #     maxint = 2**53
 
-    def real_to_pos_int(self, precision: int = 100):
-        maxint = 2**53
+    #     for k, v in self.variables.items():
+    #         if v.domain is Domain.REAL:
+    #             lower_bound = int(v.lower_bound * precision)
+    #             upper_bound = int(v.upper_bound * precision)
 
-        for k, v in self.variables.items():
-            if v.domain is Domain.REAL:
-                lower_bound = int(v.lower_bound * precision)
-                upper_bound = int(v.upper_bound * precision)
+    #             if lower_bound < 0:
+    #                 upper_bound -= lower_bound
+    #                 self._recentered[k] = {"var": v, "precision": lower_bound / precision, "original_bounds": v.bounds}
 
-                if lower_bound < 0:
-                    upper_bound -= lower_bound
-                    self._recentered[k] = {"var": v, "precision": lower_bound / precision, "original_bounds": v.bounds}
+    #             lower_bound = max(0, lower_bound)
+    #             upper_bound = min(maxint, upper_bound)
 
-                lower_bound = max(0, lower_bound)
-                upper_bound = min(maxint, upper_bound)
+    #             self._real_variables[k] = {"var": v, "precision": precision}
 
-                self._real_variables[k] = {"var": v, "precision": precision}
+    #             v = ContinuousVar(
+    #                 v.label,
+    #                 domain=Domain.POSITIVE_INTEGER,
+    #                 bounds=(lower_bound, upper_bound),
+    #                 encoding=v.encoding,
+    #             )
+    #             self.variables[k] = v
+    #         elif v.domain is Domain.INTEGER:
+    #             lower_bound = int(v.lower_bound)
+    #             upper_bound = int(v.upper_bound)
 
-                v = ContinuousVar(
-                    v.label,
-                    domain=Domain.POSITIVE_INTEGER,
-                    bounds=(lower_bound, upper_bound),
-                    encoding=v.encoding,
-                )
-                self.variables[k] = v
-            elif v.domain is Domain.INTEGER:
-                lower_bound = int(v.lower_bound)
-                upper_bound = int(v.upper_bound)
+    #             if lower_bound < 0:
+    #                 upper_bound -= lower_bound
+    #                 self._recentered[k] = {"var": v, "precision": lower_bound, "original_bounds": v.bounds}
 
-                if lower_bound < 0:
-                    upper_bound -= lower_bound
-                    self._recentered[k] = {"var": v, "precision": lower_bound, "original_bounds": v.bounds}
+    #             lower_bound = max(0, lower_bound)
+    #             upper_bound = min(maxint, upper_bound)
 
-                lower_bound = max(0, lower_bound)
-                upper_bound = min(maxint, upper_bound)
+    #             v = ContinuousVar(
+    #                 v.label, domain=Domain.POSITIVE_INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
+    #             )
+    #             self.variables[k] = v
 
-                v = ContinuousVar(
-                    v.label, domain=Domain.POSITIVE_INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
-                )
-                self.variables[k] = v
+    #     self.objective.term.replace_variables(self.variables)
+    #     self.objective.term.update_variables_precision(self._real_variables)
+    #     self.objective.term.update_negative_variables_range(self._recentered)
+    #     self.objective.simplify_term()
+    #     for i, _ in enumerate(self.constraints):
+    #         self.constraints[i].term.replace_variables(self.variables)
+    #         self.constraints[i].term.update_variables_precision(self._real_variables)
+    #         self.constraints[i].term.update_negative_variables_range(self._recentered)
+    #         self.constraints[i].simplify_terms()
 
-        self.objective.term.replace_variables(self.variables)
-        self.objective.term.update_variables_precision(self._real_variables)
-        self.objective.term.update_negative_variables_range(self._recentered)
-        self.objective.simplify_term()
-        for i, _ in enumerate(self.constraints):
-            self.constraints[i].term.replace_variables(self.variables)
-            self.constraints[i].term.update_variables_precision(self._real_variables)
-            self.constraints[i].term.update_negative_variables_range(self._recentered)
-            self.constraints[i].simplify_terms()
+    # def resize_samples(self, sample):
+    #     for k, v in sample.items():
+    #         value = v
+    #         if k in self._recentered:
+    #             if k in self._real_variables:
+    #                 value /= self._real_variables[k]["precision"]
+    #             value += self._recentered[k]["precision"]
 
-    def resize_samples(self, sample):
-        for k, v in sample.items():
-            value = v
-            if k in self._recentered:
-                if k in self._real_variables:
-                    value /= self._real_variables[k]["precision"]
-                value += self._recentered[k]["precision"]
+    #         elif k in self._real_variables:
+    #             value /= self._real_variables[k]["precision"]
+    #         sample[k] = value
 
-            elif k in self._real_variables:
-                value /= self._real_variables[k]["precision"]
-            sample[k] = value
+    #     return sample
 
-        return sample
+    # def constraint_linearization(self) -> None:
+    #     for v in self.variables.values():
+    #         if v.domain is Domain.REAL:
+    #             raise ValueError("Can not linearize models with real variables.")
+    #         if v.domain is Domain.INTEGER and v.lower_bound < 0:
+    #             raise ValueError("Can not linearize model with variables with negative bounds.")
+    #     pop_list = []
+    #     slack_constraints = []
+    #     for constraint_i, constraint in enumerate(self.constraints):
+    #         lhs = constraint.term.lhs
+    #         if isinstance(lhs, Term) and lhs.operation is Operation.ADD:
+    #             slack_constraints.extend(constraint.linearize())
+    #             pop_list.append(constraint_i)
 
-    def constraint_linearization(self) -> None:
-        for v in self.variables.values():
-            if v.domain is Domain.REAL:
-                raise ValueError("Can not linearize models with real variables.")
-            if v.domain is Domain.INTEGER and v.lower_bound < 0:
-                raise ValueError("Can not linearize model with variables with negative bounds.")
-        pop_list = []
-        slack_constraints = []
-        for constraint_i, constraint in enumerate(self.constraints):
-            lhs = constraint.term.lhs
-            if isinstance(lhs, Term) and lhs.operation is Operation.ADD:
-                slack_constraints.extend(constraint.linearize())
-                pop_list.append(constraint_i)
+    #     pop_list = sorted(pop_list, reverse=True)
+    #     for i in pop_list:
+    #         self.constraints.pop(i)
 
-        pop_list = sorted(pop_list, reverse=True)
-        for i in pop_list:
-            self.constraints.pop(i)
-
-        for sc in slack_constraints:
-            self.add_constraint(sc[0], sc[1])
+    #     for sc in slack_constraints:
+    #         self.add_constraint(sc[0], sc[1])
 
     def to_ham(self) -> QUBO:
         return QUBO.from_model(self)
@@ -645,7 +623,7 @@ class QUBO(Model):
     def _transform_constraint(
         self,
         label: str,
-        term: ConstraintTerm,
+        term: ComparisonTerm,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
     ):
@@ -735,7 +713,7 @@ class QUBO(Model):
     def add_constraint(
         self,
         label: str,
-        term: ConstraintTerm,
+        term: ComparisonTerm,
         lagrange_multiplier: float = 100,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
@@ -751,9 +729,9 @@ class QUBO(Model):
             raise ValueError("The type of penalization for inequality constraints can only be unbalanced or slack.")
 
         if term.operation in {ComparisonOperation.GE, ComparisonOperation.GT}:
-            c = ConstraintTerm(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
+            c = ComparisonTerm(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
         elif term.operation in {ComparisonOperation.LE, ComparisonOperation.LT}:
-            c = ConstraintTerm(lhs=0, rhs=(term.rhs - term.lhs), operation=term.operation)
+            c = ComparisonTerm(lhs=0, rhs=(term.rhs - term.lhs), operation=term.operation)
         else:
             c = copy.copy(term)
 
@@ -796,7 +774,7 @@ class QUBO(Model):
                 raise ValueError("you can not include two different variables with the same name in the model.")
             self._variables[k] = v
 
-    def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.Minimize) -> None:
+    def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         for v in term.variables():
             if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
                 # NOTE: is this needed ???
