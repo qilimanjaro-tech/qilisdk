@@ -29,7 +29,6 @@ from .variables import (
     BinaryVar,
     ComparisonOperation,
     ComparisonTerm,
-    ConstantVar,
     ContinuousVar,
     Domain,
     Operation,
@@ -87,9 +86,9 @@ class Constraint:
     def linearize(self):
 
         for v in self.variables.values():
-            if v.domain is Domain.Real:
+            if v.domain is Domain.REAL:
                 raise ValueError("Can not linearize models with real variables.")
-            if v.domain is Domain.Integer and v.lower_bound < 0:
+            if v.domain is Domain.INTEGER and v.lower_bound < 0:
                 raise ValueError("Can not linearize model with variables with negative bounds.")
 
         lhs = copy.copy(self.term.lhs)
@@ -104,7 +103,7 @@ class Constraint:
                         # quadratic term
                         x = var_list[0]
                         y = var_list[1]
-                        if x.domain is Domain.Binary and y.domain is Domain.Binary:
+                        if x.domain is Domain.BINARY and y.domain is Domain.BINARY:
                             z = BinaryVar(f"linearization_slack_{slack_count}")
                             slack_count += 1
                             slack_constraints.extend(
@@ -118,13 +117,13 @@ class Constraint:
                             lhs.elements[j] = coeff * z
                         elif (
                             (x.domain != y.domain)
-                            and x.domain in {Domain.Binary, Domain.Integer}
-                            and y.domain in {Domain.Binary, Domain.Integer}
+                            and x.domain in {Domain.BINARY, Domain.INTEGER}
+                            and y.domain in {Domain.BINARY, Domain.INTEGER}
                         ):
-                            x = var_list[0] if var_list[0].domain is Domain.Binary else var_list[1]
-                            y = var_list[1] if var_list[0].domain is Domain.Binary else var_list[0]
+                            x = var_list[0] if var_list[0].domain is Domain.BINARY else var_list[1]
+                            y = var_list[1] if var_list[0].domain is Domain.BINARY else var_list[0]
                             z = ContinuousVar(
-                                f"linearization_slack_{slack_count}", domain=Domain.Integer, bounds=y.bounds
+                                f"linearization_slack_{slack_count}", domain=Domain.INTEGER, bounds=y.bounds
                             )
                             slack_count += 1
                             slack_constraints.extend(
@@ -138,7 +137,7 @@ class Constraint:
 
                             lhs.elements[j] = coeff * z
 
-                        elif x.domain is Domain.Integer and y.domain is Domain.Integer:
+                        elif x.domain is Domain.INTEGER and y.domain is Domain.INTEGER:
                             x_ub = x.bounds[1]
                             x_lb = x.bounds[0]
 
@@ -168,8 +167,8 @@ class Constraint:
                                 if ni == 0:
                                     z.append(aux)
 
-                                lam.append(ContinuousVar(f"lambda1_{ni}", Domain.Integer, (0, None)))
-                            lam.append(ContinuousVar(f"lambda1_{n+1}", Domain.Integer, (0, None)))
+                                lam.append(ContinuousVar(f"lambda1_{ni}", Domain.INTEGER, (0, None)))
+                            lam.append(ContinuousVar(f"lambda1_{n+1}", Domain.INTEGER, (0, None)))
 
                             l_z1 = sum(a[i] ** 2 * lam[i] for i in range(n))
 
@@ -239,8 +238,8 @@ class Constraint:
                                     if ni == 0:
                                         z.append(aux)
 
-                                    lam.append(ContinuousVar(f"lambda2_{ni}", Domain.Integer, (0, None)))
-                                lam.append(ContinuousVar(f"lambda2_{n+1}", Domain.Integer, (0, None)))
+                                    lam.append(ContinuousVar(f"lambda2_{ni}", Domain.INTEGER, (0, None)))
+                                lam.append(ContinuousVar(f"lambda2_{n+1}", Domain.INTEGER, (0, None)))
 
                                 l_z2 = sum(a[i] ** 2 * lam[i] for i in range(n))
 
@@ -469,7 +468,7 @@ class Model:
         maxint = 2**53
 
         for k, v in self.variables.items():
-            if v.domain is Domain.Real:
+            if v.domain is Domain.REAL:
                 lower_bound = int(v.lower_bound * precision)
                 upper_bound = int(v.upper_bound * precision)
 
@@ -479,7 +478,7 @@ class Model:
                 self._real_variables[k] = {"var": v, "precision": precision}
 
                 new_var = ContinuousVar(
-                    v.label, domain=Domain.Integer, bounds=(lower_bound, upper_bound), encoding=v.encoding
+                    v.label, domain=Domain.INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
                 )
                 self.variables[k] = new_var
 
@@ -495,7 +494,7 @@ class Model:
         maxint = 2**53
 
         for k, v in self.variables.items():
-            if v.domain is Domain.Real:
+            if v.domain is Domain.REAL:
                 lower_bound = int(v.lower_bound * precision)
                 upper_bound = int(v.upper_bound * precision)
 
@@ -510,12 +509,12 @@ class Model:
 
                 v = ContinuousVar(
                     v.label,
-                    domain=Domain.PositiveInteger,
+                    domain=Domain.POSITIVE_INTEGER,
                     bounds=(lower_bound, upper_bound),
                     encoding=v.encoding,
                 )
                 self.variables[k] = v
-            elif v.domain is Domain.Integer:
+            elif v.domain is Domain.INTEGER:
                 lower_bound = int(v.lower_bound)
                 upper_bound = int(v.upper_bound)
 
@@ -527,7 +526,7 @@ class Model:
                 upper_bound = min(maxint, upper_bound)
 
                 v = ContinuousVar(
-                    v.label, domain=Domain.PositiveInteger, bounds=(lower_bound, upper_bound), encoding=v.encoding
+                    v.label, domain=Domain.POSITIVE_INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
                 )
                 self.variables[k] = v
 
@@ -557,9 +556,9 @@ class Model:
 
     def constraint_linearization(self) -> None:
         for v in self.variables.values():
-            if v.domain is Domain.Real:
+            if v.domain is Domain.REAL:
                 raise ValueError("Can not linearize models with real variables.")
-            if v.domain is Domain.Integer and v.lower_bound < 0:
+            if v.domain is Domain.INTEGER and v.lower_bound < 0:
                 raise ValueError("Can not linearize model with variables with negative bounds.")
         pop_list = []
         slack_constraints = []
@@ -687,7 +686,7 @@ class QUBO(Model):
             if ub_slack == 0:
                 return h**2
 
-            slack = ContinuousVar(f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO)
+            slack = ContinuousVar(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
 
             slack_terms, _ = slack.encode()
             out = h + slack_terms
@@ -726,7 +725,7 @@ class QUBO(Model):
             if ub_slack == 0:
                 return h**2
 
-            slack = ContinuousVar(f"{label}_slack", domain=Domain.PositiveInteger, bounds=(0, ub_slack), encoding=HOBO)
+            slack = ContinuousVar(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
 
             slack_terms, _ = slack.encode()
             out = h + slack_terms
@@ -762,12 +761,12 @@ class QUBO(Model):
             raise ValueError("QUBO models can not contain terms of order 2 or higher.")
 
         for v in c.variables():
-            if v.domain not in {Domain.PositiveInteger, Domain.Binary}:
+            if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
                 # NOTE: is this needed ???
                 raise ValueError(
                     "QUBO models are not supported for variables that are not in the positive integers or binary domains."
                 )
-            if v.domain is Domain.PositiveInteger and v.label not in self.continuous_vars:
+            if v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
@@ -799,12 +798,12 @@ class QUBO(Model):
 
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.Minimize) -> None:
         for v in term.variables():
-            if v.domain not in {Domain.PositiveInteger, Domain.Binary}:
+            if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
                 # NOTE: is this needed ???
                 raise ValueError(
                     "QUBO models are not supported for variables that are not in the positive integers or binary domains."
                 )
-            if v.domain is Domain.PositiveInteger and v.label not in self.continuous_vars:
+            if v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:

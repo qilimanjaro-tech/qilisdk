@@ -17,13 +17,14 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterator, Sequence
+from typing import Iterator, Mapping, Sequence, TypeVar
 
 import numpy as np
 
 from qilisdk.analog.exceptions import NotSupportedOperation
 
 Number = int | float
+GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 
 
@@ -33,34 +34,34 @@ class Side(Enum):
 
 
 class Domain(str, Enum):
-    Integer = "Integer Domain"
-    PositiveInteger = "Positive Integer Domain"
-    Real = "Real Domain"
-    Binary = "Binary Domain"
-    Spin = "Spin Domain"
+    INTEGER = "Integer Domain"
+    POSITIVE_INTEGER = "Positive Integer Domain"
+    REAL = "Real Domain"
+    BINARY = "Binary Domain"
+    SPIN = "Spin Domain"
 
     def check_value(self, value: float) -> bool:
-        if self == Domain.Binary:
+        if self == Domain.BINARY:
             return isinstance(value, int) and value in {0, 1}
-        if self == Domain.Spin:
+        if self == Domain.SPIN:
             return isinstance(value, int) and value in {-1, 1}
-        if self == Domain.Real:
+        if self == Domain.REAL:
             return isinstance(value, (int, float))
-        if self == Domain.Integer:
+        if self == Domain.INTEGER:
             return isinstance(value, int)
-        if self == Domain.PositiveInteger:
+        if self == Domain.POSITIVE_INTEGER:
             return isinstance(value, int) and value >= 0
         return False
 
     def min(self) -> float:
-        if self in {Domain.Binary, Domain.PositiveInteger}:
+        if self in {Domain.BINARY, Domain.POSITIVE_INTEGER}:
             return 0
-        if self == Domain.Spin:
+        if self == Domain.SPIN:
             return -1
         return -1e30
 
     def max(self) -> float:
-        if self in {Domain.Binary, Domain.Spin}:
+        if self in {Domain.BINARY, Domain.SPIN}:
             return 1
         return 1e30
 
@@ -93,7 +94,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
         """Given a continuous variable return a Term that only consists of
             binary variables that represent the continuous variable in the given encoding.
 
@@ -107,7 +108,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
+    def encoding_constraint(var: ContinuousVar, precision: float = 1e-2) -> ComparisonTerm:
         """Given a continuous variable return a Constraint Term that ensures that the encoding is respected.
 
         Args:
@@ -120,7 +121,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
@@ -133,7 +134,7 @@ class Encoding(ABC):
         """
 
     @staticmethod
-    def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
+    def num_binary_equivalent(var: "ContinuousVar", precision: float = 1e-2) -> int:
         """Give a continuous variable return the number of binary variables needed to encode it.
 
         Args:
@@ -159,7 +160,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
+    def term_equals_to(var: ContinuousVar, number: int, precision: float = 1e-2) -> Term:
         """returns a term that is 1 if the variable is equal to the number, else 0.
 
         Args:
@@ -174,10 +175,10 @@ class HOBO(Encoding):
         return "HOBO"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         abs_bound = np.abs(bounds[1] - bounds[0])
         n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
@@ -193,7 +194,8 @@ class HOBO(Encoding):
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
+        # TODO (ameer): allow to map continuous values to binary string of given format.
         if not HOBO.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
         term, binary_var = HOBO.encode(var)
@@ -201,12 +203,14 @@ class HOBO(Encoding):
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
+        binary_dict: dict[Variable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        if var.domain is Domain.Real:
-            term *= 1 / precision
+        if var.domain is Domain.REAL:
+            term *= precision
 
-        out = term.evaluate(binary_dict)
+        out = term.evaluate(binary_dict, precision=precision)
+
+        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
         if not var.domain.check_value(out):
             raise ValueError(
@@ -215,7 +219,7 @@ class HOBO(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
+    def encoding_constraint(var: ContinuousVar, precision: float = 1e-2) -> ComparisonTerm:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
@@ -229,10 +233,10 @@ class HOBO(Encoding):
         raise NotImplementedError("HOBO encoding constraints are not supported at the moment")
 
     @staticmethod
-    def num_binary_equivalent(var: "ContinuousVar", precision: int = 100) -> int:
+    def num_binary_equivalent(var: "ContinuousVar", precision: float = 1e-2) -> int:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.floor(np.log2(np.abs(bounds[1] - bounds[0]))))
 
@@ -243,12 +247,12 @@ class HOBO(Encoding):
         return True, 0
 
     @staticmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
+    def term_equals_to(var: ContinuousVar, number: int, precision: float = 1e-2) -> Term:
         encoded_num: list[int] = []
 
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         abs_bound = np.abs(bounds[1] - bounds[0])
         n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
@@ -286,23 +290,21 @@ class OneHot(Encoding):
         return "ONE HOT"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
-        if var.domain is Domain.Real:
+        if var.domain is Domain.REAL:
             bounds = (precision * bounds[0], precision * bounds[1])
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
 
-        term = sum((bounds[0] + i) * binary_vars[i] for i in range(n_binary))
-
-        # term += bounds[0]
+        term = Term([(bounds[0] + i) * binary_vars[i] for i in range(n_binary)], Operation.ADD)
 
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
         if not OneHot.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the one hot encoding.")
 
@@ -311,12 +313,14 @@ class OneHot(Encoding):
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
+        binary_dict: dict[Variable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        if var.domain is Domain.Real:
-            term *= 1 / precision
+        if var.domain is Domain.REAL:
+            term *= precision
 
-        out = term.evaluate(binary_dict)
+        out = term.evaluate(binary_dict, precision=precision)
+
+        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
         if not var.domain.check_value(out):
             raise ValueError(
@@ -326,10 +330,10 @@ class OneHot(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
+    def encoding_constraint(var: ContinuousVar, precision: float = 1e-2) -> ComparisonTerm:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
@@ -337,10 +341,10 @@ class OneHot(Encoding):
         return ComparisonTerm(1, sum(binary_vars), ComparisonOperation.EQ)
 
     @staticmethod
-    def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
+    def num_binary_equivalent(var: ContinuousVar, precision: float = 1e-2) -> int:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
@@ -352,11 +356,11 @@ class OneHot(Encoding):
         return num_ones == 1, (num_ones - 1) ** 2
 
     @staticmethod
-    def term_equals_to(var: "ContinuousVar", number: int, precision: int = 100) -> Term:
+    def term_equals_to(var: "ContinuousVar", number: int, precision: float = 1e-2) -> Term:
         out_term = Term([1], Operation.MUL)
-        if var.domain is Domain.Real:
+        if var.domain is Domain.REAL:
             for i in range(var.num_binary_equivalent()):
-                out_term *= (1 - var[i]) if i != number * precision else var[i]
+                out_term *= (1 - var[i]) if i != number / precision else var[i]
         else:
             for i in range(var.num_binary_equivalent()):
                 out_term *= (1 - var[i]) if i != number else var[i]
@@ -369,10 +373,10 @@ class DomainWall(Encoding):
         return "Domain Wall"
 
     @staticmethod
-    def encode(var: ContinuousVar, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
+    def encode(var: ContinuousVar, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
 
@@ -387,7 +391,7 @@ class DomainWall(Encoding):
         return term, binary_vars
 
     @staticmethod
-    def evaluate(var: ContinuousVar, binary_list: list[int], precision: int = 100) -> float:
+    def evaluate(var: ContinuousVar, binary_list: list[int], precision: float = 1e-2) -> float:
         if not DomainWall.check_valid(binary_list=binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
         term, binary_var = DomainWall.encode(var)
@@ -395,12 +399,14 @@ class DomainWall(Encoding):
         if len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict = {binary_var[i].label: binary_list[i] for i in range(len(binary_list))}
+        binary_dict: dict[Variable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        if var.domain is Domain.Real:
-            term *= 1 / precision
+        if var.domain is Domain.REAL:
+            term *= precision
 
-        out = term.evaluate(binary_dict)
+        out = term.evaluate(binary_dict, precision)
+
+        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
         if not var.domain.check_value(out):
             raise ValueError(
@@ -409,10 +415,10 @@ class DomainWall(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: ContinuousVar, precision: int = 100) -> ComparisonTerm:
+    def encoding_constraint(var: ContinuousVar, precision: float = 1e-2) -> ComparisonTerm:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
@@ -424,10 +430,10 @@ class DomainWall(Encoding):
         )
 
     @staticmethod
-    def num_binary_equivalent(var: ContinuousVar, precision: int = 100) -> int:
+    def num_binary_equivalent(var: ContinuousVar, precision: float = 1e-2) -> int:
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
 
@@ -439,7 +445,7 @@ class DomainWall(Encoding):
         return value == 0, value
 
     @staticmethod
-    def term_equals_to(var: ContinuousVar, number: int, precision: int = 100) -> Term:
+    def term_equals_to(var: ContinuousVar, number: int, precision: float = 1e-2) -> Term:
         encoded_num: list[int] = []
         aux_number = number
 
@@ -450,8 +456,8 @@ class DomainWall(Encoding):
                 encoded_num.append(0)
 
         bounds = var.bounds
-        if var.domain is Domain.Real:
-            bounds = (precision * bounds[0], precision * bounds[1])
+        if var.domain is Domain.REAL:
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         aux_number -= int(bounds[0])
 
@@ -597,7 +603,7 @@ class Variable:
     def num_binary_equivalent(self) -> int:
         raise NotImplementedError
 
-    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
+    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:
         raise NotImplementedError
 
     def compare(self, other: Variable) -> bool:
@@ -612,7 +618,7 @@ class Variable:
         """
         return hash(self) == hash(other)
 
-    def replace_variable(self, var_dict: dict[str, Variable]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         """Replaces the information of the variable with those coming from the dictionary
         if the variable label is in the dictionary
 
@@ -620,9 +626,9 @@ class Variable:
             var_dict (dict): A dictionary that holds the labels of the variables to be
                             changed alongside the new values they should take
         """
-        if self.label in var_dict:
-            self._domain = var_dict[self.label].domain
-            self._bounds = var_dict[self.label].bounds
+
+        self._domain = domain
+        self.set_bounds(bounds[0], bounds[1])
 
     def __copy__(self) -> Variable:
         return Variable(label=self.label, domain=self.domain)
@@ -725,15 +731,18 @@ class Variable:
 
 class BinaryVar(Variable):
     def __init__(self, label: str) -> None:
-        super().__init__(label=label, domain=Domain.Binary)
+        super().__init__(label=label, domain=Domain.BINARY)
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:  # noqa: PLR6301
+    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
         if len(binary_list) != 1:
             raise ValueError("Evaluating a Binary variable with a binary list of more than one item.")
         return binary_list[0]
+
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+        raise NotImplementedError
 
     def __copy__(self) -> BinaryVar:
         return BinaryVar(label=self.label)
@@ -741,12 +750,15 @@ class BinaryVar(Variable):
 
 class SpinVar(Variable):
     def __init__(self, label: str) -> None:
-        super().__init__(label=label, domain=Domain.Spin, bounds=(-1, 1))
+        super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:  # noqa: PLR6301
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+        raise NotImplementedError
+
+    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
         if len(binary_list) != 1:
             raise ValueError("Evaluating a Spin variable with a binary list of more than one item.")
         return -1 if binary_list[0] == 0 else 1
@@ -779,56 +791,43 @@ class ContinuousVar(Variable):
     def __getitem__(self, item: int) -> BinaryVar:
         return self._bin_vars[item]
 
-    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
+    def update_variable(
+        self, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] | None = None
+    ) -> None:
+        self._encoding = encoding if encoding is not None else self._encoding
+        return super().update_variable(domain, bounds)
+
+    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:
+        if len(binary_list) == 1:
+            if not self.domain.check_value(binary_list[0]):
+                raise ValueError(f"The value {binary_list} is invalid for the domain {self.domain.value}")
+            if self.domain == Domain.REAL:
+                return binary_list[0] * precision
+            return binary_list[0]
         return self.encoding.evaluate(self, binary_list, precision=precision)
 
-    def encode(self, precision: int = 100) -> tuple[Term, list[BinaryVar]]:
+    def encode(self, precision: float = 1e-2) -> tuple[Term, list[BinaryVar]]:
         self._term, self._bin_vars = self.encoding.encode(self, precision=precision)
         return self._term, self._bin_vars
 
-    def num_binary_equivalent(self, precision: int = 100) -> int:
+    def num_binary_equivalent(self, precision: float = 1e-2) -> int:
         return self.encoding.num_binary_equivalent(self, precision=precision)
 
     def check_valid(self, binary_list: list[int]) -> tuple[bool, int]:
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self, precision: int = 100) -> ComparisonTerm:
+    def encoding_constraint(self, precision: float = 1e-2) -> ComparisonTerm:
         return self.encoding.encoding_constraint(self, precision=precision)
 
-    def term_equals_to(self, number: int, precision: int = 100) -> Term:
+    def term_equals_to(self, number: int, precision: float = 1e-2) -> Term:
         return self.encoding.term_equals_to(self, number, precision)
-
-
-class ConstantVar(Variable):
-    def __init__(self, value: Number) -> None:
-        super().__init__(label=str(value), domain=Domain.Real)
-        self._value = value
-
-    @property
-    def value(self) -> Number:
-        return self._value
-
-    def evaluate(self, binary_list: list[int], precision: int = 100) -> float:
-        return float(self.value)
-
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
-        return 0
-
-    def __copy__(self) -> ConstantVar:
-        return ConstantVar(self.value)
-
-    def __repr__(self) -> str:
-        return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
-
-    def __str__(self) -> str:
-        return f"{np.round(self.value, 5)}" if self.value >= 0 else f"({np.round(self.value, 5)})"
 
 
 # Terms ###
 
 
 class Term:
-    CONST = Variable(CONST_KEY, Domain.Real)
+    CONST = Variable(CONST_KEY, Domain.REAL)
 
     def __init__(self, elements: Sequence[Variable | Term | Number], operation: Operation) -> None:
         self._operation = operation
@@ -885,83 +884,50 @@ class Term:
     # TO  BE IMPLEMENTED #################################################
     @property
     def degree(self) -> int:
-        pass
+        degree = 0
+        for element in self:
+            if isinstance(element, Term):
+                degree = max(degree, element.degree)
+            elif isinstance(element, Variable) and not self.is_constant(element):
+                degree = max(degree, int(self[element])) if self.operation == Operation.MUL else max(degree, 1)
+        return degree
 
     def replace_variables(self, var_dict: dict[Variable, Variable]) -> None:
-        for i, _ in enumerate(self.elements):
-            self.elements[i].replace_variable(var_dict)
+        for var, replacement_var in var_dict.items():
+            if var in self and isinstance(var, ContinuousVar):
+                if isinstance(replacement_var, ContinuousVar):
+                    var.update_variable(
+                        domain=replacement_var.domain, bounds=replacement_var.bounds, encoding=replacement_var.encoding
+                    )
+                else:
+                    raise ValueError(
+                        f"Can't update the variable {var} because the {replacement_var} is not of the same type as {var}"
+                    )
 
     def to_binary(self) -> Term:
-        """
-        Replaces the variable in the expression for the term indicated in the dictionary
-        """
-
-        if self.operation not in [Operation.ADD, Operation.MUL]:
+        if self.operation not in {Operation.ADD, Operation.MUL}:
             raise ValueError("Can not evaluate any operation that is not Addition of Multiplication")
-        out = 0 if self.operation is Operation.ADD else 1
-        for e in self.elements:
+        out_list: list[Variable | Term | Number] = []
+        for e in self:
             if isinstance(e, Term):
-                out = _apply_operation(out, self.operation, e.to_binary())
-            elif isinstance(e, ConstantVar):
-                out = _apply_operation(out, self.operation, e.value)
+                out_list.append(self[e] * e.to_binary())
             elif isinstance(e, Variable):
+                if self.is_constant(e):
+                    out_list.append(self[e])
                 if isinstance(e, ContinuousVar):
                     x, _ = e.encode()
-                    out = _apply_operation(out, self.operation, x)
+                    out_list.append(self[e] * x)
                 else:
-                    out = _apply_operation(out, self.operation, e)
+                    out_list.append(self[e] * e)
             else:
                 raise ValueError(f"Evaluating term with elements of type {e.__class__} is not supported.")
 
-        return out
+        return Term(out_list, self.operation)
 
-    def update_variables_precision(self, var_dict: dict[Variable, Variable]) -> None:
-        """
-        var_dict = {'<var_name>' : {'var' : <var>, 'precision': #number}}
-
-        Args:
-            var_dict (dict): _description_
-        """
-
-        if self.operation is Operation.ADD:
-            for i, e in enumerate(self.elements):
-                if isinstance(e, Term):
-                    if e.operation is Operation.MUL:
-                        for var in e.variables():
-                            if var.label in var_dict:
-                                e /= var_dict[var.label]["precision"]
-                                self.elements[i] = e
-                elif isinstance(e, Variable):
-                    if e.label in var_dict:
-                        e /= var_dict[e.label]["precision"]
-                        self.elements[i] = e
-        elif self.operation is Operation.MUL:
-            exp = copy.copy(self)
-            for var in self.variables():
-                if var.label in var_dict:
-                    exp /= var_dict[var.label]["precision"]
-                    self._elements = exp.elements
-
-    def update_negative_variables_range(self, var_dict: dict[Variable, Variable]) -> None:
-        """
-        var_dict = {'<var_name>' : {'var' : <var>, 'precision': #number, 'original_bounds': (#number, #number)}}
-
-        Args:
-            var_dict (dict): _description_
-        """
-        out = copy.copy(self)
-
-        if out.operation is Operation.ADD:
-            for i, e in enumerate(out.elements):
-                if isinstance(e, Term):
-                    if e.operation is Operation.MUL:
-                        for var in e.variables():
-                            if var.label in var_dict:
-                                out += var_dict[var.label]["precision"]
-                elif isinstance(e, Variable):
-                    if e.label in var_dict:
-                        out += var_dict[e.label]["precision"]
-        self._elements = out.elements
+    def update_negative_variables_range(self, var_dict: dict[Variable, tuple[float | None, float | None]]) -> None:
+        for var, bounds in var_dict.items():
+            if var in self and isinstance(var, ContinuousVar):
+                var.update_variable(domain=var.domain, bounds=bounds, encoding=var.encoding)
 
     # DONE ################################################################
 
@@ -1052,14 +1018,13 @@ class Term:
         for p in to_be_popped:
             self._elements.pop(p)
 
-    def evaluate(self, var_values: dict[Variable, list[int]], precision: int = 100) -> float:
+    def evaluate(self, var_values: Mapping[Variable, list[int]], precision: float = 1e-2) -> float:
         for var in self.variables():
             if var not in var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
         for e in self:
             if isinstance(e, Term):
-
                 output = self._apply_operation_on_constants([output, e.evaluate(var_values, precision) * self[e]])
             elif isinstance(e, Variable):
                 if e.compare(self.CONST):
@@ -1067,6 +1032,11 @@ class Term:
                 else:
                     output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) * self[e]])
         return output
+
+    def get_constant(self) -> Number:
+        if self.CONST in self:
+            return self[self.CONST]
+        return 0 if self.operation in {Operation.ADD, Operation.SUB} else 1
 
     def __copy__(self) -> Term:
         return Term(copy.copy(self.to_list()), self.operation)
@@ -1266,7 +1236,7 @@ class ComparisonTerm:
             return v1 != v2
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
-    def evaluate(self, var_values: dict[Variable, list[int]], precision: int = 100) -> bool:
+    def evaluate(self, var_values: dict[Variable, list[int]], precision: float = 1e-2) -> bool:
         return self._apply_comparison_operation(
             self._lhs.evaluate(var_values, precision), self._rhs.evaluate(var_values, precision)
         )
@@ -1275,13 +1245,7 @@ class ComparisonTerm:
         self.lhs.replace_variables(var_dict)
         self.rhs.replace_variables(var_dict)
 
-    def update_variables_precision(self, var_dict: dict[Variable, Variable]) -> None:
-        if isinstance(self.lhs, Term):
-            self.lhs.update_variables_precision(var_dict)
-        if isinstance(self.rhs, Term):
-            self.rhs.update_variables_precision(var_dict)
-
-    def update_negative_variables_range(self, var_dict: dict[Variable, Variable]) -> None:
+    def update_negative_variables_range(self, var_dict: dict[Variable, tuple[float | None, float | None]]) -> None:
         if isinstance(self.lhs, Term):
             self.lhs.update_negative_variables_range(var_dict)
         if isinstance(self.rhs, Term):
@@ -1296,6 +1260,8 @@ class ComparisonTerm:
     __str__ = __repr__
 
     def __bool__(self) -> bool:
+        if self.rhs.degree == self.lhs.degree == 0:
+            return self.rhs.get_constant() == self.lhs.get_constant()
         raise TypeError(
             "Symbolic Constraint Term objects do not have an inherent truth value. "
             "Use a method like .evaluate() to obtain a Boolean value."
