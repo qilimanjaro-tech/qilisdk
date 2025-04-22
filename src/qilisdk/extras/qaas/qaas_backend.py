@@ -66,8 +66,6 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     """
 
     _api_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1"
-    _authorization_request_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1/authorisation-tokens"
-    _authorization_refresh_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1/authorisation-tokens/refresh"
 
     def __init__(self) -> None:
         """
@@ -124,7 +122,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    QaaSBackend._authorization_request_url,
+                    QaaSBackend._api_url + "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
@@ -157,7 +155,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             devices_list_adapter = TypeAdapter(list[Device])
             devices = devices_list_adapter.validate_python(response.json()["items"])
 
-            # Previous 2 lines are the same as doing:
+            # Previous two lines are the same as doing:
             # response_json = response.json()
             # devices = [Device(**item) for item in response_json["items"]]
 
