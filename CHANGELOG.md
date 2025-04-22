@@ -1,3 +1,12 @@
+# Qilisdk 0.1.2 (2025-04-22)
+
+### Misc
+
+- Improved `QaaSBacked` functionality to include methods for executing digital and analog algorithms.
+  
+  [PR #27](https://github.com/qilimanjaro-tech/qilisdk/pulls/27)
+
+
 # Qilisdk 0.1.1 (2025-04-11)
 
 ### Misc
