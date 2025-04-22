@@ -17,27 +17,38 @@ import json
 import logging
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import httpx
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.digital.digital_backend import DigitalBackend
 
 from .keyring import delete_credentials, load_credentials, store_credentials
-from .models import Device, Token
+from .models import (
+    AnalogPayload,
+    Device,
+    DigitalPayload,
+    ExecutePayload,
+    ExecutePayloadType,
+    ExecuteResponse,
+    TimeEvolutionPayload,
+    Token,
+    VQEPayload,
+)
 from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
-    from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-    from qilisdk.analog.quantum_objects import QuantumObject
-    from qilisdk.analog.schedule import Schedule
-    from qilisdk.common.algorithm import Algorithm
-    from qilisdk.digital.circuit import Circuit
+    from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
+    from qilisdk.analog.hamiltonian import PauliOperator
+    from qilisdk.common.optimizer import Optimizer
+    from qilisdk.digital import VQE, Circuit
 
     from .qaas_analog_result import QaaSAnalogResult
     from .qaas_digital_result import QaaSDigitalResult
+    from .qaas_time_evolution_result import QaaSTimeEvolutionResult
+    from .qaas_vqe_result import QaaSVQEResult
 
 logging.basicConfig(
     format="%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG
@@ -55,8 +66,6 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     """
 
     _api_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1"
-    _authorization_request_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1/authorisation-tokens"
-    _authorization_refresh_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1/authorisation-tokens/refresh"
 
     def __init__(self) -> None:
         """
@@ -70,6 +79,14 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 "Please call QaaSBackend.login(username, apikey) or ensure environment variables are set."
             )
         self._username, self._token = credentials
+        self._selected_device: Device | None = None
+
+    @property
+    def selected_device(self) -> Device | None:
+        return self._selected_device
+
+    def set_device(self, device: Device) -> None:
+        self._selected_device = device
 
     @classmethod
     def login(
@@ -105,7 +122,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    QaaSBackend._authorization_request_url,
+                    QaaSBackend._api_url + "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
@@ -134,12 +151,37 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
             )
             response.raise_for_status()
-            response_json = response.json()
-            devices = [Device(**item) for item in response_json["items"]]
+
+            devices_list_adapter = TypeAdapter(list[Device])
+            devices = devices_list_adapter.validate_python(response.json()["items"])
+
+            # Previous two lines are the same as doing:
+            # response_json = response.json()
+            # devices = [Device(**item) for item in response_json["items"]]
+
             return devices
 
+    def _ensure_device_selected(self) -> Device:
+        if self._selected_device is None:
+            raise ValueError("Device not selected.")
+        return self._selected_device
+
     def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
-        raise NotImplementedError
+        device = self._ensure_device_selected()
+        payload = ExecutePayload(
+            type=ExecutePayloadType.DIGITAL,
+            device_id=device.id,
+            digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
+        )
+        with httpx.Client(timeout=20.0) as client:
+            response = client.post(
+                QaaSBackend._api_url + "/execute",
+                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+                json=payload.model_dump_json(),
+            )
+            response.raise_for_status()
+            execute_response = ExecuteResponse(**response.json())
+            return cast("QaaSDigitalResult", execute_response.digital_result)
 
     def evolve(
         self,
@@ -148,7 +190,65 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
     ) -> QaaSAnalogResult:
-        raise NotImplementedError
+        device = self._ensure_device_selected()
+        payload = ExecutePayload(
+            type=ExecutePayloadType.ANALOG,
+            device_id=device.id,
+            analog_payload=AnalogPayload(
+                schedule=schedule,
+                initial_state=initial_state,
+                observables=observables,
+                store_intermediate_results=store_intermediate_results,
+            ),
+        )
+        with httpx.Client(timeout=20.0) as client:
+            response = client.post(
+                QaaSBackend._api_url + "/execute",
+                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+                json=payload.model_dump_json(),
+            )
+            response.raise_for_status()
+            execute_response = ExecuteResponse(**response.json())
+            return cast("QaaSAnalogResult", execute_response.analog_result)
 
-    def run(self, algorithm: Algorithm) -> None:
-        raise NotImplementedError
+    def run_vqe(
+        self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
+    ) -> QaaSVQEResult:
+        device = self._ensure_device_selected()
+        payload = ExecutePayload(
+            type=ExecutePayloadType.VQE,
+            device_id=device.id,
+            vqe_payload=VQEPayload(
+                vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
+            ),
+        )
+        with httpx.Client(timeout=20.0) as client:
+            response = client.post(
+                QaaSBackend._api_url + "/execute",
+                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+                json=payload.model_dump_json(),
+            )
+            response.raise_for_status()
+            execute_response = ExecuteResponse(**response.json())
+            return cast("QaaSVQEResult", execute_response.vqe_result)
+
+    def run_time_evolution(
+        self, time_evolution: TimeEvolution, store_intermediate_results: bool = False
+    ) -> QaaSTimeEvolutionResult:
+        device = self._ensure_device_selected()
+        payload = ExecutePayload(
+            type=ExecutePayloadType.TIME_EVOLUTION,
+            device_id=device.id,
+            time_evolution_payload=TimeEvolutionPayload(
+                time_evolution=time_evolution, store_intermediate_results=store_intermediate_results
+            ),
+        )
+        with httpx.Client(timeout=20.0) as client:
+            response = client.post(
+                QaaSBackend._api_url + "/execute",
+                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+                json=payload.model_dump_json(),
+            )
+            response.raise_for_status()
+            execute_response = ExecuteResponse(**response.json())
+            return cast("QaaSTimeEvolutionResult", execute_response.time_evolution_result)
