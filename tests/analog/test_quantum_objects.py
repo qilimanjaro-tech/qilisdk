@@ -80,8 +80,8 @@ def test_dag():
     """Test that the dagger (adjoint) method returns the conjugate transpose."""
     arr = np.array([[1 + 2j, 2], [3, 4 + 5j]])
     qobj = QuantumObject(arr)
-    dag_qobj = qobj.adjoint()
-    np.testing.assert_array_equal(dag_qobj.dense, arr.conj().T)
+    dagger_qobj = qobj.adjoint()
+    np.testing.assert_array_equal(dagger_qobj.dense, arr.conj().T)
 
 
 def test_ptrace_valid():
