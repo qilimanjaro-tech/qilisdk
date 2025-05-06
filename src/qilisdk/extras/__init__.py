@@ -25,7 +25,7 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
     ),
     OptionalFeature(
         name="qaas",
-        dependencies=["httpx", "keyring", "pydantic", "pydantic-settings"],
+        dependencies=["httpx", "keyring"],
         symbols=[Symbol(path="qilisdk.extras.qaas.qaas_backend", name="QaaSBackend")],
     ),
 ]
