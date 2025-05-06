@@ -75,7 +75,7 @@ class QuantumObject:
         # Valid shapes are operators = (2**N, 2**N) (scalars included), bra's = (1, 2**N) / (2**N,), or ket's =(2**N, 1):
         valid_shape = self.is_operator() or self.is_ket() or self.is_bra()
 
-        if len(self._data.shape) != 2 or not valid_shape:
+        if len(self._data.shape) != 2 or not valid_shape:  # noqa: PLR2004
             raise ValueError(
                 "Dimension of data is wrong. expected data to have shape similar to (2**N, 2**N), (1, 2**N), (2**N, 1)",
                 f"but received {self._data.shape}",
@@ -332,7 +332,7 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is an operator, False otherwise.
         """
-        self._data.shape[1] == self._data.shape[0] and self._data.shape[0].bit_count() == 1
+        return self._data.shape[1] == self._data.shape[0] and self._data.shape[0].bit_count() == 1
 
     def is_density_matrix(self, tol: float = 1e-8) -> bool:
         """
