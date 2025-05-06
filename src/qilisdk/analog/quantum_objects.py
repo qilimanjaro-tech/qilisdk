@@ -24,7 +24,6 @@ from scipy.sparse.linalg import norm as scipy_norm
 from qilisdk.yaml import yaml
 
 Complex = int | float | complex
-TWO = 2
 
 
 @yaml.register_class
@@ -66,7 +65,7 @@ class QuantumObject:
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
         invalid_shape = (
-            len(self._data.shape) > TWO
+            len(self._data.shape) > 2
             or (self._data.shape[0] == 1 and self._data.shape[1].bit_count() != 1)
             or (self._data.shape[1] == 1 and self._data.shape[0].bit_count() != 1)
             or (self._data.shape[0] != self._data.shape[1] and self._data.shape[0] != 1 and self._data.shape[1] != 1)
