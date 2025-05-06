@@ -413,7 +413,7 @@ class QuantumObject:
         return f"{self.dense}"
 
 
-# TODO: Until here reviewed by Guillermo Abad Lopez!
+# TODO (Guillermo Abad Lopez): Until here reviewed
 
 ###############################################################################
 # Outside class Function Definitions
