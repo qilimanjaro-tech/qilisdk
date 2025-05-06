@@ -134,14 +134,15 @@ class QuantumObject:
         out = QuantumObject(self._data.conj().T)
         return out
 
+    # TODO: Check parcial trace
     def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
         """
         Compute the partial trace over subsystems not in 'keep'.
 
         This method calculates the reduced density matrix by tracing out
-        the subsystems that are not specified in the 'keep' parameter. The
-        input 'dims' represents the dimensions of each subsystem, and 'keep'
-        indicates the indices of the subsystems to be retained.
+        the subsystems that are not specified in the 'keep' parameter.
+        The input 'dims' represents the dimensions of each subsystem,
+        and 'keep' indicates the indices of the subsystems to be retained.
 
         Args:
             dims (list[int]): A list specifying the dimensions of each subsystem.
@@ -207,8 +208,7 @@ class QuantumObject:
         """
         Compute the norm of the QuantumObject.
 
-        For density matrices, the norm order can be specified. For state vectors,
-        the norm is computed accordingly.
+        For density matrices, the norm order can be specified. For state vectors, the norm is computed accordingly.
 
         Args:
             order (int or {"fro", "tr"}, optional): The order of the norm.
@@ -290,8 +290,7 @@ class QuantumObject:
         """
         Determine if the QuantumObject is a valid density matrix.
 
-        A valid density matrix must be square, Hermitian, positive semi-definite,
-        and have a trace equal to 1.
+        A valid density matrix must be square, Hermitian, positive semi-definite,and have a trace equal to 1.
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity,
@@ -387,8 +386,7 @@ def basis(N: int, n: int) -> QuantumObject:
     """
     Generate the basis vector representation of a Fock state.
 
-    This function creates a column vector (ket) representing the Fock state |n⟩
-    in a Hilbert space of dimension N.
+    This function creates a column vector (ket) representing the Fock state |n⟩ in a Hilbert space of dimension N.
 
     Args:
         N (int): The dimension of the Hilbert space (number of Fock states).
@@ -404,9 +402,8 @@ def ket(*state: int) -> QuantumObject:
     """
     Generate a ket state for a multi-qubit system.
 
-    This function creates a tensor product of individual qubit states (kets)
-    based on the input values. Each input must be either 0 or 1. For example,
-    ket(0, 1) creates a two-qubit ket state |0⟩ ⊗ |1⟩.
+    This function creates a tensor product of individual qubit states (kets) based on the input values.
+    Each input must be either 0 or 1. For example, ket(0, 1) creates a two-qubit ket state |0⟩ ⊗ |1⟩.
 
     Args:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
@@ -426,9 +423,8 @@ def bra(*state: int) -> QuantumObject:
     """
     Generate a bra state for a multi-qubit system.
 
-    This function creates a tensor product of individual qubit states (bras)
-    based on the input values. Each input must be either 0 or 1. For example,
-    bra(0, 1) creates a two-qubit bra state ⟨0| ⊗ ⟨1|.
+    This function creates a tensor product of individual qubit states (bras) based on the input values.
+    Each input must be either 0 or 1. For example, bra(0, 1) creates a two-qubit bra state ⟨0| ⊗ ⟨1|.
 
     Args:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
