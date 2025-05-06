@@ -456,7 +456,7 @@ def ket(*state: int) -> QuantumObject:
         QuantumObject: A QuantumObject representing the multi-qubit ket state.
     """
     if any(s not in {0, 1} for s in state):
-        raise ValueError("the state can only be 1 or 0.")
+        raise ValueError(f"the state can only contain 1s or 0s. But received: {state}")
 
     return tensor_prod([QuantumObject(csc_array(([1], ([s], [0])), shape=(2, 1))) for s in state])
 
@@ -478,7 +478,7 @@ def bra(*state: int) -> QuantumObject:
         QuantumObject: A QuantumObject representing the multi-qubit bra state.
     """
     if any(s not in {0, 1} for s in state):
-        raise ValueError("the state can only be 1 or 0.")
+        raise ValueError(f"the state can only contain 1s or 0s. But received:: {state}")
 
     return tensor_prod([QuantumObject(csc_array(([1], ([0], [s])), shape=(1, 2))) for s in state])
 
@@ -514,6 +514,9 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
     Args:
         operator (QuantumObject): The quantum operator represented as a QuantumObject.
         state (QuantumObject): The quantum state or density matrix represented as a QuantumObject.
+
+    Raises:
+        ValueError: If the operator is not a square matrix.
 
     Returns:
         Complex: The expectation value. The result is guaranteed to be real if the operator
