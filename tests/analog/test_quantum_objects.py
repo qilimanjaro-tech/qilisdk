@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse import csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect, ket, tensor
+from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor
 
 # --- Constructor Tests ---
 
@@ -381,7 +381,7 @@ def test_expect_density():
     """Test the expectation value for a density matrix using the identity operator."""
     qdm = ket(0).to_density_matrix()
     identity = QuantumObject(np.eye(2))
-    exp_val = expect(identity, qdm)
+    exp_val = expect_val(identity, qdm)
     # For a valid density matrix, trace(identity * rho) should be 1.
     assert np.isclose(exp_val, 1)
 
@@ -390,6 +390,6 @@ def test_expect_ket():
     """Test the expectation value for a ket state using the identity operator."""
     qket_obj = ket(0)
     identity = QuantumObject(np.eye(2))
-    exp_val = expect(identity, qket_obj)
+    exp_val = expect_val(identity, qket_obj)
     # For a normalized ket, ⟨ψ|I|ψ⟩ should equal 1.
     assert np.isclose(exp_val, 1)

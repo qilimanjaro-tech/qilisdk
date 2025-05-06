@@ -504,7 +504,7 @@ def tensor(operators: list[QuantumObject]) -> QuantumObject:
     return QuantumObject(out)
 
 
-def expect(operator: QuantumObject, state: QuantumObject) -> Complex:
+def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
     """
     Calculate the expectation value of an operator with respect to a quantum state.
 
@@ -519,6 +519,9 @@ def expect(operator: QuantumObject, state: QuantumObject) -> Complex:
         Complex: The expectation value. The result is guaranteed to be real if the operator
                  is Hermitian, and may be complex otherwise.
     """
+    if not operator.is_operator():
+        raise ValueError("The operator must be a square matrix.")
+
     if state.data.shape[1] == state.data.shape[0]:
         return (operator @ state).dense.trace()
 
