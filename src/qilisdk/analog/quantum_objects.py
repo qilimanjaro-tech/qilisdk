@@ -67,12 +67,10 @@ class QuantumObject:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
         invalid_shape = (
             len(self._data.shape) > TWO
-            or (self._data.shape[0] == 1 and self._data.shape[1] != 1 and self._data.shape[1] % 2 != 0)
-            or (self._data.shape[1] == 1 and self._data.shape[0] != 1 and self._data.shape[0] % 2 != 0)
+            or (self._data.shape[0] == 1 and self._data.shape[1].bit_count() != 1)
+            or (self._data.shape[1] == 1 and self._data.shape[0].bit_count() != 1)
             or (self._data.shape[0] != self._data.shape[1] and self._data.shape[0] != 1 and self._data.shape[1] != 1)
-            or (
-                self._data.shape[1] == self._data.shape[0] and self._data.shape[0] % 2 != 0 and self._data.shape[0] != 1
-            )
+            or (self._data.shape[1] == self._data.shape[0] and self._data.shape[0].bit_count() != 1)
         )
         if invalid_shape:
             raise ValueError(
