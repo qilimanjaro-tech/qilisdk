@@ -30,7 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cuda = [
-    "cudaq==0.9.1",
+    "cudaq==0.10.0",
 ]
 qaas = [
     "httpx>=0.28.1",
