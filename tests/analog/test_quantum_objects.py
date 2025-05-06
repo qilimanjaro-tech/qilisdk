@@ -288,9 +288,9 @@ def test_is_scalar():
 def test_is_dm():
     """Test is_dm: density matrices (from ket) should pass, while non-dm matrices should not."""
     qdm = ket(0).to_density_matrix()
-    assert qdm.is_dm()
+    assert qdm.is_density_matrix()
     non_dm = QuantumObject(np.array([[1, 2], [3, 4]]))
-    assert not non_dm.is_dm()
+    assert not non_dm.is_density_matrix()
 
 
 def test_is_herm():

@@ -26,6 +26,11 @@ from qilisdk.yaml import yaml
 Complex = int | float | complex
 
 
+###############################################################################
+# Main Class Definition
+###############################################################################
+
+
 @yaml.register_class
 class QuantumObject:
     """
@@ -38,7 +43,7 @@ class QuantumObject:
 
     The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
     efficient arithmetic and manipulation. The expected shapes for the data are:
-      - (2**N, 2**N) for operators or density matrices,
+      - (2**N, 2**N) for operators or density matrices (or scalars),
       - (2**N, 1) for ket states,
       - (1, 2**N) or (2**N,) for bra states.
     """
@@ -53,7 +58,8 @@ class QuantumObject:
 
         Args:
             data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
-                representing a quantum state or operator.
+                representing a quantum state or operator. Should be of shape; (2**N, 2**N) = operator
+                (1, 2**N) = ket, (2**N, 1) or (2**N,) = bra, or (1, 1) = scalar,
 
         Raises:
             ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,
@@ -65,18 +71,17 @@ class QuantumObject:
             self._data = data.tocsr()
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
-        invalid_shape = (
-            len(self._data.shape) > 2  # noqa: PLR2004
-            or (self._data.shape[0] == 1 and self._data.shape[1].bit_count() != 1)
-            or (self._data.shape[1] == 1 and self._data.shape[0].bit_count() != 1)
-            or (self._data.shape[0] != self._data.shape[1] and self._data.shape[0] != 1 and self._data.shape[1] != 1)
-            or (self._data.shape[1] == self._data.shape[0] and self._data.shape[0].bit_count() != 1)
-        )
-        if invalid_shape:
+
+        # Valid shapes are operators = (2**N, 2**N) (scalars included), bra's = (1, 2**N) / (2**N,), or ket's =(2**N, 1):
+        valid_shape = self.is_operator() or self.is_ket() or self.is_bra()
+
+        if len(self._data.shape) != 2 or not valid_shape:
             raise ValueError(
                 "Dimension of data is wrong. expected data to have shape similar to (2**N, 2**N), (1, 2**N), (2**N, 1)",
                 f"but received {self._data.shape}",
             )
+
+    # ------------- Properties --------------
 
     @property
     def data(self) -> csr_matrix:
@@ -124,6 +129,8 @@ class QuantumObject:
         """
         return self._data.shape
 
+    # ----------- Matrix Logic Operations ------------
+
     def adjoint(self) -> QuantumObject:
         """
         Compute the adjoint (conjugate transpose) of the QuantumObject.
@@ -161,29 +168,22 @@ class QuantumObject:
         if rho.shape != (total_dim, total_dim):
             raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")
 
-        n = len(dims)
         # Use letters from the ASCII alphabet (both cases) for einsum indices.
         # For each subsystem, assign two letters: one for the row index and one for the column index.
-        row_letters = []
-        col_letters = []
-        out_row = []  # Letters that will remain in the output for the row part.
-        out_col = []  # Letters for the column part.
+        row_letters, col_letters = [], []
+        out_row, out_col = [], []  # Letters that will remain in the output for the row part and for the column part.
         letters = iter(string.ascii_letters)
 
-        for i in range(n):
+        for i in range(len(dims)):
             if i in keep:
-                # For a subsystem we want to keep, use two different letters
-                r = next(letters)
-                c = next(letters)
-                row_letters.append(r)
-                col_letters.append(c)
-                out_row.append(r)
-                out_col.append(c)
+                # For a subsystem we want to keep, use two different letters (r, c)
+                r, c = next(letters), next(letters)
+                row_letters.append(r), col_letters.append(c)
+                out_row.append(r), out_col.append(c)
             else:
-                # For subsystems to be traced out, assign the same letter so that those indices are summed.
+                # For subsystems to be traced out, assign the same letter (r, r) so that those indices are summed.
                 r = next(letters)
-                row_letters.append(r)
-                col_letters.append(r)
+                row_letters.append(r), col_letters.append(r)
 
         # Create the einsum subscript strings.
         # The input tensor has 2*n indices (first n for rows, next n for columns).
@@ -204,6 +204,7 @@ class QuantumObject:
 
         return QuantumObject(reduced_matrix)
 
+    # TODO(@GuillermoAbadLopez): Check parcial trace
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
         Compute the norm of the QuantumObject.
@@ -220,12 +221,15 @@ class QuantumObject:
         """
         if self.is_scalar():
             return self.dense[0][0]
-        if self.is_dm() or self.shape[0] == self.shape[1]:
+
+        if self.is_density_matrix() or self.shape[0] == self.shape[1]:
             if order == "tr":
                 return self._data.trace()
             return scipy_norm(self._data, ord=order)
+
         if self.is_bra():
             return np.sqrt(self._data @ self._data.conj().T).toarray()[0, 0]
+
         return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
 
     def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
@@ -248,6 +252,7 @@ class QuantumObject:
         norm = self.norm(order=order)
         if norm == 0:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
+
         return QuantumObject(self._data / norm)
 
     def expm(self) -> QuantumObject:
@@ -259,6 +264,40 @@ class QuantumObject:
         """
         return QuantumObject(expm(self._data))
 
+    def to_density_matrix(self) -> QuantumObject:
+        """
+        Convert the QuantumObject to a density matrix.
+
+        If the QuantumObject represents a state vector (ket or bra), this method
+        calculates the corresponding density matrix by taking the outer product.
+        If the QuantumObject is already a density matrix, it is returned unchanged.
+        The resulting density matrix is normalized.
+
+        Raises:
+            ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
+
+        Returns:
+            QuantumObject: A new QuantumObject representing the density matrix.
+        """
+        if self.is_scalar():
+            raise ValueError("Cannot make a density matrix from scalar.")
+
+        if self.is_density_matrix():
+            return self
+
+        if self.is_bra():
+            return (self.adjoint() @ self).unit()
+
+        if self.is_ket():
+            return (self @ self.adjoint()).unit()
+
+        raise ValueError(
+            "Cannot make a density matrix from this QuantumObject. "
+            "It must be either a ket, a bra or already a density matrix."
+        )
+
+    # ----------- Checks for Matrices ------------
+
     def is_ket(self) -> bool:
         """
         Check if the QuantumObject represents a ket (column vector) state.
@@ -266,7 +305,7 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is a ket state, False otherwise.
         """
-        return self.shape[0].bit_count() == 1 and self.shape[1] == 1
+        return self.shape[1] == 1 and self.shape[0].bit_count() == 1
 
     def is_bra(self) -> bool:
         """
@@ -275,7 +314,7 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is a bra state, False otherwise.
         """
-        return self.shape[1].bit_count() == 1 and self.shape[0] == 1
+        return self.shape[0] == 1 and self.shape[1].bit_count() == 1
 
     def is_scalar(self) -> bool:
         """
@@ -284,13 +323,22 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is a scalar, False otherwise.
         """
-        return self.data.shape == (1, 1)
+        return self.shape == (1, 1)
 
-    def is_dm(self, tol: float = 1e-8) -> bool:
+    def is_operator(self) -> bool:
+        """
+        Check if the QuantumObject is an operator (square matrix).
+
+        Returns:
+            bool: True if the QuantumObject is an operator, False otherwise.
+        """
+        self._data.shape[1] == self._data.shape[0] and self._data.shape[0].bit_count() == 1
+
+    def is_density_matrix(self, tol: float = 1e-8) -> bool:
         """
         Determine if the QuantumObject is a valid density matrix.
 
-        A valid density matrix must be square, Hermitian, positive semi-definite,and have a trace equal to 1.
+        A valid density matrix must be square, Hermitian, positive semi-definite, and have a trace equal to 1.
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity,
@@ -300,7 +348,7 @@ class QuantumObject:
             bool: True if the QuantumObject is a valid density matrix, False otherwise.
         """
         # Check if rho is a square matrix
-        if self.shape[0] != self.shape[1]:
+        if not self.is_operator():
             return False
 
         # Check Hermitian condition: rho should be equal to its conjugate transpose
@@ -328,39 +376,20 @@ class QuantumObject:
         """
         return np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol)
 
-    def to_density_matrix(self) -> QuantumObject:
-        """
-        Convert the QuantumObject to a density matrix.
-
-        If the QuantumObject represents a state vector (ket or bra), this method
-        calculates the corresponding density matrix by taking the outer product.
-        If the QuantumObject is already a density matrix, it is returned unchanged.
-        The resulting density matrix is normalized.
-
-        Raises:
-            ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
-
-        Returns:
-            QuantumObject: A new QuantumObject representing the density matrix.
-        """
-        if self.is_scalar():
-            raise ValueError("Cannot make a density matrix from scalar.")
-        if self.is_dm():
-            return self
-        if self.is_bra():
-            return (self.adjoint() @ self).unit()
-        return (self @ self.adjoint()).unit()
+    # ----------- Basic Arithmetic Operators ------------
 
     def __add__(self, other: QuantumObject | Complex) -> QuantumObject:
         if isinstance(other, QuantumObject):
             return QuantumObject(self._data + other._data)
         if isinstance(other, Complex) and other == 0:
             return self
+
         raise TypeError("Addition is only supported between QuantumState instances")
 
     def __sub__(self, other: QuantumObject) -> QuantumObject:
         if isinstance(other, QuantumObject):
             return QuantumObject(self._data - other._data)
+
         raise TypeError("Subtraction is only supported between QuantumState instances")
 
     def __mul__(self, other: QuantumObject | Complex) -> QuantumObject:
@@ -368,11 +397,13 @@ class QuantumObject:
             return QuantumObject(self._data * other)
         if isinstance(other, QuantumObject):
             return QuantumObject(self._data * other._data)
+
         raise TypeError("Unsupported multiplication type")
 
     def __matmul__(self, other: QuantumObject) -> QuantumObject:
         if isinstance(other, QuantumObject):
             return QuantumObject(self._data @ other._data)
+
         raise TypeError("Dot product is only supported between QuantumState instances")
 
     def __rmul__(self, other: QuantumObject | Complex) -> QuantumObject:
@@ -380,6 +411,11 @@ class QuantumObject:
 
     def __repr__(self) -> str:
         return f"{self.dense}"
+
+
+###############################################################################
+# Outside class Function Definitions
+###############################################################################
 
 
 def basis(N: int, n: int) -> QuantumObject:
@@ -416,6 +452,7 @@ def ket(*state: int) -> QuantumObject:
     """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
+
     return tensor([QuantumObject(csc_array(([1], ([s], [0])), shape=(2, 1))) for s in state])
 
 
@@ -437,6 +474,7 @@ def bra(*state: int) -> QuantumObject:
     """
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
+
     return tensor([QuantumObject(csc_array(([1], ([0], [s])), shape=(1, 2))) for s in state])
 
 
@@ -457,6 +495,7 @@ def tensor(operators: list[QuantumObject]) -> QuantumObject:
     if len(operators) > 1:
         for i in range(1, len(operators)):
             out = kron(out, operators[i].data)
+
     return QuantumObject(out)
 
 
@@ -477,4 +516,5 @@ def expect(operator: QuantumObject, state: QuantumObject) -> Complex:
     """
     if state.data.shape[1] == state.data.shape[0]:
         return (operator @ state).dense.trace()
+
     return (state.adjoint() @ operator @ state).dense[0, 0]
