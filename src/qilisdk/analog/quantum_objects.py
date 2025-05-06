@@ -111,7 +111,7 @@ class QuantumObject:
             return int(np.log2(self._data.shape[1]))
         if self._data.shape[1] == 1:
             return int(np.log2(self._data.shape[0]))
-        return -1
+        return -1  # I'm not so sure if this is the best way to handle this, but I don;t like the alternative either :)
 
     @property
     def shape(self) -> tuple[int, ...]:
