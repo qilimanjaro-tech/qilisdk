@@ -123,7 +123,7 @@ class QuantumObject:
         """
         return self._data.shape
 
-    def dag(self) -> QuantumObject:
+    def adjoint(self) -> QuantumObject:
         """
         Compute the adjoint (conjugate transpose) of the QuantumObject.
 
@@ -348,8 +348,8 @@ class QuantumObject:
         if self.is_dm():
             return self
         if self.is_bra():
-            return (self.dag() @ self).unit()
-        return (self @ self.dag()).unit()
+            return (self.adjoint() @ self).unit()
+        return (self @ self.adjoint()).unit()
 
     def __add__(self, other: QuantumObject | Complex) -> QuantumObject:
         if isinstance(other, QuantumObject):
@@ -480,4 +480,4 @@ def expect(operator: QuantumObject, state: QuantumObject) -> Complex:
     """
     if state.data.shape[1] == state.data.shape[0]:
         return (operator @ state).dense.trace()
-    return (state.dag() @ operator @ state).dense[0, 0]
+    return (state.adjoint() @ operator @ state).dense[0, 0]
