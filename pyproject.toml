@@ -26,6 +26,8 @@ dependencies = [
     "numpy>=2.2.4",
     "ruamel-yaml>=0.18.10",
     "scipy>=1.15.1",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.0",
 ]
 
 [project.optional-dependencies]
@@ -35,8 +37,6 @@ cuda = [
 qaas = [
     "httpx>=0.28.1",
     "keyring>=25.6.0",
-    "pydantic>=2.10.6",
-    "pydantic-settings>=2.8.0",
 ]
 
 [dependency-groups]
