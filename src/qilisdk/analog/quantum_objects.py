@@ -458,7 +458,7 @@ def ket(*state: int) -> QuantumObject:
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
 
-    return tensor([QuantumObject(csc_array(([1], ([s], [0])), shape=(2, 1))) for s in state])
+    return tensor_prod([QuantumObject(csc_array(([1], ([s], [0])), shape=(2, 1))) for s in state])
 
 
 def bra(*state: int) -> QuantumObject:
@@ -480,10 +480,10 @@ def bra(*state: int) -> QuantumObject:
     if any(s not in {0, 1} for s in state):
         raise ValueError("the state can only be 1 or 0.")
 
-    return tensor([QuantumObject(csc_array(([1], ([0], [s])), shape=(1, 2))) for s in state])
+    return tensor_prod([QuantumObject(csc_array(([1], ([0], [s])), shape=(1, 2))) for s in state])
 
 
-def tensor(operators: list[QuantumObject]) -> QuantumObject:
+def tensor_prod(operators: list[QuantumObject]) -> QuantumObject:
     """
     Calculate the tensor product of a list of QuantumObjects.
 

@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse import csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor
+from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor_prod
 
 # --- Constructor Tests ---
 
@@ -373,7 +373,7 @@ def test_tensor():
     """Test the tensor product function on a list of QuantumObjects."""
     q1 = ket(0)
     q2 = ket(1)
-    qt = tensor([q1, q2])
+    qt = tensor_prod([q1, q2])
     np.testing.assert_array_equal(qt.dense.shape, (4, 1))
 
 

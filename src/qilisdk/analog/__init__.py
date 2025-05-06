@@ -14,7 +14,7 @@
 
 from .algorithms import TimeEvolution
 from .hamiltonian import Hamiltonian, I, X, Y, Z
-from .quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor
+from .quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor_prod
 from .schedule import Schedule
 
 __all__ = [
@@ -30,5 +30,5 @@ __all__ = [
     "bra",
     "expect_val",
     "ket",
-    "tensor",
+    "tensor_prod",
 ]

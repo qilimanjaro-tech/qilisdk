@@ -5,7 +5,7 @@ import pytest
 
 from qilisdk.analog.algorithms import TimeEvolution
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
-from qilisdk.analog.quantum_objects import ket, tensor
+from qilisdk.analog.quantum_objects import ket, tensor_prod
 from qilisdk.analog.schedule import Schedule
 from qilisdk.utils.serialization import (
     DeserializationError,
@@ -39,7 +39,7 @@ def test_time_evolution_algorithm_serialization():
         },
     )
 
-    state = tensor([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
+    state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
 
     time_evolution = TimeEvolution(
         schedule=schedule,
