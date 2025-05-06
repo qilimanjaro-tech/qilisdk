@@ -22,15 +22,15 @@ from typing import Literal, Type
 # import cupy as np
 import numpy as np
 
-from qilisdk.analog.hamiltonian import Z
+from qilisdk.analog.hamiltonian import Hamiltonian, Z
 
 from .variables import (
     HOBO,
-    BinaryVar,
+    BaseVariable,
     ComparisonOperation,
     ComparisonTerm,
-    ContinuousVar,
     Domain,
+    Number,
     Operation,
     Term,
     Variable,
@@ -84,234 +84,20 @@ class Constraint:
     def term(self) -> ComparisonTerm:
         return self._term
 
-    @property
-    def variables(self) -> list[Variable]:
+    def variables(self) -> list[BaseVariable]:
         return self._term.variables()
 
-    def linearize(self) -> list[tuple[str, ComparisonTerm]]:
+    @property
+    def lhs(self) -> Term:
+        return self.term.lhs
 
-        for v in self.variables:
-            if v.domain is Domain.REAL:
-                raise ValueError("Can not linearize models with real variables.")
-            if v.domain is Domain.INTEGER and v.lower_bound < 0:
-                raise ValueError("Can not linearize model with variables with negative bounds.")
+    @property
+    def rhs(self) -> Term:
+        return self.term.rhs
 
-        lhs = copy.copy(self.term.lhs)
-        slack_constraints = []
-        slack_counter = SlackCounter()
-        MAX_DEGREE = 2
-
-        if lhs.operation is Operation.ADD:
-            for j, e in enumerate(lhs):
-                if isinstance(e, Term) and e.operation is Operation.MUL:
-                    degree = e.degree
-                    if degree > MAX_DEGREE:
-                        raise ValueError(f"cannot linearize constraints with degrees higher than quadratic.\n {self}")
-                    if degree == MAX_DEGREE:
-                        # quadratic term
-                        x = var_list[0]
-                        y = var_list[1]
-                        if x.domain is Domain.BINARY and y.domain is Domain.BINARY:
-                            z = BinaryVar(f"linearization_slack_{slack_counter.next()}")
-                            slack_constraints.extend(
-                                (
-                                    (f"{self.label}_{z}_{x}", z - x <= 0),
-                                    (f"{self.label}_{z}_{y}", z - y <= 0),
-                                    (f"{self.label}_{z}_{x}_{y}", z - x - y + 1 >= 0),
-                                )
-                            )
-
-                            lhs.elements[j] = coeff * z
-                        elif (
-                            (x.domain != y.domain)
-                            and x.domain in {Domain.BINARY, Domain.INTEGER}
-                            and y.domain in {Domain.BINARY, Domain.INTEGER}
-                        ):
-                            x = var_list[0] if var_list[0].domain is Domain.BINARY else var_list[1]
-                            y = var_list[1] if var_list[0].domain is Domain.BINARY else var_list[0]
-                            z = ContinuousVar(
-                                f"linearization_slack_{slack_counter.next()}", domain=Domain.INTEGER, bounds=y.bounds
-                            )
-                            slack_constraints.extend(
-                                (
-                                    (f"{self.label}_{z}_{y}", z - y <= 0),
-                                    (f"{self.label}_{z}_{x}", z - y.bounds[1] * x <= 0),
-                                    (f"{self.label}_{z}_{x}_{y}", z - y - y.bounds[1] * (x - 1) >= 0),
-                                    (f"{self.label}_{z}", z >= 0),
-                                )
-                            )
-
-                            lhs.elements[j] = coeff * z
-
-                        elif x.domain is Domain.INTEGER and y.domain is Domain.INTEGER:
-                            x_ub = x.bounds[1]
-                            x_lb = x.bounds[0]
-
-                            y_ub = y.bounds[1]
-                            y_lb = y.bounds[0]
-
-                            z1 = 1 / 2 * (x + y)
-                            z1_ub = int(1 / 2 * (x_ub + y_ub))
-                            z1_lb = int(1 / 2 * (x_lb + y_lb))
-
-                            z2 = 1 / 2 * (x - y)
-                            z2_ub = int(1 / 2 * (x_ub - y_ub))
-                            z2_lb = int(1 / 2 * (x_lb - y_lb))
-
-                            n = int(z1_ub - z1_lb)
-                            a = list(range(z1_lb, z1_ub))
-                            h = int(np.ceil(np.log2(n)))
-
-                            z = []
-                            lam = []
-                            for ni in range(n):
-                                aux = []
-                                for hi in range(h):
-                                    aux.append(BinaryVar(f"linearization_z1_{ni}_{hi}"))
-
-                                z.append(aux)
-                                if ni == 0:
-                                    z.append(aux)
-
-                                lam.append(ContinuousVar(f"lambda1_{ni}", Domain.INTEGER, (0, None)))
-                            lam.append(ContinuousVar(f"lambda1_{n+1}", Domain.INTEGER, (0, None)))
-
-                            l_z1 = sum(a[i] ** 2 * lam[i] for i in range(n))
-
-                            s_p = []
-                            s_m = []
-
-                            for k in range(h):
-                                aux_s_p = []
-                                aux_s_m = []
-
-                                for i in range(n):
-                                    if i in {n, 0}:
-                                        if z[i][k] == 1:
-                                            if i not in aux_s_p:
-                                                aux_s_p.append(i)
-                                        elif z[i][k] == 0 and i not in aux_s_m:
-                                            aux_s_m.append(i)
-
-                                    elif z[i][k] == z[i + 1][k] == 1:
-                                        if i not in aux_s_p:
-                                            aux_s_p.append(i)
-                                    elif z[i][k] == z[i + 1][k] == 0:
-                                        if i not in aux_s_m:
-                                            aux_s_m.append(i)
-
-                                s_p.append(aux_s_p)
-                                s_m.append(aux_s_m)
-
-                            slack_constraints.extend(
-                                (
-                                    (f"{self.label}_linearization_{z1}", z1 == sum(a[i] * lam[i] for i in range(n))),
-                                    (f"{self.label}_linearization_{lam}", sum(lam[i] for i in range(n)) == 1),
-                                )
-                            )
-
-                            for k in range(h):
-                                if len(s_p[k]) > 0:
-                                    slack_constraints.append(
-                                        (
-                                            f"{self.label}_linearization_{lam}_{z[i]}",
-                                            sum(lam[i] for i in s_p[k]) <= sum(sum(z[i]) for i in s_p[k]),
-                                        )
-                                    )
-                                if len(s_m[k]) > 0:
-                                    slack_constraints.append(
-                                        (
-                                            f"{self.label}_linearization_{lam}_{z[i]}_2",
-                                            sum(lam[i] for i in s_m[k]) <= sum(1 - z[i] for i in s_m[k]),
-                                        )
-                                    )
-
-                            # Y2
-
-                            n = int(z2_ub - z2_lb)
-                            if n != 0:
-                                a = list(range(z2_lb, z2_ub))
-                                h = int(np.ceil(np.log2(n)))
-
-                                z = []
-                                lam = []
-                                for ni in range(n):
-                                    aux = []
-                                    for hi in range(h):
-                                        aux.append(BinaryVar(f"linearization_z2_{ni}_{hi}"))
-
-                                    z.append(aux)
-                                    if ni == 0:
-                                        z.append(aux)
-
-                                    lam.append(ContinuousVar(f"lambda2_{ni}", Domain.INTEGER, (0, None)))
-                                lam.append(ContinuousVar(f"lambda2_{n+1}", Domain.INTEGER, (0, None)))
-
-                                l_z2 = sum(a[i] ** 2 * lam[i] for i in range(n))
-
-                                s_p = []
-                                s_m = []
-
-                                for k in range(h):
-                                    aux_s_p = []
-                                    aux_s_m = []
-
-                                    for i in range(n):
-                                        if i in {n, 0}:
-                                            if z[i][k] == 1:
-                                                if i not in aux_s_p:
-                                                    aux_s_p.append(i)
-                                            elif z[i][k] == 0:
-                                                if i not in aux_s_m:
-                                                    aux_s_m.append(i)
-
-                                        elif z[i][k] == z[i + 1][k] == 1:
-                                            if i not in aux_s_p:
-                                                aux_s_p.append(i)
-                                        elif z[i][k] == z[i + 1][k] == 0:
-                                            if i not in aux_s_m:
-                                                aux_s_m.append(i)
-
-                                    s_p.append(aux_s_p)
-                                    s_m.append(aux_s_m)
-
-                                slack_constraints.extend(
-                                    (
-                                        (
-                                            f"{self.label}_linearization2_{z2}",
-                                            z2 == sum(a[i] * lam[i] for i in range(n)),
-                                        ),
-                                        (f"{self.label}_linearization2_{lam}", sum(lam[i] for i in range(n)) == 1),
-                                    )
-                                )
-
-                                for k in range(h):
-                                    if len(s_p[k]) > 0:
-                                        slack_constraints.append(
-                                            (
-                                                f"{self.label}_linearization2_{lam}_{z[i]}",
-                                                sum(lam[i] for i in s_p[k]) <= sum(z[i] for i in s_p[k]),
-                                            )
-                                        )
-                                    if len(s_m[k]) > 0:
-                                        slack_constraints.append(
-                                            (
-                                                f"{self.label}_linearization2_{lam}_{z[i]}_2",
-                                                sum(lam[i] for i in s_m[k]) <= sum(1 - z[i] for i in s_m[k]),
-                                            )
-                                        )
-
-                                lhs.elements[j] = coeff * (l_z1 - l_z2)
-                            else:
-                                lhs.elements[j] = coeff * (l_z1)
-            slack_constraints.append(
-                (
-                    self.label,
-                    ComparisonTerm(rhs=copy.copy(self.term.rhs), lhs=lhs, operation=self.term.operation),
-                )
-            )
-
-        return slack_constraints
+    @property
+    def degree(self) -> int:
+        return max(self.lhs.degree, self.rhs.degree)
 
     def __copy__(self) -> Constraint:
         return Constraint(label=self.label, term=copy.copy(self.term))
@@ -325,7 +111,7 @@ class Constraint:
 
 class Objective:
     def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
-        if isinstance(term, Variable):
+        if isinstance(term, BaseVariable):
             term = Term(elements=[term], operation=Operation.ADD)
         if not isinstance(term, Term):
             raise ValueError(f"the parameter term is expecting a {Term} but received {term.__class__}")
@@ -347,8 +133,7 @@ class Objective:
     def sense(self) -> ObjectiveSense:
         return self._sense
 
-    @property
-    def variables(self) -> list[Variable]:
+    def variables(self) -> list[BaseVariable]:
         return self._term.variables()
 
     def __repr__(self) -> str:
@@ -363,16 +148,10 @@ class Objective:
 
 class Model:
     def __init__(self, label: str) -> None:
-        self._constraints: list[Constraint] = []
+        self._constraints: dict[str, Constraint] = {}
         self._encoding_constraints: dict[str, Constraint] = {}
         self._objective = Objective("objective", Term([0], Operation.ADD))
         self._label = label
-        self._real_variables: dict[Variable, dict[Literal["var", "precision"], Variable | float]] = (
-            {}
-        )  # var_label : {'var' : var, 'precision': precision}
-        self._recentered: dict[Variable, dict[Literal["var", "precision", "shift"], Variable | float]] = (
-            {}
-        )  # var_label : ('var' : var, 'precision': precision, 'shift': lower_bound)
 
     @property
     def label(self) -> str:
@@ -380,7 +159,7 @@ class Model:
 
     @property
     def constraints(self) -> list[Constraint]:
-        return self._constraints
+        return list(self._constraints.values())
 
     @property
     def encoding_constraints(self) -> dict[str, Constraint]:
@@ -391,13 +170,13 @@ class Model:
         return self._objective
 
     @property
-    def variables(self) -> list[Variable]:
+    def variables(self) -> list[BaseVariable]:
         var = set()
 
-        for c in self._constraints:
-            var.update(c.variables)
+        for c in self.constraints:
+            var.update(c.variables())
 
-        var.update(self.objective.variables)
+        var.update(self.objective.variables())
 
         return list(var)
 
@@ -436,136 +215,30 @@ class Model:
         return out
 
     def add_constraint(self, label: str, term: ComparisonTerm) -> None:
+        if label in self._constraints:
+            raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
         c = Constraint(label=label, term=copy.copy(term))
-        self._constraints.append(c)
+        self._constraints[label] = c
 
     def set_objective(self, term: Term, label: str = "", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
 
-    # def real_to_int(self, precision: int = 100) -> None:
-    #     maxint = 2**53
-
-    #     for k, v in self.variables.items():
-    #         if v.domain is Domain.REAL:
-    #             lower_bound = int(v.lower_bound * precision)
-    #             upper_bound = int(v.upper_bound * precision)
-
-    #             lower_bound = max(-maxint, lower_bound)
-    #             upper_bound = min(maxint, upper_bound)
-
-    #             self._real_variables[k] = {"var": v, "precision": precision}
-
-    #             new_var = ContinuousVar(
-    #                 v.label, domain=Domain.INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
-    #             )
-    #             self.variables[k] = new_var
-
-    #     self.objective.term.replace_variables(self.variables)
-    #     self.objective.term.update_variables_precision(self._real_variables)
-    #     self.objective.simplify_term()
-    #     for i, _ in enumerate(self.constraints):
-    #         self.constraints[i].term.replace_variables(self.variables)
-    #         self.constraints[i].term.update_variables_precision(self._real_variables)
-    #         self.constraints[i].simplify_terms()
-
-    # def real_to_pos_int(self, precision: int = 100):
-    #     maxint = 2**53
-
-    #     for k, v in self.variables.items():
-    #         if v.domain is Domain.REAL:
-    #             lower_bound = int(v.lower_bound * precision)
-    #             upper_bound = int(v.upper_bound * precision)
-
-    #             if lower_bound < 0:
-    #                 upper_bound -= lower_bound
-    #                 self._recentered[k] = {"var": v, "precision": lower_bound / precision, "original_bounds": v.bounds}
-
-    #             lower_bound = max(0, lower_bound)
-    #             upper_bound = min(maxint, upper_bound)
-
-    #             self._real_variables[k] = {"var": v, "precision": precision}
-
-    #             v = ContinuousVar(
-    #                 v.label,
-    #                 domain=Domain.POSITIVE_INTEGER,
-    #                 bounds=(lower_bound, upper_bound),
-    #                 encoding=v.encoding,
-    #             )
-    #             self.variables[k] = v
-    #         elif v.domain is Domain.INTEGER:
-    #             lower_bound = int(v.lower_bound)
-    #             upper_bound = int(v.upper_bound)
-
-    #             if lower_bound < 0:
-    #                 upper_bound -= lower_bound
-    #                 self._recentered[k] = {"var": v, "precision": lower_bound, "original_bounds": v.bounds}
-
-    #             lower_bound = max(0, lower_bound)
-    #             upper_bound = min(maxint, upper_bound)
-
-    #             v = ContinuousVar(
-    #                 v.label, domain=Domain.POSITIVE_INTEGER, bounds=(lower_bound, upper_bound), encoding=v.encoding
-    #             )
-    #             self.variables[k] = v
-
-    #     self.objective.term.replace_variables(self.variables)
-    #     self.objective.term.update_variables_precision(self._real_variables)
-    #     self.objective.term.update_negative_variables_range(self._recentered)
-    #     self.objective.simplify_term()
-    #     for i, _ in enumerate(self.constraints):
-    #         self.constraints[i].term.replace_variables(self.variables)
-    #         self.constraints[i].term.update_variables_precision(self._real_variables)
-    #         self.constraints[i].term.update_negative_variables_range(self._recentered)
-    #         self.constraints[i].simplify_terms()
-
-    # def resize_samples(self, sample):
-    #     for k, v in sample.items():
-    #         value = v
-    #         if k in self._recentered:
-    #             if k in self._real_variables:
-    #                 value /= self._real_variables[k]["precision"]
-    #             value += self._recentered[k]["precision"]
-
-    #         elif k in self._real_variables:
-    #             value /= self._real_variables[k]["precision"]
-    #         sample[k] = value
-
-    #     return sample
-
-    # def constraint_linearization(self) -> None:
-    #     for v in self.variables.values():
-    #         if v.domain is Domain.REAL:
-    #             raise ValueError("Can not linearize models with real variables.")
-    #         if v.domain is Domain.INTEGER and v.lower_bound < 0:
-    #             raise ValueError("Can not linearize model with variables with negative bounds.")
-    #     pop_list = []
-    #     slack_constraints = []
-    #     for constraint_i, constraint in enumerate(self.constraints):
-    #         lhs = constraint.term.lhs
-    #         if isinstance(lhs, Term) and lhs.operation is Operation.ADD:
-    #             slack_constraints.extend(constraint.linearize())
-    #             pop_list.append(constraint_i)
-
-    #     pop_list = sorted(pop_list, reverse=True)
-    #     for i in pop_list:
-    #         self.constraints.pop(i)
-
-    #     for sc in slack_constraints:
-    #         self.add_constraint(sc[0], sc[1])
-
-    def to_ham(self) -> QUBO:
+    def to_qubo(self) -> QUBO:
         return QUBO.from_model(self)
+
+    def to_ham(self) -> Hamiltonian:
+        return self.to_qubo().to_ham()
 
 
 class QUBO(Model):
     def __init__(self, label: str) -> None:
         super().__init__(label)
-        self.continuous_vars = {}
-        self.lagrange_multipliers = {}
-        self.__qubo_objective = None
+        self.continuous_vars: dict[str, Variable] = {}
+        self.lagrange_multipliers: dict[str, float] = {}
+        self.__qubo_objective: Objective | None = None
 
     @property
-    def qubo_objective(self):
+    def qubo_objective(self) -> Objective | None:
         self.__qubo_objective = None
         if self.objective is not None:
             self._set_qubo_objective(self.objective.term, self.objective.label, self.objective.sense)
@@ -596,29 +269,46 @@ class QUBO(Model):
                 output += f"\t {key} : {value} \n"
         return output
 
-    def parse_term(self, term: Term):
-        const = ConstantVar(0)
-        terms = []
+    def _parse_term(self, term: Term) -> tuple[Number, list[tuple[Number, BaseVariable]]]:
+        const = term.get_constant()
+        terms: list[tuple[Number, BaseVariable]] = []
+
+        if term.degree > 1:
+            raise ValueError(f'QUBO constraints only allow linear terms but received "{term}" of degree {term.degree}')
 
         if term.operation is Operation.ADD:
-            for e in term.elements:
-                if isinstance(e, ConstantVar):
-                    const += e
-                elif isinstance(e, Term):
-                    c, t = self.parse_term(e)
-                    terms.extend(t)
-                    const += c
-                elif isinstance(e, Variable):
-                    terms.append((ConstantVar(1), e))
-        elif term.operation is Operation.MUL:
-            if len(term.elements) > 2:  # noqa: PLR2004
-                raise ValueError(f"QUBO constraints only allow linear terms but received {term}.")
-            if isinstance(term.elements[0], ConstantVar):
-                return 0, [(term.elements[0], term.elements[1])]
-            if isinstance(term.elements[1], ConstantVar):
-                return 0, [(term.elements[1], term.elements[0])]
-            raise ValueError(f"QUBO constraints only allow linear terms but received {term}.")
+            for element in term:
+                if isinstance(element, Term):
+                    _, aux_terms = self._parse_term(element)
+                    terms.extend(aux_terms)
+                elif not term.is_constant(element):
+                    terms.append((term[element], element))
+        if term.operation is Operation.MUL:
+            for element in term:
+                if not isinstance(element, Term) and not term.is_constant(element):
+                    terms.append((1, element))
         return const, terms
+
+    def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
+        ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GE, ComparisonOperation.GT} else 0
+        lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LE, ComparisonOperation.LT} else 0
+        const, terms = self._parse_term(term)
+        term_upper_limit = sum(coeff for coeff, _ in terms if coeff > 0)
+        term_lower_limit = sum(coeff for coeff, _ in terms if coeff < 0)
+
+        upper_cut = min(term_upper_limit, ub - const)
+        lower_cut = max(term_lower_limit, lb - const)
+
+        if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
+            warnings.warn(f"constraint ({label}) not added because it is always feasible.")
+            return None
+
+        ub_slack = int(upper_cut - lower_cut)
+
+        if upper_cut < lower_cut:
+            raise ValueError(f"Constraint {label} is unsatisfiable.")
+
+        return ub_slack
 
     def _transform_constraint(
         self,
@@ -626,88 +316,72 @@ class QUBO(Model):
         term: ComparisonTerm,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
-    ):
+    ) -> Term | None:
+
+        lower_penalization = penalization.lower()
+
+        if lower_penalization not in {"unbalanced", "slack"}:
+            raise ValueError('Only penalization of type "unbalanced" or "slack" is supported.')
+
         if parameters is None:
             parameters = []
+
         if term.operation is ComparisonOperation.EQ:
-            return (term.lhs - term.rhs) ** 2
+            h = term.lhs - term.rhs
+            ub_slack = self._check_valid_constraint(label, h, term.operation)
+            if ub_slack is None:
+                return None
+            return h**2
 
         if term.operation in {
             ComparisonOperation.GE,
             ComparisonOperation.GT,
         }:
-            # assuming the operation is h >= 0 or h > 0 because of the way inequality constraints are coded.
+            # assuming the operation is h >= 0 or h > 0
             h = term.lhs - term.rhs
-            if penalization == "unbalanced":
-                if len(parameters) < 2:
+            if lower_penalization == "unbalanced":
+                if len(parameters) < 2:  # noqa: PLR2004
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
-            ub = np.iinfo(np.int64).max
-            lb = 0
 
-            const, terms = self.parse_term(h)
-            term_upper_limit = sum(coeff.value for coeff, _ in terms if coeff.value > 0)
-            term_lower_limit = sum(coeff.value for coeff, _ in terms if coeff.value < 0)
+            if lower_penalization == "slack":
+                ub_slack = self._check_valid_constraint(label, h, term.operation)
 
-            upper_cut = min(term_upper_limit, ub - const.value)
-            lower_cut = max(term_lower_limit, lb - const.value)
+                if ub_slack is None:
+                    return None
+                if ub_slack == 0:
+                    return h**2
 
-            if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
-                warnings.warn(f"constraint ({label}) not added because it is always feasible.")
-                return None
-
-            ub_slack = int(upper_cut - lower_cut)
-
-            if upper_cut < lower_cut:
-                raise ValueError(f"Constraint {label} is unsatisfiable.")
-
-            if ub_slack == 0:
-                return h**2
-
-            slack = ContinuousVar(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
-
-            slack_terms, _ = slack.encode()
-            out = h + slack_terms
-            return (out) ** 2
+                slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
+                slack_terms = slack.encode()
+                out = h + slack_terms
+                return (out) ** 2
 
         if term.operation in {
             ComparisonOperation.LE,
             ComparisonOperation.LT,
         }:
-            if penalization == "unbalanced":
-                # assumption: input has the following structure -> 0 < h  or 0 <= h
+            if lower_penalization == "unbalanced":
+                # assuming the operation is -> 0 < h  or 0 <= h
                 h = term.rhs - term.lhs
-                if len(parameters) < 2:
+                if len(parameters) < 2:  # noqa: PLR2004
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
-            # assuming the operation is h <= 0 or h < 0 because of the way inequality constraints are coded.
-            h = term.lhs - term.rhs
-            lb = np.iinfo(np.int64).min
-            ub = 0
-            const, terms = self.parse_term(h)
-            term_upper_limit = sum(coeff.value for coeff, _ in terms if coeff.value > 0)
-            term_lower_limit = sum(coeff.value for coeff, _ in terms if coeff.value < 0)
+            if lower_penalization == "slack":
+                # assuming the operation is h <= 0 or h < 0
+                h = term.lhs - term.rhs
+                ub_slack = self._check_valid_constraint(label, h, term.operation)
 
-            upper_cut = min(term_upper_limit, ub - const.value)
-            lower_cut = max(term_lower_limit, lb - const.value)
+                if ub_slack is None:
+                    return None
+                if ub_slack == 0:
+                    return h**2
 
-            if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
-                warnings.warn(f"constraint ({label}) not added because it is always feasible.")
-                return None
+                slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
 
-            ub_slack = int(upper_cut - lower_cut)
-
-            if upper_cut < lower_cut:
-                raise ValueError(f"Constraint {label} is unsatisfiable.")
-
-            if ub_slack == 0:
-                return h**2
-
-            slack = ContinuousVar(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
-
-            slack_terms, _ = slack.encode()
-            out = h + slack_terms
-            return (out) ** 2
+                slack_terms = slack.encode()
+                out = h + slack_terms
+                return (out) ** 2
         return None
 
     def add_constraint(
@@ -719,14 +393,18 @@ class QUBO(Model):
         parameters: list[float] | None = None,
         transform_to_qubo: bool = True,
     ) -> None:
-        if label in self.lagrange_multipliers:
-            raise ValueError(f"A constraint with the label {label} already exists.")
+        if label in self._constraints:
+            raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
+
+        lower_penalization = penalization.lower()
+
+        if lower_penalization not in {"unbalanced", "slack"}:
+            raise ValueError(
+                'Only penalization of type "unbalanced" or "slack" is supported for inequality constraints.'
+            )
 
         if parameters is None:
-            parameters = [1, 1] if penalization == "unbalanced" else []
-
-        if penalization not in {"unbalanced", "slack"}:
-            raise ValueError("The type of penalization for inequality constraints can only be unbalanced or slack.")
+            parameters = [1, 1] if lower_penalization == "unbalanced" else []
 
         if term.operation in {ComparisonOperation.GE, ComparisonOperation.GT}:
             c = ComparisonTerm(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
@@ -735,89 +413,79 @@ class QUBO(Model):
         else:
             c = copy.copy(term)
 
-        if c.degree() > 2:
-            raise ValueError("QUBO models can not contain terms of order 2 or higher.")
+        if c.degree() > 2:  # noqa: PLR2004
+            raise ValueError(
+                f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree()}."
+            )
 
         for v in c.variables():
             if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
-                # NOTE: is this needed ???
                 raise ValueError(
                     "QUBO models are not supported for variables that are not in the positive integers or binary domains."
                 )
-            if v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
+            if v.lower_bound != 0:
+                raise ValueError(
+                    f"All variables must have a lower bound of 0. But variable {v} has a lower bound of {v.lower_bound}"
+                )
+            if isinstance(v, Variable) and v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
                     self.add_constraint(label=f"{self.label}_var_encoding_{v.label}", term=encoding_constraint)
 
-            if v.lower_bound != 0:
-                raise ValueError("All variables must have a lower bound of 0.")
         if transform_to_qubo:
             c = c.to_binary()
-
-            c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
-            if c is None:
+            transformed_c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
+            if transformed_c is None:
                 return
 
             self.lagrange_multipliers[label] = lagrange_multiplier
-            self.constraints.append(Constraint(label, term=c == 0))
+            self._constraints[label] = Constraint(label, term=ComparisonTerm(transformed_c, 0, ComparisonOperation.EQ))
+
         else:
-
             self.lagrange_multipliers[label] = lagrange_multiplier
-            self.constraints.append(Constraint(label, term=c))
-
-        # self.__set_qubo_objective(term=copy.copy(lagrange_multiplier * c))
-
-        for v in c.variables():
-            k = v.label
-            if k in self._variables and not compare_vars(v, self._variables[k]):
-                raise ValueError("you can not include two different variables with the same name in the model.")
-            self._variables[k] = v
+            self._constraints[label] = Constraint(label, term=c)
 
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         for v in term.variables():
             if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
-                # NOTE: is this needed ???
                 raise ValueError(
                     "QUBO models are not supported for variables that are not in the positive integers or binary domains."
                 )
-            if v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
+            if v.lower_bound != 0:
+                raise ValueError(
+                    f"All variables must have a lower bound of 0. But variable {v} has a lower bound of {v.lower_bound}"
+                )
+            if isinstance(v, Variable) and v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
-                    self.constraints.append(
-                        Constraint(label=f"{self.label}_var_encoding_{v.label}", term=encoding_constraint)
-                    )
+                    label = f"{self.label}_var_encoding_{v.label}"
+                    self._constraints[label] = Constraint(label=label, term=encoding_constraint)
 
         term = term.to_binary()
         self._objective = Objective(label=label, term=term, sense=sense)
 
-        # self.__set_qubo_objective(label=label, term=term, sense=sense)
-
-        for k, v in self._objective.variables.items():
-            if k in self._variables and not compare_vars(v, self._variables[k]):
-                raise ValueError("you can not include two different variables with the same name in the model.")
-            self._variables[k] = v
-
-    def _set_qubo_objective(self, term: Term, label: str | None = None, sense: ObjectiveSense = None) -> None:
+    def _set_qubo_objective(
+        self, term: Term, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+    ) -> None:
         term = copy.copy(term.to_binary())
         if self.__qubo_objective is None:
             self.__qubo_objective = Objective(
                 label=label if label is not None else "obj",
-                term=term,
-                sense=sense if sense is not None else ObjectiveSense.Minimize,
+                term=-term if sense == ObjectiveSense.MAXIMIZE else term,
+                sense=ObjectiveSense.MINIMIZE,
             )
         else:
             self.__qubo_objective = Objective(
                 label=label if label is not None else self.__qubo_objective.label,
-                term=copy.copy(self.__qubo_objective.term) + term,
-                sense=sense if sense is not None else self.__qubo_objective.sense,
+                term=(
+                    copy.copy(self.__qubo_objective.term) - term
+                    if sense == ObjectiveSense.MAXIMIZE
+                    else copy.copy(self.__qubo_objective.term) + term
+                ),
+                sense=ObjectiveSense.MINIMIZE,
             )
-
-        for k, v in self.__qubo_objective.variables.items():
-            if k in self._variables and not compare_vars(v, self._variables[k]):
-                raise ValueError("you can not include two different variables with the same name in the model.")
-            self._variables[k] = v
 
     def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
         self.lagrange_multipliers[constraint_label] = lagrange_multiplier
@@ -848,14 +516,18 @@ class QUBO(Model):
             )
         return instance
 
-    def to_ham(self):
-        spins = {}
+    def to_ham(self) -> Hamiltonian:
+        spins: dict[BaseVariable, Hamiltonian] = {}
         obj = self.qubo_objective
-        for i, v in enumerate(obj.variables.keys()):
+
+        if obj is None:
+            raise ValueError("Can't transform empty QUBO model to a Hamiltonian.")
+
+        for i, v in enumerate(obj.variables()):
             spins[v] = (1 - Z(i)) / 2
 
-        ham = 0
-        aux_term = 0
+        ham = Hamiltonian()
+        aux_term: Number | Hamiltonian = 0.0
 
         for terms in obj.term.to_list():
             if isinstance(terms, Operation):
@@ -870,16 +542,16 @@ class QUBO(Model):
                     if isinstance(term, Operation):
                         if term is not Operation.MUL:
                             raise ValueError(f"operation {term} is not supported")
-                    elif isinstance(term, ConstantVar):
+                    elif isinstance(term, Number):
                         aux_term *= term.value
-                    elif isinstance(term, Variable):
+                    elif isinstance(term, BaseVariable):
                         aux_term *= spins[term.label]
             else:
                 aux_term = 1
-                if isinstance(terms, ConstantVar):
-                    aux_term *= terms.value
-                elif isinstance(terms, Variable):
-                    aux_term *= spins[terms.label]
+                if isinstance(terms, Number):
+                    aux_term *= terms
+                elif isinstance(terms, BaseVariable):
+                    aux_term *= spins[terms]
 
         ham += aux_term
         return ham
@@ -896,7 +568,4 @@ class QUBO(Model):
                 lagrange_multiplier=self.lagrange_multipliers[c.label],
                 transform_to_qubo=False,
             )
-        for v in self._variables.values():
-            if isinstance(v, ContinuousVar):
-                out.add_variable(v)
         return out
