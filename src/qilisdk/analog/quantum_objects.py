@@ -134,7 +134,7 @@ class QuantumObject:
         out = QuantumObject(self._data.conj().T)
         return out
 
-    # TODO: Check parcial trace
+    # TODO(@GuillermoAbadLopez): Check parcial trace
     def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
         """
         Compute the partial trace over subsystems not in 'keep'.
