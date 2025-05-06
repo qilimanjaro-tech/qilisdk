@@ -40,7 +40,7 @@ class QuantumObject:
     efficient arithmetic and manipulation. The expected shapes for the data are:
       - (2**N, 2**N) for operators or density matrices,
       - (2**N, 1) for ket states,
-      - (1, 2**N) for bra states.
+      - (1, 2**N) or (2**N,) for bra states.
     """
 
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
@@ -49,6 +49,7 @@ class QuantumObject:
 
         Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
         The input must represent a valid quantum state or operator with appropriate dimensions.
+        Notice that 1D arrays (2**N,) are considered/transformed to bras, like what (1, 2**N) would be.
 
         Args:
             data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
@@ -265,7 +266,7 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is a ket state, False otherwise.
         """
-        return self.shape[0] % 2 == 0 and self.shape[1] == 1
+        return self.shape[0].bit_count() == 1 and self.shape[1] == 1
 
     def is_bra(self) -> bool:
         """
@@ -274,7 +275,7 @@ class QuantumObject:
         Returns:
             bool: True if the QuantumObject is a bra state, False otherwise.
         """
-        return self.shape[1] % 2 == 0 and self.shape[0] == 1
+        return self.shape[1].bit_count() == 1 and self.shape[0] == 1
 
     def is_scalar(self) -> bool:
         """
