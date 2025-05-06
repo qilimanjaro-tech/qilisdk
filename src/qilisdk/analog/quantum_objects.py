@@ -216,8 +216,8 @@ class QuantumObject:
 
         Args:
             order (int or {"fro", "tr"}, optional): The order of the norm.
-                If the QuantumObject represents a density matrix and 'tr' is specified,
-                the trace norm is returned. Defaults to 1.
+                Only applies if the QuantumObject represents a density matrix. Other than all the
+                orders accepted by scipy, it also accepts 'tr' for the trace norm. Defaults to 1.
 
         Returns:
             float: The computed norm of the QuantumObject.
@@ -227,13 +227,16 @@ class QuantumObject:
 
         if self.is_density_matrix() or self.shape[0] == self.shape[1]:
             if order == "tr":
-                return self._data.trace()
+                return np.sum(np.abs(np.linalg.eigvalsh(self.dense)))
             return scipy_norm(self._data, ord=order)
 
         if self.is_bra():
             return np.sqrt(self._data @ self._data.conj().T).toarray()[0, 0]
 
-        return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
+        if self.is_ket():
+            return np.sqrt(self._data.conj().T @ self._data).toarray()[0, 0]
+
+        raise ValueError("The QuantumObject is not a valid density matrix or state vector. Cannot compute the norm.")
 
     def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
         """
@@ -243,8 +246,8 @@ class QuantumObject:
 
         Args:
             order (int or {"fro", "tr"}, optional): The order of the norm to use for normalization.
-                If the QuantumObject represents a density matrix and 'tr' is specified,
-                the trace norm is used. Defaults to "tr".
+                Only applies if the QuantumObject represents a density matrix. Other than all the
+                orders accepted by scipy, it also accepts 'tr' for the trace norm. Defaults to "tr".
 
         Raises:
             ValueError: If the norm of the QuantumObject is 0, making normalization impossible.
