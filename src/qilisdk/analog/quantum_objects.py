@@ -141,7 +141,6 @@ class QuantumObject:
         out = QuantumObject(self._data.conj().T)
         return out
 
-    # TODO(@GuillermoAbadLopez): Check parcial trace
     def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
         """
         Compute the partial trace over subsystems not in 'keep'.
@@ -207,7 +206,6 @@ class QuantumObject:
 
         return QuantumObject(reduced_matrix)
 
-    # TODO(@GuillermoAbadLopez): Check norm definition
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
         Compute the norm of the QuantumObject.
@@ -218,6 +216,9 @@ class QuantumObject:
             order (int or {"fro", "tr"}, optional): The order of the norm.
                 Only applies if the QuantumObject represents a density matrix. Other than all the
                 orders accepted by scipy, it also accepts 'tr' for the trace norm. Defaults to 1.
+
+        Raises:
+            ValueError: If the QuantumObject is not a valid density matrix or state vector,
 
         Returns:
             float: The computed norm of the QuantumObject.
