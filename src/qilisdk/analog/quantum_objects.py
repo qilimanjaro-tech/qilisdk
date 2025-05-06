@@ -416,25 +416,23 @@ class QuantumObject:
         return f"{self.dense}"
 
 
-# TODO (Guillermo Abad Lopez): Until here reviewed
-
 ###############################################################################
 # Outside class Function Definitions
 ###############################################################################
 
 
-def basis(N: int, n: int) -> QuantumObject:
+def basis_state(n: int, N: int) -> QuantumObject:
     """
-    Generate the basis vector representation of a Fock state.
+    Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
 
     This function creates a column vector (ket) representing the Fock state |n⟩ in a Hilbert space of dimension N.
 
     Args:
-        N (int): The dimension of the Hilbert space (number of Fock states).
-        n (int): The desired number state.
+        n (int): The desired number state (from 0 to N-1).
+        N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
 
     Returns:
-        QuantumObject: A QuantumObject representing the Fock state |n⟩.
+        QuantumObject: A QuantumObject representing the |n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
     """
     return QuantumObject(csc_array(([1], ([n], [0])), shape=(N, 1)))
 

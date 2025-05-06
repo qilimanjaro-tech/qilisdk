@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse import csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect_val, ket, tensor_prod
+from qilisdk.analog.quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 
 # --- Constructor Tests ---
 
@@ -331,7 +331,7 @@ def test_basis():
     """Test that the basis function returns a vector with a 1 in the correct position."""
     N = 4
     n = 2
-    qbasis = basis(N, n)
+    qbasis = basis_state(n, N)
     assert qbasis.shape == (N, 1)
     dense = qbasis.dense.flatten()
     expected = np.zeros(N)
