@@ -297,10 +297,10 @@ def test_is_herm():
     """Test is_herm for Hermitian and non-Hermitian matrices."""
     herm_matrix = np.array([[1, 2 + 1j], [2 - 1j, 3]])
     qherm = QuantumObject(herm_matrix)
-    assert qherm.is_herm()
+    assert qherm.is_hermitian()
     non_herm = np.array([[1, 2], [3, 4]])
     qnonherm = QuantumObject(non_herm)
-    assert not qnonherm.is_herm()
+    assert not qnonherm.is_hermitian()
 
 
 def test_to_dm_from_dm():

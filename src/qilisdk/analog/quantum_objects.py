@@ -204,7 +204,7 @@ class QuantumObject:
 
         return QuantumObject(reduced_matrix)
 
-    # TODO(@GuillermoAbadLopez): Check parcial trace
+    # TODO(@GuillermoAbadLopez): Check norm definition
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
         Compute the norm of the QuantumObject.
@@ -352,7 +352,7 @@ class QuantumObject:
             return False
 
         # Check Hermitian condition: rho should be equal to its conjugate transpose
-        if not np.allclose(self.dense, self._data.conj().T.toarray(), atol=tol):
+        if not self.is_hermitian(tol=tol):
             return False
 
         # Check if eigenvalues are non-negative (positive semi-definite)
@@ -363,7 +363,7 @@ class QuantumObject:
         # Check if the trace is 1
         return np.isclose(self._data.trace(), 1, atol=tol)
 
-    def is_herm(self, tol: float = 1e-8) -> bool:
+    def is_hermitian(self, tol: float = 1e-8) -> bool:
         """
         Check if the QuantumObject is Hermitian.
 
@@ -412,6 +412,8 @@ class QuantumObject:
     def __repr__(self) -> str:
         return f"{self.dense}"
 
+
+# TODO: Until here reviewed by Guillermo Abad Lopez!
 
 ###############################################################################
 # Outside class Function Definitions
