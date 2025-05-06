@@ -178,12 +178,12 @@ class QuantumObject:
             if i in keep:
                 # For a subsystem we want to keep, use two different letters (r, c)
                 r, c = next(letters), next(letters)
-                row_letters.append(r), col_letters.append(c)
-                out_row.append(r), out_col.append(c)
+                _ = row_letters.append(r), col_letters.append(c)
+                _ = out_row.append(r), out_col.append(c)
             else:
                 # For subsystems to be traced out, assign the same letter (r, r) so that those indices are summed.
                 r = next(letters)
-                row_letters.append(r), col_letters.append(r)
+                _ = row_letters.append(r), col_letters.append(r)
 
         # Create the einsum subscript strings.
         # The input tensor has 2*n indices (first n for rows, next n for columns).
