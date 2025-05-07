@@ -193,7 +193,7 @@ For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you
 
 ```python
 import numpy as np
-from qilisdk.analog import TimeEvolution, Schedule, tensor, ket, X, Z, Y
+from qilisdk.analog import Schedule, TimeEvolution, ket, X, Z, Y, tensor_prod
 from qilisdk.extras import CudaBackend
 
 T = 10       # Total evolution time
@@ -217,16 +217,15 @@ schedule = Schedule(
 )
 
 # Prepare an initial state (equal superposition)
-state = tensor([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
+state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
 
 # Perform time evolution on the CUDA backend with observables to monitor
 time_evolution = TimeEvolution(
-    backend=CudaBackend(),
     schedule=schedule,
     initial_state=state,
     observables=[Z(0), X(0), Y(0)],
 )
-results = time_evolution.evolve(store_intermediate_results=True)
+results = time_evolution.evolve(backend=CudaBackend(), store_intermediate_results=True)
 print("Time Evolution Results:", results)
 ```
 
