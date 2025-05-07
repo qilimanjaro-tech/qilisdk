@@ -217,7 +217,7 @@ schedule = Schedule(
 )
 
 # Prepare an initial state (equal superposition)
-state = tensor([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
+state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
 
 # Perform time evolution on the CUDA backend with observables to monitor
 time_evolution = TimeEvolution(
