@@ -54,12 +54,12 @@ class QuantumObject:
 
         Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
         The input must represent a valid quantum state or operator with appropriate dimensions.
-        Notice that 1D arrays (2**N,) are considered/transformed to bras, like what (1, 2**N) would be.
+        Notice that 1D arrays of shape (2N,) are considered/transformed to bras with shape (1, 2N).
 
         Args:
             data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
-                representing a quantum state or operator. Should be of shape; (2**N, 2**N) = operator
-                (1, 2**N) = ket, (2**N, 1) or (2**N,) = bra, or (1, 1) = scalar,
+                representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
+                (1, 2**N) for ket states, (2**N, 1) or (2**N,) for bra states, or (1, 1) for scalars.
 
         Raises:
             ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,
