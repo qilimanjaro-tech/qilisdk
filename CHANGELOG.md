@@ -11,16 +11,17 @@
 
   ([PR #30](https://github.com/qilimanjaro-tech/qilisdk/pulls/30))
 
-- Updated ``Cudaq`` to version 0.10.0 to fix issues encountered in version 0.9.1
-- Migrated ``CudaBackend`` to use the new version of ``Cudaq``
+- Solved problems with ``Cudaq`` backend:
+  - Updated ``Cudaq`` to version 0.10.0 to fix issues encountered in version 0.9.1
+  - Migrated ``CudaBackend`` to use the new version of ``Cudaq``
 
   ([PR #31](https://github.com/qilimanjaro-tech/qilisdk/pulls/31))
 
 ### Misc
 
-- transformed hardcoded `PUBLIC URL` into an environment variable lookup that defaults to the hardcoded value
+- Transformed hardcoded `PUBLIC URL` into an environment variable lookup that defaults to the hardcoded value
 
-  [PR #32](https://github.com/qilimanjaro-tech/qilisdk/pulls/32)
+  ([PR #32](https://github.com/qilimanjaro-tech/qilisdk/pulls/32))
 
 
 # Qilisdk 0.1.2 (2025-04-22)
