@@ -143,7 +143,7 @@ class QuantumObject:
 
     def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
         """
-        Compute the partial trace over subsystems not in 'keep'.
+        Compute the partial trace over all subsystems not in 'keep'.
 
         This method calculates the reduced density matrix by tracing out
         the subsystems that are not specified in the 'keep' parameter.
@@ -151,7 +151,7 @@ class QuantumObject:
         and 'keep' indicates the indices of the subsystems to be retained.
 
         Args:
-            dims (list[int]): A list specifying the dimensions of each subsystem.
+            dims (list[int]): A list specifying the dimensions of each subsystem [d0, d1, ..., dn-1].
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
 
         Raises:
@@ -163,48 +163,38 @@ class QuantumObject:
                 for the subsystems specified in 'keep'.
         """
         rho = self.dense
-        total_dim = np.prod(dims)
-        if rho.shape != (total_dim, total_dim):
-            raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")
 
-        # Use letters from the ASCII alphabet (both cases) for einsum indices.
-        # For each subsystem, assign two letters: one for the row index and one for the column index.
-        row_letters, col_letters = [], []
-        out_row, out_col = [], []  # Letters that will remain in the output for the row part and for the column part.
-        letters = iter(string.ascii_letters)
+        # 1) Basic checks
+        total = int(np.prod(dims))
+        if rho.shape != (total, total):
+            raise ValueError("rho.shape != prod(dims)²")
 
-        for i in range(len(dims)):
-            if i in keep:
-                # For a subsystem we want to keep, use two different letters (r, c)
-                r, c = next(letters), next(letters)
-                row_letters.append(r)
-                col_letters.append(c)
-                out_row.append(r)
-                out_col.append(c)
-            else:
-                # For subsystems to be traced out, assign the same letter (r, r) so that those indices are summed.
-                r = next(letters)
-                row_letters.append(r)
-                col_letters.append(r)
+        # 2) Validate & sort `keep`
+        keep_set = set(keep)
+        if any(i < 0 or i >= len(dims) for i in keep_set):
+            raise IndexError("keep indices out of range (0, len(dims))")
+        if len(keep_set) != len(keep):
+            raise ValueError("duplicate indices in keep")
 
-        # Create the einsum subscript strings.
-        # The input tensor has 2*n indices (first n for rows, next n for columns).
-        input_subscript = "".join(row_letters + col_letters)
-        # The output will only contain the indices corresponding to the subsystems we keep.
-        output_subscript = "".join(out_row + out_col)
+        # 3) Turn the matrix into a (d0, d1, ..., d0, d1, ...) tensor
+        rho_t = rho.reshape(*(dims + dims))
 
-        # Reshape rho into a tensor with shape dims + dims.
-        reshaped = rho.reshape(dims + dims)
-        # Use einsum to sum over the indices that appear twice (i.e. those being traced out).
-        reduced_tensor = np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
+        # 4) Loop backwards over subsystems, so that when we trace out one, the remaining axes still line up.
+        n = len(dims)
+        for subsystem in sorted(range(n), reverse=True):
+            if subsystem not in keep_set:
+                # axis1 is the "row" index for that subsystem
+                # axis2 is the "column" index, which sits n dims later
+                rho_t = np.trace(rho_t, axis1=subsystem, axis2=subsystem + n)
+                # now we've removed one subsystem, so future column-axes shift down
+                n -= 1
 
-        # The resulting tensor has separate indices for each subsystem kept.
-        # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in keep]
-        new_dim = np.prod(dims_keep)
-        reduced_matrix = reduced_tensor.reshape(new_dim, new_dim)
+        # 5) Reassemble the “kept” dims into a flat matrix
+        dims_keep = [dims[i] for i in sorted(keep_set)]
+        new_dim = int(np.prod(dims_keep)) if dims_keep else 1
+        rho_t.reshape((new_dim, new_dim))
 
-        return QuantumObject(reduced_matrix)
+        return QuantumObject(rho_t)
 
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
