@@ -164,14 +164,11 @@ class QuantumObject:
                 for the subsystems specified in 'keep'.
         """
         rho = self.dense
+
+        # 1) Basic checks for dims
         total_dim = np.prod(dims)
         if rho.shape != (total_dim, total_dim):
-            raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")
-
-        # 1) Basic checks
-        total = int(np.prod(dims))
-        if rho.shape != (total, total):
-            raise ValueError("rho.shape != prod(dims)")
+            raise ValueError("Dimension mismatch between dims and QuantumObject shape (rho.shape != prod(dims))")
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
 
