@@ -17,6 +17,7 @@ import json
 import logging
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
+from os import environ
 from typing import TYPE_CHECKING, cast
 
 import httpx
@@ -65,7 +66,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
       c) keyring (fallback).
     """
 
-    _api_url: str = "https://qilimanjaroqaas.ddns.net:8080/api/v1"
+    _api_url: str = environ.get("PUBLIC_API_URL", "https://qilimanjaroqaas.ddns.net:8080/api/v1")
 
     def __init__(self) -> None:
         """
