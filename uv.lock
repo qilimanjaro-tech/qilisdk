@@ -335,16 +335,16 @@ wheels = [
 
 [[package]]
 name = "hypothesis"
-version = "6.131.10"
+version = "6.131.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/39/39082a2d86be79f63b68f7f00f7113f2440f007398e805ef95787cdecfe1/hypothesis-6.131.10.tar.gz", hash = "sha256:d5becbd7a240b5bea4b93ec805ab09fc773707d78f4d8a27811c0216901c6dca", size = 435466, upload-time = "2025-05-06T05:30:54.979Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/41/f84e4d8d7a3430bef5bbb7ae7aceebf7ff2fde7b76ba192ccad7c878b7cc/hypothesis-6.131.14.tar.gz", hash = "sha256:347edc46cfe9bfcfb0598c4c927ed8fd573edfc8bacd2162023c4cf16accb702", size = 436198, upload-time = "2025-05-07T04:12:05.747Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/5c/d19b4e09d2920a126cfc10f4a680ebd70accad562b4887a37da6d24302ac/hypothesis-6.131.10-py3-none-any.whl", hash = "sha256:cb41cba873bfe8ead52799be7196fc2dbf85f3b74338bfc94fee1221d24c66c4", size = 499927, upload-time = "2025-05-06T05:30:51.347Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/9c/f8f818fc3e5e14dc291149032af5d65cc02f6bd6aeead515d7133abeea02/hypothesis-6.131.14-py3-none-any.whl", hash = "sha256:4cb939361a75c5946fe3e049d69737b00bde3908f162da6dcea5b2a326cea0a2", size = 500682, upload-time = "2025-05-07T04:12:02.606Z" },
 ]
 
 [[package]]
@@ -1241,7 +1241,6 @@ name = "qilisdk"
 version = "0.1.2"
 source = { editable = "." }
 dependencies = [
-    { name = "cudaq" },
     { name = "dill" },
     { name = "numpy" },
     { name = "pydantic" },
@@ -1273,7 +1272,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cudaq", specifier = "==0.10.0" },
     { name = "cudaq", marker = "extra == 'cuda'", specifier = "==0.10.0" },
     { name = "dill", specifier = ">=0.3.9" },
     { name = "httpx", marker = "extra == 'qaas'", specifier = ">=0.28.1" },
