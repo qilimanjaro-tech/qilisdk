@@ -66,6 +66,7 @@
   ```
 
   ([PR #2](https://github.com/qilimanjaro-tech/qilisdk/pulls/2))
+
 - Introduces the `Hamiltonian` class as a central component for Pauli-based operator arithmetic, with a flyweight pattern for single-qubit operators. Internally stores terms as a dictionary mapping tuples of `PauliOperator` objects to complex coefficients.
 
   **Key Features**
@@ -130,6 +131,7 @@
   This release provides a robust framework for Pauli-operator arithmetic, scalar integration, and canonical simplification, forming a foundation for higher-level quantum analog functionality.
 
   ([PR #3](https://github.com/qilimanjaro-tech/qilisdk/pulls/3))
+
 - Added the `Optimizer` abstract base class and its concrete subclass `SciPyOptimizer`. The `SciPyOptimizer` class wraps `scipy.optimize.minimize` to optimize cost functions while supporting extra keyword arguments such as Jacobian, bounds, etc. This implementation provides a structured way to perform optimization and access optimal parameters via the `optimal_parameters` property.
 
   ### Code Example

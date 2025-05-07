@@ -277,7 +277,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
 
         return CudaAnalogResult(
             final_expected_values=np.array(
-                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
             ),
             expected_values=(
                 np.array(
