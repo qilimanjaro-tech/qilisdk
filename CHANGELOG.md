@@ -7,7 +7,9 @@
   ([PR #29](https://github.com/qilimanjaro-tech/qilisdk/pulls/29))
 
 - Some changes to the `QuantumObject` class and logic.
-  But the most important I would say, is the trace norm implementation which was incorrect before, I think, and the multiplicity of 2 check for the Hilbert Space, passing to be a pow(2) check. 
+  There are two main changes:
+    - The first concerns the trace norm which was incorrectly implemented before.
+    - The second concerns changing the modulus of 2 check for the Hilbert Space size, to a a pow(2) check.
 
   ([PR #30](https://github.com/qilimanjaro-tech/qilisdk/pulls/30))
 
