@@ -186,7 +186,36 @@ class QuantumObject:
         if len(keep_set) != len(keep):
             raise ValueError("duplicate indices in keep")
 
-        # 3) Use letters from the ASCII alphabet (both cases) for einsum indices.
+        # 3) Trace out the subsystems not in `keep`.
+        # Check if the input is a valid for a partial trace
+        rho_t = self._tracing_indices(rho, dims, keep)
+
+        # 4) The resulting tensor has separate indices for each subsystem kept.
+        # Reshape it into a matrix (i.e. combine the row indices and column indices).
+        dims_keep = [dims[i] for i in sorted(keep)]
+        new_dim = int(np.prod(dims_keep)) if dims_keep else 1
+
+        return QuantumObject(rho_t.reshape((new_dim, new_dim)))
+
+    def _tracing_indices(self, rho: np.ndarray, dims: list[int], keep: list[int]) -> np.ndarray:
+        """Helper function to compute the partial trace over subsystems not in 'keep'.
+        This function generates the appropriate einsum subscript strings for the input tensor
+        and performs the summation over the indices corresponding to the subsystems being traced out.
+
+        Args:
+            rho (np.ndarray): The input density matrix to be traced out.
+            dims (list[int]): A list specifying the dimensions of each subsystem.
+            keep (list[int]): A list of indices corresponding to the subsystems to retain.
+
+        Returns:
+            tuple[np.ndarray]: The resulting tensor after tracing out the specified subsystems.
+        """
+        # Check that the number of subsystems is not too large, that we run out of ascii letters.
+        needed, MAX_LABELS = len(dims) + len(keep), len(string.ascii_letters)
+        if needed > MAX_LABELS:
+            raise ValueError(f"Not enough einsum labels (dims + keep): need {needed}, but only {MAX_LABELS} available.")
+
+        # Use letters from the ASCII alphabet (both cases) for einsum indices.
         # For each subsystem, assign two letters: one for the row index and one for the column index.
         row_letters, col_letters = [], []
         out_row, out_col = [], []  # Letters that will remain in the output for the row part and for the column part.
@@ -215,14 +244,7 @@ class QuantumObject:
         # Reshape rho into a tensor with shape dims + dims.
         reshaped = rho.reshape(dims + dims)
         # Use einsum to sum over the indices that appear twice (i.e. those being traced out).
-        rho_t = np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
-
-        # 4) The resulting tensor has separate indices for each subsystem kept.
-        # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in sorted(keep)]
-        new_dim = int(np.prod(dims_keep)) if dims_keep else 1
-
-        return QuantumObject(rho_t.reshape((new_dim, new_dim)))
+        return np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
 
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
