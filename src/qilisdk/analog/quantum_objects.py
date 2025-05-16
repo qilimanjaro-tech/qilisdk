@@ -166,7 +166,7 @@ class QuantumObject:
         rho = self.dense
 
         # 1) Basic checks for dims
-        total_dim = np.prod(dims)
+        total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
             raise ValueError("Dimension mismatch between dims and QuantumObject shape (rho.shape != prod(dims))")
         if any(d <= 0 for d in dims):
