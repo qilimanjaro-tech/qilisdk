@@ -209,6 +209,9 @@ class QuantumObject:
 
         Returns:
             tuple[np.ndarray]: The resulting tensor after tracing out the specified subsystems.
+
+        Raises:
+            ValueError: If the number of subsystems exceeds the available ASCII letters.
         """
         # Check that the number of subsystems is not too large, that we run out of ascii letters.
         needed, MAX_LABELS = len(dims) + len(keep), len(string.ascii_letters)
