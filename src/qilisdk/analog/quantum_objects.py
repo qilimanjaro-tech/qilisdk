@@ -162,12 +162,26 @@ class QuantumObject:
             QuantumObject: A new QuantumObject representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
-        rho = self.dense
-        total_dim = np.prod(dims)
-        if rho.shape != (total_dim, total_dim):
-            raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")
+        # 0) Get the density matrix representation:
+        rho = self.to_density_matrix().dense if self.is_ket() or self.is_bra() else self.dense
 
-        # Use letters from the ASCII alphabet (both cases) for einsum indices.
+        # 1) Basic checks for dims
+        total_dim = int(np.prod(dims))
+        if rho.shape != (total_dim, total_dim):
+            raise ValueError(
+                f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}) from prod(dims)."
+            )
+        if any(d <= 0 for d in dims):
+            raise ValueError("All subsystem dimensions must be positive")
+
+        # 2) Validate & sort `keep`
+        keep_set = set(keep)
+        if any(i < 0 or i >= len(dims) for i in keep_set):
+            raise ValueError("keep indices out of range (0, len(dims))")
+        if len(keep_set) != len(keep):
+            raise ValueError("duplicate indices in keep")
+
+        # 3) Use letters from the ASCII alphabet (both cases) for einsum indices.
         # For each subsystem, assign two letters: one for the row index and one for the column index.
         row_letters, col_letters = [], []
         out_row, out_col = [], []  # Letters that will remain in the output for the row part and for the column part.
@@ -196,15 +210,14 @@ class QuantumObject:
         # Reshape rho into a tensor with shape dims + dims.
         reshaped = rho.reshape(dims + dims)
         # Use einsum to sum over the indices that appear twice (i.e. those being traced out).
-        reduced_tensor = np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
+        rho_t = np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
 
-        # The resulting tensor has separate indices for each subsystem kept.
+        # 4) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in keep]
-        new_dim = np.prod(dims_keep)
-        reduced_matrix = reduced_tensor.reshape(new_dim, new_dim)
+        dims_keep = [dims[i] for i in sorted(keep)]
+        new_dim = int(np.prod(dims_keep)) if dims_keep else 1
 
-        return QuantumObject(reduced_matrix)
+        return QuantumObject(rho_t.reshape((new_dim, new_dim)))
 
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
