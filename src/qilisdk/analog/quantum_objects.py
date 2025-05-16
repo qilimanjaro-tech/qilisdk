@@ -150,13 +150,18 @@ class QuantumObject:
         The input 'dims' represents the dimensions of each subsystem,
         and 'keep' indicates the indices of the subsystems to be retained.
 
+        If the QuantumObject is a ket or bra, it will first be converted to a density matrix.
+
         Args:
             dims (list[int]): A list specifying the dimensions of each subsystem.
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
+                The order of the indices in 'keep' is not important, since dimensions will
+                be returned in the original order, but the indices must be unique.
 
         Raises:
             ValueError: If the product of the dimensions in dims does not match the
-                shape of the QuantumObject's dense representation.
+                shape of the QuantumObject's dense representation or if any dimension is non-positive.
+            ValueError: If the indices in 'keep' are not unique or are out of range.
 
         Returns:
             QuantumObject: A new QuantumObject representing the reduced density matrix
