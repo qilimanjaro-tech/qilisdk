@@ -169,7 +169,7 @@ class QuantumObject:
         # 1) Basic checks for dims
         total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
-            raise ValueError("Dimension mismatch between dims and QuantumObject shape (rho.shape != prod(dims))")
+            raise ValueError(f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}) from prod(dims).")
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
 
