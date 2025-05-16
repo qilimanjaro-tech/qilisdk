@@ -149,6 +149,8 @@ class QuantumObject:
         The input 'dims' represents the dimensions of each subsystem,
         and 'keep' indicates the indices of the subsystems to be retained.
 
+        If the QuantumObject is a ket or bra, it will first be converted to a density matrix.
+
         Args:
             dims (list[int]): A list specifying the dimensions of each subsystem.
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
@@ -164,7 +166,10 @@ class QuantumObject:
             QuantumObject: A new QuantumObject representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
-        rho = self.dense
+        if self.is_ket() or self.is_bra():
+            rho = self.to_density_matrix().dense
+        else:
+            rho = self.dense
 
         # 1) Basic checks for dims
         total_dim = int(np.prod(dims))
