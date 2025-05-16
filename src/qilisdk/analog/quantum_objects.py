@@ -158,7 +158,7 @@ class QuantumObject:
         Raises:
             ValueError: If the product of the dimensions in dims does not match the
                 shape of the QuantumObject's dense representation or if any dimension is non-positive.
-            ValueError: If the indices in 'keep' are not unique, or are out of range, or duplicates.
+            ValueError: If the indices in 'keep' are not unique or are out of range.
 
         Returns:
             QuantumObject: A new QuantumObject representing the reduced density matrix
@@ -184,15 +184,15 @@ class QuantumObject:
         rho_t = rho.reshape(*(dims + dims))
 
         # 4) Loop backwards over subsystems, so that when we trace out one, the remaining axes still line up.
-        n = len(dims)
+        column_axis_offset = len(dims)
         # trace out in descending subsystem order
         for subsystem in reversed(range(len(dims))):
             if subsystem not in keep_set:
                 # axis1 is the "row" index for that subsystem
-                # axis2 is the "column" index, which sits n dims later
-                rho_t = np.trace(rho_t, axis1=subsystem, axis2=subsystem + n)
+                # axis2 is the "column" index, which sits column_axis_offset dims later
+                rho_t = np.trace(rho_t, axis1=subsystem, axis2=subsystem + column_axis_offset)
                 # now we've removed one subsystem, so future column-axes shift down
-                n -= 1
+                column_axis_offset -= 1
 
         # 5) Reassemble the “kept” dims into a flat matrix
         dims_keep = [dims[i] for i in sorted(keep)]
