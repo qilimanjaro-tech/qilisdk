@@ -197,7 +197,8 @@ class QuantumObject:
 
         return QuantumObject(rho_t.reshape((new_dim, new_dim)))
 
-    def _tracing_indices(self, rho: np.ndarray, dims: list[int], keep: list[int]) -> np.ndarray:
+    @staticmethod
+    def _tracing_indices(rho: np.ndarray, dims: list[int], keep: list[int]) -> np.ndarray:
         """Helper function to compute the partial trace over subsystems not in 'keep'.
         This function generates the appropriate einsum subscript strings for the input tensor
         and performs the summation over the indices corresponding to the subsystems being traced out.
