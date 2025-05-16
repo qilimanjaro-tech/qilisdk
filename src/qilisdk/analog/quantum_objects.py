@@ -166,15 +166,15 @@ class QuantumObject:
             QuantumObject: A new QuantumObject representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
-        if self.is_ket() or self.is_bra():
-            rho = self.to_density_matrix().dense
-        else:
-            rho = self.dense
+        # 0) Get the density matrix representation:
+        rho = self.to_density_matrix().dense if self.is_ket() or self.is_bra() else self.dense
 
         # 1) Basic checks for dims
         total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
-            raise ValueError(f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}) from prod(dims).")
+            raise ValueError(
+                f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}) from prod(dims)."
+            )
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
 
