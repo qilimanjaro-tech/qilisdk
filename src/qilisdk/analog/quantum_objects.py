@@ -152,7 +152,8 @@ class QuantumObject:
         Args:
             dims (list[int]): A list specifying the dimensions of each subsystem.
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
-                The order of the indices in 'keep' is not important, but they must be unique.
+                The order of the indices in 'keep' is not important, since dimensions will
+                be returned in the original order, but the indices must be unique.
 
         Raises:
             ValueError: If the product of the dimensions in dims does not match the
