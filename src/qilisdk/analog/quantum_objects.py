@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-import string
 from typing import Literal
 
 import numpy as np
