@@ -209,7 +209,7 @@ class QuantumObject:
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
 
         Returns:
-            tuple[np.ndarray]: The resulting tensor after tracing out the specified subsystems.
+            np.ndarray: The resulting tensor after tracing out the specified subsystems.
 
         Raises:
             ValueError: If the number of subsystems exceeds the available ASCII letters.
