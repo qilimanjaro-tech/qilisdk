@@ -168,13 +168,13 @@ class QuantumObject:
                 for the subsystems specified in 'keep'.
         """
         # 1) Get the density matrix representation:
-        rho = self.to_density_matrix().dense if self.is_ket() or self.is_bra() else self.dense
+        rho = self.to_density_matrix().dense
 
         # 2) Basic checks for dims
         total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
             raise ValueError(
-                f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}) from prod(dims)."
+                f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}), given by the product of all `dims`: (np.prod(dims), np.prod(dims))."
             )
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
