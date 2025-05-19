@@ -187,7 +187,7 @@ class QuantumObject:
             raise ValueError("duplicate indices in keep")
 
         # 4) Trace out the subsystems not in `keep`.
-        rho_t = self._tracing_indices(rho, dims, keep)
+        rho_t = self._compute_traced_tensor_via_einstein_summation(rho, dims, keep)
 
         # 5) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
@@ -197,8 +197,9 @@ class QuantumObject:
         return QuantumObject(rho_t.reshape((new_dim, new_dim)))
 
     @staticmethod
-    def _tracing_indices(rho: np.ndarray, dims: list[int], keep: list[int]) -> np.ndarray:
-        """Helper function to compute the partial trace over subsystems not in 'keep'.
+    def _compute_traced_tensor_via_einstein_summation(rho: np.ndarray, dims: list[int], keep: list[int]) -> np.ndarray:
+        """Helper function called in `ptrace`, which computes the partial trace over subsystems not in 'keep'.
+
         This function generates the appropriate einsum subscript strings for the input tensor
         and performs the summation over the indices corresponding to the subsystems being traced out.
 
