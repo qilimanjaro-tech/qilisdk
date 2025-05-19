@@ -127,7 +127,8 @@ def test_ptrace_works_for_operators_which_are_not_density_matrices():
 
     # Pick an out of order keep list:
     keep = [0, 2]  # subspace 2 *then* subspace 0
-    assert (q_obj.ptrace(keep, dims).dense == [[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]]).all()
+    expected_result = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]])
+    np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense, expected_result, atol=1e-8)
 
 
 def test_ptrace_invalid_dims():
