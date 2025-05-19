@@ -175,17 +175,20 @@ class QuantumObject:
         # 1) Get the density matrix representation:
         rho = self.to_density_matrix().dense
 
-        # 2) Basic checks for dims
-        if dims is None:  # If `dims` is None, we assume a density matrix of qubit states (we split in dim=2)
-            number_of_qubits_in_state = int(math.log(rho.shape[0], 2))  # to_density_matrix() should check its power 2
+        # 2.a) If `dims` is not provided, we assume a density matrix of qubit states (we split in subsystems of dim = 2):
+        if dims is None:
+            # The to_density_matrix() should check its a square matrix, with size being a power of 2, so we can do:
+            number_of_qubits_in_state = int(math.log(rho.shape[0], 2))
             dims = [2 for _ in range(number_of_qubits_in_state)]
-        total_dim = int(np.prod(dims))
-        if rho.shape != (total_dim, total_dim):
-            raise ValueError(
-                f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}), given by the product of all passed `dims`: (np.prod(dims), np.prod(dims))."
-            )
-        if any(d <= 0 for d in dims):
-            raise ValueError("All subsystem dimensions must be positive")
+        # 2.b) If `dims` is provided, we run checks on it:
+        else:
+            total_dim = int(np.prod(dims))
+            if rho.shape != (total_dim, total_dim):
+                raise ValueError(
+                    f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}), given by the product of all passed `dims`: (np.prod(dims), np.prod(dims))."
+                )
+            if any(d <= 0 for d in dims):
+                raise ValueError("All subsystem dimensions must be positive")
 
         # 3) Validate & sort `keep`
         keep_set = set(keep)
