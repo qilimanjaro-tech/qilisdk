@@ -136,6 +136,8 @@ def test_ptrace_invalid_dims():
     qobj = QuantumObject(arr)
     with pytest.raises(ValueError):  # noqa: PT011
         qobj.ptrace(keep=[0], dims=[2, 2])
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[0], dims=[1])  # too few dimensions
 
 
 def test_ptrace_invalid_keep():
@@ -144,7 +146,10 @@ def test_ptrace_invalid_keep():
     qobj = QuantumObject(arr)
     with pytest.raises(ValueError):  # noqa: PT011
         qobj.ptrace(keep=[1], dims=[2])
-
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[2], dims=[2])  # out of bounds index
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[0, 1], dims=[2])  # too many indices
 
 # --- Arithmetic Operator Tests ---
 
