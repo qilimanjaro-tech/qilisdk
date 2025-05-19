@@ -157,7 +157,7 @@ class QuantumObject:
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
                 The order of the indices in 'keep' is not important, since dimensions will
                 be returned in the tensor original order, but the indices must be unique.
-            dims (list[int] | None): A list specifying the dimensions of each subsystem.
+            dims (list[int], optional): A list specifying the dimensions of each subsystem.
                 If not specified, a density matrix of qubit states is assumed, and the
                 dimensions are inferred accordingly (i.e. we split the state in dim 2 states).
 
