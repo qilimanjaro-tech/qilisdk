@@ -195,7 +195,7 @@ class QuantumObject:
             raise ValueError("duplicate indices in keep")
 
         # 4) Trace out the subsystems not in `keep`.
-        rho_t = self._compute_traced_tensor_via_einstein_summation(rho, dims, keep)
+        rho_t = self._compute_traced_tensor_via_einstein_summation(rho, keep, dims)
 
         # 5) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
