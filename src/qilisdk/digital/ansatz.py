@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
-from typing import ClassVar, Literal, Union
+from typing import Any, ClassVar, Literal, Union
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
+from qilisdk.yaml import yaml
 
 
 class Ansatz(ABC):
@@ -64,6 +65,7 @@ class Ansatz(ABC):
     def _construct_circuit(self, parameters: list[float]) -> Circuit: ...
 
 
+@yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
     def __init__(
         self,
@@ -96,6 +98,23 @@ class HardwareEfficientAnsatz(Ansatz):
             raise ValueError(f"provided structure {structure} is not supported.")
         self.structure = structure
 
+        self.construct_layer_handlers = {
+            "interposed": self._construct_layer_interposed,
+            "grouped": self._construct_layer_grouped,
+        }
+
+    def __getstate__(self) -> dict[str, Any]:
+        state = self.__dict__.copy()
+        # Exclude the mapping that contains bound methods (not serializable).
+        state.pop("construct_layer_handlers", None)
+        return state
+
+    def __setstate__(self, state) -> None:  # noqa: ANN001
+        """
+        Restore the object's state after deserialization and reinitialize any attributes that were omitted.
+        """
+        self.__dict__.update(state)
+        # Reconstruct the mapping with the proper bound methods.
         self.construct_layer_handlers = {
             "interposed": self._construct_layer_interposed,
             "grouped": self._construct_layer_grouped,

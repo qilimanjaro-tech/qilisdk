@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk import analog, common, digital, extras, utils
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+
+class QaaSSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="qaas_", env_file=".env", env_file_encoding="utf-8")
+
+    username: str = Field(..., description="QaaS Username")
+    apikey: str = Field(..., description="QaaS API Key")

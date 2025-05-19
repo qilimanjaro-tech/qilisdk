@@ -18,8 +18,9 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Controlled, Exponential, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
+from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 
 
 # ------------------------------------------------------------------------------

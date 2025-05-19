@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from qilisdk.common.algorithm import Algorithm
 
-from qilisdk import analog, common, digital, extras, utils
 
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+class DigitalAlgorithm(Algorithm):
+    """
+    Abstract base class for digital quantum algorithms.
+    """
