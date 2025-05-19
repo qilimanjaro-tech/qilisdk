@@ -173,12 +173,12 @@ class QuantumObject:
                 for the subsystems specified in 'keep'.
         """
         # 1) Get the density matrix representation:
-        rho = self.to_density_matrix().dense
+        rho = self.dense if self.is_operator() else self.to_density_matrix().dense
 
         # 2.a) If `dims` is not provided, we assume a density matrix of qubit states (we split in subsystems of dim = 2):
         if dims is None:
             # The to_density_matrix() should check its a square matrix, with size being a power of 2, so we can do:
-            number_of_qubits_in_state = int(math.log(rho.shape[0], 2))
+            number_of_qubits_in_state = int(math.log2(rho.shape[0]))
             dims = [2 for _ in range(number_of_qubits_in_state)]
         # 2.b) If `dims` is provided, we run checks on it:
         else:
@@ -202,7 +202,7 @@ class QuantumObject:
 
         # 5) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in sorted(keep)]
+        dims_keep = [dims[i] for i in keep]
         new_dim = int(np.prod(dims_keep)) if dims_keep else 1
 
         return QuantumObject(rho_t.reshape((new_dim, new_dim)))
@@ -339,6 +339,7 @@ class QuantumObject:
 
         Raises:
             ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
+            ValueError: If the QuantumObject is an operator that is not a density matrix.
 
         Returns:
             QuantumObject: A new QuantumObject representing the density matrix.
@@ -346,14 +347,19 @@ class QuantumObject:
         if self.is_scalar():
             raise ValueError("Cannot make a density matrix from scalar.")
 
-        if self.is_density_matrix():
-            return self
-
         if self.is_bra():
             return (self.adjoint() @ self).unit()
 
         if self.is_ket():
             return (self @ self.adjoint()).unit()
+
+        if self.is_density_matrix():
+            return self
+
+        if self.is_operator():
+            raise ValueError(
+                "Cannot make a density matrix from an operator, which is not a density matrix already (trace=1 and hermitian)."
+            )
 
         raise ValueError(
             "Cannot make a density matrix from this QuantumObject. "

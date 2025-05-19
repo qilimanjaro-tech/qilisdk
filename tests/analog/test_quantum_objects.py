@@ -85,26 +85,61 @@ def test_dag():
 
 
 def test_ptrace_valid():
-    """Test partial trace on a valid 2-qubit density matrix.
-
-    The test creates a 2-qubit state |00⟩, converts it to a density matrix,
-    and then traces out the second qubit.
-    """
-    qket = ket(0, 0)
+    """Test partial trace on a valid 4-qubit density matrices."""
+    qket = ket(0, 1, 1, 0)
     rho = qket.to_density_matrix()
-    # dims for a 2-qubit system are [2, 2]; keep the first qubit (index 0).
-    reduced = rho.ptrace([2, 2], keep=[0])
-    # Expected reduced density matrix is the pure state |0⟩.
-    expected = ket(0).to_density_matrix()
-    np.testing.assert_allclose(reduced.dense, expected.dense, atol=1e-8)
+    
+    # Different combinations of partial traces.
+    reduced_single_qubit_ground = rho.ptrace(keep=[0], dims=[2, 2, 4])
+    reduced_single_qubit_excited = rho.ptrace(keep=[1], dims=[2, 2, 4])
+    reduced_double_qubit_1 = rho.ptrace(keep=[2], dims=[2, 2, 4])
+    reduced_double_qubit_2 = rho.ptrace(keep=[1, 2], dims=[2, 2, 2, 2])
+    reduced_double_qubit_3 = rho.ptrace(keep=[2, 1], dims=[2, 2, 2, 2])
 
+    # Expected reduced density matrices:
+    expected_single_qubit_ground = ket(0).to_density_matrix()
+    expected_single_qubit_excited = ket(1).to_density_matrix()
+    expected_double_qubit = ket(1, 0).to_density_matrix()
+    
+    # Checks:
+    np.testing.assert_allclose(reduced_single_qubit_ground.dense, expected_single_qubit_ground.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_single_qubit_excited.dense, expected_single_qubit_excited.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_1.dense, expected_double_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_2.dense, expected_double_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_3.dense, expected_double_qubit.dense, atol=1e-8)
+    
+def test_ptrace_valid_keep_with_automatic_dims_and_density_matrix():
+    qket = ket(0, 0, 1, 0)
+    reduced_single_qubit = qket.ptrace(keep=[2, 3])
+    expected_single_qubit = ket(1, 0).to_density_matrix()
+    np.testing.assert_allclose(reduced_single_qubit.dense, expected_single_qubit.dense, atol=1e-8)
+    
+def test_ptrace_works_for_operators_which_are_not_density_matrices():
+    dims = [2, 2, 2]
+
+    # Build a “diagonal” density matrix whose diagonal entries are 0…7. That way each composite basis |i0,i1,i2⟩ ↦ 
+    # flat index i = 4*i0 + 2*i1 + i2 carries a unique number. And the trace != 1, so not a density operator
+    full_dim = np.prod(dims)
+    rho = np.diag(np.arange(full_dim, dtype=float))
+    q_obj = QuantumObject(rho)
+    
+    # Pick an out‐of‐order keep list:
+    keep = [0, 2]  # subspace 2 *then* subspace 0
+    assert (q_obj.ptrace(keep, dims).dense == [[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]]).all()
 
 def test_ptrace_invalid_dims():
     """Partial trace should raise ValueError if dims do not match the matrix dimensions."""
     arr = np.eye(2)
     qobj = QuantumObject(arr)
     with pytest.raises(ValueError):  # noqa: PT011
-        qobj.ptrace([2, 2], keep=[0])
+        qobj.ptrace(keep=[0],dims=[2, 2])
+        
+def test_ptrace_invalid_keep():
+    """Partial trace should raise ValueError if keep indices are out of bounds."""
+    arr = np.eye(2)
+    qobj = QuantumObject(arr)
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[1], dims=[2])
 
 
 # --- Arithmetic Operator Tests ---
