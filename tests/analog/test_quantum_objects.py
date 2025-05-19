@@ -117,10 +117,9 @@ def test_ptrace_valid_keep_with_automatic_dims_and_density_matrix():
 
 
 def test_ptrace_works_for_operators_which_are_not_density_matrices():
-    dims = [2, 2, 2]
-
     # Build a “diagonal” density matrix whose diagonal entries are 0…7. That way each composite basis |i0,i1,i2⟩ ↦
     # flat index i = 4*i0 + 2*i1 + i2 carries a unique number. And the trace != 1, so not a density operator
+    dims = [2, 2, 2]
     full_dim = np.prod(dims)
     rho = np.diag(np.arange(full_dim, dtype=float))
     q_obj = QuantumObject(rho)
