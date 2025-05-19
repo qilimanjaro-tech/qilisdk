@@ -207,6 +207,8 @@ class QuantumObject:
             rho (np.ndarray): The input density matrix to be traced out.
             dims (list[int]): A list specifying the dimensions of each subsystem.
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
+                The order of the indices in 'keep' is not important, since dimensions will
+                be returned in the original order, but the indices must be unique.
 
         Returns:
             np.ndarray: The resulting tensor after tracing out the specified subsystems.
