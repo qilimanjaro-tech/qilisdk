@@ -93,8 +93,8 @@ def test_ptrace_valid():
     reduced_single_qubit_ground = rho.ptrace(keep=[0], dims=[2, 2, 4])
     reduced_single_qubit_excited = rho.ptrace(keep=[1], dims=[2, 2, 4])
     reduced_double_qubit_1 = rho.ptrace(keep=[2], dims=[2, 2, 4])
-    reduced_double_qubit_2 = rho.ptrace(keep=[1, 2], dims=[2, 2, 2, 2])
-    reduced_double_qubit_3 = rho.ptrace(keep=[2, 1], dims=[2, 2, 2, 2])
+    reduced_double_qubit_2 = rho.ptrace(keep=[2, 3], dims=[2, 2, 2, 2])
+    reduced_double_qubit_3 = rho.ptrace(keep=[3, 2], dims=[2, 2, 2, 2])
 
     # Expected reduced density matrices:
     expected_single_qubit_ground = ket(0).to_density_matrix()
