@@ -23,9 +23,10 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
+from qilisdk.common.exceptions import NotSupportedOperation
 from qilisdk.yaml import yaml
 
-from .exceptions import InvalidHamiltonianOperation, NotSupportedOperation
+from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

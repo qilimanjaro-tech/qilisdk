@@ -22,14 +22,14 @@ from warnings import warn
 
 import numpy as np
 
-from qilisdk.analog.exceptions import NotSupportedOperation
+from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 
 Number = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).max
-LARGE = 100
+LARGE_BOUND = 100
 
 
 class Side(Enum):
@@ -320,10 +320,14 @@ class OneHot(Encoding):
         term = OneHot.encode(var)
         binary_var = term.variables()
 
-        if len(binary_list) != len(binary_var):
+        # after encoding we will have one less variable than the binary list, because the first variable is multiplied
+        # by 0 so it is removed from the term.
+        if len(binary_list) != len(binary_var) + 1:
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
+        binary_dict: dict[BaseVariable, list[int]] = {
+            binary_var[i - 1]: [binary_list[i]] for i in range(1, len(binary_list))
+        }
 
         if var.domain is Domain.REAL:
             term *= precision
@@ -512,8 +516,8 @@ class BaseVariable:
                                                 variable's domain is chosen.
 
         Raises:
-            ValueError: the lower bound or the upper bound don't correspond to the variable domain.
-            ValueError: the lower bound is higher than the upper bound.
+            OutOfBoundsException: the lower bound or the upper bound don't correspond to the variable domain.
+            InvalidBoundsError: the lower bound is higher than the upper bound.
         """
         self._label = label
         self._domain = domain
@@ -525,15 +529,15 @@ class BaseVariable:
             upper_bound = domain.max()
 
         if not self.domain.check_value(upper_bound):
-            raise ValueError(
+            raise OutOfBoundsException(
                 f"the lower bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if not self.domain.check_value(lower_bound):
-            raise ValueError(
+            raise OutOfBoundsException(
                 f"the upper bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if lower_bound > upper_bound:
-            raise ValueError("lower bound can't be larger than the upper bound.")
+            raise InvalidBoundsError("lower bound can't be larger than the upper bound.")
         self._bounds = (lower_bound, upper_bound)
 
     @property
@@ -590,30 +594,32 @@ class BaseVariable:
             upper_bound (float | None): The upper bound (if None the highest allowed bound in the variable domain is
             selected). Defaults to None.
         Raises:
-            ValueError: the lower bound or the upper bound don't correspond to the variable domain.
-            ValueError: the lower bound is higher than the upper bound.
+            OutOfBoundsException: the lower bound or the upper bound don't correspond to the variable domain.
+            InvalidBoundsError: the lower bound is higher than the upper bound.
         """
         if lower_bound is None:
             lower_bound = self._domain.min()
         if upper_bound is None:
             upper_bound = self._domain.max()
         if not self.domain.check_value(lower_bound):
-            raise ValueError(
+            raise OutOfBoundsException(
                 f"the lower bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if not self.domain.check_value(upper_bound):
-            raise ValueError(
+            raise OutOfBoundsException(
                 f"the upper bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if lower_bound > upper_bound:
-            raise ValueError(
+            raise InvalidBoundsError(
                 f"the lower bound ({lower_bound}) should not be greater than the upper bound ({upper_bound})"
             )
         self._bounds = (lower_bound, upper_bound)
 
+    @abstractmethod
     def num_binary_equivalent(self) -> int:
         raise NotImplementedError
 
+    @abstractmethod
     def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:
         raise NotImplementedError
 
@@ -640,9 +646,6 @@ class BaseVariable:
 
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
-
-    def __copy__(self) -> BaseVariable:
-        return BaseVariable(label=self.label, domain=self.domain)
 
     def __repr__(self) -> str:
         return f"{self._label}"
@@ -749,7 +752,7 @@ class BinaryVar(BaseVariable):
 
     def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
         if len(binary_list) != 1:
-            raise ValueError("Evaluating a Binary variable with a binary list of more than one item.")
+            raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
         return binary_list[0]
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
@@ -771,14 +774,21 @@ class SpinVar(BaseVariable):
 
     def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
         if len(binary_list) != 1:
-            raise ValueError("Evaluating a Spin variable with a binary list of more than one item.")
+            raise EvaluationError("Evaluating a Spin variable with a binary list of more than one item.")
         return -1 if binary_list[0] == 0 else 1
+
+    def __copy__(self) -> SpinVar:
+        return SpinVar(label=self.label)
 
 
 class Variable(BaseVariable):
 
     def __init__(
-        self, label: str, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] = HOBO
+        self,
+        label: str,
+        domain: Domain,
+        bounds: tuple[float | None, float | None] = (None, None),
+        encoding: type[Encoding] = HOBO,
     ) -> None:
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
@@ -793,7 +803,7 @@ class Variable(BaseVariable):
     @property
     def term(self) -> Term:
         if self._term is None:
-            if self.bounds[1] > LARGE or self.bounds[0] < -LARGE:
+            if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
                 warn(
                     f"Encoding variable {self.label} which has the bounds {self.bounds}"
                     + "is very expensive and may take a very long time."
@@ -857,7 +867,7 @@ class Variable(BaseVariable):
 
 
 class Term:
-    CONST = BaseVariable(CONST_KEY, Domain.REAL)
+    CONST = Variable(CONST_KEY, Domain.REAL)
 
     def __init__(self, elements: Sequence[BaseVariable | Term | Number], operation: Operation) -> None:
         self._operation = operation
@@ -1041,7 +1051,8 @@ class Term:
         for term, _ in parentheses:
             out.pop(term)
 
-        for term, coeff in parentheses:
+        for _term, coeff in parentheses:
+            term = copy.copy(_term)
             if coeff > 1:
                 term **= int(coeff)
             final_out = []
