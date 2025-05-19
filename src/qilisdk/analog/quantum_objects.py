@@ -167,10 +167,10 @@ class QuantumObject:
             QuantumObject: A new QuantumObject representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
-        # 0) Get the density matrix representation:
+        # 1) Get the density matrix representation:
         rho = self.to_density_matrix().dense if self.is_ket() or self.is_bra() else self.dense
 
-        # 1) Basic checks for dims
+        # 2) Basic checks for dims
         total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
             raise ValueError(
@@ -179,17 +179,17 @@ class QuantumObject:
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
 
-        # 2) Validate & sort `keep`
+        # 3) Validate & sort `keep`
         keep_set = set(keep)
         if any(i < 0 or i >= len(dims) for i in keep_set):
             raise ValueError("keep indices out of range (0, len(dims))")
         if len(keep_set) != len(keep):
             raise ValueError("duplicate indices in keep")
 
-        # 3) Trace out the subsystems not in `keep`.
+        # 4) Trace out the subsystems not in `keep`.
         rho_t = self._tracing_indices(rho, dims, keep)
 
-        # 4) The resulting tensor has separate indices for each subsystem kept.
+        # 5) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
         dims_keep = [dims[i] for i in sorted(keep)]
         new_dim = int(np.prod(dims_keep)) if dims_keep else 1
