@@ -187,7 +187,6 @@ class QuantumObject:
             raise ValueError("duplicate indices in keep")
 
         # 3) Trace out the subsystems not in `keep`.
-        # Check if the input is a valid for a partial trace
         rho_t = self._tracing_indices(rho, dims, keep)
 
         # 4) The resulting tensor has separate indices for each subsystem kept.
