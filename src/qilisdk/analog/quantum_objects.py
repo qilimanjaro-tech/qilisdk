@@ -177,7 +177,7 @@ class QuantumObject:
 
         # 2) Basic checks for dims
         if dims is None:  # If `dims` is None, we assume a density matrix of qubit states (we split in dim=2)
-            number_of_qubits_in_state = int(math.log(rho.shape[0], 2))  # to_density_matrix() checks its power of 2.
+            number_of_qubits_in_state = int(math.log(rho.shape[0], 2))  # to_density_matrix() should check its power 2
             dims = [2 for _ in range(number_of_qubits_in_state)]
         total_dim = int(np.prod(dims))
         if rho.shape != (total_dim, total_dim):
