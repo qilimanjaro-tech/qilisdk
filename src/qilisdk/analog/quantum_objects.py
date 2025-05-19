@@ -202,7 +202,7 @@ class QuantumObject:
 
         # 5) The resulting tensor has separate indices for each subsystem kept.
         # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in keep]
+        dims_keep = [dims[i] for i in keep_set]
         new_dim = int(np.prod(dims_keep)) if dims_keep else 1
 
         return QuantumObject(rho_t.reshape((new_dim, new_dim)))
