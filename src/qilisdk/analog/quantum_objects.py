@@ -148,8 +148,8 @@ class QuantumObject:
 
         This method calculates the reduced density matrix by tracing out
         the subsystems that are not specified in the 'keep' parameter.
-        The input 'dims' represents the dimensions of each subsystem,
-        and 'keep' indicates the indices of the subsystems to be retained.
+        The input 'dims' represents the dimensions of each subsystem (optional),
+        and 'keep' indicates the indices of those subsystems to be retained.
 
         If the QuantumObject is a ket or bra, it will first be converted to a density matrix.
 
