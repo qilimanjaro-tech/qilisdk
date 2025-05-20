@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import math
 import string
 from typing import Literal
 
@@ -141,31 +142,95 @@ class QuantumObject:
         out = QuantumObject(self._data.conj().T)
         return out
 
-    def ptrace(self, dims: list[int], keep: list[int]) -> "QuantumObject":
+    def ptrace(self, keep: list[int], dims: list[int] | None = None) -> "QuantumObject":
         """
         Compute the partial trace over subsystems not in 'keep'.
 
         This method calculates the reduced density matrix by tracing out
         the subsystems that are not specified in the 'keep' parameter.
-        The input 'dims' represents the dimensions of each subsystem,
-        and 'keep' indicates the indices of the subsystems to be retained.
+        The input 'dims' represents the dimensions of each subsystem (optional),
+        and 'keep' indicates the indices of those subsystems to be retained.
+
+        If the QuantumObject is a ket or bra, it will first be converted to a density matrix.
 
         Args:
-            dims (list[int]): A list specifying the dimensions of each subsystem.
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
+                The order of the indices in 'keep' is not important, since dimensions will
+                be returned in the tensor original order, but the indices must be unique.
+            dims (list[int], optional): A list specifying the dimensions of each subsystem.
+                If not specified, a density matrix of qubit states is assumed, and the
+                dimensions are inferred accordingly (i.e. we split the state in dim 2 states).
 
         Raises:
             ValueError: If the product of the dimensions in dims does not match the
-                shape of the QuantumObject's dense representation.
+                shape of the QuantumObject's dense representation or if any dimension is non-positive.
+            ValueError: If the indices in 'keep' are not unique or are out of range.
+            ValueError: If the QuantumObject is not a valid density matrix or state vector.
+            ValueError: If the number of subsystems exceeds the available ASCII letters.
 
         Returns:
             QuantumObject: A new QuantumObject representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
-        rho = self.dense
-        total_dim = np.prod(dims)
-        if rho.shape != (total_dim, total_dim):
-            raise ValueError("Dimension mismatch between provided dims and QuantumObject shape")
+        # 1) Get the density matrix representation:
+        rho = self.dense if self.is_operator() else self.to_density_matrix().dense
+
+        # 2.a) If `dims` is not provided, we assume a density matrix of qubit states (we split in subsystems of dim = 2):
+        if dims is None:
+            # The to_density_matrix() should check its a square matrix, with size being a power of 2, so we can do:
+            number_of_qubits_in_state = int(math.log2(rho.shape[0]))
+            dims = [2 for _ in range(number_of_qubits_in_state)]
+        # 2.b) If `dims` is provided, we run checks on it:
+        else:
+            total_dim = int(np.prod(dims))
+            if rho.shape != (total_dim, total_dim):
+                raise ValueError(
+                    f"Dimension mismatch: QuantumObject shape {rho.shape} does not match the expected shape ({total_dim}, {total_dim}), given by the product of all passed `dims`: (np.prod(dims), np.prod(dims))."
+                )
+            if any(d <= 0 for d in dims):
+                raise ValueError("All subsystem dimensions must be positive")
+
+        # 3) Validate & sort `keep`
+        keep_set = set(keep)
+        if any(i < 0 or i >= len(dims) for i in keep_set):
+            raise ValueError("keep indices out of range (0, len(dims))")
+        if len(keep_set) != len(keep):
+            raise ValueError("duplicate indices in keep")
+
+        # 4) Trace out the subsystems not in `keep`.
+        rho_t = self._compute_traced_tensor_via_einstein_summation(rho, keep_set, dims)
+
+        # 5) The resulting tensor has separate indices for each subsystem kept.
+        # Reshape it into a matrix (i.e. combine the row indices and column indices).
+        dims_keep = [dims[i] for i in keep_set]
+        new_dim = int(np.prod(dims_keep)) if dims_keep else 1
+
+        return QuantumObject(rho_t.reshape((new_dim, new_dim)))
+
+    @staticmethod
+    def _compute_traced_tensor_via_einstein_summation(rho: np.ndarray, keep: set[int], dims: list[int]) -> np.ndarray:
+        """Helper function called in `ptrace`, which computes the partial trace over subsystems not in 'keep'.
+
+        This function generates the appropriate einsum subscript strings for the input tensor
+        and performs the summation over the indices corresponding to the subsystems being traced out.
+
+        Args:
+            rho (np.ndarray): The input density matrix to be traced out.
+            keep (set[int]): A list of indices corresponding to the subsystems to retain.
+                The order of the indices in 'keep' is not important, since dimensions will
+                be returned in the tensor original order, but the indices must be unique.
+            dims (list[int]): A list specifying the dimensions of each subsystem.
+
+        Returns:
+            np.ndarray: The resulting tensor after tracing out the specified subsystems.
+
+        Raises:
+            ValueError: If the number of subsystems exceeds the available ASCII letters.
+        """
+        # Check that the number of subsystems is not too large, that we run out of ascii letters.
+        needed, MAX_LABELS = len(dims) + len(keep), len(string.ascii_letters)
+        if needed > MAX_LABELS:
+            raise ValueError(f"Not enough einsum labels (dims + keep): need {needed}, but only {MAX_LABELS} available.")
 
         # Use letters from the ASCII alphabet (both cases) for einsum indices.
         # For each subsystem, assign two letters: one for the row index and one for the column index.
@@ -196,15 +261,7 @@ class QuantumObject:
         # Reshape rho into a tensor with shape dims + dims.
         reshaped = rho.reshape(dims + dims)
         # Use einsum to sum over the indices that appear twice (i.e. those being traced out).
-        reduced_tensor = np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
-
-        # The resulting tensor has separate indices for each subsystem kept.
-        # Reshape it into a matrix (i.e. combine the row indices and column indices).
-        dims_keep = [dims[i] for i in keep]
-        new_dim = np.prod(dims_keep)
-        reduced_matrix = reduced_tensor.reshape(new_dim, new_dim)
-
-        return QuantumObject(reduced_matrix)
+        return np.einsum(f"{input_subscript}->{output_subscript}", reshaped)
 
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
@@ -282,6 +339,7 @@ class QuantumObject:
 
         Raises:
             ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
+            ValueError: If the QuantumObject is an operator that is not a density matrix.
 
         Returns:
             QuantumObject: A new QuantumObject representing the density matrix.
@@ -289,14 +347,19 @@ class QuantumObject:
         if self.is_scalar():
             raise ValueError("Cannot make a density matrix from scalar.")
 
-        if self.is_density_matrix():
-            return self
-
         if self.is_bra():
             return (self.adjoint() @ self).unit()
 
         if self.is_ket():
             return (self @ self.adjoint()).unit()
+
+        if self.is_density_matrix():
+            return self
+
+        if self.is_operator():
+            raise ValueError(
+                "Cannot make a density matrix from an operator, which is not a density matrix already (trace=1 and hermitian)."
+            )
 
         raise ValueError(
             "Cannot make a density matrix from this QuantumObject. "
