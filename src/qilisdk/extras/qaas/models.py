@@ -20,6 +20,7 @@ from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
+from qilisdk.extras.qaas.qaas_backend import DigitalTranspilationConfig
 from qilisdk.yaml import yaml
 
 from .qaas_analog_result import QaaSAnalogResult
@@ -89,6 +90,7 @@ class ExecutePayloadType(str, Enum):
 class DigitalPayload(QaaSModel):
     circuit: Circuit = Field(...)
     nshots: int = Field(...)
+    transpilation_config: DigitalTranspilationConfig = Field(...)
 
 
 @yaml.register_class

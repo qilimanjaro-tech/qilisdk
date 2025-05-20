@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 from base64 import urlsafe_b64encode
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from os import environ
 from typing import TYPE_CHECKING, cast
@@ -25,6 +26,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.digital.digital_backend import DigitalBackend
+from tests import digital
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .models import (
@@ -167,12 +169,21 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
+    def execute(
+        self,
+        circuit: Circuit,
+        digital_transpilation_config: DigitalTranspilationConfig,
+        nshots: int = 1000,
+    ) -> QaaSDigitalResult:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.DIGITAL,
             device_id=device.id,
-            digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
+            digital_payload=DigitalPayload(
+                circuit=circuit,
+                nshots=nshots,
+                digital_transpilation_config=digital_transpilation_config,
+            ),
         )
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
@@ -253,3 +264,25 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
             return cast("QaaSTimeEvolutionResult", execute_response.time_evolution_result)
+
+
+@dataclass
+class DigitalTranspilationConfig:
+    """Dataclass containing the digital transpilation configuration. Used in the :meth:`.CircuitTranspiler.transpile_circuit()` method"""
+
+    routing: bool = False  # TODO: Change to True, when user confirms it works well.
+    """(bool, optional): Whether to route the circuit. Defaults to False."""
+
+    placer: Placer | type[Placer] | tuple[type[Placer], dict] | None = None
+    """(Placer | type[Placer] | tuple[type[Placer], dict], optional): ``Placer`` instance, or subclass ``type[Placer]`` to
+        use, with optionally, its kwargs dict (other than connectivity), both in a tuple. Defaults to ``ReverseTraversal``."""
+
+    router: Router | type[Router] | tuple[type[Router], dict] | None = None
+    """(Router | type[Router] | tuple[type[Router], dict], optional): ``Router`` instance, or subclass ``type[Router]`` to
+        use, with optionally, its kwargs dict (other than connectivity), both in a tuple. Defaults to ``Sabre``."""
+
+    routing_iterations: int = 10
+    """(int, optional): Number of times to repeat the routing pipeline, to get the best stochastic result. Defaults to 10."""
+
+    optimize: bool = False  # TODO: Maybe also change to True, when user confirms it works well.
+    """(bool, optional): Whether to optimize the circuit and/or transpilation. Defaults to False."""
