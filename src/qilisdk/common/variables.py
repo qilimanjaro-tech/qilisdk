@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Iterator, Mapping, Sequence, TypeVar
@@ -44,7 +45,15 @@ class Domain(str, Enum):
     BINARY = "Binary Domain"
     SPIN = "Spin Domain"
 
-    def check_value(self, value: float) -> bool:
+    def check_value(self, value: Number) -> bool:
+        """checks if the provided value is valid for a given domain
+
+        Args:
+            value (int | float): the value to be evaluated.
+
+        Returns:
+            bool: True if the value provided is valid, False otherwise.
+        """
         if self == Domain.BINARY:
             return isinstance(value, int) and value in {0, 1}
         if self == Domain.SPIN:
@@ -58,6 +67,10 @@ class Domain(str, Enum):
         return False
 
     def min(self) -> float:
+        """
+        Returns:
+            float: the minimum value allowed of a given domain.
+        """
         if self in {Domain.BINARY, Domain.POSITIVE_INTEGER}:
             return 0
         if self == Domain.SPIN:
@@ -67,6 +80,10 @@ class Domain(str, Enum):
         return -1e30
 
     def max(self) -> float:
+        """
+        Returns:
+            float: the maximum value allowed for a given domain.
+        """
         if self in {Domain.BINARY, Domain.SPIN}:
             return 1
         if self in {Domain.POSITIVE_INTEGER, Domain.INTEGER}:
@@ -101,6 +118,22 @@ class Encoding(ABC):
         """
 
     @staticmethod
+    def _extract_number(label: str) -> int:
+        """Extracts the number from the variable's label.
+
+        Args:
+            label (str): variable label that follows the format <label>(<number>).
+
+        Returns:
+            int: the number in the label.
+        """
+        pattern = re.compile(r"\((\d+)\)$")
+        matches = pattern.search(label)
+        if matches is not None:
+            return int(matches.group(1))
+        return 0
+
+    @staticmethod
     @abstractmethod
     def encode(var: Variable, precision: float = 1e-2) -> Term:
         """Given a continuous variable return a Term that only consists of
@@ -108,7 +141,8 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
+            precision (int): the precision to be considered for real variables (Only applies if
+                                the variable domain is Domain.Real)
 
         Returns:
             Term: a term that only contains binary variables
@@ -121,7 +155,8 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
+            precision (int): the precision to be considered for real variables (Only applies if
+                                the variable domain is Domain.Real)
 
         Returns:
             Constraint Term: a constraint term that ensures the encoding is respected.
@@ -129,13 +164,14 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def evaluate(var: Variable, binary_list: list[int], precision: float = 1e-2) -> float:
+    def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         """Given a binary string, evaluate the value of the continuous variable in the given encoding.
 
         Args:
             var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
+            value (list[int] | int): a list of binary values or an integer value.
+            precision (int): the precision to be considered for real variables (Only applies if
+                                the variable domain is Domain.Real)
 
         Returns:
             float: the value of the continuous variable given the specified binary values.
@@ -147,7 +183,8 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): the continuous variable.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
+            precision (int): the precision to be considered for real variables (Only applies if
+                                the variable domain is Domain.Real)
 
         Returns:
             int: the number of binary variables needed to encode it.
@@ -155,14 +192,15 @@ class Encoding(ABC):
         raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
-    def check_valid(binary_list: list[int]) -> tuple[bool, int]:
+    def check_valid(value: list[int] | int) -> tuple[bool, int]:
         """checks if the binary list sample is a valid sample in this encoding.
 
         Args:
-            binary_list (list[int]):  a list of binary values.
+            value (list[int] | int):  a list of binary values or an integer value.
 
         Returns:
-            tuple[bool, int]: the boolean is True if the sample is a valid encoding, while the int is the error in the encoding.
+            tuple[bool, int]: the boolean is True if the sample is a valid encoding,
+                                while the int is the error in the encoding.
         """
         raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
@@ -183,6 +221,19 @@ class HOBO(Encoding):
         return "HOBO"
 
     @staticmethod
+    def _hobo_encode(x: int, N: int) -> list[int]:
+        """encode the integer x in hobo encoding.
+
+        Args:
+            x (int): the integer to be encoded.
+            N (int): the number of bits to encode x.
+
+        Returns:
+            list[int]: a binary list representing the hobo encoding of the integer x.
+        """
+        return list(reversed([int(b) for b in format(x, f"0{N}b")]))
+
+    @staticmethod
     def encode(var: Variable, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -190,26 +241,31 @@ class HOBO(Encoding):
 
         abs_bound = np.abs(bounds[1] - bounds[0])
         n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
-
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary + 1)]
 
         term = sum(2**i * binary_vars[i] for i in range(n_binary))
-
         term += (np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary) * binary_vars[-1]
-
         term += bounds[0]
-
         return term
 
     @staticmethod
-    def evaluate(var: Variable, binary_list: list[int], precision: float = 1e-2) -> float:
-        # TODO (ameer): allow to map continuous values to binary string of given format.
-        if not HOBO.check_valid(binary_list=binary_list)[0]:
-            raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
-        term = HOBO.encode(var)
-        binary_var = term.variables()
+    def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
 
-        if len(binary_list) != len(binary_var):
+        term = HOBO.encode(var)
+        binary_var = sorted(
+            term.variables(),
+            key=lambda x: HOBO._extract_number(x.label),
+        )
+
+        binary_list = HOBO._hobo_encode(value, len(binary_var)) if isinstance(value, Number) else value
+
+        if not HOBO.check_valid(binary_list)[0]:
+            raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
+
+        if len(binary_list) < len(binary_var):
+            for _ in range(len(binary_var) - len(binary_list)):
+                binary_list.append(0)
+        elif len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
@@ -229,16 +285,6 @@ class HOBO(Encoding):
 
     @staticmethod
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
-        """Given a binary string, evaluate the value of the continuous variable in the given encoding.
-
-        Args:
-            var (ContinuousVar): the variable to be evaluated
-            binary_list (list[int]): a list of binary values.
-            precision (int): the precision to be considered for real variables (Only applies if the variable domain is Domain.Real)
-
-        Returns:
-            float: the value of the continuous variable given the specified binary values.
-        """
         raise NotImplementedError("HOBO encoding constraints are not supported at the moment")
 
     @staticmethod
@@ -252,7 +298,7 @@ class HOBO(Encoding):
         return n_binary + 1
 
     @staticmethod
-    def check_valid(binary_list: list[int]) -> tuple[bool, int]:
+    def check_valid(value: list[int] | int) -> tuple[bool, int]:
         return True, 0
 
     @staticmethod
@@ -299,6 +345,24 @@ class OneHot(Encoding):
         return "ONE HOT"
 
     @staticmethod
+    def _one_hot_encode(x: int, N: int) -> list[int]:
+        """One-hot encode integer x in range [0, N-1].
+
+        Args:
+            x (int): the value to be encoded
+            N (int): the number of bits to encode x.
+
+        Raises:
+            ValueError: if x is larger than N or less than 0
+
+        Returns:
+            list[int]: a binary list representing the one hot encoding of the integer x.
+        """
+        if not (0 <= x < N):
+            raise ValueError(f"the input value ({x}) must be in range [0, {N - 1}]")
+        return [1 if i == x else 0 for i in range(N)]
+
+    @staticmethod
     def encode(var: Variable, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -313,16 +377,24 @@ class OneHot(Encoding):
         return term
 
     @staticmethod
-    def evaluate(var: Variable, binary_list: list[int], precision: float = 1e-2) -> float:
-        if not OneHot.check_valid(binary_list=binary_list)[0]:
-            raise ValueError(f"invalid binary string {binary_list} with the one hot encoding.")
-
+    def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         term = OneHot.encode(var)
-        binary_var = term.variables()
+        binary_var = sorted(
+            term.variables(),
+            key=lambda x: OneHot._extract_number(x.label),
+        )
+
+        binary_list = OneHot._one_hot_encode(value, len(binary_var) + 1) if isinstance(value, int) else value
+
+        if not OneHot.check_valid(binary_list)[0]:
+            raise ValueError(f"invalid binary string {binary_list} with the one hot encoding.")
 
         # after encoding we will have one less variable than the binary list, because the first variable is multiplied
         # by 0 so it is removed from the term.
-        if len(binary_list) != len(binary_var) + 1:
+        if len(binary_list) < len(binary_var) + 1:
+            for _ in range(len(binary_var) - len(binary_list) + 1):
+                binary_list.append(0)
+        elif len(binary_list) != len(binary_var) + 1:
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
         binary_dict: dict[BaseVariable, list[int]] = {
@@ -365,7 +437,8 @@ class OneHot(Encoding):
         return n_binary
 
     @staticmethod
-    def check_valid(binary_list: list[int]) -> tuple[bool, int]:
+    def check_valid(value: list[int] | int) -> tuple[bool, int]:
+        binary_list = OneHot._one_hot_encode(value, value) if isinstance(value, int) else value
         num_ones = binary_list.count(1)
         return num_ones == 1, (num_ones - 1) ** 2
 
@@ -387,6 +460,24 @@ class DomainWall(Encoding):
         return "Domain Wall"
 
     @staticmethod
+    def _domain_wall_encode(x: int, N: int) -> list[int]:
+        """domain wall encode integer x in range [0, N-1].
+
+        Args:
+            x (int): the value to be encoded
+            N (int): the number of bits to encode x.
+
+        Raises:
+            ValueError: if x is larger than N or less than 0
+
+        Returns:
+            list[int]: a binary list representing the domain wall encoding of the integer x.
+        """
+        if not (0 <= x <= N):
+            raise ValueError(f"the input value ({x}) must be in range [0, {N}]")
+        return [1] * x + [0] * (N - x)
+
+    @staticmethod
     def encode(var: Variable, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -405,13 +496,23 @@ class DomainWall(Encoding):
         return term
 
     @staticmethod
-    def evaluate(var: Variable, binary_list: list[int], precision: float = 1e-2) -> float:
-        if not DomainWall.check_valid(binary_list=binary_list)[0]:
-            raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
+    def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         term = DomainWall.encode(var)
         binary_var = term.variables()
+        binary_var = sorted(
+            term.variables(),
+            key=lambda x: DomainWall._extract_number(x.label),
+        )
 
-        if len(binary_list) != len(binary_var):
+        binary_list = DomainWall._domain_wall_encode(value, len(binary_var)) if isinstance(value, int) else value
+
+        if not DomainWall.check_valid(binary_list)[0]:
+            raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
+
+        if len(binary_list) < len(binary_var):
+            for _ in range(len(binary_var) - len(binary_list)):
+                binary_list.append(0)
+        elif len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
@@ -455,7 +556,8 @@ class DomainWall(Encoding):
         return n_binary
 
     @staticmethod
-    def check_valid(binary_list: list[int]) -> tuple[bool, int]:
+    def check_valid(value: list[int] | int) -> tuple[bool, int]:
+        binary_list = DomainWall._domain_wall_encode(value, value) if isinstance(value, int) else value
         value = sum(binary_list[i + 1] * (1 - binary_list[i]) for i in range(len(binary_list) - 1))
         return value == 0, value
 
@@ -620,7 +722,16 @@ class BaseVariable:
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:
+    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+        """Evaluates the value of the variable given a binary string or a number.
+
+        Args:
+            value (list[int] | int | float): the value used to evaluate the variable.
+            precision (float, optional): the precision of the floating point values. Defaults to 1e-2.
+
+        Returns:
+            float: the evaluated vale of the variable.
+        """
         raise NotImplementedError
 
     def compare(self, other: BaseVariable) -> bool:
@@ -750,10 +861,14 @@ class BinaryVar(BaseVariable):
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
-        if len(binary_list) != 1:
+    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+        if isinstance(value, Number):
+            if not self.domain.check_value(value):
+                raise EvaluationError(f"Evaluating a Binary variable with a value {value} that is outside the domain.")
+            return value
+        if len(value) != 1:
             raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
-        return binary_list[0]
+        return value[0]
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         raise NotImplementedError
@@ -772,10 +887,14 @@ class SpinVar(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         raise NotImplementedError
 
-    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:  # noqa: PLR6301
-        if len(binary_list) != 1:
-            raise EvaluationError("Evaluating a Spin variable with a binary list of more than one item.")
-        return -1 if binary_list[0] == 0 else 1
+    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+        if isinstance(value, Number):
+            if not self.domain.check_value(value) and value != 0:
+                raise EvaluationError(f"Evaluating a Spin variable with a value {value} that is outside the domain.")
+            return -1 if value in {0, -1} else 1
+        if len(value) != 1:
+            raise EvaluationError("Evaluating a Spin variable with a list of more than one item.")
+        return -1 if value[0] in {0, -1} else 1
 
     def __copy__(self) -> SpinVar:
         return SpinVar(label=self.label)
@@ -834,14 +953,16 @@ class Variable(BaseVariable):
         self._encoding = encoding if encoding is not None else self._encoding
         return super().update_variable(domain, bounds)
 
-    def evaluate(self, binary_list: list[int], precision: float = 1e-2) -> float:
-        if len(binary_list) == 1:
-            if not self.domain.check_value(binary_list[0]):
-                raise ValueError(f"The value {binary_list} is invalid for the domain {self.domain.value}")
+    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+        if isinstance(value, Number):
+            if not self.domain.check_value(value):
+                raise ValueError(f"The value {value} is invalid for the domain {self.domain.value}")
+            if value < self.lower_bound or value > self.upper_bound:
+                raise ValueError(f"The value {value} is outside the defined bounds {self.bounds}")
             if self.domain == Domain.REAL:
-                return binary_list[0] * precision
-            return binary_list[0]
-        return self.encoding.evaluate(self, binary_list, precision=precision)
+                return value * precision
+            return value
+        return self.encoding.evaluate(self, value, precision=precision)
 
     def encode(self, precision: float = 1e-2) -> Term:
         self._precision = precision
@@ -1074,7 +1195,7 @@ class Term:
         for p in to_be_popped:
             self._elements.pop(p)
 
-    def evaluate(self, var_values: Mapping[BaseVariable, list[int]], precision: float = 1e-2) -> float:
+    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | Number], precision: float = 1e-2) -> float:
         for var in self.variables():
             if var not in var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
