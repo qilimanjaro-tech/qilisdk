@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse import csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-from qilisdk.analog.quantum_objects import QuantumObject, basis, bra, expect, ket, tensor
+from qilisdk.analog.quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 
 # --- Constructor Tests ---
 
@@ -80,23 +80,54 @@ def test_dag():
     """Test that the dagger (adjoint) method returns the conjugate transpose."""
     arr = np.array([[1 + 2j, 2], [3, 4 + 5j]])
     qobj = QuantumObject(arr)
-    dag_qobj = qobj.dag()
-    np.testing.assert_array_equal(dag_qobj.dense, arr.conj().T)
+    dagger_qobj = qobj.adjoint()
+    np.testing.assert_array_equal(dagger_qobj.dense, arr.conj().T)
 
 
 def test_ptrace_valid():
-    """Test partial trace on a valid 2-qubit density matrix.
-
-    The test creates a 2-qubit state |00⟩, converts it to a density matrix,
-    and then traces out the second qubit.
-    """
-    qket = ket(0, 0)
+    """Test partial trace on a valid 4-qubit density matrices."""
+    qket = ket(0, 1, 1, 0)
     rho = qket.to_density_matrix()
-    # dims for a 2-qubit system are [2, 2]; keep the first qubit (index 0).
-    reduced = rho.ptrace([2, 2], keep=[0])
-    # Expected reduced density matrix is the pure state |0⟩.
-    expected = ket(0).to_density_matrix()
-    np.testing.assert_allclose(reduced.dense, expected.dense, atol=1e-8)
+
+    # Different combinations of partial traces.
+    reduced_single_qubit_ground = rho.ptrace(keep=[0], dims=[2, 2, 4])
+    reduced_single_qubit_excited = rho.ptrace(keep=[1], dims=[2, 2, 4])
+    reduced_double_qubit_1 = rho.ptrace(keep=[2], dims=[2, 2, 4])
+    reduced_double_qubit_2 = rho.ptrace(keep=[2, 3], dims=[2, 2, 2, 2])
+    reduced_double_qubit_3 = rho.ptrace(keep=[3, 2], dims=[2, 2, 2, 2])
+
+    # Expected reduced density matrices:
+    expected_single_qubit_ground = ket(0).to_density_matrix()
+    expected_single_qubit_excited = ket(1).to_density_matrix()
+    expected_double_qubit = ket(1, 0).to_density_matrix()
+
+    # Checks:
+    np.testing.assert_allclose(reduced_single_qubit_ground.dense, expected_single_qubit_ground.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_single_qubit_excited.dense, expected_single_qubit_excited.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_1.dense, expected_double_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_2.dense, expected_double_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_3.dense, expected_double_qubit.dense, atol=1e-8)
+
+
+def test_ptrace_valid_keep_with_automatic_dims_and_density_matrix():
+    qket = ket(0, 0, 1, 0)
+    reduced_single_qubit = qket.ptrace(keep=[2, 3])
+    expected_single_qubit = ket(1, 0).to_density_matrix()
+    np.testing.assert_allclose(reduced_single_qubit.dense, expected_single_qubit.dense, atol=1e-8)
+
+
+def test_ptrace_works_for_operators_which_are_not_density_matrices():
+    # Build a “diagonal” density matrix whose diagonal entries are 0…7. That way each composite basis |i0,i1,i2⟩ ↦
+    # flat index i = 4*i0 + 2*i1 + i2 carries a unique number. And the trace != 1, so not a density operator
+    dims = [2, 2, 2]
+    full_dim = np.prod(dims)
+    rho = np.diag(np.arange(full_dim, dtype=float))
+    q_obj = QuantumObject(rho)
+
+    # Pick an out of order keep list:
+    keep = [0, 2]  # subspace 2 *then* subspace 0
+    expected_result = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]])
+    np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense, expected_result, atol=1e-8)
 
 
 def test_ptrace_invalid_dims():
@@ -104,8 +135,21 @@ def test_ptrace_invalid_dims():
     arr = np.eye(2)
     qobj = QuantumObject(arr)
     with pytest.raises(ValueError):  # noqa: PT011
-        qobj.ptrace([2, 2], keep=[0])
+        qobj.ptrace(keep=[0], dims=[2, 2])
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[0], dims=[1])  # too few dimensions
 
+
+def test_ptrace_invalid_keep():
+    """Partial trace should raise ValueError if keep indices are out of bounds."""
+    arr = np.eye(2)
+    qobj = QuantumObject(arr)
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[1], dims=[2])
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[2], dims=[2])  # out of bounds index
+    with pytest.raises(ValueError):  # noqa: PT011
+        qobj.ptrace(keep=[0, 1], dims=[2])  # too many indices
 
 # --- Arithmetic Operator Tests ---
 
@@ -288,19 +332,19 @@ def test_is_scalar():
 def test_is_dm():
     """Test is_dm: density matrices (from ket) should pass, while non-dm matrices should not."""
     qdm = ket(0).to_density_matrix()
-    assert qdm.is_dm()
+    assert qdm.is_density_matrix()
     non_dm = QuantumObject(np.array([[1, 2], [3, 4]]))
-    assert not non_dm.is_dm()
+    assert not non_dm.is_density_matrix()
 
 
 def test_is_herm():
     """Test is_herm for Hermitian and non-Hermitian matrices."""
     herm_matrix = np.array([[1, 2 + 1j], [2 - 1j, 3]])
     qherm = QuantumObject(herm_matrix)
-    assert qherm.is_herm()
+    assert qherm.is_hermitian()
     non_herm = np.array([[1, 2], [3, 4]])
     qnonherm = QuantumObject(non_herm)
-    assert not qnonherm.is_herm()
+    assert not qnonherm.is_hermitian()
 
 
 def test_to_dm_from_dm():
@@ -331,7 +375,7 @@ def test_basis():
     """Test that the basis function returns a vector with a 1 in the correct position."""
     N = 4
     n = 2
-    qbasis = basis(N, n)
+    qbasis = basis_state(n, N)
     assert qbasis.shape == (N, 1)
     dense = qbasis.dense.flatten()
     expected = np.zeros(N)
@@ -373,7 +417,7 @@ def test_tensor():
     """Test the tensor product function on a list of QuantumObjects."""
     q1 = ket(0)
     q2 = ket(1)
-    qt = tensor([q1, q2])
+    qt = tensor_prod([q1, q2])
     np.testing.assert_array_equal(qt.dense.shape, (4, 1))
 
 
@@ -381,7 +425,7 @@ def test_expect_density():
     """Test the expectation value for a density matrix using the identity operator."""
     qdm = ket(0).to_density_matrix()
     identity = QuantumObject(np.eye(2))
-    exp_val = expect(identity, qdm)
+    exp_val = expect_val(identity, qdm)
     # For a valid density matrix, trace(identity * rho) should be 1.
     assert np.isclose(exp_val, 1)
 
@@ -390,6 +434,6 @@ def test_expect_ket():
     """Test the expectation value for a ket state using the identity operator."""
     qket_obj = ket(0)
     identity = QuantumObject(np.eye(2))
-    exp_val = expect(identity, qket_obj)
+    exp_val = expect_val(identity, qket_obj)
     # For a normalized ket, ⟨ψ|I|ψ⟩ should equal 1.
     assert np.isclose(exp_val, 1)

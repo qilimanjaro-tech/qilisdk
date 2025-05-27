@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk import analog, common, digital, extras, utils
+from .cuda.cuda_backend import CudaBackend
+from .qaas.qaas_backend import QaaSBackend
 
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+__all__ = ["CudaBackend", "QaaSBackend"]

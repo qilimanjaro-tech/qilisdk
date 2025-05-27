@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.1.0"
+version = "0.1.3"
 description = "qilisdk is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -26,11 +26,17 @@ dependencies = [
     "numpy>=2.2.4",
     "ruamel-yaml>=0.18.10",
     "scipy>=1.15.1",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.0",
 ]
 
 [project.optional-dependencies]
-cuda-backend = [
-    "cudaq>=0.9.1",
+cuda = [
+    "cudaq==0.10.0",
+]
+qaas = [
+    "httpx>=0.28.1",
+    "keyring>=25.6.0",
 ]
 
 [dependency-groups]
@@ -150,7 +156,8 @@ exclude = ["\\.ipynb$"]
 [tool.pytest.ini_options]
 markers = [
     "core: tests that only exercise the core library",
-    "cuda_backend: tests that require the qibo backend"
+    "cuda: tests that require the cuda extra",
+    "qaas: tests that require the qaas extra"
 ]
 
 [tool.towncrier]

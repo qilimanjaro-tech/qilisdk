@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.yaml import yaml
 
-from qilisdk import analog, common, digital, extras, utils
 
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+@yaml.register_class
+class CudaAnalogResult(AnalogResult): ...

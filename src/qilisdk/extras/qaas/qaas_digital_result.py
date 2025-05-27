@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk import analog, common, digital, extras, utils
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.yaml import yaml
 
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+
+@yaml.register_class
+class QaaSDigitalResult(DigitalResult): ...
