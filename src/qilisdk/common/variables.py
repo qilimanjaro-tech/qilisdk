@@ -22,6 +22,7 @@ from typing import Iterator, Mapping, Sequence, TypeVar
 from warnings import warn
 
 import numpy as np
+from exceptiongroup import catch
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 
@@ -31,11 +32,6 @@ CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).max
 LARGE_BOUND = 100
-
-
-class Side(Enum):
-    RIGHT = "right"
-    LEFT = "left"
 
 
 class Domain(str, Enum):
@@ -108,6 +104,8 @@ class ComparisonOperation(Enum):
 
 
 class Encoding(ABC):
+    """Represents am abstract variable encoding class."""
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -216,6 +214,8 @@ class Encoding(ABC):
 
 
 class HOBO(Encoding):
+    """Represents a HOBO variable encoding class."""
+
     @property
     def name(self) -> str:
         return "HOBO"
@@ -340,6 +340,8 @@ class HOBO(Encoding):
 
 
 class OneHot(Encoding):
+    """Represents a One-Hot variable encoding class."""
+
     @property
     def name(self) -> str:
         return "ONE HOT"
@@ -455,6 +457,8 @@ class OneHot(Encoding):
 
 
 class DomainWall(Encoding):
+    """Represents a Domain-wall variable encoding class."""
+
     @property
     def name(self) -> str:
         return "Domain Wall"
@@ -602,8 +606,8 @@ class DomainWall(Encoding):
 # Variables ###
 
 
-class BaseVariable:
-    """This class represents the general structure of any variable that can be included in the model."""
+class BaseVariable(ABC):
+    """Represents an abstract structure of any variable that can be included in the model."""
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
@@ -855,6 +859,8 @@ class BaseVariable:
 
 
 class BinaryVar(BaseVariable):
+    """Represents Binary Variable structure."""
+
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.BINARY)
 
@@ -878,6 +884,8 @@ class BinaryVar(BaseVariable):
 
 
 class SpinVar(BaseVariable):
+    """Represents Spin Variable structure."""
+
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
@@ -901,6 +909,8 @@ class SpinVar(BaseVariable):
 
 
 class Variable(BaseVariable):
+    """Represents General Variable structure (Continuous, binary, or Spin).
+    Note: For Binary or Spin variables it's recommended to use the BinaryVar and SpinVar objects."""
 
     def __init__(
         self,
@@ -988,9 +998,20 @@ class Variable(BaseVariable):
 
 
 class Term:
+    """Represents a term that is constructed from a series of mathematical operations on Variable objects."""
+
     CONST = Variable(CONST_KEY, Domain.REAL)
 
     def __init__(self, elements: Sequence[BaseVariable | Term | Number], operation: Operation) -> None:
+        """initialize a new term object.
+
+        Args:
+            elements (Sequence[BaseVariable  |  Term  |  Number]): a list of elements in the term.
+            operation (Operation): the mathematical operation between these elements.
+
+        Raises:
+            ValueError: if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).
+        """
         self._operation = operation
         self._elements: dict[int, Number] = {}
         self._map: dict[int, BaseVariable | Term] = {}
@@ -1045,10 +1066,18 @@ class Term:
 
     @property
     def operation(self) -> Operation:
+        """
+        Returns:
+            Operation: the operation between the term's elements.
+        """
         return self._operation
 
     @property
     def degree(self) -> int:
+        """
+        Returns:
+            int: the highest degree in the term.
+        """
         degree = 0
         if self.operation == Operation.MUL:
             for element in self:
@@ -1066,6 +1095,17 @@ class Term:
         return degree
 
     def replace_variables(self, var_dict: dict[BaseVariable, BaseVariable]) -> None:
+        """Updates the variables in the term with new values.
+
+        Args:
+            var_dict (dict[BaseVariable, BaseVariable]): a dictionary where the keys are the old variables and
+                the values are the new updated variable.
+
+        Note: this is only effects Variable objects and it doesn't change anything about BinaryVar or SpinVar objects
+
+        Raises:
+            ValueError: if the replacement variable is not of the same type as the original variable.
+        """
         for var, replacement_var in var_dict.items():
             if var in self and isinstance(var, Variable):
                 if isinstance(replacement_var, Variable):
@@ -1074,10 +1114,21 @@ class Term:
                     )
                 else:
                     raise ValueError(
-                        f"Can't update the variable {var} because the {replacement_var} is not of the same type as {var}"
+                        f"Can't update the variable {var} because the "
+                        + f" {replacement_var} is not of the same type as {var}"
                     )
 
     def to_binary(self) -> Term:
+        """Returns the term in binary format. That is encoding all continuous variables into
+            binary according to the encoding defined in the variable.
+
+        Raises:
+            ValueError: The term contains operations that are not addition or multiplication.
+            ValueError: the term contains an element that is not a Term or a BaseVariable.
+
+        Returns:
+            Term: the term after transforming all the variables into binary.
+        """
         if self.operation not in {Operation.ADD, Operation.MUL}:
             raise ValueError("Can not evaluate any operation that is not Addition of Multiplication")
         out_list: list[BaseVariable | Term | Number] = []
@@ -1100,7 +1151,13 @@ class Term:
 
         return Term(out_list, self.operation)
 
-    def update_negative_variables_range(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
+    def update_variable_bounds(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
+        """update the bounds of the variables inside the term.
+
+        Args:
+            var_dict (dict[BaseVariable, tuple[float  |  None, float  |  None]]): a dictionary which has the variable
+                    as its keys, and the new bounds as its values.
+        """
         for var, bounds in var_dict.items():
             if var in self and isinstance(var, Variable):
                 var.update_variable(domain=var.domain, bounds=bounds, encoding=var.encoding)
@@ -1134,6 +1191,11 @@ class Term:
         return list(var)
 
     def simplify(self) -> Term | BaseVariable:
+        """Simplify the term object.
+
+        Returns:
+            Term | BaseVariable: the simplified term.
+        """
         if len(self) == 1:
             item = next(iter(self._elements.keys()))
             if self._elements[item] == 1:
@@ -1141,12 +1203,39 @@ class Term:
         return self
 
     def pop(self, item: BaseVariable | Term) -> Number:
-        return self._elements.pop(hash(item))
+        """Remove an item from the term.
+
+        Args:
+            item (BaseVariable | Term): the item to be removed.
+
+        Raises:
+            KeyError: if item is not in the term.
+
+        Returns:
+            Number: the coefficient of the removed item.
+        """
+        try:
+            return self._elements.pop(hash(item))
+        except KeyError as e:
+            raise KeyError(f'item "{item}" not found in the term.') from e
 
     def is_constant(self, variable: BaseVariable) -> bool:
+        """Checks if the variable is a constant variable as defined by the Term class.
+
+        Args:
+            variable (BaseVariable): the variable to be checked.
+
+        Returns:
+            bool: True if the variable is a constant, False otherwise.
+        """
         return variable.compare(self.CONST)
 
     def to_list(self) -> list[BaseVariable | Term | Number]:
+        """Exports the current term into a list of its elements.
+
+        Returns:
+            list[BaseVariable | Term | Number]: A list of the elements inside the term.
+        """
         out_list: list[BaseVariable | Term | Number] = []
         for e in self:
             if isinstance(e, BaseVariable) and self.is_constant(e):
@@ -1159,6 +1248,11 @@ class Term:
         return out_list
 
     def unfold_parentheses(self) -> Term:
+        """Simplifies any parentheses in the term expression.
+
+        Returns:
+            Term: A new term with a more simplified form.
+        """
         out = copy.copy(self)
         if out.operation != Operation.MUL:
             return out
@@ -1184,6 +1278,7 @@ class Term:
         return out
 
     def remove_zeros(self) -> None:
+        """Simplifies any un-necessary zeros from terms."""
         to_be_popped = []
         if self.operation == Operation.MUL and self.CONST in self and self[self.CONST] == 0:
             l = len(self)
@@ -1196,6 +1291,18 @@ class Term:
             self._elements.pop(p)
 
     def evaluate(self, var_values: Mapping[BaseVariable, list[int] | Number], precision: float = 1e-2) -> float:
+        """Evaluates the term given a set of values for the variables in the term.
+
+        Args:
+            var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the term.
+            precision (float, optional): the precision of the real variables in the term. Defaults to 1e-2.
+
+        Raises:
+            ValueError: if not all variables in the term are provided a value.
+
+        Returns:
+            float: the result from evaluating the term.
+        """
         for var in self.variables():
             if var not in var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
@@ -1213,6 +1320,10 @@ class Term:
         return output
 
     def get_constant(self) -> Number:
+        """
+        Returns:
+            Number: The constant value of the term.
+        """
         if self.CONST in self:
             return self[self.CONST]
         return 0 if self.operation in {Operation.ADD, Operation.SUB} else 1
@@ -1365,9 +1476,18 @@ class Term:
 
 
 class ComparisonTerm:
+    """Represents a comparison term that is constructed from a series of mathematical operations on Variable objects."""
+
     def __init__(
         self, lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term, operation: ComparisonOperation
     ) -> None:
+        """Initializes a new comparison term.
+
+        Args:
+            lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+            rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+            operation (ComparisonOperation): the comparison operations between the left and right hand sides.
+        """
         term = lhs - rhs
         if not isinstance(term, Term):
             term = Term([term], Operation.ADD)
@@ -1378,14 +1498,26 @@ class ComparisonTerm:
 
     @property
     def operation(self) -> ComparisonOperation:
+        """
+        Returns:
+            ComparisonOperation: the comparison operation between the left and right hand sides.
+        """
         return self._operation
 
     @property
     def lhs(self) -> Term:
+        """
+        Returns:
+            Term: the left hand side of the comparison term.
+        """
         return self._lhs
 
     @property
     def rhs(self) -> Term:
+        """
+        Returns:
+            Term: the right hand side of the comparison term.
+        """
         return self._rhs
 
     def variables(self) -> list[BaseVariable]:
@@ -1404,17 +1536,45 @@ class ComparisonTerm:
         return list(var)
 
     def degree(self) -> int:
+        """
+        Returns:
+            int: the maximum degree in the left and right hand sides of the comparison term.
+        """
         return max(self.rhs.degree, self.lhs.degree)
 
     def to_list(self) -> list:
+        """Exports the comparison term into a list.
+
+        Returns:
+            list: a list constructed from all the elements in the left and right hand sides of the comparison term.
+        """
         out = self.rhs.to_list()
         out.extend(self.lhs.to_list())
         return out
 
     def to_binary(self) -> ComparisonTerm:
+        """Returns the comparison term in binary format. That is encoding all continuous variables into
+            binary according to the encoding defined in the variable.
+
+        Returns:
+            ComparisonTerm: the comparison term after transforming all the variables into binary.
+        """
         return ComparisonTerm(rhs=self.rhs.to_binary(), lhs=self.lhs.to_binary(), operation=self.operation)
 
     def _apply_comparison_operation(self, v1: Number, v2: Number) -> bool:
+        """Compare two arguments.
+
+        Args:
+            v1 (Number): the left hand side value.
+            v2 (Number): the right hand side value.
+
+        Raises:
+            ValueError: if the comparison term's operation is invalid.
+
+        Returns:
+            bool: the result of the comparison between v1 and v2 assuming the
+            comparison operation of the comparison term object.
+        """
         if self.operation is ComparisonOperation.EQ:
             return v1 == v2
         if self.operation is ComparisonOperation.GE:
@@ -1430,19 +1590,42 @@ class ComparisonTerm:
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
     def evaluate(self, var_values: dict[BaseVariable, list[int]], precision: float = 1e-2) -> bool:
+        """Evaluates the comparison term given a set of values for the variables in the term.
+
+        Args:
+            var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the comparison term.
+            precision (float, optional): the precision of the real variables in the comparison term. Defaults to 1e-2.
+
+        Returns:
+            bool: the result from evaluating the comparison term.
+        """
         return self._apply_comparison_operation(
             self._lhs.evaluate(var_values, precision), self._rhs.evaluate(var_values, precision)
         )
 
     def replace_variables(self, var_dict: dict[BaseVariable, BaseVariable]) -> None:
+        """Updates the variables in the comparison term with new values.
+
+        Args
+        var_dict : dict[BaseVariable, BaseVariable]
+        a dictionary where the keys are the old variables and the values are the new updated variable.
+
+        Note: this is only effects Variable objects and it doesn't change anything about BinaryVar or SpinVar objects
+        """
         self.lhs.replace_variables(var_dict)
         self.rhs.replace_variables(var_dict)
 
-    def update_negative_variables_range(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
+    def update_variable_bounds(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
+        """update the bounds of the variables inside the term.
+
+        Args
+        var_dict : dict[BaseVariable, tuple[float | None, float | None]]
+        a dictionary which has the variable as its keys, and the new bounds as its values.
+        """
         if isinstance(self.lhs, Term):
-            self.lhs.update_negative_variables_range(var_dict)
+            self.lhs.update_variable_bounds(var_dict)
         if isinstance(self.rhs, Term):
-            self.rhs.update_negative_variables_range(var_dict)
+            self.rhs.update_variable_bounds(var_dict)
 
     def __copy__(self) -> ComparisonTerm:
         return ComparisonTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)

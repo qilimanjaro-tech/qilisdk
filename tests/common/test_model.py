@@ -17,16 +17,8 @@ import copy
 
 import pytest
 
-from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter, cast_to_list
-from qilisdk.common.variables import (
-    BinaryVar,
-    ComparisonOperation,
-    ComparisonTerm,
-    Domain,
-    Operation,
-    Term,
-    Variable,
-)
+from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
+from qilisdk.common.variables import BinaryVar, ComparisonOperation, ComparisonTerm, Domain, Operation, Term, Variable
 
 
 # ---------- SlackCounter ----------
@@ -35,19 +27,11 @@ def test_slackcounter_singleton_and_increment():
     c2 = SlackCounter()
     assert c1 is c2
     # reset counter for test
-    c1._count = 0
+    c1.reset_counter()
     assert c1.next() == 0
     assert c2.next() == 1
-
-
-# ---------- cast_to_list ----------
-def test_cast_to_list_single_and_list():
-    term = ComparisonTerm(lhs=1, rhs=0, operation=ComparisonOperation.EQ)
-    assert cast_to_list(term) == [term]
-    lst = [term, term]
-    assert cast_to_list(lst) == lst
-    with pytest.raises(ValueError):  # noqa: PT011
-        cast_to_list(123)
+    c1.reset_counter()
+    assert c1.next() == 0
 
 
 # ---------- Constraint ----------
@@ -61,6 +45,9 @@ def test_constraint_init_and_repr():
     assert cons.lhs == ct.lhs
     assert cons.rhs == ct.rhs
     assert cons.degree == max(ct.lhs.degree, ct.rhs.degree)
+    # errors
+    with pytest.raises(ValueError):  # noqa: PT011
+        Constraint(label="bad", term=Term([0], Operation.ADD))
 
 
 # ---------- Objective ----------
@@ -105,7 +92,7 @@ def test_model_set_objective_and_repr(simple_model):
     m.set_objective(term=t, label="obj1", sense=ObjectiveSense.MINIMIZE)
     assert m.objective.label == "obj1"
     assert m.objective.term == t
-    s = repr(m)
+    s = str(m)
     assert "Model name: m1" in s
     assert "objective (obj1)" in s
 
@@ -117,7 +104,6 @@ def test_qubo_parse_term_add_and_mul():
     # ADD term: 2*b + 3
     t = Term(elements=[2, v, 1, v], operation=Operation.ADD)
     const, terms = q._parse_term(t)
-    # terms should contain b twice coefficient sum= v:2?
     assert const == 3
     assert any(coeff == 2 and var == v for coeff, var in terms)
     # MUL term: b * 1

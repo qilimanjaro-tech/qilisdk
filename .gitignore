@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+.coverage
 
 # Virtual environments
 .venv
@@ -14,3 +15,6 @@ wheels/
 
 # Folder for storing user files
 .tmp
+
+# development environment files
+.vscode

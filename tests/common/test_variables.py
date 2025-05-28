@@ -21,7 +21,6 @@ from qilisdk.common.variables import (
     HOBO,
     MAX_INT,
     MIN_INT,
-    BaseVariable,
     BinaryVar,
     ComparisonTerm,
     Domain,
@@ -62,26 +61,26 @@ def test_domain_check_value_and_bounds():
     assert Domain.REAL.max() == 1e30
 
 
-def test_basevariable_bounds_validation():
+def test_variable_bounds_validation():
     # valid bounds
-    v = BaseVariable("x", Domain.INTEGER, bounds=(1, 10))
+    v = Variable("x", Domain.INTEGER, bounds=(1, 10))
     assert v.lower_bound == 1
     assert v.upper_bound == 10
 
     # invalid domain bound
     with pytest.raises(OutOfBoundsException):
-        BaseVariable("y", Domain.BINARY, bounds=(0, 2))
+        Variable("y", Domain.BINARY, bounds=(0, 2))
 
     with pytest.raises(OutOfBoundsException):
-        BaseVariable("y", Domain.POSITIVE_INTEGER, bounds=(-1, 2))
+        Variable("y", Domain.POSITIVE_INTEGER, bounds=(-1, 2))
 
     # lower > upper
     with pytest.raises(InvalidBoundsError):
-        BaseVariable("z", Domain.INTEGER, bounds=(5, 3))
+        Variable("z", Domain.INTEGER, bounds=(5, 3))
 
 
 def test_set_bounds():
-    v = BaseVariable("x", Domain.POSITIVE_INTEGER)
+    v = Variable("x", Domain.POSITIVE_INTEGER)
     v.set_bounds(2, 5)
     assert v.bounds == (2, 5)
     with pytest.raises(OutOfBoundsException):
@@ -206,7 +205,7 @@ def test_replace_and_update_range():
     # replace x with a new variable z
     c1.replace_variables({a: c})
     # update bounds
-    c1.update_negative_variables_range({a: (-1, 2)})
+    c1.update_variable_bounds({a: (-1, 2)})
 
 
 def test_encoding_constraint_not_implemented():

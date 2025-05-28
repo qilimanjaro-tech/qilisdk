@@ -40,6 +40,8 @@ from .variables import (
 
 
 class SlackCounter:
+    """A singleton class to generate a slack counter id that increments continuously within the user's active session."""
+
     _instance: SlackCounter | None = None
     _count: int = 0
 
@@ -54,13 +56,8 @@ class SlackCounter:
         self._count += 1
         return value
 
-
-def cast_to_list(terms: ComparisonTerm | list[ComparisonTerm]) -> list[ComparisonTerm]:
-    if isinstance(terms, list):
-        return terms
-    if isinstance(terms, ComparisonTerm):
-        return [terms]
-    raise ValueError(f"terms provided to the constraints should be of type {ComparisonTerm}")
+    def reset_counter(self) -> None:
+        self._count = 0
 
 
 class ObjectiveSense(enum.Enum):
@@ -69,7 +66,18 @@ class ObjectiveSense(enum.Enum):
 
 
 class Constraint:
+    """Representing a constraint object of a model."""
+
     def __init__(self, label: str, term: ComparisonTerm) -> None:
+        """Initializes a new constraint object.
+
+        Args:
+            label (str): The constraint's label.
+            term (ComparisonTerm): The comparison term that defines the constraint.
+
+        Raises:
+            ValueError: if the term provided is not a ConstraintTerm.
+        """
         self._label = label
         if not isinstance(term, ComparisonTerm):
             raise ValueError(f"the parameter term is expecting a {ComparisonTerm} but received {term.__class__}")
@@ -78,25 +86,50 @@ class Constraint:
 
     @property
     def label(self) -> str:
+        """
+        Returns:
+            str: The label of the constraint object.
+        """
         return self._label
 
     @property
     def term(self) -> ComparisonTerm:
+        """
+        Returns:
+            ComparisonTerm: The comparison term of the constraint object.
+        """
         return self._term
 
     def variables(self) -> list[BaseVariable]:
+        """Returns a list of the variables in the constraint term.
+
+        Returns:
+            list[BaseVariable]: the list of variables in the constraint term.
+        """
         return self._term.variables()
 
     @property
     def lhs(self) -> Term:
+        """
+        Returns:
+            Term: The left hand side of the constraint term.
+        """
         return self.term.lhs
 
     @property
     def rhs(self) -> Term:
+        """
+        Returns:
+            Term: The right hand side of the constraint term.
+        """
         return self.term.rhs
 
     @property
     def degree(self) -> int:
+        """
+        Returns:
+            int: The degree of the constraint term.
+        """
         return max(self.lhs.degree, self.rhs.degree)
 
     def __copy__(self) -> Constraint:
@@ -110,8 +143,33 @@ class Constraint:
 
 
 class Objective:
+    """Representing an objective object of a model.
+
+    Parameters
+    ----------
+    label: str
+        The objective's label.
+    term: Term
+        The term that defines the objective.
+    sense: ObjectiveSense
+        The objective's sense of optimization (ObjectiveSense.MINIMIZE or ObjectiveSense.MAXIMIZE).
+        Defaults to ObjectiveSense.MINIMIZE.
+    """
+
     def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
-        if isinstance(term, BaseVariable):
+        """Initializes a new Objective object.
+
+        Args:
+            label (str): The objective's label.
+            term (Term): The term that defines the objective.
+            sense (ObjectiveSense, optional): The objective's sense of optimization
+                    (ObjectiveSense.MINIMIZE or ObjectiveSense.MAXIMIZE). Defaults to ObjectiveSense.MINIMIZE.
+
+        Raises:
+            ValueError: if the term provided is not a Term Object.
+            ValueError: if the optimization sense provided is not one that is defined by the ObjectiveSense Enum.
+        """
+        if isinstance(term, Variable):
             term = Term(elements=[term], operation=Operation.ADD)
         if not isinstance(term, Term):
             raise ValueError(f"the parameter term is expecting a {Term} but received {term.__class__}")
@@ -123,17 +181,34 @@ class Objective:
 
     @property
     def label(self) -> str:
+        """
+        Returns:
+            str: the label of the objective.
+        """
         return self._label
 
     @property
     def term(self) -> Term:
+        """
+        Returns:
+            Term: the objective term.
+        """
         return self._term
 
     @property
     def sense(self) -> ObjectiveSense:
+        """
+        Returns:
+            ObjectiveSense: the objective optimization sense.
+        """
         return self._sense
 
     def variables(self) -> list[BaseVariable]:
+        """Gathers a list of all the variables in the objective term.
+
+        Returns:
+            list[BaseVariable]: the list of variables in the objective term.
+        """
         return self._term.variables()
 
     def __repr__(self) -> str:
@@ -147,7 +222,14 @@ class Objective:
 
 
 class Model:
+    """Represents a mathematical model that can be used to represent a cost function."""
+
     def __init__(self, label: str) -> None:
+        """Initializes a new model object.
+
+        Args:
+            label (str): the model label.
+        """
         self._constraints: dict[str, Constraint] = {}
         self._encoding_constraints: dict[str, Constraint] = {}
         self._objective = Objective("objective", Term([0], Operation.ADD))
@@ -155,22 +237,43 @@ class Model:
 
     @property
     def label(self) -> str:
+        """
+        Returns:
+            str: The model label.
+        """
         return self._label
 
     @property
     def constraints(self) -> list[Constraint]:
+        """
+        Returns:
+            list[Constraint]: a list of all the constraints in the model.
+        """
         return list(self._constraints.values())
 
     @property
     def encoding_constraints(self) -> dict[str, Constraint]:
+        """
+        Returns:
+            dict[str, Constraint]:
+        """
         return self._encoding_constraints
 
     @property
     def objective(self) -> Objective:
+        """
+        Returns:
+            Objective: The objective of the model.
+        """
         return self._objective
 
     @property
     def variables(self) -> list[BaseVariable]:
+        """
+        Returns:
+            list[BaseVariable]: a list of variables that are used in the model whether that is in the constraints
+            or the objective.
+        """
         var = set()
 
         for c in self.constraints:
@@ -179,19 +282,6 @@ class Model:
         var.update(self.objective.variables())
 
         return list(var)
-
-    def __repr__(self) -> str:
-        output = f"Model name: {self.label} \n"
-        output += (
-            f"objective ({self.objective.label}): \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
-        )
-        if len(self.constraints) > 0:
-            output += "subject to the constraint/s: \n"
-            for c in self.constraints:
-                output += f"\t {c} \n"
-            for label, value in self.encoding_constraints.items():
-                output += f"\t {label}: {value} \n"
-        return output
 
     def __str__(self) -> str:
         output = f"Model name: {self.label} \n"
@@ -205,6 +295,9 @@ class Model:
             for label, value in self.encoding_constraints.items():
                 output += f"\t {label}: {value} \n"
         return output
+
+    def __repr__(self) -> str:
+        return self.label
 
     def __copy__(self) -> Model:
         out = Model(label=self.label)
@@ -215,23 +308,59 @@ class Model:
         return out
 
     def add_constraint(self, label: str, term: ComparisonTerm) -> None:
+        """Add a constraint to the model.
+
+        Args:
+            label (str): constraint label.
+            term (ComparisonTerm): The constraint's comparison term.
+
+        Raises:
+            ValueError: if the constraint label is already used in the model.
+        """
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
         c = Constraint(label=label, term=copy.copy(term))
         self._constraints[label] = c
 
-    def set_objective(self, term: Term, label: str = "", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+    def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+        """Sets the model's objective.
+
+        Args:
+            term (Term): the objective term.
+            label (str, optional): the objective's label. Defaults to "obj".
+            sense (ObjectiveSense, optional): The optimization sense of the model's objective.
+                                                Defaults to ObjectiveSense.MINIMIZE.
+        """
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
 
     def to_qubo(self) -> QUBO:
+        """Export the model to a qubo model.
+        Note: this exportation only works if the model doesn't violate the QUBO format.
+            Automatic constraint and objective linearization will be added in the future.
+
+        Returns:
+            QUBO: A QUBO model that is generate from the model object.
+        """
         return QUBO.from_model(self)
 
     def to_ham(self) -> Hamiltonian:
+        """Exports the model to an ising hamiltonian.
+
+        Returns:
+            Hamiltonian: An ising hamiltonian that represents the model.
+        """
         return self.to_qubo().to_ham()
 
 
 class QUBO(Model):
+    """Represents a model that is used for Quadratic Unconstrained Binary Optimization."""
+
     def __init__(self, label: str) -> None:
+        """Initializes a new QUBO model object.
+
+        Args:
+            label (str): the QUBO model label.
+        """
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
         self.lagrange_multipliers: dict[str, float] = {}
@@ -239,26 +368,31 @@ class QUBO(Model):
 
     @property
     def qubo_objective(self) -> Objective | None:
+        """
+        Returns:
+            Objective | None: The QUBO objective (factoring in the constraints and objective of the model).
+                If the objective and constraints are not defined in the model, this property returns None.
+        """
         self.__qubo_objective = None
         if self.objective is not None:
-            self._set_qubo_objective(self.objective.term, self.objective.label, self.objective.sense)
+            self._build_qubo_objective(self.objective.term, self.objective.label, self.objective.sense)
         for constraint in self.constraints:
             if constraint.label in self.lagrange_multipliers:
-                self._set_qubo_objective(
+                self._build_qubo_objective(
                     constraint.term.lhs * self.lagrange_multipliers[constraint.label]
                     - constraint.term.rhs * self.lagrange_multipliers[constraint.label]
                 )
             else:
-                self._set_qubo_objective(constraint.term.lhs - constraint.term.rhs)
+                self._build_qubo_objective(constraint.term.lhs - constraint.term.rhs)
         return self.__qubo_objective
-
-    def __repr__(self) -> str:
-        return self.label
 
     def __str__(self) -> str:
         output = f"Model name: {self.label} \n"
         if self.objective is not None:
-            output += f"objective ({self.objective.label}): \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
+            output += (
+                f"objective ({self.objective.label}):"
+                + f" \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
+            )
         if len(self.constraints) > 0:
             output += "subject to the constraint/s: \n"
             for c in self.constraints:
@@ -269,7 +403,23 @@ class QUBO(Model):
                 output += f"\t {key} : {value} \n"
         return output
 
+    def __repr__(self) -> str:
+        return self.label
+
     def _parse_term(self, term: Term) -> tuple[Number, list[tuple[Number, BaseVariable]]]:
+        """parses a Term object into a list of variables and coefficients.
+
+        Args:
+            term (Term): The term to be parsed.
+
+        Raises:
+            ValueError: if the degree of the term is higher than 1.
+
+        Returns:
+            tuple[Number, list[tuple[Number, BaseVariable]]]:
+                The first return value is the constant value in the term.
+                The second return value is a list of variables and their respective coefficients.
+        """
         const = term.get_constant()
         terms: list[tuple[Number, BaseVariable]] = []
 
@@ -290,6 +440,20 @@ class QUBO(Model):
         return const, terms
 
     def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
+        """Checks if a given constraint is valid. Assumes that the right hand side of the constraint is set to zero.
+
+        Args:
+            label (str): the label of the constraint.
+            term (Term): the left hand side of the constraint term.
+            operation (ComparisonOperation): the comparison operation between the left and right hand sides.
+
+        Raises:
+            ValueError: if the constraint is never feasible given the variable ranges.
+
+        Returns:
+            int | None: the upper bound of the continuous slack variable needed for this given constraint.
+                        None in case the constraint is always feasible.
+        """
         ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GE, ComparisonOperation.GT} else 0
         lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LE, ComparisonOperation.LT} else 0
         const, terms = self._parse_term(term)
@@ -317,6 +481,24 @@ class QUBO(Model):
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
     ) -> Term | None:
+        """Transforms a constraint into QUBO format.
+
+        Args:
+            label (str): the constraint's label.
+            term (ComparisonTerm): the constraint term.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): The penalization used to
+                            handel inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
+                            Defaults to None.
+
+        Raises:
+            ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
+            ValueError: if unbalanced penalization method is used and not enough parameters are provided.
+
+        Returns:
+            Term | None: A transformed term that is in QUBO format.
+                        None if the constraint is always feasible.
+        """
 
         lower_penalization = penalization.lower()
 
@@ -393,6 +575,28 @@ class QUBO(Model):
         parameters: list[float] | None = None,
         transform_to_qubo: bool = True,
     ) -> None:
+        """Adds a constraint to the QUBO model.
+
+        Args:
+            label (str): the constraint label.
+            term (ComparisonTerm): the constraint's comparison term.
+            lagrange_multiplier (float, optional): the lagrange multiplier used to scale this constraint.
+                                                    Defaults to 100.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to
+                            handel inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
+                            Defaults to None.
+            transform_to_qubo (bool, optional): Automatically transform a given constraint to QUBO format.
+                                                Defaults to True.
+
+        Raises:
+            ValueError: if constraint label already exists in the model.
+            ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
+            ValueError: if unbalanced penalization method is used and not enough parameters are provided.
+            ValueError: if the degree of the provided term is larger than 2.
+            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
+            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+        """
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
 
@@ -447,6 +651,18 @@ class QUBO(Model):
             self._constraints[label] = Constraint(label, term=c)
 
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+        """Set the QUBO objective.
+
+        Args:
+            term (Term): The objective's term.
+            label (str, optional): the objective's label. Defaults to "obj".
+            sense (ObjectiveSense, optional): The optimization sense of the model's objective.
+                                                Defaults to ObjectiveSense.MINIMIZE.
+
+        Raises:
+            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
+            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+        """
         for v in term.variables():
             if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
                 raise ValueError(
@@ -466,9 +682,18 @@ class QUBO(Model):
         term = term.to_binary()
         self._objective = Objective(label=label, term=term, sense=sense)
 
-    def _set_qubo_objective(
+    def _build_qubo_objective(
         self, term: Term, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
     ) -> None:
+        """updates the internal qubo objective term.
+
+        Args:
+            term (Term): A term to be added to the qubo objective.
+            label (str | None, optional): the label of the objective (if None then the current label is maintained).
+                                            Defaults to None.
+            sense (ObjectiveSense, optional): The optimization sense of the model's objective.
+                                                Defaults to ObjectiveSense.MINIMIZE.
+        """
         term = copy.copy(term.to_binary())
         if self.__qubo_objective is None:
             self.__qubo_objective = Objective(
@@ -488,6 +713,12 @@ class QUBO(Model):
             )
 
     def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        """Sets the lagrange multiplier value for a given constraint.
+
+        Args:
+            constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
+            lagrange_multiplier (float): the lagrange multiplier value.
+        """
         self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
     @classmethod
@@ -498,6 +729,19 @@ class QUBO(Model):
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
     ) -> QUBO:
+        """A class method that constructs a QUBO model from a regular model if possible.
+
+        Args:
+            model (Model): the model to be used to construct the QUBO model.
+            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values
+                                    to scale the model's constraints. Defaults to None.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to
+                            handel inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
+                            Defaults to None.
+        Returns:
+            QUBO: _description_
+        """
         instance = QUBO(label=model.label)
         instance.set_objective(term=model.objective.term, label=model.objective.label, sense=model.objective.sense)
         for constraint in model.constraints:
@@ -517,6 +761,15 @@ class QUBO(Model):
         return instance
 
     def to_ham(self) -> Hamiltonian:
+        """Construct am ising hamiltonian from the current QUBO model.
+
+        Raises:
+            ValueError: if the QUBO model is empty (doesn't have an objective nor constraints.)
+            ValueError: if the QUBO model uses operations that are not addition or multiplications.
+
+        Returns:
+            Hamiltonian: An ising hamiltonian that represents the QUBO model.
+        """
         spins: dict[BaseVariable, Hamiltonian] = {}
         obj = self.qubo_objective
 
@@ -544,13 +797,13 @@ class QUBO(Model):
                             raise ValueError(f"operation {term} is not supported")
                     elif isinstance(term, Number):
                         aux_term *= term.value
-                    elif isinstance(term, BaseVariable):
+                    elif isinstance(term, Variable):
                         aux_term *= spins[term.label]
             else:
                 aux_term = 1
                 if isinstance(terms, Number):
                     aux_term *= terms
-                elif isinstance(terms, BaseVariable):
+                elif isinstance(terms, Variable):
                     aux_term *= spins[terms]
 
         ham += aux_term
