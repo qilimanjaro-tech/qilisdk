@@ -1058,7 +1058,7 @@ class Term:
                         coeff = 1.0
                         if e_copy.operation == Operation.MUL and self.CONST in e_copy:
                             coeff = e_copy.pop(self.CONST)
-                        simple_e = e_copy._simplify()
+                        simple_e = e_copy._simplify()  # noqa: SLF001
                         simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
                         if simple_e in self:
                             if isinstance(simple_e, BaseVariable) and self.is_constant(simple_e):
