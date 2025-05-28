@@ -255,7 +255,7 @@ class Model:
     def encoding_constraints(self) -> dict[str, Constraint]:
         """
         Returns:
-            dict[str, Constraint]:
+            dict[str, Constraint]: a list of all variable encoding constraints in the model.
         """
         return self._encoding_constraints
 
@@ -267,7 +267,6 @@ class Model:
         """
         return self._objective
 
-    @property
     def variables(self) -> list[BaseVariable]:
         """
         Returns:

@@ -29,8 +29,24 @@ Number = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
-MIN_INT = np.iinfo(np.int64).max
+MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
+
+
+def _extract_number(label: str) -> int:
+    """Extracts the number from the variable's label.
+
+    Args:
+        label (str): variable label that follows the format <label>(<number>).
+
+    Returns:
+        int: the number in the label.
+    """
+    pattern = re.compile(r"\((\d+)\)$")
+    matches = pattern.search(label)
+    if matches is not None:
+        return int(matches.group(1))
+    return 0
 
 
 class Domain(str, Enum):
@@ -113,22 +129,6 @@ class Encoding(ABC):
         Returns:
             str: The name of the encoding.
         """
-
-    @staticmethod
-    def _extract_number(label: str) -> int:
-        """Extracts the number from the variable's label.
-
-        Args:
-            label (str): variable label that follows the format <label>(<number>).
-
-        Returns:
-            int: the number in the label.
-        """
-        pattern = re.compile(r"\((\d+)\)$")
-        matches = pattern.search(label)
-        if matches is not None:
-            return int(matches.group(1))
-        return 0
 
     @staticmethod
     @abstractmethod
@@ -247,14 +247,14 @@ class HOBO(Encoding):
         term = sum(2**i * binary_vars[i] for i in range(n_binary))
         term += (np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary) * binary_vars[-1]
         term += bounds[0]
-        return term
+        return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
-        term = HOBO.encode(var)
+        term = HOBO.encode(var, precision)
         binary_var = sorted(
             term.variables(),
-            key=lambda x: HOBO._extract_number(x.label),
+            key=lambda x: _extract_number(x.label),
         )
 
         binary_list = HOBO._hobo_encode(value, len(binary_var)) if isinstance(value, Number) else value
@@ -270,10 +270,7 @@ class HOBO(Encoding):
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        if var.domain is Domain.REAL:
-            term *= precision
-
-        out = term.evaluate(binary_dict, precision=precision)
+        out = term.evaluate(binary_dict)
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -376,14 +373,14 @@ class OneHot(Encoding):
 
         term = Term([(bounds[0] + i) * binary_vars[i] for i in range(n_binary)], Operation.ADD)
 
-        return term
+        return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
-        term = OneHot.encode(var)
+        term = OneHot.encode(var, precision)
         binary_var = sorted(
             term.variables(),
-            key=lambda x: OneHot._extract_number(x.label),
+            key=lambda x: _extract_number(x.label),
         )
 
         binary_list = OneHot._one_hot_encode(value, len(binary_var) + 1) if isinstance(value, int) else value
@@ -403,10 +400,7 @@ class OneHot(Encoding):
             binary_var[i - 1]: [binary_list[i]] for i in range(1, len(binary_list))
         }
 
-        if var.domain is Domain.REAL:
-            term *= precision
-
-        out = term.evaluate(binary_dict, precision=precision)
+        out = term.evaluate(binary_dict)
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -497,15 +491,15 @@ class DomainWall(Encoding):
 
         term += bounds[0]
 
-        return term
+        return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
-        term = DomainWall.encode(var)
+        term = DomainWall.encode(var, precision)
         binary_var = term.variables()
         binary_var = sorted(
             term.variables(),
-            key=lambda x: DomainWall._extract_number(x.label),
+            key=lambda x: _extract_number(x.label),
         )
 
         binary_list = DomainWall._domain_wall_encode(value, len(binary_var)) if isinstance(value, int) else value
@@ -521,10 +515,7 @@ class DomainWall(Encoding):
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        if var.domain is Domain.REAL:
-            term *= precision
-
-        out = term.evaluate(binary_dict, precision)
+        out = term.evaluate(binary_dict)
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -726,12 +717,11 @@ class BaseVariable(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+    def evaluate(self, value: list[int] | Number) -> float:
         """Evaluates the value of the variable given a binary string or a number.
 
         Args:
             value (list[int] | int | float): the value used to evaluate the variable.
-            precision (float, optional): the precision of the floating point values. Defaults to 1e-2.
 
         Returns:
             float: the evaluated vale of the variable.
@@ -867,7 +857,7 @@ class BinaryVar(BaseVariable):
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+    def evaluate(self, value: list[int] | Number) -> float:
         if isinstance(value, Number):
             if not self.domain.check_value(value):
                 raise EvaluationError(f"Evaluating a Binary variable with a value {value} that is outside the domain.")
@@ -895,7 +885,7 @@ class SpinVar(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         raise NotImplementedError
 
-    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+    def evaluate(self, value: list[int] | Number) -> float:
         if isinstance(value, Number):
             if not self.domain.check_value(value) and value != 0:
                 raise EvaluationError(f"Evaluating a Spin variable with a value {value} that is outside the domain.")
@@ -918,16 +908,33 @@ class Variable(BaseVariable):
         domain: Domain,
         bounds: tuple[float | None, float | None] = (None, None),
         encoding: type[Encoding] = HOBO,
+        precision: float = 1e-2,
     ) -> None:
+        """_summary_
+
+        Args:
+            label (str): The name of the variable.
+            domain (Domain): The domain of the values this variable can take.
+            bounds (tuple[float  |  None, float  |  None], optional): the bounds on the values of the variable The bounds
+                    have the structure (lower_bound, Upper_bound) both values included. Defaults to (None, None).
+                    Note: if None is selected then the lowest/highest possible value of the variable's domain is chosen.
+            encoding (type[Encoding], optional): _description_. Defaults to HOBO.
+            precision (float, optional): The floating point precision for REAL variables. Defaults to 1e-2.
+        """
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
         self._precision = 1e-2
         self._term: Term | None = None
         self._bin_vars: list[BaseVariable] = []
+        self._precision = precision
 
     @property
     def encoding(self) -> type[Encoding]:
         return self._encoding
+
+    @property
+    def precision(self) -> float:
+        return self._precision
 
     @property
     def term(self) -> Term:
@@ -945,8 +952,15 @@ class Variable(BaseVariable):
     def bin_vars(self) -> list[BaseVariable]:
         if self._term is None:
             self._term = self.encode()
-            self._bin_vars = self._term.variables()
+            self._bin_vars = sorted(
+                self._term.variables(),
+                key=lambda x: _extract_number(x.label),
+            )
         return self._bin_vars
+
+    def set_precision(self, precision: float) -> None:
+        self._precision = precision
+        self._term = None
 
     def __copy__(self) -> Variable:
         return Variable(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
@@ -963,35 +977,32 @@ class Variable(BaseVariable):
         self._encoding = encoding if encoding is not None else self._encoding
         return super().update_variable(domain, bounds)
 
-    def evaluate(self, value: list[int] | Number, precision: float = 1e-2) -> float:
+    def evaluate(self, value: list[int] | Number) -> float:
         if isinstance(value, Number):
             if not self.domain.check_value(value):
                 raise ValueError(f"The value {value} is invalid for the domain {self.domain.value}")
             if value < self.lower_bound or value > self.upper_bound:
                 raise ValueError(f"The value {value} is outside the defined bounds {self.bounds}")
-            if self.domain == Domain.REAL:
-                return value * precision
             return value
-        return self.encoding.evaluate(self, value, precision=precision)
+        return self.encoding.evaluate(self, value, self._precision)
 
-    def encode(self, precision: float = 1e-2) -> Term:
-        self._precision = precision
+    def encode(self) -> Term:
         term = self.encoding.encode(self, precision=self._precision)
         self._term = copy.copy(term)
         self._bin_vars = self._term.variables()
         return term
 
-    def num_binary_equivalent(self, precision: float = 1e-2) -> int:
-        return self.encoding.num_binary_equivalent(self, precision=precision)
+    def num_binary_equivalent(self) -> int:
+        return self.encoding.num_binary_equivalent(self, precision=self._precision)
 
     def check_valid(self, binary_list: list[int]) -> tuple[bool, int]:
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self, precision: float = 1e-2) -> ComparisonTerm:
-        return self.encoding.encoding_constraint(self, precision=precision)
+    def encoding_constraint(self) -> ComparisonTerm:
+        return self.encoding.encoding_constraint(self, precision=self._precision)
 
-    def term_equals_to(self, number: int, precision: float = 1e-2) -> Term:
-        return self.encoding.term_equals_to(self, number, precision)
+    def term_equals_to(self, number: int) -> Term:
+        return self.encoding.term_equals_to(self, number, self._precision)
 
 
 # Terms ###
@@ -1047,10 +1058,13 @@ class Term:
                         coeff = 1.0
                         if e_copy.operation == Operation.MUL and self.CONST in e_copy:
                             coeff = e_copy.pop(self.CONST)
-                        simple_e = e_copy.simplify()
+                        simple_e = e_copy._simplify()
                         simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
                         if simple_e in self:
-                            self[simple_e] += coeff  # self._apply_operation_on_constants([self[simple_e], coeff])
+                            if isinstance(simple_e, BaseVariable) and self.is_constant(simple_e):
+                                self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
+                            else:
+                                self[simple_e] += coeff
                         else:
                             self[simple_e] = coeff
                     elif len(e_copy) == 0:
@@ -1062,7 +1076,7 @@ class Term:
                 raise ValueError(
                     f"Term accepts object of types Term or Variable but an object of type {e.__class__()} was given"
                 )
-        self.remove_zeros()
+        self._remove_zeros()
 
     @property
     def operation(self) -> Operation:
@@ -1190,7 +1204,7 @@ class Term:
                 var.update(e.variables())
         return list(var)
 
-    def simplify(self) -> Term | BaseVariable:
+    def _simplify(self) -> Term | BaseVariable:
         """Simplify the term object.
 
         Returns:
@@ -1247,7 +1261,7 @@ class Term:
                 out_list.append(self[e] * e if self[e] != 1 else e)
         return out_list
 
-    def unfold_parentheses(self) -> Term:
+    def _unfold_parentheses(self) -> Term:
         """Simplifies any parentheses in the term expression.
 
         Returns:
@@ -1277,7 +1291,7 @@ class Term:
 
         return out
 
-    def remove_zeros(self) -> None:
+    def _remove_zeros(self) -> None:
         """Simplifies any un-necessary zeros from terms."""
         to_be_popped = []
         if self.operation == Operation.MUL and self.CONST in self and self[self.CONST] == 0:
@@ -1290,12 +1304,11 @@ class Term:
         for p in to_be_popped:
             self._elements.pop(p)
 
-    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | Number], precision: float = 1e-2) -> float:
+    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | Number]) -> float:
         """Evaluates the term given a set of values for the variables in the term.
 
         Args:
             var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the term.
-            precision (float, optional): the precision of the real variables in the term. Defaults to 1e-2.
 
         Raises:
             ValueError: if not all variables in the term are provided a value.
@@ -1309,7 +1322,7 @@ class Term:
         output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
         for e in self:
             if isinstance(e, Term):
-                output = self._apply_operation_on_constants([output, e.evaluate(var_values, precision) * self[e]])
+                output = self._apply_operation_on_constants([output, e.evaluate(var_values) * self[e]])
             elif isinstance(e, BaseVariable):
                 if e.compare(self.CONST):
                     output = self._apply_operation_on_constants([output, self[e]])
@@ -1400,14 +1413,14 @@ class Term:
     def __mul__(self, other: Number | BaseVariable | Term) -> Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         out.append(other)
-        return Term(out, Operation.MUL).unfold_parentheses()
+        return Term(out, Operation.MUL)._unfold_parentheses()
 
     __imul__ = __mul__
 
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         out.insert(0, other)
-        return Term(out, Operation.MUL).unfold_parentheses()
+        return Term(out, Operation.MUL)._unfold_parentheses()
 
     def __neg__(self) -> Term:
         return -1 * self
@@ -1589,19 +1602,16 @@ class ComparisonTerm:
             return v1 != v2
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
-    def evaluate(self, var_values: dict[BaseVariable, list[int]], precision: float = 1e-2) -> bool:
+    def evaluate(self, var_values: dict[BaseVariable, list[int]]) -> bool:
         """Evaluates the comparison term given a set of values for the variables in the term.
 
         Args:
             var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the comparison term.
-            precision (float, optional): the precision of the real variables in the comparison term. Defaults to 1e-2.
 
         Returns:
             bool: the result from evaluating the comparison term.
         """
-        return self._apply_comparison_operation(
-            self._lhs.evaluate(var_values, precision), self._rhs.evaluate(var_values, precision)
-        )
+        return self._apply_comparison_operation(self._lhs.evaluate(var_values), self._rhs.evaluate(var_values))
 
     def replace_variables(self, var_dict: dict[BaseVariable, BaseVariable]) -> None:
         """Updates the variables in the comparison term with new values.

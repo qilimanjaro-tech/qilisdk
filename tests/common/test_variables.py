@@ -152,7 +152,7 @@ def test_term_constant_and_simplify():
     # constant term
     t = Term([1, 2, 3], Operation.ADD)
     # Simplify should keep as Term since len>1
-    s = t.simplify()
+    s = t._simplify()
     assert isinstance(s, Term)
     assert t == 6
     # constant with zero elements
