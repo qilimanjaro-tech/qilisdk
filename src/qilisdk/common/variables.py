@@ -22,7 +22,6 @@ from typing import Iterator, Mapping, Sequence, TypeVar
 from warnings import warn
 
 import numpy as np
-from exceptiongroup import catch
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 
@@ -153,7 +152,7 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): The continuous variable to be encoded
-            precision (int): the precision to be considered for real variables (Only applies if
+            precision (float): the precision to be considered for real variables (Only applies if
                                 the variable domain is Domain.Real)
 
         Returns:
@@ -168,7 +167,7 @@ class Encoding(ABC):
         Args:
             var (ContinuousVar): the variable to be evaluated
             value (list[int] | int): a list of binary values or an integer value.
-            precision (int): the precision to be considered for real variables (Only applies if
+            precision (float): the precision to be considered for real variables (Only applies if
                                 the variable domain is Domain.Real)
 
         Returns:
@@ -181,7 +180,7 @@ class Encoding(ABC):
 
         Args:
             var (ContinuousVar): the continuous variable.
-            precision (int): the precision to be considered for real variables (Only applies if
+            precision (float): the precision to be considered for real variables (Only applies if
                                 the variable domain is Domain.Real)
 
         Returns:
@@ -210,6 +209,8 @@ class Encoding(ABC):
         Args:
             var (ContinuousVar): the continuous variable.
             number (int): the number to equate the variable to.
+            precision (float): the precision to be considered for real variables (Only applies if
+                                the variable domain is Domain.Real)
         """
 
 
@@ -250,7 +251,6 @@ class HOBO(Encoding):
 
     @staticmethod
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
-
         term = HOBO.encode(var)
         binary_var = sorted(
             term.variables(),
