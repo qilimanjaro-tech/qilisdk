@@ -420,7 +420,7 @@ class OneHot(Encoding):
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
-        return ComparisonTerm(1, sum(binary_vars), ComparisonOperation.EQ)
+        return ComparisonTerm(lhs=sum(binary_vars), rhs=1, operation=ComparisonOperation.EQ)
 
     @staticmethod
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
@@ -535,9 +535,9 @@ class DomainWall(Encoding):
 
         binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
         return ComparisonTerm(
-            0,
-            sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)),
-            ComparisonOperation.EQ,
+            lhs=sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)),
+            rhs=0,
+            operation=ComparisonOperation.EQ,
         )
 
     @staticmethod
@@ -722,6 +722,9 @@ class BaseVariable(ABC):
 
         Args:
             value (list[int] | int | float): the value used to evaluate the variable.
+                if the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                its binary representation. This representation is constructed using the encoding, bounds and domain
+                of the variable. To check the binary representation of a variable you can check the method `to_binary()`
 
         Returns:
             float: the evaluated vale of the variable.
@@ -751,6 +754,14 @@ class BaseVariable(ABC):
 
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
+
+    def to_binary(self) -> Term:
+        """Returns the binary representation of a variable.º
+
+        Returns:
+            Term: the binary representation of a variable.
+        """
+        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f"{self._label}"
@@ -869,6 +880,9 @@ class BinaryVar(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         raise NotImplementedError
 
+    def to_binary(self) -> Term:
+        return Term([self], Operation.ADD)
+
     def __copy__(self) -> BinaryVar:
         return BinaryVar(label=self.label)
 
@@ -893,6 +907,9 @@ class SpinVar(BaseVariable):
         if len(value) != 1:
             raise EvaluationError("Evaluating a Spin variable with a list of more than one item.")
         return -1 if value[0] in {0, -1} else 1
+
+    def to_binary(self) -> Term:
+        return Term([self], Operation.ADD)
 
     def __copy__(self) -> SpinVar:
         return SpinVar(label=self.label)
@@ -944,18 +961,13 @@ class Variable(BaseVariable):
                     f"Encoding variable {self.label} which has the bounds {self.bounds}"
                     + "is very expensive and may take a very long time."
                 )
-            self._term = self.encode()
-            self._bin_vars = self._term.variables()
+            self._term = self.to_binary()
         return self._term
 
     @property
     def bin_vars(self) -> list[BaseVariable]:
         if self._term is None:
-            self._term = self.encode()
-            self._bin_vars = sorted(
-                self._term.variables(),
-                key=lambda x: _extract_number(x.label),
-            )
+            self.to_binary()
         return self._bin_vars
 
     def set_precision(self, precision: float) -> None:
@@ -967,14 +979,14 @@ class Variable(BaseVariable):
 
     def __getitem__(self, item: int) -> BaseVariable:
         if self._term is None:
-            self._term = self.encode()
-            self._bin_vars = self._term.variables()
+            self.to_binary()
         return self._bin_vars[item]
 
     def update_variable(
         self, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] | None = None
     ) -> None:
         self._encoding = encoding if encoding is not None else self._encoding
+        self._term = None
         return super().update_variable(domain, bounds)
 
     def evaluate(self, value: list[int] | Number) -> float:
@@ -986,11 +998,15 @@ class Variable(BaseVariable):
             return value
         return self.encoding.evaluate(self, value, self._precision)
 
-    def encode(self) -> Term:
-        term = self.encoding.encode(self, precision=self._precision)
-        self._term = copy.copy(term)
-        self._bin_vars = self._term.variables()
-        return term
+    def to_binary(self) -> Term:
+        if self._term is None:
+            term = self.encoding.encode(self, precision=self._precision)
+            self._term = copy.copy(term)
+            self._bin_vars = sorted(
+                self._term.variables(),
+                key=lambda x: _extract_number(x.label),
+            )
+        return self._term
 
     def num_binary_equivalent(self) -> int:
         return self.encoding.num_binary_equivalent(self, precision=self._precision)
@@ -1029,7 +1045,7 @@ class Term:
         for e in elements:
             if isinstance(e, BaseVariable):
                 if e in self:
-                    if self.is_constant(e):
+                    if self._is_constant(e):
                         self[e] = self._apply_operation_on_constants([self[e], 1])
                     elif isinstance(e, BinaryVar) and self.operation == Operation.MUL:
                         self[e] = 1
@@ -1046,7 +1062,7 @@ class Term:
                 if e.operation == self._operation:
                     for key in e:
                         if key in self:
-                            if isinstance(key, BaseVariable) and self.is_constant(key):
+                            if isinstance(key, BaseVariable) and self._is_constant(key):
                                 self[key] = self._apply_operation_on_constants([self[key], e[key]])
                             else:
                                 self[key] += e[key]
@@ -1061,7 +1077,7 @@ class Term:
                         simple_e = e_copy._simplify()  # noqa: SLF001
                         simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
                         if simple_e in self:
-                            if isinstance(simple_e, BaseVariable) and self.is_constant(simple_e):
+                            if isinstance(simple_e, BaseVariable) and self._is_constant(simple_e):
                                 self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
                             else:
                                 self[simple_e] += coeff
@@ -1097,14 +1113,14 @@ class Term:
             for element in self:
                 if isinstance(element, Term):
                     degree += element.degree
-                elif isinstance(element, BaseVariable) and not self.is_constant(element):
+                elif isinstance(element, BaseVariable) and not self._is_constant(element):
                     degree += int(self[element])
             return degree
 
         for element in self:
             if isinstance(element, Term):
                 degree = max(degree, element.degree)
-            elif isinstance(element, BaseVariable) and not self.is_constant(element):
+            elif isinstance(element, BaseVariable) and not self._is_constant(element):
                 degree = max(degree, 1)
         return degree
 
@@ -1150,10 +1166,10 @@ class Term:
             if isinstance(e, Term):
                 out_list.append(self[e] * e.to_binary())
             elif isinstance(e, BaseVariable):
-                if self.is_constant(e):
+                if self._is_constant(e):
                     out_list.append(self[e])
                 elif isinstance(e, Variable):
-                    x = e.encode()
+                    x = e.to_binary()
                     if self.operation == Operation.MUL:
                         out_list.append(x ** int(self[e]))
                     else:
@@ -1198,7 +1214,7 @@ class Term:
         """
         var = set()
         for e in self:
-            if isinstance(e, BaseVariable) and not self.is_constant(e):
+            if isinstance(e, BaseVariable) and not self._is_constant(e):
                 var.add(e)
             elif isinstance(e, Term):
                 var.update(e.variables())
@@ -1233,7 +1249,7 @@ class Term:
         except KeyError as e:
             raise KeyError(f'item "{item}" not found in the term.') from e
 
-    def is_constant(self, variable: BaseVariable) -> bool:
+    def _is_constant(self, variable: BaseVariable) -> bool:
         """Checks if the variable is a constant variable as defined by the Term class.
 
         Args:
@@ -1252,7 +1268,7 @@ class Term:
         """
         out_list: list[BaseVariable | Term | Number] = []
         for e in self:
-            if isinstance(e, BaseVariable) and self.is_constant(e):
+            if isinstance(e, BaseVariable) and self._is_constant(e):
                 out_list.append(self[e])
             elif self.operation == Operation.MUL:
                 for _ in range(int(self[e])):
@@ -1309,6 +1325,9 @@ class Term:
 
         Args:
             var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the term.
+                if the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                its binary representation. This representation is constructed using the encoding, bounds and domain
+                of the variable. To check the binary representation of a variable you can check the method `to_binary()`
 
         Raises:
             ValueError: if not all variables in the term are provided a value.
@@ -1356,7 +1375,7 @@ class Term:
                         term_str = term_str.removeprefix("(").removesuffix(")")
                     output_string += f"({term_str}) " if self[e] == 1 else f"({self[e]}) * ({term_str}) "
             elif isinstance(e, BaseVariable):
-                if self.is_constant(e):
+                if self._is_constant(e):
                     if self.operation in {Operation.ADD, Operation.SUB} and self[e] == 0:
                         continue
                     if self.operation in {Operation.MUL, Operation.DIV} and self[e] == 1:

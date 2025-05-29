@@ -16,13 +16,13 @@ from __future__ import annotations
 # import numpy as np
 import copy
 import enum
-import warnings
 from typing import Literal, Type
 
 # import cupy as np
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, Z
+from qilisdk.config import logger
 
 from .variables import (
     HOBO,
@@ -252,12 +252,12 @@ class Model:
         return list(self._constraints.values())
 
     @property
-    def encoding_constraints(self) -> dict[str, Constraint]:
+    def encoding_constraints(self) -> list[Constraint]:
         """
         Returns:
             dict[str, Constraint]: a list of all variable encoding constraints in the model.
         """
-        return self._encoding_constraints
+        return list(self._encoding_constraints.values())
 
     @property
     def objective(self) -> Objective:
@@ -282,6 +282,21 @@ class Model:
 
         return list(var)
 
+    def _generate_encoding_constraints(self) -> None:
+        for var in self.variables():
+            if not isinstance(var, Variable) or var.domain in {Domain.BINARY, Domain.SPIN}:
+                continue
+            ub_encoding_name = f"{var}_upper_bound_constraint"
+            lb_encoding_name = f"{var}_lower_bound_constraint"
+            if ub_encoding_name not in self._encoding_constraints:
+                self._encoding_constraints[ub_encoding_name] = Constraint(
+                    label=ub_encoding_name, term=var <= var.upper_bound
+                )
+            if lb_encoding_name not in self._encoding_constraints:
+                self._encoding_constraints[lb_encoding_name] = Constraint(
+                    label=lb_encoding_name, term=var >= var.lower_bound
+                )
+
     def __str__(self) -> str:
         output = f"Model name: {self.label} \n"
         output += (
@@ -291,8 +306,8 @@ class Model:
             output += "subject to the constraint/s: \n"
             for c in self.constraints:
                 output += f"\t {c} \n"
-            for label, value in self.encoding_constraints.items():
-                output += f"\t {label}: {value} \n"
+            for c in self.encoding_constraints:
+                output += f"\t {c} \n"
         return output
 
     def __repr__(self) -> str:
@@ -320,6 +335,7 @@ class Model:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
         c = Constraint(label=label, term=copy.copy(term))
         self._constraints[label] = c
+        self._generate_encoding_constraints()
 
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Sets the model's objective.
@@ -331,6 +347,7 @@ class Model:
                                                 Defaults to ObjectiveSense.MINIMIZE.
         """
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
+        self._generate_encoding_constraints()
 
     def to_qubo(self) -> QUBO:
         """Export the model to a qubo model.
@@ -362,8 +379,21 @@ class QUBO(Model):
         """
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
-        self.lagrange_multipliers: dict[str, float] = {}
+        self._lagrange_multipliers: dict[str, float] = {}
         self.__qubo_objective: Objective | None = None
+
+    @property
+    def lagrange_multipliers(self) -> dict[str, float]:
+        return self._lagrange_multipliers
+
+    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        """Sets the lagrange multiplier value for a given constraint.
+
+        Args:
+            constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
+            lagrange_multiplier (float): the lagrange multiplier value.
+        """
+        self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
     @property
     def qubo_objective(self) -> Objective | None:
@@ -430,11 +460,11 @@ class QUBO(Model):
                 if isinstance(element, Term):
                     _, aux_terms = self._parse_term(element)
                     terms.extend(aux_terms)
-                elif not term.is_constant(element):
+                elif not Term.CONST.compare(element):
                     terms.append((term[element], element))
         if term.operation is Operation.MUL:
             for element in term:
-                if not isinstance(element, Term) and not term.is_constant(element):
+                if not isinstance(element, Term) and not Term.CONST.compare(element):
                     terms.append((1, element))
         return const, terms
 
@@ -459,11 +489,18 @@ class QUBO(Model):
         term_upper_limit = sum(coeff for coeff, _ in terms if coeff > 0)
         term_lower_limit = sum(coeff for coeff, _ in terms if coeff < 0)
 
+        if operation == ComparisonOperation.GT and term_upper_limit + const <= 0:
+            raise ValueError(f"Constraint {label} is unsatisfiable.")
+        if operation == ComparisonOperation.LT and term_lower_limit + const >= 0:
+            raise ValueError(f"Constraint {label} is unsatisfiable.")
+
         upper_cut = min(term_upper_limit, ub - const)
         lower_cut = max(term_lower_limit, lb - const)
 
         if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
-            warnings.warn(f"constraint ({label}) not added because it is always feasible.")
+            logger.warning(
+                'constraint "%s" was not added to model "%s" because it is always feasible.', label, self.label
+            )
             return None
 
         ub_slack = int(upper_cut - lower_cut)
@@ -534,7 +571,7 @@ class QUBO(Model):
                     return h**2
 
                 slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
-                slack_terms = slack.encode()
+                slack_terms = slack.to_binary()
                 out = h + slack_terms
                 return (out) ** 2
 
@@ -560,7 +597,7 @@ class QUBO(Model):
 
                 slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
 
-                slack_terms = slack.encode()
+                slack_terms = slack.to_binary()
                 out = h + slack_terms
                 return (out) ** 2
         return None
@@ -621,20 +658,7 @@ class QUBO(Model):
                 f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree()}."
             )
 
-        for v in c.variables():
-            if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
-                raise ValueError(
-                    "QUBO models are not supported for variables that are not in the positive integers or binary domains."
-                )
-            if v.lower_bound != 0:
-                raise ValueError(
-                    f"All variables must have a lower bound of 0. But variable {v} has a lower bound of {v.lower_bound}"
-                )
-            if isinstance(v, Variable) and v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
-                self.continuous_vars[v.label] = v
-                encoding_constraint = v.encoding_constraint()
-                if encoding_constraint is not None:
-                    self.add_constraint(label=f"{self.label}_var_encoding_{v.label}", term=encoding_constraint)
+        self._check_variables(c, lagrange_multiplier=lagrange_multiplier)
 
         if transform_to_qubo:
             c = c.to_binary()
@@ -658,6 +682,20 @@ class QUBO(Model):
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
 
+        """
+
+        self._check_variables(term)
+
+        term = term.to_binary()
+        self._objective = Objective(label=label, term=term, sense=sense)
+
+    def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: Number = 100) -> None:
+        """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
+        encoding constraint for supported continuous variables.
+
+        Args:
+            term (Term): the term to be checked.
+
         Raises:
             ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
             ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
@@ -675,11 +713,10 @@ class QUBO(Model):
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
-                    label = f"{self.label}_var_encoding_{v.label}"
-                    self._constraints[label] = Constraint(label=label, term=encoding_constraint)
-
-        term = term.to_binary()
-        self._objective = Objective(label=label, term=term, sense=sense)
+                    enc_label = f"{v.label}_encoding_constraint"
+                    self.add_constraint(
+                        label=enc_label, term=encoding_constraint, lagrange_multiplier=lagrange_multiplier
+                    )
 
     def _build_qubo_objective(
         self, term: Term, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
@@ -711,15 +748,6 @@ class QUBO(Model):
                 sense=ObjectiveSense.MINIMIZE,
             )
 
-    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
-        """Sets the lagrange multiplier value for a given constraint.
-
-        Args:
-            constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
-            lagrange_multiplier (float): the lagrange multiplier value.
-        """
-        self.lagrange_multipliers[constraint_label] = lagrange_multiplier
-
     @classmethod
     def from_model(
         cls,
@@ -741,7 +769,7 @@ class QUBO(Model):
         Returns:
             QUBO: _description_
         """
-        instance = QUBO(label=model.label)
+        instance = QUBO(label="QUBO_" + model.label)
         instance.set_objective(term=model.objective.term, label=model.objective.label, sense=model.objective.sense)
         for constraint in model.constraints:
             if lagrange_multiplier_dict is not None and constraint.label in lagrange_multiplier_dict:

@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2023 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from importlib.metadata import PackageNotFoundError, version
+"""configuration module"""
 
-from qilisdk import analog, common, digital, extras, utils
+from .config import logger
 
-try:
-    __version__ = version("qilisdk")
-except PackageNotFoundError:
-    __version__ = "0.0.0"
-
-__all__ = ["analog", "common", "digital", "extras", "utils"]
+__all__ = ["logger"]
