@@ -119,7 +119,7 @@ class ComparisonOperation(Enum):
 
 
 class Encoding(ABC):
-    """Represents am abstract variable encoding class."""
+    """Represents an abstract variable encoding class."""
 
     @property
     @abstractmethod

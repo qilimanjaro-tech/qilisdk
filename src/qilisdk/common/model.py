@@ -788,7 +788,7 @@ class QUBO(Model):
         return instance
 
     def to_ham(self) -> Hamiltonian:
-        """Construct am ising hamiltonian from the current QUBO model.
+        """Construct an ising hamiltonian from the current QUBO model.
 
         Raises:
             ValueError: if the QUBO model is empty (doesn't have an objective nor constraints.)
