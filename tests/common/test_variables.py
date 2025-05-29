@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 from copy import copy
 
 import pytest
@@ -132,6 +133,10 @@ def test_arithmetic_and_comparisons():
     # power operations
     t2 = a**2
     assert isinstance(t2, Term)
+
+    val = t2.evaluate({a: [2]})
+    assert val == 2**2
+
     # negative power
     with pytest.raises(NotImplementedError):
         _ = a**-1
@@ -160,7 +165,7 @@ def test_term_constant_and_simplify():
     assert t0 == 0
 
 
-def test_onehot_encoding_and_evaluate():
+def test_encoding_and_evaluate():
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=OneHot)
     # should have 3 binary vars
     assert var.num_binary_equivalent() == 3
@@ -174,6 +179,39 @@ def test_onehot_encoding_and_evaluate():
     assert not OneHot.check_valid([0, 0, 0])[0]
     with pytest.raises(ValueError):  # noqa: PT011
         var.evaluate([0, 0, 0])
+
+    var = Variable("v", Domain.REAL, bounds=(-1, 2), encoding=OneHot, precision=1e-1)
+    # should have 3 binary vars
+    assert var.num_binary_equivalent() == 31
+    # valid samples
+    for i in range(31):
+        binary = OneHot._one_hot_encode(i, 31)
+        assert OneHot.check_valid(binary)[0]
+        val = var.evaluate(binary)
+        assert math.isclose(val, i * 1e-1 - 1, abs_tol=1e-1)
+    # # invalid sample
+    assert not OneHot.check_valid([0, 0, 0])[0]
+    with pytest.raises(ValueError):  # noqa: PT011
+        var.evaluate([0, 0, 0])
+
+    var = Variable("v", Domain.REAL, bounds=(-1, 2), encoding=DomainWall, precision=1e-1)
+    # should have 3 binary vars
+    assert var.num_binary_equivalent() == 30
+    # valid samples
+    for i in range(30):
+        binary = DomainWall._domain_wall_encode(i, 30)
+        val = var.evaluate(binary)
+        assert math.isclose(val, i * 1e-1 - 1, abs_tol=1e-1)
+    # # invalid sample
+    assert not DomainWall.check_valid([0, 1, 0])[0]
+    with pytest.raises(ValueError):  # noqa: PT011
+        var.evaluate([0, 1, 0])
+
+    x = Variable("x", Domain.REAL, (-1, 2), HOBO, precision=1e-1)
+    assert x.evaluate(-1) == -1
+    assert x.evaluate(-0.5) == -0.5
+    assert x.evaluate([0]) == -1
+    assert x.evaluate([1, 0, 1]) == -0.5
 
 
 def test_hobo_num_binary_and_check_valid():

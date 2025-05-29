@@ -362,10 +362,18 @@ class OneHot(Encoding):
         return [1 if i == x else 0 for i in range(N)]
 
     @staticmethod
+    def _find_zero(var: Variable) -> int:
+        binary_var = var.bin_vars
+        for i in range(var.num_binary_equivalent()):
+            if _extract_number(binary_var[i].label) != i:
+                return i
+        return 0
+
+    @staticmethod
     def encode(var: Variable, precision: float = 1e-2) -> Term:
         bounds = var.bounds
         if var.domain is Domain.REAL:
-            bounds = (precision * bounds[0], precision * bounds[1])
+            bounds = (bounds[0] / precision, bounds[1] / precision)
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
@@ -396,9 +404,13 @@ class OneHot(Encoding):
         elif len(binary_list) != len(binary_var) + 1:
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict: dict[BaseVariable, list[int]] = {
-            binary_var[i - 1]: [binary_list[i]] for i in range(1, len(binary_list))
-        }
+        zero_index = OneHot._find_zero(var)
+        binary_dict: dict[BaseVariable, list[int]] = {}
+        for i in range(var.num_binary_equivalent()):
+            if i < zero_index:
+                binary_dict[binary_var[i]] = [binary_list[i]]
+            if i > zero_index:
+                binary_dict[binary_var[i - 1]] = [binary_list[i]]
 
         out = term.evaluate(binary_dict)
 
@@ -1224,7 +1236,7 @@ class Term:
         """Simplify the term object.
 
         Returns:
-            Term | BaseVariable: the simplified term.
+            (Term | BaseVariable): the simplified term.
         """
         if len(self) == 1:
             item = next(iter(self._elements.keys()))
