@@ -637,7 +637,7 @@ class BaseVariable(ABC):
 
         Args:
             value (list[int] | int | float): the value used to evaluate the variable.
-                if the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                If the value provided is binary list (list[int]) then the value of the variable is evaluated based on
                 its binary representation. This representation is constructed using the encoding, bounds and domain
                 of the variable. To check the binary representation of a variable you can check the method `to_binary()`
 
@@ -1237,7 +1237,7 @@ class Term:
 
         Args:
             var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the term.
-                if the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                If the value provided is binary list (list[int]) then the value of the variable is evaluated based on
                 its binary representation. This representation is constructed using the encoding, bounds and domain
                 of the variable. To check the binary representation of a variable you can check the method `to_binary()`
 
