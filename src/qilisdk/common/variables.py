@@ -201,18 +201,6 @@ class Encoding(ABC):
         """
         raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
-    @staticmethod
-    @abstractmethod
-    def term_equals_to(var: Variable, number: int, precision: float = 1e-2) -> Term:
-        """returns a term that is 1 if the variable is equal to the number, else 0.
-
-        Args:
-            var (ContinuousVar): the continuous variable.
-            number (int): the number to equate the variable to.
-            precision (float): the precision to be considered for real variables (Only applies if
-                                the variable domain is Domain.Real)
-        """
-
 
 class HOBO(Encoding):
     """Represents a HOBO variable encoding class."""
@@ -297,43 +285,6 @@ class HOBO(Encoding):
     @staticmethod
     def check_valid(value: list[int] | int) -> tuple[bool, int]:
         return True, 0
-
-    @staticmethod
-    def term_equals_to(var: Variable, number: int, precision: float = 1e-2) -> Term:
-        encoded_num: list[int] = []
-
-        bounds = var.bounds
-        if var.domain is Domain.REAL:
-            bounds = (bounds[0] / precision, bounds[1] / precision)
-
-        abs_bound = np.abs(bounds[1] - bounds[0])
-        n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
-
-        aux_num = number
-
-        aux_num -= int(bounds[0])
-
-        overflow_val = np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary
-
-        if aux_num >= overflow_val:
-            encoded_num.insert(0, 1)
-            aux_num -= overflow_val
-        else:
-            encoded_num.insert(0, 0)
-
-        for i in range(n_binary, 0, -1):
-            if aux_num >= 2**i:
-                encoded_num.insert(0, 1)
-                aux_num -= 2**i
-            else:
-                encoded_num.insert(0, 0)
-
-        out_term = Term([1], Operation.MUL)
-
-        for i in range(var.num_binary_equivalent()):
-            out_term *= var[i] if encoded_num[i] == 0 else (1 - var[i])
-
-        return out_term
 
 
 class OneHot(Encoding):
@@ -450,17 +401,6 @@ class OneHot(Encoding):
         num_ones = binary_list.count(1)
         return num_ones == 1, (num_ones - 1) ** 2
 
-    @staticmethod
-    def term_equals_to(var: "Variable", number: int, precision: float = 1e-2) -> Term:
-        out_term = Term([1], Operation.MUL)
-        if var.domain is Domain.REAL:
-            for i in range(var.num_binary_equivalent()):
-                out_term *= (1 - var[i]) if i != number / precision else var[i]
-        else:
-            for i in range(var.num_binary_equivalent()):
-                out_term *= (1 - var[i]) if i != number else var[i]
-        return out_term
-
 
 class DomainWall(Encoding):
     """Represents a Domain-wall variable encoding class."""
@@ -567,43 +507,6 @@ class DomainWall(Encoding):
         binary_list = DomainWall._domain_wall_encode(value, value) if isinstance(value, int) else value
         value = sum(binary_list[i + 1] * (1 - binary_list[i]) for i in range(len(binary_list) - 1))
         return value == 0, value
-
-    @staticmethod
-    def term_equals_to(var: Variable, number: int, precision: float = 1e-2) -> Term:
-        encoded_num: list[int] = []
-        aux_number = number
-
-        for i in range(var.num_binary_equivalent()):
-            if i <= number:
-                encoded_num.append(1)
-            else:
-                encoded_num.append(0)
-
-        bounds = var.bounds
-        if var.domain is Domain.REAL:
-            bounds = (bounds[0] / precision, bounds[1] / precision)
-
-        aux_number -= int(bounds[0])
-
-        n_binary = int(np.abs(bounds[1] - bounds[0]))
-
-        num_sum = 0
-        for i in range(n_binary):
-            if num_sum < aux_number:
-                encoded_num.append(1)
-                num_sum += 1
-            else:
-                encoded_num.append(0)
-
-        if num_sum < aux_number:
-            raise ValueError(f"There are not enough qubits to encode the number {number}")
-
-        out_term = Term([1], Operation.MUL)
-
-        for i in range(var.num_binary_equivalent()):
-            out_term *= var[i] if encoded_num[i] == 0 else (1 - var[i])
-
-        return out_term
 
 
 # Variables ###
@@ -1028,9 +931,6 @@ class Variable(BaseVariable):
 
     def encoding_constraint(self) -> ComparisonTerm:
         return self.encoding.encoding_constraint(self, precision=self._precision)
-
-    def term_equals_to(self, number: int) -> Term:
-        return self.encoding.term_equals_to(self, number, self._precision)
 
 
 # Terms ###
