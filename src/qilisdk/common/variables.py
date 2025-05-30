@@ -513,7 +513,11 @@ class DomainWall(Encoding):
 
 
 class BaseVariable(ABC):
-    """Represents an abstract structure of any variable that can be included in the model."""
+    """Represents an abstract structure of any variable that can be included in the optimization ``Model``
+    (It's the ``Model``'s minimum mathematical expression).
+
+    ``Variable``'s are used to construct ``Term``s that can then be used to build ``Model``s.
+    """
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
@@ -937,7 +941,12 @@ class Variable(BaseVariable):
 
 
 class Term:
-    """Represents a term that is constructed from a series of mathematical operations on Variable objects."""
+    """Represents a mathematical Term (e.g. 3x*y, 2x, ...).
+
+    And they are built from:
+    - ``Variable``'s: The decision variables of the model (x, y, ...).
+    - Other ``Term``'s: Allowing for complex expressions to be constructed.
+    """
 
     CONST = Variable(CONST_KEY, Domain.REAL)
 
@@ -1420,7 +1429,13 @@ class Term:
 
 
 class ComparisonTerm:
-    """Represents a comparison term that is constructed from a series of mathematical operations on Variable objects."""
+    """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term``s
+    (e.g. x+y>0, x>2, ...).
+
+    They are built from a left and a right hand part, each of which can contain:
+    - ``Variable``'s: The decision variables of the model (x, y, ...).
+    - Other ``Term``'s: Allowing for complex expressions to be constructed (x+y, ...)
+    """
 
     def __init__(
         self, lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term, operation: ComparisonOperation

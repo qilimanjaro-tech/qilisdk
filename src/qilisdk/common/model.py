@@ -66,7 +66,17 @@ class ObjectiveSense(enum.Enum):
 
 
 class Constraint:
-    """Representing a constraint object of a model."""
+    """Represents a mathematical constraint within an optimization ``Model``.
+
+    Unlike the ``Objective``, which is singular, a ``Model`` can contain multiple ``Constraints``.
+
+    Each ``Constraint`` is defined by one or more ``ComparisonTerm`` objects (e.g., ``x + y > 2``),
+    where each term consists of a left-hand side and a right-hand side expression. These expressions
+    can be composed of:
+
+    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+    - Other ``Term`` objects: Enabling the construction of more complex expressions (e.g., ``x + y``).
+    """
 
     def __init__(self, label: str, term: ComparisonTerm) -> None:
         """Initializes a new constraint object.
@@ -143,17 +153,13 @@ class Constraint:
 
 
 class Objective:
-    """Representing an objective object of a model.
+    """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
 
-    Parameters
-    ----------
-    label: str
-        The objective's label.
-    term: Term
-        The term that defines the objective.
-    sense: ObjectiveSense
-        The objective's sense of optimization (ObjectiveSense.MINIMIZE or ObjectiveSense.MAXIMIZE).
-        Defaults to ObjectiveSense.MINIMIZE.
+    A ``Model`` can have only one ``Objective``, unlike ``Constraints``, which can be multiple.
+
+    The ``Objective`` is constructed using ``Term`` objects (e.g., ``3x*y``, ``2x``). Each ``Term`` may include:
+    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+    - Other ``Term`` objects: Allowing for the construction of complex expressions.
     """
 
     def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
@@ -222,7 +228,19 @@ class Objective:
 
 
 class Model:
-    """Represents a mathematical model that can be used to represent a cost function."""
+    """Represents a mathematical optimization model, consisting of an ``Objective`` function
+    and a set of ``Constraint`` objects.
+
+    A ``Model`` includes:
+    - A single ``Objective`` that defines the goal of the optimization (e.g., minimize ``3x*y + 2x``).
+    - One or more ``Constraints`` that specify the limitations or requirements within which the
+        ``Objective`` must be optimized (e.g., ``x + y > 0``, ``x > 2``).
+
+    Both the ``Objective`` and ``Constraints`` are constructed from ``Term`` objects (e.g., ``3x*y``, ``2x``).
+    Each ``Term`` may include:
+    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+    - Nested ``Term`` objects: Enabling the construction of complex mathematical expressions.
+    """
 
     def __init__(self, label: str) -> None:
         """Initializes a new model object.
