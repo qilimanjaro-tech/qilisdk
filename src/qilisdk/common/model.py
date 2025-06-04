@@ -22,7 +22,7 @@ from typing import Literal, Type
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, Z
-from qilisdk.config import logger
+from qilisdk.utils import logger
 
 from .variables import (
     HOBO,
@@ -517,7 +517,7 @@ class QUBO(Model):
 
         if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
             logger.warning(
-                'constraint "%s" was not added to model "%s" because it is always feasible.', label, self.label
+                f'constraint "{label}" was not added to model "{self.label}" because it is always feasible.',
             )
             return None
 
