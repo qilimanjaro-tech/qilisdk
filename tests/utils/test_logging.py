@@ -1,13 +1,13 @@
 # test_logger.py
 
 
-from loguru_caplog import loguru_caplog as caplog
+from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
 from qilisdk.common.model import Model, ObjectiveSense
 from qilisdk.common.variables import BinaryVar, Domain, OneHot, Variable
 
 
-def test_log_output(caplog):
+def test_log_output(caplog):  # noqa: F811
 
     N = 2
     b = [BinaryVar(f"b({i})") for i in range(N)]
