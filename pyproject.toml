@@ -29,7 +29,6 @@ dependencies = [
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.0",
     "loguru>=0.7.3",
-    "loguru-caplog>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +50,7 @@ dev = [
     "pytest-sugar>=1.0.0",
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
+    "loguru-caplog>=0.2.0",
 ]
 
 [build-system]
