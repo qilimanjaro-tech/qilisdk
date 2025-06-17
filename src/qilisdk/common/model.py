@@ -367,15 +367,28 @@ class Model:
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
         self._generate_encoding_constraints()
 
-    def to_qubo(self) -> QUBO:
+    def to_qubo(
+        self,
+        lagrange_multiplier_dict: dict[str, float] | None = None,
+        penalization: Literal["unbalanced", "slack"] = "slack",
+        parameters: list[float] | None = None,
+    ) -> QUBO:
         """Export the model to a qubo model.
-        Note: this exportation only works if the model doesn't violate the QUBO format.
-            Automatic constraint and objective linearization will be added in the future.
+        Args:
+            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values
+                                        to scale the model's constraints. Defaults to None.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to
+                            handel inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
+                            Defaults to None.
 
+        Note:
+            this exportation only works if the model doesn't violate the QUBO format.
+            Automatic constraint and objective linearization will be added in the future.
         Returns:
             QUBO: A QUBO model that is generate from the model object.
         """
-        return QUBO.from_model(self)
+        return QUBO.from_model(self, lagrange_multiplier_dict, penalization, parameters)
 
     def to_ham(self) -> Hamiltonian:
         """Exports the model to an ising hamiltonian.
@@ -822,36 +835,35 @@ class QUBO(Model):
             raise ValueError("Can't transform empty QUBO model to a Hamiltonian.")
 
         for i, v in enumerate(obj.variables()):
+            # TODO (ameer): Change this to the hash instead of the variables.
             spins[v] = (1 - Z(i)) / 2
 
-        ham = Hamiltonian()
-        aux_term: Number | Hamiltonian = 0.0
+        def _parse_term(term: Term) -> Hamiltonian:
+            ham = Hamiltonian()
+            terms = term.to_list()
+            operation = term.operation
+            default = 0.0 if operation is Operation.ADD else 1.0
+            aux_term: Number | Hamiltonian = copy.copy(default)
+            for t in terms:
+                aux: Number | Hamiltonian = copy.copy(default)
+                if isinstance(t, Term):
+                    aux = _parse_term(t)
+                elif isinstance(t, Number):
+                    aux = t
+                elif isinstance(t, BaseVariable):
+                    aux = spins[t]
 
-        for terms in obj.term.to_list():
-            if isinstance(terms, Operation):
-                if terms is Operation.ADD:
-                    ham += aux_term
+                if operation is Operation.ADD:
+                    aux_term += aux
+                elif operation is Operation.MUL:
+                    aux_term *= aux
                 else:
-                    raise ValueError(f"operation {terms} is not supported")
+                    raise ValueError(f"operation {operation} is not supported")
+            ham += aux_term
+            return ham
 
-            elif isinstance(terms, list):
-                aux_term = 1
-                for term in terms:
-                    if isinstance(term, Operation):
-                        if term is not Operation.MUL:
-                            raise ValueError(f"operation {term} is not supported")
-                    elif isinstance(term, Number):
-                        aux_term *= term.value
-                    elif isinstance(term, Variable):
-                        aux_term *= spins[term.label]
-            else:
-                aux_term = 1
-                if isinstance(terms, Number):
-                    aux_term *= terms
-                elif isinstance(terms, Variable):
-                    aux_term *= spins[terms]
+        ham = _parse_term(obj.term)
 
-        ham += aux_term
         return ham
 
     def __copy__(self) -> QUBO:

@@ -1139,7 +1139,7 @@ class Term:
                 var.add(e)
             elif isinstance(e, Term):
                 var.update(e.variables())
-        return list(var)
+        return sorted(var, key=lambda x: x.label)
 
     def _simplify(self) -> Term | BaseVariable:
         """Simplify the term object.
