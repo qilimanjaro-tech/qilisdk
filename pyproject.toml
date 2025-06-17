@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cuda = [
-    "cudaq==0.10.0",
+    "cuda-quantum-cu12",
 ]
 qaas = [
     "httpx>=0.28.1",
@@ -56,6 +56,9 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
 
 [tool.ruff]
 line-length = 120

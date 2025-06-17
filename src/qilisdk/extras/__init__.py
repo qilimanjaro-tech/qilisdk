@@ -20,7 +20,7 @@ __all__ = []
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="cuda",
-        dependencies=["cudaq"],
+        dependencies=["cuda-quantum-cu12"],
         symbols=[Symbol(path="qilisdk.extras.cuda.cuda_backend", name="CudaBackend")],
     ),
     OptionalFeature(
