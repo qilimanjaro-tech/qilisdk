@@ -42,10 +42,7 @@ jobs:
 
       - name: Install the project
         run: uv sync --all-groups --all-extras
-
-      - name: Explicit installation of cudaq
-        run: uv pip install cudaq==0.10.0
-
+        
       - name: Ruff
         run: uv run ruff check --output-format=github .
 

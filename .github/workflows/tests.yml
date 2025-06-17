@@ -43,8 +43,5 @@ jobs:
       - name: Install qilisdk
         run: uv sync --all-groups --all-extras
 
-      - name: Explicit installation of cudaq
-        run: uv pip install cudaq==0.10.0
-
       - name: Run tests
         run: uv run pytest tests
