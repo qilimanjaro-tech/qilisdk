@@ -866,6 +866,17 @@ class QUBO(Model):
 
         return ham
 
+    def to_qubo(
+        self,
+        lagrange_multiplier_dict: dict[str, float] | None = None,
+        penalization: Literal["unbalanced", "slack"] = "slack",
+        parameters: list[float] | None = None,
+    ) -> QUBO:
+        logger.warning(
+            f"Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
+        )
+        return copy.copy(self)
+
     def __copy__(self) -> QUBO:
         out = QUBO(label=self.label)
         obj = copy.copy(self.objective)
