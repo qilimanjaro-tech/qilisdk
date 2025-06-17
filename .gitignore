@@ -15,5 +15,6 @@ wheels/
 # Folder for storing user files
 .tmp
 
-# VS Code workspace settings
+# development environment files
 .vscode
+.coverage
