@@ -24,6 +24,7 @@ from warnings import warn
 import numpy as np
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
+from qilisdk.utils import logger
 
 Number = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
@@ -1502,13 +1503,18 @@ class ComparisonTerm:
         return max(self.rhs.degree, self.lhs.degree)
 
     def to_list(self) -> list:
-        """Exports the comparison term into a list.
+        """Exports the comparison term into a list. The elements of the right hand side are first moved to the left hand
+        side before the generation of the list. Therefore, you can assume that the right hand side will be zero.
 
         Returns:
             list: a list constructed from all the elements in the left and right hand sides of the comparison term.
         """
-        out = self.rhs.to_list()
-        out.extend(self.lhs.to_list())
+        logger.info(
+            "to_list(): The elements of output list assume the comparison term has been transformed "
+            + f"from (lhs {self.operation.value} rhs) to (lhs - rhs {self.operation.value} 0).",
+        )
+        out = self.lhs.to_list()
+        out.extend((-1 * self.rhs).to_list())
         return out
 
     def to_binary(self) -> ComparisonTerm:
