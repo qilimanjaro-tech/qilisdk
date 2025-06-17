@@ -1492,7 +1492,7 @@ class ComparisonTerm:
         var.update(lhs_var)
         var.update(rhs_var)
 
-        return list(var)
+        return sorted(var, key=lambda x: x.label)
 
     def degree(self) -> int:
         """

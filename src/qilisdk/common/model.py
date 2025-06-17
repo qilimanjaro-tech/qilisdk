@@ -298,7 +298,7 @@ class Model:
 
         var.update(self.objective.variables())
 
-        return list(var)
+        return sorted(var, key=lambda x: x.label)
 
     def _generate_encoding_constraints(self) -> None:
         for var in self.variables():
