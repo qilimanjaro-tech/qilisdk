@@ -17,9 +17,8 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import State
-from cudaq.operator import ElementaryOperator, OperatorSum, ScalarOperator, evolve, spin
-from cudaq.operator import Schedule as cuda_schedule
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
+from cudaq import Schedule as cuda_schedule
 
 from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
