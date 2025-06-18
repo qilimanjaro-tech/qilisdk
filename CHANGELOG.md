@@ -1,8 +1,15 @@
+# Qilisdk 0.1.4 (2025-06-18)
+
+### Bugfixes
+
+- Removed manual installation of CUDA-Q for the tests and the code quality workflows. ([PR #40](https://github.com/qilimanjaro-tech/qilisdk/pulls/40))
+
+
 # Qilisdk 0.1.3 (2025-05-07)
 
 ### Bugfixes
 
-- Made `pydantic` pass to be a mandatory requirement, and not only for qaas as before. Solving a problem with installation overseen in previous PRs. 
+- Made `pydantic` pass to be a mandatory requirement, and not only for qaas as before. Solving a problem with installation overseen in previous PRs.
 
   ([PR #29](https://github.com/qilimanjaro-tech/qilisdk/pulls/29))
 
@@ -30,7 +37,7 @@
 ### Misc
 
 - Improved `QaaSBacked` functionality to include methods for executing digital and analog algorithms.
-  
+
   [PR #27](https://github.com/qilimanjaro-tech/qilisdk/pulls/27)
 
 
