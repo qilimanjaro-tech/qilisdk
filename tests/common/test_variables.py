@@ -19,16 +19,18 @@ import pytest
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.common.variables import (
+    EQ,
     HOBO,
+    LT,
     MAX_INT,
     MIN_INT,
-    BinaryVar,
+    BinaryVariable,
     ComparisonTerm,
     Domain,
     DomainWall,
     OneHot,
     Operation,
-    SpinVar,
+    SpinVariable,
     Term,
     Variable,
 )
@@ -91,21 +93,21 @@ def test_set_bounds():
 
 
 def test_binaryvar_evaluate_and_copy():
-    b = BinaryVar("b")
+    b = BinaryVariable("b")
     assert b.num_binary_equivalent() == 1
     assert b.evaluate([0]) == 0
     assert b.evaluate([1]) == 1
     with pytest.raises(EvaluationError):
         b.evaluate([0, 1])
     b2 = copy(b)
-    assert isinstance(b2, BinaryVar)
+    assert isinstance(b2, BinaryVariable)
     assert b2.label == b.label
     with pytest.raises(NotImplementedError):
         b.update_variable(Domain.BINARY, (0, 1))
 
 
 def test_spinvar_evaluate():
-    s = SpinVar("s")
+    s = SpinVariable("s")
     assert s.num_binary_equivalent() == 1
     assert s.evaluate([1]) == 1
     assert s.evaluate([0]) == -1
@@ -142,13 +144,15 @@ def test_arithmetic_and_comparisons():
         _ = a**-1
 
     # comparisons
-    c = a < 3
+    c = LT(a, 3)
     assert isinstance(c, ComparisonTerm)
     assert c.evaluate({a: [2]})
     assert not c.evaluate({a: [5]})
     # bool of comparison when constants
-    c2 = 2 - a == 2 - a
-    assert bool(c2)
+    c2 = EQ(2 - a, 2 - a)
+    zero = Term([], Operation.ADD)
+    assert c2.lhs == zero
+    assert c2.rhs == zero
     with pytest.raises(TypeError):
         _ = bool(a < b)
 
@@ -159,10 +163,13 @@ def test_term_constant_and_simplify():
     # Simplify should keep as Term since len>1
     s = t._simplify()
     assert isinstance(s, Term)
-    assert t == 6
+    ct = EQ(t, 6)
+    zero = Term([0], Operation.ADD)
+    assert ct.lhs == zero
+    assert ct.rhs == zero
     # constant with zero elements
     t0 = Term([], Operation.ADD)
-    assert t0 == 0
+    assert t0 == zero
 
 
 def test_encoding_and_evaluate():
@@ -239,7 +246,7 @@ def test_replace_and_update_range():
     b = Variable("y", Domain.INTEGER, bounds=(0, 1))
     c = Variable("z", Domain.INTEGER, bounds=(0, 1))
 
-    c1 = a == b
+    c1 = EQ(a, b)
     # replace x with a new variable z
     c1.replace_variables({a: c})
     # update bounds

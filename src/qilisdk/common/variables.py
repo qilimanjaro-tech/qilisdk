@@ -34,6 +34,84 @@ MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
 
 
+def LT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Less Than' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs < rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LT)
+
+
+def LEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Less Than or equal to' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs <= rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LE)
+
+
+def EQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Equal to' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs == rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.EQ)
+
+
+def NEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Not Equal to' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs != rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.NE)
+
+
+def GT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Greater Than' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs > rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GT)
+
+
+def GEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+    """'Greater Than or equal to' mathematical operation
+
+    Args:
+        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+
+    Returns:
+        ComparisonTerm: a comparison term with the structure lhs >= rhs.
+    """
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GE)
+
+
 def _extract_number(label: str) -> int:
     """Extracts the number from the variable's label.
 
@@ -231,7 +309,7 @@ class HOBO(Encoding):
 
         abs_bound = np.abs(bounds[1] - bounds[0])
         n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
-        binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary + 1)]
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary + 1)]
 
         term = sum(2**i * binary_vars[i] for i in range(n_binary))
         term += (np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary) * binary_vars[-1]
@@ -329,7 +407,7 @@ class OneHot(Encoding):
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
-        binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
 
         term = Term([(bounds[0] + i) * binary_vars[i] for i in range(n_binary)], Operation.ADD)
 
@@ -383,7 +461,7 @@ class OneHot(Encoding):
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
-        binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
         return ComparisonTerm(lhs=sum(binary_vars), rhs=1, operation=ComparisonOperation.EQ)
 
     @staticmethod
@@ -436,7 +514,7 @@ class DomainWall(Encoding):
 
         n_binary = int(np.abs(bounds[1] - bounds[0]))
 
-        binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
 
         term = Term([0], Operation.ADD)
         for i in range(n_binary):
@@ -486,7 +564,7 @@ class DomainWall(Encoding):
 
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
-        binary_vars = [BinaryVar(var.label + f"({i})") for i in range(n_binary)]
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
         return ComparisonTerm(
             lhs=sum(binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)),
             rhs=0,
@@ -526,8 +604,8 @@ class BaseVariable(ABC):
         Args:
             label (str): The name of the variable.
             domain (Domain): The domain of the values this variable can take.
-            bounds (tuple[float  |  None, float  |  None], optional): the bounds on the values of the variable
-                                                The bounds have the structure (lower_bound, Upper_bound) both values
+            bounds (tuple[float  |  None, float  |  None], optional): the bounds on the variable's values.
+                                                The bounds follow the structure (lower_bound, Upper_bound) both
                                                 included. Defaults to (None, None).
                                                 Note: if None is selected then the lowest/highest possible value of the
                                                 variable's domain is chosen.
@@ -651,18 +729,6 @@ class BaseVariable(ABC):
         """
         raise NotImplementedError
 
-    def compare(self, other: BaseVariable) -> bool:
-        """Checks if two Variable objects are equal based on their hash values.
-
-        Args:
-            other (`Variable`): the `Variable` object to be compared with.
-
-        Returns:
-            bool: a boolean value that indicates whether the hash value of the current `Variable` object (`self`) is
-            equal to the hash value of the `other` `Variable` object passed as an argument.
-        """
-        return hash(self) == hash(other)
-
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         """Replaces the information of the variable with those coming from the dictionary
         if the variable label is in the dictionary
@@ -757,29 +823,21 @@ class BaseVariable(ABC):
             out = Term(elements=[out], operation=Operation.ADD)
         return out
 
-    def __lt__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
-
-    def __le__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
-
-    def __eq__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:  # type: ignore[override]
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
-
-    def __ne__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:  # type: ignore[override]
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
-
-    def __gt__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
-
-    def __ge__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
-
     def __hash__(self) -> int:
         return hash((self._label, self._domain.value, self._bounds))
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BaseVariable):
+            raise NotImplementedError
+        return hash(self) == hash(other)
 
-class BinaryVar(BaseVariable):
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, BaseVariable):
+            raise NotImplementedError
+        return hash(self) != hash(other)
+
+
+class BinaryVariable(BaseVariable):
     """Represents Binary Variable structure."""
 
     def __init__(self, label: str) -> None:
@@ -803,11 +861,11 @@ class BinaryVar(BaseVariable):
     def to_binary(self) -> Term:
         return Term([self], Operation.ADD)
 
-    def __copy__(self) -> BinaryVar:
-        return BinaryVar(label=self.label)
+    def __copy__(self) -> BinaryVariable:
+        return BinaryVariable(label=self.label)
 
 
-class SpinVar(BaseVariable):
+class SpinVariable(BaseVariable):
     """Represents Spin Variable structure."""
 
     def __init__(self, label: str) -> None:
@@ -831,8 +889,8 @@ class SpinVar(BaseVariable):
     def to_binary(self) -> Term:
         return Term([self], Operation.ADD)
 
-    def __copy__(self) -> SpinVar:
-        return SpinVar(label=self.label)
+    def __copy__(self) -> SpinVariable:
+        return SpinVariable(label=self.label)
 
 
 class Variable(BaseVariable):
@@ -929,12 +987,30 @@ class Variable(BaseVariable):
         return self._term
 
     def num_binary_equivalent(self) -> int:
+        """
+        Returns:
+            int: the number of binary variables needed to encode the continuous variable.
+        """
         return self.encoding.num_binary_equivalent(self, precision=self._precision)
 
     def check_valid(self, binary_list: list[int]) -> tuple[bool, int]:
+        """checks if the binary list sample is a valid sample in the variable's encoding.
+
+        Args:
+            binary_list (list[int] | int):  a list of binary values or an integer value.
+
+        Returns:
+            tuple[bool, int]: the boolean is True if the sample is a valid encoding,
+                                and the integer is the error in the encoding.
+        """
         return self.encoding.check_valid(binary_list)
 
     def encoding_constraint(self) -> ComparisonTerm:
+        """Given a continuous variable return a Comparison Term that ensures that the encoding is respected.
+
+        Returns:
+            ComparisonTerm: a Comparison Term that ensures the encoding is respected.
+        """
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
 
@@ -962,14 +1038,17 @@ class Term:
             ValueError: if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).
         """
         self._operation = operation
-        self._elements: dict[int, Number] = {}
-        self._map: dict[int, BaseVariable | Term] = {}
+        self._elements: dict[int, Number] = {}  # The list of elements in the term.
+        # key: the hash of the term or variable | value: the coefficient corresponding to that value.
+        self._map: dict[int, BaseVariable | Term] = {}  # the map between the hashs and the items.
+        # key: the hash of the term of variable | value: the term or the variable.
+        # Each key in element has a corresponding key in map.
         for e in elements:
             if isinstance(e, BaseVariable):
                 if e in self:
                     if self._is_constant(e):
                         self[e] = self._apply_operation_on_constants([self[e], 1])
-                    elif isinstance(e, BinaryVar) and self.operation == Operation.MUL:
+                    elif isinstance(e, BinaryVariable) and self.operation == Operation.MUL:
                         self[e] = 1
                     else:
                         self[e] += 1
@@ -1180,7 +1259,7 @@ class Term:
         Returns:
             bool: True if the variable is a constant, False otherwise.
         """
-        return variable.compare(self.CONST)
+        return variable == self.CONST
 
     def to_list(self) -> list[BaseVariable | Term | Number]:
         """Exports the current term into a list of its elements.
@@ -1257,20 +1336,21 @@ class Term:
         Returns:
             float: the result from evaluating the term.
         """
+        var_hash_dict = {hash(v): var_values[v] for v in var_values}
         for var in self.variables():
-            if var not in var_values:
+            if hash(var) not in var_hash_dict:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
         for e in self:
             if isinstance(e, Term):
                 output = self._apply_operation_on_constants([output, e.evaluate(var_values) * self[e]])
             elif isinstance(e, BaseVariable):
-                if e.compare(self.CONST):
+                if e == self.CONST:
                     output = self._apply_operation_on_constants([output, self[e]])
                 elif self.operation == Operation.MUL:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) ** self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) ** self[e]])
                 else:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_values[e]) * self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) * self[e]])
         return output
 
     def get_constant(self) -> Number:
@@ -1322,9 +1402,6 @@ class Term:
     def __setitem__(self, key: BaseVariable | Term, item: Number) -> None:
         self._map[hash(key)] = key
         self._elements[hash(key)] = item
-
-    def __hash__(self) -> int:
-        return hash((frozenset(self._elements.items()), self.operation))
 
     def __iter__(self) -> Iterator[BaseVariable | Term]:
         for e in self._elements:
@@ -1410,23 +1487,18 @@ class Term:
             "The power operation for terms that are not addition or multiplication is not supported."
         )
 
-    def __lt__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LT)
+    def __hash__(self) -> int:
+        return hash((frozenset(self._elements.items()), self.operation))
 
-    def __le__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.LE)
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Term):
+            raise NotImplementedError
+        return hash(self) == hash(other)
 
-    def __eq__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:  # type: ignore[override]
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.EQ)
-
-    def __ne__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:  # type: ignore[override]
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.NE)
-
-    def __gt__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GT)
-
-    def __ge__(self, other: Number | BaseVariable | Term) -> ComparisonTerm:
-        return ComparisonTerm(lhs=self, rhs=other, operation=ComparisonOperation.GE)
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, Term):
+            raise NotImplementedError
+        return hash(self) != hash(other)
 
 
 class ComparisonTerm:
@@ -1598,8 +1670,6 @@ class ComparisonTerm:
     __str__ = __repr__
 
     def __bool__(self) -> bool:
-        if self.rhs.degree == self.lhs.degree == 0:
-            return self.rhs.get_constant() == self.lhs.get_constant()
         raise TypeError(
             "Symbolic Constraint Term objects do not have an inherent truth value. "
             "Use a method like .evaluate() to obtain a Boolean value."

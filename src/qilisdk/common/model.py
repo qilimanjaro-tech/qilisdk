@@ -25,7 +25,9 @@ from qilisdk.analog.hamiltonian import Hamiltonian, Z
 from qilisdk.utils import logger
 
 from .variables import (
+    GEQ,
     HOBO,
+    LEQ,
     BaseVariable,
     ComparisonOperation,
     ComparisonTerm,
@@ -68,7 +70,7 @@ class ObjectiveSense(enum.Enum):
 class Constraint:
     """Represents a mathematical constraint within an optimization ``Model``.
 
-    Unlike the ``Objective``, which is singular, a ``Model`` can contain multiple ``Constraints``.
+    Unlike the ``Objective``, which is unique, a ``Model`` can contain multiple ``Constraints``.
 
     Each ``Constraint`` is defined by one or more ``ComparisonTerm`` objects (e.g., ``x + y > 2``),
     where each term consists of a left-hand side and a right-hand side expression. These expressions
@@ -162,7 +164,7 @@ class Objective:
     - Other ``Term`` objects: Allowing for the construction of complex expressions.
     """
 
-    def __init__(self, label: str, term: Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+    def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Initializes a new Objective object.
 
         Args:
@@ -273,7 +275,7 @@ class Model:
     def encoding_constraints(self) -> list[Constraint]:
         """
         Returns:
-            dict[str, Constraint]: a list of all variable encoding constraints in the model.
+            list[Constraint]: a list of all variable encoding constraints in the model.
         """
         return list(self._encoding_constraints.values())
 
@@ -308,11 +310,11 @@ class Model:
             lb_encoding_name = f"{var}_lower_bound_constraint"
             if ub_encoding_name not in self._encoding_constraints:
                 self._encoding_constraints[ub_encoding_name] = Constraint(
-                    label=ub_encoding_name, term=var <= var.upper_bound
+                    label=ub_encoding_name, term=LEQ(var, var.upper_bound)
                 )
             if lb_encoding_name not in self._encoding_constraints:
                 self._encoding_constraints[lb_encoding_name] = Constraint(
-                    label=lb_encoding_name, term=var >= var.lower_bound
+                    label=lb_encoding_name, term=GEQ(var, var.lower_bound)
                 )
 
     def __str__(self) -> str:
@@ -491,11 +493,11 @@ class QUBO(Model):
                 if isinstance(element, Term):
                     _, aux_terms = self._parse_term(element)
                     terms.extend(aux_terms)
-                elif not Term.CONST.compare(element):
+                elif element != Term.CONST:
                     terms.append((term[element], element))
         if term.operation is Operation.MUL:
             for element in term:
-                if not isinstance(element, Term) and not Term.CONST.compare(element):
+                if not isinstance(element, Term) and element != Term.CONST:
                     terms.append((1, element))
         return const, terms
 

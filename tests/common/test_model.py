@@ -18,7 +18,16 @@ import copy
 import pytest
 
 from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
-from qilisdk.common.variables import BinaryVar, ComparisonOperation, ComparisonTerm, Domain, Operation, Term, Variable
+from qilisdk.common.variables import (
+    EQ,
+    BinaryVariable,
+    ComparisonOperation,
+    ComparisonTerm,
+    Domain,
+    Operation,
+    Term,
+    Variable,
+)
 
 
 # ---------- SlackCounter ----------
@@ -42,8 +51,8 @@ def test_constraint_init_and_repr():
     assert cons.label == "c1"
     assert cons.term is ct
     assert "c1" in repr(cons)
-    assert cons.lhs == ct.lhs
-    assert cons.rhs == ct.rhs
+    assert hash(cons.lhs) == hash(ct.lhs)
+    assert hash(cons.rhs) == hash(ct.rhs)
     assert cons.degree == max(ct.lhs.degree, ct.rhs.degree)
     # errors
     with pytest.raises(ValueError):  # noqa: PT011
@@ -71,9 +80,9 @@ def test_constraint_copy():
     cons = Constraint(label="c1", term=ct)
     cons2 = copy.copy(cons)
 
-    assert cons2.lhs == cons.lhs
+    assert hash(cons2.lhs) == hash(cons.lhs)
     assert cons2.term.operation == cons.term.operation
-    assert cons2.rhs == cons.rhs
+    assert hash(cons2.rhs) == hash(cons.rhs)
     assert cons2.label == cons.label
 
 
@@ -84,10 +93,10 @@ def test_objective_init_and_copy_and_errors():
     obj = Objective(label="o1", term=t, sense=ObjectiveSense.MAXIMIZE)
     obj2 = Objective(label="o2", term=var, sense=ObjectiveSense.MAXIMIZE)
     assert obj.label == "o1"
-    assert obj.term == t
+    assert hash(obj.term) == hash(t)
     assert obj.sense == ObjectiveSense.MAXIMIZE
     assert obj2.label == "o2"
-    assert obj2.term == t
+    assert hash(obj2.term) == hash(t)
     assert obj2.sense == ObjectiveSense.MAXIMIZE
     assert "o1" in str(obj)
     assert f"{t}" in str(obj)
@@ -96,7 +105,7 @@ def test_objective_init_and_copy_and_errors():
     # copy
     obj3 = copy.copy(obj)
     assert obj3.label == obj.label
-    assert obj3.term == obj.term
+    assert hash(obj3.term) == hash(obj.term)
     assert obj3.sense == obj.sense
     # errors
     with pytest.raises(ValueError):  # noqa: PT011
@@ -186,30 +195,30 @@ def test_model_copy(simple_model):
 
     m2 = copy.copy(m)
     assert m2.label == m.label
-    assert m2.objective.term == m.objective.term
+    assert hash(m2.objective.term) == hash(m.objective.term)
     assert len(m2.constraints) == len(m.constraints)
     for i, c in enumerate(m.constraints):
         assert m2.constraints[i].label == c.label
-        assert m2.constraints[i].term.lhs == c.term.lhs
-        assert m2.constraints[i].term.rhs == c.term.rhs
+        assert hash(m2.constraints[i].term.lhs) == hash(c.term.lhs)
+        assert hash(m2.constraints[i].term.rhs) == hash(c.term.rhs)
         assert m2.constraints[i].term.operation == c.term.operation
 
 
 # ---------- QUBO ----------
 def test_qubo_parse_term_add_and_mul():
     q = QUBO(label="q1")
-    v = BinaryVar("b")
+    v = BinaryVariable("b")
     v2 = Variable("v2", Domain.BINARY)
     # ADD term: 2*b + 3
     t = Term(elements=[2, v, 1, v], operation=Operation.ADD)
     const, terms = q._parse_term(t)
+    assert any(coeff == 2 and hash(var) == hash(v) for coeff, var in terms)
     assert const == 3
-    assert any(coeff == 2 and var == v for coeff, var in terms)
     # MUL term: b * 1
     t2 = v * 1
     const2, terms2 = q._parse_term(t2)
     assert const2 == 1
-    assert any(var == v for _, var in terms2)
+    assert any(hash(var) == hash(v) for _, var in terms2)
 
     # MUL term: b + q1 * v + 2
     t2 = v + v2 * 2 + 2
@@ -223,14 +232,14 @@ def test_qubo_parse_term_add_and_mul():
 
 def test_qubo_print_and_str():
     q = QUBO(label="q1")
-    v = BinaryVar("b")
+    v = BinaryVariable("b")
 
     t = 2 * v
     q.set_objective(t)
     s = str(q)
     assert "Model name: q1" in s
 
-    ct = v == 1
+    ct = EQ(v, 1)
     q.add_constraint("con1", ct, lagrange_multiplier=2)
     s = str(q)
     assert "subject to the constraint/s:" in s
@@ -239,19 +248,19 @@ def test_qubo_print_and_str():
 
 def test_qubo_transform_constraint():
     q = QUBO(label="q1")
-    v = BinaryVar("b")
+    v = BinaryVariable("b")
 
     t = 2 * v
     q.set_objective(t)
 
-    ct = v == 1
+    ct = EQ(v, 1)
     q.add_constraint("con1", ct, lagrange_multiplier=2)
     # TODO (ameer): finish this test
 
 
 def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     q = QUBO(label="q2")
-    v = BinaryVar("b2")
+    v = BinaryVariable("b2")
     # always feasible: term 0 >= 0
     h = ComparisonTerm(lhs=v, rhs=v, operation=ComparisonOperation.GE)
     slack = q._check_valid_constraint("c1", h.lhs - h.rhs, h.operation)
@@ -264,7 +273,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
 
 def test_qubo_add_constraint_and_objective_errors():
     q = QUBO(label="q3")
-    x = BinaryVar("x")
+    x = BinaryVariable("x")
     term = ComparisonTerm(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
     # invalid penalization
     with pytest.raises(ValueError):  # noqa: PT011
@@ -289,7 +298,7 @@ def test_qubo_set_objective_errors():
     with pytest.raises(ValueError):  # noqa: PT011
         q.set_objective(term=t)
     # valid binary
-    b = BinaryVar("b3")
+    b = BinaryVariable("b3")
     t2 = Term(elements=[b], operation=Operation.ADD)
     q.set_objective(term=t2, label="o2", sense=ObjectiveSense.MAXIMIZE)
     assert q.objective.label == "o2"
