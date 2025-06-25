@@ -216,7 +216,11 @@ class ComparisonOperation(Enum):
 
 
 class Encoding(ABC):
-    """Represents an abstract variable encoding class."""
+    """Represents an abstract variable encoding class.
+
+    The Encoding is defined on the variable bases, and it defines how the continuous variables are encoded into binary
+    variables.
+    """
 
     @property
     @abstractmethod

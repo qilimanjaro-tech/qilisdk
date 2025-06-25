@@ -242,6 +242,24 @@ class Model:
     Each ``Term`` may include:
     - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
     - Nested ``Term`` objects: Enabling the construction of complex mathematical expressions.
+
+    Example:
+    >>> from qilisdk.common.variables import BinaryVariable, LEQ
+    >>> from qilisdk.common.model import Model
+
+    >>> num_items = 4
+    >>> values = [1, 3, 5, 2]
+    >>> weights = [3, 2, 4, 5]
+    >>> max_weight = 6
+    >>> bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
+
+    >>> model = Model("Knapsack")
+
+    >>> objective = sum(values[i] * bin_vars[i] for i in range(num_items))
+    >>> model.set_objective(objective)
+
+    >>> constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
+    >>> model.add_constraint("maximum weight", constraint)
     """
 
     def __init__(self, label: str) -> None:
