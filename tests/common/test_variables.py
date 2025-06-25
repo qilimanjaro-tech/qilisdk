@@ -20,11 +20,11 @@ import pytest
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.common.variables import (
     EQ,
-    HOBO,
     LT,
     MAX_INT,
     MIN_INT,
     BinaryVariable,
+    Bitwise,
     ComparisonTerm,
     Domain,
     DomainWall,
@@ -214,7 +214,7 @@ def test_encoding_and_evaluate():
     with pytest.raises(ValueError):  # noqa: PT011
         var.evaluate([0, 1, 0])
 
-    x = Variable("x", Domain.REAL, (-1, 2), HOBO, precision=1e-1)
+    x = Variable("x", Domain.REAL, (-1, 2), Bitwise, precision=1e-1)
     assert x.evaluate(-1) == -1
     assert x.evaluate(-0.5) == -0.5
     assert x.evaluate([0]) == -1
@@ -222,10 +222,10 @@ def test_encoding_and_evaluate():
 
 
 def test_hobo_num_binary_and_check_valid():
-    var = Variable("v2", Domain.INTEGER, bounds=(0, 7), encoding=HOBO)
+    var = Variable("v2", Domain.INTEGER, bounds=(0, 7), encoding=Bitwise)
     # bounds difference =7 -> floor(log2(7))=2 -> +1 =3
-    assert HOBO.num_binary_equivalent(var) == 3
-    assert HOBO.check_valid([0, 1, 1])[0]
+    assert Bitwise.num_binary_equivalent(var) == 3
+    assert Bitwise.check_valid([0, 1, 1])[0]
     assert var.evaluate([0, 1, 1]) == 6
 
 
@@ -255,7 +255,7 @@ def test_replace_and_update_range():
 
 def test_encoding_constraint_not_implemented():
     with pytest.raises(NotImplementedError):
-        HOBO.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1)))
+        Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1)))
     # OneHot and DomainWall constraints produce ComparisonTerm
     var = Variable("v4", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
     cons = DomainWall.encoding_constraint(var)

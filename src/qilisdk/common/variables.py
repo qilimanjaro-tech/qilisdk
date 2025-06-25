@@ -303,7 +303,7 @@ class Encoding(ABC):
         raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
 
-class HOBO(Encoding):
+class Bitwise(Encoding):
     """Represents a HOBO variable encoding class."""
 
     @property
@@ -340,15 +340,15 @@ class HOBO(Encoding):
 
     @staticmethod
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
-        term = HOBO.encode(var, precision)
+        term = Bitwise.encode(var, precision)
         binary_var = sorted(
             term.variables(),
             key=lambda x: _extract_number(x.label),
         )
 
-        binary_list = HOBO._hobo_encode(value, len(binary_var)) if isinstance(value, Number) else value
+        binary_list = Bitwise._hobo_encode(value, len(binary_var)) if isinstance(value, Number) else value
 
-        if not HOBO.check_valid(binary_list)[0]:
+        if not Bitwise.check_valid(binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
 
         if len(binary_list) < len(binary_var):
@@ -924,7 +924,7 @@ class Variable(BaseVariable):
         label: str,
         domain: Domain,
         bounds: tuple[float | None, float | None] = (None, None),
-        encoding: type[Encoding] = HOBO,
+        encoding: type[Encoding] = Bitwise,
         precision: float = 1e-2,
     ) -> None:
         """_summary_

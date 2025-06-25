@@ -26,9 +26,9 @@ from qilisdk.utils import logger
 
 from .variables import (
     GEQ,
-    HOBO,
     LEQ,
     BaseVariable,
+    Bitwise,
     ComparisonOperation,
     ComparisonTerm,
     Domain,
@@ -621,7 +621,9 @@ class QUBO(Model):
                 if ub_slack == 0:
                     return h**2
 
-                slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
+                slack = Variable(
+                    f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
+                )
                 slack_terms = slack.to_binary()
                 out = h + slack_terms
                 return (out) ** 2
@@ -646,7 +648,9 @@ class QUBO(Model):
                 if ub_slack == 0:
                     return h**2
 
-                slack = Variable(f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=HOBO)
+                slack = Variable(
+                    f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
+                )
 
                 slack_terms = slack.to_binary()
                 out = h + slack_terms
