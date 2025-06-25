@@ -47,6 +47,9 @@ def LT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
     return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LT)
 
 
+LessThan = LT
+
+
 def LEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
     """'Less Than or equal to' mathematical operation
 
@@ -57,7 +60,10 @@ def LEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) ->
     Returns:
         ComparisonTerm: a comparison term with the structure lhs <= rhs.
     """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LE)
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LEQ)
+
+
+LessThanOrEqual = LEQ
 
 
 def EQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
@@ -73,6 +79,9 @@ def EQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
     return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.EQ)
 
 
+Equal = EQ
+
+
 def NEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
     """'Not Equal to' mathematical operation
 
@@ -83,7 +92,10 @@ def NEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) ->
     Returns:
         ComparisonTerm: a comparison term with the structure lhs != rhs.
     """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.NE)
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.NEQ)
+
+
+NotEqual = NEQ
 
 
 def GT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
@@ -99,6 +111,9 @@ def GT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
     return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GT)
 
 
+GreaterThan = GT
+
+
 def GEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
     """'Greater Than or equal to' mathematical operation
 
@@ -109,7 +124,10 @@ def GEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) ->
     Returns:
         ComparisonTerm: a comparison term with the structure lhs >= rhs.
     """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GE)
+    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GEQ)
+
+
+GreaterThanOrEqual = GEQ
 
 
 def _extract_number(label: str) -> int:
@@ -190,11 +208,11 @@ class Operation(Enum):
 
 class ComparisonOperation(Enum):
     LT = "<"
-    LE = "<="
+    LEQ = "<="
     EQ = "=="
-    NE = "!="
+    NEQ = "!="
     GT = ">"
-    GE = ">="
+    GEQ = ">="
 
 
 class Encoding(ABC):
@@ -828,12 +846,12 @@ class BaseVariable(ABC):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BaseVariable):
-            raise NotImplementedError
+            return False
         return hash(self) == hash(other)
 
     def __ne__(self, other: object) -> bool:
         if not isinstance(other, BaseVariable):
-            raise NotImplementedError
+            return True
         return hash(self) != hash(other)
 
 
@@ -1038,11 +1056,8 @@ class Term:
             ValueError: if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).
         """
         self._operation = operation
-        self._elements: dict[int, Number] = {}  # The list of elements in the term.
-        # key: the hash of the term or variable | value: the coefficient corresponding to that value.
-        self._map: dict[int, BaseVariable | Term] = {}  # the map between the hashs and the items.
-        # key: the hash of the term of variable | value: the term or the variable.
-        # Each key in element has a corresponding key in map.
+        self._elements: dict[BaseVariable | Term, Number] = {}  # The list of elements in the term.
+        # key: the term or variable | value: the coefficient corresponding to that value.
         for e in elements:
             if isinstance(e, BaseVariable):
                 if e in self:
@@ -1230,7 +1245,7 @@ class Term:
         if len(self) == 1:
             item = next(iter(self._elements.keys()))
             if self._elements[item] == 1:
-                return self._map[item]
+                return item
         return self
 
     def pop(self, item: BaseVariable | Term) -> Number:
@@ -1246,7 +1261,7 @@ class Term:
             Number: the coefficient of the removed item.
         """
         try:
-            return self._elements.pop(hash(item))
+            return self._elements.pop(item)
         except KeyError as e:
             raise KeyError(f'item "{item}" not found in the term.') from e
 
@@ -1317,7 +1332,7 @@ class Term:
                 self._elements.popitem()
         for e in self:
             if self[e] == 0:
-                to_be_popped.append(hash(e))
+                to_be_popped.append(e)
         for p in to_be_popped:
             self._elements.pop(p)
 
@@ -1397,19 +1412,16 @@ class Term:
     __str__ = __repr__
 
     def __getitem__(self, item: BaseVariable | Term) -> Number:
-        return self._elements[hash(item)]
+        return self._elements[item]
 
     def __setitem__(self, key: BaseVariable | Term, item: Number) -> None:
-        self._map[hash(key)] = key
-        self._elements[hash(key)] = item
+        self._elements[key] = item
 
     def __iter__(self) -> Iterator[BaseVariable | Term]:
-        for e in self._elements:
-            yield self._map[e]
+        yield from self._elements
 
     def __contains__(self, item: BaseVariable | Term) -> bool:
-        item_hash = hash(item)
-        return any(item_hash == e for e in self._elements)
+        return item in self._elements
 
     __next__ = __iter__
 
@@ -1614,15 +1626,15 @@ class ComparisonTerm:
         """
         if self.operation is ComparisonOperation.EQ:
             return v1 == v2
-        if self.operation is ComparisonOperation.GE:
+        if self.operation is ComparisonOperation.GEQ:
             return v1 >= v2
         if self.operation is ComparisonOperation.GT:
             return v1 > v2
-        if self.operation is ComparisonOperation.LE:
+        if self.operation is ComparisonOperation.LEQ:
             return v1 <= v2
         if self.operation is ComparisonOperation.LT:
             return v1 < v2
-        if self.operation is ComparisonOperation.NE:
+        if self.operation is ComparisonOperation.NEQ:
             return v1 != v2
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 

@@ -46,7 +46,7 @@ def test_slackcounter_singleton_and_increment():
 # ---------- Constraint ----------
 def test_constraint_init_and_repr():
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.GE)
+    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.GEQ)
     cons = Constraint(label="c1", term=ct)
     assert cons.label == "c1"
     assert cons.term is ct
@@ -262,7 +262,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     q = QUBO(label="q2")
     v = BinaryVariable("b2")
     # always feasible: term 0 >= 0
-    h = ComparisonTerm(lhs=v, rhs=v, operation=ComparisonOperation.GE)
+    h = ComparisonTerm(lhs=v, rhs=v, operation=ComparisonOperation.GEQ)
     slack = q._check_valid_constraint("c1", h.lhs - h.rhs, h.operation)
     assert slack is None
     # unsatisfiable: v > 2

@@ -516,8 +516,8 @@ class QUBO(Model):
             int | None: the upper bound of the continuous slack variable needed for this given constraint.
                         None in case the constraint is always feasible.
         """
-        ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GE, ComparisonOperation.GT} else 0
-        lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LE, ComparisonOperation.LT} else 0
+        ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GEQ, ComparisonOperation.GT} else 0
+        lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else 0
         const, terms = self._parse_term(term)
         term_upper_limit = sum(coeff for coeff, _ in terms if coeff > 0)
         term_lower_limit = sum(coeff for coeff, _ in terms if coeff < 0)
@@ -585,7 +585,7 @@ class QUBO(Model):
             return h**2
 
         if term.operation in {
-            ComparisonOperation.GE,
+            ComparisonOperation.GEQ,
             ComparisonOperation.GT,
         }:
             # assuming the operation is h >= 0 or h > 0
@@ -609,7 +609,7 @@ class QUBO(Model):
                 return (out) ** 2
 
         if term.operation in {
-            ComparisonOperation.LE,
+            ComparisonOperation.LEQ,
             ComparisonOperation.LT,
         }:
             if lower_penalization == "unbalanced":
@@ -679,9 +679,9 @@ class QUBO(Model):
         if parameters is None:
             parameters = [1, 1] if lower_penalization == "unbalanced" else []
 
-        if term.operation in {ComparisonOperation.GE, ComparisonOperation.GT}:
+        if term.operation in {ComparisonOperation.GEQ, ComparisonOperation.GT}:
             c = ComparisonTerm(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
-        elif term.operation in {ComparisonOperation.LE, ComparisonOperation.LT}:
+        elif term.operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}:
             c = ComparisonTerm(lhs=0, rhs=(term.rhs - term.lhs), operation=term.operation)
         else:
             c = copy.copy(term)
