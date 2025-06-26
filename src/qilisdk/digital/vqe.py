@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
-from typing import TYPE_CHECKING
 
 from qilisdk.common.model import Model
 from qilisdk.common.optimizer import Optimizer
@@ -22,9 +21,6 @@ from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
 from qilisdk.digital.digital_backend import DigitalBackend
 from qilisdk.yaml import yaml
-
-if TYPE_CHECKING:
-    from qilisdk.digital.digital_result import DigitalResult
 
 
 @yaml.register_class
@@ -107,15 +103,13 @@ class VQE(DigitalAlgorithm):
         Args:
             ansatz (Ansatz): The parameterized quantum circuit representing the trial state.
             initial_params (list[float]): The initial set of parameters for the ansatz.
-            cost_function (Callable[[DigitalResult], float]): A function that computes the cost from
-                a DigitalResult obtained after executing the circuit. The cost generally represents the
-                expectation value of the Hamiltonian.
+            model (Model): The abstract mathematical model representing the cost function. To construct a cost function
+                using this model define an objective and a set of constraints that will be evaluated
+                during the optimization of the circuit parameters.
         """
         self._ansatz = ansatz
         self._initial_params = initial_params
-        # self._cost_function = cost_function
         self._model = model
-        self._execution_results: list[DigitalResult]
 
     def obtain_cost(self, params: list[float], backend: DigitalBackend, nshots: int = 1000) -> float:
         """
@@ -124,7 +118,7 @@ class VQE(DigitalAlgorithm):
         The process involves:
             1. Generating the quantum circuit using the ansatz with the specified parameters.
             2. Executing the circuit on the provided digital backend with the given number of shots.
-            3. Passing the resulting DigitalResult to the cost_function to obtain the cost value.
+            3. Passing the resulting DigitalResult to the model to obtain the cost value.
 
         Args:
             params (list[float]): The ansatz parameters to evaluate.
@@ -132,7 +126,7 @@ class VQE(DigitalAlgorithm):
             nshots (int, optional): The number of shots (circuit executions). Defaults to 1000.
 
         Returns:
-            float: The cost computed from the DigitalResult.
+            float: The cost computed using the model.
         """
         circuit = self._ansatz.get_circuit(params)
         results = backend.execute(circuit=circuit, nshots=nshots)
