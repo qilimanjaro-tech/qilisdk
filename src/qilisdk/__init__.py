@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from importlib.metadata import PackageNotFoundError, version
+
 from qilisdk import analog, common, digital, extras, utils
+
+try:
+    __version__ = version("qilisdk")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = ["analog", "common", "digital", "extras", "utils"]

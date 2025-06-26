@@ -12,5 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""config.py"""
+from sys import stderr
 
-class InvalidHamiltonianOperation(Exception): ...
+from loguru import logger
+
+logger.remove()
+logger.add(
+    stderr,
+    colorize=True,
+    format="<fg #7f1cdb>QiliSDK</> | <green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <lvl>{level}</> | <lvl>{message}</>",
+    enqueue=False,
+)

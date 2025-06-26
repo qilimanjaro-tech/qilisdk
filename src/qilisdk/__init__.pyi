@@ -15,3 +15,4 @@
 from qilisdk import analog, common, digital, extras, utils
 
 __all__ = ["analog", "common", "digital", "extras", "utils"]
+__version__: str
