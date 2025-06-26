@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import copy
 from pprint import pformat
 from typing import Callable
 
+from qilisdk.common.model import QUBO, Model
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
+from qilisdk.common.variables import BinaryVariable
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
 from qilisdk.digital.digital_backend import DigitalBackend
@@ -97,9 +100,7 @@ class VQE(DigitalAlgorithm):
     and the optimal parameters that yield this cost.
     """
 
-    def __init__(
-        self, ansatz: Ansatz, initial_params: list[float], cost_function: Callable[[DigitalResult], float]
-    ) -> None:
+    def __init__(self, ansatz: Ansatz, initial_params: list[float], model: Model) -> None:
         """
         Initialize the VQE algorithm.
 
@@ -112,7 +113,8 @@ class VQE(DigitalAlgorithm):
         """
         self._ansatz = ansatz
         self._initial_params = initial_params
-        self._cost_function = cost_function
+        # self._cost_function = cost_function
+        self._model = model
         self._execution_results: list[DigitalResult]
 
     def obtain_cost(self, params: list[float], backend: DigitalBackend, nshots: int = 1000) -> float:
@@ -134,7 +136,16 @@ class VQE(DigitalAlgorithm):
         """
         circuit = self._ansatz.get_circuit(params)
         results = backend.execute(circuit=circuit, nshots=nshots)
-        return self._cost_function(results)
+        cost = 0.0
+        var_list = self._model.variables()
+        for state, prob in results.get_probabilities():
+            mapped_state = {v: float(state[i]) for i, v in enumerate(var_list)}
+            eval_res = self._model.evaluate(mapped_state)
+            aux_cost = eval_res[self._model.objective.label]
+            for c in self._model.constraints:
+                aux_cost += eval_res[c.label]
+            cost += aux_cost * prob
+        return cost
 
     def execute(
         self,

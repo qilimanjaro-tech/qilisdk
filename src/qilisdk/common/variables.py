@@ -870,6 +870,8 @@ class BinaryVariable(BaseVariable):
 
     def evaluate(self, value: list[int] | Number) -> float:
         if isinstance(value, Number):
+            if value in {1.0, 0.0, 1, 0}:
+                return int(value)
             if not self.domain.check_value(value):
                 raise EvaluationError(f"Evaluating a Binary variable with a value {value} that is outside the domain.")
             return value
@@ -1642,7 +1644,7 @@ class ComparisonTerm:
             return v1 != v2
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
-    def evaluate(self, var_values: dict[BaseVariable, list[int]]) -> bool:
+    def evaluate(self, var_values: Mapping[BaseVariable, Number | list[int]]) -> bool:
         """Evaluates the comparison term given a set of values for the variables in the term.
 
         Args:
