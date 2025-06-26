@@ -410,13 +410,13 @@ class Model:
         """
         return QUBO.from_model(self, lagrange_multiplier_dict, penalization, parameters)
 
-    def to_ham(self) -> Hamiltonian:
+    def to_hamiltonian(self) -> Hamiltonian:
         """Exports the model to an ising hamiltonian.
 
         Returns:
             Hamiltonian: An ising hamiltonian that represents the model.
         """
-        return self.to_qubo().to_ham()
+        return self.to_qubo().to_hamiltonian()
 
 
 class QUBO(Model):
@@ -842,7 +842,7 @@ class QUBO(Model):
             )
         return instance
 
-    def to_ham(self) -> Hamiltonian:
+    def to_hamiltonian(self) -> Hamiltonian:
         """Construct an ising hamiltonian from the current QUBO model.
 
         Raises:
