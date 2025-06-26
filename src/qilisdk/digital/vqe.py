@@ -11,20 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import copy
 from pprint import pformat
-from typing import Callable
+from typing import TYPE_CHECKING
 
-from qilisdk.common.model import QUBO, Model
+from qilisdk.common.model import Model
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
-from qilisdk.common.variables import BinaryVariable
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
 from qilisdk.digital.digital_backend import DigitalBackend
-from qilisdk.digital.digital_result import DigitalResult
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.digital.digital_result import DigitalResult
 
 
 @yaml.register_class
