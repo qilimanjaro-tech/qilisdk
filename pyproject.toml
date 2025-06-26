@@ -51,6 +51,7 @@ dev = [
     "ruff>=0.9.5",
     "towncrier>=24.8.0",
     "loguru-caplog>=0.2.0",
+    "pytest-cov>=6.2.1",
 ]
 
 [build-system]
