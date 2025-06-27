@@ -418,9 +418,19 @@ class Model:
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
         self._generate_encoding_constraints()
 
-    def evaluate(
-        self, sample: Mapping[BaseVariable, Number | list[int]]
-    ) -> dict[str, float]:  # TODO (ameer): replace this with a model result object?
+    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+        """Evaluates the objective and the constraints of the model given a set of values for the variables.
+
+        Args:
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The value for the variables to be used during the
+                                                                evaluation. Note: All the model's variables must be
+                                                                provided for the model to be evaluated.
+
+        Returns:
+            dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
+                            Note: For constraints, the value is equal to lagrange multiplier of that constraint if
+                            the constraint is not satisfied or 0 otherwise.
+        """
         results = {}
 
         results[self.objective.label] = self.objective.term.evaluate(sample)
@@ -824,9 +834,19 @@ class QUBO(Model):
                 sense=ObjectiveSense.MINIMIZE,
             )
 
-    def evaluate(
-        self, sample: Mapping[BaseVariable, Number | list[int]]
-    ) -> dict[str, float]:  # TODO (ameer): replace this with a model result object?
+    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+        """Evaluates the objective and the constraints of the model given a set of values for the variables.
+
+        Args:
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The value for the variables to be used during the
+                                                                evaluation. Note: All the model's variables must be
+                                                                provided for the model to be evaluated.
+
+        Returns:
+            dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
+                            Note: For constraints, the value is equal to the value of the evaluated constraint term
+                            multiplied by the lagrange multiplier of that constraint.
+        """
         results = {}
 
         results[self.objective.label] = self.objective.term.evaluate(sample)
