@@ -16,7 +16,7 @@ from __future__ import annotations
 # import numpy as np
 import copy
 import enum
-from typing import Literal, Type
+from typing import Literal, Mapping, Type
 
 # import cupy as np
 import numpy as np
@@ -270,8 +270,22 @@ class Model:
         """
         self._constraints: dict[str, Constraint] = {}
         self._encoding_constraints: dict[str, Constraint] = {}
+        self._lagrange_multipliers: dict[str, float] = {}
         self._objective = Objective("objective", Term([0], Operation.ADD))
         self._label = label
+
+    @property
+    def lagrange_multipliers(self) -> dict[str, float]:
+        return self._lagrange_multipliers
+
+    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        """Sets the lagrange multiplier value for a given constraint.
+
+        Args:
+            constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
+            lagrange_multiplier (float): the lagrange multiplier value.
+        """
+        self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
     @property
     def label(self) -> str:
@@ -320,7 +334,10 @@ class Model:
 
         return sorted(var, key=lambda x: x.label)
 
-    def _generate_encoding_constraints(self) -> None:
+    def _generate_encoding_constraints(
+        self,
+        lagrange_multiplier: float = 100,
+    ) -> None:
         for var in self.variables():
             if not isinstance(var, Variable) or var.domain in {Domain.BINARY, Domain.SPIN}:
                 continue
@@ -330,22 +347,30 @@ class Model:
                 self._encoding_constraints[ub_encoding_name] = Constraint(
                     label=ub_encoding_name, term=LEQ(var, var.upper_bound)
                 )
+                self._lagrange_multipliers[ub_encoding_name] = lagrange_multiplier
             if lb_encoding_name not in self._encoding_constraints:
                 self._encoding_constraints[lb_encoding_name] = Constraint(
                     label=lb_encoding_name, term=GEQ(var, var.lower_bound)
                 )
+                self._lagrange_multipliers[lb_encoding_name] = lagrange_multiplier
 
     def __str__(self) -> str:
         output = f"Model name: {self.label} \n"
-        output += (
-            f"objective ({self.objective.label}): \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
-        )
+        if self.objective is not None:
+            output += (
+                f"objective ({self.objective.label}):"
+                + f" \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
+            )
         if len(self.constraints) > 0:
             output += "subject to the constraint/s: \n"
             for c in self.constraints:
                 output += f"\t {c} \n"
             for c in self.encoding_constraints:
                 output += f"\t {c} \n"
+        if len(self.lagrange_multipliers) > 0:
+            output += "\nWith Lagrange Multiplier/s: \n"
+            for key, value in self.lagrange_multipliers.items():
+                output += f"\t {key} : {value} \n"
         return output
 
     def __repr__(self) -> str:
@@ -359,7 +384,12 @@ class Model:
             out.add_constraint(label=c.label, term=copy.copy(c.term))
         return out
 
-    def add_constraint(self, label: str, term: ComparisonTerm) -> None:
+    def add_constraint(
+        self,
+        label: str,
+        term: ComparisonTerm,
+        lagrange_multiplier: float = 100,
+    ) -> None:
         """Add a constraint to the model.
 
         Args:
@@ -373,7 +403,8 @@ class Model:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
         c = Constraint(label=label, term=copy.copy(term))
         self._constraints[label] = c
-        self._generate_encoding_constraints()
+        self._lagrange_multipliers[label] = lagrange_multiplier
+        self._generate_encoding_constraints(lagrange_multiplier=lagrange_multiplier)
 
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Sets the model's objective.
@@ -386,6 +417,32 @@ class Model:
         """
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
         self._generate_encoding_constraints()
+
+    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+        """Evaluates the objective and the constraints of the model given a set of values for the variables.
+
+        Args:
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The dictionary maps the variable to the value to be
+                                                                used during the evaluation. In case the variable is
+                                                                continuous (Not Binary or Spin) then the value could
+                                                                either be a number or a list of binary bits that
+                                                                correspond to the encoding of the variable.
+                                                                Note: All the model's variables must be provided for
+                                                                the model to be evaluated.
+
+        Returns:
+            dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
+                            Note: For constraints, the value is equal to lagrange multiplier of that constraint if
+                            the constraint is not satisfied or 0 otherwise.
+        """
+        results = {}
+
+        results[self.objective.label] = self.objective.term.evaluate(sample)
+        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MINIMIZE else 1
+
+        for c in self.constraints:
+            results[c.label] = float(not c.term.evaluate(sample)) * self.lagrange_multipliers[c.label]
+        return results
 
     def to_qubo(
         self,
@@ -430,21 +487,7 @@ class QUBO(Model):
         """
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
-        self._lagrange_multipliers: dict[str, float] = {}
         self.__qubo_objective: Objective | None = None
-
-    @property
-    def lagrange_multipliers(self) -> dict[str, float]:
-        return self._lagrange_multipliers
-
-    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
-        """Sets the lagrange multiplier value for a given constraint.
-
-        Args:
-            constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
-            lagrange_multiplier (float): the lagrange multiplier value.
-        """
-        self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
     @property
     def qubo_objective(self) -> Objective | None:
@@ -465,23 +508,6 @@ class QUBO(Model):
             else:
                 self._build_qubo_objective(constraint.term.lhs - constraint.term.rhs)
         return self.__qubo_objective
-
-    def __str__(self) -> str:
-        output = f"Model name: {self.label} \n"
-        if self.objective is not None:
-            output += (
-                f"objective ({self.objective.label}):"
-                + f" \n\t {self.objective.sense.value} : \n\t {self.objective.term} \n\n"
-            )
-        if len(self.constraints) > 0:
-            output += "subject to the constraint/s: \n"
-            for c in self.constraints:
-                output += f"\t {c} \n"
-        if len(self.lagrange_multipliers) > 0:
-            output += "\nWith Lagrange Multiplier/s: \n"
-            for key, value in self.lagrange_multipliers.items():
-                output += f"\t {key} : {value} \n"
-        return output
 
     def __repr__(self) -> str:
         return self.label
@@ -720,8 +746,17 @@ class QUBO(Model):
             transformed_c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
             if transformed_c is None:
                 return
-
-            self.lagrange_multipliers[label] = lagrange_multiplier
+            if lower_penalization == "unbalanced":
+                self.lagrange_multipliers[label] = 1
+                logger.warning(
+                    "add_constraint() in QUBO model:"
+                    + f' The Lagrange Multiplier for the constraint "{label}" in the QUBO model ({self.label})'
+                    + " has been set to 1 because the constraint uses unbalanced"
+                    + " penalization method."
+                    + ' To customize the penalization coefficient, please use the "parameters" field.',
+                )
+            else:
+                self.lagrange_multipliers[label] = lagrange_multiplier
             self._constraints[label] = Constraint(label, term=ComparisonTerm(transformed_c, 0, ComparisonOperation.EQ))
 
         else:
@@ -802,6 +837,33 @@ class QUBO(Model):
                 ),
                 sense=ObjectiveSense.MINIMIZE,
             )
+
+    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+        """Evaluates the objective and the constraints of the model given a set of values for the variables.
+
+        Args:
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The dictionary maps the variable to the value to be
+                                                                used during the evaluation. In case the variable is
+                                                                continuous (Not Binary or Spin) then the value could
+                                                                either be a number or a list of binary bits that
+                                                                correspond to the encoding of the variable.
+                                                                Note: All the model's variables must be provided for
+                                                                the model to be evaluated.
+
+        Returns:
+            dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
+                            Note: For constraints, the value is equal to the value of the evaluated constraint term
+                            multiplied by the lagrange multiplier of that constraint.
+        """
+        results = {}
+
+        results[self.objective.label] = self.objective.term.evaluate(sample)
+        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MINIMIZE else 1
+
+        for c in self.constraints:
+            results[c.label] = c.term.lhs.evaluate(sample) - c.term.rhs.evaluate(sample)
+            results[c.label] *= self.lagrange_multipliers[c.label]
+        return results
 
     @classmethod
     def from_model(

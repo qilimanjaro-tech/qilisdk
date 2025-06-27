@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.optimizer_result import OptimizerResult
 from qilisdk.digital.vqe import VQE, VQEResult
 
@@ -41,6 +42,9 @@ def dummy_backend():
     """
     backend = MagicMock()
     dummy_result = MagicMock(name="DigitalResult")
+    dummy_result.get_probabilities.return_value = [
+        ("000", 1),
+    ]
     backend.execute.return_value = dummy_result
     return backend
 
@@ -64,10 +68,12 @@ def test_vqe_properties_assignment(dummy_ansatz, initial_params, dummy_cost_func
 
     Verifies that the ansatz, initial parameters, and cost function are assigned properly.
     """
-    vqe = VQE(dummy_ansatz, initial_params, dummy_cost_function)
+    mock_instance = MagicMock(spec=Model)
+
+    vqe = VQE(dummy_ansatz, initial_params, mock_instance)
     assert vqe._ansatz == dummy_ansatz
     assert vqe._initial_params == initial_params
-    assert vqe._cost_function == dummy_cost_function
+    assert vqe._model == mock_instance
 
 
 def test_obtain_cost_calls_backend(dummy_ansatz, initial_params, dummy_cost_function, dummy_backend):
@@ -80,7 +86,19 @@ def test_obtain_cost_calls_backend(dummy_ansatz, initial_params, dummy_cost_func
       - backend.execute is called with the generated circuit and specified number of shots.
       - The returned cost is as defined by the dummy cost function.
     """
-    vqe = VQE(dummy_ansatz, initial_params, dummy_cost_function)
+    mock_instance = MagicMock(spec=Model)
+
+    mock_objective = MagicMock(spec=Objective)
+    mock_objective.label = "obj"
+
+    mock_con = MagicMock(spec=Constraint)
+    mock_con.label = "con1"
+
+    mock_instance.objective = mock_objective
+    mock_instance.constraints = [mock_con]
+    mock_instance.evaluate.return_value = {"obj": -2, "con1": 10}
+
+    vqe = VQE(dummy_ansatz, initial_params, mock_instance)
     test_params = [0.1, 0.2, 0.3]
     # Call obtain_cost with a custom number of shots.
     cost = vqe.obtain_cost(test_params, backend=dummy_backend, nshots=500)
@@ -91,7 +109,7 @@ def test_obtain_cost_calls_backend(dummy_ansatz, initial_params, dummy_cost_func
     dummy_backend.execute.assert_called_once_with(circuit=expected_circuit, nshots=500)
 
     # The dummy_cost_function returns 0.7 regardless of input.
-    assert cost == 0.7
+    assert cost == 8.0
 
 
 def test_obtain_cost_default_nshots(dummy_ansatz, initial_params, dummy_cost_function, dummy_backend):
@@ -100,7 +118,19 @@ def test_obtain_cost_default_nshots(dummy_ansatz, initial_params, dummy_cost_fun
 
     Verifies backend.execute is called with nshots=1000.
     """
-    vqe = VQE(dummy_ansatz, initial_params, dummy_cost_function)
+    mock_instance = MagicMock(spec=Model)
+
+    mock_objective = MagicMock(spec=Objective)
+    mock_objective.label = "obj"
+
+    mock_con = MagicMock(spec=Constraint)
+    mock_con.label = "con1"
+
+    mock_instance.objective = mock_objective
+    mock_instance.constraints = [mock_con]
+    mock_instance.evaluate.return_value = {"obj": -2, "con1": 10}
+
+    vqe = VQE(dummy_ansatz, initial_params, mock_instance)
     test_params = [0.1, 0.2, 0.3]
     _ = vqe.obtain_cost(test_params, backend=dummy_backend)  # nshots not specified
 
