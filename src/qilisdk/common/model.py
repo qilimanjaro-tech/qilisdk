@@ -422,9 +422,13 @@ class Model:
         """Evaluates the objective and the constraints of the model given a set of values for the variables.
 
         Args:
-            sample (Mapping[BaseVariable, Number  |  list[int]]): The value for the variables to be used during the
-                                                                evaluation. Note: All the model's variables must be
-                                                                provided for the model to be evaluated.
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The dictionary maps the variable to the value to be
+                                                                used during the evaluation. In case the variable is
+                                                                continuous (Not Binary or Spin) then the value could
+                                                                either be a number or a list of binary bits that
+                                                                correspond to the encoding of the variable.
+                                                                Note: All the model's variables must be provided for
+                                                                the model to be evaluated.
 
         Returns:
             dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
@@ -838,9 +842,13 @@ class QUBO(Model):
         """Evaluates the objective and the constraints of the model given a set of values for the variables.
 
         Args:
-            sample (Mapping[BaseVariable, Number  |  list[int]]): The value for the variables to be used during the
-                                                                evaluation. Note: All the model's variables must be
-                                                                provided for the model to be evaluated.
+            sample (Mapping[BaseVariable, Number  |  list[int]]): The dictionary maps the variable to the value to be
+                                                                used during the evaluation. In case the variable is
+                                                                continuous (Not Binary or Spin) then the value could
+                                                                either be a number or a list of binary bits that
+                                                                correspond to the encoding of the variable.
+                                                                Note: All the model's variables must be provided for
+                                                                the model to be evaluated.
 
         Returns:
             dict[str, float]: a dictionary that maps the name of the objective/constraint to it's evaluated value.
