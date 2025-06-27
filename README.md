@@ -234,60 +234,43 @@ print("Time Evolution Results:", results)
 The VQE algorithm integrates ansatz design, cost function evaluation, and classical optimization. Below is an illustrative example that sets up a VQE instance using a hardware-efficient ansatz and the SciPy optimizer:
 
 ```python
-import numpy as np
 from qilisdk.common import SciPyOptimizer
-from qilisdk.digital import HardwareEfficientAnsatz, VQE
+from qilisdk.common.model import QUBO, Model
+from qilisdk.common.variables import LEQ, BinaryVariable
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.vqe import VQE
 from qilisdk.extras import CudaBackend
 
 
-# Define problem parameters
-n_items = 4
-weights = [np.random.randint(1, 5) for _ in range(n_items)]
-values  = [np.random.randint(1, 10) for _ in range(n_items)]
-max_weight_perc = 0.6
-max_w = int(max_weight_perc * sum(weights))
-nqubits = n_items
+model = Model("Knapsack")
 
-# Initialize a hardware-efficient ansatz
+values = [2, 3, 7]
+weights = [1, 3, 3]
+max_weight = 4
+b = [BinaryVariable(f"b{i}") for i in range(len(values))]
+
+obj = sum(b[i] * values[i] for i in range(len(values)))
+model.set_objective(obj, "obj")
+
+con = LEQ(sum(b[i] * weights[i] for i in range(len(weights))), max_weight)
+
+model.add_constraint("max_weight", con)
+
+n_qubits = 3
 ansatz = HardwareEfficientAnsatz(
-    n_qubits=nqubits,
-    connectivity="Full",
-    layers=1,
-    one_qubit_gate="U3",
-    two_qubit_gate="CNOT"
+    n_qubits=n_qubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate="U2", two_qubit_gate="CNOT"
+)
+vqe = VQE(
+    ansatz=ansatz,
+    initial_params=[0 for _ in range(ansatz.nparameters)],
+    model=model,
 )
 
-# Use a CUDA backend for simulation
 backend = CudaBackend()
+optimizer = SciPyOptimizer(method="Powell")
 
-LM = sum(values)
-
-def cost_function(result):
-    # Get the most probable outcomes from the digital result
-    most_probable = result.get_probabilities()
-    final_cost = 0
-    for bitstring, prob in most_probable:
-        x_n = [int(bit) for bit in bitstring]
-        total_weight = sum(weights[i] * x_n[i] for i in range(n_items))
-        penalty = (total_weight - max_w) if total_weight > max_w else 0
-        reward = -sum(values[i] * x_n[i] for i in range(n_items))
-        final_cost += prob * (LM * penalty + reward)
-    return final_cost
-
-optimizer = SciPyOptimizer(
-    method="Powell",
-    bounds=[(0, np.pi)] * ansatz.nparameters
-)
-
-# Initialize and execute the VQE algorithm
-vqe = VQE(ansatz, [0.5] * ansatz.nparameters, cost_function)
-results = vqe.execute(backend, optimizer, store_intermediate_results=True)
-
-print("Optimal Cost:", results.optimal_cost)
-print("Optimal Parameters:", results.optimal_parameters)
-print("Intermediate Optimization Steps:")
-for intermediate in results.intermediate_results:
-    print("Cost:", intermediate.cost)
+results = vqe.execute(backend, optimizer, nshots=1000)
 ```
 
 ### Open QASM Serialization
