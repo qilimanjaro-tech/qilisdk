@@ -127,7 +127,7 @@ class VQEResult(Result):
             f"{class_name}(\n  Optimal Cost = {self.optimal_cost},"
             + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
-            + f"\n  probabilities={pformat(self.optimal_probabilities)})"
+            + f"\n  Optimal Probabilities={pformat(self.optimal_probabilities)})"
             + f"\n  Samples={pformat(self.optimal_samples)})"
         )
 
