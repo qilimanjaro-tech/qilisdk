@@ -37,10 +37,10 @@ class VQEResult(Result):
         probabilities (list[tuple[str, float]]): the list of samples and their probabilities.
     """
 
-    def __init__(self, optimizer_result: OptimizerResult, digital_results: DigitalResult) -> None:
+    def __init__(self, optimizer_result: OptimizerResult, digital_result: DigitalResult) -> None:
         super().__init__()
         self._optimizer_result: OptimizerResult = optimizer_result
-        self._digital_result: DigitalResult = digital_results
+        self._digital_result: DigitalResult = digital_result
 
     @property
     def optimal_cost(self) -> float:
@@ -53,7 +53,7 @@ class VQEResult(Result):
         return self._optimizer_result.optimal_cost
 
     @property
-    def samples(self) -> dict[str, int]:
+    def optimal_samples(self) -> dict[str, int]:
         """
         Gets the raw measurement samples.
 
@@ -64,7 +64,7 @@ class VQEResult(Result):
         return self._digital_result.samples
 
     @property
-    def probabilities(self) -> dict[str, float]:
+    def optimal_probabilities(self) -> dict[str, float]:
         """
         Gets the probabilities for each measurement outcome of executing the circuit with the optimal parameters.
 
@@ -73,7 +73,7 @@ class VQEResult(Result):
         """
         return dict(self._digital_result.probabilities)
 
-    def get_probability(self, bitstring: str) -> float:
+    def get_optimal_probability(self, bitstring: str) -> float:
         """
         Computes the probability of a specific measurement outcome.
 
@@ -83,9 +83,9 @@ class VQEResult(Result):
         Returns:
             float: The probability of the specified bitstring occurring.
         """
-        return self.probabilities.get(bitstring, 0.0)
+        return self._digital_result.get_probability(bitstring)
 
-    def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
+    def get_optimal_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
         """
         Returns the n most probable bitstrings along with their probabilities.
 
@@ -95,9 +95,7 @@ class VQEResult(Result):
         Returns:
             list[tuple[str, float]]: A list of tuples (bitstring, probability) sorted in descending order by probability.
         """
-        if n is None:
-            n = len(self.probabilities)
-        return heapq.nlargest(n, self.probabilities.items(), key=operator.itemgetter(1))
+        return self._digital_result.get_probabilities(n)
 
     @property
     def optimal_parameters(self) -> list[float]:
@@ -131,8 +129,8 @@ class VQEResult(Result):
             f"{class_name}(\n  Optimal Cost = {self.optimal_cost},"
             + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
-            + f"\n  probabilities={pformat(self.get_probabilities())})"
-            + f"\n  Samples={pformat(self.samples)})"
+            + f"\n  probabilities={pformat(self.optimal_probabilities)})"
+            + f"\n  Samples={pformat(self.optimal_samples)})"
         )
 
 
@@ -224,4 +222,4 @@ class VQE(DigitalAlgorithm):
         )
         circuit = self._ansatz.get_circuit(optimizer_result.optimal_parameters)
         digital_result = backend.execute(circuit, nshots=nshots)
-        return VQEResult(optimizer_result=optimizer_result, digital_results=digital_result)
+        return VQEResult(optimizer_result=optimizer_result, digital_result=digital_result)
