@@ -128,7 +128,7 @@ class VQEResult(Result):
             + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
             + f"\n  Optimal Probabilities={pformat(self.optimal_probabilities)})"
-            + f"\n  Samples={pformat(self.optimal_samples)})"
+            + f"\n  Optimal Samples={pformat(self.optimal_samples)})"
         )
 
 
