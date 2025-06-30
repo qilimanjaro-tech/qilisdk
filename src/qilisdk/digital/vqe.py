@@ -20,6 +20,7 @@ from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
 from qilisdk.digital.digital_backend import DigitalBackend
+from qilisdk.digital.digital_result import DigitalResult
 from qilisdk.yaml import yaml
 
 
@@ -31,11 +32,13 @@ class VQEResult(Result):
     Attributes:
         optimal_cost (float): The estimated ground state energy (optimal cost).
         optimal_parameters (list[float]): The optimal parameters found during the optimization.
+        probabilities (list[tuple[str, float]]): the list of samples and their probabilities.
     """
 
-    def __init__(self, optimizer_result: OptimizerResult) -> None:
+    def __init__(self, optimizer_result: OptimizerResult, digital_result: DigitalResult) -> None:
         super().__init__()
         self._optimizer_result: OptimizerResult = optimizer_result
+        self._digital_result: DigitalResult = digital_result
 
     @property
     def optimal_cost(self) -> float:
@@ -46,6 +49,51 @@ class VQEResult(Result):
             float: The optimal cost.
         """
         return self._optimizer_result.optimal_cost
+
+    @property
+    def optimal_samples(self) -> dict[str, int]:
+        """
+        Gets the raw measurement samples.
+
+        Returns:
+            dict[str, int]: A dictionary where keys are bitstrings representing measurement outcomes
+            and values are the number of times each outcome was observed.
+        """
+        return self._digital_result.samples
+
+    @property
+    def optimal_probabilities(self) -> dict[str, float]:
+        """
+        Gets the probabilities for each measurement outcome of executing the circuit with the optimal parameters.
+
+        Returns:
+            dict[str, float]: A dictionary mapping each bitstring outcome to its corresponding probability.
+        """
+        return dict(self._digital_result.probabilities)
+
+    def get_optimal_probability(self, bitstring: str) -> float:
+        """
+        Computes the probability of a specific measurement outcome.
+
+        Args:
+            bitstring (str): The bitstring representing the measurement outcome of interest.
+
+        Returns:
+            float: The probability of the specified bitstring occurring.
+        """
+        return self._digital_result.get_probability(bitstring)
+
+    def get_optimal_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
+        """
+        Returns the n most probable bitstrings along with their probabilities.
+
+        Parameters:
+            n (int): The number of most probable bitstrings to return.
+
+        Returns:
+            list[tuple[str, float]]: A list of tuples (bitstring, probability) sorted in descending order by probability.
+        """
+        return self._digital_result.get_probabilities(n)
 
     @property
     def optimal_parameters(self) -> list[float]:
@@ -79,6 +127,8 @@ class VQEResult(Result):
             f"{class_name}(\n  Optimal Cost = {self.optimal_cost},"
             + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
+            + f"\n  Optimal Probabilities={pformat(self.optimal_probabilities)})"
+            + f"\n  Optimal Samples={pformat(self.optimal_samples)})"
         )
 
 
@@ -168,4 +218,6 @@ class VQE(DigitalAlgorithm):
             self._initial_params,
             store_intermediate_results=store_intermediate_results,
         )
-        return VQEResult(optimizer_result=optimizer_result)
+        circuit = self._ansatz.get_circuit(optimizer_result.optimal_parameters)
+        digital_result = backend.execute(circuit, nshots=nshots)
+        return VQEResult(optimizer_result=optimizer_result, digital_result=digital_result)
