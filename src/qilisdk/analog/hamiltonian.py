@@ -398,23 +398,37 @@ class Hamiltonian:
         return " ".join(parts)
 
     @classmethod
-    def parse(cls, ham_str: str) -> Hamiltonian:
-        ham_str = ham_str.strip()
+    def parse(cls, hamiltonian_str: str) -> Hamiltonian:
+        hamiltonian_str = hamiltonian_str.strip()
+
+        # 1) remove *all* spaces inside any ( … ) group (coefficients or indices)
+        hamiltonian_str = re.sub(
+            r'\(\s*([0-9A-Za-z.+\-j\s]+?)\s*\)',
+            lambda m: '(' + re.sub(r'\s+', '', m.group(1)) + ')',
+            hamiltonian_str
+        )
+
+        # 2) collapse multiple spaces down to one (outside the parens now)
+        hamiltonian_str = re.sub(r'\s+', ' ', hamiltonian_str)
+
+        # 3) ensure a single space between a closing “)” and the next operator token like X(0)/Y(1)/etc.
+        hamiltonian_str = re.sub(r'\)\s*(?=[XYZI]\()', ') ', hamiltonian_str)
+
         # Special case: "0" => empty Hamiltonian
-        if ham_str == "0":
+        if hamiltonian_str == "0":
             return cls({})
 
         elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
-        if not ham_str.startswith("+") and not ham_str.startswith("-"):
-            ham_str = "+ " + ham_str
+        if not hamiltonian_str.startswith("+") and not hamiltonian_str.startswith("-"):
+            hamiltonian_str = "+ " + hamiltonian_str
 
         # Replace " - " with " + - " so each term is split on " + "
-        ham_str = ham_str.replace(" - ", " + - ")
+        hamiltonian_str = hamiltonian_str.replace(" - ", " + - ")
 
         # Split on " + "
-        tokens = ham_str.split(" + ")
+        tokens = hamiltonian_str.split(" + ")
         # Remove any empty tokens (can happen if the string started "+ ")
         tokens = [t.strip() for t in tokens if t.strip()]
 
@@ -476,8 +490,8 @@ class Hamiltonian:
 
             return coeff_val, ops
 
-        for tok in tokens:
-            coeff, op_list = parse_token(tok)
+        for token in tokens:
+            coeff, op_list = parse_token(token)
             if not op_list:
                 # purely scalar => store as (I(0),)
                 elements[I(0),] += coeff
@@ -486,9 +500,9 @@ class Hamiltonian:
                 op_list.sort(key=lambda op: op.qubit)
                 elements[tuple(op_list)] += coeff
 
-        ham = cls(elements)
-        ham.simplify()
-        return ham
+        hamiltonian = cls(elements)
+        hamiltonian.simplify()
+        return hamiltonian
 
     # ------- Internal multiplication helpers --------
 
