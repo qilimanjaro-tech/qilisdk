@@ -20,6 +20,7 @@ import pytest
 from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
 from qilisdk.common.variables import (
     EQ,
+    LT,
     BinaryVariable,
     ComparisonOperation,
     ComparisonTerm,
@@ -145,6 +146,18 @@ def test_model_add_duplicate_constraint(simple_model):
         m.add_constraint("c", ct)
 
 
+def test_model_lagrange_multipliers(simple_model):
+    m = simple_model
+    var = Variable("x", Domain.BINARY)
+    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
+    m.add_constraint("c", ct, lagrange_multiplier=10)
+    assert m.lagrange_multipliers["c"] == 10
+    m.set_lagrange_multiplier("c", 20)
+    assert m.lagrange_multipliers["c"] == 20
+    with pytest.raises(ValueError, match=r'constraint "c2" not in model.'):
+        m.set_lagrange_multiplier("c2", 20)
+
+
 def test_model_set_objective_and_repr(simple_model):
     m = simple_model
     var = Variable("y", Domain.BINARY)
@@ -202,6 +215,17 @@ def test_model_copy(simple_model):
         assert hash(m2.constraints[i].term.lhs) == hash(c.term.lhs)
         assert hash(m2.constraints[i].term.rhs) == hash(c.term.rhs)
         assert m2.constraints[i].term.operation == c.term.operation
+
+
+def test_model_evaluation():
+    m = Model("test")
+    v = Variable("v", Domain.INTEGER, (-10, 10))
+
+    m.set_objective(v * 2 + 3)
+    m.add_constraint("c", LT(v * 2, 15))
+    results = m.evaluate({v: 5})
+    assert results["obj"] == -(5 * 2 + 3)
+    assert results["c"] == 0
 
 
 # ---------- QUBO ----------

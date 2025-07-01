@@ -455,8 +455,8 @@ class Hamiltonian:
                 # parse as a complex number
                 coeff_str = maybe_coeff
                 # If it's e.g. '(2.5+3j)', remove parentheses
-                coeff_str = coeff_str.removeprefix("(")
-                coeff_str = coeff_str.removesuffix(")")
+                if coeff_str.startswith("(") and coeff_str.endswith(")"):
+                    coeff_str = coeff_str[1:-1]
                 coeff_val = complex(coeff_str) * sign
                 words = words[1:]  # consume this word
             else:

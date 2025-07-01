@@ -284,7 +284,12 @@ class Model:
         Args:
             constraint_label (str): the constraint to which the lagrange multiplier value corresponds.
             lagrange_multiplier (float): the lagrange multiplier value.
+
+        Raises:
+            ValueError: if the constraint provided is not in the model.
         """
+        if constraint_label not in self._constraints:
+            raise ValueError(f'constraint "{constraint_label}" not in model.')
         self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
     @property
