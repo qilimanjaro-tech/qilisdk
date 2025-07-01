@@ -251,6 +251,10 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
         ("Z(0) - 2j", -2j + Z(0)),
         ("Z(0) - 2j + 3", (3 - 2j) + Z(0)),
         ("Z(0) - 2j + 3 + 2 Z(0)", (3 - 2j) + 3 * Z(0)),
+        ("(2.5+3j) Y(0)", (2.5 + 3j) * Y(0)),
+        ("(2.5 + 3j) Y(0)", (2.5 + 3j) * Y(0)),
+        ("(2.5+3j)Y(0)", (2.5 + 3j) * Y(0)),
+        ("(2.5   +   3j   )    Y(0)   ", (2.5 + 3j) * Y(0)),
     ],
 )
 def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
