@@ -17,14 +17,20 @@ import copy
 
 import pytest
 
+from qilisdk.analog.hamiltonian import Z
 from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
 from qilisdk.common.variables import (
     EQ,
+    GEQ,
+    GT,
+    LEQ,
     LT,
     BinaryVariable,
+    Bitwise,
     ComparisonOperation,
     ComparisonTerm,
     Domain,
+    OneHot,
     Operation,
     Term,
     Variable,
@@ -222,10 +228,26 @@ def test_model_evaluation():
     v = Variable("v", Domain.INTEGER, (-10, 10))
 
     m.set_objective(v * 2 + 3)
-    m.add_constraint("c", LT(v * 2, 15))
+    m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
     results = m.evaluate({v: 5})
     assert results["obj"] == -(5 * 2 + 3)
     assert results["c"] == 0
+    results = m.evaluate({v: 10})
+    assert results["obj"] == -(10 * 2 + 3)
+    assert results["c"] == 20
+
+
+def test_model_to_ham():
+    m = Model("test")
+    b = [BinaryVariable(f"b{i}") for i in range(3)]
+
+    term = b[0] + 2 * b[1] + 3 * b[2]
+    m.set_objective(term)
+    assert m.to_qubo().to_hamiltonian() == 3 - Z(1) - 0.5 * Z(0) - 1.5 * Z(2)
+    m.add_constraint("c", EQ(b[0], 0), lagrange_multiplier=10)
+    assert m.to_qubo().to_hamiltonian() == (
+        (1 - Z(0)) / 2 + 2 * (1 - Z(1)) / 2 + 3 * (1 - Z(2)) / 2 + 10 * ((1 - Z(0)) / 2) * ((1 - Z(0)) / 2)
+    )
 
 
 # ---------- QUBO ----------
@@ -249,6 +271,11 @@ def test_qubo_parse_term_add_and_mul():
     const2, terms2 = q._parse_term(t2)
     assert const2 == 2
 
+    t3 = v + v * v * 2 + 2
+    const3, term3 = q._parse_term(t3)
+    assert const3 == 2
+    assert term3[0] == (3, v)
+
     t3 = v2**2
     with pytest.raises(ValueError):  # noqa: PT011
         q._parse_term(t3)
@@ -268,6 +295,8 @@ def test_qubo_print_and_str():
     s = str(q)
     assert "subject to the constraint/s:" in s
     assert "\nWith Lagrange Multiplier/s: \n" in s
+
+    assert repr(q) == q.label
 
 
 def test_qubo_transform_constraint():
@@ -290,7 +319,19 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     slack = q._check_valid_constraint("c1", h.lhs - h.rhs, h.operation)
     assert slack is None
     # unsatisfiable: v > 2
-    h2 = ComparisonTerm(lhs=v, rhs=2, operation=ComparisonOperation.GT)
+    h2 = GT(v, 2)
+    with pytest.raises(ValueError):  # noqa: PT011
+        q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
+
+    h2 = LT(v, -1)
+    with pytest.raises(ValueError):  # noqa: PT011
+        q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
+
+    h2 = LT(v, -1)
+    with pytest.raises(ValueError):  # noqa: PT011
+        q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
+
+    h2 = LEQ(v, -10)
     with pytest.raises(ValueError):  # noqa: PT011
         q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
 
@@ -327,3 +368,182 @@ def test_qubo_set_objective_errors():
     q.set_objective(term=t2, label="o2", sense=ObjectiveSense.MAXIMIZE)
     assert q.objective.label == "o2"
     assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value  # always stored as minimize
+
+
+def test_qubo_transform_unsupported_penalization_error():
+    q = QUBO(label="test")
+    y = Variable("y", Domain.REAL, bounds=(0, 1))
+    ct = GT(y, 0)
+    q._transform_constraint("c", term=ct, penalization="slack", parameters=None)
+    with pytest.raises(ValueError, match=r"Only penalization of type \"unbalanced\" or \"slack\" is supported."):
+        q._transform_constraint("c2", term=ct, penalization="test", parameters=None)
+
+    with pytest.raises(ValueError, match=r"using unbalanced penalization requires at least 2 parameters."):
+        q._transform_constraint("c2", term=ct, penalization="unbalanced", parameters=None)
+    ct = LT(y, 1)
+    with pytest.raises(ValueError, match=r"using unbalanced penalization requires at least 2 parameters."):
+        q._transform_constraint("c2", term=ct, penalization="unbalanced", parameters=None)
+
+
+def test_qubo_transform_unbalanced_penalization():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 10))
+
+    ct = GT(x, 5)
+
+    q.add_constraint("c", ct, penalization="unbalanced", parameters=(2, 1))
+
+    h = ct.lhs - ct.rhs
+    assert q._constraints["c"].lhs - q._constraints["c"].rhs == (-2 * h + h**2).to_binary()
+
+    ct = LT(x, 5)
+
+    q.add_constraint("c2", ct, penalization="unbalanced", parameters=(2, 1))
+
+    h = ct.rhs - ct.lhs
+    assert q._constraints["c2"].lhs - q._constraints["c2"].rhs == (-2 * h + h**2).to_binary()
+
+
+def test_qubo_transform_slack_penalization():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    ct = GT(x, 1)
+
+    ub_slack = q._check_valid_constraint("c", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    slack = Variable("c_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
+    assert ub_slack == 2
+    q.add_constraint("c", ct, penalization="slack")
+
+    c = q._constraints["c"].term.lhs - q._constraints["c"].term.rhs
+    assert slack[0] in c
+    assert slack[1] in c
+
+    ct = LT(x, 2)
+
+    ub_slack = q._check_valid_constraint("c2", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    slack = Variable("c2_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
+    assert ub_slack == 1
+    q.add_constraint("c2", ct, penalization="slack")
+
+    c = q._constraints["c2"].term.lhs - q._constraints["c2"].term.rhs
+    assert slack[0] in c
+
+
+def test_add_constraint_error_constraint_already_exists():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    ct = GT(x, 1)
+    q.add_constraint("c", ct, penalization="slack")
+
+    with pytest.raises(ValueError, match=r'Constraint "c" already exists'):
+        q.add_constraint("c", ct, penalization="slack")
+
+
+def test_add_constraint_error_degree_greater_than_two():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    ct = GT(x**3, 1)
+
+    with pytest.raises(
+        ValueError, match=r"QUBO models can not contain terms of order 2 or higher but received terms with degree 3"
+    ):
+        q.add_constraint("c", ct, penalization="slack")
+
+
+def test_add_constraint_without_transform_to_qubo():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    ct = EQ(x**2, 1)
+    q.add_constraint("c", ct, transform_to_qubo=False)
+
+    assert q._constraints["c"].term.lhs == ct.lhs
+    assert q._constraints["c"].term.rhs == ct.rhs
+
+
+def test_check_variables():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    ct = EQ(x**2, 1)
+    with pytest.raises(
+        ValueError,
+        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
+    ):
+        q._check_variables(ct)
+
+    x = Variable("x", Domain.REAL, encoding=OneHot, bounds=(0, 2))
+
+    ct = EQ(x**2, 1)
+    with pytest.raises(
+        ValueError,
+        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
+    ):
+        q._check_variables(ct)
+
+    x = Variable("x", Domain.SPIN, encoding=OneHot, bounds=(-1, 1))
+
+    ct = EQ(x**2, 1)
+    with pytest.raises(
+        ValueError,
+        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
+    ):
+        q._check_variables(ct)
+
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(1, 2))
+
+    ct = EQ(x**2, 1)
+    with pytest.raises(
+        ValueError,
+        match=r"All variables must have a lower bound of 0. But variable x has a lower bound of 1",
+    ):
+        q._check_variables(ct)
+
+
+def test_qubo_model_to_qubo():
+    q = QUBO(label="test")
+    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+
+    q.set_objective(x + x**2)
+    ct = EQ(x, 1)
+    q.add_constraint("c", ct)
+
+    assert q.qubo_objective.term == q.to_qubo().qubo_objective.term
+
+
+def test_qubo_model_evaluation():
+    m = QUBO("test")
+    v = Variable("v", Domain.POSITIVE_INTEGER, (0, 10), encoding=OneHot)
+
+    m.set_objective(v * 2 + 3)
+    m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
+    variables = m.variables()
+    values = dict.fromkeys(m.variables(), 0)
+    values[v[5]] = 1
+    values[variables[0]] = 1
+    values[variables[1]] = 0
+    values[variables[2]] = 1
+    values[variables[3]] = 0
+    results = m.evaluate(values)
+    assert results["obj"] == -(5 * 2 + 3)
+    assert results["c"] == 0
+    values = dict.fromkeys(m.variables(), 0)
+    values[v[7]] = 1
+    values[variables[0]] = 1
+    values[variables[1]] = 0
+    values[variables[2]] = 0
+    values[variables[3]] = 0
+
+    results = m.evaluate(values)
+    assert results["obj"] == -(7 * 2 + 3)
+    assert results["c"] == 0
+
+
+def test_to_hamiltonian_with_empty_qubo():
+    q = QUBO("test")
+    q._objective = None
+    with pytest.raises(ValueError, match=r"Can't transform empty QUBO model to a Hamiltonian."):
+        q.to_hamiltonian()

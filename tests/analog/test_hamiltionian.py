@@ -245,7 +245,6 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
         ("X(0)", X(0)),
         ("Y(0)", Y(0)),
         ("- Y(0)", -1 * Y(0)),
-        # ("(2.5+3j) Y(0)", (2.5 + 3j) * Y(0)),
         ("Z(0) + 2", 2 + Z(0)),
         ("Z(0) + 2j", 2j + Z(0)),
         ("Z(0) - 2j", -2j + Z(0)),

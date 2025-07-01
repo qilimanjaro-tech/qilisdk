@@ -470,15 +470,12 @@ class Model:
         Returns:
             QUBO: A QUBO model that is generate from the model object.
         """
+        if lagrange_multiplier_dict is None:
+            lagrange_multiplier_dict = {}
+        for lm in self.lagrange_multipliers:
+            if lm not in lagrange_multiplier_dict:
+                lagrange_multiplier_dict[lm] = self.lagrange_multipliers[lm]
         return QUBO.from_model(self, lagrange_multiplier_dict, penalization, parameters)
-
-    def to_hamiltonian(self) -> Hamiltonian:
-        """Exports the model to an ising hamiltonian.
-
-        Returns:
-            Hamiltonian: An ising hamiltonian that represents the model.
-        """
-        return self.to_qubo().to_hamiltonian()
 
 
 class QUBO(Model):
@@ -511,7 +508,9 @@ class QUBO(Model):
                     - constraint.term.rhs * self.lagrange_multipliers[constraint.label]
                 )
             else:
-                self._build_qubo_objective(constraint.term.lhs - constraint.term.rhs)
+                self._build_qubo_objective(
+                    constraint.term.lhs - constraint.term.rhs
+                )  # I don't think this line can be reached.
         return self.__qubo_objective
 
     def __repr__(self) -> str:
@@ -539,7 +538,7 @@ class QUBO(Model):
 
         if term.operation is Operation.ADD:
             for element in term:
-                if isinstance(element, Term):
+                if isinstance(element, Term):  # I don't think this will ever be true for a QUBO model.
                     _, aux_terms = self._parse_term(element)
                     terms.extend(aux_terms)
                 elif element != Term.CONST:
@@ -926,7 +925,6 @@ class QUBO(Model):
             raise ValueError("Can't transform empty QUBO model to a Hamiltonian.")
 
         for i, v in enumerate(obj.variables()):
-            # TODO (ameer): Change this to the hash instead of the variables.
             spins[v] = (1 - Z(i)) / 2
 
         def _parse_term(term: Term) -> Hamiltonian:
@@ -948,7 +946,7 @@ class QUBO(Model):
                     aux_term += aux
                 elif operation is Operation.MUL:
                     aux_term *= aux
-                else:
+                else:  # I don't think this can be reached.
                     raise ValueError(f"operation {operation} is not supported")
             ham += aux_term
             return ham

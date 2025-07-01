@@ -304,22 +304,22 @@ class Encoding(ABC):
 
 
 class Bitwise(Encoding):
-    """Represents a HOBO variable encoding class."""
+    """Represents a Bitwise variable encoding class."""
 
     @property
     def name(self) -> str:
-        return "HOBO"
+        return "Bitwise"
 
     @staticmethod
-    def _hobo_encode(x: int, N: int) -> list[int]:
-        """encode the integer x in hobo encoding.
+    def _bitwise_encode(x: int, N: int) -> list[int]:
+        """encode the integer x in Bitwise encoding.
 
         Args:
             x (int): the integer to be encoded.
             N (int): the number of bits to encode x.
 
         Returns:
-            list[int]: a binary list representing the hobo encoding of the integer x.
+            list[int]: a binary list representing the Bitwise encoding of the integer x.
         """
         return list(reversed([int(b) for b in format(x, f"0{N}b")]))
 
@@ -346,10 +346,10 @@ class Bitwise(Encoding):
             key=lambda x: _extract_number(x.label),
         )
 
-        binary_list = Bitwise._hobo_encode(value, len(binary_var)) if isinstance(value, Number) else value
+        binary_list = Bitwise._bitwise_encode(value, len(binary_var)) if isinstance(value, Number) else value
 
         if not Bitwise.check_valid(binary_list)[0]:
-            raise ValueError(f"invalid binary string {binary_list} with the HOBO encoding.")
+            raise ValueError(f"invalid binary string {binary_list} with the Bitwise encoding.")
 
         if len(binary_list) < len(binary_var):
             for _ in range(len(binary_var) - len(binary_list)):
@@ -371,7 +371,7 @@ class Bitwise(Encoding):
 
     @staticmethod
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
-        raise NotImplementedError("HOBO encoding constraints are not supported at the moment")
+        raise NotImplementedError("Bitwise encoding constraints are not supported at the moment")
 
     @staticmethod
     def num_binary_equivalent(var: "Variable", precision: float = 1e-2) -> int:
@@ -416,8 +416,9 @@ class OneHot(Encoding):
     @staticmethod
     def _find_zero(var: Variable) -> int:
         binary_var = var.bin_vars
+        term = var.term
         for i in range(var.num_binary_equivalent()):
-            if _extract_number(binary_var[i].label) != i:
+            if binary_var[i] not in term:
                 return i
         return 0
 
@@ -584,7 +585,7 @@ class DomainWall(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
-        n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
+        n_binary = int(np.abs(bounds[1] - bounds[0]))
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
         return ComparisonTerm(
@@ -937,7 +938,7 @@ class Variable(BaseVariable):
             bounds (tuple[float  |  None, float  |  None], optional): the bounds on the values of the variable The bounds
                     have the structure (lower_bound, Upper_bound) both values included. Defaults to (None, None).
                     Note: if None is selected then the lowest/highest possible value of the variable's domain is chosen.
-            encoding (type[Encoding], optional): _description_. Defaults to HOBO.
+            encoding (type[Encoding], optional): _description_. Defaults to Bitwise.
             precision (float, optional): The floating point precision for REAL variables. Defaults to 1e-2.
         """
         super().__init__(label=label, domain=domain, bounds=bounds)
@@ -1004,8 +1005,9 @@ class Variable(BaseVariable):
         if self._term is None:
             term = self.encoding.encode(self, precision=self._precision)
             self._term = copy.copy(term)
+            self._bin_vars = [BinaryVariable(f"{self.label}({i})") for i in range(self.num_binary_equivalent())]
             self._bin_vars = sorted(
-                self._term.variables(),
+                self._bin_vars,
                 key=lambda x: _extract_number(x.label),
             )
         return self._term
@@ -1448,6 +1450,8 @@ class Term:
 
     def __mul__(self, other: Number | BaseVariable | Term) -> Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        if len(out) == 0:
+            out = [0]
         out.append(other)
         return Term(out, Operation.MUL)._unfold_parentheses()
 
@@ -1455,6 +1459,8 @@ class Term:
 
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        if len(out) == 0:
+            out = [0]
         out.insert(0, other)
         return Term(out, Operation.MUL)._unfold_parentheses()
 
@@ -1510,12 +1516,12 @@ class Term:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Term):
-            raise NotImplementedError
+            return False
         return hash(self) == hash(other)
 
     def __ne__(self, other: object) -> bool:
         if not isinstance(other, Term):
-            raise NotImplementedError
+            return False
         return hash(self) != hash(other)
 
 
