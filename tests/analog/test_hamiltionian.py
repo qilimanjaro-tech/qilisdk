@@ -1,12 +1,29 @@
+from typing import ClassVar
+
 import numpy as np
 import pytest
 
 from qilisdk.analog import Hamiltonian, I, X, Y, Z
+from qilisdk.analog.exceptions import InvalidHamiltonianOperation
+from qilisdk.analog.hamiltonian import PauliI, PauliOperator, PauliX, PauliY, PauliZ, _get_pauli
+from qilisdk.common.exceptions import NotSupportedOperation
 
 
 # Helper function to convert sparse matrix to dense NumPy array.
 def dense(ham: Hamiltonian) -> np.ndarray:
     return ham.to_matrix().toarray()
+
+
+def test_get_pauli_returns_correct_instance():
+    assert isinstance(_get_pauli("X", 0), PauliX)
+    assert isinstance(_get_pauli("Y", 1), PauliY)
+    assert isinstance(_get_pauli("Z", 2), PauliZ)
+    assert isinstance(_get_pauli("I", 3), PauliI)
+
+
+def test_get_pauli_raises_on_invalid_name():
+    with pytest.raises(ValueError, match="Unknown Pauli operator name: W"):
+        _get_pauli("W", 0)
 
 
 # -----------------------------
@@ -29,10 +46,17 @@ def dense(ham: Hamiltonian) -> np.ndarray:
         (Y(0) + Y(1) + Y(0) + 1, 1 + 2 * Y(0) + Y(1)),
         (1 + Z(0) + Z(1) + Z(0), 1 + 2 * Z(0) + Z(1)),
         (1 + Z(0) + 3 + Z(1) + Z(0) + 2j, (4 + 2j) + 2 * Z(0) + Z(1)),
+        ((Z(0)) + (Z(0) - Z(0)), Z(0)),
+        ((Z(0) + Z(2) + 0), Z(0) + Z(2)),
     ],
 )
 def test_addition(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian == expected_hamiltonian
+
+
+def test_invalid_addition_operation():
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid addition between Hamiltonian and str"):
+        (Z(0) + Z(2)) + "Z"
 
 
 # -----------------------------
@@ -50,10 +74,16 @@ def test_addition(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
         (Z(0) - Z(1) + Z(0), 2 * Z(0) - Z(1)),
         (1 - Z(0) + Z(1) + Z(0), 1 + Z(1)),
         (1 + Z(0) - 3 + Z(1) + Z(0) - 2j, (-2 - 2j) + 2 * Z(0) + Z(1)),
+        ((Z(0) + Z(2) - 0), Z(0) + Z(2)),
     ],
 )
 def test_subtraction(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian == expected_hamiltonian
+
+
+def test_invalid_subtraction_operation():
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid subtraction between Hamiltonian and str"):
+        (Z(0) + Z(2)) - "Z"
 
 
 # -----------------------------
@@ -68,6 +98,8 @@ def test_subtraction(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian
         (Z(0) * Z(1), Z(0) * Z(1)),
         (X(0) * Z(1), X(0) * Z(1)),
         (2 * Z(0), 2 * Z(0)),
+        ((2 + Z(0)) * ((2 + Z(0)) * 0), 0),
+        ((2 + Z(0)) * 3 * I(0), 6 + 3 * Z(0)),
         (Z(0) * 3, 3 * Z(0)),
         ((Z(0) + Z(1)) * 2, 2 * Z(0) + 2 * Z(1)),
         ((Z(0) + X(1)) * (Z(0) + X(1)), 2 + 2 * (Z(0) * X(1))),
@@ -88,6 +120,38 @@ def test_multiplication(hamiltonian: Hamiltonian, expected_hamiltonian: Hamilton
     assert hamiltonian == expected_hamiltonian
 
 
+def test_invalid_multiplication_operation():
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid multiplication between Hamiltonian and str"):
+        (Z(0) + Z(2)) * "Z"
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian_rhs", "hamiltonian_lhs", "expected_hamiltonian"),
+    [
+        (Z(0) + 1, Z(0) + 1, 2 + 2 * Z(0)),
+        (Z(0) * Z(1), X(0) * X(1), -1 * Y(0) * Y(1)),
+    ],
+)
+def test_hamiltonian_rmul(hamiltonian_rhs, hamiltonian_lhs, expected_hamiltonian):
+    assert hamiltonian_lhs.__rmul__(hamiltonian_rhs) == expected_hamiltonian  # noqa: PLC2801
+
+
+class MockPauli(PauliOperator):
+    _NAME: ClassVar[str] = "M"
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
+
+    def __init__(self, qubit: int):
+        super().__init__(qubit)
+
+
+def test_multiply_pauli_errors():
+    with pytest.raises(ValueError, match=r"Operators must act on the same qubit for multiplication."):
+        Hamiltonian._multiply_pauli(Z(0), Z(1))
+
+    with pytest.raises(NotSupportedOperation, match=r"Multiplying Z\(0\) and M\(0\) not supported."):
+        Hamiltonian._multiply_pauli(Z(0), MockPauli(0))
+
+
 # -----------------------------
 #  DIVISION TESTS
 # -----------------------------
@@ -105,6 +169,48 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian == expected_hamiltonian
 
 
+def test_truediv_raises_not_supported():
+    with pytest.raises(NotSupportedOperation, match="Division by operators is not supported"):
+        2 / Z(0)
+
+
+def test_equality():
+    pauli1 = Z(0)
+    assert pauli1 == Z(0)
+    assert pauli1 != Z(1)
+    assert pauli1 != 1
+
+
+@pytest.mark.parametrize(
+    ("pauli", "expected_output"),
+    [
+        (Z(0), "Z(0)"),
+        (Z(9), "Z(9)"),
+        (X(0), "X(0)"),
+        (X(9), "X(9)"),
+        (Y(0), "Y(0)"),
+        (Y(3), "Y(3)"),
+        (I(0), "I(0)"),
+        (I(5), "I(5)"),
+    ],
+)
+def test_str_and_repr(pauli: PauliOperator, expected_output: str):
+    assert str(pauli) == expected_output
+    assert repr(pauli) == expected_output
+
+
+def test_hamiltonian_division_errors():
+    H = 1 + 2 * Z(0) + Z(0) * Z(1)
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Division by operators is not supported"):
+        2 / H
+
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Division by operators is not supported"):
+        H / Z(0)
+
+    with pytest.raises(ZeroDivisionError, match=r"Cannot divide by zero."):
+        H / 0
+
+
 # -----------------------------
 #  __STR__
 # -----------------------------
@@ -118,12 +224,17 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
         (Z(0) - 2, "-2 + Z(0)"),
         (Z(0) - 2j, "-2j + Z(0)"),
         (Z(0) - 3 + 2j, "(-3+2j) + Z(0)"),
+        (Z(0) - Z(0), "0"),
         (Z(0) - 3 + 2j - 2 * Z(0), "(-3+2j) - Z(0)"),
+        (-1 * Z(1) - 2 * Z(0), "- Z(1) - 2 Z(0)"),
+        (-1j * Z(1) - 2.5j * Z(0), "-1j Z(1) - 2.5j Z(0)"),
+        (Z(0) - 3 + 2.5j - 2 * Z(0), "(-3+2.5j) - Z(0)"),
         (1 + Z(0) - 3 * Z(1) + Z(1) + Z(0) - 2j * Z(1), "1 + 2 Z(0) + (-2-2j) Z(1)"),
     ],
 )
 def test_str(hamiltonian: Hamiltonian, expected_str: str):
     assert str(hamiltonian) == expected_str
+    assert repr(hamiltonian) == expected_str
 
 
 @pytest.mark.parametrize(
@@ -133,6 +244,8 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
         ("Z(0)", Z(0)),
         ("X(0)", X(0)),
         ("Y(0)", Y(0)),
+        ("- Y(0)", -1 * Y(0)),
+        ("(2.5+3j) Y(0)", (2.5 + 3j) * Y(0)),
         ("Z(0) + 2", 2 + Z(0)),
         ("Z(0) + 2j", 2j + Z(0)),
         ("Z(0) - 2j", -2j + Z(0)),
@@ -143,6 +256,12 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
 def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
     hamiltonian = Hamiltonian.parse(hamiltonian_str)
     assert hamiltonian == expected_hamiltonian
+
+
+def test_parse_value_error():
+    hamiltonian_str = "2 Z(1) + W(0)"
+    with pytest.raises(ValueError, match=r"Unrecognized operator format: 'W\(0\)'"):
+        Hamiltonian.parse(hamiltonian_str)
 
 
 @pytest.mark.parametrize(
@@ -213,3 +332,42 @@ def test_to_matrix_three_qubit():
     X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
     expected = 3 * np.kron(I2, np.kron(Z_matrix, X_matrix))
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
+
+
+# ------ Hamiltonian Simplification Test -------
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian", "expected_hamiltonian"),
+    [(Z(0) + I(0) + I(1), Z(0) + 2 * I(0)), (0 * (Z(0) + 2 * Z(3)) + Z(1), Z(1))],
+)
+def test_simplify_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
+    assert hamiltonian == expected_hamiltonian
+
+
+# ---- Equality Tests -----
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian", "expected_hamiltonian"),
+    [
+        (1 * I(0) + 2 * I(1), 3),
+        (0 * (Z(0) + 2 * Z(3)), 0),
+        (0.5j * I(0), 0.5j),
+        (2 * Z(0) - Z(0), Z(0)),
+        (2 * Z(0) - Z(1), 2 * Z(0) - Z(1)),
+    ],
+)
+def test_eq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
+    assert hamiltonian == expected_hamiltonian
+
+
+@pytest.mark.parametrize(
+    ("hamiltonian", "expected_hamiltonian"),
+    [
+        (1 * I(0) + 2 * I(1), "I(0)"),
+        (2 * Z(0) - Z(1), Z(1)),
+    ],
+)
+def test_neq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
+    assert hamiltonian != expected_hamiltonian
