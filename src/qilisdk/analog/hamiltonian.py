@@ -403,16 +403,14 @@ class Hamiltonian:
 
         # 1) remove *all* spaces inside any ( … ) group (coefficients or indices)
         hamiltonian_str = re.sub(
-            r'\(\s*([0-9A-Za-z.+\-j\s]+?)\s*\)',
-            lambda m: '(' + re.sub(r'\s+', '', m.group(1)) + ')',
-            hamiltonian_str
+            r"\(\s*([0-9A-Za-z.+\-j\s]+?)\s*\)", lambda m: "(" + re.sub(r"\s+", "", m.group(1)) + ")", hamiltonian_str
         )
 
         # 2) collapse multiple spaces down to one (outside the parens now)
-        hamiltonian_str = re.sub(r'\s+', ' ', hamiltonian_str)
+        hamiltonian_str = re.sub(r"\s+", " ", hamiltonian_str)
 
         # 3) ensure a single space between a closing “)” and the next operator token like X(0)/Y(1)/etc.
-        hamiltonian_str = re.sub(r'\)\s*(?=[XYZI]\()', ') ', hamiltonian_str)
+        hamiltonian_str = re.sub(r"\)\s*(?=[XYZI]\()", ") ", hamiltonian_str)
 
         # Special case: "0" => empty Hamiltonian
         if hamiltonian_str == "0":
