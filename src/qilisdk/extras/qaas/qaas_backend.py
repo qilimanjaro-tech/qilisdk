@@ -18,7 +18,7 @@ import logging
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from os import environ
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import httpx
 from pydantic import TypeAdapter, ValidationError
@@ -182,7 +182,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return cast("QaaSDigitalResult", execute_response.digital_result)
+            return execute_response.job_id
 
     def evolve(
         self,
@@ -210,7 +210,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return cast("QaaSAnalogResult", execute_response.analog_result)
+            return execute_response.job_id
 
     def run_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
@@ -231,7 +231,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return cast("QaaSVQEResult", execute_response.vqe_result)
+            return execute_response.job_id
 
     def run_time_evolution(
         self, time_evolution: TimeEvolution, store_intermediate_results: bool = False
@@ -252,4 +252,4 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             execute_response = ExecuteResponse(**response.json())
-            return cast("QaaSTimeEvolutionResult", execute_response.time_evolution_result)
+            return execute_response.job_id
