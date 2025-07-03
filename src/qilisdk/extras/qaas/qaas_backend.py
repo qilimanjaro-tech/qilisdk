@@ -33,7 +33,7 @@ from .models import (
     DigitalPayload,
     ExecutePayload,
     ExecutePayloadType,
-    ExecuteResponse,
+    Job,
     TimeEvolutionPayload,
     Token,
     VQEPayload,
@@ -45,11 +45,6 @@ if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import PauliOperator
     from qilisdk.common.optimizer import Optimizer
     from qilisdk.digital import VQE, Circuit
-
-    from .qaas_analog_result import QaaSAnalogResult
-    from .qaas_digital_result import QaaSDigitalResult
-    from .qaas_time_evolution_result import QaaSTimeEvolutionResult
-    from .qaas_vqe_result import QaaSVQEResult
 
 logging.basicConfig(
     format="%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG
@@ -167,7 +162,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> QaaSDigitalResult:
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.DIGITAL,
@@ -181,8 +176,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=payload.model_dump_json(),
             )
             response.raise_for_status()
-            execute_response = ExecuteResponse(**response.json())
-            return execute_response.job_id
+            return Job(**response.json())
 
     def evolve(
         self,
@@ -190,7 +184,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-    ) -> QaaSAnalogResult:
+    ) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.ANALOG,
@@ -209,12 +203,11 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=payload.model_dump_json(),
             )
             response.raise_for_status()
-            execute_response = ExecuteResponse(**response.json())
-            return execute_response.job_id
+            return Job(**response.json())
 
     def run_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
-    ) -> QaaSVQEResult:
+    ) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.VQE,
@@ -230,12 +223,11 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=payload.model_dump_json(),
             )
             response.raise_for_status()
-            execute_response = ExecuteResponse(**response.json())
-            return execute_response.job_id
+            return Job(**response.json())
 
     def run_time_evolution(
         self, time_evolution: TimeEvolution, store_intermediate_results: bool = False
-    ) -> QaaSTimeEvolutionResult:
+    ) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.TIME_EVOLUTION,
@@ -251,5 +243,4 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=payload.model_dump_json(),
             )
             response.raise_for_status()
-            execute_response = ExecuteResponse(**response.json())
-            return execute_response.job_id
+            return Job(**response.json())

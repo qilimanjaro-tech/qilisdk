@@ -190,5 +190,5 @@ class ExecutePayload(QaaSModel):
 
 
 @yaml.register_class
-class ExecuteResponse(QaaSModel):
-    job_id: int = Field(...)
+class Job(QaaSModel):
+    id: int = Field(...)
