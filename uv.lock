@@ -1681,7 +1681,7 @@ requires-dist = [
     { name = "httpx", marker = "extra == 'qaas'", specifier = ">=0.28.1" },
     { name = "keyring", marker = "extra == 'qaas'", specifier = ">=25.6.0" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "numpy", specifier = ">=2.2.4" },
+    { name = "numpy", specifier = ">=1.26.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pydantic-settings", specifier = ">=2.8.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.10" },
