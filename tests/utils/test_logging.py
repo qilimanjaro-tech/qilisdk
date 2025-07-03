@@ -8,7 +8,6 @@ from qilisdk.common.variables import LT, BinaryVariable, Domain, OneHot, Variabl
 
 
 def test_log_output(caplog):  # noqa: F811
-
     N = 2
     b = [BinaryVariable(f"b({i})") for i in range(N)]
     x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(0, 10), encoding=OneHot)

@@ -1115,6 +1115,7 @@ class Variable(BaseVariable):
 
 # Terms ###
 
+
 @yaml.register_class
 class Term:
     """Represents a mathematical Term (e.g. 3x*y, 2x, ...).

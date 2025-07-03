@@ -28,10 +28,10 @@ from scipy import sparse
 def csr_representer(representer, data: sparse.csr_matrix):
     """Representer for CSR matrix."""
     value = {
-        "data":    data.data.tolist(),
+        "data": data.data.tolist(),
         "indices": data.indices.tolist(),
-        "indptr":  data.indptr.tolist(),
-        "shape":   data.shape,
+        "indptr": data.indptr.tolist(),
+        "shape": data.shape,
     }
     return representer.represent_mapping("!csr_matrix", value)
 
@@ -81,10 +81,7 @@ def defaultdict_representer(representer, data: defaultdict):
     (as module+qualname) plus its items dict.
     """
     factory = data.default_factory
-    factory_name = (
-        None if factory is None
-        else f"{factory.__module__}.{factory.__qualname__}"
-    )
+    factory_name = None if factory is None else f"{factory.__module__}.{factory.__qualname__}"
     return representer.represent_mapping(
         "!defaultdict",
         {"default_factory": factory_name, "items": dict(data)},
