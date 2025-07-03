@@ -162,7 +162,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> Job:
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> Job:  # type: ignore[override]
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.DIGITAL,
@@ -178,7 +178,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             response.raise_for_status()
             return Job(**response.json())
 
-    def evolve(
+    def evolve(  # type: ignore[override]
         self,
         schedule: Schedule,
         initial_state: QuantumObject,
