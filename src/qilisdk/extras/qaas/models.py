@@ -79,8 +79,11 @@ class Device(QaaSModel):
     id: int = Field(...)
     code: str = Field(...)
     name: str = Field(...)
-    status: DeviceStatus = Field(...)
     type: DeviceType = Field(...)
+    status: DeviceStatus = Field(...)
+    pending_jobs: int = Field(alias="number_pending_jobs")
+    static_features: dict
+    dynamic_features: dict
 
 
 class ExecutePayloadType(str, Enum):
