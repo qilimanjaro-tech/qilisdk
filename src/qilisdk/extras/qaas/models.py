@@ -23,6 +23,11 @@ from qilisdk.digital import VQE, Circuit
 from qilisdk.utils.serialization import deserialize, serialize
 from qilisdk.yaml import yaml
 
+from .qaas_analog_result import QaaSAnalogResult
+from .qaas_digital_result import QaaSDigitalResult
+from .qaas_time_evolution_result import QaaSTimeEvolutionResult
+from .qaas_vqe_result import QaaSVQEResult
+
 
 class QaaSModel(BaseModel):
     model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, arbitrary_types_allowed=True)
@@ -187,6 +192,15 @@ class ExecutePayload(QaaSModel):
     analog_payload: AnalogPayload | None = None
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
+
+
+@yaml.register_class
+class ExecuteResponse(QaaSModel):
+    type: ExecutePayloadType = Field(...)
+    digital_result: QaaSDigitalResult | None = None
+    analog_result: QaaSAnalogResult | None = None
+    vqe_result: QaaSVQEResult | None = None
+    time_evolution_result: QaaSTimeEvolutionResult | None = None
 
 
 @yaml.register_class
