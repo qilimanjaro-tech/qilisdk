@@ -61,7 +61,8 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
       c) keyring (fallback).
     """
 
-    _api_url: str = environ.get("PUBLIC_API_URL", "https://qilimanjaroqaas.ddns.net:8080/api/v1")
+    _api_url: str = environ.get("QILISDK_QAAS_API_URL", "https://qilimanjaro.ddns.net/public-api/api/v1")
+    _audience: str = environ.get("QILISDK_QAAS_AUDIENCE", "urn:qilimanjaro.tech:public-api:beren")
 
     def __init__(self) -> None:
         """
@@ -75,14 +76,28 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 "Please call QaaSBackend.login(username, apikey) or ensure environment variables are set."
             )
         self._username, self._token = credentials
-        self._selected_device: Device | None = None
+        self._selected_device: int | None = None
 
+    def _get_headers(self) -> dict:  # noqa: PLR6301
+        from qilisdk import __version__  # noqa: PLC0415
+
+        return {
+            "User-Agent": f"qilisdk/{__version__}"
+        }
+
+    def _get_authorized_headers(self) -> dict:
+        return {
+            **self._get_headers(),
+            "Authorization": f"Bearer {self._token.access_token}"
+        }
+
+    # TODO (vyron): Change this to `code: str` when implemented server-side.
     @property
-    def selected_device(self) -> Device | None:
+    def selected_device(self) -> int | None:
         return self._selected_device
 
-    def set_device(self, device: Device) -> None:
-        self._selected_device = device
+    def set_device(self, id: int) -> None:
+        self._selected_device = id
 
     @classmethod
     def login(
@@ -111,8 +126,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             assertion = {
                 "username": username,
                 "api_key": apikey,
-                "user_id": None,
-                "audience": QaaSBackend._api_url,
+                "audience": QaaSBackend._audience,
                 "iat": int(datetime.now(timezone.utc).timestamp()),
             }
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
@@ -124,7 +138,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                         "assertion": encoded_assertion,
                         "scope": "user profile",
                     },
-                    headers={"X-Client-Version": "0.23.2"},
+                    headers={"User-Agent": "qilisdk/0.1.4"},
                 )
                 response.raise_for_status()
                 # Suppose QaaS returns {"token": "..."} in JSON
@@ -141,23 +155,32 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         delete_credentials()
 
     def list_devices(self) -> list[Device]:
-        with httpx.Client(timeout=20.0) as client:
+        with httpx.Client() as client:
             response = client.get(
                 QaaSBackend._api_url + "/devices",
-                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
+                headers=self._get_authorized_headers()
             )
             response.raise_for_status()
 
             devices_list_adapter = TypeAdapter(list[Device])
             devices = devices_list_adapter.validate_python(response.json()["items"])
 
-            # Previous two lines are the same as doing:
-            # response_json = response.json()
-            # devices = [Device(**item) for item in response_json["items"]]
-
             return devices
 
-    def _ensure_device_selected(self) -> Device:
+    def list_jobs(self) -> list[Job]:
+        with httpx.Client() as client:
+            response = client.get(
+                QaaSBackend._api_url + "/jobs",
+                headers=self._get_authorized_headers()
+            )
+            response.raise_for_status()
+
+            jobs_list_adapter = TypeAdapter(list[Job])
+            jobs = jobs_list_adapter.validate_python(response.json()["items"])
+
+            return jobs
+
+    def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
             raise ValueError("Device not selected.")
         return self._selected_device
@@ -166,14 +189,18 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.DIGITAL,
-            device_id=device.id,
             digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
         )
+        json = {
+            "device_id": device,
+            "payload": payload.model_dump_json(),
+            "meta": {}
+        }
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
-                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
-                json=payload.model_dump_json(),
+                headers=self._get_authorized_headers(),
+                json=json,
             )
             response.raise_for_status()
             return Job(**response.json())
@@ -188,7 +215,6 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.ANALOG,
-            device_id=device.id,
             analog_payload=AnalogPayload(
                 schedule=schedule,
                 initial_state=initial_state,
@@ -196,11 +222,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 store_intermediate_results=store_intermediate_results,
             ),
         )
+        json = {
+            "device_id": device,
+            "payload": payload.model_dump_json(),
+            "meta": {}
+        }
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
-                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
-                json=payload.model_dump_json(),
+                headers=self._get_authorized_headers(),
+                json=json,
             )
             response.raise_for_status()
             return Job(**response.json())
@@ -211,16 +242,20 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.VQE,
-            device_id=device.id,
             vqe_payload=VQEPayload(
                 vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
             ),
         )
+        json = {
+            "device_id": device,
+            "payload": payload.model_dump_json(),
+            "meta": {}
+        }
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
-                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
-                json=payload.model_dump_json(),
+                headers=self._get_authorized_headers(),
+                json=json,
             )
             response.raise_for_status()
             return Job(**response.json())
@@ -231,16 +266,20 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecutePayloadType.TIME_EVOLUTION,
-            device_id=device.id,
             time_evolution_payload=TimeEvolutionPayload(
                 time_evolution=time_evolution, store_intermediate_results=store_intermediate_results
             ),
         )
+        json = {
+            "device_id": device,
+            "payload": payload.model_dump_json(),
+            "meta": {}
+        }
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
-                headers={"X-Client-Version": "0.23.2", "Authorization": f"Bearer {self._token.access_token}"},
-                json=payload.model_dump_json(),
+                headers=self._get_authorized_headers(),
+                json=json,
             )
             response.raise_for_status()
             return Job(**response.json())

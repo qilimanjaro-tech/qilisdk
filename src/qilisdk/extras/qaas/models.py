@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ruff: noqa: ANN001, ANN202, PLR6301
+from email.utils import parsedate_to_datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
 from qilisdk.utils.serialization import deserialize, serialize
-from qilisdk.yaml import yaml
 
 from .qaas_analog_result import QaaSAnalogResult
 from .qaas_digital_result import QaaSDigitalResult
@@ -66,14 +66,18 @@ class DeviceStatus(str, Enum):
 class DeviceType(str, Enum):
     """Device type"""
 
+    QPU_ANALOG = "qpu.analog"
+    QPU_DIGITAL = "qpu.digital"
+    SIMULATOR = "simulator"
     QUANTUM_DIGITAL = "quantum_device"
     QUANTUM_ANALOG = "quantum_analog_device"
-    SIMULATOR = "simulator_device"
+    SIMULATOR_DEVICE = "simulator_device"
 
 
-@yaml.register_class
 class Device(QaaSModel):
+    # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
     id: int = Field(...)
+    code: str = Field(...)
     name: str = Field(...)
     status: DeviceStatus = Field(...)
     type: DeviceType = Field(...)
@@ -86,7 +90,6 @@ class ExecutePayloadType(str, Enum):
     TIME_EVOLUTION = "time_evolution"
 
 
-@yaml.register_class
 class DigitalPayload(QaaSModel):
     circuit: Circuit = Field(...)
     nshots: int = Field(...)
@@ -102,7 +105,6 @@ class DigitalPayload(QaaSModel):
         return v
 
 
-@yaml.register_class
 class AnalogPayload(QaaSModel):
     schedule: Schedule = Field(...)
     initial_state: QuantumObject = Field(...)
@@ -140,7 +142,6 @@ class AnalogPayload(QaaSModel):
         return v
 
 
-@yaml.register_class
 class VQEPayload(QaaSModel):
     vqe: VQE = Field(...)
     optimizer: Optimizer = Field(...)
@@ -168,7 +169,6 @@ class VQEPayload(QaaSModel):
         return v
 
 
-@yaml.register_class
 class TimeEvolutionPayload(QaaSModel):
     time_evolution: TimeEvolution = Field()
     store_intermediate_results: bool = Field()
@@ -184,17 +184,14 @@ class TimeEvolutionPayload(QaaSModel):
         return v
 
 
-@yaml.register_class
 class ExecutePayload(QaaSModel):
     type: ExecutePayloadType = Field(...)
-    device_id: int = Field(...)
     digital_payload: DigitalPayload | None = None
     analog_payload: AnalogPayload | None = None
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
 
 
-@yaml.register_class
 class ExecuteResponse(QaaSModel):
     type: ExecutePayloadType = Field(...)
     digital_result: QaaSDigitalResult | None = None
@@ -203,6 +200,28 @@ class ExecuteResponse(QaaSModel):
     time_evolution_result: QaaSTimeEvolutionResult | None = None
 
 
-@yaml.register_class
+class JobStatus(str, Enum):
+    NOT_SENT = "not sent"
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    ERROR = "error"
+    QUEUED = "queued"
+    CANCELLED = "cancelled"
+
+
 class Job(QaaSModel):
     id: int = Field(...)
+    name: str = Field(...)
+    description: str = Field(...)
+    device_id: int = Field(...)
+    status: JobStatus = Field(...)
+    created_at: AwareDatetime = Field(...)
+    modified_at: AwareDatetime | None = None
+
+    @field_validator('created_at', mode='before')
+    def _parse_http_date(cls, v):
+        if isinstance(v, str):
+            # parse "Fri, 04 Jul 2025 12:36:40 GMT"
+            return parsedate_to_datetime(v)
+        return v

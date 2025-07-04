@@ -29,6 +29,7 @@ dependencies = [
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.0",
     "loguru>=0.7.3",
+    "keyrings-alt[qaas]>=5.0.2",
 ]
 
 [project.optional-dependencies]
