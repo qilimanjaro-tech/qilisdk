@@ -141,7 +141,6 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                     headers={"User-Agent": "qilisdk/0.1.4"},
                 )
                 response.raise_for_status()
-                # Suppose QaaS returns {"token": "..."} in JSON
                 token = Token(**response.json())
         except httpx.RequestError:
             # Log error message
