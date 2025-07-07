@@ -69,9 +69,6 @@ class DeviceType(str, Enum):
     QPU_ANALOG = "qpu.analog"
     QPU_DIGITAL = "qpu.digital"
     SIMULATOR = "simulator"
-    QUANTUM_DIGITAL = "quantum_device"
-    QUANTUM_ANALOG = "quantum_analog_device"
-    SIMULATOR_DEVICE = "simulator_device"
 
 
 class Device(QaaSModel):
