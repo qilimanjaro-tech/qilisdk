@@ -18,7 +18,6 @@ import copy
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-
 from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
 
 import numpy as np

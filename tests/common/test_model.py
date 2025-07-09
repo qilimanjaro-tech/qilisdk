@@ -21,7 +21,6 @@ from qilisdk.analog.hamiltonian import Z
 from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
 from qilisdk.common.variables import (
     EQ,
-    GEQ,
     GT,
     LEQ,
     LT,
