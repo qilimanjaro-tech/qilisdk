@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """config.py"""
+
 from sys import stderr
 
 from loguru import logger

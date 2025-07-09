@@ -15,14 +15,15 @@ from __future__ import annotations
 
 # import numpy as np
 import copy
-import enum
-from typing import Literal, Mapping, Type
+from enum import Enum
+from typing import TYPE_CHECKING, Literal, Mapping, Type
 
 # import cupy as np
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, Z
 from qilisdk.utils import logger
+from qilisdk.yaml import yaml
 
 from .variables import (
     GEQ,
@@ -37,6 +38,10 @@ from .variables import (
     Term,
     Variable,
 )
+
+if TYPE_CHECKING:
+    from ruamel.yaml.nodes import ScalarNode
+    from ruamel.yaml.representer import RoundTripRepresenter
 
 # Utils ###
 
@@ -62,11 +67,33 @@ class SlackCounter:
         self._count = 0
 
 
-class ObjectiveSense(enum.Enum):
+@yaml.register_class
+class ObjectiveSense(str, Enum):
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
+    @classmethod
+    def to_yaml(cls, representer: RoundTripRepresenter, node: ObjectiveSense) -> ScalarNode:
+        """
+        Method to be called automatically during YAML serialization.
 
+        Returns:
+            ScalarNode: The YAML scalar node representing the ObjectiveSense.
+        """
+        return representer.represent_scalar("!ObjectiveSense", f"{node.value}")
+
+    @classmethod
+    def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:
+        """
+        Method to be called automatically during YAML deserialization.
+
+        Returns:
+            ObjectiveSense: The ObjectiveSense instance created from the YAML node value.
+        """
+        return cls(node.value)
+
+
+@yaml.register_class
 class Constraint:
     """Represents a mathematical constraint within an optimization ``Model``.
 
@@ -154,6 +181,7 @@ class Constraint:
         return f"{self.label}: {self.term}"
 
 
+@yaml.register_class
 class Objective:
     """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
 
@@ -229,6 +257,7 @@ class Objective:
         return Objective(label=self.label, term=copy.copy(self.term), sense=self.sense)
 
 
+@yaml.register_class
 class Model:
     """Represents a mathematical optimization model, consisting of an ``Objective`` function
     and a set of ``Constraint`` objects.
@@ -476,6 +505,7 @@ class Model:
         return self.to_qubo().to_hamiltonian()
 
 
+@yaml.register_class
 class QUBO(Model):
     """Represents a model that is used for Quadratic Unconstrained Binary Optimization."""
 

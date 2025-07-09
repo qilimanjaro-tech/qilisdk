@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# ruff: noqa: ANN001, ANN202, PLR6301
+from email.utils import parsedate_to_datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
-from qilisdk.yaml import yaml
+from qilisdk.utils.serialization import deserialize, serialize
 
 from .qaas_analog_result import QaaSAnalogResult
 from .qaas_digital_result import QaaSDigitalResult
@@ -65,17 +66,21 @@ class DeviceStatus(str, Enum):
 class DeviceType(str, Enum):
     """Device type"""
 
-    QUANTUM_DIGITAL = "quantum_device"
-    QUANTUM_ANALOG = "quantum_analog_device"
-    SIMULATOR = "simulator_device"
+    QPU_ANALOG = "qpu.analog"
+    QPU_DIGITAL = "qpu.digital"
+    SIMULATOR = "simulator"
 
 
-@yaml.register_class
 class Device(QaaSModel):
+    # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
     id: int = Field(...)
+    code: str = Field(...)
     name: str = Field(...)
-    status: DeviceStatus = Field(...)
     type: DeviceType = Field(...)
+    status: DeviceStatus = Field(...)
+    pending_jobs: int = Field(alias="number_pending_jobs")
+    static_features: dict
+    dynamic_features: dict
 
 
 class ExecutePayloadType(str, Enum):
@@ -85,48 +90,138 @@ class ExecutePayloadType(str, Enum):
     TIME_EVOLUTION = "time_evolution"
 
 
-@yaml.register_class
 class DigitalPayload(QaaSModel):
     circuit: Circuit = Field(...)
     nshots: int = Field(...)
 
+    @field_serializer("circuit")
+    def _serialize_circuit(self, circuit: Circuit, _info):
+        return serialize(circuit)
 
-@yaml.register_class
+    @field_validator("circuit", mode="before")
+    def _load_circuit(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Circuit)
+        return v
+
+
 class AnalogPayload(QaaSModel):
     schedule: Schedule = Field(...)
     initial_state: QuantumObject = Field(...)
     observables: list[PauliOperator | Hamiltonian] = Field(...)
     store_intermediate_results: bool = Field(...)
 
+    @field_serializer("schedule")
+    def _serialize_schedule(self, schedule: Schedule, _info):
+        return serialize(schedule)
 
-@yaml.register_class
+    @field_validator("schedule", mode="before")
+    def _validate_schedule(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Schedule)
+        return v
+
+    @field_serializer("initial_state")
+    def _serialize_initial_state(self, initial_state: QuantumObject, _info):
+        return serialize(initial_state)
+
+    @field_validator("initial_state", mode="before")
+    def _validate_initial_state(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, QuantumObject)
+        return v
+
+    @field_serializer("observables")
+    def _serialize_observables(self, observables: list[PauliOperator | Hamiltonian], _info):
+        return [serialize(obs) for obs in observables]
+
+    @field_validator("observables", mode="before")
+    def _validate_observables(cls, v):
+        if isinstance(v, list) and all(isinstance(item, str) for item in v):
+            return [deserialize(item) for item in v]
+        return v
+
+
 class VQEPayload(QaaSModel):
     vqe: VQE = Field(...)
     optimizer: Optimizer = Field(...)
     nshots: int = Field(...)
     store_intermediate_results: bool = Field(...)
 
+    @field_serializer("vqe")
+    def _serialize_vqe(self, vqe: VQE, _info):
+        return serialize(vqe)
 
-@yaml.register_class
+    @field_validator("vqe", mode="before")
+    def _load_vqe(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, VQE)
+        return v
+
+    @field_serializer("optimizer")
+    def _serialize_optimizer(self, optimizer: Optimizer, _info):
+        return serialize(optimizer)
+
+    @field_validator("optimizer", mode="before")
+    def _load_optimizer(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Optimizer)
+        return v
+
+
 class TimeEvolutionPayload(QaaSModel):
     time_evolution: TimeEvolution = Field()
     store_intermediate_results: bool = Field()
 
+    @field_serializer("time_evolution")
+    def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
+        return serialize(time_evolution)
 
-@yaml.register_class
+    @field_validator("time_evolution", mode="before")
+    def _load_time_evolution(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, TimeEvolution)
+        return v
+
+
 class ExecutePayload(QaaSModel):
     type: ExecutePayloadType = Field(...)
-    device_id: int = Field(...)
     digital_payload: DigitalPayload | None = None
     analog_payload: AnalogPayload | None = None
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
 
 
-@yaml.register_class
 class ExecuteResponse(QaaSModel):
     type: ExecutePayloadType = Field(...)
     digital_result: QaaSDigitalResult | None = None
     analog_result: QaaSAnalogResult | None = None
     vqe_result: QaaSVQEResult | None = None
     time_evolution_result: QaaSTimeEvolutionResult | None = None
+
+
+class JobStatus(str, Enum):
+    NOT_SENT = "not sent"
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    ERROR = "error"
+    QUEUED = "queued"
+    CANCELLED = "cancelled"
+
+
+class Job(QaaSModel):
+    id: int = Field(...)
+    name: str = Field(...)
+    description: str = Field(...)
+    device_id: int = Field(...)
+    status: JobStatus = Field(...)
+    created_at: AwareDatetime = Field(...)
+    modified_at: AwareDatetime | None = None
+
+    @field_validator('created_at', mode='before')
+    def _parse_http_date(cls, v):
+        if isinstance(v, str):
+            # parse "Fri, 04 Jul 2025 12:36:40 GMT"
+            return parsedate_to_datetime(v)
+        return v
