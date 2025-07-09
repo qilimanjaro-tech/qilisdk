@@ -191,6 +191,7 @@ class Gate(ABC):
         return f"{self.name}{qubits_str}"
 
 
+@yaml.register_class
 class BasicGate(Gate):
     """
     Represents a quantum gate that can be used in quantum circuits.

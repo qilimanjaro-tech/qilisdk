@@ -18,12 +18,18 @@ import copy
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterator, Mapping, Sequence, TypeVar
+
+from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
 
 import numpy as np
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.utils import logger
+from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from ruamel.yaml.nodes import ScalarNode
+    from ruamel.yaml.representer import RoundTripRepresenter
 
 Number = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
@@ -145,6 +151,7 @@ def _extract_number(label: str) -> int:
     return 0
 
 
+@yaml.register_class
 class Domain(str, Enum):
     INTEGER = "Integer Domain"
     POSITIVE_INTEGER = "Positive Integer Domain"
@@ -197,15 +204,57 @@ class Domain(str, Enum):
             return MAX_INT
         return 1e30
 
+    @classmethod
+    def to_yaml(cls, representer: RoundTripRepresenter, node: Domain) -> ScalarNode:
+        """
+        Method to be called automatically during YAML serialization.
 
-class Operation(Enum):
+        Returns:
+            ScalarNode: The YAML scalar node representing the Domain.
+        """
+        return representer.represent_scalar("!Domain", f"{node.value}")
+
+    @classmethod
+    def from_yaml(cls, _, node: ScalarNode) -> Domain:
+        """
+        Method to be called automatically during YAML deserialization.
+
+        Returns:
+            Domain: The Domain instance created from the YAML node value.
+        """
+        return cls(node.value)
+
+
+@yaml.register_class
+class Operation(str, Enum):
     MUL = "*"
     ADD = "+"
     DIV = "/"
     SUB = "-"
 
+    @classmethod
+    def to_yaml(cls, representer: RoundTripRepresenter, node: Operation) -> ScalarNode:
+        """
+        Method to be called automatically during YAML serialization.
 
-class ComparisonOperation(Enum):
+        Returns:
+            ScalarNode: The YAML scalar node representing the Operation.
+        """
+        return representer.represent_scalar("!Operation", f"{node.value}")
+
+    @classmethod
+    def from_yaml(cls, _, node: ScalarNode) -> Operation:
+        """
+        Method to be called automatically during YAML deserialization.
+
+        Returns:
+            Operation: The Operation instance created from the YAML node value.
+        """
+        return cls(node.value)
+
+
+@yaml.register_class
+class ComparisonOperation(str, Enum):
     LT = "<"
     LEQ = "<="
     EQ = "=="
@@ -213,7 +262,28 @@ class ComparisonOperation(Enum):
     GT = ">"
     GEQ = ">="
 
+    @classmethod
+    def to_yaml(cls, representer: RoundTripRepresenter, node: ComparisonOperation) -> ScalarNode:
+        """
+        Method to be called automatically during YAML serialization.
 
+        Returns:
+            ScalarNode: The YAML scalar node representing the ComparisonOperation.
+        """
+        return representer.represent_scalar("!ComparisonOperation", f"{node.value}")
+
+    @classmethod
+    def from_yaml(cls, _, node: ScalarNode) -> ComparisonOperation:
+        """
+        Method to be called automatically during YAML deserialization.
+
+        Returns:
+            ComparisonOperation: The ComparisonOperation instance created from the YAML node value.
+        """
+        return cls(node.value)
+
+
+@yaml.register_class
 class Encoding(ABC):
     """Represents an abstract variable encoding class.
 
@@ -302,6 +372,7 @@ class Encoding(ABC):
         """
 
 
+@yaml.register_class
 class Bitwise(Encoding):
     """Represents a Bitwise variable encoding class."""
 
@@ -387,6 +458,7 @@ class Bitwise(Encoding):
         return True, 0
 
 
+@yaml.register_class
 class OneHot(Encoding):
     """Represents a One-Hot variable encoding class."""
 
@@ -501,6 +573,7 @@ class OneHot(Encoding):
         return num_ones == 1, (num_ones - 1) ** 2
 
 
+@yaml.register_class
 class DomainWall(Encoding):
     """Represents a Domain-wall variable encoding class."""
 
@@ -851,6 +924,7 @@ class BaseVariable(ABC):
         return hash(self) == hash(other)
 
 
+@yaml.register_class
 class BinaryVariable(BaseVariable):
     """Represents Binary Variable structure."""
 
@@ -881,6 +955,7 @@ class BinaryVariable(BaseVariable):
         return BinaryVariable(label=self.label)
 
 
+@yaml.register_class
 class SpinVariable(BaseVariable):
     """Represents Spin Variable structure."""
 
@@ -909,6 +984,7 @@ class SpinVariable(BaseVariable):
         return SpinVariable(label=self.label)
 
 
+@yaml.register_class
 class Variable(BaseVariable):
     """Represents General Variable structure (Continuous, binary, or Spin).
     Note: For Binary or Spin variables it's recommended to use the BinaryVar and SpinVar objects."""
@@ -1034,6 +1110,7 @@ class Variable(BaseVariable):
 # Terms ###
 
 
+@yaml.register_class
 class Term:
     """Represents a mathematical Term (e.g. 3x*y, 2x, ...).
 
@@ -1492,6 +1569,7 @@ class Term:
         return hash(self) == hash(other)
 
 
+@yaml.register_class
 class ComparisonTerm:
     """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term``s
     (e.g. x+y>0, x>2, ...).

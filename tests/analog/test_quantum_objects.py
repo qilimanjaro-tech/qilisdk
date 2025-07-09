@@ -151,6 +151,7 @@ def test_ptrace_invalid_keep():
     with pytest.raises(ValueError):  # noqa: PT011
         qobj.ptrace(keep=[0, 1], dims=[2])  # too many indices
 
+
 # --- Arithmetic Operator Tests ---
 
 

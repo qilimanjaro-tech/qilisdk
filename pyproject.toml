@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.1.4"
+version = "0.1.5"
 description = "qilisdk is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -23,32 +23,34 @@ classifiers = [
 ]
 dependencies = [
     "dill>=0.3.9",
-    "numpy>=2.2.4",
+    "numpy>=1.26.0",
     "ruamel-yaml>=0.18.10",
-    "scipy>=1.15.1",
+    "scipy>=1.15.3",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.0",
     "loguru>=0.7.3",
+    "keyrings-alt[qaas]>=5.0.2",
 ]
 
 [project.optional-dependencies]
 cuda = [
-    "cuda-quantum-cu12",
+    "cuda-quantum-cu12==0.11.0",
 ]
 qaas = [
     "httpx>=0.28.1",
     "keyring>=25.6.0",
+    "keyrings-alt>=5.0.2",
 ]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.125.3",
+    "hypothesis>=6.135.26",
     "ipykernel>=6.29.5",
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-sugar>=1.0.0",
-    "ruff>=0.9.5",
+    "ruff>=0.12.2",
     "towncrier>=24.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=6.2.1",
