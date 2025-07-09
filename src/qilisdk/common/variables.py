@@ -19,7 +19,6 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Iterator, Mapping, Sequence, TypeVar
-from warnings import warn
 
 import numpy as np
 
@@ -276,6 +275,7 @@ class Encoding(ABC):
         """
 
     @staticmethod
+    @abstractmethod
     def num_binary_equivalent(var: "Variable", precision: float = 1e-2) -> int:
         """Give a continuous variable return the number of binary variables needed to encode it.
 
@@ -287,9 +287,9 @@ class Encoding(ABC):
         Returns:
             int: the number of binary variables needed to encode it.
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
     @staticmethod
+    @abstractmethod
     def check_valid(value: list[int] | int) -> tuple[bool, int]:
         """checks if the binary list sample is a valid sample in this encoding.
 
@@ -300,15 +300,12 @@ class Encoding(ABC):
             tuple[bool, int]: the boolean is True if the sample is a valid encoding,
                                 while the int is the error in the encoding.
         """
-        raise NotImplementedError("This is an abstract class and is not meant to be executed.")
 
 
 class Bitwise(Encoding):
     """Represents a Bitwise variable encoding class."""
 
-    @property
-    def name(self) -> str:
-        return "Bitwise"
+    name = "Bitwise"
 
     @staticmethod
     def _bitwise_encode(x: int, N: int) -> list[int]:
@@ -349,7 +346,9 @@ class Bitwise(Encoding):
         binary_list = Bitwise._bitwise_encode(value, len(binary_var)) if isinstance(value, Number) else value
 
         if not Bitwise.check_valid(binary_list)[0]:
-            raise ValueError(f"invalid binary string {binary_list} with the Bitwise encoding.")
+            raise ValueError(
+                f"invalid binary string {binary_list} with the Bitwise encoding."
+            )  # can not be reached in the case of Bitwise encoding.
 
         if len(binary_list) < len(binary_var):
             for _ in range(len(binary_var) - len(binary_list)):
@@ -366,7 +365,7 @@ class Bitwise(Encoding):
         if not var.domain.check_value(out):
             raise ValueError(
                 f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )
+            )  # not sure this line can be reached.
         return out
 
     @staticmethod
@@ -391,9 +390,7 @@ class Bitwise(Encoding):
 class OneHot(Encoding):
     """Represents a One-Hot variable encoding class."""
 
-    @property
-    def name(self) -> str:
-        return "ONE HOT"
+    name = "One-Hot"
 
     @staticmethod
     def _one_hot_encode(x: int, N: int) -> list[int]:
@@ -455,7 +452,7 @@ class OneHot(Encoding):
             for _ in range(len(binary_var) - len(binary_list) + 1):
                 binary_list.append(0)
         elif len(binary_list) != len(binary_var) + 1:
-            raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
+            raise ValueError(f"expected {len(binary_var) + 1} variables but received {len(binary_list)}")
 
         zero_index = OneHot._find_zero(var)
         binary_dict: dict[BaseVariable, list[int]] = {}
@@ -472,7 +469,7 @@ class OneHot(Encoding):
         if not var.domain.check_value(out):
             raise ValueError(
                 f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )
+            )  # not sure this line can be reached.
 
         return out
 
@@ -507,9 +504,7 @@ class OneHot(Encoding):
 class DomainWall(Encoding):
     """Represents a Domain-wall variable encoding class."""
 
-    @property
-    def name(self) -> str:
-        return "Domain Wall"
+    name = "Domain Wall"
 
     @staticmethod
     def _domain_wall_encode(x: int, N: int) -> list[int]:
@@ -576,7 +571,7 @@ class DomainWall(Encoding):
         if not var.domain.check_value(out):
             raise ValueError(
                 f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )
+            )  # not sure if this line is reachable.
         return out
 
     @staticmethod
@@ -735,7 +730,9 @@ class BaseVariable(ABC):
 
     @abstractmethod
     def num_binary_equivalent(self) -> int:
-        raise NotImplementedError
+        """Returns:
+        int: the number of binary variables that are needed to represent this variable in the given encoding.
+        """
 
     @abstractmethod
     def evaluate(self, value: list[int] | Number) -> float:
@@ -750,7 +747,6 @@ class BaseVariable(ABC):
         Returns:
             float: the evaluated vale of the variable.
         """
-        raise NotImplementedError
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
         """Replaces the information of the variable with those coming from the dictionary
@@ -764,13 +760,13 @@ class BaseVariable(ABC):
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
 
+    @abstractmethod
     def to_binary(self) -> Term:
         """Returns the binary representation of a variable.º
 
         Returns:
             Term: the binary representation of a variable.
         """
-        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f"{self._label}"
@@ -854,11 +850,6 @@ class BaseVariable(ABC):
             return False
         return hash(self) == hash(other)
 
-    def __ne__(self, other: object) -> bool:
-        if not isinstance(other, BaseVariable):
-            return True
-        return hash(self) != hash(other)
-
 
 class BinaryVariable(BaseVariable):
     """Represents Binary Variable structure."""
@@ -875,7 +866,7 @@ class BinaryVariable(BaseVariable):
                 return int(value)
             if not self.domain.check_value(value):
                 raise EvaluationError(f"Evaluating a Binary variable with a value {value} that is outside the domain.")
-            return value
+            return value  # I don't think this line is reachable
         if len(value) != 1:
             raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
         return value[0]
@@ -960,7 +951,7 @@ class Variable(BaseVariable):
     def term(self) -> Term:
         if self._term is None:
             if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
-                warn(
+                logger.warning(
                     f"Encoding variable {self.label} which has the bounds {self.bounds}"
                     + "is very expensive and may take a very long time."
                 )
@@ -1083,35 +1074,36 @@ class Term:
                 else:
                     self[self.CONST] = e
             elif isinstance(e, Term):
-                if e.operation == self._operation:
+                if len(e) == 0:
+                    if self.CONST in self:
+                        self[self.CONST] = self._apply_operation_on_constants([self[self.CONST], 0])
+                    else:
+                        self[self.CONST] = 0
+                elif e.operation == self._operation:
                     for key in e:
                         if key in self:
                             if isinstance(key, BaseVariable) and self._is_constant(key):
                                 self[key] = self._apply_operation_on_constants([self[key], e[key]])
+                            elif isinstance(key, BinaryVariable) and self.operation == Operation.MUL:
+                                self[key] = 1
                             else:
                                 self[key] += e[key]
                         else:
                             self[key] = e[key]
                 else:
                     e_copy = copy.copy(e)
-                    if len(e_copy) > 0:
-                        coeff = 1.0
-                        if e_copy.operation == Operation.MUL and self.CONST in e_copy:
-                            coeff = e_copy.pop(self.CONST)
-                        simple_e = e_copy._simplify()  # noqa: SLF001
-                        simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
-                        if simple_e in self:
-                            if isinstance(simple_e, BaseVariable) and self._is_constant(simple_e):
-                                self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
-                            else:
-                                self[simple_e] += coeff
+                    coeff = 1.0
+                    if e_copy.operation == Operation.MUL and self.CONST in e_copy:
+                        coeff = e_copy.pop(self.CONST)
+                    simple_e = e_copy._simplify()  # noqa: SLF001
+                    simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
+                    if simple_e in self:
+                        if isinstance(simple_e, BaseVariable) and self._is_constant(simple_e):
+                            self[simple_e] = self._apply_operation_on_constants([self[simple_e], coeff])
                         else:
-                            self[simple_e] = coeff
-                    elif len(e_copy) == 0:
-                        if self.CONST in self:
-                            self[self.CONST] = self._apply_operation_on_constants([self[self.CONST], 0])
-                        else:
-                            self[self.CONST] = 0
+                            self[simple_e] += coeff
+                    else:
+                        self[simple_e] = coeff
             else:
                 raise ValueError(
                     f"Term accepts object of types Term or Variable but an object of type {e.__class__()} was given"
@@ -1148,30 +1140,6 @@ class Term:
                 degree = max(degree, 1)
         return degree
 
-    def replace_variables(self, var_dict: dict[BaseVariable, BaseVariable]) -> None:
-        """Updates the variables in the term with new values.
-
-        Args:
-            var_dict (dict[BaseVariable, BaseVariable]): a dictionary where the keys are the old variables and
-                the values are the new updated variable.
-
-        Note: this is only effects Variable objects and it doesn't change anything about BinaryVar or SpinVar objects
-
-        Raises:
-            ValueError: if the replacement variable is not of the same type as the original variable.
-        """
-        for var, replacement_var in var_dict.items():
-            if var in self and isinstance(var, Variable):
-                if isinstance(replacement_var, Variable):
-                    var.update_variable(
-                        domain=replacement_var.domain, bounds=replacement_var.bounds, encoding=replacement_var.encoding
-                    )
-                else:
-                    raise ValueError(
-                        f"Can't update the variable {var} because the "
-                        + f" {replacement_var} is not of the same type as {var}"
-                    )
-
     def to_binary(self) -> Term:
         """Returns the term in binary format. That is encoding all continuous variables into
             binary according to the encoding defined in the variable.
@@ -1205,28 +1173,17 @@ class Term:
 
         return Term(out_list, self.operation)
 
-    def update_variable_bounds(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
-        """update the bounds of the variables inside the term.
-
-        Args:
-            var_dict (dict[BaseVariable, tuple[float  |  None, float  |  None]]): a dictionary which has the variable
-                    as its keys, and the new bounds as its values.
-        """
-        for var, bounds in var_dict.items():
-            if var in self and isinstance(var, Variable):
-                var.update_variable(domain=var.domain, bounds=bounds, encoding=var.encoding)
-
     def _apply_operation_on_constants(self, const_list: list[Number]) -> Number:
-        out = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
-        for c in const_list:
+        out = const_list[0]
+        for i in range(1, len(const_list)):
             if self.operation is Operation.ADD:
-                out += float(c)
+                out += float(const_list[i])
             elif self.operation is Operation.SUB:
-                out -= float(c)
+                out -= float(const_list[i])
             elif self.operation is Operation.MUL:
-                out *= float(c)
+                out *= float(const_list[i])
             elif self.operation is Operation.DIV:
-                out /= float(c)
+                out /= float(const_list[i])
 
         return out
 
@@ -1320,6 +1277,9 @@ class Term:
         for term, _ in parentheses:
             out.pop(term)
 
+        if len(out) == 0 and len(parentheses) != 0:
+            out = Term([1], Operation.ADD)
+
         for _term, coeff in parentheses:
             term = copy.copy(_term)
             if coeff > 1:
@@ -1392,7 +1352,16 @@ class Term:
         if len(self) == 0:
             return "0"
         output_string = ""
-        for i, e in enumerate(self):
+        const = self.get_constant()
+        keys = list(self._elements.keys())
+
+        if (
+            (self.operation in {Operation.ADD, Operation.SUB} and const == 0)
+            or (self.operation in {Operation.MUL, Operation.DIV} and const == 1)
+        ) and Term.CONST in keys:
+            keys.remove(Term.CONST)
+
+        for i, e in enumerate(keys):
             if isinstance(e, Term):
                 term_str = str(e).strip()
                 if len(term_str) > 0:
@@ -1412,10 +1381,10 @@ class Term:
                     output_string += f"{e} " if self[e] == 1 else f"({self[e]}) * {e} "
             else:
                 output_string += f"{e} "
-            if i < len(self) - 1:
+            if i < len(keys) - 1:
                 output_string += f"{self.operation.value} "
 
-        return output_string
+        return output_string.strip()
 
     __str__ = __repr__
 
@@ -1505,7 +1474,10 @@ class Term:
         if self.operation == Operation.MUL:
             out = copy.copy(self)
             for element in out:
-                out[element] += a
+                if element is Term.CONST:
+                    out[element] **= a
+                else:
+                    out[element] *= a
             return out
         raise NotImplementedError(
             "The power operation for terms that are not addition or multiplication is not supported."
@@ -1518,11 +1490,6 @@ class Term:
         if not isinstance(other, Term):
             return False
         return hash(self) == hash(other)
-
-    def __ne__(self, other: object) -> bool:
-        if not isinstance(other, Term):
-            return False
-        return hash(self) != hash(other)
 
 
 class ComparisonTerm:
@@ -1546,7 +1513,7 @@ class ComparisonTerm:
         """
         term = lhs - rhs
         if not isinstance(term, Term):
-            term = Term([term], Operation.ADD)
+            term = Term([term], Operation.ADD)  # I don't think this line is reachable
         const = -1 * term.pop(Term.CONST) if Term.CONST in term else 0
         self._lhs = term
         self._rhs = Term([const], Operation.ADD)
@@ -1591,6 +1558,7 @@ class ComparisonTerm:
 
         return sorted(var, key=lambda x: x.label)
 
+    @property
     def degree(self) -> int:
         """
         Returns:
@@ -1661,35 +1629,11 @@ class ComparisonTerm:
         """
         return self._apply_comparison_operation(self._lhs.evaluate(var_values), self._rhs.evaluate(var_values))
 
-    def replace_variables(self, var_dict: dict[BaseVariable, BaseVariable]) -> None:
-        """Updates the variables in the comparison term with new values.
-
-        Args
-        var_dict : dict[BaseVariable, BaseVariable]
-        a dictionary where the keys are the old variables and the values are the new updated variable.
-
-        Note: this is only effects Variable objects and it doesn't change anything about BinaryVar or SpinVar objects
-        """
-        self.lhs.replace_variables(var_dict)
-        self.rhs.replace_variables(var_dict)
-
-    def update_variable_bounds(self, var_dict: dict[BaseVariable, tuple[float | None, float | None]]) -> None:
-        """update the bounds of the variables inside the term.
-
-        Args
-        var_dict : dict[BaseVariable, tuple[float | None, float | None]]
-        a dictionary which has the variable as its keys, and the new bounds as its values.
-        """
-        if isinstance(self.lhs, Term):
-            self.lhs.update_variable_bounds(var_dict)
-        if isinstance(self.rhs, Term):
-            self.rhs.update_variable_bounds(var_dict)
-
     def __copy__(self) -> ComparisonTerm:
         return ComparisonTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)
 
     def __repr__(self) -> str:
-        return f"{self.lhs!s} {self.operation.value} {self.rhs!s}"
+        return f"{str(self.lhs).strip()} {self.operation.value} {str(self.rhs).strip()}"
 
     __str__ = __repr__
 

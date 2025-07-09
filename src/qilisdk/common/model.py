@@ -738,9 +738,9 @@ class QUBO(Model):
         else:
             c = copy.copy(term)
 
-        if c.degree() > 2:  # noqa: PLR2004
+        if c.degree > 2:  # noqa: PLR2004
             raise ValueError(
-                f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree()}."
+                f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree}."
             )
 
         self._check_variables(c, lagrange_multiplier=lagrange_multiplier)
