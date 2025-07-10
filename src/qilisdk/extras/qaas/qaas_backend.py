@@ -32,7 +32,7 @@ from .models import (
     Device,
     DigitalPayload,
     ExecutePayload,
-    ExecutePayloadType,
+    ExecuteType,
     Job,
     TimeEvolutionPayload,
     Token,
@@ -81,15 +81,10 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def _get_headers(self) -> dict:  # noqa: PLR6301
         from qilisdk import __version__  # noqa: PLC0415
 
-        return {
-            "User-Agent": f"qilisdk/{__version__}"
-        }
+        return {"User-Agent": f"qilisdk/{__version__}"}
 
     def _get_authorized_headers(self) -> dict:
-        return {
-            **self._get_headers(),
-            "Authorization": f"Bearer {self._token.access_token}"
-        }
+        return {**self._get_headers(), "Authorization": f"Bearer {self._token.access_token}"}
 
     # TODO (vyron): Change this to `code: str` when implemented server-side.
     @property
@@ -155,10 +150,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
     def list_devices(self) -> list[Device]:
         with httpx.Client() as client:
-            response = client.get(
-                QaaSBackend._api_url + "/devices",
-                headers=self._get_authorized_headers()
-            )
+            response = client.get(QaaSBackend._api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             devices_list_adapter = TypeAdapter(list[Device])
@@ -168,16 +160,34 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
     def list_jobs(self) -> list[Job]:
         with httpx.Client() as client:
-            response = client.get(
-                QaaSBackend._api_url + "/jobs",
-                headers=self._get_authorized_headers()
-            )
+            response = client.get(QaaSBackend._api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             jobs_list_adapter = TypeAdapter(list[Job])
             jobs = jobs_list_adapter.validate_python(response.json()["items"])
 
             return jobs
+
+    def get_job(self, id: int) -> Job:
+        with httpx.Client() as client:
+            response = client.get(
+                f"{QaaSBackend._api_url}/jobs/{id}",
+                headers=self._get_authorized_headers(),
+                params={
+                    "payload": True,
+                    "result": True,
+                    "logs": True,
+                    "error_logs": True,
+                    "error": True,
+                },
+            )
+            response.raise_for_status()
+
+            # assuming the API returns {"item": { ...job fields... }}
+            job_adapter = TypeAdapter(Job)
+            job = job_adapter.validate_python(response.json())
+
+            return job
 
     def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
@@ -187,14 +197,10 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def execute(self, circuit: Circuit, nshots: int = 1000) -> Job:  # type: ignore[override]
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecutePayloadType.DIGITAL,
+            type=ExecuteType.DIGITAL,
             digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
         )
-        json = {
-            "device_id": device,
-            "payload": payload.model_dump_json(),
-            "meta": {}
-        }
+        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
@@ -213,7 +219,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     ) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecutePayloadType.ANALOG,
+            type=ExecuteType.ANALOG,
             analog_payload=AnalogPayload(
                 schedule=schedule,
                 initial_state=initial_state,
@@ -221,11 +227,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 store_intermediate_results=store_intermediate_results,
             ),
         )
-        json = {
-            "device_id": device,
-            "payload": payload.model_dump_json(),
-            "meta": {}
-        }
+        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
@@ -240,16 +242,12 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     ) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecutePayloadType.VQE,
+            type=ExecuteType.VQE,
             vqe_payload=VQEPayload(
                 vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
             ),
         )
-        json = {
-            "device_id": device,
-            "payload": payload.model_dump_json(),
-            "meta": {}
-        }
+        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
@@ -259,21 +257,15 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             response.raise_for_status()
             return Job(**response.json())
 
-    def run_time_evolution(
-        self, time_evolution: TimeEvolution, store_intermediate_results: bool = False
-    ) -> Job:
+    def run_time_evolution(self, time_evolution: TimeEvolution, store_intermediate_results: bool = False) -> Job:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecutePayloadType.TIME_EVOLUTION,
+            type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(
                 time_evolution=time_evolution, store_intermediate_results=store_intermediate_results
             ),
         )
-        json = {
-            "device_id": device,
-            "payload": payload.model_dump_json(),
-            "meta": {}
-        }
+        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",

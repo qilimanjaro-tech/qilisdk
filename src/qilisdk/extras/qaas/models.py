@@ -18,15 +18,13 @@ from enum import Enum
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
+from qilisdk.analog.analog_result import AnalogResult
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.vqe import VQEResult
 from qilisdk.utils.serialization import deserialize, serialize
-
-from .qaas_analog_result import QaaSAnalogResult
-from .qaas_digital_result import QaaSDigitalResult
-from .qaas_time_evolution_result import QaaSTimeEvolutionResult
-from .qaas_vqe_result import QaaSVQEResult
 
 
 class QaaSModel(BaseModel):
@@ -83,7 +81,7 @@ class Device(QaaSModel):
     dynamic_features: dict
 
 
-class ExecutePayloadType(str, Enum):
+class ExecuteType(str, Enum):
     DIGITAL = "digital"
     ANALOG = "analog"
     VQE = "vqe"
@@ -185,23 +183,63 @@ class TimeEvolutionPayload(QaaSModel):
 
 
 class ExecutePayload(QaaSModel):
-    type: ExecutePayloadType = Field(...)
+    type: ExecuteType = Field(...)
     digital_payload: DigitalPayload | None = None
     analog_payload: AnalogPayload | None = None
     vqe_payload: VQEPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
 
 
-class ExecuteResponse(QaaSModel):
-    type: ExecutePayloadType = Field(...)
-    digital_result: QaaSDigitalResult | None = None
-    analog_result: QaaSAnalogResult | None = None
-    vqe_result: QaaSVQEResult | None = None
-    time_evolution_result: QaaSTimeEvolutionResult | None = None
+class ExecuteResult(QaaSModel):
+    type: ExecuteType = Field(...)
+    digital_result: DigitalResult | None = None
+    analog_result: AnalogResult | None = None
+    vqe_result: VQEResult | None = None
+    time_evolution_result: AnalogResult | None = None
+
+    @field_serializer("digital_result")
+    def _serialize_digital_result(self, digital_result: DigitalResult, _info):
+        return serialize(digital_result)
+
+    @field_validator("digital_result", mode="before")
+    def _load_digital_result(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, DigitalResult)
+        return v
+
+    @field_serializer("vqe_result")
+    def _serialize_vqe_result(self, vqe_result: VQEResult, _info):
+        return serialize(vqe_result)
+
+    @field_validator("digital_result", mode="before")
+    def _load_vqe_result(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, VQEResult)
+        return v
+
+    @field_serializer("analog_result")
+    def _serialize_analog_result(self, analog_result: AnalogResult, _info):
+        return serialize(analog_result)
+
+    @field_validator("analog_result", mode="before")
+    def _load_analog_result(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, AnalogResult)
+        return v
+
+    @field_serializer("time_evolution_result")
+    def _serialize_time_evolution_result(self, time_evolution_result: AnalogResult, _info):
+        return serialize(time_evolution_result)
+
+    @field_validator("time_evolution_result", mode="before")
+    def _load_time_evolution_result(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, AnalogResult)
+        return v
 
 
 class JobStatus(str, Enum):
-    NOT_SENT = "not sent"
+    NOT_SENT = "not_sent"
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -218,9 +256,21 @@ class Job(QaaSModel):
     status: JobStatus = Field(...)
     created_at: AwareDatetime = Field(...)
     modified_at: AwareDatetime | None = None
+    payload: ExecutePayload | None = None
+    result: ExecuteResult | None = None
+    logs: str | None = None
+    error: str | None = None
+    error_logs: str | None = None
 
-    @field_validator('created_at', mode='before')
-    def _parse_http_date(cls, v):
+    @field_validator("created_at", mode="before")
+    def _parse_created_at(cls, v):
+        if isinstance(v, str):
+            # parse "Fri, 04 Jul 2025 12:36:40 GMT"
+            return parsedate_to_datetime(v)
+        return v
+
+    @field_validator("modified_at", mode="before")
+    def _parse_modified_at(cls, v):
         if isinstance(v, str):
             # parse "Fri, 04 Jul 2025 12:36:40 GMT"
             return parsedate_to_datetime(v)
