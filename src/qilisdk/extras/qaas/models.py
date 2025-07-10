@@ -256,7 +256,7 @@ class Job(QaaSModel):
     status: JobStatus = Field(...)
     created_at: AwareDatetime = Field(...)
     modified_at: AwareDatetime | None = None
-    payload: ExecutePayload | None = None
+    # payload: ExecutePayload | None = None
     result: ExecuteResult | None = None
     logs: str | None = None
     error: str | None = None

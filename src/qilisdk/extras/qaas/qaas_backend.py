@@ -201,7 +201,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        with httpx.Client(timeout=20.0) as client:
+        with httpx.Client() as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
                 headers=self._get_authorized_headers(),
@@ -228,7 +228,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        with httpx.Client(timeout=20.0) as client:
+        with httpx.Client() as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
                 headers=self._get_authorized_headers(),
@@ -248,7 +248,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        with httpx.Client(timeout=20.0) as client:
+        with httpx.Client() as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
                 headers=self._get_authorized_headers(),
@@ -266,7 +266,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        with httpx.Client(timeout=20.0) as client:
+        with httpx.Client() as client:
             response = client.post(
                 QaaSBackend._api_url + "/execute",
                 headers=self._get_authorized_headers(),
