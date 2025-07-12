@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import base64
 import json
 import logging
 from base64 import urlsafe_b64encode
@@ -182,12 +183,20 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 },
             )
             response.raise_for_status()
+            data = response.json()
 
-            # assuming the API returns {"item": { ...job fields... }}
-            job_adapter = TypeAdapter(Job)
-            job = job_adapter.validate_python(response.json())
+        # ── decode + parse Base64 strings ───────────────────────────────────────
+        for field in ("payload", "result"):
+            raw = data.get(field)
+            if isinstance(raw, str):
+                # 1) base64 → bytes
+                decoded: bytes = base64.b64decode(raw)
+                # 2) decode bytes → str
+                text = decoded.decode("utf-8")
+                # 3) parse JSON (or YAML, if that’s what you actually get)
+                data[field] = json.loads(text)
 
-            return job
+        return TypeAdapter(Job).validate_python(data)
 
     def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
