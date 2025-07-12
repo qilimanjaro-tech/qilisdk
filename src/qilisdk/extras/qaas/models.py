@@ -199,41 +199,41 @@ class ExecuteResult(QaaSModel):
 
     @field_serializer("digital_result")
     def _serialize_digital_result(self, digital_result: DigitalResult, _info):
-        return serialize(digital_result)
+        return serialize(digital_result) if digital_result is not None else None
 
     @field_validator("digital_result", mode="before")
     def _load_digital_result(cls, v):
-        if isinstance(v, str):
+        if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, DigitalResult)
         return v
 
     @field_serializer("vqe_result")
     def _serialize_vqe_result(self, vqe_result: VQEResult, _info):
-        return serialize(vqe_result)
+        return serialize(vqe_result) if vqe_result is not None else None
 
-    @field_validator("digital_result", mode="before")
+    @field_validator("vqe_result", mode="before")
     def _load_vqe_result(cls, v):
-        if isinstance(v, str):
+        if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, VQEResult)
         return v
 
     @field_serializer("analog_result")
     def _serialize_analog_result(self, analog_result: AnalogResult, _info):
-        return serialize(analog_result)
+        return serialize(analog_result) if analog_result is not None else None
 
     @field_validator("analog_result", mode="before")
     def _load_analog_result(cls, v):
-        if isinstance(v, str):
+        if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, AnalogResult)
         return v
 
     @field_serializer("time_evolution_result")
     def _serialize_time_evolution_result(self, time_evolution_result: AnalogResult, _info):
-        return serialize(time_evolution_result)
+        return serialize(time_evolution_result) if time_evolution_result is not None else None
 
     @field_validator("time_evolution_result", mode="before")
     def _load_time_evolution_result(cls, v):
-        if isinstance(v, str):
+        if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, AnalogResult)
         return v
 
