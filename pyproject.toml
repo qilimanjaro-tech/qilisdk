@@ -4,7 +4,7 @@ version = "0.1.5"
 description = "qilisdk is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -61,7 +61,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
+cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", branch = "main"}
 
 [tool.ruff]
 line-length = 120
