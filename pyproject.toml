@@ -61,7 +61,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", branch = "main"}
+cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
 
 [tool.ruff]
 line-length = 120
