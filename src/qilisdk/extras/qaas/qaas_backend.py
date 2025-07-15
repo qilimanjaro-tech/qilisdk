@@ -184,17 +184,18 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             data = response.json()
+            print(data)
 
         # ── decode + parse Base64 strings ───────────────────────────────────────
-        for field in ("payload", "result"):
-            raw = data.get(field)
-            if isinstance(raw, str):
-                # 1) base64 → bytes
-                decoded: bytes = base64.b64decode(raw)
-                # 2) decode bytes → str
-                text = decoded.decode("utf-8")
-                # 3) parse JSON (or YAML, if that’s what you actually get)
-                data[field] = json.loads(text)
+        # for field in ("payload", "result"):
+        #     raw = data.get(field)
+        #     if isinstance(raw, str):
+        #         # 1) base64 → bytes
+        #         decoded: bytes = base64.b64decode(raw)
+        #         # 2) decode bytes → str
+        #         text = decoded.decode("utf-8")
+        #         # 3) parse JSON (or YAML, if that’s what you actually get)
+        #         data[field] = json.loads(text)
 
         return TypeAdapter(Job).validate_python(data)
 
