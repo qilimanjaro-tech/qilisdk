@@ -189,17 +189,27 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             response.raise_for_status()
             data = response.json()
 
-        data["payload"] = json.loads(data["payload"])
+        print(data)
 
-        decoded_result: bytes = base64.b64decode(data.get("result"))
-        text_result = decoded_result.decode("utf-8")
-        data["result"] = json.loads(text_result)
+        raw_payload = data["payload"]
+        if raw_payload is not None:
+            data["payload"] = json.loads(raw_payload)
 
-        decoded_error: bytes = base64.b64decode(data.get("error"))
-        data["error"] = decoded_error.decode("utf-8")
+        raw_result = data.get("result")
+        if raw_result is not None:
+            decoded_result: bytes = base64.b64decode(raw_result)
+            text_result = decoded_result.decode("utf-8")
+            data["result"] = json.loads(text_result)
 
-        decoded_logs: bytes = base64.b64decode(data.get("logs"))
-        data["logs"] = decoded_logs.decode("utf-8")
+        raw_error = data.get("error")
+        if raw_error is not None:
+            decoded_error: bytes = base64.b64decode(raw_error)
+            data["error"] = decoded_error.decode("utf-8")
+
+        raw_logs = data.get("logs")
+        if raw_logs is not None:
+            decoded_logs: bytes = base64.b64decode(raw_logs)
+            data["logs"] = decoded_logs.decode("utf-8")
 
         return TypeAdapter(JobDetail).validate_python(data)
 

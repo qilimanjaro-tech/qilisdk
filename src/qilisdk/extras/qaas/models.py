@@ -288,32 +288,3 @@ class JobDetail(JobInfo):
     logs: str | None = None
     error: str | None = None
     error_logs: str | None = None
-
-
-# class Job(QaaSModel):
-#     id: int = Field(...)
-#     name: str = Field(...)
-#     description: str = Field(...)
-#     device_id: int = Field(...)
-#     status: JobStatus = Field(...)
-#     created_at: AwareDatetime = Field(...)
-#     modified_at: AwareDatetime | None = None
-#     # payload: ExecutePayload | None = None
-#     result: ExecuteResult | None = None
-#     logs: str | None = None
-#     error: str | None = None
-#     error_logs: str | None = None
-
-#     @field_validator("created_at", mode="before")
-#     def _parse_created_at(cls, v):
-#         if isinstance(v, str):
-#             # parse "Fri, 04 Jul 2025 12:36:40 GMT"
-#             return parsedate_to_datetime(v)
-#         return v
-
-#     @field_validator("modified_at", mode="before")
-#     def _parse_modified_at(cls, v):
-#         if isinstance(v, str):
-#             # parse "Fri, 04 Jul 2025 12:36:40 GMT"
-#             return parsedate_to_datetime(v)
-#         return v
