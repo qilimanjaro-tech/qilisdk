@@ -563,15 +563,6 @@ class Hamiltonian:
         # Otherwise, keep the same qubit
         return phase, op_cls(op1.qubit)
 
-    @staticmethod
-    def _multiply_hamiltonians(h1: Hamiltonian, h2: Hamiltonian) -> Hamiltonian:
-        out = Hamiltonian()
-        for key1, c1 in h1.elements.items():
-            for key2, c2 in h2.elements.items():
-                phase, new_key = Hamiltonian._multiply_sets(key1, key2)
-                out.elements[new_key] += phase * c1 * c2
-        return out.simplify()
-
     # ------- Public arithmetic operators --------
 
     def __add__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
@@ -612,15 +603,7 @@ class Hamiltonian:
 
     def __rtruediv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
         # (other / self)
-        if not isinstance(other, (int, float, complex)):
-            raise InvalidHamiltonianOperation("Division by operators is not supported")
-        out = copy.copy(self)
-        return (1 / other) * out
-
-    def __rfloordiv__(self, other: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        if not isinstance(other, (int, float, complex)):
-            raise NotSupportedOperation("Division of operators is not supported")
-        return (1 / other) * self
+        raise InvalidHamiltonianOperation("Division by operators is not supported")
 
     __iadd__ = __add__
     __isub__ = __sub__
