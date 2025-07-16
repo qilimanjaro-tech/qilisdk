@@ -20,7 +20,7 @@ import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from os import environ
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import httpx
 from pydantic import TypeAdapter, ValidationError
@@ -58,22 +58,13 @@ logging.basicConfig(
 
 class QaaSBackend(DigitalBackend, AnalogBackend):
     """
-    Manages communication with a hypothetical QaaS service via synchronous HTTP calls.
-
-    Credentials to log in can come from:
-      a) method parameters,
-      b) environment (via Pydantic),
-      c) keyring (fallback).
+    Manages communication with Qilimanjaro QaaS service via synchronous HTTP calls.
     """
 
     _api_url: str = environ.get("QILISDK_QAAS_API_URL", "https://qilimanjaro.ddns.net/public-api/api/v1")
     _audience: str = environ.get("QILISDK_QAAS_AUDIENCE", "urn:qilimanjaro.tech:public-api:beren")
 
     def __init__(self) -> None:
-        """
-        Normally, you won't call __init__() directly.
-        Instead, use QaaSBackend.login(...) to create a logged-in instance.
-        """  # noqa: DOC501
         credentials = load_credentials()
         if credentials is None:
             raise RuntimeError(
@@ -153,25 +144,23 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def logout(cls) -> None:
         delete_credentials()
 
-    def list_devices(self) -> list[Device]:
+    def list_devices(self, where: Callable[[Device], bool] | None = None) -> list[Device]:
         with httpx.Client() as client:
             response = client.get(QaaSBackend._api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
-            devices_list_adapter = TypeAdapter(list[Device])
-            devices = devices_list_adapter.validate_python(response.json()["items"])
+            devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
 
-            return devices
+        return [d for d in devices if where(d)] if where else devices
 
-    def list_jobs(self) -> list[JobInfo]:
+    def list_jobs(self, where: Callable[[JobInfo], bool] | None = None) -> list[JobInfo]:
         with httpx.Client() as client:
             response = client.get(QaaSBackend._api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
-            jobs_list_adapter = TypeAdapter(list[JobInfo])
-            jobs = jobs_list_adapter.validate_python(response.json()["items"])
+            jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
 
-            return jobs
+        return [j for j in jobs if where(j)] if where else jobs
 
     def get_job_details(self, id: int) -> JobDetail:
         with httpx.Client() as client:
@@ -188,8 +177,6 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             data = response.json()
-
-        print(data)
 
         raw_payload = data["payload"]
         if raw_payload is not None:
