@@ -240,6 +240,7 @@ class ExecuteResult(QaaSModel):
 
 class _TimestampMixin:
     """Parses RFC-2822 date strings returned by the API."""
+
     created_at: AwareDatetime = Field(...)
     modified_at: AwareDatetime | None = None
 
@@ -264,6 +265,7 @@ class JobStatus(str, Enum):
 
 class JobId(QaaSModel):
     """Handle/reference you normally get back immediately after `POST /execute`."""
+
     id: int = Field(...)
 
 
@@ -272,6 +274,7 @@ class JobInfo(JobId, _TimestampMixin):
     Light-weight representation suitable for 'list jobs' and polling
     when you do *not* need logs or results.
     """
+
     name: str = Field(...)
     description: str = Field(...)
     device_id: int = Field(...)
@@ -283,6 +286,7 @@ class JobDetail(JobInfo):
     Full representation returned by `GET /jobs/{id}` when payload/result/logs
     are requested.
     """
+
     payload: ExecutePayload | None = None
     result: ExecuteResult | None = None
     logs: str | None = None

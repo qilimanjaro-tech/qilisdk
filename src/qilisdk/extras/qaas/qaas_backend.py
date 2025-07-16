@@ -190,7 +190,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         """Return lightweight job summaries.
 
         Args:
-            where: Optional predicate applied client‑side. A
+            where: Optional predicate applied client-side. A
                 :class:`~qilisdk.models.JobInfo` remains in the list if the
                 predicate returns ``True``. ``None`` disables filtering.
 
@@ -288,8 +288,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
             if timeout is not None and (time.monotonic() - start_t) >= timeout:
                 raise TimeoutError(
-                    f"Timed out after {timeout}s while waiting for job {id} "
-                    f"(last status {current.status.value!r})"
+                    f"Timed out after {timeout}s while waiting for job {id} (last status {current.status.value!r})"
                 )
 
             time.sleep(poll_interval)
