@@ -57,9 +57,7 @@ logging.basicConfig(
 
 
 class QaaSBackend(DigitalBackend, AnalogBackend):
-    """
-    Manages communication with Qilimanjaro QaaS service via synchronous HTTP calls.
-    """
+    """Synchronous client for the Qilimanjaro QaaS REST API."""
 
     _api_url: str = environ.get("QILISDK_QAAS_API_URL", "https://qilimanjaro.ddns.net/public-api/api/v1")
     _audience: str = environ.get("QILISDK_QAAS_AUDIENCE", "urn:qilimanjaro.tech:public-api:beren")
@@ -85,9 +83,19 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     # TODO (vyron): Change this to `code: str` when implemented server-side.
     @property
     def selected_device(self) -> int | None:
+        """ID of the currently selected device.
+
+        Returns:
+            The device identifier or ``None`` if no device is selected.
+        """
         return self._selected_device
 
     def set_device(self, id: int) -> None:
+        """Select the backend device for subsequent executions.
+
+        Args:
+            id: Device identifier returned by :py:meth:`list_devices`.
+        """
         self._selected_device = id
 
     @classmethod
@@ -96,6 +104,21 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         username: str | None = None,
         apikey: str | None = None,
     ) -> bool:
+        """Authenticate and cache credentials in the system keyring.
+
+        Args:
+            username: QaaS account user name. If ``None``, the value is read
+                from the environment.
+            apikey: QaaS API key. If ``None``, the value is read from the
+                environment.
+
+        Returns:
+            ``True`` if authentication succeeds, otherwise ``False``.
+
+        Note:
+            The resulting tokens are stored in the OS keyring so that future
+            :class:`QaaSBackend` constructions require no explicit credentials.
+        """
         # Use provided parameters or fall back to environment variables via Settings()
         if not username or not apikey:
             try:
@@ -142,9 +165,19 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
     @classmethod
     def logout(cls) -> None:
+        """Delete cached credentials from the keyring."""
         delete_credentials()
 
     def list_devices(self, where: Callable[[Device], bool] | None = None) -> list[Device]:
+        """Return all visible devices, optionally filtered.
+
+        Args:
+            where: A predicate that retains a device when it evaluates to
+                ``True``. Pass ``None`` to disable filtering.
+
+        Returns:
+            A list of :class:`~qilisdk.models.Device` objects.
+        """
         with httpx.Client() as client:
             response = client.get(QaaSBackend._api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
@@ -154,6 +187,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         return [d for d in devices if where(d)] if where else devices
 
     def list_jobs(self, where: Callable[[JobInfo], bool] | None = None) -> list[JobInfo]:
+        """Return lightweight job summaries.
+
+        Args:
+            where: Optional predicate applied client‑side. A
+                :class:`~qilisdk.models.JobInfo` remains in the list if the
+                predicate returns ``True``. ``None`` disables filtering.
+
+        Returns:
+            A list of :class:`~qilisdk.models.JobInfo` objects.
+        """
         with httpx.Client() as client:
             response = client.get(QaaSBackend._api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
@@ -163,6 +206,15 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         return [j for j in jobs if where(j)] if where else jobs
 
     def get_job_details(self, id: int) -> JobDetail:
+        """Fetch the complete record of *id*.
+
+        Args:
+            id: Identifier of the job.
+
+        Returns:
+            A :class:`~qilisdk.models.JobDetail` instance containing payload,
+            result, logs and error information.
+        """
         with httpx.Client() as client:
             response = client.get(
                 f"{QaaSBackend._api_url}/jobs/{id}",
@@ -207,6 +259,19 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         poll_interval: float = 5.0,
         timeout: float | None = None,
     ) -> JobDetail:
+        """Block until *id* reaches a terminal state.
+
+        Args:
+            id: Job identifier.
+            poll_interval: Seconds between successive polls. Defaults to ``5``.
+            timeout: Maximum wait time in seconds. ``None`` waits indefinitely.
+
+        Returns:
+            Final :class:`~qilisdk.models.JobDetail` snapshot.
+
+        Raises:
+            TimeoutError: If *timeout* elapses before the job finishes.
+        """
         start_t = time.monotonic()
         terminal_states = {
             JobStatus.COMPLETED,
@@ -235,6 +300,15 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         return self._selected_device
 
     def execute(self, circuit: Circuit, nshots: int = 1000) -> int:  # type: ignore[override]
+        """Submit a digital circuit to the selected device.
+
+        Args:
+            circuit: Quantum circuit to execute.
+            nshots: Number of measurement samples. Defaults to ``1000``.
+
+        Returns:
+            The numeric identifier of the created job.
+        """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.DIGITAL,
@@ -258,6 +332,20 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
     ) -> int:
+        """Submit an analog time-evolution job.
+
+        Args:
+            schedule: Control-pulse schedule to apply to the device.
+            initial_state: Quantum state prepared at :math:`t = 0`.
+            observables: Operators whose expectation values will be measured
+                during the evolution.
+            store_intermediate_results: If ``True``, the backend records
+                intermediate expectation values and returns them in the result
+                payload.
+
+        Returns:
+            The numeric identifier of the created job.
+        """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.ANALOG,
@@ -282,6 +370,20 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
     def run_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
     ) -> int:
+        """Run a Variational Quantum Eigensolver on the selected device.
+
+        Args:
+            vqe: Problem definition containing Hamiltonian and ansatz.
+            optimizer: Classical optimizer that updates the variational
+                parameters between circuit evaluations.
+            nshots: Number of shots per circuit evaluation. Defaults to
+                ``1000``.
+            store_intermediate_results: Whether to keep intermediate energies
+                and parameter vectors for later analysis.
+
+        Returns:
+            The numeric identifier of the created job.
+        """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.VQE,
@@ -301,6 +403,17 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             return job.id
 
     def run_time_evolution(self, time_evolution: TimeEvolution, store_intermediate_results: bool = False) -> int:
+        """Simulate a digital (Trotterized) time-evolution circuit.
+
+        Args:
+            time_evolution: High-level description of the evolution problem
+                (Hamiltonian, total time, step size, etc.).
+            store_intermediate_results: Store intermediate measurement results
+                in the payload when ``True``.
+
+        Returns:
+            The numeric identifier of the created job.
+        """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
