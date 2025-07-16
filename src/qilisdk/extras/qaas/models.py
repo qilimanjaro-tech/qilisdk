@@ -236,6 +236,20 @@ class ExecuteResult(QaaSModel):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, AnalogResult)
         return v
+    
+
+class _TimestampMixin:
+    """Parses RFC‑2822 date strings returned by the API."""
+    created_at: AwareDatetime = Field(...)
+    modified_at: AwareDatetime | None = None
+
+    @field_validator("created_at", mode="before")
+    def _parse_created_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
+
+    @field_validator("modified_at", mode="before")
+    def _parse_modified_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
 
 
 class JobStatus(str, Enum):
@@ -248,30 +262,58 @@ class JobStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class Job(QaaSModel):
+class JobId(QaaSModel):
+    """Handle/reference you normally get back immediately after `POST /execute`."""
     id: int = Field(...)
+
+
+class JobInfo(JobId, _TimestampMixin):
+    """
+    Light-weight representation suitable for 'list jobs' and polling
+    when you do *not* need logs or results.
+    """
     name: str = Field(...)
     description: str = Field(...)
     device_id: int = Field(...)
     status: JobStatus = Field(...)
-    created_at: AwareDatetime = Field(...)
-    modified_at: AwareDatetime | None = None
-    # payload: ExecutePayload | None = None
+
+
+class JobDetail(JobInfo):
+    """
+    Full representation returned by `GET /jobs/{id}` when payload/result/logs
+    are requested.
+    """
+    payload: ExecutePayload | None = None
     result: ExecuteResult | None = None
     logs: str | None = None
     error: str | None = None
     error_logs: str | None = None
 
-    @field_validator("created_at", mode="before")
-    def _parse_created_at(cls, v):
-        if isinstance(v, str):
-            # parse "Fri, 04 Jul 2025 12:36:40 GMT"
-            return parsedate_to_datetime(v)
-        return v
 
-    @field_validator("modified_at", mode="before")
-    def _parse_modified_at(cls, v):
-        if isinstance(v, str):
-            # parse "Fri, 04 Jul 2025 12:36:40 GMT"
-            return parsedate_to_datetime(v)
-        return v
+# class Job(QaaSModel):
+#     id: int = Field(...)
+#     name: str = Field(...)
+#     description: str = Field(...)
+#     device_id: int = Field(...)
+#     status: JobStatus = Field(...)
+#     created_at: AwareDatetime = Field(...)
+#     modified_at: AwareDatetime | None = None
+#     # payload: ExecutePayload | None = None
+#     result: ExecuteResult | None = None
+#     logs: str | None = None
+#     error: str | None = None
+#     error_logs: str | None = None
+
+#     @field_validator("created_at", mode="before")
+#     def _parse_created_at(cls, v):
+#         if isinstance(v, str):
+#             # parse "Fri, 04 Jul 2025 12:36:40 GMT"
+#             return parsedate_to_datetime(v)
+#         return v
+
+#     @field_validator("modified_at", mode="before")
+#     def _parse_modified_at(cls, v):
+#         if isinstance(v, str):
+#             # parse "Fri, 04 Jul 2025 12:36:40 GMT"
+#             return parsedate_to_datetime(v)
+#         return v

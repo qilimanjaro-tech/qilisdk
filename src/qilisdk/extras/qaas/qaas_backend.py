@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from os import environ
@@ -34,7 +35,10 @@ from .models import (
     DigitalPayload,
     ExecutePayload,
     ExecuteType,
-    Job,
+    JobDetail,
+    JobId,
+    JobInfo,
+    JobStatus,
     TimeEvolutionPayload,
     Token,
     VQEPayload,
@@ -159,17 +163,17 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
 
             return devices
 
-    def list_jobs(self) -> list[Job]:
+    def list_jobs(self) -> list[JobInfo]:
         with httpx.Client() as client:
             response = client.get(QaaSBackend._api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
-            jobs_list_adapter = TypeAdapter(list[Job])
+            jobs_list_adapter = TypeAdapter(list[JobInfo])
             jobs = jobs_list_adapter.validate_python(response.json()["items"])
 
             return jobs
 
-    def get_job(self, id: int) -> Job:
+    def get_job_details(self, id: int) -> JobDetail:
         with httpx.Client() as client:
             response = client.get(
                 f"{QaaSBackend._api_url}/jobs/{id}",
@@ -184,27 +188,53 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
             response.raise_for_status()
             data = response.json()
-            print(data)
 
-        # ── decode + parse Base64 strings ───────────────────────────────────────
-        # for field in ("payload", "result"):
-        #     raw = data.get(field)
-        #     if isinstance(raw, str):
-        #         # 1) base64 → bytes
-        #         decoded: bytes = base64.b64decode(raw)
-        #         # 2) decode bytes → str
-        #         text = decoded.decode("utf-8")
-        #         # 3) parse JSON (or YAML, if that’s what you actually get)
-        #         data[field] = json.loads(text)
+        data["payload"] = json.loads(data["payload"])
 
-        return TypeAdapter(Job).validate_python(data)
+        decoded_result: bytes = base64.b64decode(data.get("result"))
+        text_result = decoded_result.decode("utf-8")
+        data["result"] = json.loads(text_result)
+
+        decoded_error: bytes = base64.b64decode(data.get("error"))
+        data["error"] = decoded_error.decode("utf-8")
+
+        return TypeAdapter(JobDetail).validate_python(data)
+
+    def wait_for_job(
+        self,
+        id: int,
+        *,
+        poll_interval: float = 5.0,
+        timeout: float | None = None,
+    ) -> JobDetail:
+        start_t = time.monotonic()
+        terminal_states = {
+            JobStatus.COMPLETED,
+            JobStatus.ERROR,
+            JobStatus.CANCELLED,
+        }
+
+        # poll until we hit a terminal state or timeout
+        while True:
+            current = self.get_job_details(id)
+
+            if current.status in terminal_states:
+                return current
+
+            if timeout is not None and (time.monotonic() - start_t) >= timeout:
+                raise TimeoutError(
+                    f"Timed out after {timeout}s while waiting for job {id} "
+                    f"(last status {current.status.value!r})"
+                )
+
+            time.sleep(poll_interval)
 
     def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> Job:  # type: ignore[override]
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> int:  # type: ignore[override]
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.DIGITAL,
@@ -218,7 +248,8 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=json,
             )
             response.raise_for_status()
-            return Job(**response.json())
+            job = JobId(**response.json())
+            return job.id
 
     def evolve(  # type: ignore[override]
         self,
@@ -226,7 +257,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         initial_state: QuantumObject,
         observables: list[PauliOperator | Hamiltonian],
         store_intermediate_results: bool = False,
-    ) -> Job:
+    ) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.ANALOG,
@@ -245,11 +276,12 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=json,
             )
             response.raise_for_status()
-            return Job(**response.json())
+            job = JobId(**response.json())
+            return job.id
 
     def run_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
-    ) -> Job:
+    ) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.VQE,
@@ -265,9 +297,10 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=json,
             )
             response.raise_for_status()
-            return Job(**response.json())
+            job = JobId(**response.json())
+            return job.id
 
-    def run_time_evolution(self, time_evolution: TimeEvolution, store_intermediate_results: bool = False) -> Job:
+    def run_time_evolution(self, time_evolution: TimeEvolution, store_intermediate_results: bool = False) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
@@ -283,4 +316,5 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
                 json=json,
             )
             response.raise_for_status()
-            return Job(**response.json())
+            job = JobId(**response.json())
+            return job.id
