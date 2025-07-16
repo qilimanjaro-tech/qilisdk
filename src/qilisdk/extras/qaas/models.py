@@ -236,10 +236,10 @@ class ExecuteResult(QaaSModel):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, AnalogResult)
         return v
-    
+
 
 class _TimestampMixin:
-    """Parses RFC‑2822 date strings returned by the API."""
+    """Parses RFC-2822 date strings returned by the API."""
     created_at: AwareDatetime = Field(...)
     modified_at: AwareDatetime | None = None
 

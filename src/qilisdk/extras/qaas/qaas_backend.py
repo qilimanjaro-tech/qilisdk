@@ -198,6 +198,9 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         decoded_error: bytes = base64.b64decode(data.get("error"))
         data["error"] = decoded_error.decode("utf-8")
 
+        decoded_logs: bytes = base64.b64decode(data.get("logs"))
+        data["logs"] = decoded_logs.decode("utf-8")
+
         return TypeAdapter(JobDetail).validate_python(data)
 
     def wait_for_job(
