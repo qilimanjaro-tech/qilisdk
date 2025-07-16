@@ -238,21 +238,6 @@ class ExecuteResult(QaaSModel):
         return v
 
 
-class _TimestampMixin:
-    """Parses RFC-2822 date strings returned by the API."""
-
-    created_at: AwareDatetime = Field(...)
-    modified_at: AwareDatetime | None = None
-
-    @field_validator("created_at", mode="before")
-    def _parse_created_at(cls, v):
-        return parsedate_to_datetime(v) if isinstance(v, str) else v
-
-    @field_validator("modified_at", mode="before")
-    def _parse_modified_at(cls, v):
-        return parsedate_to_datetime(v) if isinstance(v, str) else v
-
-
 class JobStatus(str, Enum):
     NOT_SENT = "not_sent"
     PENDING = "pending"
@@ -269,7 +254,7 @@ class JobId(QaaSModel):
     id: int = Field(...)
 
 
-class JobInfo(JobId, _TimestampMixin):
+class JobInfo(JobId):
     """
     Light-weight representation suitable for 'list jobs' and polling
     when you do *not* need logs or results.
@@ -279,6 +264,16 @@ class JobInfo(JobId, _TimestampMixin):
     description: str = Field(...)
     device_id: int = Field(...)
     status: JobStatus = Field(...)
+    created_at: AwareDatetime = Field(...)
+    modified_at: AwareDatetime | None = None
+
+    @field_validator("created_at", mode="before")
+    def _parse_created_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
+
+    @field_validator("modified_at", mode="before")
+    def _parse_modified_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
 
 
 class JobDetail(JobInfo):
