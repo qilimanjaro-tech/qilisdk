@@ -1,0 +1,27 @@
+@layer base {
+
+    :root {
+        --code-block-color: rgb(250, 250, 250);
+    }
+
+    .dark {
+        --code-block-color: rgb(5, 5, 5);
+    }
+}
+
+pre {
+    background-color: var(--code-block-color);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    background: linear-gradient(90deg, #E16D7E, #7857E4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
