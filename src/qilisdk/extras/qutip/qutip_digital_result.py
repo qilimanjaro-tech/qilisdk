@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.yaml import yaml
 
-from .cuda_backend import CudaBackend
 
-__all__ = ["CudaBackend"]
+@yaml.register_class
+class QutipDigitalResult(DigitalResult): ...

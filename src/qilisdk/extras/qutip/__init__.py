@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .cuda_backend import CudaBackend
+from .qutip_backend import QutipBackend
 
-__all__ = ["CudaBackend"]
+__all__ = ["QutipBackend"]

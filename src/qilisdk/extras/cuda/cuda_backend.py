@@ -23,22 +23,7 @@ from cudaq import Schedule as cuda_schedule
 from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.digital import (
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Circuit,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
@@ -286,12 +271,12 @@ class CudaBackend(DigitalBackend, AnalogBackend):
                 else None
             ),
             final_state=(
-                QuantumObject(np.array(evolution_result.final_state())).adjoint()
+                QuantumObject(np.array(evolution_result.final_state()))
                 if evolution_result.final_state() is not None
                 else None
             ),
             intermediate_states=(
-                [QuantumObject(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
+                [QuantumObject(np.array(state)) for state in evolution_result.intermediate_states()]
                 if evolution_result.intermediate_states() is not None
                 else None
             ),
