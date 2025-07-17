@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class CudaAnalogResult(AnalogResult): ...
+class CudaAnalogResult(TimeEvolutionResult): ...

@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 
 
 class DigitalSimulationMethod(str, Enum):
@@ -73,7 +73,7 @@ class DigitalBackend(ABC):
         self._digital_simulation_method = value
 
     @abstractmethod
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> DigitalResult:
+    def execute(self, circuit: Circuit, nshots: int = 1000) -> SamplingResult:
         """
         Execute the provided quantum circuit and return the measurement results.
 

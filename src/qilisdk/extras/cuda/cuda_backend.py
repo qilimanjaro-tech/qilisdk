@@ -20,9 +20,10 @@ import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
 from cudaq import Schedule as cuda_schedule
 
-from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
+from qilisdk.common.backend import Backend
 from qilisdk.digital import (
     RX,
     RY,
@@ -39,15 +40,14 @@ from qilisdk.digital import (
     Y,
     Z,
 )
-from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
+from qilisdk.digital.digital_backend import DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-
-from .cuda_analog_result import CudaAnalogResult
-from .cuda_digital_result import CudaDigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 
 if TYPE_CHECKING:
-    from qilisdk.analog.schedule import Schedule
+    from qilisdk.analog.time_evolution import TimeEvolution
+    from qilisdk.digital.sampling import Sampling
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -57,7 +57,7 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
-class CudaBackend(DigitalBackend, AnalogBackend):
+class CudaBackend(Backend):
     """
     Digital backend implementation using CUDA-based simulation.
 
@@ -78,7 +78,7 @@ class CudaBackend(DigitalBackend, AnalogBackend):
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        super().__init__(digital_simulation_method=digital_simulation_method)
+        super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: CudaBackend._handle_X,
             Y: CudaBackend._handle_Y,
@@ -99,6 +99,17 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             PauliZ: CudaBackend._handle_PauliZ,
             PauliI: CudaBackend._handle_PauliI,
         }
+        self._digital_simulation_method = digital_simulation_method
+
+    @property
+    def digital_simulation_method(self) -> DigitalSimulationMethod:
+        """
+        Get the simulation method currently configured for the backend.
+
+        Returns:
+            SimulationMethod: The simulation method to be used for circuit execution.
+        """
+        return self._digital_simulation_method
 
     def _apply_digital_simulation_method(self) -> None:
         """
@@ -117,43 +128,90 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         else:
             cudaq.set_target("tensornet-mps")
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> CudaDigitalResult:
-        """
-        Execute a quantum circuit and return the measurement results.
-
-        This method applies the selected simulation method, translates the circuit's gates into
-        CUDA operations via their respective handlers, runs the simulation, and returns the result
-        as a CudaDigitalResult.
-
-        Args:
-            circuit (Circuit): The quantum circuit to be executed.
-            nshots (int, optional): The number of measurement shots to perform. Defaults to 1000.
-
-        Returns:
-            DigitalResult: A result object containing the measurement samples and computed probabilities.
-
-        Raises:
-            UnsupportedGateError: If the circuit contains a gate for which no handler is registered.
-        """
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
-        qubits = kernel.qalloc(circuit.nqubits)
+        qubits = kernel.qalloc(functional.circuit.nqubits)
 
-        for gate in circuit.gates:
+        for gate in functional.circuit.gates:
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
                 self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
             elif isinstance(gate, M):
-                self._handle_M(kernel, gate, circuit, qubits)
+                self._handle_M(kernel, gate, functional.circuit, qubits)
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
                     raise UnsupportedGateError
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
-        cudaq_result = cudaq.sample(kernel, shots_count=nshots)
-        return CudaDigitalResult(nshots=nshots, samples=dict(cudaq_result.items()))
+        cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+        return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
+    
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        cudaq.set_target("dynamics")
+
+        cuda_hamiltonian = None
+        steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
+
+        def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
+            def compute_value(param_name: str, step_idx: int) -> float:
+                return functional.schedule.get_coefficient(time_steps[int(step_idx)], param_name)
+
+            return cuda_schedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
+
+        _cuda_schedule = parameter_values(steps)
+
+        def get_schedule(key: str) -> Callable:
+            return lambda **args: args[key]
+
+        cuda_hamiltonian = sum(
+            ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
+            for key, ham in functional.schedule.hamiltonians.items()
+        )
+
+        cuda_observables = []
+        for observable in functional.observables:
+            if isinstance(observable, PauliOperator):
+                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
+            elif isinstance(observable, Hamiltonian):
+                cuda_observables.append(self._hamiltonian_to_cuda(observable))
+            else:
+                raise ValueError(f"unsupported observable type of {observable.__class__}")
+
+        evolution_result = evolve(
+            hamiltonian=cuda_hamiltonian,
+            dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
+            schedule=_cuda_schedule,
+            initial_state=State.from_data(np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)),
+            observables=cuda_observables,
+            collapse_operators=[],
+            store_intermediate_results=functional.store_intermediate_results,
+        )
+
+        return TimeEvolutionResult(
+            final_expected_values=np.array(
+                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
+            ),
+            expected_values=(
+                np.array(
+                    [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()]
+                )
+                if evolution_result.expectation_values() is not None
+                else None
+            ),
+            final_state=(
+                QuantumObject(np.array(evolution_result.final_state())).adjoint()
+                if evolution_result.final_state() is not None
+                else None
+            ),
+            intermediate_states=(
+                [QuantumObject(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
+                if evolution_result.intermediate_states() is not None
+                else None
+            ),
+        )
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
@@ -203,99 +261,6 @@ class CudaBackend(DigitalBackend, AnalogBackend):
             raise UnsupportedGateError
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.adjoint(target_kernel, target_qubit)
-
-    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
-        out = None
-        for offset, terms in hamiltonian:
-            if out is None:
-                out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
-            else:
-                out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
-        return out
-
-    def evolve(
-        self,
-        schedule: Schedule,
-        initial_state: QuantumObject,
-        observables: list[PauliOperator | Hamiltonian],
-        store_intermediate_results: bool = False,
-    ) -> CudaAnalogResult:
-        """computes the time evolution under of an initial state under the given schedule.
-
-        Args:
-            schedule (Schedule): The evolution schedule of the system.
-            initial_state (QuantumObject): the initial state of the evolution.
-            observables (list[PauliOperator  |  Hamiltonian]): the list of observables to be measured at the end of the evolution.
-            store_intermediate_results (bool): A flag to store the intermediate results along the evolution.
-
-        Raises:
-            ValueError: if the observables provided are not an instance of the PauliOperator or a Hamiltonian class.
-
-        Returns:
-            AnalogResult: The results of the evolution.
-        """
-        cudaq.set_target("dynamics")
-
-        cuda_hamiltonian = None
-        steps = np.linspace(0, schedule.T, int(schedule.T / schedule.dt))
-
-        def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
-            def compute_value(param_name: str, step_idx: int) -> float:
-                return schedule.get_coefficient(time_steps[int(step_idx)], param_name)
-
-            return cuda_schedule(list(range(len(time_steps))), list(schedule.hamiltonians), compute_value)
-
-        _cuda_schedule = parameter_values(steps)
-
-        def get_schedule(key: str) -> Callable:
-            return lambda **args: args[key]
-
-        cuda_hamiltonian = sum(
-            ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
-            for key, ham in schedule.hamiltonians.items()
-        )
-
-        cuda_observables = []
-        for observable in observables:
-            if isinstance(observable, PauliOperator):
-                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
-            elif isinstance(observable, Hamiltonian):
-                cuda_observables.append(self._hamiltonian_to_cuda(observable))
-            else:
-                raise ValueError(f"unsupported observable type of {observable.__class__}")
-
-        evolution_result = evolve(
-            hamiltonian=cuda_hamiltonian,
-            dimensions=dict.fromkeys(range(schedule.nqubits), 2),
-            schedule=_cuda_schedule,
-            initial_state=State.from_data(np.array(initial_state.to_density_matrix().dense, dtype=np.complex128)),
-            observables=cuda_observables,
-            collapse_operators=[],
-            store_intermediate_results=store_intermediate_results,
-        )
-
-        return CudaAnalogResult(
-            final_expected_values=np.array(
-                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
-            ),
-            expected_values=(
-                np.array(
-                    [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()]
-                )
-                if evolution_result.expectation_values() is not None
-                else None
-            ),
-            final_state=(
-                QuantumObject(np.array(evolution_result.final_state())).adjoint()
-                if evolution_result.final_state() is not None
-                else None
-            ),
-            intermediate_states=(
-                [QuantumObject(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
-                if evolution_result.intermediate_states() is not None
-                else None
-            ),
-        )
 
     @staticmethod
     def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:
@@ -377,6 +342,15 @@ class CudaBackend(DigitalBackend, AnalogBackend):
         """Handle an U3 gate operation."""
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
+
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
+        out = None
+        for offset, terms in hamiltonian:
+            if out is None:
+                out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+            else:
+                out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+        return out
 
     @staticmethod
     def _handle_PauliX(operator: PauliX) -> ElementaryOperator:

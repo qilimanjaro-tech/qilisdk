@@ -21,9 +21,9 @@ from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class AnalogResult(Result):
+class TimeEvolutionResult(Result):
     """
-    Encapsulates the outcome of an analog quantum simulation.
+    Encapsulates the outcome of a Time Evolution.
 
     This result class stores key outputs from the simulation, including the
     final expected measurement values, the complete time-evolution of expectation

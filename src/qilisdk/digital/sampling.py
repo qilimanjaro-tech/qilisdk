@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
+from qilisdk.common.functional import Functional
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class QaaSAnalogResult(TimeEvolutionResult): ...
+class Sampling(Functional):
+    result_type = SamplingResult
+
+    def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
+        self.circuit = circuit
+        self.nshots = nshots

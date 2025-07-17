@@ -20,7 +20,7 @@ from qilisdk.digital import (
     Y,
     Z,
 )
-from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.extras.cuda.cuda_backend import CudaBackend
@@ -129,11 +129,11 @@ basic_gate_test_cases = [
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
-    backend = CudaBackend(digital_simulation_method=DigitalSimulationMethod.STATE_VECTOR)
+    backend = CudaBackend(sampling_simulation_method=DigitalSimulationMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("qpp-cpu")
-    assert isinstance(result, DigitalResult)
+    assert isinstance(result, SamplingResult)
     assert result.samples == {"0": 1000}
     assert result.nshots == 10
 
@@ -143,11 +143,11 @@ def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, moc
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
-    backend = CudaBackend(digital_simulation_method=DigitalSimulationMethod.STATE_VECTOR)
+    backend = CudaBackend(sampling_simulation_method=DigitalSimulationMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("nvidia")
-    assert isinstance(result, DigitalResult)
+    assert isinstance(result, SamplingResult)
     assert result.samples == {"0": 1000}
     assert result.nshots == 10
 
@@ -156,11 +156,11 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
-    backend = CudaBackend(digital_simulation_method=DigitalSimulationMethod.TENSOR_NETWORK)
+    backend = CudaBackend(sampling_simulation_method=DigitalSimulationMethod.TENSOR_NETWORK)
     circuit = Circuit(nqubits=1)
     result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("tensornet")
-    assert isinstance(result, DigitalResult)
+    assert isinstance(result, SamplingResult)
     assert result.samples == {"0": 1000}
     assert result.nshots == 10
 
@@ -169,11 +169,11 @@ def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
-    backend = CudaBackend(digital_simulation_method=DigitalSimulationMethod.MATRIX_PRODUCT_STATE)
+    backend = CudaBackend(sampling_simulation_method=DigitalSimulationMethod.MATRIX_PRODUCT_STATE)
     circuit = Circuit(nqubits=1)
     result = backend.execute(circuit, nshots=10)
     mock_set_target.assert_called_with("tensornet-mps")
-    assert isinstance(result, DigitalResult)
+    assert isinstance(result, SamplingResult)
     assert result.samples == {"0": 1000}
     assert result.nshots == 10
 

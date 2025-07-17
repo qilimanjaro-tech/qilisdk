@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .algorithms import TimeEvolution
 from .hamiltonian import Hamiltonian, I, X, Y, Z
 from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 from .schedule import Schedule
+from .time_evolution import TimeEvolution
 
 __all__ = [
     "Hamiltonian",

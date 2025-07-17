@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
 
-from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.analog.quantum_objects import QuantumObject
 
 
 def test_default_values():
     """When no arguments are provided, properties should default correctly."""
-    result = AnalogResult()
+    result = TimeEvolutionResult()
     # Both expected arrays default to empty arrays.
     np.testing.assert_array_equal(result.final_expected_values, np.array([]))
     np.testing.assert_array_equal(result.expected_values, np.array([]))
@@ -26,7 +26,7 @@ def test_default_values():
 )
 def test_array_properties(final_arr_input, expected_arr_input, final_arr_expected, expected_arr_expected):
     """Test that final_expected_values and expected_values are set correctly."""
-    result = AnalogResult(
+    result = TimeEvolutionResult(
         final_expected_values=final_arr_input,
         expected_values=expected_arr_input,
     )
@@ -45,7 +45,7 @@ def test_custom_values():
         QuantumObject(np.array([[1]])),
         QuantumObject(np.array([[2]])),
     ]
-    result = AnalogResult(
+    result = TimeEvolutionResult(
         final_expected_values=final_expected,
         expected_values=expected,
         final_state=final_state,
@@ -63,7 +63,7 @@ def test_repr_format():
     expected = np.array([3, 4])
     final_state = QuantumObject(np.array([[1, 0], [0, 1]]))
     intermediate_states = [QuantumObject(np.array([[0, 1], [1, 0]]))]
-    result = AnalogResult(
+    result = TimeEvolutionResult(
         final_expected_values=final_expected,
         expected_values=expected,
         final_state=final_state,

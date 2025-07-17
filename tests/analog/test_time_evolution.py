@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from qilisdk.analog.algorithms import TimeEvolution
+from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.analog.analog_backend import AnalogBackend
-from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.analog.hamiltonian import X, Z
 from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.analog.schedule import Schedule
@@ -35,7 +35,7 @@ def observables():
 def fake_backend(initial_state):
     # Create a fake backend whose evolve() method returns a known AnalogResult.
     backend = MagicMock(spec=AnalogBackend)
-    dummy_result = AnalogResult(
+    dummy_result = TimeEvolutionResult(
         final_expected_values=np.array([1.0]),
         expected_values=np.array([0.5]),
         final_state=initial_state,
@@ -48,11 +48,11 @@ def fake_backend(initial_state):
 def test_properties_assignment(schedule, observables, initial_state):
     """Test that the TimeEvolution instance assigns properties correctly."""
     n_shots = 500
-    te = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state, n_shots=n_shots)
+    te = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state, nshots=n_shots)
     assert te.schedule == schedule
     assert te.observables == observables
     assert te.initial_state == initial_state
-    assert te.n_shots == n_shots
+    assert te.nshots == n_shots
 
 
 @pytest.mark.parametrize("store_intermediate_results", [True, False])

@@ -11,10 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
-from qilisdk.yaml import yaml
+from typing import Protocol, Type, TypeVar
+
+from qilisdk.common.result import Result
+
+TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
 
 
-@yaml.register_class
-class QaaSAnalogResult(TimeEvolutionResult): ...
+class Functional(Protocol[TResult_co]):
+    result_type: Type[TResult_co]

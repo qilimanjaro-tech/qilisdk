@@ -20,7 +20,7 @@ from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class DigitalResult(Result):
+class SamplingResult(Result):
     """
     Class representing the result of a quantum circuit measurement.
 

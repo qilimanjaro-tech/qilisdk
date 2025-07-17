@@ -20,7 +20,7 @@ from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.digital.digital_algorithm import DigitalAlgorithm
 from qilisdk.digital.digital_backend import DigitalBackend
-from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
 
@@ -35,10 +35,10 @@ class VQEResult(Result):
         probabilities (list[tuple[str, float]]): the list of samples and their probabilities.
     """
 
-    def __init__(self, optimizer_result: OptimizerResult, digital_result: DigitalResult) -> None:
+    def __init__(self, optimizer_result: OptimizerResult, digital_result: SamplingResult) -> None:
         super().__init__()
         self._optimizer_result: OptimizerResult = optimizer_result
-        self._digital_result: DigitalResult = digital_result
+        self._digital_result: SamplingResult = digital_result
 
     @property
     def optimal_cost(self) -> float:

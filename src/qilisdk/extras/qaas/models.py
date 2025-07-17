@@ -18,11 +18,11 @@ from enum import Enum
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
-from qilisdk.analog.analog_result import AnalogResult
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital import VQE, Circuit
-from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.digital.vqe import VQEResult
 from qilisdk.utils.serialization import deserialize, serialize
 
@@ -192,19 +192,19 @@ class ExecutePayload(QaaSModel):
 
 class ExecuteResult(QaaSModel):
     type: ExecuteType = Field(...)
-    digital_result: DigitalResult | None = None
-    analog_result: AnalogResult | None = None
+    digital_result: SamplingResult | None = None
+    analog_result: TimeEvolutionResult | None = None
     vqe_result: VQEResult | None = None
-    time_evolution_result: AnalogResult | None = None
+    time_evolution_result: TimeEvolutionResult | None = None
 
     @field_serializer("digital_result")
-    def _serialize_digital_result(self, digital_result: DigitalResult, _info):
+    def _serialize_digital_result(self, digital_result: SamplingResult, _info):
         return serialize(digital_result) if digital_result is not None else None
 
     @field_validator("digital_result", mode="before")
     def _load_digital_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, DigitalResult)
+            return deserialize(v, SamplingResult)
         return v
 
     @field_serializer("vqe_result")
@@ -218,23 +218,23 @@ class ExecuteResult(QaaSModel):
         return v
 
     @field_serializer("analog_result")
-    def _serialize_analog_result(self, analog_result: AnalogResult, _info):
+    def _serialize_analog_result(self, analog_result: TimeEvolutionResult, _info):
         return serialize(analog_result) if analog_result is not None else None
 
     @field_validator("analog_result", mode="before")
     def _load_analog_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, AnalogResult)
+            return deserialize(v, TimeEvolutionResult)
         return v
 
     @field_serializer("time_evolution_result")
-    def _serialize_time_evolution_result(self, time_evolution_result: AnalogResult, _info):
+    def _serialize_time_evolution_result(self, time_evolution_result: TimeEvolutionResult, _info):
         return serialize(time_evolution_result) if time_evolution_result is not None else None
 
     @field_validator("time_evolution_result", mode="before")
     def _load_time_evolution_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, AnalogResult)
+            return deserialize(v, TimeEvolutionResult)
         return v
 
 
