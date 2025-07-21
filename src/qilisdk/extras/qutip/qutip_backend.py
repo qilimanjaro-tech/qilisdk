@@ -104,9 +104,36 @@ class QutipBackend(DigitalBackend, AnalogBackend):
 
         Returns:
             DigitalResult: A result object containing the measurement samples and computed probabilities.
+        """
+
+        qutip_circuit = self._get_qutip_circuit(circuit)
+
+        counts: Counter[str] = Counter()
+        init_state = tensor(*[basis(2, 0) for _ in range(circuit.nqubits)])
+
+        sim = CircuitSimulator(qutip_circuit)
+        sim.initialize(init_state)
+        for _ in range(nshots):
+            res = sim.run(init_state)  # runs the full circuit for one shot
+            bits = res.cbits  # classical measurement bits
+            label = ""
+            for c in np.array(bits).flatten():
+                label += f"{int(c)}"
+            counts[label] += 1
+
+        return QutipDigitalResult(nshots=nshots, samples=dict(counts))
+
+    def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
+        """_summary_
+
+        Args:
+            circuit (Circuit): the qiliSDK circuit to be translated to qutip.
 
         Raises:
             UnsupportedGateError: If the circuit contains a gate for which no handler is registered.
+
+        Returns:
+            QubitCircuit: the translated qutip circuit.
         """
         qutip_circuit = QubitCircuit(
             circuit.nqubits, num_cbits=circuit.nqubits, input_states=[0 for _ in range(circuit.nqubits)]
@@ -125,8 +152,6 @@ class QutipBackend(DigitalBackend, AnalogBackend):
                     raise UnsupportedGateError
                 handler(qutip_circuit, gate, gate.target_qubits[0])
 
-        counts: Counter[str] = Counter()
-        init_state = tensor(*[basis(2, 0) for _ in range(circuit.nqubits)])
         no_measurement = True
 
         for g in circuit.gates:
@@ -136,17 +161,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         if no_measurement:
             for i in range(circuit.nqubits):
                 qutip_circuit.add_measurement(f"M{i}", targets=i, classical_store=i)
-        sim = CircuitSimulator(qutip_circuit)
-        sim.initialize(init_state)
-        for _ in range(1000):
-            res = sim.run(init_state)  # runs the full circuit for one shot
-            bits = res.cbits  # classical measurement bits
-            label = ""
-            for c in np.array(bits).flatten():
-                label += f"{int(c)}"
-            counts[label] += 1
-
-        return QutipDigitalResult(nshots=nshots, samples=dict(counts))
+        return qutip_circuit
 
     def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # noqa: PLR6301
         """

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .cuda_analog_result import CudaAnalogResult
 from .cuda_backend import CudaBackend
+from .cuda_digital_result import CudaDigitalResult
 
-__all__ = ["CudaBackend"]
+__all__ = ["CudaAnalogResult", "CudaBackend", "CudaDigitalResult"]
