@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.common.result import Result
