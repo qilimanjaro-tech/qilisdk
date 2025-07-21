@@ -479,20 +479,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cuquantum-cu12"
-version = "25.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cudensitymat-cu12" },
-    { name = "custatevec-cu12" },
-    { name = "cutensornet-cu12" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/b1/7f16a82234ba31ed4f2699ce1bb889718fffb27cc3ff0f95e7be3393f9f8/cuquantum_cu12-25.3.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:9e604fadc38355278aec2fefe6777c2771444b1bd2c3baba8ec362831ee7a739", size = 7237, upload-time = "2025-03-17T10:23:36.253Z" },
-    { url = "https://files.pythonhosted.org/packages/ea/7b/20a77d102562a407bd9f8c9557b0ffec9d6e3e41ecbebc5c27dc683b0326/cuquantum_cu12-25.3.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:2d7bef6330546e48d9e3a874aae420339361f9fe6f4d9cd683a5c698116f08aa", size = 7237, upload-time = "2025-03-17T10:23:37.077Z" },
-]
-
-[[package]]
 name = "cuquantum-python-cu12"
 version = "25.3.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -750,16 +736,16 @@ wheels = [
 
 [[package]]
 name = "hypothesis"
-version = "6.135.32"
+version = "6.135.29"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/1a/5b0a64bcbbf642ecc4697d89b762ed62481a7dd36e5f5cbf93f29043b1e9/hypothesis-6.135.32.tar.gz", hash = "sha256:b74019dc58065d806abea6292008a392bc9326b88d6a46c8cce51c9cd485af42", size = 456414, upload-time = "2025-07-15T23:36:41.986Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/5e/0313a89bae4bc6b28dc4afcc72e9ee0fe15c86ead45b4ea14996c7a85ea9/hypothesis-6.135.29.tar.gz", hash = "sha256:871acb38ff61346a420267f81f4ba05ad9a85d08965211edf9b29bc0c1ad9d7b", size = 455112, upload-time = "2025-07-12T18:18:00.125Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/06/e430a4134be021e1965473804409584ddf9b6a42906d360b9c75d3c35c79/hypothesis-6.135.32-py3-none-any.whl", hash = "sha256:d0f2bf93863f19a7af2510685dde2b89efb94eaebd3ca0b86c548cd8daa33ab0", size = 523424, upload-time = "2025-07-15T23:36:37.601Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/55/1032721d92aa755ffc1c5ee252c9b60a24b4dbd047763df45c983aa19e35/hypothesis-6.135.29-py3-none-any.whl", hash = "sha256:db4e08bcc19235d2cf37801d6ccdaca757f86dc34a64e09c85fced15bb7e836a", size = 522075, upload-time = "2025-07-12T18:17:55.966Z" },
 ]
 
 [[package]]
@@ -2054,7 +2040,6 @@ cuda = [
     { name = "cuda-quantum-cu12" },
     { name = "cudensitymat-cu12" },
     { name = "cupy-cuda12x" },
-    { name = "cuquantum-cu12" },
     { name = "custatevec-cu12" },
     { name = "cutensornet-cu12" },
 ]
@@ -2088,7 +2073,6 @@ requires-dist = [
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda'", specifier = "==0.11.0" },
     { name = "cudensitymat-cu12", marker = "extra == 'cuda'", specifier = "==0.1.0" },
     { name = "cupy-cuda12x", marker = "extra == 'cuda'", specifier = "==13.4.1" },
-    { name = "cuquantum-cu12", marker = "extra == 'cuda'", specifier = "==25.3.0" },
     { name = "custatevec-cu12", marker = "extra == 'cuda'", specifier = "==1.8.0" },
     { name = "cutensornet-cu12", marker = "extra == 'cuda'", specifier = "==2.7.0" },
     { name = "dill", specifier = ">=0.3.9" },
