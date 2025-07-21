@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
@@ -40,7 +41,6 @@ from qilisdk.digital import (
     Y,
     Z,
 )
-from qilisdk.digital.digital_backend import DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.digital.sampling_result import SamplingResult
@@ -57,9 +57,19 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
+class DigitalSimulationMethod(str, Enum):
+    """
+    Enumeration of available simulation methods for the CUDA backend.
+    """
+
+    STATE_VECTOR = "state_vector"
+    TENSOR_NETWORK = "tensor_network"
+    MATRIX_PRODUCT_STATE = "matrix_product_state"
+
+
 class CudaBackend(Backend):
     """
-    Digital backend implementation using CUDA-based simulation.
+    Backend implementation using CUDA-based simulation.
 
     This backend translates a quantum circuit into a CUDA-compatible kernel and executes it
     using the cudaq library. It supports different simulation methods including state vector,
@@ -148,7 +158,7 @@ class CudaBackend(Backend):
 
         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
-    
+
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         cudaq.set_target("dynamics")
 
@@ -184,7 +194,9 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=_cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)),
+            initial_state=State.from_data(
+                np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)
+            ),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,
@@ -343,7 +355,7 @@ class CudaBackend(Backend):
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
 
-    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:  # type: ignore
         out = None
         for offset, terms in hamiltonian:
             if out is None:
@@ -353,17 +365,17 @@ class CudaBackend(Backend):
         return out
 
     @staticmethod
-    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
+    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:  # type: ignore
         return spin.x(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
+    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:  # type: ignore
         return spin.y(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
+    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:  # type: ignore
         return spin.z(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
+    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:  # type: ignore
         return spin.i(target=operator.qubit)

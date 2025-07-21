@@ -13,11 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
+from qilisdk.common.result import Result
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class OptimizerIntermediateResult:
+class OptimizerIntermediateResult(Result):
     """
     Represents an intermediate result.
 
@@ -50,7 +51,7 @@ class OptimizerIntermediateResult:
 
 
 @yaml.register_class
-class OptimizerResult:
+class OptimizerResult(Result):
     """
     Represents the result of an optimization run.
 

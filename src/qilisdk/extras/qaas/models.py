@@ -17,11 +17,11 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
+from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.analog.time_evolution_result import TimeEvolutionResult
-from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.common.optimizer import Optimizer
-from qilisdk.digital import VQE, Circuit
+from qilisdk.digital import VQE
+from qilisdk.digital.sampling import Sampling
 from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.digital.vqe import VQEResult
 from qilisdk.utils.serialization import deserialize, serialize
@@ -82,61 +82,22 @@ class Device(QaaSModel):
 
 
 class ExecuteType(str, Enum):
-    DIGITAL = "digital"
-    ANALOG = "analog"
-    VQE = "vqe"
+    SAMPLING = "sampling"
     TIME_EVOLUTION = "time_evolution"
+    VQE = "vqe"
 
 
-class DigitalPayload(QaaSModel):
-    circuit: Circuit = Field(...)
-    nshots: int = Field(...)
+class SamplingPayload(QaaSModel):
+    sampling: Sampling = Field(...)
 
-    @field_serializer("circuit")
-    def _serialize_circuit(self, circuit: Circuit, _info):
-        return serialize(circuit)
+    @field_serializer("sampling")
+    def _serialize_sampling(self, sampling: Sampling, _info):
+        return serialize(sampling)
 
-    @field_validator("circuit", mode="before")
-    def _load_circuit(cls, v):
+    @field_validator("sampling", mode="before")
+    def _load_sampling(cls, v):
         if isinstance(v, str):
-            return deserialize(v, Circuit)
-        return v
-
-
-class AnalogPayload(QaaSModel):
-    schedule: Schedule = Field(...)
-    initial_state: QuantumObject = Field(...)
-    observables: list[PauliOperator | Hamiltonian] = Field(...)
-    store_intermediate_results: bool = Field(...)
-
-    @field_serializer("schedule")
-    def _serialize_schedule(self, schedule: Schedule, _info):
-        return serialize(schedule)
-
-    @field_validator("schedule", mode="before")
-    def _validate_schedule(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, Schedule)
-        return v
-
-    @field_serializer("initial_state")
-    def _serialize_initial_state(self, initial_state: QuantumObject, _info):
-        return serialize(initial_state)
-
-    @field_validator("initial_state", mode="before")
-    def _validate_initial_state(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, QuantumObject)
-        return v
-
-    @field_serializer("observables")
-    def _serialize_observables(self, observables: list[PauliOperator | Hamiltonian], _info):
-        return [serialize(obs) for obs in observables]
-
-    @field_validator("observables", mode="before")
-    def _validate_observables(cls, v):
-        if isinstance(v, list) and all(isinstance(item, str) for item in v):
-            return [deserialize(item) for item in v]
+            return deserialize(v, Sampling)
         return v
 
 
@@ -168,8 +129,7 @@ class VQEPayload(QaaSModel):
 
 
 class TimeEvolutionPayload(QaaSModel):
-    time_evolution: TimeEvolution = Field()
-    store_intermediate_results: bool = Field()
+    time_evolution: TimeEvolution = Field(...)
 
     @field_serializer("time_evolution")
     def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
@@ -184,47 +144,25 @@ class TimeEvolutionPayload(QaaSModel):
 
 class ExecutePayload(QaaSModel):
     type: ExecuteType = Field(...)
-    digital_payload: DigitalPayload | None = None
-    analog_payload: AnalogPayload | None = None
-    vqe_payload: VQEPayload | None = None
+    sampling_payload: SamplingPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
+    vqe_payload: VQEPayload | None = None
 
 
 class ExecuteResult(QaaSModel):
     type: ExecuteType = Field(...)
-    digital_result: SamplingResult | None = None
-    analog_result: TimeEvolutionResult | None = None
-    vqe_result: VQEResult | None = None
+    sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
+    vqe_result: VQEResult | None = None
 
-    @field_serializer("digital_result")
-    def _serialize_digital_result(self, digital_result: SamplingResult, _info):
-        return serialize(digital_result) if digital_result is not None else None
+    @field_serializer("sampling_result")
+    def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
+        return serialize(sampling_result) if sampling_result is not None else None
 
-    @field_validator("digital_result", mode="before")
-    def _load_digital_result(cls, v):
+    @field_validator("sampling_result", mode="before")
+    def _load_sampling_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, SamplingResult)
-        return v
-
-    @field_serializer("vqe_result")
-    def _serialize_vqe_result(self, vqe_result: VQEResult, _info):
-        return serialize(vqe_result) if vqe_result is not None else None
-
-    @field_validator("vqe_result", mode="before")
-    def _load_vqe_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, VQEResult)
-        return v
-
-    @field_serializer("analog_result")
-    def _serialize_analog_result(self, analog_result: TimeEvolutionResult, _info):
-        return serialize(analog_result) if analog_result is not None else None
-
-    @field_validator("analog_result", mode="before")
-    def _load_analog_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TimeEvolutionResult)
         return v
 
     @field_serializer("time_evolution_result")
@@ -235,6 +173,16 @@ class ExecuteResult(QaaSModel):
     def _load_time_evolution_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, TimeEvolutionResult)
+        return v
+
+    @field_serializer("vqe_result")
+    def _serialize_vqe_result(self, vqe_result: VQEResult, _info):
+        return serialize(vqe_result) if vqe_result is not None else None
+
+    @field_validator("vqe_result", mode="before")
+    def _load_vqe_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, VQEResult)
         return v
 
 

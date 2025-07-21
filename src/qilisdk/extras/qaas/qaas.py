@@ -20,25 +20,25 @@ import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from os import environ
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import httpx
 from pydantic import TypeAdapter, ValidationError
 
-from qilisdk.analog.analog_backend import AnalogBackend
-from qilisdk.digital.digital_backend import DigitalBackend
+from qilisdk.analog.time_evolution import TimeEvolution
+from qilisdk.common.result import Result
+from qilisdk.digital.sampling import Sampling
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .models import (
-    AnalogPayload,
     Device,
-    DigitalPayload,
     ExecutePayload,
     ExecuteType,
     JobDetail,
     JobId,
     JobInfo,
     JobStatus,
+    SamplingPayload,
     TimeEvolutionPayload,
     Token,
     VQEPayload,
@@ -46,17 +46,18 @@ from .models import (
 from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
-    from qilisdk.analog import Hamiltonian, QuantumObject, Schedule, TimeEvolution
-    from qilisdk.analog.hamiltonian import PauliOperator
+    from qilisdk.common.functional import Functional
     from qilisdk.common.optimizer import Optimizer
-    from qilisdk.digital import VQE, Circuit
+    from qilisdk.digital import VQE
 
 logging.basicConfig(
     format="%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG
 )
 
+TResult = TypeVar("TResult", bound=Result)
 
-class QaaSBackend(DigitalBackend, AnalogBackend):
+
+class QaaS:
     """Synchronous client for the Qilimanjaro QaaS REST API."""
 
     _api_url: str = environ.get("QILISDK_QAAS_API_URL", "https://qilimanjaro.ddns.net/public-api/api/v1")
@@ -71,6 +72,10 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             )
         self._username, self._token = credentials
         self._selected_device: int | None = None
+        self._handlers: dict[type[Functional], Callable[[Functional], Result]] = {
+            Sampling: self._execute_sampling,
+            TimeEvolution: self._execute_time_evolution,
+        }
 
     def _get_headers(self) -> dict:  # noqa: PLR6301
         from qilisdk import __version__  # noqa: PLC0415
@@ -140,13 +145,13 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             assertion = {
                 "username": username,
                 "api_key": apikey,
-                "audience": QaaSBackend._audience,
+                "audience": QaaS._audience,
                 "iat": int(datetime.now(timezone.utc).timestamp()),
             }
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    QaaSBackend._api_url + "/authorisation-tokens",
+                    QaaS._api_url + "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
@@ -179,7 +184,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             A list of :class:`~qilisdk.models.Device` objects.
         """
         with httpx.Client() as client:
-            response = client.get(QaaSBackend._api_url + "/devices", headers=self._get_authorized_headers())
+            response = client.get(QaaS._api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
@@ -198,7 +203,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             A list of :class:`~qilisdk.models.JobInfo` objects.
         """
         with httpx.Client() as client:
-            response = client.get(QaaSBackend._api_url + "/jobs", headers=self._get_authorized_headers())
+            response = client.get(QaaS._api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
@@ -217,7 +222,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         """
         with httpx.Client() as client:
             response = client.get(
-                f"{QaaSBackend._api_url}/jobs/{id}",
+                f"{QaaS._api_url}/jobs/{id}",
                 headers=self._get_authorized_headers(),
                 params={
                     "payload": True,
@@ -298,25 +303,26 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> int:  # type: ignore[override]
-        """Submit a digital circuit to the selected device.
+    def submit(self, functional: Functional) -> int:
+        try:
+            handler = self._handlers[type(functional)]
+        except KeyError as exc:
+            raise NotImplementedError(
+                f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
+            ) from exc
 
-        Args:
-            circuit: Quantum circuit to execute.
-            nshots: Number of measurement samples. Defaults to ``1000``.
+        return handler(functional)
 
-        Returns:
-            The numeric identifier of the created job.
-        """
+    def _execute_sampling(self, sampling: Sampling) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecuteType.DIGITAL,
-            digital_payload=DigitalPayload(circuit=circuit, nshots=nshots),
+            type=ExecuteType.SAMPLING,
+            sampling_payload=SamplingPayload(sampling=sampling),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                QaaSBackend._api_url + "/execute",
+                QaaS._api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -324,41 +330,16 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
             job = JobId(**response.json())
             return job.id
 
-    def evolve(  # type: ignore[override]
-        self,
-        schedule: Schedule,
-        initial_state: QuantumObject,
-        observables: list[PauliOperator | Hamiltonian],
-        store_intermediate_results: bool = False,
-    ) -> int:
-        """Submit an analog time-evolution job.
-
-        Args:
-            schedule: Control-pulse schedule to apply to the device.
-            initial_state: Quantum state prepared at :math:`t = 0`.
-            observables: Operators whose expectation values will be measured
-                during the evolution.
-            store_intermediate_results: If ``True``, the backend records
-                intermediate expectation values and returns them in the result
-                payload.
-
-        Returns:
-            The numeric identifier of the created job.
-        """
+    def _execute_time_evolution(self, time_evolution: TimeEvolution) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecuteType.ANALOG,
-            analog_payload=AnalogPayload(
-                schedule=schedule,
-                initial_state=initial_state,
-                observables=observables,
-                store_intermediate_results=store_intermediate_results,
-            ),
+            type=ExecuteType.TIME_EVOLUTION,
+            time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                QaaSBackend._api_url + "/execute",
+                QaaS._api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -393,37 +374,7 @@ class QaaSBackend(DigitalBackend, AnalogBackend):
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                QaaSBackend._api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
-            response.raise_for_status()
-            job = JobId(**response.json())
-            return job.id
-
-    def run_time_evolution(self, time_evolution: TimeEvolution, store_intermediate_results: bool = False) -> int:
-        """Simulate a digital (Trotterized) time-evolution circuit.
-
-        Args:
-            time_evolution: High-level description of the evolution problem
-                (Hamiltonian, total time, step size, etc.).
-            store_intermediate_results: Store intermediate measurement results
-                in the payload when ``True``.
-
-        Returns:
-            The numeric identifier of the created job.
-        """
-        device = self._ensure_device_selected()
-        payload = ExecutePayload(
-            type=ExecuteType.TIME_EVOLUTION,
-            time_evolution_payload=TimeEvolutionPayload(
-                time_evolution=time_evolution, store_intermediate_results=store_intermediate_results
-            ),
-        )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        with httpx.Client() as client:
-            response = client.post(
-                QaaSBackend._api_url + "/execute",
+                QaaS._api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )

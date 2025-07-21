@@ -14,7 +14,6 @@
 
 from .ansatz import HardwareEfficientAnsatz
 from .circuit import Circuit
-from .digital_backend import DigitalSimulationMethod
 from .gates import (
     CNOT,
     CZ,
@@ -46,7 +45,6 @@ __all__ = [
     "U3",
     "VQE",
     "Circuit",
-    "DigitalSimulationMethod",
     "Gate",
     "H",
     "HardwareEfficientAnsatz",

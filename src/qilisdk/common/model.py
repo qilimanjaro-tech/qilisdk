@@ -43,8 +43,6 @@ if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
     from ruamel.yaml.representer import RoundTripRepresenter
 
-# Utils ###
-
 
 class SlackCounter:
     """A singleton class to generate a slack counter id that increments continuously within the user's active session."""

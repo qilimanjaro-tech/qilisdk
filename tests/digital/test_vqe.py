@@ -151,7 +151,7 @@ def test_execute_calls_optimizer_and_returns_vqeresult(
       - The final result is a VQEResult with optimal_cost equal to 0.2 and optimal_parameters equal to [0.9, 0.1].
     """
     vqe = VQE(dummy_ansatz, initial_params, dummy_cost_function)
-    result = vqe.execute(backend=dummy_backend, optimizer=dummy_optimizer, nshots=600)
+    result = vqe.run(backend=dummy_backend, optimizer=dummy_optimizer, nshots=600)
 
     # Verify that optimizer.optimize was called with the objective function and initial parameters.
     dummy_optimizer.optimize.assert_called_once()

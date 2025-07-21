@@ -13,13 +13,13 @@
 # limitations under the License.
 from pprint import pformat
 
+from qilisdk.common.algorithm import Algorithm
+from qilisdk.common.backend import Backend
 from qilisdk.common.model import Model
 from qilisdk.common.optimizer import Optimizer
 from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
-from qilisdk.digital.digital_algorithm import DigitalAlgorithm
-from qilisdk.digital.digital_backend import DigitalBackend
 from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
@@ -133,7 +133,7 @@ class VQEResult(Result):
 
 
 @yaml.register_class
-class VQE(DigitalAlgorithm):
+class VQE(Algorithm):
     """
     Implements the Variational Quantum Eigensolver (VQE) algorithm.
 
@@ -161,7 +161,7 @@ class VQE(DigitalAlgorithm):
         self._initial_params = initial_params
         self._model = model
 
-    def obtain_cost(self, params: list[float], backend: DigitalBackend, nshots: int = 1000) -> float:
+    def obtain_cost(self, params: list[float], backend: Backend, nshots: int = 1000) -> float:
         """
         Evaluate the cost at a given parameter set by executing the corresponding quantum circuit.
 
@@ -191,9 +191,9 @@ class VQE(DigitalAlgorithm):
             cost += aux_cost * prob
         return cost
 
-    def execute(
+    def run(
         self,
-        backend: DigitalBackend,
+        backend: Backend,
         optimizer: Optimizer,
         nshots: int = 1000,
         store_intermediate_results: bool = False,

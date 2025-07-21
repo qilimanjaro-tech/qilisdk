@@ -13,6 +13,6 @@
 # limitations under the License.
 
 from .cuda.cuda_backend import CudaBackend
-from .qaas.qaas_backend import QaaSBackend
+from .qaas.qaas import QaaS
 
-__all__ = ["CudaBackend", "QaaSBackend"]
+__all__ = ["CudaBackend", "QaaS"]
