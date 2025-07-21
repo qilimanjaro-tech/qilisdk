@@ -230,6 +230,8 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         Returns:
             AnalogResult: The results of the evolution.
         """
+        tlist = np.linspace(0, schedule.T - schedule.dt, int(schedule.T / schedule.dt))
+
         qutip_hamiltonians = []
         for ham in schedule.hamiltonians.values():
             qutip_hamiltonians.append(Qobj(ham.to_matrix().toarray()))
@@ -251,14 +253,14 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             if isinstance(obs, PauliOperator):
                 for i in range(schedule.nqubits):
                     if aux_obs is None:
-                        aux_obs = identity() if i != obs.qubit else Qobj(obs.matrix)
+                        aux_obs = identity(2) if i != obs.qubit else Qobj(obs.matrix)
                     else:
-                        aux_obs = tensor(aux_obs, identity()) if i != obs.qubit else tensor(aux_obs, Qobj(obs.matrix))
+                        aux_obs = tensor(aux_obs, identity(2)) if i != obs.qubit else tensor(aux_obs, Qobj(obs.matrix))
             elif isinstance(obs, Hamiltonian):
                 aux_obs = copy(obs)
                 if obs.nqubits < schedule.nqubits:
                     for _ in range(schedule.nqubits - obs.nqubits):
-                        aux_obs = tensor(aux_obs, identity)
+                        aux_obs = tensor(aux_obs, identity(2))
             if aux_obs is not None:
                 qutip_obs.append(aux_obs)
 
@@ -266,7 +268,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             H=H_t,
             e_ops=qutip_obs,
             psi0=qutip_init_state,
-            tlist=np.linspace(0, schedule.T - schedule.dt, int(schedule.T / schedule.dt)),
+            tlist=tlist,
             options={"store_states": store_intermediate_results},
         )
 
@@ -409,5 +411,4 @@ class QutipBackend(DigitalBackend, AnalogBackend):
 
         if U3_label not in circuit.user_gates:
             circuit.user_gates[U3_label] = QutipBackend._qutip_U1
-        circuit.add_gate(U3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])
         circuit.add_gate(U3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])

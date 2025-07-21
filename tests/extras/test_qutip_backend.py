@@ -1,6 +1,11 @@
 import numpy as np
 import pytest
+from qutip import basis
 
+from qilisdk.analog.hamiltonian import X as pauli_x
+from qilisdk.analog.hamiltonian import Z as pauli_z
+from qilisdk.analog.quantum_objects import QuantumObject, ket
+from qilisdk.analog.schedule import Schedule
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.digital_result import DigitalResult
 from qilisdk.digital.exceptions import UnsupportedGateError
@@ -86,7 +91,7 @@ basic_gate_test_cases = [
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
-def test_execute_adjoint_handler(gate_instance):
+def test_adjoint_handler(gate_instance):
     backend = QutipBackend()
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
@@ -96,7 +101,7 @@ def test_execute_adjoint_handler(gate_instance):
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
-def test_execute_controlled_handler(gate_instance):
+def test_controlled_handler(gate_instance):
     backend = QutipBackend()
     circuit = Circuit(nqubits=1)
     controlled_gate = Controlled(1, basic_gate=gate_instance)
@@ -104,3 +109,61 @@ def test_execute_controlled_handler(gate_instance):
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
     assert any(g.name == "User_" + controlled_gate.name for g in qutip_circuit.gates)
+
+
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+def test_handlers(gate_instance):
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=1)
+    circuit.add(gate_instance)
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+
+    assert any(g.name == gate_instance.name for g in qutip_circuit.gates)
+
+
+def test_constant_hamiltonian():
+    x = 2.0
+    schedule = Schedule(
+        hamiltonians={"hz": x * pauli_z(0)},
+        dt=0.1,
+        T=1.0,
+        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+    )
+    psi0 = ket(0)
+    obs = [pauli_z(0)]
+    backend = QutipBackend()
+    res = backend.evolve(schedule, psi0, obs, store_intermediate_results=True)
+
+    assert pytest.approx(res.final_expected_values, rel=1e-6) == 1.0
+
+    # Intermediate states should replicate constant behavior
+    assert res.intermediate_states is not None
+    for state in res.intermediate_states:
+        psi = state.dense.flatten()
+        assert pytest.approx(abs(psi[0]) ** 2, rel=1e-6) == 1.0
+
+
+def test_time_dependent_hamiltonian():
+    o = 1.0
+    dt = 0.01
+    T = 10
+
+    steps = np.linspace(0, T, int(T / dt))
+
+    schedule = Schedule(
+        T,
+        dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+    )
+
+    psi0 = (ket(0) + ket(1)).unit()
+    obs = [
+        pauli_z(0),  # measure z
+    ]
+
+    backend = QutipBackend()
+    res = backend.evolve(schedule, psi0, obs)
+
+    expect_z = res.final_expected_values[0]
+    assert pytest.approx(expect_z, rel=1e-2) == 1.0
