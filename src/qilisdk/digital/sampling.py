@@ -19,7 +19,7 @@ from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class Sampling(Functional):
+class Sampling(Functional[SamplingResult]):
     result_type = SamplingResult
 
     def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:

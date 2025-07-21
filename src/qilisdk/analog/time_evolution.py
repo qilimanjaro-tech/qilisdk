@@ -23,7 +23,7 @@ Complex = int | float | complex
 
 
 @yaml.register_class
-class TimeEvolution(Functional):
+class TimeEvolution(Functional[TimeEvolutionResult]):
     result_type = TimeEvolutionResult
 
     def __init__(

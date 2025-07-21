@@ -43,8 +43,7 @@ class Backend(ABC):
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
-        # mypy cannot follow the per-class mapping, so we cast.
-        return cast("TResult", handler(functional))
+        return handler(functional)
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
