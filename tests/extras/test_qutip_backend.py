@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
-from qutip import basis
 
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
-from qilisdk.analog.quantum_objects import QuantumObject, ket
+from qilisdk.analog.quantum_objects import ket
 from qilisdk.analog.schedule import Schedule
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.digital_result import DigitalResult
