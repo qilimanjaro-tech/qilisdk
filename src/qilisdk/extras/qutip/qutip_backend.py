@@ -400,7 +400,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         U2_label = "U2"
 
         if U2_label not in circuit.user_gates:
-            circuit.user_gates[U2_label] = QutipBackend._qutip_U1
+            circuit.user_gates[U2_label] = QutipBackend._qutip_U2
         circuit.add_gate(U2_label, targets=qubit, arg_value=[gate.phi, gate.gamma])
 
     @staticmethod
@@ -423,5 +423,5 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         U3_label = "U3"
 
         if U3_label not in circuit.user_gates:
-            circuit.user_gates[U3_label] = QutipBackend._qutip_U1
+            circuit.user_gates[U3_label] = QutipBackend._qutip_U3
         circuit.add_gate(U3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])
