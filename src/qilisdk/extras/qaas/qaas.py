@@ -347,7 +347,7 @@ class QaaS:
             job = JobId(**response.json())
             return job.id
 
-    def run_vqe(
+    def submit_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
     ) -> int:
         """Run a Variational Quantum Eigensolver on the selected device.

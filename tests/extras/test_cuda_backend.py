@@ -3,6 +3,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.digital import (
     RX,
     RY,
@@ -277,6 +278,24 @@ def test_execute_unsupported_gate(mock_set_target, mock_sample, mock_make_kernel
         backend.execute(Sampling(circuit, nshots=10))
 
 
+def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
+    class BadGate(BasicGate):
+        name = "Bad"
+
+        def __init__(self, q=0):
+            super().__init__((q,))
+
+        def _generate_matrix(self):
+            return np.eye(2)
+
+    be = CudaBackend()
+    circuit = Circuit(2)  # small helper from Backend superclass
+    circuit._gates.append(Controlled(1, basic_gate=BadGate(0)))
+
+    with pytest.raises(UnsupportedGateError):
+        be.execute(Sampling(circuit=circuit, nshots=10))
+
+
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
@@ -299,3 +318,35 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
     circuit._gates.append(adjoint_gate)
     with pytest.raises(UnsupportedGateError):
         backend.execute(Sampling(circuit, nshots=10))
+
+
+@patch("qilisdk.extras.cuda.cuda_backend.spin.x", lambda *, target: f"x{target}")
+@patch("qilisdk.extras.cuda.cuda_backend.spin.y", lambda *, target: f"y{target}")
+@patch("qilisdk.extras.cuda.cuda_backend.spin.z", lambda *, target: f"z{target}")
+@patch("qilisdk.extras.cuda.cuda_backend.spin.i", lambda *, target: f"i{target}")
+def test_pauli_operator_handlers_call_spin():
+    assert CudaBackend._handle_PauliX(PauliX(1)) == "x1"
+    assert CudaBackend._handle_PauliY(PauliY(2)) == "y2"
+    assert CudaBackend._handle_PauliZ(PauliZ(3)) == "z3"
+    assert CudaBackend._handle_PauliI(PauliI(4)) == "i4"
+
+
+def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
+    be = CudaBackend()
+
+    # Replace the Pauli → spin handler mapping with predictable numbers
+    be._pauli_operator_handlers = {
+        PauliX: lambda op: 2,
+        PauliY: lambda op: 3,
+        PauliZ: lambda op: 4,
+        PauliI: lambda op: 1,
+    }
+
+    # Minimal dummy “Hamiltonian” iterable
+    class DummyHam:
+        def __iter__(self):
+            # 2 * 2  +  3 * (3*4)  = 4 + 36 = 40
+            yield 2, [PauliX(0)]
+            yield 3, [PauliY(0), PauliZ(0)]
+
+    assert be._hamiltonian_to_cuda(DummyHam()) == 40
