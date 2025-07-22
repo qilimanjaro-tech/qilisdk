@@ -2,7 +2,8 @@ version = 1
 revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
-    "python_full_version >= '3.11'",
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
     "python_full_version < '3.11'",
 ]
 
@@ -55,6 +56,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2d/b6/ffec7edce2a8315ef1acd4ae2e334ba428db2b2e8d7577a9aaf1e434034d/astpretty-3.0.0.tar.gz", hash = "sha256:b08c95f32e5994454ea99882ff3c4a0afc8254c38998a0ed4b479dba448dc581", size = 4675, upload-time = "2022-05-16T23:41:24.712Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9f/0a/79fff71a08bc0cc427f0dfbd4cca62b60f7f277aae81b89b79e9b04d526d/astpretty-3.0.0-py2.py3-none-any.whl", hash = "sha256:15bfd47593667169485a1fa7938b8de9445b11057d6f2b6e214b2f70667f94b6", size = 4928, upload-time = "2022-05-16T23:41:23.422Z" },
+]
+
+[[package]]
+name = "astroid"
+version = "3.3.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/74/dfb75f9ccd592bbedb175d4a32fc643cf569d7c218508bfbd6ea7ef9c091/astroid-3.3.11.tar.gz", hash = "sha256:1e5a5011af2920c7c67a53f65d536d65bfa7116feeaf2354d8b94f29573bb0ce", size = 400439, upload-time = "2025-07-13T18:04:23.177Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/0f/3b8fdc946b4d9cc8cc1e8af42c4e409468c84441b933d037e101b3d72d86/astroid-3.3.11-py3-none-any.whl", hash = "sha256:54c760ae8322ece1abd213057c4b5bba7c49818853fc901ef09719a60dbf9dec", size = 275612, upload-time = "2025-07-13T18:04:21.07Z" },
 ]
 
 [[package]]
@@ -753,7 +766,7 @@ name = "importlib-metadata"
 version = "8.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
 wheels = [
@@ -824,7 +837,8 @@ name = "ipython"
 version = "9.3.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.11'",
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
 ]
 dependencies = [
     { name = "colorama", marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
@@ -1897,14 +1911,6 @@ dependencies = [
 cuda = [
     { name = "cuda-quantum-cu12" },
 ]
-docs = [
-    { name = "furo" },
-    { name = "nbsphinx" },
-    { name = "sphinx" },
-    { name = "sphinx-automodapi" },
-    { name = "sphinx-design" },
-    { name = "sphinx-mdinclude" },
-]
 qaas = [
     { name = "httpx" },
     { name = "keyring" },
@@ -1924,29 +1930,32 @@ dev = [
     { name = "ruff" },
     { name = "towncrier" },
 ]
+docs = [
+    { name = "furo" },
+    { name = "nbsphinx" },
+    { name = "sphinx" },
+    { name = "sphinx-autoapi" },
+    { name = "sphinx-automodapi" },
+    { name = "sphinx-design" },
+    { name = "sphinx-mdinclude" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda'", specifier = "==0.11.0" },
     { name = "dill", specifier = ">=0.3.9" },
-    { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
     { name = "httpx", marker = "extra == 'qaas'", specifier = ">=0.28.1" },
     { name = "keyring", marker = "extra == 'qaas'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'qaas'", specifier = ">=5.0.2" },
     { name = "keyrings-alt", extras = ["qaas"], specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "nbsphinx", marker = "extra == 'docs'", specifier = ">=0.9.7" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pydantic-settings", specifier = ">=2.8.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.10" },
     { name = "scipy", specifier = ">=1.15.3" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.1.3" },
-    { name = "sphinx-automodapi", marker = "extra == 'docs'", specifier = ">=0.20.0" },
-    { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.6.1" },
-    { name = "sphinx-mdinclude", marker = "extra == 'docs'", specifier = ">=0.6.2" },
 ]
-provides-extras = ["cuda", "qaas", "docs"]
+provides-extras = ["cuda", "qaas"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1960,6 +1969,15 @@ dev = [
     { name = "pytest-sugar", specifier = ">=1.0.0" },
     { name = "ruff", specifier = ">=0.12.2" },
     { name = "towncrier", specifier = ">=24.8.0" },
+]
+docs = [
+    { name = "furo", specifier = ">=2024.8.6" },
+    { name = "nbsphinx", specifier = ">=0.9.7" },
+    { name = "sphinx", specifier = ">=8.1.3" },
+    { name = "sphinx-autoapi", specifier = ">=3.6.0" },
+    { name = "sphinx-automodapi", specifier = ">=0.20.0" },
+    { name = "sphinx-design", specifier = ">=0.6.1" },
+    { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
 ]
 
 [[package]]
@@ -2262,7 +2280,8 @@ name = "scipy"
 version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.11'",
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
 ]
 dependencies = [
     { name = "numpy", marker = "python_full_version >= '3.11'" },
@@ -2391,6 +2410,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6f/6d/be0b61178fe2cdcb67e2a92fc9ebb488e3c51c4f74a36a7824c0adf23425/sphinx-8.1.3.tar.gz", hash = "sha256:43c1911eecb0d3e161ad78611bc905d1ad0e523e4ddc202a58a821773dc4c927", size = 8184611, upload-time = "2024-10-13T20:27:13.93Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/60/1ddff83a56d33aaf6f10ec8ce84b4c007d9368b21008876fceda7e7381ef/sphinx-8.1.3-py3-none-any.whl", hash = "sha256:09719015511837b76bf6e03e42eb7595ac8c2e41eeb9c29c5b755c6b677992a2", size = 3487125, upload-time = "2024-10-13T20:27:10.448Z" },
+]
+
+[[package]]
+name = "sphinx-autoapi"
+version = "3.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "astroid" },
+    { name = "jinja2" },
+    { name = "pyyaml" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/a8/22b379a2a75ccb881217d3d4ae56d7d35f2d1bb4c8c0c51d0253676746a1/sphinx_autoapi-3.6.0.tar.gz", hash = "sha256:c685f274e41d0842ae7e199460c322c4bd7fec816ccc2da8d806094b4f64af06", size = 55417, upload-time = "2025-02-18T01:50:55.241Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/17/0eda9dc80fcaf257222b506844207e71b5d59567c41bbdcca2a72da119b9/sphinx_autoapi-3.6.0-py3-none-any.whl", hash = "sha256:f3b66714493cab140b0e896d33ce7137654a16ac1edb6563edcbd47bf975f711", size = 35281, upload-time = "2025-02-18T01:50:52.789Z" },
 ]
 
 [[package]]
