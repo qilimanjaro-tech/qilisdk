@@ -72,7 +72,7 @@ class QaaS:
             )
         self._username, self._token = credentials
         self._selected_device: int | None = None
-        self._handlers: dict[type[Functional], Callable[[Functional], Result]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional], int]] = {
             Sampling: self._execute_sampling,
             TimeEvolution: self._execute_time_evolution,
         }

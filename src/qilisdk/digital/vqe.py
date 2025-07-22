@@ -20,6 +20,7 @@ from qilisdk.common.optimizer import Optimizer
 from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
+from qilisdk.digital.sampling import Sampling
 from qilisdk.digital.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
@@ -219,5 +220,5 @@ class VQE(Algorithm):
             store_intermediate_results=store_intermediate_results,
         )
         circuit = self._ansatz.get_circuit(optimizer_result.optimal_parameters)
-        digital_result = backend.execute(circuit, nshots=nshots)
+        digital_result = backend.execute(Sampling(circuit=circuit, nshots=nshots))
         return VQEResult(optimizer_result=optimizer_result, digital_result=digital_result)
