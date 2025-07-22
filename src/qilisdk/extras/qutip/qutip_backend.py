@@ -188,14 +188,12 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
         else:
-            gate_name = "User_" + gate.name
+            gate_name = "Controlled_" + gate.name
             if gate_name not in circuit.user_gates:
                 circuit.user_gates[gate_name] = qutip_controlled_gate
-            circuit.add_gate(
-                gate_name, targets=[*gate.control_qubits, *gate.target_qubits]  # , arg_value=[*gate.control_qubits]
-            )
+            circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
 
-    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:
+    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:  # noqa: PLR6301
         """
         Handle an adjoint (inverse) gate operation.
 
@@ -206,11 +204,15 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             kernel (cudaq.Kernel): The main CUDA kernel being constructed.
             gate (Adjoint): The adjoint gate to be handled.
             target_qubit (cudaq.QuakeValue): The target qubit for the gate.
-
-        Raises:
-            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
         """
-        raise NotImplementedError
+
+        def qutip_adjoined_gate() -> Qobj:
+            return Qobj(gate.matrix)
+
+        gate_name = "Adjoint_" + gate.name
+        if gate_name not in circuit.user_gates:
+            circuit.user_gates[gate_name] = qutip_adjoined_gate
+        circuit.add_gate(gate_name, targets=[*gate.target_qubits])
 
     def evolve(  # noqa: PLR6301
         self,
@@ -236,11 +238,22 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         for ham in schedule.hamiltonians.values():
             qutip_hamiltonians.append(Qobj(ham.to_matrix().toarray()))
 
-        def get_ham_schedule(ham: str, dt: float, schedule: dict[int, dict[str, float]]) -> Callable:
-            return lambda t: schedule[int(t / dt)][ham]
+        def get_ham_schedule(ham: str, dt: float, schedule: dict[int, dict[str, float]], T: float) -> Callable:
+            def get_coeff(t: float) -> float:
+                if int(t / dt) in schedule:
+                    return schedule[int(t / dt)][ham]
+                time_step = int(t / dt)
+                while time_step > 0:
+                    time_step -= 1
+                    if time_step in schedule:
+                        return schedule[time_step][ham]
+                return 0
+
+            return get_coeff
+            # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
 
         H_t = [
-            [qutip_hamiltonians[i], get_ham_schedule(h, schedule.dt, schedule.schedule)]
+            [qutip_hamiltonians[i], get_ham_schedule(h, schedule.dt, schedule.schedule, schedule.T)]
             for i, h in enumerate(schedule.hamiltonians)
         ]
 

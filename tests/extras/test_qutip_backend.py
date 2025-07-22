@@ -95,8 +95,9 @@ def test_adjoint_handler(gate_instance):
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
-    with pytest.raises(NotImplementedError):
-        backend.execute(circuit, nshots=10)
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+
+    assert any(g.name == "Adjoint_" + adjoint_gate.name for g in qutip_circuit.gates)
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
@@ -107,7 +108,7 @@ def test_controlled_handler(gate_instance):
     circuit._gates.append(controlled_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
-    assert any(g.name == "User_" + controlled_gate.name for g in qutip_circuit.gates)
+    assert any(g.name == "Controlled_" + controlled_gate.name for g in qutip_circuit.gates)
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
