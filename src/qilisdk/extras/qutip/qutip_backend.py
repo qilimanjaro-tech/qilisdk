@@ -238,22 +238,24 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         for ham in schedule.hamiltonians.values():
             qutip_hamiltonians.append(Qobj(ham.to_matrix().toarray()))
 
-        def get_ham_schedule(ham: str, dt: float, schedule: dict[int, dict[str, float]], T: float) -> Callable:
+        def get_hamiltonian_schedule(
+            hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
+        ) -> Callable:
             def get_coeff(t: float) -> float:
                 if int(t / dt) in schedule:
-                    return schedule[int(t / dt)][ham]
+                    return schedule[int(t / dt)][hamiltonian]
                 time_step = int(t / dt)
                 while time_step > 0:
                     time_step -= 1
                     if time_step in schedule:
-                        return schedule[time_step][ham]
+                        return schedule[time_step][hamiltonian]
                 return 0
 
             return get_coeff
             # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
 
         H_t = [
-            [qutip_hamiltonians[i], get_ham_schedule(h, schedule.dt, schedule.schedule, schedule.T)]
+            [qutip_hamiltonians[i], get_hamiltonian_schedule(h, schedule.dt, schedule.schedule, schedule.T)]
             for i, h in enumerate(schedule.hamiltonians)
         ]
 
