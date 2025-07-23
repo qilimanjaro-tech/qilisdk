@@ -180,7 +180,7 @@ class VQE(Algorithm):
             float: The cost computed using the model.
         """
         circuit = self._ansatz.get_circuit(params)
-        results = backend.execute(circuit=circuit, nshots=nshots)
+        results = backend.execute(Sampling(circuit=circuit, nshots=nshots))
         cost = 0.0
         var_list = self._model.variables()
         for state, prob in results.get_probabilities():

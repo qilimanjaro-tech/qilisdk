@@ -21,4 +21,6 @@ TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
 
 
 class Functional(Protocol[TResult_co]):
-    result_type: Type[TResult_co]
+    @property
+    def result_type(self) -> Type[TResult_co]:
+        ...

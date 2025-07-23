@@ -20,7 +20,7 @@ import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from os import environ
-from typing import TYPE_CHECKING, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import httpx
 from pydantic import TypeAdapter, ValidationError
@@ -72,9 +72,9 @@ class QaaS:
             )
         self._username, self._token = credentials
         self._selected_device: int | None = None
-        self._handlers: dict[type[Functional], Callable[[Functional], int]] = {
-            Sampling: self._execute_sampling,
-            TimeEvolution: self._execute_time_evolution,
+        self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], int]] = {
+            Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
+            TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
         }
 
     def _get_headers(self) -> dict:  # noqa: PLR6301

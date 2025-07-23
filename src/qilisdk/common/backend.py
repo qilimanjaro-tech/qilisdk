@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.common.result import Result
@@ -30,12 +30,21 @@ TResult = TypeVar("TResult", bound=Result)
 
 class Backend(ABC):
     def __init__(self) -> None:
-        self._handlers: dict[type[Functional], Callable[[Functional], Result]] = {
-            Sampling: self._execute_sampling,
-            TimeEvolution: self._execute_time_evolution,
+        self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], Result]] = {
+            Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
+            TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
         }
 
-    def execute(self, functional: Functional[TResult]) -> TResult:
+    @overload
+    def execute(self, functional: Sampling) -> SamplingResult: ...
+
+    @overload
+    def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
+
+    @overload
+    def execute(self, functional: Functional[TResult]) -> TResult: ...
+
+    def execute(self, functional: Functional[Any]) -> Any:
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:

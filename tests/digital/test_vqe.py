@@ -4,6 +4,7 @@ import pytest
 
 from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.optimizer_result import OptimizerResult
+from qilisdk.digital.sampling import Sampling
 from qilisdk.digital.vqe import VQE, VQEResult
 
 
@@ -106,7 +107,12 @@ def test_obtain_cost_calls_backend(dummy_ansatz, initial_params, dummy_cost_func
     # Verify get_circuit and execute were called with expected arguments.
     expected_circuit = f"circuit_for_{test_params}"
     dummy_ansatz.get_circuit.assert_called_once_with(test_params)
-    dummy_backend.execute.assert_called_once_with(circuit=expected_circuit, nshots=500)
+
+    dummy_backend.execute.assert_called_once()
+    called_sampling = dummy_backend.execute.call_args[0][0]
+    assert isinstance(called_sampling, Sampling)
+    assert called_sampling.circuit == expected_circuit
+    assert called_sampling.nshots == 500
 
     # The dummy_cost_function returns 0.7 regardless of input.
     assert cost == 8.0
@@ -135,7 +141,12 @@ def test_obtain_cost_default_nshots(dummy_ansatz, initial_params, dummy_cost_fun
     _ = vqe.obtain_cost(test_params, backend=dummy_backend)  # nshots not specified
 
     expected_circuit = f"circuit_for_{test_params}"
-    dummy_backend.execute.assert_called_once_with(circuit=expected_circuit, nshots=1000)
+
+    dummy_backend.execute.assert_called_once()
+    called_sampling = dummy_backend.execute.call_args[0][0]
+    assert isinstance(called_sampling, Sampling)
+    assert called_sampling.circuit == expected_circuit
+    assert called_sampling.nshots == 1000
 
 
 def test_execute_calls_optimizer_and_returns_vqeresult(
