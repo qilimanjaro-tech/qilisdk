@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .qutip_analog_result import QutipAnalogResult
+from .qutip_analog_result import QutipTimeEvolutionResult
 from .qutip_backend import QutipBackend
-from .qutip_digital_result import QutipDigitalResult
+from .qutip_digital_result import QutipSamplingResult
 
-__all__ = ["QutipAnalogResult", "QutipBackend", "QutipDigitalResult"]
+__all__ = ["QutipBackend", "QutipSamplingResult", "QutipTimeEvolutionResult"]

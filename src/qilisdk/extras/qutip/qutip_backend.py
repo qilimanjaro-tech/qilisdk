@@ -31,19 +31,18 @@ from qutip_qip.operations import Y as q_Y
 from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
-from qilisdk.analog.analog_backend import AnalogBackend
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
+from qilisdk.common.backend import Backend
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
-from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-
-from .qutip_analog_result import QutipAnalogResult
-from .qutip_digital_result import QutipDigitalResult
+from qilisdk.digital.sampling_result import SamplingResult
 
 if TYPE_CHECKING:
-    from qilisdk.analog.schedule import Schedule
+    from qilisdk.analog.time_evolution import TimeEvolution
+    from qilisdk.digital.sampling import Sampling
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -53,7 +52,7 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], Qobj]]
 
 
-class QutipBackend(DigitalBackend, AnalogBackend):
+class QutipBackend(Backend):
     """
     Digital backend implementation using CUDA-based simulation.
 
@@ -63,9 +62,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
     mapped to CUDA operations via dedicated handler functions.
     """
 
-    def __init__(
-        self, digital_simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR
-    ) -> None:
+    def __init__(self) -> None:
         """
         Initialize the QutipBackend.
 
@@ -74,7 +71,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        super().__init__(digital_simulation_method=digital_simulation_method)
+        super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: QutipBackend._handle_X,
             Y: QutipBackend._handle_Y,
@@ -90,7 +87,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             U3: QutipBackend._handle_U3,
         }
 
-    def execute(self, circuit: Circuit, nshots: int = 1000) -> QutipDigitalResult:
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -106,14 +103,14 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             DigitalResult: A result object containing the measurement samples and computed probabilities.
         """
 
-        qutip_circuit = self._get_qutip_circuit(circuit)
+        qutip_circuit = self._get_qutip_circuit(functional.circuit)
 
         counts: Counter[str] = Counter()
-        init_state = tensor(*[basis(2, 0) for _ in range(circuit.nqubits)])
+        init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
-        for _ in range(nshots):
+        for _ in range(functional.nshots):
             res = sim.run(init_state)  # runs the full circuit for one shot
             bits = res.cbits  # classical measurement bits
             label = ""
@@ -121,7 +118,92 @@ class QutipBackend(DigitalBackend, AnalogBackend):
                 label += f"{int(c)}"
             counts[label] += 1
 
-        return QutipDigitalResult(nshots=nshots, samples=dict(counts))
+        return SamplingResult(nshots=functional.nshots, samples=dict(counts))
+
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:  # noqa: PLR6301
+        """computes the time evolution under of an initial state under the given schedule.
+
+        Args:
+            schedule (Schedule): The evolution schedule of the system.
+            initial_state (QuantumObject): the initial state of the evolution.
+            observables (list[PauliOperator  |  Hamiltonian]): the list of observables to be measured at the end of the evolution.
+            store_intermediate_results (bool): A flag to store the intermediate results along the evolution.
+
+        Returns:
+            AnalogResult: The results of the evolution.
+        """
+        tlist = np.linspace(0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt))
+
+        qutip_hamiltonians = []
+        for hamiltonian in functional.schedule.hamiltonians.values():
+            qutip_hamiltonians.append(Qobj(hamiltonian.to_matrix().toarray()))
+
+        def get_hamiltonian_schedule(
+            hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
+        ) -> Callable:
+            def get_coeff(t: float) -> float:
+                if int(t / dt) in schedule:
+                    return schedule[int(t / dt)][hamiltonian]
+                time_step = int(t / dt)
+                while time_step > 0:
+                    time_step -= 1
+                    if time_step in schedule:
+                        return schedule[time_step][hamiltonian]
+                return 0
+
+            return get_coeff
+            # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
+
+        H_t = [
+            [qutip_hamiltonians[i], get_hamiltonian_schedule(h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T)]
+            for i, h in enumerate(functional.schedule.hamiltonians)
+        ]
+
+        qutip_init_state = Qobj(functional.initial_state.dense)
+
+        qutip_obs: list[Qobj] = []
+
+        for obs in functional.observables:
+            aux_obs = None
+            if isinstance(obs, PauliOperator):
+                for i in range(functional.schedule.nqubits):
+                    if aux_obs is None:
+                        aux_obs = identity(2) if i != obs.qubit else Qobj(obs.matrix)
+                    else:
+                        aux_obs = tensor(aux_obs, identity(2)) if i != obs.qubit else tensor(aux_obs, Qobj(obs.matrix))
+            elif isinstance(obs, Hamiltonian):
+                aux_obs = copy(obs)
+                if obs.nqubits < functional.schedule.nqubits:
+                    for _ in range(functional.schedule.nqubits - obs.nqubits):
+                        aux_obs = tensor(aux_obs, identity(2))
+            if aux_obs is not None:
+                qutip_obs.append(aux_obs)
+
+        results = sesolve(
+            H=H_t,
+            e_ops=qutip_obs,
+            psi0=qutip_init_state,
+            tlist=tlist,
+            options={"store_states": functional.store_intermediate_results},
+        )
+
+        return TimeEvolutionResult(
+            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),
+            expected_values=(
+                np.array(
+                    [
+                        [results.expect[val][i] for val in range(len(results.expect))]
+                        for i in range(len(results.expect[0]))
+                    ]
+                )
+                if len(results.expect) > 0
+                else None
+            ),
+            final_state=(QuantumObject(results.final_state.full()) if results.final_state is not None else None),
+            intermediate_states=(
+                [QuantumObject(state.full()) for state in results.states] if len(results.states) > 1 else None
+            ),
+        )
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
         """_summary_
@@ -213,99 +295,6 @@ class QutipBackend(DigitalBackend, AnalogBackend):
         if gate_name not in circuit.user_gates:
             circuit.user_gates[gate_name] = qutip_adjoined_gate
         circuit.add_gate(gate_name, targets=[*gate.target_qubits])
-
-    def evolve(  # noqa: PLR6301
-        self,
-        schedule: Schedule,
-        initial_state: QuantumObject,
-        observables: list[PauliOperator | Hamiltonian],
-        store_intermediate_results: bool = False,
-    ) -> QutipAnalogResult:
-        """computes the time evolution under of an initial state under the given schedule.
-
-        Args:
-            schedule (Schedule): The evolution schedule of the system.
-            initial_state (QuantumObject): the initial state of the evolution.
-            observables (list[PauliOperator  |  Hamiltonian]): the list of observables to be measured at the end of the evolution.
-            store_intermediate_results (bool): A flag to store the intermediate results along the evolution.
-
-        Returns:
-            AnalogResult: The results of the evolution.
-        """
-        tlist = np.linspace(0, schedule.T - schedule.dt, int(schedule.T / schedule.dt))
-
-        qutip_hamiltonians = []
-        for ham in schedule.hamiltonians.values():
-            qutip_hamiltonians.append(Qobj(ham.to_matrix().toarray()))
-
-        def get_hamiltonian_schedule(
-            hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
-        ) -> Callable:
-            def get_coeff(t: float) -> float:
-                if int(t / dt) in schedule:
-                    return schedule[int(t / dt)][hamiltonian]
-                time_step = int(t / dt)
-                while time_step > 0:
-                    time_step -= 1
-                    if time_step in schedule:
-                        return schedule[time_step][hamiltonian]
-                return 0
-
-            return get_coeff
-            # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
-
-        H_t = [
-            [qutip_hamiltonians[i], get_hamiltonian_schedule(h, schedule.dt, schedule.schedule, schedule.T)]
-            for i, h in enumerate(schedule.hamiltonians)
-        ]
-
-        qutip_init_state = Qobj(initial_state.dense)
-
-        qutip_obs: list[Qobj] = []
-
-        for obs in observables:
-            aux_obs = None
-            if isinstance(obs, PauliOperator):
-                for i in range(schedule.nqubits):
-                    if aux_obs is None:
-                        aux_obs = identity(2) if i != obs.qubit else Qobj(obs.matrix)
-                    else:
-                        aux_obs = tensor(aux_obs, identity(2)) if i != obs.qubit else tensor(aux_obs, Qobj(obs.matrix))
-            elif isinstance(obs, Hamiltonian):
-                aux_obs = copy(obs)
-                if obs.nqubits < schedule.nqubits:
-                    for _ in range(schedule.nqubits - obs.nqubits):
-                        aux_obs = tensor(aux_obs, identity(2))
-            if aux_obs is not None:
-                qutip_obs.append(aux_obs)
-
-        results = sesolve(
-            H=H_t,
-            e_ops=qutip_obs,
-            psi0=qutip_init_state,
-            tlist=tlist,
-            options={"store_states": store_intermediate_results},
-        )
-
-        # return results
-
-        return QutipAnalogResult(
-            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),
-            expected_values=(
-                np.array(
-                    [
-                        [results.expect[val][i] for val in range(len(results.expect))]
-                        for i in range(len(results.expect[0]))
-                    ]
-                )
-                if len(results.expect) > 0
-                else None
-            ),
-            final_state=(QuantumObject(results.final_state.full()) if results.final_state is not None else None),
-            intermediate_states=(
-                [QuantumObject(state.full()) for state in results.states] if len(results.states) > 1 else None
-            ),
-        )
 
     @staticmethod
     def _handle_M(qutip_circuit: QubitCircuit, gate: M) -> None:

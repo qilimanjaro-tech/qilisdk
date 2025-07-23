@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .cuda_analog_result import CudaTimeEvolutionResult
 from .cuda_backend import CudaBackend, DigitalSimulationMethod
-from .cuda_digital_result import CudaSamplingResult
+from .cuda_sampling_result import CudaSamplingResult
+from .cuda_time_evolution_result import CudaTimeEvolutionResult
 
 __all__ = ["CudaBackend", "CudaSamplingResult", "CudaTimeEvolutionResult", "DigitalSimulationMethod"]

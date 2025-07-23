@@ -5,11 +5,14 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.quantum_objects import ket
 from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.time_evolution import TimeEvolution
+from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
-from qilisdk.digital.digital_result import DigitalResult
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
-from qilisdk.extras.qutip import QutipBackend, QutipDigitalResult  # adjust import as needed
+from qilisdk.digital.sampling import Sampling
+from qilisdk.digital.sampling_result import SamplingResult
+from qilisdk.extras.qutip import QutipBackend  # adjust import as needed
 
 
 @pytest.fixture
@@ -26,21 +29,21 @@ def test_basic_gate_handlers_mapping(backend):
 
 
 def test_execute_simple_circuit_no_measurement(backend):
-    circ = Circuit(nqubits=1)
-    circ.add(X(0))
-    result = backend.execute(circ, nshots=100)
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    result = backend.execute(Sampling(circuit=circuit, nshots=100))
     # Expect roughly all shots to be '1'
-    assert isinstance(result, QutipDigitalResult)
+    assert isinstance(result, SamplingResult)
     samples = result.samples
     assert "1" in samples
     assert samples["1"] == 100
 
 
 def test_execute_with_measurement_gate(backend):
-    circ = Circuit(nqubits=1)
-    circ.add(X(0))
-    circ.add(M(0))
-    result = backend.execute(circ, nshots=50)
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    circuit.add(M(0))
+    result = backend.execute(Sampling(circuit=circuit, nshots=50))
     # Still expect only '1'
     assert result.samples == {"1": 50}
 
@@ -49,18 +52,18 @@ def test_unsupported_gate_raises(backend):
     class FakeGate:
         target_qubits = [0]
 
-    circ = Circuit(nqubits=1)
-    circ.gates.append(FakeGate())
+    circuit = Circuit(nqubits=1)
+    circuit.gates.append(FakeGate())
     with pytest.raises(UnsupportedGateError):
-        backend.execute(circ)
+        backend.execute(Sampling(circuit=circuit))
 
 
 def test_controlled_cnot(backend):
-    circ = Circuit(nqubits=2)
-    circ.add(CNOT(control=0, target=1))
+    circuit = Circuit(nqubits=2)
+    circuit.add(CNOT(control=0, target=1))
     # Expect no error on building or executing
-    result = backend.execute(circ, nshots=10)
-    assert isinstance(result, QutipDigitalResult)
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
     # All samples should be "00" since X only applies if control=1, but no preparation
     assert result.samples == {"00": 10}
 
@@ -68,8 +71,8 @@ def test_controlled_cnot(backend):
 def test_nshots():
     backend = QutipBackend()
     circuit = Circuit(nqubits=1)
-    result = backend.execute(circuit, nshots=10)
-    assert isinstance(result, DigitalResult)
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
     assert result.nshots == 10
 
 
@@ -132,7 +135,9 @@ def test_constant_hamiltonian():
     psi0 = ket(0)
     obs = [pauli_z(0)]
     backend = QutipBackend()
-    res = backend.evolve(schedule, psi0, obs, store_intermediate_results=True)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=True))
+
+    assert isinstance(res, TimeEvolutionResult)
 
     assert pytest.approx(res.final_expected_values, rel=1e-6) == 1.0
 
@@ -163,7 +168,9 @@ def test_time_dependent_hamiltonian():
     ]
 
     backend = QutipBackend()
-    res = backend.evolve(schedule, psi0, obs)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
     assert pytest.approx(expect_z, rel=1e-2) == 1.0
