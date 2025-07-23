@@ -101,6 +101,20 @@ class SamplingPayload(QaaSModel):
         return v
 
 
+class TimeEvolutionPayload(QaaSModel):
+    time_evolution: TimeEvolution = Field(...)
+
+    @field_serializer("time_evolution")
+    def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
+        return serialize(time_evolution)
+
+    @field_validator("time_evolution", mode="before")
+    def _load_time_evolution(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, TimeEvolution)
+        return v
+
+
 class VQEPayload(QaaSModel):
     vqe: VQE = Field(...)
     optimizer: Optimizer = Field(...)
@@ -125,20 +139,6 @@ class VQEPayload(QaaSModel):
     def _load_optimizer(cls, v):
         if isinstance(v, str):
             return deserialize(v, Optimizer)
-        return v
-
-
-class TimeEvolutionPayload(QaaSModel):
-    time_evolution: TimeEvolution = Field(...)
-
-    @field_serializer("time_evolution")
-    def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
-        return serialize(time_evolution)
-
-    @field_validator("time_evolution", mode="before")
-    def _load_time_evolution(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, TimeEvolution)
         return v
 
 
