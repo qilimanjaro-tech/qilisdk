@@ -4,8 +4,8 @@ import pytest
 
 from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.optimizer_result import OptimizerResult
-from qilisdk.digital.sampling import Sampling
 from qilisdk.digital.vqe import VQE, VQEResult
+from qilisdk.functionals.sampling import Sampling
 
 
 @pytest.fixture

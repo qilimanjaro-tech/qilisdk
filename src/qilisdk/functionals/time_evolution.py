@@ -13,10 +13,10 @@
 # limitations under the License.
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.analog.quantum_objects import QuantumObject
 from qilisdk.analog.schedule import Schedule
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.common.functional import Functional
+from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 
 Complex = int | float | complex

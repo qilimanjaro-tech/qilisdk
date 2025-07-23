@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
-from qilisdk.yaml import yaml
 
+from .cuda_backend import CudaBackend, CudaSamplingMethod
+from .qutip_backend import QutipBackend
 
-@yaml.register_class
-class CudaTimeEvolutionResult(TimeEvolutionResult): ...
+__all__ = ["CudaBackend", "CudaSamplingMethod", "QutipBackend"]

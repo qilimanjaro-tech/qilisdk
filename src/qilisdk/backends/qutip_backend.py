@@ -32,17 +32,17 @@ from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.common.backend import Backend
+from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.digital.sampling_result import SamplingResult
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.analog.time_evolution import TimeEvolution
-    from qilisdk.digital.sampling import Sampling
+    from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.time_evolution import TimeEvolution
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)

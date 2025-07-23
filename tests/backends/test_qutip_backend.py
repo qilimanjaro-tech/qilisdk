@@ -3,16 +3,16 @@ import pytest
 
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
-from qilisdk.analog.quantum_objects import ket
 from qilisdk.analog.schedule import Schedule
-from qilisdk.analog.time_evolution import TimeEvolution
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
+from qilisdk.backends import QutipBackend
+from qilisdk.common.quantum_objects import ket
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
-from qilisdk.digital.sampling import Sampling
-from qilisdk.digital.sampling_result import SamplingResult
-from qilisdk.extras.qutip import QutipBackend  # adjust import as needed
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
 @pytest.fixture

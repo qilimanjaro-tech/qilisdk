@@ -14,7 +14,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-import qilisdk.extras.qaas.qaas as qaas
+import qilisdk.qaas.qaas as qaas
 
 
 # ────────────────────────────────────────────────────────────────────────────────

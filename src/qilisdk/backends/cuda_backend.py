@@ -22,17 +22,19 @@ from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve
 from cudaq import Schedule as cuda_schedule
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
-from qilisdk.analog.quantum_objects import QuantumObject
-from qilisdk.analog.time_evolution_result import TimeEvolutionResult
 from qilisdk.common.backend import Backend
-from qilisdk.digital import (
+from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.digital.exceptions import UnsupportedGateError
+from qilisdk.digital.gates import (
     RX,
     RY,
     RZ,
     U1,
     U2,
     U3,
-    Circuit,
+    Adjoint,
+    BasicGate,
+    Controlled,
     H,
     M,
     S,
@@ -41,13 +43,13 @@ from qilisdk.digital import (
     Y,
     Z,
 )
-from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.digital.sampling_result import SamplingResult
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.analog.time_evolution import TimeEvolution
-    from qilisdk.digital.sampling import Sampling
+    from qilisdk.digital.circuit import Circuit
+    from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.time_evolution import TimeEvolution
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -57,7 +59,7 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
-class DigitalSimulationMethod(str, Enum):
+class CudaSamplingMethod(str, Enum):
     """
     Enumeration of available simulation methods for the CUDA backend.
     """
@@ -77,14 +79,12 @@ class CudaBackend(Backend):
     mapped to CUDA operations via dedicated handler functions.
     """
 
-    def __init__(
-        self, digital_simulation_method: DigitalSimulationMethod = DigitalSimulationMethod.STATE_VECTOR
-    ) -> None:
+    def __init__(self, sampling_method: CudaSamplingMethod = CudaSamplingMethod.STATE_VECTOR) -> None:
         """
         Initialize the CudaBackend.
 
         Args:
-            digital_simulation_method (SimulationMethod, optional): The simulation method to use for executing circuits.
+            sampling_simulation_method (CudaSamplingMethod, optional): The simulation method to use for sampling circuits.
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
@@ -109,17 +109,17 @@ class CudaBackend(Backend):
             PauliZ: CudaBackend._handle_PauliZ,
             PauliI: CudaBackend._handle_PauliI,
         }
-        self._digital_simulation_method = digital_simulation_method
+        self._sampling_method = sampling_method
 
     @property
-    def digital_simulation_method(self) -> DigitalSimulationMethod:
+    def sampling_method(self) -> CudaSamplingMethod:
         """
         Get the simulation method currently configured for the backend.
 
         Returns:
             SimulationMethod: The simulation method to be used for circuit execution.
         """
-        return self._digital_simulation_method
+        return self._sampling_method
 
     def _apply_digital_simulation_method(self) -> None:
         """
@@ -128,12 +128,12 @@ class CudaBackend(Backend):
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         """
-        if self.digital_simulation_method == DigitalSimulationMethod.STATE_VECTOR:
+        if self.sampling_method == CudaSamplingMethod.STATE_VECTOR:
             if cudaq.num_available_gpus() == 0:
                 cudaq.set_target("qpp-cpu")
             else:
                 cudaq.set_target("nvidia")
-        elif self.digital_simulation_method == DigitalSimulationMethod.TENSOR_NETWORK:
+        elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
         else:
             cudaq.set_target("tensornet-mps")

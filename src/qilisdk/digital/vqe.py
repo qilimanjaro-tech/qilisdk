@@ -20,8 +20,8 @@ from qilisdk.common.optimizer import Optimizer
 from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
-from qilisdk.digital.sampling import Sampling
-from qilisdk.digital.sampling_result import SamplingResult
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
 

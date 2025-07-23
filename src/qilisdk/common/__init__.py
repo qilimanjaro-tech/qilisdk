@@ -12,6 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .model import Constraint, Model, Objective, ObjectiveSense
 from .optimizer import SciPyOptimizer
+from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
+from .variables import (
+    BinaryVariable,
+    Equal,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    NotEqual,
+    SpinVariable,
+    Variable,
+)
 
-__all__ = ["SciPyOptimizer"]
+__all__ = [
+    "BinaryVariable",
+    "Constraint",
+    "Equal",
+    "GreaterThan",
+    "GreaterThanOrEqual",
+    "LessThan",
+    "LessThanOrEqual",
+    "Model",
+    "NotEqual",
+    "Objective",
+    "ObjectiveSense",
+    "QuantumObject",
+    "SciPyOptimizer",
+    "SpinVariable",
+    "Variable",
+    "basis_state",
+    "bra",
+    "expect_val",
+    "ket",
+    "tensor_prod",
+]

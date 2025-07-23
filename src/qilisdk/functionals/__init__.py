@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .cuda.cuda_backend import CudaBackend
-from .qaas.qaas import QaaS
+from .sampling import Sampling
+from .sampling_result import SamplingResult
+from .time_evolution import TimeEvolution
+from .time_evolution_result import TimeEvolutionResult
 
-__all__ = ["CudaBackend", "QaaS"]
+__all__ = ["Sampling", "SamplingResult", "TimeEvolution", "TimeEvolutionResult"]

@@ -14,7 +14,7 @@
 
 from qilisdk.common.functional import Functional
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.sampling_result import SamplingResult
+from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.yaml import yaml
 
 

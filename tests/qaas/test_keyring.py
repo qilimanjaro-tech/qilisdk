@@ -2,8 +2,8 @@
 import keyring
 from pydantic import ValidationError
 
-from qilisdk.extras.qaas.keyring import KEYRING_IDENTIFIER, delete_credentials, load_credentials, store_credentials
-from qilisdk.extras.qaas.qaas_models import Token
+from qilisdk.qaas.keyring import KEYRING_IDENTIFIER, delete_credentials, load_credentials, store_credentials
+from qilisdk.qaas.qaas_models import Token
 
 
 class FakeToken:

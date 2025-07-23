@@ -15,7 +15,7 @@ from pprint import pformat
 
 import numpy as np
 
-from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.common.result import Result
 from qilisdk.yaml import yaml
 

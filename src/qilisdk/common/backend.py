@@ -16,14 +16,14 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
-from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.common.result import Result
-from qilisdk.digital.sampling import Sampling
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.time_evolution import TimeEvolution
 
 if TYPE_CHECKING:
-    from qilisdk.analog.time_evolution_result import TimeEvolutionResult
     from qilisdk.common.functional import Functional
-    from qilisdk.digital.sampling_result import SamplingResult
+    from qilisdk.functionals.sampling_result import SamplingResult
+    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 TResult = TypeVar("TResult", bound=Result)
 

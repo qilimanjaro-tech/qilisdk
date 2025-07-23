@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 import httpx
 from pydantic import TypeAdapter, ValidationError
 
-from qilisdk.analog.time_evolution import TimeEvolution
 from qilisdk.common.result import Result
-from qilisdk.digital.sampling import Sampling
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.time_evolution import TimeEvolution
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .qaas_models import (

@@ -33,12 +33,10 @@ class OptionalFeature:
     """Holds metadata about an optional feature.
 
     Attributes:
-        feature_name (str):
+        name (str):
             The name of the extras group in pyproject.toml
-        distributions (list[str]):
-            The PyPI distribution names that must be installed
-        import_path (str):
-            The Python import path to the module containing the real symbols
+        dependencies (list[str]):
+            The dependencies that must be installed
         symbols (list[str]):
             Which symbols (classes, functions, etc.) to re-export
     """
@@ -53,9 +51,9 @@ class ImportedFeature:
     """Holds the result of an optional import.
 
     Attributes:
-        feature_name (str):
+        name (str):
             A label for the feature (e.g. 'qibo-backend').
-        symbol_map (dict[str, Union[Any, Callable]]):
+        symbols (dict[str, Union[Any, Callable]]):
             A mapping from symbol name to the real or stubbed object.
             If the required dependency is missing, the symbol is a stub
             that raises an error when called.

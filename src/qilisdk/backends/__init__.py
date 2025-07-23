@@ -21,15 +21,16 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="cuda",
         dependencies=["cuda-quantum-cu12"],
-        symbols=[Symbol(path="qilisdk.extras.cuda.cuda_backend", name="CudaBackend")],
+        symbols=[
+            Symbol(path="qilisdk.backends.cuda_backend", name="CudaBackend"),
+            Symbol(path="qilisdk.backends.cuda_backend", name="CudaSamplingMethod"),
+        ],
     ),
     OptionalFeature(
-        name="qaas",
-        dependencies=["httpx", "keyring", "keyrings-alt"],
+        name="qutip",
+        dependencies=["qutip", "qutip-qip", "matplotlib"],
         symbols=[
-            Symbol(path="qilisdk.extras.qaas.qaas", name="QaaS"),
-            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceStatus"),
-            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceType"),
+            Symbol(path="qilisdk.backends.qutip_backend", name="QutipBackend"),
         ],
     ),
 ]

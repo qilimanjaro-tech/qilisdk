@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse import csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-from qilisdk.analog.quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
+from qilisdk.common import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 
 # --- Constructor Tests ---
 
