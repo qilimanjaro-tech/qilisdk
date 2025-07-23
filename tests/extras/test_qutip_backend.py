@@ -135,7 +135,9 @@ def test_constant_hamiltonian():
     psi0 = ket(0)
     obs = [pauli_z(0)]
     backend = QutipBackend()
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=True))
+    res = backend.execute(
+        TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=True)
+    )
 
     assert isinstance(res, TimeEvolutionResult)
 

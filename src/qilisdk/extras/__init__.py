@@ -29,7 +29,7 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
         symbols=[
             Symbol(path="qilisdk.extras.qaas.qaas", name="QaaS"),
             Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceStatus"),
-            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceType")
+            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceType"),
         ],
     ),
 ]

@@ -132,7 +132,9 @@ class QutipBackend(Backend):
         Returns:
             AnalogResult: The results of the evolution.
         """
-        tlist = np.linspace(0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt))
+        tlist = np.linspace(
+            0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt)
+        )
 
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
@@ -155,7 +157,12 @@ class QutipBackend(Backend):
             # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
 
         H_t = [
-            [qutip_hamiltonians[i], get_hamiltonian_schedule(h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T)]
+            [
+                qutip_hamiltonians[i],
+                get_hamiltonian_schedule(
+                    h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T
+                ),
+            ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
 
