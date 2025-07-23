@@ -18,7 +18,7 @@ from copy import copy
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
-from qutip import Qobj, basis, identity, sesolve, tensor
+from qutip import Qobj, basis, sesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
 from qutip_qip.operations import RY as q_RY
@@ -32,8 +32,8 @@ from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
 from qilisdk.analog.analog_backend import AnalogBackend
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.analog.quantum_objects import QuantumObject
+from qilisdk.analog.hamiltonian import Hamiltonian, I, PauliOperator
+from qilisdk.analog.quantum_objects import QuantumObject, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.digital_backend import DigitalBackend, DigitalSimulationMethod
 from qilisdk.digital.exceptions import UnsupportedGateError
@@ -231,12 +231,17 @@ class QutipBackend(DigitalBackend, AnalogBackend):
 
         Returns:
             AnalogResult: The results of the evolution.
+
+        Raises:
+            ValueError: if the initial state provided is invalid.
         """
         tlist = np.linspace(0, schedule.T - schedule.dt, int(schedule.T / schedule.dt))
 
         qutip_hamiltonians = []
         for ham in schedule.hamiltonians.values():
-            qutip_hamiltonians.append(Qobj(ham.to_matrix().toarray()))
+            qutip_hamiltonians.append(
+                Qobj(ham.to_matrix().toarray(), dims=[[2 for _ in range(ham.nqubits)] for _ in range(2)])
+            )
 
         def get_hamiltonian_schedule(
             hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
@@ -258,26 +263,40 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             [qutip_hamiltonians[i], get_hamiltonian_schedule(h, schedule.dt, schedule.schedule, schedule.T)]
             for i, h in enumerate(schedule.hamiltonians)
         ]
+        state_dim = []
+        if initial_state.is_density_matrix():
+            state_dim = [[2 for _ in range(initial_state.nqubits)] for _ in range(2)]
+        elif initial_state.is_bra():
+            state_dim = [[1], [2 for _ in range(initial_state.nqubits)]]
+        elif initial_state.is_ket():
+            state_dim = [[2 for _ in range(initial_state.nqubits)], [1]]
+        else:
+            raise ValueError("invalid initial state provided.")
 
-        qutip_init_state = Qobj(initial_state.dense)
+        qutip_init_state = Qobj(initial_state.dense, dims=state_dim)
 
         qutip_obs: list[Qobj] = []
 
+        identity = QuantumObject(I(0).matrix)
         for obs in observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
                 for i in range(schedule.nqubits):
                     if aux_obs is None:
-                        aux_obs = identity(2) if i != obs.qubit else Qobj(obs.matrix)
+                        aux_obs = identity if i != obs.qubit else QuantumObject(obs.matrix)
                     else:
-                        aux_obs = tensor(aux_obs, identity(2)) if i != obs.qubit else tensor(aux_obs, Qobj(obs.matrix))
+                        aux_obs = (
+                            tensor_prod([aux_obs, identity])
+                            if i != obs.qubit
+                            else tensor_prod([aux_obs, QuantumObject(obs.matrix)])
+                        )
             elif isinstance(obs, Hamiltonian):
-                aux_obs = copy(obs)
+                aux_obs = QuantumObject(obs.to_matrix())
                 if obs.nqubits < schedule.nqubits:
                     for _ in range(schedule.nqubits - obs.nqubits):
-                        aux_obs = tensor(aux_obs, identity(2))
+                        aux_obs = tensor_prod([aux_obs, identity])
             if aux_obs is not None:
-                qutip_obs.append(aux_obs)
+                qutip_obs.append(Qobj(aux_obs.dense, dims=[[2 for _ in range(schedule.nqubits)] for _ in range(2)]))
 
         results = sesolve(
             H=H_t,
