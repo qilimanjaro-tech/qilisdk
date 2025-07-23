@@ -14,5 +14,5 @@
 
 # from qilisdk import analog, backends, common, digital, qaas, utils
 
-__all__ = []
+__all__: list[str] = []
 __version__: str
