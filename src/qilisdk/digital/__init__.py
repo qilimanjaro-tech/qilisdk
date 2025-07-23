@@ -32,7 +32,8 @@ from .gates import (
     Y,
     Z,
 )
-from .vqe import VQE
+
+# from .vqe import VQE
 
 __all__ = [
     "CNOT",
@@ -43,7 +44,7 @@ __all__ = [
     "U1",
     "U2",
     "U3",
-    "VQE",
+    # "VQE",
     "Circuit",
     "Gate",
     "H",

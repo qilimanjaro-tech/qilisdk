@@ -3,10 +3,20 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
-from qilisdk.analog import Hamiltonian, I, X, Y, Z
 from qilisdk.analog.exceptions import InvalidHamiltonianOperation
-from qilisdk.analog.hamiltonian import PauliI, PauliOperator, PauliX, PauliY, PauliZ, _get_pauli
-from qilisdk.common.exceptions import NotSupportedOperation
+from qilisdk.analog.hamiltonian import (
+    Hamiltonian,
+    I,
+    PauliI,
+    PauliOperator,
+    PauliX,
+    PauliY,
+    PauliZ,
+    X,
+    Y,
+    Z,
+    _get_pauli,
+)
 
 
 # Helper function to convert sparse matrix to dense NumPy array.
@@ -148,7 +158,7 @@ def test_multiply_pauli_errors():
     with pytest.raises(ValueError, match=r"Operators must act on the same qubit for multiplication."):
         Hamiltonian._multiply_pauli(Z(0), Z(1))
 
-    with pytest.raises(NotSupportedOperation, match=r"Multiplying Z\(0\) and M\(0\) not supported."):
+    with pytest.raises(InvalidHamiltonianOperation, match=r"Multiplying Z\(0\) and M\(0\) not supported."):
         Hamiltonian._multiply_pauli(Z(0), MockPauli(0))
 
 
@@ -170,7 +180,7 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
 
 
 def test_truediv_raises_not_supported():
-    with pytest.raises(NotSupportedOperation, match="Division by operators is not supported"):
+    with pytest.raises(InvalidHamiltonianOperation, match="Division by operators is not supported"):
         2 / Z(0)
 
 

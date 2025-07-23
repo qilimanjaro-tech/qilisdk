@@ -4,15 +4,19 @@ import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
-from qilisdk.backends import CudaBackend, CudaSamplingMethod
-from qilisdk.digital import (
+from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.exceptions import UnsupportedGateError
+from qilisdk.digital.gates import (
     RX,
     RY,
     RZ,
     U1,
     U2,
     U3,
-    Circuit,
+    Adjoint,
+    BasicGate,
+    Controlled,
     H,
     M,
     S,
@@ -21,8 +25,6 @@ from qilisdk.digital import (
     Y,
     Z,
 )
-from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 
