@@ -302,7 +302,7 @@ class QutipBackend(DigitalBackend, AnalogBackend):
             e_ops=qutip_obs,
             psi0=qutip_init_state,
             tlist=tlist,
-            options={"store_states": store_intermediate_results},
+            options={"store_states": store_intermediate_results, "store_final_state": True},
         )
 
         # return results
