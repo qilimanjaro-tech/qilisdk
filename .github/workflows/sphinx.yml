@@ -1,0 +1,38 @@
+name: Build-sphinx-docs
+
+on:
+  push:
+    branches:
+      - documentation
+
+  workflow_dispatch:
+
+jobs: 
+  build: 
+    name: building documentation
+    runs-on: ubuntu-latest
+    env:
+      HOME_REPO: /home/repo
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          python-version: "3.12"
+
+      - name: Install the requierements
+        run: uv sync --all-groups --all-extras  
+
+      - name: Build HTML
+        run: | 
+          cd docs/
+          make html
+      - name: Run ghp-import
+        run: | 
+          ghp-import -n -p -f docs/_build/html
