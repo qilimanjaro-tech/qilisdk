@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 from collections import Counter
-from copy import copy
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
