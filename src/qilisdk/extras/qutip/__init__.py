@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .cuda_analog_result import CudaTimeEvolutionResult
-from .cuda_backend import CudaBackend, DigitalSimulationMethod
-from .cuda_digital_result import CudaSamplingResult
+from .qutip_analog_result import QutipAnalogResult
+from .qutip_backend import QutipBackend
+from .qutip_digital_result import QutipDigitalResult
 
-__all__ = ["CudaBackend", "CudaSamplingResult", "CudaTimeEvolutionResult", "DigitalSimulationMethod"]
+__all__ = ["QutipAnalogResult", "QutipBackend", "QutipDigitalResult"]
