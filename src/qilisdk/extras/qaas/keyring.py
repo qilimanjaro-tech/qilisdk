@@ -15,7 +15,7 @@
 import keyring
 from pydantic import ValidationError
 
-from .models import Token
+from .qaas_models import Token
 
 KEYRING_IDENTIFIER = "QaaSKeyring"
 

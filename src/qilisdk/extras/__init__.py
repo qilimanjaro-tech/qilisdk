@@ -26,7 +26,11 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="qaas",
         dependencies=["httpx", "keyring", "keyrings-alt"],
-        symbols=[Symbol(path="qilisdk.extras.qaas.qaas", name="QaaS")],
+        symbols=[
+            Symbol(path="qilisdk.extras.qaas.qaas", name="QaaS"),
+            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceStatus"),
+            Symbol(path="qilisdk.extras.qaas.qaas_models", name="DeviceType")
+        ],
     ),
 ]
 

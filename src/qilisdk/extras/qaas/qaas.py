@@ -30,7 +30,7 @@ from qilisdk.common.result import Result
 from qilisdk.digital.sampling import Sampling
 
 from .keyring import delete_credentials, load_credentials, store_credentials
-from .models import (
+from .qaas_models import (
     Device,
     ExecutePayload,
     ExecuteType,

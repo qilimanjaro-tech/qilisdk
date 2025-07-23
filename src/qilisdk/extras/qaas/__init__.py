@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dtos import DeviceStatus, DeviceType
 from .qaas import QaaS
+from .qaas_models import DeviceStatus, DeviceType
 
 __all__ = ["DeviceStatus", "DeviceType", "QaaS"]
