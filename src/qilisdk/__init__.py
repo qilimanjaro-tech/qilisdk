@@ -14,8 +14,6 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-# from qilisdk import analog, backends, common, digital, qaas, utils
-
 try:
     __version__ = version("qilisdk")
 except PackageNotFoundError:
