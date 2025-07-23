@@ -17,12 +17,12 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.common.optimizer import Optimizer
 from qilisdk.digital.vqe import VQE, VQEResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.utils.serialization import deserialize, serialize
 
 

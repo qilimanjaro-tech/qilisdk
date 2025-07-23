@@ -32,7 +32,7 @@ from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.common.backend import Backend
+from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError

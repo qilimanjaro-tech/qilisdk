@@ -21,7 +21,7 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 
 if TYPE_CHECKING:
-    from qilisdk.common.functional import Functional
+    from qilisdk.functionals.functional import Functional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 

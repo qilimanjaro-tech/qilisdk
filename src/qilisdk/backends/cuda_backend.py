@@ -22,7 +22,7 @@ from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve
 from cudaq import Schedule as cuda_schedule
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
-from qilisdk.common.backend import Backend
+from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (

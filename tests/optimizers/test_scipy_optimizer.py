@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from qilisdk.common.optimizer import SciPyOptimizer
+from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 
 def dummy_cost(params):

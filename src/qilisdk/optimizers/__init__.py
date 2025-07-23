@@ -12,16 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.digital.circuit import Circuit
-from qilisdk.functionals.functional import Functional
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.yaml import yaml
+from .scipy_optimizer import SciPyOptimizer
 
-
-@yaml.register_class
-class Sampling(Functional[SamplingResult]):
-    result_type = SamplingResult
-
-    def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
-        self.circuit = circuit
-        self.nshots = nshots
+__all__ = ["SciPyOptimizer"]

@@ -14,8 +14,8 @@
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.functional import Functional
 from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.functionals.functional import Functional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 

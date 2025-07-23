@@ -13,15 +13,15 @@
 # limitations under the License.
 from pprint import pformat
 
+from qilisdk.backends.backend import Backend
 from qilisdk.common.algorithm import Algorithm
-from qilisdk.common.backend import Backend
 from qilisdk.common.model import Model
-from qilisdk.common.optimizer import Optimizer
-from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.optimizers.optimizer import Optimizer
+from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
 
 

@@ -11,39 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from scipy import optimize as scipy_optimize
-from scipy.optimize import OptimizeResult
 
 from qilisdk.yaml import yaml
 
+from .optimizer import Optimizer
 from .optimizer_result import OptimizerIntermediateResult, OptimizerResult
 
-
-class Optimizer(ABC):
-    @abstractmethod
-    def optimize(
-        self,
-        cost_function: Callable[[list[float]], float],
-        init_parameters: list[float],
-        store_intermediate_results: bool = False,
-    ) -> OptimizerResult:
-        """
-        Optimize the cost function and return an OptimizerResult.
-
-        Args:
-            cost_function (Callable[[List[float]], float]): A function that takes a list of parameters and returns the cost.
-            init_parameters (List[float]): The initial parameters for the optimization.
-            store_intermediate_results (bool, optional): If True, stores a list of intermediate optimization results.
-                Each intermediate result is recorded as an OptimizerResult containing the parameters and cost at that iteration.
-                Defaults to False.
-
-        Returns:
-            OptimizerResult: An object containing the optimal cost, optimal parameters, and, if requested, the intermediate results.
-        """
+if TYPE_CHECKING:
+    from scipy.optimize import OptimizeResult
 
 
 @yaml.register_class

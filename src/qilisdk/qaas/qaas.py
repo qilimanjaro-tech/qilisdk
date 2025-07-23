@@ -46,9 +46,9 @@ from .qaas_models import (
 from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
-    from qilisdk.common.functional import Functional
-    from qilisdk.common.optimizer import Optimizer
     from qilisdk.digital.vqe import VQE
+    from qilisdk.functionals.functional import Functional
+    from qilisdk.optimizers.optimizer import Optimizer
 
 logging.basicConfig(
     format="%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG

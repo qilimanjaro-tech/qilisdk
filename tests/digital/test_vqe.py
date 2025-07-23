@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from qilisdk.common.model import Constraint, Model, Objective
-from qilisdk.common.optimizer_result import OptimizerResult
 from qilisdk.digital.vqe import VQE, VQEResult
 from qilisdk.functionals.sampling import Sampling
+from qilisdk.optimizers.optimizer_result import OptimizerResult
 
 
 @pytest.fixture

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from .model import Constraint, Model, Objective, ObjectiveSense
-from .optimizer import SciPyOptimizer
 from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
     BinaryVariable,
@@ -40,7 +39,6 @@ __all__ = [
     "Objective",
     "ObjectiveSense",
     "QuantumObject",
-    "SciPyOptimizer",
     "SpinVariable",
     "Variable",
     "basis_state",
