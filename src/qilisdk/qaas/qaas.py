@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import base64
 import json
-import logging
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
@@ -28,6 +27,7 @@ from pydantic import TypeAdapter, ValidationError
 from qilisdk.common.result import Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.logging import logger
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .qaas_models import (
@@ -50,10 +50,6 @@ if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional
     from qilisdk.optimizers.optimizer import Optimizer
 
-logging.basicConfig(
-    format="%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG
-)
-
 TResult = TypeVar("TResult", bound=Result)
 
 
@@ -64,8 +60,13 @@ class QaaS:
     _audience: str = environ.get("QILISDK_QAAS_AUDIENCE", "urn:qilimanjaro.tech:public-api:beren")
 
     def __init__(self) -> None:
+        logger.debug("Initializing QaaS client")
         credentials = load_credentials()
         if credentials is None:
+            logger.error(
+                "No valid QaaS credentials found in keyring. "
+                "User must call QaaSBackend.login() or set environment variables."
+            )
             raise RuntimeError(
                 "No valid QaaS credentials found in keyring."
                 "Please call QaaSBackend.login(username, apikey) or ensure environment variables are set."
@@ -76,6 +77,7 @@ class QaaS:
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
         }
+        logger.info("QaaS client initialized for user '{}'", self._username)
 
     def _get_headers(self) -> dict:  # noqa: PLR6301
         from qilisdk import __version__  # noqa: PLC0415
@@ -133,14 +135,16 @@ class QaaS:
                 apikey = apikey or settings.apikey
             except ValidationError:
                 # Environment credentials could not be validated.
-                # Optionally, log error details here.
+                logger.exception("Environment credentials could not be validated")
                 return False
 
         if not username or not apikey:
             # Insufficient credentials provided.
+            logger.warning("Insufficient credentials provided for login (username or apikey missing)")
             return False
 
         # Send login request to QaaS
+        logger.debug("Attempting login for user '{}'", username)
         try:
             assertion = {
                 "username": username,
@@ -162,16 +166,18 @@ class QaaS:
                 response.raise_for_status()
                 token = Token(**response.json())
         except httpx.RequestError:
-            # Log error message
+            logger.exception("Network error while logging in to QaaS")
             return False
 
         store_credentials(username=username, token=token)
+        logger.info("Login successful for user '{}'", username)
         return True
 
     @classmethod
     def logout(cls) -> None:
         """Delete cached credentials from the keyring."""
         delete_credentials()
+        logger.info("Credentials deleted from keyring for QaaS")
 
     def list_devices(self, where: Callable[[Device], bool] | None = None) -> list[Device]:
         """Return all visible devices, optionally filtered.
@@ -277,6 +283,7 @@ class QaaS:
         Raises:
             TimeoutError: If *timeout* elapses before the job finishes.
         """
+        logger.info("Waiting for job {} (poll={}, timeout={})", id, poll_interval, timeout)
         start_t = time.monotonic()
         terminal_states = {
             JobStatus.COMPLETED,
@@ -289,29 +296,37 @@ class QaaS:
             current = self.get_job_details(id)
 
             if current.status in terminal_states:
+                logger.info("Job {} reached terminal state {}", id, current.status.value)
                 return current
 
             if timeout is not None and (time.monotonic() - start_t) >= timeout:
+                logger.error("Timeout while waiting for job {} after {}s (last status {})", id, timeout, current.status.value)
                 raise TimeoutError(
                     f"Timed out after {timeout}s while waiting for job {id} (last status {current.status.value!r})"
                 )
 
+            logger.debug("Job {} still {}, sleeping {}s", id, current.status.value, poll_interval)
             time.sleep(poll_interval)
 
     def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
+            logger.error("Attempted to execute without selecting a device")
             raise ValueError("Device not selected.")
         return self._selected_device
 
     def submit(self, functional: Functional) -> int:
+        logger.debug("Submitting functional {}", type(functional).__qualname__)
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
+            logger.error("{} does not support {}", type(self).__qualname__, type(functional).__qualname__)
             raise NotImplementedError(
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
-        return handler(functional)
+        job_id = handler(functional)
+        logger.info("Submitted functional {} → job {}", type(functional).__qualname__, job_id)
+        return job_id
 
     def _execute_sampling(self, sampling: Sampling) -> int:
         device = self._ensure_device_selected()
@@ -328,7 +343,8 @@ class QaaS:
             )
             response.raise_for_status()
             job = JobId(**response.json())
-            return job.id
+        logger.info("Sampling job submitted: {}", job.id)
+        return job.id
 
     def _execute_time_evolution(self, time_evolution: TimeEvolution) -> int:
         device = self._ensure_device_selected()
@@ -337,6 +353,7 @@ class QaaS:
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
+        logger.debug("Executing time evolution on device {}", device)
         with httpx.Client() as client:
             response = client.post(
                 QaaS._api_url + "/execute",
@@ -345,7 +362,8 @@ class QaaS:
             )
             response.raise_for_status()
             job = JobId(**response.json())
-            return job.id
+        logger.info("Time evolution job submitted: {}", job.id)
+        return job.id
 
     def submit_vqe(
         self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
