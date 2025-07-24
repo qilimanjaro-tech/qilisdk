@@ -134,7 +134,9 @@ class QutipBackend(Backend):
         Raises:
             ValueError: if the initial state provided is invalid.
         """
-        tlist = np.linspace(0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt))
+        tlist = np.linspace(
+            0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt)
+        )
 
         qutip_hamiltonians = []
         for ham in functional.schedule.hamiltonians.values():
@@ -159,7 +161,12 @@ class QutipBackend(Backend):
             # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
 
         H_t = [
-            [qutip_hamiltonians[i], get_hamiltonian_schedule(h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T)]
+            [
+                qutip_hamiltonians[i],
+                get_hamiltonian_schedule(
+                    h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T
+                ),
+            ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
         state_dim = []
@@ -195,7 +202,9 @@ class QutipBackend(Backend):
                     for _ in range(functional.schedule.nqubits - obs.nqubits):
                         aux_obs = tensor_prod([aux_obs, identity])
             if aux_obs is not None:
-                qutip_obs.append(Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)]))
+                qutip_obs.append(
+                    Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
+                )
 
         results = sesolve(
             H=H_t,
