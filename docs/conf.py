@@ -14,9 +14,9 @@ sys.path.insert(0, Path("../src").resolve())
 
 # from sphinxawesome_theme.postprocess import Icons  # pylint: disable=import-error
 
-project = 'QiliSDK'
-copyright = '2025, Qilimanjaro Quantum Tech'
-author = 'Qilimanjaro Quantum Tech'
+project = "QiliSDK"
+copyright = "2025, Qilimanjaro Quantum Tech"
+author = "Qilimanjaro Quantum Tech"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -34,8 +34,8 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 source_suffix = [".rst", ".pynb"]
 pygments_style = "default"
 
@@ -65,13 +65,13 @@ autoapi_add_toctree_entry = True
 
 # Optional tweaks:
 # autoapi_keep_files = True       # keep the generated .rst files in your repo
-# autoapi_member_order = "bysource"  # or "alphabetical"
-# autoapi_options = [
-#     "members",
-#     "undoc-members",
-#     "show-inheritance",
-#     "show-module-summary",
-# ]
+autoapi_member_order = "bysource"  # or "alphabetical"
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+]
 
 
 # -- Options for HTML output -------------------------------------------------

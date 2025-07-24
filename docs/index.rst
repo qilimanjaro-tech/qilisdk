@@ -6,11 +6,6 @@
 qiliSDK documentation
 =========================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Getting started
@@ -18,3 +13,17 @@ documentation for details.
    getting_started/qilisdk101.md
    
 
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Fundamentals and usage
+
+   Fundamentals_and_Usage/analog
+   Fundamentals_and_Usage/digital
+   Fundamentals_and_Usage/model
+   Fundamentals_and_Usage/algorithms
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
