@@ -3,7 +3,7 @@ name: Build-sphinx-docs
 on:
   push:
     branches:
-      - documentation
+      - main
 
   workflow_dispatch:
 
@@ -26,13 +26,25 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           python-version: "3.12"
 
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
       - name: Install the requierements
         run: uv sync --all-groups --all-extras  
+
+      - name: Install ghp-import
+        run: uv pip install ghp-import
 
       - name: Build HTML
         run: | 
           cd docs/
           make html
-      - name: Run ghp-import
-        run: | 
-          ghp-import -n -p -f docs/_build/html
+
+      - name: Deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          ghp-import -n -f docs/_build/html
+          git push -f https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} gh-pages
