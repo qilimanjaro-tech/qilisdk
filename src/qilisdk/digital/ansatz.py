@@ -67,6 +67,7 @@ class Ansatz(ABC):
 
 @yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
+
     def __init__(
         self,
         n_qubits: int,
@@ -76,6 +77,44 @@ class HardwareEfficientAnsatz(Ansatz):
         one_qubit_gate: Literal["U1", "U2", "U3"] = "U1",
         two_qubit_gate: Literal["CZ", "CNOT"] = "CZ",
     ) -> None:
+        """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
+
+        The ansatz is composed of multiple layers of parameterized single-qubit gates
+        and two-qubit entangling gates, arranged according to the specified connectivity
+        and structural strategy.
+
+        Args:
+            n_qubits (int): The number of qubits in the circuit.
+            layers (int, optional): Number of repeating layers of gates.. Defaults to 1.
+            connectivity (Literal[&quot;Circular&quot;, &quot;Linear&quot;, &quot;Full&quot;] | list[tuple[int, int]], optional): Topology of qubit connectivity. Options include:
+                - 'Circular': Qubits form a closed loop.
+                - 'Linear' : Qubits are connected in a line.
+                - 'Full'   : All-to-all connectivity between qubits
+                Defaults to "Linear".
+            structure (Literal[&quot;grouped&quot;, &quot;interposed&quot;], optional): Structure of each layer. Options include:
+                - 'grouped'   : Applies all single-qubit gates followed by all two-qubit gates.
+                - 'interposed': Interleaves single- and two-qubit gates.
+                Defaults to "grouped".
+            one_qubit_gate (Literal[&quot;U1&quot;, &quot;U2&quot;, &quot;U3&quot;], optional): A list of single-qubit gate classes to be used
+                as parameterized gates (e.g., [`U1`, `U2`, `U3`]). Defaults to "U1".
+            two_qubit_gate (Literal[&quot;CZ&quot;, &quot;CNOT&quot;], optional):  A list of two-qubit gate classes used for
+                entanglement (e.g., [`CNOT`, `CZ`]). Defaults to "CZ".
+
+        Raises:
+            ValueError: If an unsupported connectivity or structure type is specified.
+
+        Example:
+            >>> from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+            >>> ansatz = HardwareEfficientAnsatz(
+            ...     num_qubits=4,
+            ...     layers=3,
+            ...     connectivity='Linear',
+            ...     on_qubit_gates='U3',
+            ...     two_qubit_gates='CNOT',
+            ...     structure='grouped'
+            ... )
+            >>> print(ansatz.circuit)
+        """
         super().__init__(n_qubits, layers)
 
         # Define chip topology

@@ -20,8 +20,8 @@ qiliSDK documentation
 
    Fundamentals_and_Usage/analog
    Fundamentals_and_Usage/digital
-   Fundamentals_and_Usage/model
-   Fundamentals_and_Usage/algorithms
+   Fundamentals_and_Usage/common
+   Fundamentals_and_Usage/functionals
 
 
 .. toctree::

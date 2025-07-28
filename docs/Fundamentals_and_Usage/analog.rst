@@ -1,12 +1,12 @@
 Analog Module
 =============
 
-The :mod:`~qilisdk.analog` module in Qili SDK enables the construction and simulation of time-dependent quantum systems. It is composed of the following core components:
+The :mod:`~qilisdk.analog` module in Qili SDK enables the construction and simulation of analog quantum systems. It is composed of the following core components:
 
-- **Hamiltonian**: Tools to build arbitrary Hamiltonians using symbolic quantum operators.
-- **Schedule**: A system for defining time-dependent evolution of Hamiltonians.
+- :class:`~qilisdk.analog.hamiltonian.Hamiltonian`: Tools to build arbitrary Hamiltonians using symbolic Pauli operators.
+- :class:`~qilisdk.analog.schedule.Schedule`: A system for defining time-dependent evolution of Hamiltonians.
 
-This module is ideal for expressing analog quantum simulations, such as adiabatic evolutions or Hamiltonian-based computation.
+This module is ideal for expressing analog quantum simulations, such as adiabatic time-evolutions or Hamiltonian-based computation.
 
 Hamiltonian
 -----------
