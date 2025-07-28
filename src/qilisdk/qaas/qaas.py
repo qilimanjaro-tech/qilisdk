@@ -52,6 +52,8 @@ if TYPE_CHECKING:
 
 TResult = TypeVar("TResult", bound=Result)
 
+TResult = TypeVar("TResult", bound=Result)
+
 
 class QaaS:
     """Synchronous client for the Qilimanjaro QaaS REST API."""

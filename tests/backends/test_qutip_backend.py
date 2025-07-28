@@ -5,7 +5,7 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
-from qilisdk.common.quantum_objects import ket
+from qilisdk.common.quantum_objects import ket, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
@@ -176,3 +176,32 @@ def test_time_dependent_hamiltonian():
 
     expect_z = res.final_expected_values[0]
     assert pytest.approx(expect_z, rel=1e-2) == 1.0
+
+
+def test_time_dependent_hamiltonian_with_3_qubits():
+    dt = 0.01
+    T = 50
+    # steps = int(T / dt) - 1
+
+    steps = np.linspace(0, T, int(T / dt))
+    h1 = pauli_x(0) + pauli_x(1) + pauli_x(2)
+    h2 = -1 * pauli_z(0) - 1 * pauli_z(1) - 2 * pauli_z(2) + 3 * pauli_z(0) * pauli_z(1)
+
+    # Create a schedule for the time evolution
+    schedule = Schedule(
+        T,
+        dt,
+        hamiltonians={"h1": h1, "h2": h2},
+        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+    )
+
+    psi0 = (ket(0) + ket(1)).unit()
+    psi0 = tensor_prod([psi0, psi0, psi0]).unit()
+    obs = [pauli_z(0), pauli_z(1), pauli_z(2)]  # measure z
+
+    backend = QutipBackend()
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False))
+
+    assert pytest.approx(res.final_expected_values[0], rel=1e-2) == -1.0
+    assert pytest.approx(res.final_expected_values[1], rel=1e-2) == -1.0
+    assert pytest.approx(res.final_expected_values[2], rel=1e-2) == -1.0
