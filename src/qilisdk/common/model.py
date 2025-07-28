@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, Z
-from qilisdk.utils import logger
+from qilisdk.utils.logging import logger
 from qilisdk.yaml import yaml
 
 from .variables import (
@@ -42,8 +42,6 @@ from .variables import (
 if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
     from ruamel.yaml.representer import RoundTripRepresenter
-
-# Utils ###
 
 
 class SlackCounter:

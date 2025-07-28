@@ -13,14 +13,15 @@
 # limitations under the License.
 from pprint import pformat
 
+from qilisdk.backends.backend import Backend
+from qilisdk.common.algorithm import Algorithm
 from qilisdk.common.model import Model
-from qilisdk.common.optimizer import Optimizer
-from qilisdk.common.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.common.result import Result
 from qilisdk.digital.ansatz import Ansatz
-from qilisdk.digital.digital_algorithm import DigitalAlgorithm
-from qilisdk.digital.digital_backend import DigitalBackend
-from qilisdk.digital.digital_result import DigitalResult
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.optimizers.optimizer import Optimizer
+from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
 
 
@@ -35,10 +36,10 @@ class VQEResult(Result):
         probabilities (list[tuple[str, float]]): the list of samples and their probabilities.
     """
 
-    def __init__(self, optimizer_result: OptimizerResult, digital_result: DigitalResult) -> None:
+    def __init__(self, optimizer_result: OptimizerResult, digital_result: SamplingResult) -> None:
         super().__init__()
         self._optimizer_result: OptimizerResult = optimizer_result
-        self._digital_result: DigitalResult = digital_result
+        self._digital_result: SamplingResult = digital_result
 
     @property
     def optimal_cost(self) -> float:
@@ -133,7 +134,7 @@ class VQEResult(Result):
 
 
 @yaml.register_class
-class VQE(DigitalAlgorithm):
+class VQE(Algorithm):
     """
     Implements the Variational Quantum Eigensolver (VQE) algorithm.
 
@@ -161,7 +162,7 @@ class VQE(DigitalAlgorithm):
         self._initial_params = initial_params
         self._model = model
 
-    def obtain_cost(self, params: list[float], backend: DigitalBackend, nshots: int = 1000) -> float:
+    def obtain_cost(self, params: list[float], backend: Backend, nshots: int = 1000) -> float:
         """
         Evaluate the cost at a given parameter set by executing the corresponding quantum circuit.
 
@@ -179,7 +180,7 @@ class VQE(DigitalAlgorithm):
             float: The cost computed using the model.
         """
         circuit = self._ansatz.get_circuit(params)
-        results = backend.execute(circuit=circuit, nshots=nshots)
+        results = backend.execute(Sampling(circuit=circuit, nshots=nshots))
         cost = 0.0
         var_list = self._model.variables()
         for state, prob in results.get_probabilities():
@@ -191,9 +192,9 @@ class VQE(DigitalAlgorithm):
             cost += aux_cost * prob
         return cost
 
-    def execute(
+    def run(
         self,
-        backend: DigitalBackend,
+        backend: Backend,
         optimizer: Optimizer,
         nshots: int = 1000,
         store_intermediate_results: bool = False,
@@ -219,5 +220,5 @@ class VQE(DigitalAlgorithm):
             store_intermediate_results=store_intermediate_results,
         )
         circuit = self._ansatz.get_circuit(optimizer_result.optimal_parameters)
-        digital_result = backend.execute(circuit, nshots=nshots)
+        digital_result = backend.execute(Sampling(circuit=circuit, nshots=nshots))
         return VQEResult(optimizer_result=optimizer_result, digital_result=digital_result)
