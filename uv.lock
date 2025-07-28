@@ -8,18 +8,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "accessible-pygments"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pygments" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/c1/bbac6a50d02774f91572938964c582fff4270eee73ab822a4aeea4d8b11b/accessible_pygments-0.0.5.tar.gz", hash = "sha256:40918d3e6a2b619ad424cb91e556bd3bd8865443d9f22f1dcdf79e33c8046872", size = 1377899, upload-time = "2024-05-10T11:23:10.216Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/3f/95338030883d8c8b91223b4e21744b04d11b161a3ef117295d8241f50ab4/accessible_pygments-0.0.5-py3-none-any.whl", hash = "sha256:88ae3211e68a1d0b011504b2ffc1691feafce124b845bd072ab6f9f66f34d4b7", size = 1395903, upload-time = "2024-05-10T11:23:08.421Z" },
-]
-
-[[package]]
 name = "alabaster"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -795,22 +783,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a5/84/51a69ee89ff8d1fea0c6997e946657e25a3f08513de8435fe124929f3eef/fonttools-4.59.0-cp313-cp313-win32.whl", hash = "sha256:70d6b3ceaa9cc5a6ac52884f3b3d9544e8e231e95b23f138bdb78e6d4dc0eae3", size = 2199688, upload-time = "2025-07-16T12:04:34.444Z" },
     { url = "https://files.pythonhosted.org/packages/a0/ee/f626cd372932d828508137a79b85167fdcf3adab2e3bed433f295c596c6a/fonttools-4.59.0-cp313-cp313-win_amd64.whl", hash = "sha256:26731739daa23b872643f0e4072d5939960237d540c35c14e6a06d47d71ca8fe", size = 2248560, upload-time = "2025-07-16T12:04:36.034Z" },
     { url = "https://files.pythonhosted.org/packages/d0/9c/df0ef2c51845a13043e5088f7bb988ca6cd5bb82d5d4203d6a158aa58cf2/fonttools-4.59.0-py3-none-any.whl", hash = "sha256:241313683afd3baacb32a6bd124d0bce7404bc5280e12e291bae1b9bba28711d", size = 1128050, upload-time = "2025-07-16T12:04:52.687Z" },
-]
-
-[[package]]
-name = "furo"
-version = "2025.7.19"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "accessible-pygments" },
-    { name = "beautifulsoup4" },
-    { name = "pygments" },
-    { name = "sphinx" },
-    { name = "sphinx-basic-ng" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/69/312cd100fa45ddaea5a588334d2defa331ff427bcb61f5fe2ae61bdc3762/furo-2025.7.19.tar.gz", hash = "sha256:4164b2cafcf4023a59bb3c594e935e2516f6b9d35e9a5ea83d8f6b43808fe91f", size = 1662054, upload-time = "2025-07-19T10:52:09.754Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl", hash = "sha256:bdea869822dfd2b494ea84c0973937e35d1575af088b6721a29c7f7878adc9e3", size = 342175, upload-time = "2025-07-19T10:52:02.399Z" },
 ]
 
 [[package]]
@@ -2323,13 +2295,13 @@ dev = [
     { name = "towncrier" },
 ]
 docs = [
-    { name = "furo" },
     { name = "nbsphinx" },
     { name = "sphinx" },
     { name = "sphinx-autoapi" },
     { name = "sphinx-automodapi" },
     { name = "sphinx-design" },
     { name = "sphinx-mdinclude" },
+    { name = "sphinxawesome-theme" },
 ]
 
 [package.metadata]
@@ -2370,13 +2342,13 @@ dev = [
     { name = "towncrier", specifier = ">=24.8.0" },
 ]
 docs = [
-    { name = "furo", specifier = ">=2024.8.6" },
     { name = "nbsphinx", specifier = ">=0.9.7" },
     { name = "sphinx", specifier = ">=8.1.3" },
     { name = "sphinx-autoapi", specifier = ">=3.6.0" },
     { name = "sphinx-automodapi", specifier = ">=0.20.0" },
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
+    { name = "sphinxawesome-theme", specifier = ">=5.3.2" },
 ]
 
 [[package]]
@@ -2886,18 +2858,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sphinx-basic-ng"
-version = "1.0.0b2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "sphinx" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/98/0b/a866924ded68efec7a1759587a4e478aec7559d8165fac8b2ad1c0e774d6/sphinx_basic_ng-1.0.0b2.tar.gz", hash = "sha256:9ec55a47c90c8c002b5960c57492ec3021f5193cb26cebc2dc4ea226848651c9", size = 20736, upload-time = "2023-07-08T18:40:54.166Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/dd/018ce05c532a22007ac58d4f45232514cd9d6dd0ee1dc374e309db830983/sphinx_basic_ng-1.0.0b2-py3-none-any.whl", hash = "sha256:eb09aedbabfb650607e9b4b68c9d240b90b1e1be221d6ad71d61c52e29f7932b", size = 22496, upload-time = "2023-07-08T18:40:52.659Z" },
-]
-
-[[package]]
 name = "sphinx-design"
 version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2922,6 +2882,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b6/a7/c9a7888bb2187fdb06955d71e75f6f266b7e179b356ac76138d160a5b7eb/sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c", size = 65257, upload-time = "2024-08-03T19:07:37.643Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/42/3d/6b41fe1637cd53c4b10d56e0e6f396546f837973dabf9c4b2a1de44620ac/sphinx_mdinclude-0.6.2-py3-none-any.whl", hash = "sha256:648e78edb067c0e4bffc22943278d49d54a0714494743592032fa3ad82a86984", size = 16911, upload-time = "2024-08-03T19:07:30.406Z" },
+]
+
+[[package]]
+name = "sphinxawesome-theme"
+version = "5.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "sphinx", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/45/58/6f3e05f77c881e1356d73fc1d99561efe1795671bd56e7fb47c63a32cc1f/sphinxawesome_theme-5.3.2.tar.gz", hash = "sha256:0629d38b80aefc279b1186c53a7a6faf21e721b5b2ecda14f488ca1074e2631f", size = 364039, upload-time = "2024-11-08T11:51:03.257Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/e9/ca6a7178677bb171c8fd7f9eab726c00182168d38a79d2a58e7678590227/sphinxawesome_theme-5.3.2-py3-none-any.whl", hash = "sha256:5f2bb6b6ab8fa11db1ded5590106eb557351d6a6c36adea7ebd4e0f4bc96945d", size = 375173, upload-time = "2024-11-08T11:51:01.441Z" },
 ]
 
 [[package]]

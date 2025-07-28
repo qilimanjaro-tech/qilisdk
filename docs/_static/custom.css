@@ -1,11 +1,11 @@
-@layer base {
+@layer base { /* Jupyter notebook */
 
     :root {
         --code-block-color: rgb(250, 250, 250);
     }
 
     .dark {
-        --code-block-color: rgb(5, 5, 5);
+        --code-block-color: rgb(25,25,25);
     }
 }
 
@@ -25,3 +25,21 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-text-fill-color: transparent;
     font-weight: bold;
 }
+
+/* Links in headers coloured with gradienrs are white over white without this */
+h1 .py-meth, h2 .py-meth, h3 .py-meth, h4 .py-meth, h5 .py-meth, h6 .py-meth {
+  background: linear-gradient(90deg, #E16D7E, #7857E4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-weight: bold;
+}
+
+
+/* Error cell in Jupyter notebook. Affects only to dark but I can't change it only there*/
+div.nboutput.container div.output_area.stderr {
+  background-color: rgba(156, 56, 96, 0.9) !important;
+  color: #ffffff !important;
+}
+

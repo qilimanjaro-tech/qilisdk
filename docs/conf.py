@@ -12,7 +12,7 @@ from pathlib import Path
 # if your package root is one level up in `src/`
 sys.path.insert(0, Path("../src").resolve())
 
-# from sphinxawesome_theme.postprocess import Icons  # pylint: disable=import-error
+from sphinxawesome_theme.postprocess import Icons  # pylint: disable=import-error
 
 project = "QiliSDK"
 copyright = "2025, Qilimanjaro Quantum Tech"
@@ -37,7 +37,8 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 source_suffix = [".rst", ".pynb"]
-pygments_style = "default"
+pygments_style = "sphinx"
+pygments_style_dark = "monokai"
 
 # Napoleon settings
 napoleon_google_docstring = True
@@ -81,10 +82,10 @@ html_title = project
 # html_permalinks_icon = Icons.permalinks_icon
 html_favicon = "_static/q_light.jpeg"
 # html_baseurl = "https://docs.qilimanjaro.tech/"
-html_theme = "furo"
+html_theme = "sphinxawesome_theme"
 html_theme_options = {
-    "light_logo": "Logo_black.png",
-    "dark_logo": "Logo_light.png",
+    "logo_light": "_static/q_light.jpeg",
+    "logo_dark": "_static/q_dark.jpeg",
 }
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
