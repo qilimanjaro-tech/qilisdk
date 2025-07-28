@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
-from qilisdk.common.exceptions import NotSupportedOperation
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -158,7 +157,7 @@ class PauliOperator(ABC):
         return self.to_hamiltonian() / other
 
     def __rtruediv__(self, _: Complex | PauliOperator | Hamiltonian) -> Hamiltonian:
-        raise NotSupportedOperation("Division by operators is not supported")
+        raise InvalidHamiltonianOperation("Division by operators is not supported")
 
     __itruediv__ = __truediv__
 
@@ -554,7 +553,7 @@ class Hamiltonian:
         key = (op1.name, op2.name)
         result = Hamiltonian._PAULI_PRODUCT_TABLE.get(key)
         if result is None:
-            raise NotSupportedOperation(f"Multiplying {op1} and {op2} not supported.")
+            raise InvalidHamiltonianOperation(f"Multiplying {op1} and {op2} not supported.")
         phase, op_cls = result
 
         # By convention, an I operator is always I(0) in this code

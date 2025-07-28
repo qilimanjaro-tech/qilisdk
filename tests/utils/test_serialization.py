@@ -3,10 +3,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from qilisdk.analog.algorithms import TimeEvolution
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
-from qilisdk.analog.quantum_objects import ket, tensor_prod
 from qilisdk.analog.schedule import Schedule
+from qilisdk.common.quantum_objects import ket, tensor_prod
+from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.utils.serialization import (
     DeserializationError,
     deserialize,

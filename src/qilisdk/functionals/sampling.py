@@ -12,47 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .ansatz import HardwareEfficientAnsatz
-from .circuit import Circuit
-from .gates import (
-    CNOT,
-    CZ,
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Gate,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital.circuit import Circuit
+from qilisdk.functionals.functional import Functional
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.yaml import yaml
 
-# from .vqe import VQE
 
-__all__ = [
-    "CNOT",
-    "CZ",
-    "RX",
-    "RY",
-    "RZ",
-    "U1",
-    "U2",
-    "U3",
-    # "VQE",
-    "Circuit",
-    "Gate",
-    "H",
-    "HardwareEfficientAnsatz",
-    "M",
-    "S",
-    "T",
-    "X",
-    "Y",
-    "Z",
-]
+@yaml.register_class
+class Sampling(Functional[SamplingResult]):
+    result_type = SamplingResult
+
+    def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
+        self.circuit = circuit
+        self.nshots = nshots

@@ -11,48 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from .ansatz import HardwareEfficientAnsatz
-from .circuit import Circuit
-from .gates import (
-    CNOT,
-    CZ,
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Gate,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from typing import Protocol, Type, TypeVar
 
-# from .vqe import VQE
+from qilisdk.common.result import Result
 
-__all__ = [
-    "CNOT",
-    "CZ",
-    "RX",
-    "RY",
-    "RZ",
-    "U1",
-    "U2",
-    "U3",
-    # "VQE",
-    "Circuit",
-    "Gate",
-    "H",
-    "HardwareEfficientAnsatz",
-    "M",
-    "S",
-    "T",
-    "X",
-    "Y",
-    "Z",
-]
+TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
+
+
+class Functional(Protocol[TResult_co]):
+    @property
+    def result_type(self) -> Type[TResult_co]: ...

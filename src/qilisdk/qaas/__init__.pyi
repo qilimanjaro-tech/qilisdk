@@ -12,47 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .ansatz import HardwareEfficientAnsatz
-from .circuit import Circuit
-from .gates import (
-    CNOT,
-    CZ,
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Gate,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from .qaas import QaaS
+from .qaas_models import DeviceStatus, DeviceType
 
-# from .vqe import VQE
-
-__all__ = [
-    "CNOT",
-    "CZ",
-    "RX",
-    "RY",
-    "RZ",
-    "U1",
-    "U2",
-    "U3",
-    # "VQE",
-    "Circuit",
-    "Gate",
-    "H",
-    "HardwareEfficientAnsatz",
-    "M",
-    "S",
-    "T",
-    "X",
-    "Y",
-    "Z",
-]
+__all__ = ["DeviceStatus", "DeviceType", "QaaS"]
