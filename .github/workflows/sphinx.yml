@@ -34,6 +34,13 @@ jobs:
 
       - name: Install ghp-import
         run: uv pip install ghp-import
+      
+      - name:  Check for hamiltonian.py
+        run: |
+          echo "PWD: $(pwd)"
+          tree 
+          ls -l src/qilisdk/analog/
+          test -f src/qilisdk/analog/hamiltonian.py && echo "✅ File is present" || echo "❌ File is missing"
 
       - name: Build HTML
         run: | 
