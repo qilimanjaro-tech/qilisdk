@@ -66,6 +66,7 @@ dev = [
 ]
 docs = [
     "nbsphinx>=0.9.7",
+    "pypandoc>=1.15",
     "sphinx>=8.1.3",
     "sphinx-autoapi>=3.6.0",
     "sphinx-automodapi>=0.20.0",

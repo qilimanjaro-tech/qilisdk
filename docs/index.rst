@@ -22,8 +22,17 @@ qiliSDK documentation
    Fundamentals_and_Usage/digital
    Fundamentals_and_Usage/common
    Fundamentals_and_Usage/functionals
+   Fundamentals_and_Usage/backends_qaas
+
 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Examples
+
+   Examples/code_examples.ipynb
+
+
+.. toctree::
+   :maxdepth: 4
    :caption: API Reference

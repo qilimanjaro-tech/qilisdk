@@ -73,7 +73,7 @@ autoapi_options = [
     "show-inheritance",
     "show-module-summary",
 ]
-
+autoapi_python_class_content = "both"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
