@@ -492,7 +492,7 @@ Helper constructors
     [0]] shape: (4, 1)
 
 Quantum Object Properties & Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 All data are stored sparsely, but you can retrieve dense or sparse views:
 

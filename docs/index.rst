@@ -22,7 +22,8 @@ qiliSDK documentation
    Fundamentals_and_Usage/digital
    Fundamentals_and_Usage/common
    Fundamentals_and_Usage/functionals
-   Fundamentals_and_Usage/backends_qaas
+   Fundamentals_and_Usage/backends
+   Fundamentals_and_Usage/qaas
 
 
 
