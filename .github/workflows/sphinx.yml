@@ -42,7 +42,9 @@ jobs:
         run: uv pip list
       
       - name: test module imports
-        run: python -c "from qilisdk.analog.hamiltonian import Z; print(Z(0))"
+        run: |
+          python -c "from qilisdk.analog.hamiltonian import Z; print(Z(0))"
+          python -c "import astroid; print('Astroid version:', astroid.__version__)"
 
       - name: Build HTML
         run: | 
