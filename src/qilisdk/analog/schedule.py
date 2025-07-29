@@ -22,22 +22,6 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class Schedule:
-    """
-    Represents a time-dependent schedule for Hamiltonian coefficients in an annealing process.
-
-    A Schedule defines the evolution of a system by associating time steps with a set
-    of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
-    corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
-    at discrete time steps.
-
-    Attributes:
-        _T (float): The total annealing time.
-        _dt (float): The time step duration. Total time must be divisible by dt.
-        _hamiltonians (dict[str, Hamiltonian]): A mapping of labels to Hamiltonian objects.
-        _schedule (dict[int, dict[str, float]]): A mapping of time steps to coefficient dictionaries.
-        _nqubits (int): The maximum number of qubits among the Hamiltonians.
-        iter_time_step (int): Internal counter for iteration over time steps.
-    """
 
     def __init__(
         self,
@@ -47,7 +31,12 @@ class Schedule:
         schedule: dict[int, dict[str, float]] | None = None,
     ) -> None:
         """
-        Initialize a Schedule object.
+        Represents a time-dependent schedule for Hamiltonian coefficients in an annealing process.
+
+        A Schedule defines the evolution of a system by associating time steps with a set
+        of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
+        corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
+        at discrete time steps.
 
         Args:
             T (float): The total annealing time.

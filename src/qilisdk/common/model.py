@@ -93,20 +93,18 @@ class ObjectiveSense(str, Enum):
 
 @yaml.register_class
 class Constraint:
-    """Represents a mathematical constraint within an optimization ``Model``.
-
-    Unlike the ``Objective``, which is unique, a ``Model`` can contain multiple ``Constraints``.
-
-    Each ``Constraint`` is defined by one or more ``ComparisonTerm`` objects (e.g., ``x + y > 2``),
-    where each term consists of a left-hand side and a right-hand side expression. These expressions
-    can be composed of:
-
-    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-    - Other ``Term`` objects: Enabling the construction of more complex expressions (e.g., ``x + y``).
-    """
 
     def __init__(self, label: str, term: ComparisonTerm) -> None:
-        """Initializes a new constraint object.
+        """Represents a mathematical constraint within an optimization ``Model``.
+
+        Unlike the ``Objective``, which is unique, a ``Model`` can contain multiple ``Constraints``.
+
+        Each ``Constraint`` is defined by one or more ``ComparisonTerm`` objects (e.g., ``x + y > 2``),
+        where each term consists of a left-hand side and a right-hand side expression. These expressions
+        can be composed of:
+
+        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+        - Other ``Term`` objects: Enabling the construction of more complex expressions (e.g., ``x + y``).
 
         Args:
             label (str): The constraint's label.
@@ -138,8 +136,7 @@ class Constraint:
         return self._term
 
     def variables(self) -> list[BaseVariable]:
-        """Returns a list of the variables in the constraint term.
-
+        """
         Returns:
             list[BaseVariable]: the list of variables in the constraint term.
         """
@@ -181,17 +178,15 @@ class Constraint:
 
 @yaml.register_class
 class Objective:
-    """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
-
-    A ``Model`` can have only one ``Objective``, unlike ``Constraints``, which can be multiple.
-
-    The ``Objective`` is constructed using ``Term`` objects (e.g., ``3x*y``, ``2x``). Each ``Term`` may include:
-    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-    - Other ``Term`` objects: Allowing for the construction of complex expressions.
-    """
 
     def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
-        """Initializes a new Objective object.
+        """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
+
+        A ``Model`` can have only one ``Objective``, unlike ``Constraints``, which can be multiple.
+
+        The ``Objective`` is constructed using ``Term`` objects (e.g., ``3x*y``, ``2x``). Each ``Term`` may include:
+        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+        - Other ``Term`` objects: Allowing for the construction of complex expressions.
 
         Args:
             label (str): The objective's label.
@@ -257,40 +252,37 @@ class Objective:
 
 @yaml.register_class
 class Model:
-    """Represents a mathematical optimization model, consisting of an ``Objective`` function
-    and a set of ``Constraint`` objects.
-
-    A ``Model`` includes:
-    - A single ``Objective`` that defines the goal of the optimization (e.g., minimize ``3x*y + 2x``).
-    - One or more ``Constraints`` that specify the limitations or requirements within which the
-        ``Objective`` must be optimized (e.g., ``x + y > 0``, ``x > 2``).
-
-    Both the ``Objective`` and ``Constraints`` are constructed from ``Term`` objects (e.g., ``3x*y``, ``2x``).
-    Each ``Term`` may include:
-    - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-    - Nested ``Term`` objects: Enabling the construction of complex mathematical expressions.
-
-    Example:
-    >>> from qilisdk.common.variables import BinaryVariable, LEQ
-    >>> from qilisdk.common.model import Model
-
-    >>> num_items = 4
-    >>> values = [1, 3, 5, 2]
-    >>> weights = [3, 2, 4, 5]
-    >>> max_weight = 6
-    >>> bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
-
-    >>> model = Model("Knapsack")
-
-    >>> objective = sum(values[i] * bin_vars[i] for i in range(num_items))
-    >>> model.set_objective(objective)
-
-    >>> constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
-    >>> model.add_constraint("maximum weight", constraint)
-    """
 
     def __init__(self, label: str) -> None:
-        """Initializes a new model object.
+        """Represents a mathematical optimization model, consisting of an ``Objective`` function
+        and a set of ``Constraint`` objects.
+
+        A ``Model`` includes:
+        - A single ``Objective`` that defines the goal of the optimization (e.g., minimize ``3x*y + 2x``).
+        - One or more ``Constraints`` that specify the limitations or requirements within which the
+        ``Objective`` must be optimized (e.g., ``x + y > 0``, ``x > 2``).
+
+        Both the ``Objective`` and ``Constraints`` are constructed from ``Term`` objects (e.g., ``3x*y``, ``2x``).
+        Each ``Term`` may include:
+        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
+        - Nested ``Term`` objects: Enabling the construction of complex mathematical expressions.
+
+        Example:
+
+        .. code-block:: python
+
+            from qilisdk.common.variables import BinaryVariable, LEQ
+            from qilisdk.common.model import Model
+            num_items = 4
+            values = [1, 3, 5, 2]
+            weights = [3, 2, 4, 5]
+            max_weight = 6
+            bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
+            model = Model("Knapsack")
+            objective = sum(values[i] * bin_vars[i] for i in range(num_items))
+            model.set_objective(objective)
+            constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
+            model.add_constraint("maximum weight", constraint)
 
         Args:
             label (str): the model label.
@@ -507,10 +499,9 @@ class Model:
 
 @yaml.register_class
 class QUBO(Model):
-    """Represents a model that is used for Quadratic Unconstrained Binary Optimization."""
 
     def __init__(self, label: str) -> None:
-        """Initializes a new QUBO model object.
+        """Represents a model that is used for Quadratic Unconstrained Binary Optimization.
 
         Args:
             label (str): the QUBO model label.

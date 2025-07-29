@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          submodules: recursive
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
