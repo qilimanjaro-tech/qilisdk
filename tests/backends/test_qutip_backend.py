@@ -200,7 +200,9 @@ def test_time_dependent_hamiltonian_with_3_qubits():
     obs = [pauli_z(0), pauli_z(1), pauli_z(2)]  # measure z
 
     backend = QutipBackend()
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False))
+    res = backend.execute(
+        TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False)
+    )
 
     assert pytest.approx(res.final_expected_values[0], rel=1e-2) == -1.0
     assert pytest.approx(res.final_expected_values[1], rel=1e-2) == -1.0

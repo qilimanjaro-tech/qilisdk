@@ -12,7 +12,6 @@ from enum import Enum
 from types import SimpleNamespace
 
 import pytest
-from pydantic import ValidationError
 
 import qilisdk.qaas.qaas as qaas
 
@@ -231,10 +230,14 @@ def test_login_success(monkeypatch):
 
 def test_login_requires_credentials(monkeypatch):
     """If neither parameters nor environment variables are supplied, login fails."""
-    # Simulate missing env-vars by having the settings constructor raise ValidationError
-    monkeypatch.setattr(
-        qaas, "QaaSSettings", lambda: (_ for _ in ()).throw(ValidationError.from_exception_data("Credentials", []))
-    )
+
+    # Patch `get_settings` to return an object with missing credentials
+    class DummySettings:
+        qaas_username = None
+        qaas_apikey = None
+
+    monkeypatch.setattr(qaas, "get_settings", DummySettings)
+
     assert qaas.QaaS.login(username=None, apikey=None) is False
 
 
