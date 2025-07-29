@@ -90,7 +90,7 @@ Example 1: Dictionary-Based Schedule
     )
 
 Example 2: Functional Schedule with :meth:`~qilisdk.analog.schedule.Schedule.add_hamiltonian`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, you can build the schedule incrementally using functional definitions for coefficients:
 
@@ -134,8 +134,3 @@ You can update or insert specific time steps using the provided methods.
         hamiltonian_label="h1", 
         new_coefficient=0.2
     )
-
-Summary
--------
-
-The ``analog`` module in Qili SDK enables expressive and dynamic construction of analog quantum simulations. With flexible Hamiltonian composition and powerful scheduling capabilities, it supports a wide range of use cases from Ising models to time-dependent protocols.

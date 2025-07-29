@@ -140,9 +140,10 @@ Ansatz
 
 The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use circuit templates (Ansätze). For example:
 
-- :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`: Builds a hardware-efficient ansatz tailored to quantum device topologies.
+1. :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` 
 
-Configuration options:
+Builds a hardware-efficient ansatz tailored to quantum device topologies. Configuration options:
+
 
 - **layers**: Number of repeating layers of gates.
 - **connectivity**:

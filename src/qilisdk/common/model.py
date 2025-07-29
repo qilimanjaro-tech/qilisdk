@@ -307,7 +307,7 @@ class Model:
         Raises:
             ValueError: if the constraint provided is not in the model.
         """
-        if constraint_label not in self._constraints:
+        if constraint_label not in self._lagrange_multipliers:
             raise ValueError(f'constraint "{constraint_label}" not in model.')
         self.lagrange_multipliers[constraint_label] = lagrange_multiplier
 
@@ -389,10 +389,16 @@ class Model:
             output += "subject to the constraint/s: \n"
             for c in self.constraints:
                 output += f"\t {c} \n"
+            output += "\n"
+
+        if len(self.encoding_constraints) > 0:
+            output += "subject to the encoding constraint/s: \n"
             for c in self.encoding_constraints:
                 output += f"\t {c} \n"
+            output += "\n"
+
         if len(self.lagrange_multipliers) > 0:
-            output += "\nWith Lagrange Multiplier/s: \n"
+            output += "With Lagrange Multiplier/s: \n"
             for key, value in self.lagrange_multipliers.items():
                 output += f"\t {key} : {value} \n"
         return output
@@ -462,7 +468,7 @@ class Model:
         results = {}
 
         results[self.objective.label] = self.objective.term.evaluate(sample)
-        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MINIMIZE else 1
+        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MAXIMIZE else 1
 
         for c in self.constraints:
             results[c.label] = float(not c.term.evaluate(sample)) * self.lagrange_multipliers[c.label]
@@ -769,7 +775,7 @@ class QUBO(Model):
             transformed_c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
             if transformed_c is None:
                 return
-            if lower_penalization == "unbalanced":
+            if lower_penalization == "unbalanced" and lagrange_multiplier != 1:
                 self.lagrange_multipliers[label] = 1
                 logger.warning(
                     "add_constraint() in QUBO model:"
