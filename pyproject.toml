@@ -73,6 +73,7 @@ docs = [
     "sphinx-design>=0.6.1",
     "sphinx-mdinclude>=0.6.2",
     "sphinxawesome-theme>=5.3.2",
+    "astroid==3.3.8",
 ]
 
 [build-system]
