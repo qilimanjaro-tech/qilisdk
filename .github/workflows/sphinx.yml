@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 1
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -40,6 +40,9 @@ jobs:
       
       - name: pip list
         run: uv pip list
+      
+      - name: test module imports
+        run: python -c "from qilisdk.analog.hamiltonian import Z; print(Z(0))"
 
       - name: Build HTML
         run: | 
