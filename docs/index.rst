@@ -1,8 +1,3 @@
-.. qilisdk doc documentation master file, created by
-   sphinx-quickstart on Wed Jul 16 17:06:54 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 QiliSDK
 =========================
 
@@ -53,7 +48,11 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    :maxdepth: 2
    :caption: Examples
 
-   examples/code_examples.ipynb
+   examples/circuits.ipynb
+   examples/hamiltonians.ipynb
+   examples/time_evolution.ipynb
+   examples/quantum_objects.ipynb
+   examples/models.ipynb
 
 .. toctree::
    :maxdepth: 4
