@@ -15,7 +15,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
       New to QiliSDK? Here you will find a description of its main concepts, together
       with some tutorials on how to install and start using QiliSDK!
 
-   .. grid-item-card:: Fundamentals and Usage
+   .. grid-item-card:: Fundamentals
       :link: fundamentals/analog.html
       :text-align: center
       :img-top: _static/book.png
@@ -25,15 +25,15 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 .. toctree::
    :maxdepth: 2
    :caption: Getting Started
+   :hidden:
 
    getting_started/introduction
    getting_started/installation
-   
-
 
 .. toctree::
    :maxdepth: 2
    :caption: Fundamentals
+   :hidden:
 
    fundamentals/analog
    fundamentals/digital
@@ -42,11 +42,10 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    fundamentals/backends
    fundamentals/qaas
 
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Code Examples
+   :hidden:
 
    examples/circuits.ipynb
    examples/hamiltonians.ipynb
@@ -57,3 +56,4 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 .. toctree::
    :maxdepth: 4
    :caption: API Reference
+   :hidden:
