@@ -75,9 +75,7 @@ html_copy_source = False
 html_show_sourcelink = False
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_light.jpeg",
-    logo_dark="_static/q_dark.jpeg",
-    awesome_external_links=True
+    logo_light="_static/q_light.jpeg", logo_dark="_static/q_dark.jpeg", awesome_external_links=True
 )
 
 html_theme_options = asdict(theme_options)

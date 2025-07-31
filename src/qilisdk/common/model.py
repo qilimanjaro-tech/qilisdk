@@ -70,14 +70,9 @@ class ObjectiveSense(str, Enum):
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
-    """
-    .. autoapi-nodoc::
-    """
     @classmethod
     def to_yaml(cls, representer: RoundTripRepresenter, node: ObjectiveSense) -> ScalarNode:
         """
-        .. autoapi-nodoc::
-
         Method to be called automatically during YAML serialization.
 
         Returns:
@@ -88,8 +83,6 @@ class ObjectiveSense(str, Enum):
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:
         """
-        .. autoapi-nodoc::
-
         Method to be called automatically during YAML deserialization.
 
         Returns:
@@ -100,7 +93,6 @@ class ObjectiveSense(str, Enum):
 
 @yaml.register_class
 class Constraint:
-
     def __init__(self, label: str, term: ComparisonTerm) -> None:
         """Represents a mathematical constraint within an optimization ``Model``.
 
@@ -188,7 +180,6 @@ class Constraint:
 
 @yaml.register_class
 class Objective:
-
     def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
 
@@ -262,7 +253,6 @@ class Objective:
 
 @yaml.register_class
 class Model:
-
     def __init__(self, label: str) -> None:
         """Represents a mathematical optimization model, consisting of an ``Objective`` function
         and a set of ``Constraint`` objects.
@@ -283,6 +273,7 @@ class Model:
 
             from qilisdk.common.variables import BinaryVariable, LEQ
             from qilisdk.common.model import Model
+
             num_items = 4
             values = [1, 3, 5, 2]
             weights = [3, 2, 4, 5]
@@ -515,7 +506,6 @@ class Model:
 
 @yaml.register_class
 class QUBO(Model):
-
     def __init__(self, label: str) -> None:
         """Represents a model that is used for Quadratic Unconstrained Binary Optimization.
 

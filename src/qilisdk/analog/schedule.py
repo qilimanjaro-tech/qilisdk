@@ -22,7 +22,6 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class Schedule:
-
     def __init__(
         self,
         T: float,

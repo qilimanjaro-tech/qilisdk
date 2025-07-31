@@ -158,7 +158,7 @@ ignore = [
     "PLR1702",
     "TD003"]
 dummy-variable-rgx = "^_$"
-exclude = [".tmp"]
+exclude = [".tmp", "docs/*"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]

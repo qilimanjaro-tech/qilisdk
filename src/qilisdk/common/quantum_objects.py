@@ -34,7 +34,6 @@ Complex = int | float | complex
 
 @yaml.register_class
 class QuantumObject:
-
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """Represents a quantum state or operator using a sparse matrix representation.
 

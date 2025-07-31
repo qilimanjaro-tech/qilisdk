@@ -67,7 +67,6 @@ class Ansatz(ABC):
 
 @yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
-
     def __init__(
         self,
         n_qubits: int,
@@ -108,13 +107,14 @@ class HardwareEfficientAnsatz(Ansatz):
         .. code-block:: python
 
             from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+
             ansatz = HardwareEfficientAnsatz(
                 num_qubits=4,
                 layers=3,
-                connectivity='Linear',
-                on_qubit_gates='U3',
-                two_qubit_gates='CNOT',
-                structure='grouped'
+                connectivity="Linear",
+                on_qubit_gates="U3",
+                two_qubit_gates="CNOT",
+                structure="grouped",
             )
             print(ansatz.circuit)
         """
