@@ -46,7 +46,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples
+   :caption: Code Examples
 
    examples/circuits.ipynb
    examples/hamiltonians.ipynb
