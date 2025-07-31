@@ -34,24 +34,19 @@ Complex = int | float | complex
 
 @yaml.register_class
 class QuantumObject:
-    """
-    Represents a quantum state or operator using a sparse matrix representation.
-
-    The QuantumObject class is a wrapper around sparse matrices (or NumPy arrays,
-    which are converted to sparse matrices) that represent quantum states (kets, bras)
-    or operators. It provides utility methods for common quantum operations such as
-    taking the adjoint (dagger), computing tensor products, partial traces, and norms.
-
-    The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
-    efficient arithmetic and manipulation. The expected shapes for the data are:
-      - (2**N, 2**N) for operators or density matrices (or scalars),
-      - (2**N, 1) for ket states,
-      - (1, 2**N) or (2**N,) for bra states.
-    """
-
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
-        """
-        Initialize a QuantumObject with the given data.
+        """Represents a quantum state or operator using a sparse matrix representation.
+
+        The QuantumObject class is a wrapper around sparse matrices (or NumPy arrays,
+        which are converted to sparse matrices) that represent quantum states (kets, bras)
+        or operators. It provides utility methods for common quantum operations such as
+        taking the adjoint (dagger), computing tensor products, partial traces, and norms.
+
+        The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
+        efficient arithmetic and manipulation. The expected shapes for the data are:
+        - (2**N, 2**N) for operators or density matrices (or scalars),
+        - (2**N, 1) for ket states,
+        - (1, 2**N) or (2**N,) for bra states.
 
         Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
         The input must represent a valid quantum state or operator with appropriate dimensions.
