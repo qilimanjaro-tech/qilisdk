@@ -29,7 +29,6 @@ dependencies = [
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.0",
     "loguru>=0.7.3",
-    "keyrings-alt[qaas]>=5.0.2",
 ]
 
 [project.optional-dependencies]
@@ -53,13 +52,13 @@ qutip = [
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.135.26",
+    "hypothesis>=6.136.6",
     "ipykernel>=6.29.5",
-    "mypy>=1.15.0",
+    "mypy>=1.17.1",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-sugar>=1.0.0",
-    "ruff>=0.12.2",
+    "ruff>=0.12.7",
     "towncrier>=24.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=6.2.1",
@@ -73,7 +72,6 @@ docs = [
     "sphinx-design>=0.6.1",
     "sphinx-mdinclude>=0.6.2",
     "sphinxawesome-theme>=5.3.2",
-    "astroid==3.3.8",
 ]
 
 [build-system]

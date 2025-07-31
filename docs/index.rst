@@ -3,27 +3,49 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-qiliSDK documentation
+QiliSDK
 =========================
+
+.. rst-class:: lead center
+
+Welcome to **QiliSDK**, a unified Python framework for developing, simulating, and running both digital and analog quantum algorithms across a variety of backends (CPU, GPU, and Qilimanjaro's QaaS). Its modular design makes it easy to prototype circuits, build Hamiltonians, design variational workflows, and deploy them on local or remote quantum simulators and hardware.
+
+.. grid:: 2
+
+   .. grid-item-card:: Getting Started
+      :link: getting_started/installation.html
+      :text-align: center
+      :img-top: _static/rocket.png
+
+      New to QiliSDK? Here you will find a description of its main concepts, together
+      with some tutorials on how to install and start using QiliSDK!
+
+   .. grid-item-card:: Fundamentals and Usage
+      :link: fundamentals/analog.html
+      :text-align: center
+      :img-top: _static/book.png
+
+      This section contains in-depth information about the key concepts of QiliSDK.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting started
+   :caption: Getting Started
 
-   getting_started/qilisdk101.md
+   getting_started/introduction
+   getting_started/installation
    
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Fundamentals and usage
+   :caption: Fundamentals
 
-   Fundamentals_and_Usage/analog
-   Fundamentals_and_Usage/digital
-   Fundamentals_and_Usage/common
-   Fundamentals_and_Usage/functionals
-   Fundamentals_and_Usage/backends
-   Fundamentals_and_Usage/qaas
+   fundamentals/analog
+   fundamentals/digital
+   fundamentals/common
+   fundamentals/functionals
+   fundamentals/backends
+   fundamentals/qaas
 
 
 
@@ -31,8 +53,7 @@ qiliSDK documentation
    :maxdepth: 2
    :caption: Examples
 
-   Examples/code_examples.ipynb
-
+   examples/code_examples.ipynb
 
 .. toctree::
    :maxdepth: 4

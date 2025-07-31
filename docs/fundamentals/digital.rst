@@ -15,43 +15,36 @@ This submodule provides the necessary components to define and manipulate quantu
 Simple Gates
 ^^^^^^^^^^^^
 
-The core functionality includes a set of basic quantum gates:
+Use these constructors to apply standard single- and two-qubit operations:
 
-.. list-table::
-   :class: longtable
-   :header-rows: 1
-   :widths: 20 50
-
-   * - Signature
-     - Description
-   * - ``X(qubit: int)``
-     - Pauli-X gate; performs a bit-flip on the given qubit.
-   * - ``Y(qubit: int)``
-     - Pauli-Y gate; applies a bit-and-phase flip.
-   * - ``Z(qubit: int)``
-     - Pauli-Z gate; applies a phase flip.
-   * - ``H(qubit: int)``
-     - Hadamard gate; places the qubit in a superposition state.
-   * - ``S(qubit: int)``
-     - S gate; applies a π/2 rotation around the Z-axis.
-   * - ``T(qubit: int)``
-     - T gate; applies a π/4 rotation around the Z-axis.
-   * - ``RX(qubit: int, theta: float)``
-     - Rotation around the X-axis by angle `theta` on the Bloch sphere.
-   * - ``RY(qubit: int, theta: float)``
-     - Rotation around the Y-axis by angle `theta`.
-   * - ``RZ(qubit: int, phi: float)``
-     - Rotation around the Z-axis by angle `phi`.
-   * - ``U1(qubit: int, *, phi: float)``
-     - Equivalent to a phase shift and RZ: ``U1(phi) = exp(i*phi/2) RZ(phi)``.
-   * - ``U2(qubit: int, *, phi: float, gamma: float)``
-     - Combines Z rotations with a π/2 Y-rotation: ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(π/2) RZ(gamma)``.
-   * - ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``
-     - General single-qubit unitary: ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``.
-   * - ``CNOT(control: int, target: int)``
-     - Controlled-X gate; flips the target qubit if the control qubit is 1.
-   * - ``CZ(control: int, target: int)``
-     - Controlled-Z gate; applies a Z rotation to the target if the control qubit is 1.
+- ``X(qubit: int)``  
+  Pauli X (bit-flip) on the specified qubit.  
+- ``Y(qubit: int)``  
+  Pauli Y (bit-and-phase-flip).  
+- ``Z(qubit: int)``  
+  Pauli Z (phase-flip).  
+- ``H(qubit: int)``  
+  Hadamard: creates superposition.  
+- ``S(qubit: int)``  
+  Phase gate (π/2 rotation about Z).  
+- ``T(qubit: int)``  
+  T gate (π/4 rotation about Z).  
+- ``RX(qubit: int, theta: float)``  
+  Rotation by angle `theta` around X.  
+- ``RY(qubit: int, theta: float)``  
+  Rotation by angle `theta` around Y.  
+- ``RZ(qubit: int, phi: float)``  
+  Rotation by angle `phi` around Z.  
+- ``U1(qubit: int, *, phi: float)``  
+  Phase shift equivalent to RZ plus global phase.  
+- ``U2(qubit: int, *, phi: float, gamma: float)``  
+  π/2 Y-rotation sandwiched by Z-rotations.  
+- ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``  
+  General single-qubit unitary: RZ–RY–RZ decomposition.  
+- ``CNOT(control: int, target: int)``  
+  Controlled-X: flips target if control is |1⟩.  
+- ``CZ(control: int, target: int)``  
+  Controlled-Z: applies Z on target if control is |1⟩.
 
 Controlled Gates
 ^^^^^^^^^^^^^^^^
@@ -91,15 +84,23 @@ Circuits
 
 Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit` class. You can sequentially add gates to define the circuit:
 
+**Initialization**
+
 .. code-block:: python
 
-    from qilisdk.digital import Circuit, H, X, CNOT
+    from qilisdk.digital import Circuit
 
-    # Create a circuit with 2 qubits
-    circuit = Circuit(2)
-    circuit.add(H(0))         # Apply Hadamard on qubit 0
-    circuit.add(X(0))         # Apply X gate on qubit 0
-    circuit.add(CNOT(0, 1))   # Apply CNOT between qubit 0 and 1
+    # Create a 3-qubit circuit
+    circuit = Circuit(num_qubits=3)
+
+**Adding Gates**
+
+.. code-block:: python
+
+    from qilisdk.digital import H, CNOT
+
+    circuit.add(H(0))         # Hadamard on qubit 0
+    circuit.add(CNOT(0, 2))   # CNOT: control 0 → target 2
 
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -140,9 +141,10 @@ Ansatz
 
 The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use circuit templates (Ansätze). For example:
 
-1. :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` 
+HardwareEfficientAnsatz
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Builds a hardware-efficient ansatz tailored to quantum device topologies. Configuration options:
+:class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` is a hardware-efficient ansatz tailored to quantum device topologies. Configuration options:
 
 
 - **layers**: Number of repeating layers of gates.
@@ -156,3 +158,19 @@ Builds a hardware-efficient ansatz tailored to quantum device topologies. Config
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
   - ``interposed``: Interleaves single and two-qubit gates.
 
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+    from qilisdk.digital.gates import U3, CNOT
+
+    ansatz = HardwareEfficientAnsatz(
+        num_qubits=4,
+        layers=3,
+        connectivity="circular",
+        on_qubit_gates=[U3],
+        two_qubit_gates=[CNOT],
+        structure="interleaved"
+    )

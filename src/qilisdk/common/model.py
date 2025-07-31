@@ -70,9 +70,14 @@ class ObjectiveSense(str, Enum):
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
+    """
+    .. autoapi-nodoc::
+    """
     @classmethod
     def to_yaml(cls, representer: RoundTripRepresenter, node: ObjectiveSense) -> ScalarNode:
         """
+        .. autoapi-nodoc::
+
         Method to be called automatically during YAML serialization.
 
         Returns:
@@ -83,6 +88,8 @@ class ObjectiveSense(str, Enum):
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:
         """
+        .. autoapi-nodoc::
+
         Method to be called automatically during YAML deserialization.
 
         Returns:
@@ -137,6 +144,9 @@ class Constraint:
 
     def variables(self) -> list[BaseVariable]:
         """
+        Returns the list of variables in the constraint term.
+
+        :rtype: list[BaseVariable]
         Returns:
             list[BaseVariable]: the list of variables in the constraint term.
         """

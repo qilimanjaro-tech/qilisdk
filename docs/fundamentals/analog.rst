@@ -11,7 +11,19 @@ This module is ideal for expressing analog quantum simulations, such as adiabati
 Hamiltonian
 -----------
 
-The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class allows you to construct symbolic representations of quantum Hamiltonians. These are expressed analytically using Pauli operators such as ``Z``, ``X``, and ``Y``.
+The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents an analytic Hamiltonian as a sum of weighted Pauli operators. You can combine single- and multi-qubit operators using Python arithmetic.
+
+**Common Pauli operators**:
+
+- ``X(i)`` - Pauli_X acting on qubit *i*  
+- ``Y(i)`` - Pauli_Y acting on qubit *i*  
+- ``Z(i)`` - Pauli_Z acting on qubit *i*  
+
+**Arithmetic operations**:
+
+- Addition: ``H1 + H2``  
+- Scalar multiplication: ``alpha * H``  
+- Operator multiplication: ``Z(i) * Z(j)``  
 
 Example: Ising Hamiltonian
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -36,13 +48,17 @@ you can use the Pauli ``Z`` operators from the library:
     ]
     h = [1, 2, 3]
 
-    H = -1 * sum( 
-            sum(
-                J[i][j] * Z(i) * Z(j) 
-                for i in range(nqubits)
-            ) 
-            for j in range(nqubits)
-        ) - sum(h[j] * Z(j) for j in range(nqubits))
+    # Pairwise ZZ couplings
+    coupling = sum(
+        J[i][j] * Z(i) * Z(j)
+        for i in range(nqubits) for j in range(i + 1, nqubits)
+    )
+
+    # Local fields
+    fields = sum(h[j] * Z(j) for j in range(nqubits))
+
+    # Ising Hamiltonian
+    H = -coupling - fields
 
     print(H)
 
@@ -57,9 +73,13 @@ This defines a fully connected 3-qubit Ising model using symbolic operators.
 Schedule
 --------
 
-The :class:`~qilisdk.analog.schedule.Schedule` class represents the time evolution of a quantum system. It defines how different Hamiltonians evolve over discrete time steps using time-dependent coefficients.
+The :class:`~qilisdk.analog.schedule.Schedule` class defines how one or more Hamiltonians evolve over time. You specify:
 
-You begin by defining your Hamiltonians and labeling them. Then, for each time step, you assign a coefficient to each Hamiltonian to define its contribution over time.
+- **total_time** (float): Duration of the evolution.  
+- **time_step** (float): Time increment between discrete steps.  
+- **hamiltonians** (dict[str, Hamiltonian]): Map of labels to Hamiltonian instances.  
+- **schedule_map** (dict[int, dict[str, float]]): For each time-step index, map labels to coefficients.
+
 
 Example 1: Dictionary-Based Schedule
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -74,12 +94,13 @@ Example 1: Dictionary-Based Schedule
     T = 1
     steps = np.linspace(0, T, int(T / dt))
 
+    # Define two Hamiltonians
     h1 = X(0) + X(1) + X(2)
     h2 = -1 * Z(0) - 1 * Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
 
     schedule = Schedule(
-        T,
-        dt,
+        total_time=T,
+        time_step=dt,
         hamiltonians={"h1": h1, "h2": h2},
         schedule={
             t: {
@@ -92,18 +113,20 @@ Example 1: Dictionary-Based Schedule
 Example 2: Functional Schedule with :meth:`~qilisdk.analog.schedule.Schedule.add_hamiltonian`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Alternatively, you can build the schedule incrementally using functional definitions for coefficients:
+Alternatively, You can add Hamiltonians one at a time, supplying a callable for the coefficient:
 
 .. code-block:: python
 
     schedule = Schedule(T, dt)
 
+    # Add h1 with a time‐dependent coefficient function
     schedule.add_hamiltonian(
         label="h1", 
         hamiltonian=h1, 
         schedule=lambda t: 1 - steps[t] / T
     )
 
+    # Add h2 similarly
     schedule.add_hamiltonian(
         label="h2", 
         hamiltonian=h2, 
@@ -115,7 +138,7 @@ This provides more flexibility and modularity for dynamic or conditional evoluti
 Modifying a Schedule
 ^^^^^^^^^^^^^^^^^^^^
 
-You can update or insert specific time steps using the provided methods.
+Once constructed, you can refine or extend the schedule:
 
 **Add a new time step:**
 
@@ -125,7 +148,7 @@ You can update or insert specific time steps using the provided methods.
         "h1": 0.3
     })
 
-**Modify an existing coefficient:**
+**Update  an existing coefficient:**
 
 .. code-block:: python
 
@@ -134,3 +157,5 @@ You can update or insert specific time steps using the provided methods.
         hamiltonian_label="h1", 
         new_coefficient=0.2
     )
+
+This lets you insert or override coefficients without rebuilding the full map.
