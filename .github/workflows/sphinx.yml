@@ -1,15 +1,15 @@
-name: Build-sphinx-docs
+name: Publish Documentation
 
 on:
-  push:
-    branches:
-      - documentation
+  release:
+    types: [released]
 
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs: 
-  build: 
-    name: building documentation
+  deploy-documentation: 
+    name: Deploying Documentation
     runs-on: ubuntu-latest
     env:
       HOME_REPO: /home/repo
