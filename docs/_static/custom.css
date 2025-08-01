@@ -27,14 +27,17 @@ code, pre {
     --qili-purple: 271 77.3% 48.4%;
     --qili-red: 344 98.3% 45.5%;
 
-   --primary: var(--qili-purple);
-   --secondary: var(--qili-blue);
-   --accent: var(--qili-red);
+   --primary: var(--qili-blue);
+
+   /* Enable --access for highlighting */
+   /* --accent: var(--qili-red); */
 }
 
 .dark {
   --primary: var(--qili-red);
-  --accent: var(--qili-purple);
+
+  /* Enable --access for highlighting */
+  /* --accent: var(--qili-purple); */
 }
 
 #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
