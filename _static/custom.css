@@ -1,0 +1,74 @@
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("PlusJakartaSans-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+html, body {
+  font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+code, pre {
+  font-family: "Plus Jakarta Sans", monospace !important;
+}
+
+:root {
+    --qili-blue: 254 72% 62%;
+    --qili-purple: 304 33% 54%;
+    --qili-red: 351 66% 65%;
+
+    --qili-dark-blue: 244 45% 13%;
+
+   --primary: var(--qili-blue);
+
+   /* Enable --access for highlighting */
+   /* --accent: var(--qili-red); */
+}
+
+.dark {
+  --primary: var(--qili-red);
+  --background: var(--qili-dark-blue);
+  --accent: var(--qili-blue);
+  --card: var(--qili-dark-blue);
+
+  /* Enable --access for highlighting */
+  /* --accent: var(--qili-purple); */
+}
+
+#content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--qili-red))    0%,
+      hsl(var(--qili-purple)) 50%,
+      hsl(var(--qili-blue))   100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    /* Remove this to have a full-width gradient */
+    width: fit-content;
+}
+
+#content h1 > a, #content h2 > a, #content h3 > a, #content h4 > a, #content h5 > a, #content h6 > a {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit;
+  background: none;
+  text-decoration: none;
+}
+
+#content h1 > a > code, #content h2 > a > code, #content h3 > a > code, #content h4 > a > code, h5 > a > code, #content h6 > a > code {
+  background: none;
+  position: static;
+}

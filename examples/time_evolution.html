@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html :class="{'dark': darkMode === 'dark' || (darkMode === 'system' &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches)}" class="scroll-smooth" data-content_root="../" lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }" x-init="$watch('darkMode', val =&gt; localStorage.setItem('darkMode', val))">
+<head>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Time Evolution | QiliSDK</title>
+<meta content="Time Evolution | QiliSDK" property="og:title"/>
+<meta content="Time Evolution | QiliSDK" name="twitter:title"/>
+<link href="../_static/pygments.css?v=6aa05603" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
+<link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css?v=2aa19091" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=9d540474" rel="stylesheet" type="text/css"/>
+<link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
+<link href="../_static/q_trans.png" rel="icon"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="quantum_objects.html" rel="next" title="Quantum Objects"/>
+<link href="hamiltonians.html" rel="prev" title="Hamiltonians"/>
+<script>
+    <!-- Prevent Flash of wrong theme -->
+      const userPreference = localStorage.getItem('darkMode');
+      let mode;
+      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        mode = 'dark';
+        document.documentElement.classList.add('dark');
+      } else {
+        mode = 'light';
+      }
+      if (!userPreference) {localStorage.setItem('darkMode', mode)}
+    </script>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../_static/q_trans.png" width="24"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center space-x-1">
+<button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'" aria-label="Color theme switcher" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="!justify-start text-sm md:!hidden bg-background" href="../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../_static/q_trans.png" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/analog.html">Analog Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/common.html">Common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/qaas.html">Quantum as a Service (QaaS)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="circuits.html">Circuits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Time Evolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/index.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/common/index.html">qilisdk.common<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/algorithm/index.html">qilisdk.common.algorithm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/exceptions/index.html">qilisdk.common.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/model/index.html">qilisdk.common.model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/quantum_objects/index.html">qilisdk.common.quantum_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/result/index.html">qilisdk.common.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/common/variables/index.html">qilisdk.common.variables</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/vqe/index.html">qilisdk.digital.vqe</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/qaas/index.html">qilisdk.qaas<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/qaas/keyring/index.html">qilisdk.qaas.keyring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/qaas/qaas/index.html">qilisdk.qaas.qaas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/qaas/qaas_models/index.html">qilisdk.qaas.qaas_models</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/logging/index.html">qilisdk.utils.logging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">QiliSDK</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Time Evolution</span>
+</nav>
+<div id="content" role="main">
+<section id="Time-Evolution">
+<h1>Time Evolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Time-Evolution"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[1]:
+</span></code></pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span>
+</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolution</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">T</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Total evolution time</span>
+</span><span id="line-9"><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># Time-step</span>
+</span><span id="line-10"><span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">T</span> <span class="o">/</span> <span class="n">dt</span><span class="p">))</span>
+</span><span id="line-11"><span class="n">nqubits</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span id="line-12">
+</span><span id="line-13"><span class="c1"># Define two Hamiltonians for the simulation</span>
+</span><span id="line-14"><span class="n">H1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span>
+</span><span id="line-15"><span class="n">H2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span>
+</span><span id="line-16">
+</span><span id="line-17"><span class="c1"># Create a schedule for the time evolution</span>
+</span><span id="line-18"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-19">    <span class="n">T</span><span class="p">,</span>
+</span><span id="line-20">    <span class="n">dt</span><span class="p">,</span>
+</span><span id="line-21">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h1"</span><span class="p">:</span> <span class="n">H1</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">:</span> <span class="n">H2</span><span class="p">},</span>
+</span><span id="line-22">    <span class="n">schedule</span><span class="o">=</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="p">{</span><span class="s2">"h1"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">:</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">}</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">steps</span><span class="p">))},</span>
+</span><span id="line-23"><span class="p">)</span>
+</span><span id="line-24">
+</span><span id="line-25"><span class="c1"># Prepare an initial state (equal superposition)</span>
+</span><span id="line-26"><span class="n">state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([(</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)])</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="c1"># Perform time evolution on the CUDA backend with observables to monitor</span>
+</span><span id="line-29"><span class="n">time_evolution</span> <span class="o">=</span> <span class="n">TimeEvolution</span><span class="p">(</span>
+</span><span id="line-30">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span> <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span> <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-31"><span class="p">)</span>
+</span><span id="line-32">
+</span><span id="line-33"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-34"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-35"><span class="nb">print</span><span class="p">(</span><span class="s2">"Time Evolution Results:"</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Time Evolution Results: TimeEvolutionResult(
+  final_expected_values=array([ 0.99426886, -0.01322734,  0.10608707]),
+  expected_values=array([[ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+       [-1.19420124e-09,  1.00000000e+00,  2.43282688e-06],
+       [ 1.97549858e-04,  9.99997984e-01,  1.99816005e-03],
+       [ 9.76438099e-04,  9.99981916e-01,  5.93418774e-03],
+       [ 2.68656871e-03,  9.99928468e-01,  1.16550558e-02],
+       [ 5.63154892e-03,  9.99804577e-01,  1.89497368e-02],
+       [ 1.00618836e-02,  9.99568682e-01,  2.75900245e-02],
+       [ 1.61724846e-02,  9.99174172e-01,  3.72749836e-02],
+       [ 2.40908416e-02,  9.98571728e-01,  4.76879030e-02],
+       [ 3.38808586e-02,  9.97711109e-01,  5.85203383e-02],
+       [ 4.55466009e-02,  9.96544807e-01,  6.94546953e-02],
+       [ 5.90360431e-02,  9.95029771e-01,  8.01903972e-02],
+       [ 7.42449136e-02,  9.93128240e-01,  9.04654192e-02],
+       [ 9.10273659e-02,  9.90814072e-01,  1.00007469e-01],
+       [ 1.09195789e-01,  9.88069238e-01,  1.08606908e-01],
+       [ 1.28538840e-01,  9.84883293e-01,  1.16114878e-01],
+       [ 1.48824276e-01,  9.81263278e-01,  1.22367127e-01],
+       [ 1.69807686e-01,  9.77218749e-01,  1.27314045e-01],
+       [ 1.91246273e-01,  9.72774000e-01,  1.30903045e-01],
+       [ 2.12897454e-01,  9.67963843e-01,  1.33119019e-01],
+       [ 2.34533789e-01,  9.62824732e-01,  1.34024019e-01],
+       [ 2.55943875e-01,  9.57404469e-01,  1.33676536e-01],
+       [ 2.76936597e-01,  9.51752065e-01,  1.32189743e-01],
+       [ 2.97349368e-01,  9.45919702e-01,  1.29689132e-01],
+       [ 3.17045265e-01,  9.39959658e-01,  1.26325535e-01],
+       [ 3.35916994e-01,  9.33919517e-01,  1.22286993e-01],
+       [ 3.53894691e-01,  9.27845566e-01,  1.17733401e-01],
+       [ 3.70931669e-01,  9.21778040e-01,  1.12849201e-01],
+       [ 3.87012631e-01,  9.15747040e-01,  1.07835902e-01],
+       [ 4.02153033e-01,  9.09776299e-01,  1.02859244e-01],
+       [ 4.16389676e-01,  9.03878908e-01,  9.80946363e-02],
+       [ 4.29782579e-01,  8.98057481e-01,  9.37000249e-02],
+       [ 4.42413404e-01,  8.92299796e-01,  8.98412716e-02],
+       [ 4.54379212e-01,  8.86585360e-01,  8.66367708e-02],
+       [ 4.65789162e-01,  8.80880060e-01,  8.42067492e-02],
+       [ 4.76762719e-01,  8.75140321e-01,  8.26240188e-02],
+       [ 4.87420321e-01,  8.69312768e-01,  8.19557329e-02],
+       [ 4.97888960e-01,  8.63330509e-01,  8.22618737e-02],
+       [ 5.08291305e-01,  8.57122481e-01,  8.35523930e-02],
+       [ 5.18745329e-01,  8.50610151e-01,  8.58233885e-02],
+       [ 5.29361959e-01,  8.43709263e-01,  8.90538935e-02],
+       [ 5.40241851e-01,  8.36333393e-01,  9.31944086e-02],
+       [ 5.51471801e-01,  8.28394240e-01,  9.81928488e-02],
+       [ 5.63129716e-01,  8.19803072e-01,  1.03960796e-01],
+       [ 5.75274756e-01,  8.10477148e-01,  1.10389076e-01],
+       [ 5.87949115e-01,  8.00338458e-01,  1.17363500e-01],
+       [ 6.01176290e-01,  7.89314328e-01,  1.24779645e-01],
+       [ 6.14971571e-01,  7.77340579e-01,  1.32482418e-01],
+       [ 6.29324353e-01,  7.64369812e-01,  1.40319812e-01],
+       [ 6.44210597e-01,  7.50361282e-01,  1.48157526e-01],
+       [ 6.59589083e-01,  7.35288514e-01,  1.55862256e-01],
+       [ 6.75407972e-01,  7.19142676e-01,  1.63272420e-01],
+       [ 6.91601476e-01,  7.01932320e-01,  1.70230480e-01],
+       [ 7.08092879e-01,  6.83685642e-01,  1.76574115e-01],
+       [ 7.24790002e-01,  6.64447430e-01,  1.82178663e-01],
+       [ 7.41595363e-01,  6.44281817e-01,  1.86915109e-01],
+       [ 7.58405475e-01,  6.23269860e-01,  1.90672013e-01],
+       [ 7.75113636e-01,  6.01511951e-01,  1.93344834e-01],
+       [ 7.91610903e-01,  5.79123262e-01,  1.94854884e-01],
+       [ 8.07789990e-01,  5.56237895e-01,  1.95127488e-01],
+       [ 8.23544773e-01,  5.33004582e-01,  1.94113687e-01],
+       [ 8.38774097e-01,  5.09574232e-01,  1.91812714e-01],
+       [ 8.53386148e-01,  4.86117682e-01,  1.88206487e-01],
+       [ 8.67294839e-01,  4.62808241e-01,  1.83325376e-01],
+       [ 8.80428016e-01,  4.39824177e-01,  1.77203843e-01],
+       [ 8.92722122e-01,  4.17343650e-01,  1.69916128e-01],
+       [ 9.04126740e-01,  3.95540752e-01,  1.61562221e-01],
+       [ 9.14606494e-01,  3.74579983e-01,  1.52265548e-01],
+       [ 9.24141196e-01,  3.54616741e-01,  1.42161937e-01],
+       [ 9.32723717e-01,  3.35790108e-01,  1.31420969e-01],
+       [ 9.40363858e-01,  3.18217186e-01,  1.20223281e-01],
+       [ 9.47084821e-01,  3.01995466e-01,  1.08761575e-01],
+       [ 9.52923255e-01,  2.87192188e-01,  9.72518271e-02],
+       [ 9.57928810e-01,  2.73844238e-01,  8.59169842e-02],
+       [ 9.62162878e-01,  2.61956010e-01,  7.49776334e-02],
+       [ 9.65696219e-01,  2.51497584e-01,  6.46512014e-02],
+       [ 9.68606769e-01,  2.42402412e-01,  5.51543102e-02],
+       [ 9.70977941e-01,  2.34567546e-01,  4.66894503e-02],
+       [ 9.72895952e-01,  2.27854119e-01,  3.94457512e-02],
+       [ 9.74448312e-01,  2.22088096e-01,  3.35762498e-02],
+       [ 9.75719648e-01,  2.17066318e-01,  2.92126923e-02],
+       [ 9.76790369e-01,  2.12558285e-01,  2.64490055e-02],
+       [ 9.77734190e-01,  2.08311178e-01,  2.53437577e-02],
+       [ 9.78616297e-01,  2.04056109e-01,  2.59084598e-02],
+       [ 9.79491315e-01,  1.99517069e-01,  2.81016596e-02],
+       [ 9.80401739e-01,  1.94419654e-01,  3.18343805e-02],
+       [ 9.81377314e-01,  1.88496349e-01,  3.69823481e-02],
+       [ 9.82434927e-01,  1.81499777e-01,  4.33525777e-02],
+       [ 9.83578062e-01,  1.73211745e-01,  5.07137741e-02],
+       [ 9.84798018e-01,  1.63451927e-01,  5.87905744e-02],
+       [ 9.86074841e-01,  1.52087947e-01,  6.72730572e-02],
+       [ 9.87379338e-01,  1.39042934e-01,  7.58228544e-02],
+       [ 9.88675214e-01,  1.24303401e-01,  8.40832135e-02],
+       [ 9.89921683e-01,  1.07920987e-01,  9.16958141e-02],
+       [ 9.91076626e-01,  9.00197645e-02,  9.83034265e-02],
+       [ 9.92099322e-01,  7.07939316e-02,  1.03571975e-01],
+       [ 9.92953490e-01,  5.05056484e-02,  1.07203298e-01],
+       [ 9.93610447e-01,  2.94799945e-02,  1.08945900e-01],
+       [ 9.94051285e-01,  8.09531195e-03,  1.08611738e-01],
+       [ 9.94268863e-01, -1.32273384e-02,  1.06087067e-01]])
+  final_state=[[-0.22177525-0.97362733j]
+ [ 0.05326401-0.0053398j ]]
+  intermediate_states=[[[0.70710678+0.j]
+ [0.70710678+0.j]],
+ [[0.7035742 -0.07059276j]
+ [0.70357438-0.07059105j]],
+ [[0.69308119-0.14048928j]
+ [0.69322357-0.13907664j]],
+ [[0.6758671 -0.20902603j]
+ [0.67643478-0.20481154j]],
+ [[0.65222671-0.27557867j]
+ [0.6536359 -0.26723926j]],
+ [[0.62250386-0.33956548j]
+ [0.6252955 -0.3258677j ]],
+ [[0.58708494-0.40045252j]
+ [0.59192434-0.38025602j]],
+ [[0.54639401-0.45775521j]
+ [0.55404531-0.43005529j]],
+ [[0.50088385-0.51103893j]
+ [0.51219951-0.47498025j]],
+ [[0.45103147-0.55992057j]
+ [0.46694534-0.51480251j]],
+ [[0.39733198-0.60407003j]
+ [0.41883797-0.54936459j]],
+ [[0.34029403-0.64320914j]
+ [0.36843117-0.57856759j]],
+ [[0.28043288-0.6771114j ]
+ [0.31627888-0.60236634j]],
+ [[0.21826812-0.70560096j]
+ [0.26289761-0.6207827j ]],
+ [[0.15431602-0.72854956j]
+ [0.20880031-0.63388054j]],
+ [[0.08908717-0.74587727j]
+ [0.15448995-0.64176587j]],
+ [[0.02308454-0.75754818j]
+ [0.10040787-0.64459764j]],
+ [[-0.04320386-0.76356877j]
+ [ 0.04701064-0.64256218j]],
+ [[-0.10930431-0.76398672j]
+ [-0.00530554-0.6358842j ]],
+ [[-0.17476024-0.75888575j]
+ [-0.05617909-0.62481612j]],
+ [[-0.23913764-0.74838498j]
+ [-0.10525923-0.60963399j]],
+ [[-0.3020221 -0.73263537j]
+ [-0.15225294-0.5906328j ]],
+ [[-0.36302387-0.71181597j]
+ [-0.19688835-0.56812558j]],
+ [[-0.42177694-0.6861333j ]
+ [-0.2389357 -0.54243437j]],
+ [[-0.47794064-0.65581657j]
+ [-0.27819738-0.51389063j]],
+ [[-0.53120159-0.62111462j]
+ [-0.31449955-0.48283697j]],
+ [[-0.58127094-0.58229842j]
+ [-0.3477181 -0.44960514j]],
+ [[-0.62788654-0.53965204j]
+ [-0.3777524 -0.41453262j]],
+ [[-0.67081399-0.4934723j]
+ [-0.40452544-0.3779588j]],
+ [[-0.70984358-0.4440705j ]
+ [-0.42800044-0.34020451j]],
+ [[-0.7447919 -0.39176507j]
+ [-0.44816172-0.30158951j]],
+ [[-0.77550074-0.3368826j ]
+ [-0.46502059-0.26242059j]],
+ [[-0.80183843-0.27975318j]
+ [-0.47860543-0.22300257j]],
+ [[-0.82369595-0.22071382j]
+ [-0.48897484-0.18361373j]],
+ [[-0.84098875-0.16010155j]
+ [-0.49620273-0.14452774j]],
+ [[-0.85365495-0.09825771j]
+ [-0.50038467-0.10598973j]],
+ [[-0.86165446-0.03552116j]
+ [-0.50163094-0.06823661j]],
+ [[-0.86497004+0.02777239j]
+ [-0.50006353-0.03149586j]],
+ [[-0.86360434+0.09128637j]
+ [-0.49582059+0.00403595j]],
+ [[-0.85758036+0.15468868j]
+ [-0.48905004+0.03817579j]],
+ [[-0.84694068+0.21765215j]
+ [-0.47990894+0.07075615j]],
+ [[-0.83174686+0.27985369j]
+ [-0.46856179+0.10163133j]],
+ [[-0.81207745+0.34097818j]
+ [-0.45518191+0.13066571j]],
+ [[-0.78803075+0.40071485j]
+ [-0.43994344+0.15774952j]],
+ [[-0.75972182+0.45875934j]
+ [-0.42302411+0.18279286j]],
+ [[-0.7272818 +0.51481622j]
+ [-0.40460505+0.20571874j]],
+ [[-0.69085544+0.56860083j]
+ [-0.38487449+0.22645857j]],
+ [[-0.65060916+0.61983345j]
+ [-0.3640076 +0.24497485j]],
+ [[-0.60672203+0.66824438j]
+ [-0.34218351+0.26124369j]],
+ [[-0.55938657+0.71357688j]
+ [-0.31958425+0.27524645j]],
+ [[-0.50880845+0.75558487j]
+ [-0.29639155+0.28697998j]],
+ [[-0.45521273+0.79403108j]
+ [-0.27277313+0.29646388j]],
+ [[-0.39883834+0.82869097j]
+ [-0.24889194+0.30373025j]],
+ [[-0.33994034+0.85935266j]
+ [-0.22490098+0.30882537j]],
+ [[-0.27878208+0.88581914j]
+ [-0.20095976+0.3118015j ]],
+ [[-0.21564284+0.9079074j ]
+ [-0.17721474+0.31272553j]],
+ [[-0.15081415+0.92545007j]
+ [-0.15380715+0.3116739j ]],
+ [[-0.08460197+0.93829597j]
+ [-0.13086699+0.30873454j]],
+ [[-0.01732262+0.94631146j]
+ [-0.10851985+0.30400328j]],
+ [[ 0.05069235+0.94938153j]
+ [-0.08687592+0.29758626j]],
+ [[ 0.11910115+0.94741084j]
+ [-0.06603838+0.28959721j]],
+ [[ 0.18755753+0.940324j  ]
+ [-0.04611312+0.28015448j]],
+ [[ 0.25569571+0.92806938j]
+ [-0.02717754+0.26938505j]],
+ [[ 0.32314686+0.91061711j]
+ [-0.00930983+0.25742165j]],
+ [[0.38952856+0.88796481j]
+ [0.00743092+0.2443988j ]],
+ [[0.45445571+0.86013433j]
+ [0.02298991+0.23045694j]],
+ [[0.51753774+0.82717474j]
+ [0.03732266+0.21573977j]],
+ [[0.57837997+0.78916402j]
+ [0.05039525+0.2003923j ]],
+ [[0.63658308+0.74621216j]
+ [0.06218881+0.18455881j]],
+ [[0.69175026+0.6984579j]
+ [0.07269062+0.1683871j]],
+ [[0.7434851+0.64607417j]
+ [0.0819004+0.15202104j]],
+ [[0.79139397+0.58926904j]
+ [0.08983048+0.13560263j]],
+ [[0.8350928 +0.52828178j]
+ [0.09649932+0.11927386j]],
+ [[0.87420628+0.4633873j ]
+ [0.10193604+0.10317286j]],
+ [[0.90837053+0.39489798j]
+ [0.1061811 +0.08743075j]],
+ [[0.93723711+0.32316361j]
+ [0.10928441+0.07217207j]],
+ [[0.96047767+0.24856795j]
+ [0.11130334+0.0575168j ]],
+ [[0.97778614+0.17153201j]
+ [0.11230372+0.04357641j]],
+ [[0.98888312+0.09251023j]
+ [0.11235867+0.03045577j]],
+ [[0.99351912+0.01199616j]
+ [0.11154811+0.01824451j]],
+ [[0.99147941-0.06948673j]
+ [0.10995825+0.00702557j]],
+ [[0.98258783-0.15138146j]
+ [0.10768014-0.00313079j]],
+ [[0.96671061-0.23310448j]
+ [0.10480901-0.01216452j]],
+ [[0.94376072-0.31404435j]
+ [0.10144289-0.0200298j ]],
+ [[0.91370273-0.39356446j]
+ [0.09768121-0.02669689j]],
+ [[0.87655621-0.47100964j]
+ [0.09362447-0.03214949j]],
+ [[0.83239649-0.54571489j]
+ [0.08937496-0.03637939j]],
+ [[0.78136451-0.61699835j]
+ [0.08502975-0.03940149j]],
+ [[0.72366513-0.68417674j]
+ [0.08068474-0.04124247j]],
+ [[0.65957138-0.74656855j]
+ [0.07643065-0.04194456j]],
+ [[0.58942682-0.80350074j]
+ [0.0723531 -0.04156451j]],
+ [[0.51364742-0.8543161j ]
+ [0.06853031-0.04017371j]],
+ [[0.43272238-0.8983813j ]
+ [0.06503206-0.03785795j]],
+ [[0.34721234-0.93509595j]
+ [0.06191997-0.03471421j]],
+ [[0.25775267-0.96389931j]
+ [0.05924304-0.03085367j]],
+ [[0.16504913-0.98428067j]
+ [0.05703951-0.0263976j ]],
+ [[0.0698758 -0.99578819j]
+ [0.05533541-0.02147667j]],
+ [[-0.02692767-0.99803814j]
+ [ 0.05414214-0.01622976j]],
+ [[-0.12446233-0.99072437j]
+ [ 0.05345737-0.01080127j]],
+ [[-0.22177525-0.97362733j]
+ [ 0.05326401-0.0053398j ]]]
+)
+</pre></div></div>
+</div>
+</section>
+</div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
+<div class="mr-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="hamiltonians.html">
+<svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+        Hamiltonians
+      </a>
+</div>
+<div class="ml-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="quantum_objects.html">
+        Quantum Objects
+        <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</a>
+</div>
+</div></div>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 8.1.3</a></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=7f41d439"></script>
+<script src="../_static/doctools.js?v=9bcbadda"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script defer="defer" src="../_static/theme.js?v=073f68d9"></script>
+<script src="../_static/design-tabs.js?v=f930bc37"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
