@@ -66,7 +66,7 @@ autoapi_python_class_content = "both"
 
 html_title = project
 html_permalinks_icon = Icons.permalinks_icon
-html_favicon = "_static/q_light.jpeg"
+html_favicon = "_static/q_trans.png"
 # html_baseurl = "https://docs.qilimanjaro.tech/"
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
@@ -75,7 +75,7 @@ html_copy_source = False
 html_show_sourcelink = False
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_light.jpeg", logo_dark="_static/q_dark.jpeg", awesome_external_links=True
+    logo_light="_static/q_trans.png", logo_dark="_static/q_trans.png", awesome_external_links=True
 )
 
 html_theme_options = asdict(theme_options)

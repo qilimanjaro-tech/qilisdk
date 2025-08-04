@@ -23,9 +23,11 @@ code, pre {
 }
 
 :root {
-    --qili-blue: 247 100.0% 56.9%;
-    --qili-purple: 271 77.3% 48.4%;
-    --qili-red: 344 98.3% 45.5%;
+    --qili-blue: 254 72% 62%;
+    --qili-purple: 304 33% 54%;
+    --qili-red: 351 66% 65%;
+
+    --qili-dark-blue: 244 45% 13%;
 
    --primary: var(--qili-blue);
 
@@ -35,6 +37,9 @@ code, pre {
 
 .dark {
   --primary: var(--qili-red);
+  --background: var(--qili-dark-blue);
+  --accent: var(--qili-blue);
+  --card: var(--qili-dark-blue);
 
   /* Enable --access for highlighting */
   /* --accent: var(--qili-purple); */
