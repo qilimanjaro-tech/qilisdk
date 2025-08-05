@@ -89,7 +89,6 @@ class CudaBackend(Backend):
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        logger.debug("Initializing CudaBackend with sampling_method={}", sampling_method.value)
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: CudaBackend._handle_X,
@@ -112,6 +111,7 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
+        logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     @property
     def sampling_method(self) -> CudaSamplingMethod:
@@ -130,28 +130,23 @@ class CudaBackend(Backend):
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         """
-        logger.debug("Applying simulation method {}", self.sampling_method.value)
+        logger.info("Applying sampling simulation method {}", self.sampling_method.value)
         if self.sampling_method == CudaSamplingMethod.STATE_VECTOR:
             if cudaq.num_available_gpus() == 0:
                 cudaq.set_target("qpp-cpu")
-                logger.info("No GPU detected, using qpp-cpu backend")
+                logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
             else:
                 cudaq.set_target("nvidia")
-                logger.info("GPU detected, using nvidia backend")
+                logger.debug("GPU detected, using cudaq's 'nvidia' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
-            logger.info("Using tensornet backend")
+            logger.debug("Using cudaq's 'tensornet' backend")
         else:
             cudaq.set_target("tensornet-mps")
-            logger.info("Using tensornet-mps backend")
+            logger.debug("Using cudaq's 'tensornet-mps' backend")
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
-        logger.info(
-            "Executing Sampling (shots={}, qubits={}, gates={})",
-            functional.nshots,
-            functional.circuit.nqubits,
-            len(functional.circuit.gates),
-        )
+        logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
@@ -170,20 +165,15 @@ class CudaBackend(Backend):
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+        logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
-        logger.info(
-            "Executing TimeEvolution (T={}, dt={}, qubits={})",
-            functional.schedule.T,
-            functional.schedule.dt,
-            functional.schedule.nqubits,
-        )
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
         cuda_hamiltonian = None
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
-        logger.trace("Computed {} time steps", len(steps))
 
         def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
             def compute_value(param_name: str, step_idx: int) -> float:
@@ -200,6 +190,7 @@ class CudaBackend(Backend):
             ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
             for key, ham in functional.schedule.hamiltonians.items()
         )
+        logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
         for observable in functional.observables:
@@ -210,6 +201,7 @@ class CudaBackend(Backend):
             else:
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
+        logger.trace("Observables compiled for evolution")
 
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
@@ -223,7 +215,7 @@ class CudaBackend(Backend):
             store_intermediate_results=functional.store_intermediate_results,
         )
 
-        logger.info("TimeEvolution finished")
+        logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
             final_expected_values=np.array(
                 [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
