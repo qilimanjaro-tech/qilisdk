@@ -18,3 +18,7 @@ wheels/
 # development environment files
 .vscode
 .coverage
+
+# Sphinx documentation
+docs/_build/*
+docs/code/api/*

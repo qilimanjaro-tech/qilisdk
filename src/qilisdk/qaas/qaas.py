@@ -18,16 +18,16 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from os import environ
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import httpx
-from pydantic import TypeAdapter, ValidationError
+from pydantic import TypeAdapter
 
 from qilisdk.common.result import Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.logging import logger
+from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .qaas_models import (
@@ -43,7 +43,6 @@ from .qaas_models import (
     Token,
     VQEPayload,
 )
-from .qaas_settings import QaaSSettings
 
 if TYPE_CHECKING:
     from qilisdk.digital.vqe import VQE
@@ -57,9 +56,6 @@ TResult = TypeVar("TResult", bound=Result)
 
 class QaaS:
     """Synchronous client for the Qilimanjaro QaaS REST API."""
-
-    _api_url: str = environ.get("QILISDK_QAAS_API_URL", "https://qilimanjaro.ddns.net/public-api/api/v1")
-    _audience: str = environ.get("QILISDK_QAAS_AUDIENCE", "urn:qilimanjaro.tech:public-api:beren")
 
     def __init__(self) -> None:
         logger.debug("Initializing QaaS client")
@@ -79,6 +75,7 @@ class QaaS:
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
         }
+        self._settings = get_settings()
         logger.info("QaaS client initialized for user '{}'", self._username)
 
     def _get_headers(self) -> dict:  # noqa: PLR6301
@@ -129,20 +126,11 @@ class QaaS:
             :class:`QaaSBackend` constructions require no explicit credentials.
         """
         # Use provided parameters or fall back to environment variables via Settings()
-        if not username or not apikey:
-            try:
-                # Load environment variables into the settings object.
-                settings = QaaSSettings()  # type: ignore[call-arg]
-                username = username or settings.username
-                apikey = apikey or settings.apikey
-            except ValidationError:
-                # Environment credentials could not be validated.
-                logger.exception("Environment credentials could not be validated")
-                return False
+        settings = get_settings()
+        username = username or settings.qaas_username
+        apikey = apikey or settings.qaas_apikey
 
         if not username or not apikey:
-            # Insufficient credentials provided.
-            logger.warning("Insufficient credentials provided for login (username or apikey missing)")
             return False
 
         # Send login request to QaaS
@@ -151,13 +139,13 @@ class QaaS:
             assertion = {
                 "username": username,
                 "api_key": apikey,
-                "audience": QaaS._audience,
+                "audience": settings.qaas_audience,
                 "iat": int(datetime.now(timezone.utc).timestamp()),
             }
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    QaaS._api_url + "/authorisation-tokens",
+                    settings.qaas_api_url + "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
@@ -192,7 +180,7 @@ class QaaS:
             A list of :class:`~qilisdk.models.Device` objects.
         """
         with httpx.Client() as client:
-            response = client.get(QaaS._api_url + "/devices", headers=self._get_authorized_headers())
+            response = client.get(self._settings.qaas_api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
@@ -211,7 +199,7 @@ class QaaS:
             A list of :class:`~qilisdk.models.JobInfo` objects.
         """
         with httpx.Client() as client:
-            response = client.get(QaaS._api_url + "/jobs", headers=self._get_authorized_headers())
+            response = client.get(self._settings.qaas_api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
@@ -230,7 +218,7 @@ class QaaS:
         """
         with httpx.Client() as client:
             response = client.get(
-                f"{QaaS._api_url}/jobs/{id}",
+                f"{self._settings.qaas_api_url}/jobs/{id}",
                 headers=self._get_authorized_headers(),
                 params={
                     "payload": True,
@@ -339,7 +327,7 @@ class QaaS:
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                QaaS._api_url + "/execute",
+                self._settings.qaas_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -358,7 +346,7 @@ class QaaS:
         logger.debug("Executing time evolution on device {}", device)
         with httpx.Client() as client:
             response = client.post(
-                QaaS._api_url + "/execute",
+                self._settings.qaas_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -394,7 +382,7 @@ class QaaS:
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                QaaS._api_url + "/execute",
+                self._settings.qaas_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )

@@ -457,8 +457,11 @@ class X(BasicGate):
     The Pauli-X gate.
 
     The associated matrix is:
-        [[0, 1],
-        [1, 0]]
+
+    .. code-block:: text
+
+       [[0, 1],
+       [1, 0]]
 
     This is a pi radians rotation around the X-axis in the Bloch sphere.
     """
@@ -488,8 +491,9 @@ class Y(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
-        [[0, -i],
-         [i, 0]]
+
+       [[ 0, -i ],
+        [ i,  0 ]]
 
     This is a pi radians rotation around the Y-axis in the Bloch sphere.
     """
@@ -519,8 +523,9 @@ class Z(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1, 0],
-         [0, -1]]
+        [0, -1]]
 
     This is a pi radians rotation around the Z-axis in the Bloch sphere.
     """
@@ -550,8 +555,9 @@ class H(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
-        1/sqrt(2) * [[1, 1],
-                     [1, -1]]
+
+        [[1/sqrt(2),  1/sqrt(2)],
+         [1/sqrt(2), -1/sqrt(2)]]
 
     This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.
     """
@@ -581,6 +587,7 @@ class S(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1, 0],
          [0, i]]
 
@@ -612,6 +619,7 @@ class T(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1,           0],
          [0, exp(i*pi/4)]]
 
@@ -643,6 +651,7 @@ class RX(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[cos(theta/2),     -i*sin(theta/2)],
          [-i*sin(theta/2),     cos(theta/2)]]
 
@@ -685,6 +694,7 @@ class RY(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[cos(theta/2), -sin(theta/2)],
          [sin(theta/2),  cos(theta/2)]]
 
@@ -727,6 +737,7 @@ class RZ(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[exp(-i*phi/2),              0],
          [0,               exp(i*phi/2)]]
 
@@ -777,6 +788,7 @@ class U1(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1,            0],
          [0, exp(i*phi)]]
 
@@ -822,6 +834,7 @@ class U2(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         1/sqrt(2)*[[1,                   -exp(i*gamma)],
                    [exp(i*phi),    exp(i*(phi+gamma))]]
 
@@ -882,6 +895,7 @@ class U3(BasicGate):
     The associated matrix is:
 
     .. code-block:: text
+
         [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],
          [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
 
@@ -949,6 +963,7 @@ class CNOT(Controlled[X]):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1, 0, 0, 0],
          [0, 1, 0, 0],
          [0, 0, 0, 1],
@@ -974,6 +989,7 @@ class CZ(Controlled[Z]):
     The associated matrix is:
 
     .. code-block:: text
+
         [[1, 0, 0, 0],
          [0, 1, 0, 0],
          [0, 0, 1, 0],

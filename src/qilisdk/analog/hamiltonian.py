@@ -195,15 +195,6 @@ class PauliI(PauliOperator):
 
 @yaml.register_class
 class Hamiltonian:
-    """
-    The `elements` dictionary now maps from a tuple of PauliOperator objects
-    to a complex coefficient. For example:
-        {
-            (Z(0), Y(1)):  1,
-            (X(1),):       1j,
-        }
-    """
-
     _EPS: float = 1e-14
     _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, Callable[..., PauliOperator]]]] = {
         ("X", "X"): (1, I),
@@ -220,6 +211,21 @@ class Hamiltonian:
     ZERO: int = 0
 
     def __init__(self, elements: dict[tuple[PauliOperator, ...], complex] | None = None) -> None:
+        """A class to represent abstract Hamiltonian expressions.
+
+        Args:
+            elements (dict[tuple[PauliOperator, ...], complex] | None, optional): maps from a tuple of PauliOperator objects
+                        to a complex coefficient. For example:
+
+                        .. code-block:: text
+
+                            {
+                            (Z(0), Y(1)):  1,
+                            (X(1),):       1j,
+                            }
+
+                        Defaults to None.
+        """
         self._elements: dict[tuple[PauliOperator, ...], complex] = defaultdict(complex)
         if elements:
             for key, val in elements.items():
@@ -239,6 +245,11 @@ class Hamiltonian:
         return self._elements
 
     def simplify(self) -> Hamiltonian:
+        """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
+
+        Returns:
+            Hamiltonian: Simplified Hamiltonian
+        """
         # 1) Remove near-zero
         keys_to_remove = [key for key, value in self._elements.items() if abs(value) < Hamiltonian._EPS]
         for key in keys_to_remove:
