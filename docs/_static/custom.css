@@ -14,7 +14,7 @@
   src: url("PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype-variations");
 }
 
-html, body, .wy-nav-content {
+html, body {
   font-family: "Plus Jakarta Sans", sans-serif !important;
 }
 
@@ -23,37 +23,45 @@ code, pre {
 }
 
 :root {
-   --primary: 271 77.3% 48.4%;
-   /* --accent: 344 98.3% 45.5%; */
+    --qili-blue: 254 72% 62%;
+    --qili-purple: 304 33% 54%;
+    --qili-red: 351 66% 65%;
+    --qili-dark-blue: 244 45% 13%;
+
+   --primary: var(--qili-blue);
 }
 
 .dark {
-  --primary: 344 98.3% 45.5%;
-  --accent: 271 77.3% 48.4%;
+  --primary: var(--qili-red);
+  --background: var(--qili-dark-blue);
+  --accent: var(--qili-blue);
+  --card: var(--qili-dark-blue);
 }
 
-/* h1, h2, h3, h4, h5, h6 {
-    background: linear-gradient(90deg, #E16D7E, #7857E4);
-    background-clip: text;
+#content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--qili-red))    0%,
+      hsl(var(--qili-purple)) 50%,
+      hsl(var(--qili-blue))   100%
+    );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: bold;
-} */
+    color: transparent;
 
-/* Links in headers coloured with gradienrs are white over white without this */
-/* h1 .py-meth, h2 .py-meth, h3 .py-meth, h4 .py-meth, h5 .py-meth, h6 .py-meth {
-  background: linear-gradient(90deg, #E16D7E, #7857E4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
-  font-weight: bold;
-} */
+    /* Remove this to have a full-width gradient */
+    width: fit-content;
+}
 
+#content h1 > a, #content h2 > a, #content h3 > a, #content h4 > a, #content h5 > a, #content h6 > a {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit;
+  background: none;
+  text-decoration: none;
+}
 
-/* Error cell in Jupyter notebook. Affects only to dark but I can't change it only there*/
-/* div.nboutput.container div.output_area.stderr {
-  background-color: rgba(156, 56, 96, 0.9) !important;
-  color: #ffffff !important;
-} */
-
+#content h1 > a > code, #content h2 > a > code, #content h3 > a > code, #content h4 > a > code, h5 > a > code, #content h6 > a > code {
+  background: none;
+  position: static;
+}
