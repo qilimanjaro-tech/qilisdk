@@ -60,21 +60,17 @@ class QaaS:
         credentials = load_credentials()
         if credentials is None:
             logger.error(
-                "No valid QaaS credentials found in keyring. "
-                "User must call QaaSBackend.login() or set environment variables."
+                "No QaaS credentials found. Call `.login()` or set env vars before instantiation."
             )
-            raise RuntimeError(
-                "No valid QaaS credentials found in keyring."
-                "Please call QaaSBackend.login(username, apikey) or ensure environment variables are set."
-            )
+            raise RuntimeError("Missing QaaS credentials - invoke QaaSBackend.login() first.")
         self._username, self._token = credentials
         self._selected_device: int | None = None
         self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], int]] = {
-            Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
-            TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
+            Sampling: lambda f: self._submit_sampling(cast("Sampling", f)),
+            TimeEvolution: lambda f: self._submit_time_evolution(cast("TimeEvolution", f)),
         }
         self._settings = get_settings()
-        logger.success("QaaS client initialized for user '{}'", self._username)
+        logger.success("QaaS client initialised for user '{}'", self._username)
 
     @classmethod
     def _get_headers(cls) -> dict:
@@ -130,6 +126,7 @@ class QaaS:
         apikey = apikey or settings.qaas_apikey
 
         if not username or not apikey:
+            logger.warning("Login called without credentials - aborting")
             return False
 
         # Send login request to QaaS
@@ -154,19 +151,24 @@ class QaaS:
                 )
                 response.raise_for_status()
                 token = Token(**response.json())
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "Login failed - server returned {} {}", exc.response.status_code, exc.response.reason_phrase
+            )
+            return False
         except httpx.RequestError:
             logger.exception("Network error while logging in to QaaS")
             return False
 
         store_credentials(username=username, token=token)
-        logger.info("Login successful for user '{}'", username)
+        logger.success("Login successful for user '{}'", username)
         return True
 
     @classmethod
     def logout(cls) -> None:
         """Delete cached credentials from the keyring."""
         delete_credentials()
-        logger.info("Credentials deleted from keyring for QaaS")
+        logger.info("Cached credentials removed - user logged out")
 
     def list_devices(self, where: Callable[[Device], bool] | None = None) -> list[Device]:
         """Return all visible devices, optionally filtered.
@@ -178,12 +180,14 @@ class QaaS:
         Returns:
             A list of :class:`~qilisdk.models.Device` objects.
         """
+        logger.debug("Fetching device list from server…")
         with httpx.Client() as client:
             response = client.get(self._settings.qaas_api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
 
+        logger.success("{} devices retrieved", len(devices))
         return [d for d in devices if where(d)] if where else devices
 
     def list_jobs(self, where: Callable[[JobInfo], bool] | None = None) -> list[JobInfo]:
@@ -197,12 +201,14 @@ class QaaS:
         Returns:
             A list of :class:`~qilisdk.models.JobInfo` objects.
         """
+        logger.debug("Fetching job list…")
         with httpx.Client() as client:
             response = client.get(self._settings.qaas_api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
 
+        logger.success("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
 
     def get_job_details(self, id: int) -> JobDetail:
@@ -215,6 +221,7 @@ class QaaS:
             A :class:`~qilisdk.models.JobDetail` instance containing payload,
             result, logs and error information.
         """
+        logger.debug("Retrieving job {} details", id)
         with httpx.Client() as client:
             response = client.get(
                 f"{self._settings.qaas_api_url}/jobs/{id}",
@@ -250,7 +257,9 @@ class QaaS:
             decoded_logs: bytes = base64.b64decode(raw_logs)
             data["logs"] = decoded_logs.decode("utf-8")
 
-        return TypeAdapter(JobDetail).validate_python(data)
+        job_detail = TypeAdapter(JobDetail).validate_python(data)
+        logger.debug("Job {} details retrieved (status {})", id, job_detail.status.value)
+        return job_detail
 
     def wait_for_job(
         self,
@@ -272,7 +281,7 @@ class QaaS:
         Raises:
             TimeoutError: If *timeout* elapses before the job finishes.
         """
-        logger.info("Waiting for job {} (poll={}, timeout={})", id, poll_interval, timeout)
+        logger.info("Waiting for job {} (poll={}s, timeout={}s)…", id, poll_interval, timeout)
         start_t = time.monotonic()
         terminal_states = {
             JobStatus.COMPLETED,
@@ -285,7 +294,7 @@ class QaaS:
             current = self.get_job_details(id)
 
             if current.status in terminal_states:
-                logger.info("Job {} reached terminal state {}", id, current.status.value)
+                logger.success("Job {} reached terminal state {}", id, current.status.value)
                 return current
 
             if timeout is not None and (time.monotonic() - start_t) >= timeout:
@@ -299,25 +308,25 @@ class QaaS:
 
     def _ensure_device_selected(self) -> int:
         if self._selected_device is None:
-            logger.error("Attempted to execute without selecting a device")
+            logger.error("Attempted execution without selecting a device")
             raise ValueError("Device not selected.")
         return self._selected_device
 
     def submit(self, functional: Functional) -> int:
-        logger.debug("Submitting functional {}", type(functional).__qualname__)
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
-            logger.error("{} does not support {}", type(self).__qualname__, type(functional).__qualname__)
+            logger.error("Unsupported functional type: {}", type(functional).__qualname__)
             raise NotImplementedError(
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
+        logger.info("Submitting {}", type(functional).__qualname__)
         job_id = handler(functional)
-        logger.info("Submitted functional {} → job {}", type(functional).__qualname__, job_id)
+        logger.success("Submission complete - job {}", job_id)
         return job_id
 
-    def _execute_sampling(self, sampling: Sampling) -> int:
+    def _submit_sampling(self, sampling: Sampling) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.SAMPLING,
@@ -332,10 +341,9 @@ class QaaS:
             )
             response.raise_for_status()
             job = JobId(**response.json())
-        logger.info("Sampling job submitted: {}", job.id)
         return job.id
 
-    def _execute_time_evolution(self, time_evolution: TimeEvolution) -> int:
+    def _submit_time_evolution(self, time_evolution: TimeEvolution) -> int:
         device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
