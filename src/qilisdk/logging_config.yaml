@@ -1,0 +1,16 @@
+sinks:
+  - sink: stderr
+    level: INFO
+    format: "<fg #7f1cdb>QiliSDK</> | <green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <lvl>{level}</> | <lvl>{message}</>"
+    filter: qilisdk
+    colorize: true
+
+intercept_libraries:
+  - name: httpx
+    level: ERROR
+  - name: httpcore
+    level: ERROR
+  - name: keyring
+    level: ERROR
+  - name: matplotlib
+    level: ERROR

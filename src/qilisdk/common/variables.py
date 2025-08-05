@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
 import numpy as np
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
-from qilisdk.logging import logger
+from loguru import logger
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:

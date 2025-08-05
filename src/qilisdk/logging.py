@@ -13,38 +13,71 @@
 # limitations under the License.
 
 """config.py"""
+from __future__ import annotations
 
 import logging
-from sys import stderr
-from typing import TYPE_CHECKING, Any, Mapping, TypedDict
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loguru import logger
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings
+from ruamel.yaml import YAML
+
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from types import FrameType
 
 
+class SinkConfig(BaseModel):
+    """
+    Configuration for a single Loguru sink.
+    """
+    sink: str | Path
+    level: str = "INFO"
+    format: str | None = None
+    filter: str | dict[str, str] | None = None
+    colorize: bool = False
+    enqueue: bool = False
+    rotation: str | None = None
+    serialize: bool = False
+
+
+class InterceptLibraryConfig(BaseModel):
+    """
+    Configuration for intercepting a stdlib logging library.
+    """
+    name: str
+    level: str = "ERROR"
+
+
+class LoggingSettings(BaseSettings):
+    """
+    Pydantic settings for Loguru configuration loaded from YAML or JSON.
+    """
+    sinks: list[SinkConfig] = []
+    intercept_libraries: list[InterceptLibraryConfig] = []
+
+    @classmethod
+    def load(cls, path: str | Path) -> LoggingSettings:
+        path = Path(path)
+        yaml = YAML(typ="safe")
+        data = yaml.load(path)
+        return cls(**data)
+
+
 class InterceptHandler(logging.Handler):
     """
-    Redirect stdlib 'logging' records to Loguru.
-    Optionally ignore records whose logger name doesn't start with `name_prefix`.
+    Redirect stdlib 'logging' records to Loguru, optionally filtering by name_prefix.
     """
-
-    def __init__(self, *, name_prefix: str | None = None) -> None:
-        super().__init__()
-        self.name_prefix = name_prefix
-
-    def emit(self, record: logging.LogRecord) -> None:  # type: ignore[override]
-        # Optional filter: keep only your library's records
-        if self.name_prefix and not record.name.startswith(self.name_prefix):
-            return
-
+    def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
         try:
             level = logger.level(record.levelname).name
         except ValueError:
             level = record.levelno  # type: ignore[assignment]
 
-        # Walk back to the frame where the logging call was made so Loguru shows the right caller
         frame: FrameType | None = logging.currentframe()
         depth = 2
         while frame and frame.f_code.co_filename == logging.__file__:
@@ -54,39 +87,44 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-class LoguruRecord(TypedDict, total=False):
-    name: str
-    extra: Mapping[str, Any]
+def configure_logging() -> None:
+    """
+    Load settings (path overridden by environment variable) and configure Loguru + stdlib logging intercept.
+    """
+    # Determine config path
+    config_path = Path(get_settings().logging_config_path).expanduser()
+    if not config_path.is_absolute():
+        config_path = (Path.cwd() / config_path).resolve()
 
+    settings = LoggingSettings.load(config_path)
 
-logger.remove()
+    # 1) Remove all pre-configured Loguru handlers
+    logger.remove()
 
+    # 2) Add configured sinks
+    for sink_conf in settings.sinks:
+        params = sink_conf.model_dump()
+        sink_target = params.pop("sink")
 
-def only_qilisdk(record: LoguruRecord) -> bool:
-    return record["name"].startswith("qilisdk") or record["extra"].get("component") is not None
+        # Resolve stderr/stdout
+        if isinstance(sink_target, str) and sink_target.lower() == "stderr":
+            sink_target = sys.stderr
+        elif isinstance(sink_target, str) and sink_target.lower() == "stdout":
+            sink_target = sys.stdout
 
+        clean_params = {k: v for k, v in params.items() if v is not None}
 
-logger.add(
-    stderr,
-    level="INFO",
-    format="<fg #7f1cdb>QiliSDK</> | <green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <lvl>{level}</> | <lvl>{message}</>",
-    filter=only_qilisdk,
-    colorize=True,
-    enqueue=False,
-)
-logger.add(
-    "app.jsonl",
-    level="DEBUG",
-    serialize=True,
-    rotation="10 MB")
+        logger.add(sink_target, **clean_params)
 
-# 4) Quiet noisy libs *before* intercepting
-for name in ("httpx", "httpcore", "keyring"):
-    logging.getLogger(name).setLevel(logging.WARNING)
+    # 3) Quiet down noisy libraries before intercepting
+    for intercept_library in settings.intercept_libraries:
+        logging.getLogger(intercept_library.name).setLevel(intercept_library.level)
 
-# 5) Intercept stdlib -> Loguru
-logging.root.handlers = [InterceptHandler()]
-logging.root.setLevel(logging.NOTSET)
-for n in list(logging.root.manager.loggerDict.keys()):
-    logging.getLogger(n).handlers = []
-    logging.getLogger(n).propagate = True
+    # 4) Intercept stdlib -> Loguru
+    handler = InterceptHandler()
+    logging.root.handlers = [handler]
+    logging.root.setLevel(logging.NOTSET)
+
+    for logger_name in list(logging.root.manager.loggerDict.keys()):
+        logging.getLogger(logger_name).handlers = []
+        logging.getLogger(logger_name).propagate = True

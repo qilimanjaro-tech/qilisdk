@@ -13,9 +13,14 @@
 # limitations under the License.
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def default_logging_config_path() -> Path:
+    return Path(__file__).with_name("logging_config.yaml").resolve()
 
 
 class QiliSDKSettings(BaseSettings):
@@ -28,6 +33,10 @@ class QiliSDKSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8")
 
+    logging_config_path: Path = Field(
+        default_factory=default_logging_config_path,
+        description="YAML file used for logging configuration. [env: QILISDK_LOGGING_CONFIG_PATH]",
+    )
     qaas_username: str | None = Field(
         default=None,
         description="QaaS username used for authentication. [env: QILISDK_QAAS_USERNAME]",

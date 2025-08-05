@@ -21,12 +21,12 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import httpx
+from loguru import logger
 from pydantic import TypeAdapter
 
 from qilisdk.common.result import Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.logging import logger
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -48,8 +48,6 @@ if TYPE_CHECKING:
     from qilisdk.digital.vqe import VQE
     from qilisdk.functionals.functional import Functional
     from qilisdk.optimizers.optimizer import Optimizer
-
-TResult = TypeVar("TResult", bound=Result)
 
 TResult = TypeVar("TResult", bound=Result)
 
@@ -76,9 +74,10 @@ class QaaS:
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
         }
         self._settings = get_settings()
-        logger.info("QaaS client initialized for user '{}'", self._username)
+        logger.success("QaaS client initialized for user '{}'", self._username)
 
-    def _get_headers(self) -> dict:  # noqa: PLR6301
+    @classmethod
+    def _get_headers(cls) -> dict:
         from qilisdk import __version__  # noqa: PLC0415
 
         return {"User-Agent": f"qilisdk/{__version__}"}
@@ -151,7 +150,7 @@ class QaaS:
                         "assertion": encoded_assertion,
                         "scope": "user profile",
                     },
-                    headers={"User-Agent": "qilisdk/0.1.4"},
+                    headers=cls._get_headers(),
                 )
                 response.raise_for_status()
                 token = Token(**response.json())

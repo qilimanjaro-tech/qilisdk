@@ -20,6 +20,7 @@ import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
 from cudaq import Schedule as cuda_schedule
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
@@ -45,7 +46,6 @@ from qilisdk.digital.gates import (
 )
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.logging import logger
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit

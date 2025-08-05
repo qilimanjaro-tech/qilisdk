@@ -14,6 +14,11 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
+from .logging import configure_logging
+
+# Reads LOGGING_CONFIG_PATH or defaults to ./logging.yaml
+configure_logging()
+
 try:
     __version__ = version("qilisdk")
 except PackageNotFoundError:

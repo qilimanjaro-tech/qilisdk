@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 
 # import cupy as np
 import numpy as np
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, Z
-from qilisdk.logging import logger
 from qilisdk.yaml import yaml
 
 from .variables import (
