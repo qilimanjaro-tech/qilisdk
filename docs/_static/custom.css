@@ -26,13 +26,9 @@ code, pre {
     --qili-blue: 254 72% 62%;
     --qili-purple: 304 33% 54%;
     --qili-red: 351 66% 65%;
-
     --qili-dark-blue: 244 45% 13%;
 
    --primary: var(--qili-blue);
-
-   /* Enable --access for highlighting */
-   /* --accent: var(--qili-red); */
 }
 
 .dark {
@@ -40,9 +36,6 @@ code, pre {
   --background: var(--qili-dark-blue);
   --accent: var(--qili-blue);
   --card: var(--qili-dark-blue);
-
-  /* Enable --access for highlighting */
-  /* --accent: var(--qili-purple); */
 }
 
 #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
