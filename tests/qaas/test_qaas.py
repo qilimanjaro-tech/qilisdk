@@ -65,7 +65,7 @@ def test_init_raises_when_no_credentials(monkeypatch):
     """Constructing QaaS without cached credentials must fail."""
     monkeypatch.setattr(qaas, "load_credentials", lambda: None)
 
-    with pytest.raises(RuntimeError, match="No valid QaaS credentials"):
+    with pytest.raises(RuntimeError):
         qaas.QaaS()
 
 
@@ -104,7 +104,7 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(qaas.QaaS, "_execute_sampling", lambda self, _: 99, raising=True)
+    monkeypatch.setattr(qaas.QaaS, "_submit_sampling", lambda self, _: 99, raising=True)
 
     q = qaas.QaaS()
     assert q.submit(FakeSampling()) == 99

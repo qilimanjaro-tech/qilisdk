@@ -21,9 +21,9 @@ from enum import Enum
 from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
-from loguru import logger
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:

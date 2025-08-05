@@ -146,7 +146,12 @@ class CudaBackend(Backend):
             logger.info("Using tensornet-mps backend")
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
-        logger.info("Executing Sampling (shots={}, qubits={}, gates={})", functional.nshots, functional.circuit.nqubits, len(functional.circuit.gates))
+        logger.info(
+            "Executing Sampling (shots={}, qubits={}, gates={})",
+            functional.nshots,
+            functional.circuit.nqubits,
+            len(functional.circuit.gates),
+        )
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
@@ -168,7 +173,12 @@ class CudaBackend(Backend):
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
-        logger.info("Executing TimeEvolution (T={}, dt={}, qubits={})", functional.schedule.T, functional.schedule.dt, functional.schedule.nqubits)
+        logger.info(
+            "Executing TimeEvolution (T={}, dt={}, qubits={})",
+            functional.schedule.T,
+            functional.schedule.dt,
+            functional.schedule.nqubits,
+        )
         cudaq.set_target("dynamics")
 
         cuda_hamiltonian = None

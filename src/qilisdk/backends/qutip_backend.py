@@ -141,7 +141,9 @@ class QutipBackend(Backend):
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
             qutip_hamiltonians.append(
-                Qobj(hamiltonian.to_matrix().toarray(), dims=[[2 for _ in range(hamiltonian.nqubits)] for _ in range(2)])
+                Qobj(
+                    hamiltonian.to_matrix().toarray(), dims=[[2 for _ in range(hamiltonian.nqubits)] for _ in range(2)]
+                )
             )
 
         def get_hamiltonian_schedule(

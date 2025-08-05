@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """config.py"""
+
 from __future__ import annotations
 
 import logging
@@ -35,6 +36,7 @@ class SinkConfig(BaseModel):
     """
     Configuration for a single Loguru sink.
     """
+
     sink: str | Path
     level: str = "INFO"
     format: str | None = None
@@ -49,6 +51,7 @@ class InterceptLibraryConfig(BaseModel):
     """
     Configuration for intercepting a stdlib logging library.
     """
+
     name: str
     level: str = "ERROR"
 
@@ -57,6 +60,7 @@ class LoggingSettings(BaseSettings):
     """
     Pydantic settings for Loguru configuration loaded from YAML or JSON.
     """
+
     sinks: list[SinkConfig] = []
     intercept_libraries: list[InterceptLibraryConfig] = []
 
@@ -72,6 +76,7 @@ class InterceptHandler(logging.Handler):
     """
     Redirect stdlib 'logging' records to Loguru, optionally filtering by name_prefix.
     """
+
     def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
         try:
             level = logger.level(record.levelname).name

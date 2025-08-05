@@ -59,9 +59,7 @@ class QaaS:
         logger.debug("Initializing QaaS client")
         credentials = load_credentials()
         if credentials is None:
-            logger.error(
-                "No QaaS credentials found. Call `.login()` or set env vars before instantiation."
-            )
+            logger.error("No QaaS credentials found. Call `.login()` or set env vars before instantiation.")
             raise RuntimeError("Missing QaaS credentials - invoke QaaSBackend.login() first.")
         self._username, self._token = credentials
         self._selected_device: int | None = None
@@ -152,9 +150,7 @@ class QaaS:
                 response.raise_for_status()
                 token = Token(**response.json())
         except httpx.HTTPStatusError as exc:
-            logger.error(
-                "Login failed - server returned {} {}", exc.response.status_code, exc.response.reason_phrase
-            )
+            logger.error("Login failed - server returned {} {}", exc.response.status_code, exc.response.reason_phrase)
             return False
         except httpx.RequestError:
             logger.exception("Network error while logging in to QaaS")
@@ -298,7 +294,9 @@ class QaaS:
                 return current
 
             if timeout is not None and (time.monotonic() - start_t) >= timeout:
-                logger.error("Timeout while waiting for job {} after {}s (last status {})", id, timeout, current.status.value)
+                logger.error(
+                    "Timeout while waiting for job {} after {}s (last status {})", id, timeout, current.status.value
+                )
                 raise TimeoutError(
                     f"Timed out after {timeout}s while waiting for job {id} (last status {current.status.value!r})"
                 )
