@@ -1,4 +1,4 @@
-Digital Module
+Digital
 ==============
 
 The :mod:`~qilisdk.digital` module in the Qili SDK facilitates the construction and simulation of digital quantum systems. It is composed of the following primary components:

@@ -1,8 +1,8 @@
-Quantum as a Service (QaaS)
+SpeQtrum
 ====
 
-The :mod:`~qilisdk.qaas` module provides a synchronous client for the Qilimanjaro QaaS REST API via the
-:class:`~qilisdk.qaas.qaas.QaaS` class. It handles authentication, device selection, job management, and submission
+The :mod:`~qilisdk.speqtrum` module provides a synchronous client for the Qilimanjaro SpeQtrum API via the
+:class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class. It handles authentication, device selection, job management, and submission
 of quantum functionals (Sampling, TimeEvolution) and VQE workflows to remote hardware or simulators.
 
 Authentication
@@ -14,14 +14,14 @@ Before making any API calls, you must authenticate and cache credentials in your
 
 .. code-block:: python
 
-    from qilisdk.qaas import QaaS
+    from qilisdk.speqtrum import SpeQtrum
 
     # You can provide credentials directly...
-    success = QaaS.login(username="alice", apikey="MY_SECRET_KEY")
+    success = SpeQtrum.login(username="alice", apikey="MY_SECRET_KEY")
 
     # ...or omit them to read from environment variables:
-    #   QILISDK_QAAS_USERNAME and QILISDK_QAAS_APIKEY
-    success = QaaS.login()
+    #   QILISDK_SPEQTRUM_USERNAME and QILISDK_SPEQTRUM_APIKEY
+    success = SpeQtrum.login()
 
     if not success:
         raise RuntimeError("Authentication failed")
@@ -30,9 +30,9 @@ Before making any API calls, you must authenticate and cache credentials in your
 
 .. code-block:: python
 
-    from qilisdk.qaas import QaaS
+    from qilisdk.speqtrum import SpeQtrum
 
-    QaaS.logout()
+    SpeQtrum.logout()
     # Credentials removed from keyring
 
 Device Management
@@ -44,7 +44,7 @@ Once authenticated, you can list available devices, select one for subsequent jo
 
 .. code-block:: python
 
-    client = QaaS()
+    client = SpeQtrum()
     devices = client.list_devices()
     for dev in devices:
         print(f"{dev.id}: {dev.name} ({dev.status})")
@@ -92,7 +92,7 @@ You can list existing jobs, inspect their details, and wait for completion.
 Functional Submission
 ---------------------
 
-Use :meth:`~qilisdk.qaas.qaas.QaaS.submit` to dispatch a :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional.
+Use :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit` to dispatch a :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional.
 
 .. code-block:: python
 
@@ -124,7 +124,7 @@ Use :meth:`~qilisdk.qaas.qaas.QaaS.submit` to dispatch a :class:`~qilisdk.functi
 Variational Quantum Eigensolver (VQE)
 -------------------------------------
 
-For end-to-end VQE workflows, use :meth:`~qilisdk.qaas.qaas.QaaS.submit_vqe`:
+For end-to-end VQE workflows, use :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit_vqe`:
 
 **Parameters**
 
@@ -137,7 +137,6 @@ For end-to-end VQE workflows, use :meth:`~qilisdk.qaas.qaas.QaaS.submit_vqe`:
 
 .. code-block:: python
 
-    from qilisdk.qaas import QaaS
     from qilisdk.digital.vqe import VQE
     from qilisdk.optimizers import COBYLA
 

@@ -1,4 +1,4 @@
-Common Module
+Common
 =============
 
 The :mod:`~qilisdk.common` module in the Qili SDK provides a collection of utilities useful for building quantum algorithms and performing simulations. It consists of the following primary components:
