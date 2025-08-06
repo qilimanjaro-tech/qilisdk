@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .qaas import QaaS
-from .qaas_models import DeviceStatus, DeviceType
+from .speqtrum import SpeQtrum
+from .speqtrum_models import DeviceStatus, DeviceType
 
-__all__ = ["DeviceStatus", "DeviceType", "QaaS"]
+__all__ = ["DeviceStatus", "DeviceType", "SpeQtrum"]

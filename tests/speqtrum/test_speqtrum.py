@@ -1,5 +1,5 @@
 """
-Unit-tests for the QaaS synchronous client.
+Unit-tests for the SpeQtrum synchronous client.
 
 All tests are *function* based (no classes) so they integrate with plain
 pytest discovery.
@@ -13,7 +13,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import qilisdk.qaas.qaas as qaas
+import qilisdk.speqtrum.speqtrum as speqtrum
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ class DummyResponse:
     def __init__(self, payload: dict | None = None):
         self._payload = payload or {"id": 42}
 
-    # QaaS never checks the status code directly - it just calls this method
+    # SpeQtrum never checks the status code directly - it just calls this method
     def raise_for_status(self):
         return None
 
@@ -50,7 +50,7 @@ class DummyClient:
     def __exit__(self, *_):
         return False
 
-    # the real client's signature is much richer, but QaaS only uses a subset
+    # the real client's signature is much richer, but SpeQtrum only uses a subset
     def get(self, *_, **__):
         return DummyResponse(self._get_payload)
 
@@ -62,11 +62,11 @@ class DummyClient:
 # tests
 # ────────────────────────────────────────────────────────────────────────────────
 def test_init_raises_when_no_credentials(monkeypatch):
-    """Constructing QaaS without cached credentials must fail."""
-    monkeypatch.setattr(qaas, "load_credentials", lambda: None)
+    """Constructing SpeQtrum without cached credentials must fail."""
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: None)
 
-    with pytest.raises(RuntimeError, match="No valid QaaS credentials"):
-        qaas.QaaS()
+    with pytest.raises(RuntimeError, match="No valid SpeQtrum credentials"):
+        speqtrum.SpeQtrum()
 
 
 def test_init_succeeds_with_stub_credentials(monkeypatch):
@@ -74,8 +74,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
 
     tok = SimpleNamespace(access_token="xyz")
 
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("alice", tok))
-    q = qaas.QaaS()
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("alice", tok))
+    q = speqtrum.SpeQtrum()
 
     assert q._username == "alice"
     assert q._token is tok
@@ -83,8 +83,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
 
 def test_set_and_read_selected_device(monkeypatch):
     """`set_device` should persist the chosen id and `selected_device` must return it."""
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    client = qaas.QaaS()
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
 
     client.set_device(3)
     assert client.selected_device == 3
@@ -93,27 +93,27 @@ def test_set_and_read_selected_device(monkeypatch):
 def test_submit_dispatches_to_sampling_handler(monkeypatch):
     """`submit` must route to _execute_sampling when given a Sampling instance."""
 
-    # Stub the Sampling symbol **before** constructing QaaS so that __init__
+    # Stub the Sampling symbol **before** constructing SpeQtrum so that __init__
     # collects the correct type inside _handlers.
     class FakeSampling:
         pass
 
-    monkeypatch.setattr(qaas, "Sampling", FakeSampling)
+    monkeypatch.setattr(speqtrum, "Sampling", FakeSampling)
 
     # simple credentials stub
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(qaas.QaaS, "_execute_sampling", lambda self, _: 99, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "_execute_sampling", lambda self, _: 99, raising=True)
 
-    q = qaas.QaaS()
+    q = speqtrum.SpeQtrum()
     assert q.submit(FakeSampling()) == 99
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
     """Passing an unsupported functional type should raise `NotImplementedError`."""
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    client = qaas.QaaS()
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
 
     class SomethingElse:
         pass
@@ -134,13 +134,13 @@ def test_wait_for_job_completes(monkeypatch):
         ERROR = "ERROR"
         CANCELLED = "CANCELLED"
 
-    monkeypatch.setattr(qaas, "JobStatus", DummyStatus)
+    monkeypatch.setattr(speqtrum, "JobStatus", DummyStatus)
 
     # ------------------------------------------------------------------
     # credentials and client set-up
     # ------------------------------------------------------------------
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    q = qaas.QaaS()
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
 
     # ------------------------------------------------------------------
     # sequence of fake JobDetail objects
@@ -155,8 +155,8 @@ def test_wait_for_job_completes(monkeypatch):
         calls["n"] += 1
         return FakeJob(DummyStatus.RUNNING if calls["n"] == 1 else DummyStatus.COMPLETED)
 
-    monkeypatch.setattr(qaas.QaaS, "get_job_details", fake_get_job_details, raising=True)
-    monkeypatch.setattr(qaas.time, "sleep", lambda *_: None)  # skip real sleeping
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job_details", fake_get_job_details, raising=True)
+    monkeypatch.setattr(speqtrum.time, "sleep", lambda *_: None)  # skip real sleeping
 
     # run - should finish on 2nd iteration
     result = q.wait_for_job(123, poll_interval=0.0, timeout=5)
@@ -173,18 +173,18 @@ def test_wait_for_job_times_out(monkeypatch):
         ERROR = "ERROR"
         CANCELLED = "CANCELLED"
 
-    monkeypatch.setattr(qaas, "JobStatus", DummyStatus)
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    q = qaas.QaaS()
+    monkeypatch.setattr(speqtrum, "JobStatus", DummyStatus)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
 
     # always RUNNING → never terminal
     monkeypatch.setattr(
-        qaas.QaaS,
+        speqtrum.SpeQtrum,
         "get_job_details",
         lambda *_: types.SimpleNamespace(status=DummyStatus.RUNNING),
         raising=True,
     )
-    monkeypatch.setattr(qaas.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(speqtrum.time, "sleep", lambda *_: None)
 
     # deterministically advance monotonic clock
     t = {"v": 0.0}
@@ -193,7 +193,7 @@ def test_wait_for_job_times_out(monkeypatch):
         t["v"] += 0.1
         return t["v"]
 
-    monkeypatch.setattr(qaas.time, "monotonic", fake_monotonic)
+    monkeypatch.setattr(speqtrum.time, "monotonic", fake_monotonic)
 
     with pytest.raises(TimeoutError):
         q.wait_for_job(1, poll_interval=0.0, timeout=0.0)
@@ -203,7 +203,7 @@ def test_login_success(monkeypatch):
     """`login` returns True and stores the credentials on success."""
     # replace the outbound HTTP client with a stub
     monkeypatch.setattr(
-        qaas.httpx,
+        speqtrum.httpx,
         "Client",
         lambda **_: DummyClient(post_payload={"access_token": "abc", "expires_at": 0, "refresh_token": "r"}),
     )
@@ -214,16 +214,16 @@ def test_login_success(monkeypatch):
     def fake_store(username: str, token):
         stored.append((username, token))
 
-    monkeypatch.setattr(qaas, "store_credentials", fake_store)
+    monkeypatch.setattr(speqtrum, "store_credentials", fake_store)
 
     # any object with an __init__(**kwargs) works here - we never use the token later
     class FakeToken:
         def __init__(self, **_):
             pass
 
-    monkeypatch.setattr(qaas, "Token", FakeToken)
+    monkeypatch.setattr(speqtrum, "Token", FakeToken)
 
-    assert qaas.QaaS.login("bob", "APIKEY") is True
+    assert speqtrum.SpeQtrum.login("bob", "APIKEY") is True
     assert stored
     assert stored[0][0] == "bob"
 
@@ -233,12 +233,12 @@ def test_login_requires_credentials(monkeypatch):
 
     # Patch `get_settings` to return an object with missing credentials
     class DummySettings:
-        qaas_username = None
-        qaas_apikey = None
+        speqtrum_username = None
+        speqtrum_apikey = None
 
-    monkeypatch.setattr(qaas, "get_settings", DummySettings)
+    monkeypatch.setattr(speqtrum, "get_settings", DummySettings)
 
-    assert qaas.QaaS.login(username=None, apikey=None) is False
+    assert speqtrum.SpeQtrum.login(username=None, apikey=None) is False
 
 
 def test_logout_deletes_credentials(monkeypatch):
@@ -248,8 +248,8 @@ def test_logout_deletes_credentials(monkeypatch):
     def fake_delete():
         called["n"] += 1
 
-    monkeypatch.setattr(qaas, "delete_credentials", fake_delete)
-    qaas.QaaS.logout()
+    monkeypatch.setattr(speqtrum, "delete_credentials", fake_delete)
+    speqtrum.SpeQtrum.logout()
 
     assert called["n"] == 1
 
@@ -257,14 +257,14 @@ def test_logout_deletes_credentials(monkeypatch):
 def test_list_devices_filters_client_side(monkeypatch):
     """Client should apply the *where* predicate after pulling raw data."""
     monkeypatch.setattr(
-        qaas.httpx,
+        speqtrum.httpx,
         "Client",
         lambda **_: DummyClient(get_payload={"items": [{"id": 1}, {"id": 2}]}),
     )
-    monkeypatch.setattr(qaas, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(qaas.TypeAdapter, "validate_python", lambda self, data: data)  # identity - skip pydantic
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(speqtrum.TypeAdapter, "validate_python", lambda self, data: data)  # identity - skip pydantic
 
-    client = qaas.QaaS()
+    client = speqtrum.SpeQtrum()
     all_devices = client.list_devices()
     only_two = client.list_devices(lambda d: d["id"] == 2)
 

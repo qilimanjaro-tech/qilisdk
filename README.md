@@ -149,23 +149,24 @@ print("Optimal cost:", result.optimal_cost)
 print("Optimal Parameters:", result.optimal_parameters)
 ```
 
-### Quantum-as-a-Service (QaaS)
+### SpeQtrum
 
-QiliSDK now includes a draft backend for interfacing with Qilimanjaro's QaaS platform. This module supports secure login and a unified interface for both digital circuits and analog evolutions:
+QiliSDK includes a client for interacting with Qilimanjaro's SpeQtrum platform. This module supports secure login and a unified interface for both digital circuits and analog evolutions:
 
 ```python
-from qilisdk.extras import QaaSBackend
+from qilisdk.speqtrum import SpeQtrum
+from qilisdk.functionals import Sampling
 
 # Login to QaaSBackend with credentials (or use environment variables)
 # This only needs to be run once.
-QaaSBackend.login(username="your_username", apikey="your_apikey")
+SpeQtrum.login(username="your_username", apikey="your_apikey")
 
 # Instantiate QaaSBackend
-qaas_backend = QaaSBackend()
+client = SpeQtrum()
 
 # Execute a pre-built circuit (see Digital Quantum Circuits section)
-results = qaas_backend.execute(circuit)
-print("QaaS Simulation Results:", results)
+results = client.submit(Sampling(circuit, 1000))
+print("Results:", results)
 ```
 
 ### CUDA-Accelerated Simulation

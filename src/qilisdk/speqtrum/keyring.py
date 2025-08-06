@@ -15,9 +15,9 @@
 import keyring
 from pydantic import ValidationError
 
-from .qaas_models import Token
+from .speqtrum_models import Token
 
-KEYRING_IDENTIFIER = "QaaSKeyring"
+KEYRING_IDENTIFIER = "SpeQtrumKeyring"
 
 
 def store_credentials(username: str, token: Token) -> None:
