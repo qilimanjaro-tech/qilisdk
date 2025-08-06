@@ -37,21 +37,21 @@ class QiliSDKSettings(BaseSettings):
         default_factory=default_logging_config_path,
         description="YAML file used for logging configuration. [env: QILISDK_LOGGING_CONFIG_PATH]",
     )
-    qaas_username: str | None = Field(
+    speqtrum_username: str | None = Field(
         default=None,
-        description="QaaS username used for authentication. [env: QILISDK_QAAS_USERNAME]",
+        description="SpeQtrum username used for authentication. [env: QILISDK_SPEQTRUM_USERNAME]",
     )
-    qaas_apikey: str | None = Field(
+    speqtrum_apikey: str | None = Field(
         default=None,
-        description="QaaS API key associated with the user account. [env: QILISDK_QAAS_APIKEY]",
+        description="SpeQtrum API key associated with the user account. [env: QILISDK_SPEQTRUM_APIKEY]",
     )
-    qaas_api_url: str = Field(
+    speqtrum_api_url: str = Field(
         default="https://qilimanjaro.ddns.net/public-api/api/v1",
-        description="Base URL of the QaaS API endpoint. [env: QILISDK_QAAS_API_URL]",
+        description="Base URL of the SpeQtrum API endpoint. [env: QILISDK_SPEQTRUM_API_URL]",
     )
-    qaas_audience: str = Field(
+    speqtrum_audience: str = Field(
         default="urn:qilimanjaro.tech:public-api:beren",
-        description="Audience claim expected in the JWT used for authentication. [env: QILISDK_QAAS_AUDIENCE]",
+        description="Audience claim expected in the JWT used for authentication. [env: QILISDK_SPEQTRUM_AUDIENCE]",
     )
 
 
