@@ -109,13 +109,18 @@ class QutipBackend(Backend):
 
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
-        for _ in range(functional.nshots):
-            res = sim.run(init_state)  # runs the full circuit for one shot
-            bits = res.cbits  # classical measurement bits
-            label = ""
-            for c in np.array(bits).flatten():
-                label += f"{int(c)}"
-            counts[label] += 1
+
+        res = sim.run(init_state)  # runs the full circuit for one shot
+        bits = res.cbits  # classical measurement bits
+        probs = res.probabilities
+
+        bits_list = ["".join(map(str, cb)) for cb in bits]
+
+        rng = np.random.default_rng()
+        samples = rng.choice(bits_list, size=functional.nshots, p=probs)
+        samples_py = map(str, samples)
+
+        counts = Counter(samples_py)
 
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
