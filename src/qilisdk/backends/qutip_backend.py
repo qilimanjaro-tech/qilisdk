@@ -110,7 +110,7 @@ class QutipBackend(Backend):
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
 
-        res = sim.run(init_state)  # runs the full circuit for one shot
+        res = sim.run_statistics(init_state)  # runs the full circuit for one shot
         bits = res.cbits  # classical measurement bits
         probs = res.probabilities
 
