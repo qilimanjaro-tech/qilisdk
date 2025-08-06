@@ -1,7 +1,7 @@
 [project]
 name = "qilisdk"
 version = "0.1.5"
-description = "qilisdk is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
+description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
 requires-python = ">=3.10"
@@ -39,7 +39,7 @@ cuda = [
     "cutensornet-cu12==2.7.0",
     "custatevec-cu12==1.8.0"
 ]
-qaas = [
+speqtrum = [
     "httpx>=0.28.1",
     "keyring>=25.6.0",
     "keyrings-alt>=5.0.2",
@@ -183,7 +183,7 @@ exclude = ["\\.ipynb$"]
 markers = [
     "core: tests that only exercise the core library",
     "cuda: tests that require the cuda extra",
-    "qaas: tests that require the qaas extra"
+    "speqtrum: tests that require the speqtrum extra"
 ]
 
 [tool.towncrier]

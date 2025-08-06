@@ -30,7 +30,7 @@ from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
-from .qaas_models import (
+from .speqtrum_models import (
     Device,
     ExecutePayload,
     ExecuteType,
@@ -56,15 +56,15 @@ logging.basicConfig(
 TResult = TypeVar("TResult", bound=Result)
 
 
-class QaaS:
-    """Synchronous client for the Qilimanjaro QaaS REST API."""
+class SpeQtrum:
+    """Synchronous client for the Qilimanjaro SpeQtrum API."""
 
     def __init__(self) -> None:
         credentials = load_credentials()
         if credentials is None:
             raise RuntimeError(
-                "No valid QaaS credentials found in keyring."
-                "Please call QaaSBackend.login(username, apikey) or ensure environment variables are set."
+                "No valid SpeQtrum credentials found in keyring."
+                "Please call SpeQtrum.login(username, apikey) or ensure environment variables are set."
             )
         self._username, self._token = credentials
         self._selected_device: int | None = None
@@ -109,38 +109,38 @@ class QaaS:
         """Authenticate and cache credentials in the system keyring.
 
         Args:
-            username: QaaS account user name. If ``None``, the value is read
+            username: SpeQtrum account user name. If ``None``, the value is read
                 from the environment.
-            apikey: QaaS API key. If ``None``, the value is read from the
+            apikey: SpeQtrum API key. If ``None``, the value is read from the
                 environment.
 
         Returns:
             ``True`` if authentication succeeds, otherwise ``False``.
 
         Note:
-            The resulting tokens are stored in the OS keyring so that future
-            :class:`QaaSBackend` constructions require no explicit credentials.
+            The resulting tokens are stored securely in the OS keyring so that future
+            :class:`SpeQtrum` constructions require no explicit credentials.
         """
         # Use provided parameters or fall back to environment variables via Settings()
         settings = get_settings()
-        username = username or settings.qaas_username
-        apikey = apikey or settings.qaas_apikey
+        username = username or settings.speqtrum_username
+        apikey = apikey or settings.speqtrum_apikey
 
         if not username or not apikey:
             return False
 
-        # Send login request to QaaS
+        # Send login request to SpeQtrum
         try:
             assertion = {
                 "username": username,
                 "api_key": apikey,
-                "audience": settings.qaas_audience,
+                "audience": settings.speqtrum_audience,
                 "iat": int(datetime.now(timezone.utc).timestamp()),
             }
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    settings.qaas_api_url + "/authorisation-tokens",
+                    settings.speqtrum_api_url + "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
@@ -172,7 +172,7 @@ class QaaS:
             A list of :class:`~qilisdk.models.Device` objects.
         """
         with httpx.Client() as client:
-            response = client.get(self._settings.qaas_api_url + "/devices", headers=self._get_authorized_headers())
+            response = client.get(self._settings.speqtrum_api_url + "/devices", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
@@ -191,7 +191,7 @@ class QaaS:
             A list of :class:`~qilisdk.models.JobInfo` objects.
         """
         with httpx.Client() as client:
-            response = client.get(self._settings.qaas_api_url + "/jobs", headers=self._get_authorized_headers())
+            response = client.get(self._settings.speqtrum_api_url + "/jobs", headers=self._get_authorized_headers())
             response.raise_for_status()
 
             jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
@@ -210,7 +210,7 @@ class QaaS:
         """
         with httpx.Client() as client:
             response = client.get(
-                f"{self._settings.qaas_api_url}/jobs/{id}",
+                f"{self._settings.speqtrum_api_url}/jobs/{id}",
                 headers=self._get_authorized_headers(),
                 params={
                     "payload": True,
@@ -292,6 +292,31 @@ class QaaS:
         return self._selected_device
 
     def submit(self, functional: Functional) -> int:
+        """
+        Submit a quantum functional for execution on the selected device.
+
+        The concrete subclass of
+        :class:`~qilisdk.functionals.functional.Functional` provided in
+        *functional* determines which private ``_execute_*`` routine is
+        invoked. Supported types are:
+
+        * :class:`~qilisdk.functionals.sampling.Sampling`
+        * :class:`~qilisdk.functionals.time_evolution.TimeEvolution`
+
+        A backend device must be selected beforehand with
+        :py:meth:`set_device`.
+
+        Args:
+            functional: A fully configured functional instance (e.g.,
+                ``Sampling`` or ``TimeEvolution``) that defines the quantum
+                workload to be executed.
+
+        Returns:
+            int: The numeric identifier of the created job on SpeQtrum.
+
+        Raises:
+            NotImplementedError: If *functional* is not of a supported type.
+        """
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -310,7 +335,7 @@ class QaaS:
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                self._settings.qaas_api_url + "/execute",
+                self._settings.speqtrum_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -327,7 +352,7 @@ class QaaS:
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                self._settings.qaas_api_url + "/execute",
+                self._settings.speqtrum_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )
@@ -362,7 +387,7 @@ class QaaS:
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
-                self._settings.qaas_api_url + "/execute",
+                self._settings.speqtrum_api_url + "/execute",
                 headers=self._get_authorized_headers(),
                 json=json,
             )

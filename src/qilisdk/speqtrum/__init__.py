@@ -19,12 +19,12 @@ __all__ = []
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
-        name="qaas",
+        name="speqtrum",
         dependencies=["httpx", "keyring", "keyrings-alt"],
         symbols=[
-            Symbol(path="qilisdk.qaas.qaas", name="QaaS"),
-            Symbol(path="qilisdk.qaas.qaas_models", name="DeviceStatus"),
-            Symbol(path="qilisdk.qaas.qaas_models", name="DeviceType"),
+            Symbol(path="qilisdk.speqtrum.speqtrum", name="SpeQtrum"),
+            Symbol(path="qilisdk.speqtrum.speqtrum_models", name="DeviceStatus"),
+            Symbol(path="qilisdk.speqtrum.speqtrum_models", name="DeviceType"),
         ],
     ),
 ]
