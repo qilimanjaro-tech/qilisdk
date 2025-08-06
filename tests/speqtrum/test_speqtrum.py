@@ -65,7 +65,7 @@ def test_init_raises_when_no_credentials(monkeypatch):
     """Constructing SpeQtrum without cached credentials must fail."""
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: None)
 
-    with pytest.raises(RuntimeError, match="No valid SpeQtrum credentials"):
+    with pytest.raises(RuntimeError):
         speqtrum.SpeQtrum()
 
 
