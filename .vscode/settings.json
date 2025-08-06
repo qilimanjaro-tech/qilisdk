@@ -1,0 +1,20 @@
+{
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    // Use the Material themes
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.productIconTheme": "material-product-icons",
+    // QiliSDK-specific folder icons
+    "material-icon-theme.folders.associations": {
+        "common": "app",
+        "analog": "functions",
+        "digital": "core",
+        "qilisdk": "src",
+        "functionals": "organism",
+        "optimizers": "target",
+        "speqtrum": "cloudflare"
+    },
+}
