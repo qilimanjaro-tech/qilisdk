@@ -152,7 +152,7 @@ HardwareEfficientAnsatz
   - ``Circular``: Qubits form a ring.
   - ``Linear``: Qubits are connected linearly.
   - ``Full``: All-to-all connectivity.
-- **on_qubit_gates**: Choose one or more parameterized single-qubit gates (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
+- **on_qubit_gates**: Choose the parameterized single-qubit gates (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
 - **two_qubit_gates**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
@@ -164,13 +164,12 @@ HardwareEfficientAnsatz
 .. code-block:: python
 
     from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-    from qilisdk.digital.gates import U3, CNOT
 
     ansatz = HardwareEfficientAnsatz(
         num_qubits=4,
         layers=3,
         connectivity="circular",
-        on_qubit_gates=[U3],
-        two_qubit_gates=[CNOT],
+        on_qubit_gates="U3",
+        two_qubit_gates="CNOT",
         structure="interleaved"
     )
