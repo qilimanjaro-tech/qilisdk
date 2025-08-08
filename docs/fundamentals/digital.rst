@@ -152,8 +152,8 @@ HardwareEfficientAnsatz
   - ``Circular``: Qubits form a ring.
   - ``Linear``: Qubits are connected linearly.
   - ``Full``: All-to-all connectivity.
-- **on_qubit_gates**: Choose the parameterized single-qubit gates (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
-- **two_qubit_gates**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
+- **one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
+- **two_qubit_gate**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
   - ``interposed``: Interleaves single and two-qubit gates.
@@ -169,7 +169,7 @@ HardwareEfficientAnsatz
         num_qubits=4,
         layers=3,
         connectivity="circular",
-        on_qubit_gates="U3",
-        two_qubit_gates="CNOT",
+        one_qubit_gate="U3",
+        two_qubit_gate="CNOT",
         structure="interleaved"
     )
