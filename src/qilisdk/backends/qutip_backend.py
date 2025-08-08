@@ -54,23 +54,16 @@ PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperat
 
 class QutipBackend(Backend):
     """
-    Digital backend implementation using CUDA-based simulation.
+    Backend that runs both digital-circuit sampling and analog
+    time-evolution experiments using the **QuTiP** simulation library.
 
-    This backend translates a quantum circuit into a CUDA-compatible kernel and executes it
-    using the cudaq library. It supports different simulation methods including state vector,
-    tensor network, and matrix product state simulations. Gate operations in the circuit are
-    mapped to CUDA operations via dedicated handler functions.
+    The backend is CPU-only and has no hardware dependencies, which makes it
+    ideal for local development, CI pipelines, and educational notebooks.
     """
 
     def __init__(self) -> None:
-        """
-        Initialize the QutipBackend.
+        """Instantiate a new :class:`QutipBackend`."""
 
-        Args:
-            digital_simulation_method (SimulationMethod, optional): The simulation method to use for executing circuits.
-                Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
-                Defaults to STATE_VECTOR.
-        """
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: QutipBackend._handle_X,
@@ -111,13 +104,18 @@ class QutipBackend(Backend):
 
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
-        for _ in range(functional.nshots):
-            res = sim.run(init_state)  # runs the full circuit for one shot
-            bits = res.cbits  # classical measurement bits
-            label = ""
-            for c in np.array(bits).flatten():
-                label += f"{int(c)}"
-            counts[label] += 1
+
+        res = sim.run_statistics(init_state)  # runs the full circuit for one shot
+        bits = res.cbits  # classical measurement bits
+        probs = res.probabilities
+
+        bits_list = ["".join(map(str, cb)) for cb in bits]
+
+        rng = np.random.default_rng()
+        samples = rng.choice(bits_list, size=functional.nshots, p=probs)
+        samples_py = map(str, samples)
+
+        counts = Counter(samples_py)
 
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
