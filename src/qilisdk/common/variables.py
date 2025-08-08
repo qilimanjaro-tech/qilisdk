@@ -834,7 +834,7 @@ class BaseVariable(ABC):
 
     @abstractmethod
     def to_binary(self) -> Term:
-        """Returns the binary representation of a variable.º
+        """Returns the binary representation of a variable.
 
         Returns:
             Term: the binary representation of a variable.
@@ -1104,6 +1104,66 @@ class Variable(BaseVariable):
             ComparisonTerm: a Comparison Term that ensures the encoding is respected.
         """
         return self.encoding.encoding_constraint(self, precision=self._precision)
+
+
+@yaml.register_class
+class Parameter(BaseVariable):
+    """ """
+
+    def __init__(
+        self,
+        label: str,
+        value: Number,
+        domain: Domain = Domain.REAL,
+        bounds: tuple[float | None, float | None] = (None, None),
+    ) -> None:
+        super().__init__(label=label, domain=domain, bounds=bounds)
+
+        if not self.domain.check_value(value):
+            raise ValueError(
+                f"Parameter value provided {value} doesn't correspond to the parameter's domain ({self.domain.name})"
+            )
+        self._value = value
+
+    @property
+    def value(self) -> Number:
+        return self._value
+
+    def set_value(self, value: Number) -> None:
+        if not self.domain.check_value(value):
+            raise ValueError(
+                f"Parameter value provided {value} doesn't correspond to the parameter's domain ({self.domain.name})"
+            )
+        self._value = value
+
+    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+        """
+        Returns:
+        int: the number of binary variables that are needed to represent this variable in the given encoding.
+        """
+        return 0
+
+    def evaluate(self, value: list[int] | Number) -> float:
+        """Evaluates the value of the variable given a binary string or a number.
+
+        Args:
+            value (list[int] | int | float): the value used to evaluate the variable.
+                If the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                its binary representation. This representation is constructed using the encoding, bounds and domain
+                of the variable. To check the binary representation of a variable you can check the method `to_binary()`
+
+        Returns:
+            float: the evaluated vale of the variable.
+        """
+        return self.value
+
+    def to_binary(self) -> Term:
+        """Returns the binary representation of a variable.
+
+        Returns:
+            Term: the binary representation of a variable.
+        """
+        return Term([self.value], operation=Operation.ADD)
 
 
 # Terms ###
@@ -1395,21 +1455,23 @@ class Term:
         Returns:
             float: the result from evaluating the term.
         """
-        var_hash_dict = {hash(v): var_values[v] for v in var_values}
+        _var_values = dict(var_values)
         for var in self.variables():
-            if hash(var) not in var_hash_dict:
+            if isinstance(var, Parameter):
+                _var_values[var] = var.value
+            if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
         for e in self:
             if isinstance(e, Term):
-                output = self._apply_operation_on_constants([output, e.evaluate(var_values) * self[e]])
+                output = self._apply_operation_on_constants([output, e.evaluate(_var_values) * self[e]])
             elif isinstance(e, BaseVariable):
                 if e == self.CONST:
                     output = self._apply_operation_on_constants([output, self[e]])
                 elif self.operation == Operation.MUL:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) ** self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) ** self[e]])
                 else:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) * self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
         return output
 
     def get_constant(self) -> Number:
