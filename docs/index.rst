@@ -3,7 +3,7 @@ QiliSDK
 
 .. rst-class:: lead center
 
-Welcome to **QiliSDK**, a unified Python framework for developing, simulating, and running both digital and analog quantum algorithms across a variety of backends (CPU, GPU, and Qilimanjaro's QaaS). Its modular design makes it easy to prototype circuits, build Hamiltonians, design variational workflows, and deploy them on local or remote quantum simulators and hardware.
+Welcome to **QiliSDK**, a unified Python framework for developing, simulating, and running both digital and analog quantum algorithms across a variety of backends (QPU, CPU, GPU) and Qilimanjaro's SpeQtrum. Its modular design makes it easy to prototype circuits, build Hamiltonians, design variational workflows, and deploy them on local or remote quantum simulators and hardware.
 
 .. grid:: 2
 
@@ -40,7 +40,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    fundamentals/common
    fundamentals/functionals
    fundamentals/backends
-   fundamentals/qaas
+   fundamentals/speqtrum
 
 .. toctree::
    :maxdepth: 2

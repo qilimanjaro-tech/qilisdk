@@ -2284,15 +2284,15 @@ cuda = [
     { name = "custatevec-cu12" },
     { name = "cutensornet-cu12" },
 ]
-qaas = [
-    { name = "httpx" },
-    { name = "keyring" },
-    { name = "keyrings-alt" },
-]
 qutip = [
     { name = "matplotlib" },
     { name = "qutip" },
     { name = "qutip-qip" },
+]
+speqtrum = [
+    { name = "httpx" },
+    { name = "keyring" },
+    { name = "keyrings-alt" },
 ]
 
 [package.dev-dependencies]
@@ -2327,9 +2327,9 @@ requires-dist = [
     { name = "custatevec-cu12", marker = "extra == 'cuda'", specifier = "==1.8.0" },
     { name = "cutensornet-cu12", marker = "extra == 'cuda'", specifier = "==2.7.0" },
     { name = "dill", specifier = ">=0.3.9" },
-    { name = "httpx", marker = "extra == 'qaas'", specifier = ">=0.28.1" },
-    { name = "keyring", marker = "extra == 'qaas'", specifier = ">=25.6.0" },
-    { name = "keyrings-alt", marker = "extra == 'qaas'", specifier = ">=5.0.2" },
+    { name = "httpx", marker = "extra == 'speqtrum'", specifier = ">=0.28.1" },
+    { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
+    { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", marker = "extra == 'qutip'", specifier = ">=3.10.3" },
     { name = "numpy", specifier = ">=1.26.0" },
@@ -2340,7 +2340,7 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.18.10" },
     { name = "scipy", specifier = ">=1.15.3" },
 ]
-provides-extras = ["cuda", "qaas", "qutip"]
+provides-extras = ["cuda", "speqtrum", "qutip"]
 
 [package.metadata.requires-dev]
 dev = [

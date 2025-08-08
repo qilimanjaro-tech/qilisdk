@@ -26,14 +26,14 @@ from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.utils.serialization import deserialize, serialize
 
 
-class QaaSModel(BaseModel):
+class SpeQtrumModel(BaseModel):
     model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, arbitrary_types_allowed=True)
 
 
 class LoginPayload(BaseModel): ...
 
 
-class Token(QaaSModel):
+class Token(SpeQtrumModel):
     """
     Represents the structure of the login response:
     {
@@ -68,7 +68,7 @@ class DeviceType(str, Enum):
     SIMULATOR = "simulator"
 
 
-class Device(QaaSModel):
+class Device(SpeQtrumModel):
     # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
     id: int = Field(...)
     code: str = Field(...)
@@ -86,7 +86,7 @@ class ExecuteType(str, Enum):
     VQE = "vqe"
 
 
-class SamplingPayload(QaaSModel):
+class SamplingPayload(SpeQtrumModel):
     sampling: Sampling = Field(...)
 
     @field_serializer("sampling")
@@ -100,7 +100,7 @@ class SamplingPayload(QaaSModel):
         return v
 
 
-class TimeEvolutionPayload(QaaSModel):
+class TimeEvolutionPayload(SpeQtrumModel):
     time_evolution: TimeEvolution = Field(...)
 
     @field_serializer("time_evolution")
@@ -114,7 +114,7 @@ class TimeEvolutionPayload(QaaSModel):
         return v
 
 
-class VQEPayload(QaaSModel):
+class VQEPayload(SpeQtrumModel):
     vqe: VQE = Field(...)
     optimizer: Optimizer = Field(...)
     nshots: int = Field(...)
@@ -141,14 +141,14 @@ class VQEPayload(QaaSModel):
         return v
 
 
-class ExecutePayload(QaaSModel):
+class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_payload: SamplingPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
     vqe_payload: VQEPayload | None = None
 
 
-class ExecuteResult(QaaSModel):
+class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
@@ -195,7 +195,7 @@ class JobStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class JobId(QaaSModel):
+class JobId(SpeQtrumModel):
     """Handle/reference you normally get back immediately after `POST /execute`."""
 
     id: int = Field(...)

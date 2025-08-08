@@ -1,4 +1,4 @@
-Analog Module
+Analog
 =============
 
 The :mod:`~qilisdk.analog` module in Qili SDK enables the construction and simulation of analog quantum systems. It is composed of the following core components:
