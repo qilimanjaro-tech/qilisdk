@@ -1,6 +1,3 @@
-# test_logger.py
-
-
 from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
 from qilisdk.common.model import Model, ObjectiveSense

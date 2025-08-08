@@ -20,6 +20,7 @@ import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
 from cudaq import Schedule as cuda_schedule
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
@@ -110,6 +111,7 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
+        logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     @property
     def sampling_method(self) -> CudaSamplingMethod:
@@ -128,17 +130,23 @@ class CudaBackend(Backend):
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         """
+        logger.info("Applying sampling simulation method {}", self.sampling_method.value)
         if self.sampling_method == CudaSamplingMethod.STATE_VECTOR:
             if cudaq.num_available_gpus() == 0:
                 cudaq.set_target("qpp-cpu")
+                logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
             else:
                 cudaq.set_target("nvidia")
+                logger.debug("GPU detected, using cudaq's 'nvidia' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
+            logger.debug("Using cudaq's 'tensornet' backend")
         else:
             cudaq.set_target("tensornet-mps")
+            logger.debug("Using cudaq's 'tensornet-mps' backend")
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+        logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
@@ -157,9 +165,11 @@ class CudaBackend(Backend):
                 handler(kernel, gate, qubits[gate.target_qubits[0]])
 
         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+        logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
         cuda_hamiltonian = None
@@ -180,6 +190,7 @@ class CudaBackend(Backend):
             ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
             for key, ham in functional.schedule.hamiltonians.items()
         )
+        logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
         for observable in functional.observables:
@@ -188,7 +199,9 @@ class CudaBackend(Backend):
             elif isinstance(observable, Hamiltonian):
                 cuda_observables.append(self._hamiltonian_to_cuda(observable))
             else:
+                logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
+        logger.trace("Observables compiled for evolution")
 
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
@@ -202,6 +215,7 @@ class CudaBackend(Backend):
             store_intermediate_results=functional.store_intermediate_results,
         )
 
+        logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
             final_expected_values=np.array(
                 [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
@@ -244,10 +258,12 @@ class CudaBackend(Backend):
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
         if len(gate.control_qubits) != 1:
+            logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
+            logger.error("Unsupported gate inside Controlled: {}", type(gate.basic_gate).__name__)
             raise UnsupportedGateError
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
@@ -270,6 +286,7 @@ class CudaBackend(Backend):
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
+            logger.error("Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
             raise UnsupportedGateError
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.adjoint(target_kernel, target_qubit)
