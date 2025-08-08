@@ -17,6 +17,7 @@ from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
+from loguru import logger
 from qutip import Qobj, basis, sesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
@@ -53,23 +54,16 @@ PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperat
 
 class QutipBackend(Backend):
     """
-    Digital backend implementation using CUDA-based simulation.
+    Backend that runs both digital-circuit sampling and analog
+    time-evolution experiments using the **QuTiP** simulation library.
 
-    This backend translates a quantum circuit into a CUDA-compatible kernel and executes it
-    using the cudaq library. It supports different simulation methods including state vector,
-    tensor network, and matrix product state simulations. Gate operations in the circuit are
-    mapped to CUDA operations via dedicated handler functions.
+    The backend is CPU-only and has no hardware dependencies, which makes it
+    ideal for local development, CI pipelines, and educational notebooks.
     """
 
     def __init__(self) -> None:
-        """
-        Initialize the QutipBackend.
+        """Instantiate a new :class:`QutipBackend`."""
 
-        Args:
-            digital_simulation_method (SimulationMethod, optional): The simulation method to use for executing circuits.
-                Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
-                Defaults to STATE_VECTOR.
-        """
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             X: QutipBackend._handle_X,
@@ -85,6 +79,7 @@ class QutipBackend(Backend):
             U2: QutipBackend._handle_U2,
             U3: QutipBackend._handle_U3,
         }
+        logger.success("QutipBackend initialised")
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
@@ -101,7 +96,7 @@ class QutipBackend(Backend):
         Returns:
             DigitalResult: A result object containing the measurement samples and computed probabilities.
         """
-
+        logger.info("Executing Sampling (shots={})", functional.nshots)
         qutip_circuit = self._get_qutip_circuit(functional.circuit)
 
         counts: Counter[str] = Counter()
@@ -109,14 +104,20 @@ class QutipBackend(Backend):
 
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
-        for _ in range(functional.nshots):
-            res = sim.run(init_state)  # runs the full circuit for one shot
-            bits = res.cbits  # classical measurement bits
-            label = ""
-            for c in np.array(bits).flatten():
-                label += f"{int(c)}"
-            counts[label] += 1
 
+        res = sim.run_statistics(init_state)  # runs the full circuit for one shot
+        bits = res.cbits  # classical measurement bits
+        probs = res.probabilities
+
+        bits_list = ["".join(map(str, cb)) for cb in bits]
+
+        rng = np.random.default_rng()
+        samples = rng.choice(bits_list, size=functional.nshots, p=probs)
+        samples_py = map(str, samples)
+
+        counts = Counter(samples_py)
+
+        logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:  # noqa: PLR6301
@@ -134,14 +135,17 @@ class QutipBackend(Backend):
         Raises:
             ValueError: if the initial state provided is invalid.
         """
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         tlist = np.linspace(
             0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt)
         )
 
         qutip_hamiltonians = []
-        for ham in functional.schedule.hamiltonians.values():
+        for hamiltonian in functional.schedule.hamiltonians.values():
             qutip_hamiltonians.append(
-                Qobj(ham.to_matrix().toarray(), dims=[[2 for _ in range(ham.nqubits)] for _ in range(2)])
+                Qobj(
+                    hamiltonian.to_matrix().toarray(), dims=[[2 for _ in range(hamiltonian.nqubits)] for _ in range(2)]
+                )
             )
 
         def get_hamiltonian_schedule(
@@ -177,6 +181,7 @@ class QutipBackend(Backend):
         elif functional.initial_state.is_ket():
             state_dim = [[2 for _ in range(functional.initial_state.nqubits)], [1]]
         else:
+            logger.error("Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
         qutip_init_state = Qobj(functional.initial_state.dense, dims=state_dim)
@@ -214,8 +219,7 @@ class QutipBackend(Backend):
             options={"store_states": functional.store_intermediate_results, "store_final_state": True},
         )
 
-        # return results
-
+        logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
             final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),
             expected_values=(
@@ -260,7 +264,8 @@ class QutipBackend(Backend):
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
-                    raise UnsupportedGateError
+                    logger.error("Unsupported gate {}", type(gate).__name__)
+                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 handler(qutip_circuit, gate, gate.target_qubits[0])
 
         no_measurement = True
@@ -291,6 +296,7 @@ class QutipBackend(Backend):
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
         if len(gate.control_qubits) != 1:
+            logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
 
         def qutip_controlled_gate() -> Qobj:

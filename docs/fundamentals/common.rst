@@ -6,7 +6,7 @@ The :mod:`~qilisdk.common` module in the Qili SDK provides a collection of utili
 - :mod:`~qilisdk.common.model`: A toolkit to construct and mathematically represent optimization models.
 
     - Depends on :mod:`~qilisdk.common.variables`, which provides the fundamental building blocks of models.
-- :mod:`~qilisdk.common.quantum_objects`: Tools for creating and managing digital quantum circuits.
+- :mod:`~qilisdk.common.quantum_objects`: A toolkit to construct and manage quantum state vector, density matrices, and quantum operators.
 
 
 Models
