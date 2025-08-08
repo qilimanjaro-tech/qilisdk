@@ -52,8 +52,9 @@ light = Theme(
     bgcolor="#FFFFFF",
     color="#000000",
     wire_color="#F0F0F0",
-    gate_color="#AC115F",
-    plus_color="#5E56A1",
+    gate_color="#5E56A1",
+    # plus_color="#5E56A1",
+    plus_color="#AC115F",
 )
 
 dark = Theme(
@@ -220,6 +221,7 @@ class MatRenderer(BaseRenderer):
     def __init__(self, qc: Circuit, ax: Axes | None = None, *, style: StyleConfig | None = None) -> None:
         self.qc = qc
         self._ax = ax or self._make_axes(style)
+        self._end_meas_qubits: set[int] = set()
         super().__init__(style or StyleConfig(), n_qubits=qc.nqubits)
 
     # ------------------------------------------------------------------
@@ -233,18 +235,54 @@ class MatRenderer(BaseRenderer):
     # Figure‑level helpers -------------------------------------------------
 
     def canvas_plot(self) -> None:
-        """Render the circuit onto the encapsulated *Axes*."""
-
         self._draw_wire_labels()
 
-        for gate in self.qc.gates:
+        gates = list(self.qc.gates)
+
+        # ------------------------------------------------------------------
+        # 1. compute last‑gate index for each qubit ------------------------
+        # ------------------------------------------------------------------
+        last_idx: dict[int, int] = {}
+        for idx in reversed(range(len(gates))):
+            gate = gates[idx]
+            for q in getattr(gate, "target_qubits", ()) or []:
+                if q not in last_idx:
+                    last_idx[q] = idx
+            if len(last_idx) == self._qwires:
+                break
+
+        # ------------------------------------------------------------------
+        # 2. iterate through gates, drawing or deferring measurements -----
+        # ------------------------------------------------------------------
+        deferred_qubits: set[int] = set()
+
+        for idx, gate in enumerate(gates):
             if isinstance(gate, M):
-                self._handle_measure(gate)
-            elif isinstance(gate, Controlled):
+                inline_qubits: List[int] = []
+                for q in gate.target_qubits:
+                    if last_idx.get(q) == idx:
+                        deferred_qubits.add(q)
+                        self._end_meas_qubits.add(q)
+                    else:
+                        inline_qubits.append(q)
+                if inline_qubits:
+                    self._draw_inline_measure(inline_qubits)
+                continue  # move to next gate
+
+            if isinstance(gate, Controlled):
                 self._draw_multiq_gate(gate)
             else:
                 self._draw_singleq_gate(gate)
 
+        # ------------------------------------------------------------------
+        # 3. draw any deferred (final‑column) measurements -----------------
+        # ------------------------------------------------------------------
+        if deferred_qubits:
+            self._draw_concurrent_measures(sorted(deferred_qubits))
+
+        # ------------------------------------------------------------------
+        # final touches -----------------------------------------------------
+        # ------------------------------------------------------------------
         self._draw_wires()
         self._finalise_figure()
         plt.tight_layout()
@@ -384,34 +422,48 @@ class MatRenderer(BaseRenderer):
 
     # Measurements --------------------------------------------------------
 
-    def _handle_measure(self, gate: M) -> None:
-        wire = gate.target_qubits[0]
-        layer = max(len(self._layer_widths[w]) for w in range(wire + 1))
-        x = self._xskip(range(wire + 1), layer) + self.style.gate_margin
-        self._reserve(self._MIN_GATE_W, range(wire + 1), layer, xskip=x)
+    def _draw_inline_measure(self, qubits: List[int]) -> None:
+        layer = max(len(self._layer_widths[q]) for q in qubits)
+        x = self._xskip(qubits, layer) + self.style.gate_margin
+        self._reserve(self._MIN_GATE_W, qubits, layer, xskip=x)
+        for q in qubits:
+            self._draw_measure_symbol(q, x)
 
+    def _draw_concurrent_measures(self, qubits: List[int]) -> None:
+        layer = max(len(v) for v in self._layer_widths.values())
+        x = self._xskip(range(self._qwires), layer) + self.style.gate_margin
+        self._reserve(self._MIN_GATE_W, range(self._qwires), layer, xskip=x)
+        for q in qubits:
+            self._draw_measure_symbol(q, x)
+
+    def _draw_measure_symbol(self, wire: int, x: float) -> None:
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
-
-        # Outer box
-        self.axes.add_patch(FancyBboxPatch((x, y - self._MIN_GATE_H / 2), self._MIN_GATE_W, self._MIN_GATE_H,
-                                           boxstyle=self.style.bulge, mutation_scale=0.3, facecolor=self.style.bgcolor,
-                                           edgecolor=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate"]))
-        # Arc and arrow
-        self.axes.add_patch(Arc((x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2),
-                                self._MIN_GATE_W * 1.5, self._MIN_GATE_H, theta1=0, theta2=180, linewidth=1.25,
-                                color=self.style.measure_color, zorder=self._Z["gate_label"]))
-        self.axes.add_patch(FancyArrow(x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2,
-                                       dx=self._MIN_GATE_W * 0.7, dy=self._MIN_GATE_H * 0.7, width=0.0,
-                                       length_includes_head=True, color=self.style.measure_color,
-                                       linewidth=1.25, zorder=self._Z["gate_label"]))
+        self.axes.add_patch(FancyBboxPatch((x, y - self._MIN_GATE_H / 2), self._MIN_GATE_W, self._MIN_GATE_H, boxstyle=self.style.bulge, mutation_scale=0.3, facecolor=self.style.bgcolor, edgecolor=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate"]))
+        self.axes.add_patch(Arc((x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2), self._MIN_GATE_W * 1.5, self._MIN_GATE_H, theta1=0, theta2=180, linewidth=1.25, color=self.style.measure_color, zorder=self._Z["gate_label"]))
+        self.axes.add_patch(FancyArrow(x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2, dx=self._MIN_GATE_W * 0.7, dy=self._MIN_GATE_H * 0.7, length_includes_head=True, width=0, color=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate_label"]))
 
     # Final decoration ----------------------------------------------------
 
     def _draw_wires(self) -> None:
-        max_len = max(map(sum, self._layer_widths.values())) + self.style.end_wire_ext * self.style.layer_sep
-        for i in range(self._qwires):
-            y = _ypos(i, n_qubits=self._qwires, sep=self.style.wire_sep)
-            self.axes.add_line(plt.Line2D([0, max_len], [y, y], lw=1, color=self.style.wire_color, zorder=self._Z["wire"]))
+        """
+        Draw horizontal wires.  For qubits whose *final* operation is a measurement,
+        stop the wire exactly at the edge of the measurement symbol; otherwise add
+        the usual right-hand extension.
+        """
+        ext = self.style.end_wire_ext * self.style.layer_sep
+        for q in range(self._qwires):
+            y = _ypos(q, n_qubits=self._qwires, sep=self.style.wire_sep)
+            # how far the drawing for this wire actually goes
+            x_end = sum(self._layer_widths[q])
+            # keep the tail only for wires that KEEP going after their last gate
+            if q not in self._end_meas_qubits:
+                x_end += ext
+            self.axes.add_line(
+                plt.Line2D([0, x_end], [y, y],
+                        lw=1,
+                        color=self.style.wire_color,
+                        zorder=self._Z["wire"])
+            )
 
     def _draw_wire_labels(self) -> None:
         labels = self.style.wire_label or [fr"$q_{{{i}}}$" for i in range(self._qwires)]
@@ -429,7 +481,10 @@ class MatRenderer(BaseRenderer):
         fig = self.axes.figure
         fig.set_facecolor(self.style.bgcolor)
 
-        x_end = self.style.padding + self.style.end_wire_ext * self.style.layer_sep + max(map(sum, self._layer_widths.values()))
+        longest_wire = max(sum(w) for w in self._layer_widths.values())
+        x_end = self.style.padding + longest_wire + self.style.end_wire_ext * self.style.layer_sep
+
+        # x_end = self.style.padding + self.style.end_wire_ext * self.style.layer_sep + max(map(sum, self._layer_widths.values()))
         y_end = self.style.padding + (self._qwires - 1) * self.style.wire_sep
 
         self.axes.set_xlim(
