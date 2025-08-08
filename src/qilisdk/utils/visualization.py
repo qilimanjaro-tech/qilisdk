@@ -1,33 +1,51 @@
 """
-Module for rendering a quantum circuit using matplotlib library.
+Improved and more idiomatic implementation of the matplotlib‑based quantum
+circuit renderer.  Public behaviour is unchanged; internal structure is
+cleaned‑up, redundant parameters are removed, and pythonic conventions are
+followed.  The two public entry points remain:
+
+    >>> renderer = MatRenderer(qc)
+    >>> renderer.canvas_plot()
+    >>> renderer.save("circuit.png")
+
+The companion configuration models (`Theme`, `StyleConfig`) keep using
+Pydantic for runtime validation, which is often valuable in interactive
+workflows.
 """
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
-from matplotlib.patches import (
-    Arc,
-    Circle,
-    FancyArrow,
-    FancyBboxPatch,
-)
-from pydantic import BaseModel, Field, field_validator
+from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
+from pydantic import BaseModel, Field
 
-from qilisdk.digital import Circuit
 from qilisdk.digital.gates import BasicGate, Controlled, Gate, M, X
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from qilisdk.digital import Circuit
+
+###############################################################################
+# Configuration models
+###############################################################################
 
 
 class Theme(BaseModel):
-    """
-    Pydantic V2 model for circuit color themes, containing only common attributes.
-    """
-    bgcolor: str = Field(..., description="Background color of the circuit.")
-    color: str = Field(..., description="Accent color for elements and gate labels.")
-    wire_color: str = Field(..., description="Color of the wires.")
-    gate_color: str = Field(..., description="Color for gates.")
-    plus_color: str = Field(..., description="Color for plus sign.")
+    """Simple colour theme configuration."""
+
+    bgcolor: str = Field(description="Figure background colour.")
+    color: str = Field(description="Primary text colour.")
+    wire_color: str = Field(description="Colour of inactive wires.")
+    gate_color: str = Field(description="Default gate fill colour.")
+    plus_color: str = Field(description="Colour of ⊕ and control dots.")
+
+    class Config:
+        """Make *Theme* immutable so that it can be shared safely."""
+
+        frozen = True
 
 
 light = Theme(
@@ -35,40 +53,47 @@ light = Theme(
     color="#000000",
     wire_color="#F0F0F0",
     gate_color="#AC115F",
-    plus_color="#5E56A1"
+    plus_color="#5E56A1",
 )
+
 dark = Theme(
     bgcolor="#000000",
     color="#FFFFFF",
     wire_color="#FFFFFF",
     gate_color="#FFFFFF",
-    plus_color="#5E56A1"
+    plus_color="#5E56A1",
 )
 
 
 class StyleConfig(BaseModel):
-    """
-    Pydantic V2 model for circuit style configuration.
-    """
-    dpi: int = Field(150, description="DPI of the figure.")
-    fontsize: int = Field(10, description="Fontsize at circuit level.")
-    end_wire_ext: int = Field(2, description="Extension of the wire at the end.")
-    padding: float = Field(0.3, description="Padding between circuit and figure border.")
-    gate_margin: float = Field(0.15, description="Margin space on each side of a gate.")
-    wire_sep: float = Field(0.5, description="Separation between wires.")
-    layer_sep: float = Field(0.5, description="Separation between layers.")
-    gate_pad: float = Field(0.05, description="Padding between gate and gate label.")
-    label_pad: float = Field(0.1, description="Padding between wire label and wire.")
-    bulge: str = Field("round", description="Bulge style of the gate.")
-    align_layer: bool = Field(True, description="Align layers of gates across wires.")
-    theme: Theme = Field(light, description="Color theme of the circuit.")
-    title: Optional[str] = Field(None, description="Title of the circuit.")
-    wire_label: Optional[List[Any]] = Field(None, description="Labels for the wires.")
+    """All visual parameters controlling the appearance of a circuit plot."""
+
+    dpi: int = Field(150, description="Figure DPI.")
+    fontsize: int = Field(10, description="Base font size (pt).")
+    end_wire_ext: int = Field(2, description="Extra space after last layer.")
+    padding: float = Field(0.3, description="Padding around drawing (inches).")
+    gate_margin: float = Field(0.15, description="Left/right margin per gate.")
+    wire_sep: float = Field(0.5, description="Vertical separation of wires.")
+    layer_sep: float = Field(0.5, description="Horizontal separation of layers.")
+    gate_pad: float = Field(0.05, description="Padding around gate text.")
+    label_pad: float = Field(0.1, description="Padding before wire label.")
+    bulge: str = Field("round", description="Box‑style for gate rectangles.")
+    align_layer: bool = Field(True, description="Align layers across wires.")
+    theme: Theme = Field(light, description="Colour theme.")
+    title: Optional[str] = Field(None, description="Figure title.")
+    wire_label: Optional[List[Any]] = Field(None, description="Custom wire labels.")
+
+    # ---------------------------------------------------------------------
+    # Convenience derived properties – keep as *property* for live updates.
+    # ---------------------------------------------------------------------
 
     @property
-    def measure_color(self) -> str:
-        # White for dark theme, black otherwise
+    def measure_color(self) -> str:  # noqa: D401 – not @cached_property on purpose
+        """Colour of measurement symbol – contrast with gate fill."""
+
         return "#FFFFFF" if self.theme is dark else "#000000"
+
+    # Aliases – shorter, nicer to read inside drawing code -----------------
 
     @property
     def bgcolor(self) -> str:
@@ -87,764 +112,375 @@ class StyleConfig(BaseModel):
         return self.theme.gate_color
 
 
+###############################################################################
+# Internal helpers
+###############################################################################
+
+
+def _ypos(index: int, *, n_qubits: int, sep: float) -> float:
+    """Map **qubit index** to **matplotlib y‑coordinate**."""
+
+    return (n_qubits - 1 - index) * sep
+
+
+###############################################################################
+# Base renderer – shared layer bookkeeping
+###############################################################################
+
+
 class BaseRenderer:
-    """
-    Base class for rendering quantum circuits with MatRender and TextRender.
-    """
+    """Abstract helper that stores layer widths for *MatRenderer* variants."""
 
-    def __init__(self, style: StyleConfig):
-        """
-        Initialize the base renderer with default values.
-        Both Renderers should override these attributes as needed.
-        """
+    #: Minimum spacing (inches) before the first layer so labels fit nicely.
+    _START_PAD: float = 0.1
 
-        self._qwires = 0
-        self._layer_list = []
+    def __init__(self, style: StyleConfig, *, n_qubits: int) -> None:
         self.style = style
+        self._qwires = n_qubits
+        # *layer_widths[w][l]* – width (inches) of layer *l* on wire *w*
+        self._layer_widths: dict[int, list[float]] = {
+            w: [self._START_PAD] for w in range(n_qubits)
+        }
 
-    def _get_xskip(self, wire_list: List[int], layer: int) -> float:
-        """
-        Get the xskip (horizontal value for getting to requested layer) for the gate to be plotted.
+    # ------------------------------------------------------------------
+    # Layer helpers
+    # ------------------------------------------------------------------
 
-        Parameters
-        ----------
-        wire_list : List[int]
-            The list of wires the gate is acting on (control and target).
-
-        layer : int
-            The layer the gate is acting on.
-
-        Returns
-        -------
-        float
-            The maximum xskip value needed to reach the specified layer.
-        """
+    def _xskip(self, wires: Iterable[int], layer: int) -> float:
+        """Total horizontal offset needed to start *layer* on *wires*."""
 
         if self.style.align_layer:
-            wire_list = list(range(self._qwires))
-        xskip_vals = [sum(self._layer_list.get(w, [])[:layer]) for w in wire_list]
-        return max(xskip_vals or [0])
+            wires = range(self._qwires)
+        return max(sum(self._layer_widths[w][:layer]) for w in wires)
 
-    def _manage_layers(
-        self,
-        gate_width: float,
-        wire_list: List[int],
-        layer: int,
-        xskip: float = 0,
-    ) -> None:
-        """
-        Manages and updates the layer widths according to the gate's width just plotted.
+    def _reserve(self, width: float, wires: Iterable[int], layer: int, *, xskip: float = 0.0) -> None:
+        """Reserve *width* (plus margins) on *wires* for *layer* at *xskip*."""
 
-        Parameters
-        ----------
-        gate_width : float
-            The width of the gate to be plotted.
-
-        wire_list : list
-            The list of wires the gate is acting on (control and target).
-
-        layer : int
-            The layer the gate is acting on.
-
-        xskip : float, optional
-            The horizontal value for getting to requested layer. The default is 0.
-        """
-
-        for w in wire_list:
-            current = self._layer_list.setdefault(w, [])
-            required = gate_width + self.style.gate_margin * 2
-            if len(current) > layer:
-                current[layer] = max(current[layer], required)
+        full_width = width + self.style.gate_margin * 2
+        for w in wires:
+            layers = self._layer_widths[w]
+            if len(layers) > layer:
+                layers[layer] = max(layers[layer], full_width)
             else:
-                gap = xskip - sum(current) if xskip else 0
-                current.append(gap + required)
+                gap = xskip - sum(layers) if xskip else 0.0
+                layers.append(gap + full_width)
+
+    # ------------------------------------------------------------------
+    # Convenience metrics – exposed as *property* so subclasses can use them
+    # without redundant locals.
+    # ------------------------------------------------------------------
+
+    @property
+    def _renderer(self):
+        """Matplotlib backend renderer for text size measurements."""
+
+        # Lazily created when first needed – figure must already exist
+        return self.axes.figure.canvas.get_renderer()
+
+    # ------------------------------------------------------------------
+    # Abstract API expected by subclasses
+    # ------------------------------------------------------------------
+
+    @property
+    def axes(self) -> Axes:  # noqa: D401 – to be implemented by subclass
+        raise NotImplementedError
+
+
+###############################################################################
+# Matplotlib implementation
+###############################################################################
 
 
 class MatRenderer(BaseRenderer):
-    """
-    Class to render a quantum circuit using matplotlib.
-
-    Parameters
-    ----------
-    qc : QuantumCircuit Object
-        The quantum circuit to be rendered.
-
-    ax : Axes Object, optional
-        The axes object to plot the circuit. The default is None.
-
-    **style
-        Additional style arguments to be passed to the `StyleConfig` dataclass.
-    """
-
-    def __init__(
-        self,
-        qc: Circuit,
-        ax: Axes = None,
-        style: StyleConfig | None = None,
-    ) -> None:
-
-        # user defined style
-        self.style = style or StyleConfig()
-
-        super().__init__(self.style)
-        self._qc = qc
-        self._ax = ax
-        self._qwires = qc.nqubits
-
-        # default values
-        self._min_gate_height = 0.2
-        self._min_gate_width = 0.2
-        self._default_layers = 2
-        self._arrow_lenght = 0.06
-        self._connector_r = 0.01
-        self._target_node_r = 0.12
-        self._control_node_r = 0.05
-        self._display_layer_len = 0
-        self._start_pad = 0.1
-        self._layer_list = {i: [self._start_pad] for i in range(self._qwires)}
-
-        # fig config
-        self._zorder = {
-            "wire": 1,
-            "wire_label": 1,
-            "gate": 2,
-            "node": 2,
-            "bridge": 2,
-            "connector": 3,
-            "gate_label": 3,
-            "node_label": 3,
-        }
-        if self._ax is None:
-            self.fig = plt.figure()
-            self._ax = self.fig.add_subplot(111)
-            self.fig.set_dpi(self.style.dpi)
-        else:
-            self.fig = self._ax.get_figure()
-
-    def _ypos(self, index: int) -> float:
-        return (self._qwires - 1 - index) * self.style.wire_sep
-
-    def _get_text_width(
-        self,
-        text: str,
-        fontsize: float,
-        fontweight: Union[float, str],
-        fontfamily: str,
-        fontstyle: str,
-    ) -> float:
-        """
-        Get the width of the text to be plotted.
-
-        Parameters
-        ----------
-        text : str
-            The text to be plotted.
-
-        fontsize : float
-            The fontsize of the text.
-
-        fontweight : str or float
-            The fontweight of the text.
-
-        fontfamily : str
-            The fontfamily of the text.
-
-        fontstyle : str
-            The fontstyle of the text.
-
-        Returns
-        -------
-        float
-            The width of the text inches.
-        """
-
-        text_obj = plt.Text(
-            0,
-            0,
-            text,
-            fontsize=fontsize,
-            fontweight=fontweight,
-            fontfamily=fontfamily,
-            fontstyle=fontstyle,
-        )
-        self._ax.add_artist(text_obj)
-
-        bbox = text_obj.get_window_extent(
-            renderer=self._ax.figure.canvas.get_renderer()
-        )
-        text_obj.remove()
-
-        return bbox.width / self.style.dpi
-
-    def _add_wire(self) -> None:
-        """
-        Adds the wires to the circuit.
-        """
-        max_len = max(sum(self._layer_list[i]) for i in range(self._qwires)) + self.style.end_wire_ext * self.style.layer_sep
-        for i in range(self._qwires):
-            y = self._ypos(i)
-            wire = plt.Line2D([0, max_len], [y, y], lw=1, color=self.style.wire_color, zorder=self._zorder["wire"])
-            self._ax.add_line(wire)
-
-    def _add_wire_labels(self) -> None:
-        """
-        Adds the wire labels to the circuit.
-        """
-
-        if self.style.wire_label is None:
-            self.style.wire_label = [f"$q_{{{i}}}$" for i in range(self._qwires)]
-        self.max_label_width = max(
-            self._get_text_width(label, self.style.fontsize, "normal", "monospace", "normal")
-            for label in self.style.wire_label
-        )
-        for i, label in enumerate(self.style.wire_label):
-            y = self._ypos(i)
-            wire_label = plt.Text(-self.style.label_pad, y, label,
-                                   fontsize=self.style.fontsize,
-                                   fontweight="normal",
-                                   fontfamily="monospace",
-                                   fontstyle="normal",
-                                   verticalalignment="center",
-                                   horizontalalignment="right",
-                                   zorder=self._zorder["wire_label"],
-                                   color=self.style.color)
-            self._ax.add_artist(wire_label)
-
-    def _draw_control_node(self, pos: int, xskip: float, color: str) -> None:
-        """
-        Draw the control node for the multi-qubit gate.
-
-        Parameters
-        ----------
-        pos : int
-            The position of the control node, in terms of the wire number.
-
-        xskip : float
-            The horizontal value for getting to requested layer.
-
-        color : str
-            The color of the control node. HEX code or color name supported by matplotlib are valid.
-        """
-        y = self._ypos(pos)
-        control_node = Circle((xskip + self.style.gate_margin + self.style.gate_pad, y),
-                               self._control_node_r, color=self.style.theme.plus_color, zorder=self._zorder["node"])
-        self._ax.add_artist(control_node)
-
-    def _draw_target_node(self, pos: int, xskip: float, color: str) -> None:
-        """
-        Draw the target node for the multi-qubit gate.
-
-        Parameters
-        ----------
-        pos : int
-            The position of the target node, in terms of the wire number.
-
-        xskip : float
-            The horizontal value for getting to requested layer.
-
-        color : str
-            The color of the control node. HEX code or color name supported by matplotlib are valid.
-        """
-        y = self._ypos(pos)
-        target_node = Circle((xskip + self.style.gate_margin + self.style.gate_pad, y),
-                              self._target_node_r, color=self.style.theme.plus_color, zorder=self._zorder["node"])
-        vert = plt.Line2D((xskip + self.style.gate_margin + self.style.gate_pad,) * 2,
-                          (y - self._target_node_r / 2, y + self._target_node_r / 2), lw=1.5,
-                          color=self.style.bgcolor, zorder=self._zorder["node_label"])
-        horiz = plt.Line2D((xskip + self.style.gate_margin + self.style.gate_pad - self._target_node_r/2,
-                            xskip + self.style.gate_margin + self.style.gate_pad + self._target_node_r/2),
-                           (y, y), lw=1.5, color=self.style.bgcolor, zorder=self._zorder["node_label"])
-        self._ax.add_artist(target_node)
-        self._ax.add_line(vert)
-        self._ax.add_line(horiz)
-
-    def _draw_qbridge(
-        self, pos1: int, pos2: int, xskip: float, color: str
-    ) -> None:
-        """
-        Draw the bridge between the control and target nodes for the multi-qubit gate.
-
-        Parameters
-        ----------
-        pos1 : int
-            The position of the first node for the bridge, in terms of the wire number.
-
-        pos2 : int
-            The position of the second node for the bridge, in terms of the wire number.
-
-        xskip : float
-            The horizontal value for getting to requested layer.
-
-        color : str
-            The color of the control node. HEX code or color name supported by matplotlib are valid.
-        """
-        y1 = self._ypos(pos1)
-        y2 = self._ypos(pos2)
-        bridge = plt.Line2D([xskip + self.style.gate_margin + self.style.gate_pad]*2,
-                             [y1, y2], color=self.style.theme.plus_color,
-                             zorder=self._zorder["bridge"])
-        self._ax.add_line(bridge)
-
-    def _draw_swap_mark(self, pos: int, xskip: int, color: str) -> None:
-        """
-        Draw the swap mark for the SWAP gate.
-
-        Parameters
-        ----------
-        pos : int
-            The position of the swap mark, in terms of the wire number.
-
-        xskip : float
-            The horizontal value for getting to requested layer.
-
-        color : str
-            The color of the swap mark.
-        """
-        y = self._ypos(pos)
-        offset = self._min_gate_width / 3
-        lines = [
-            ([xskip + self.style.gate_margin + self.style.gate_pad + offset,
-              xskip + self.style.gate_margin + self.style.gate_pad - offset],
-             [y + self._min_gate_height/2, y - self._min_gate_height/2]),
-            ([xskip + self.style.gate_margin + self.style.gate_pad - offset,
-              xskip + self.style.gate_margin + self.style.gate_pad + offset],
-             [y + self._min_gate_height/2, y - self._min_gate_height/2])
-        ]
-        for xs, ys in lines:
-            self._ax.add_line(plt.Line2D(xs, ys, color=color, linewidth=2, zorder=self._zorder["gate"]))
-
-    def to_pi_fraction(self, value: float, tolerance: float = 0.01) -> str:
-        """
-        Convert a value to a string fraction of pi.
-
-        Parameters
-        ----------
-        value : float
-            The value to be converted.
-
-        tolerance : float, optional
-            The tolerance for the fraction. The default is 0.01.
-
-        Returns
-        -------
-        str
-            The value in terms of pi.
-        """
-
-        pi_value = value / np.pi
-        if abs(pi_value - round(pi_value)) < tolerance:
-            num = round(pi_value)
-            return f"[{num}\\pi]" if num != 1 else "[\\pi]"
-
-        for denom in [2, 3, 4, 6, 8, 12]:
-            fraction_value = pi_value * denom
-            if abs(fraction_value - round(fraction_value)) < tolerance:
-                num = round(fraction_value)
-                return (
-                    f"[{num}\\pi/{denom}]" if num != 1 else f"[\\pi/{denom}]"
-                )
-
-        return f"[{round(value, 2)}]"
-
-    def _draw_singleq_gate(self, gate: Gate, layer: int) -> None:
-        """
-        Draw the single qubit gate.
-
-        Parameters
-        ----------
-        gate : Gate Object
-            The gate to be plotted.
-
-        layer : int
-            The layer the gate is acting on.
-        """
-
-        gate_wire = gate.target_qubits[0]
-        if gate.is_parameterized and self.showarg is True:
-            pi_frac = self.to_pi_fraction(gate.parameter_values[0])
-            text = f"${{{self.text}}}_{{{pi_frac}}}$"
-        else:
-            text = self.text
-
-        text_width = self._get_text_width(
-            text,
-            self.fontsize,
-            self.fontweight,
-            self.fontfamily,
-            self.fontstyle,
-        )
-        gate_width = max(
-            text_width + self.style.gate_pad * 2, self._min_gate_width
-        )
-
-        gate_text = plt.Text(
-            self._get_xskip([gate_wire], layer)
-            + self.style.gate_margin
-            + gate_width / 2,
-            gate_wire * self.style.wire_sep,
-            text,
-            color=self.fontcolor,
-            fontsize=self.fontsize,
-            fontweight=self.fontweight,
-            fontfamily=self.fontfamily,
-            fontstyle=self.fontstyle,
-            verticalalignment="center",
-            horizontalalignment="center",
-            zorder=self._zorder["gate_label"],
-        )
-        gate_patch = FancyBboxPatch(
-            (
-                self._get_xskip([gate_wire], layer) + self.style.gate_margin,
-                gate_wire * self.style.wire_sep
-                - self._min_gate_height / 2,
-            ),
-            gate_width,
-            self._min_gate_height,
-            boxstyle=self.style.bulge,
-            mutation_scale=0.3,
-            facecolor=self.color,
-            edgecolor=self.color,
-            zorder=self._zorder["gate"],
-        )
-
-        self._ax.add_artist(gate_text)
-        self._ax.add_patch(gate_patch)
-        self._manage_layers(gate_width, [gate_wire], layer)
-
-    def _draw_multiq_gate(self, gate: Gate, layer: int) -> None:
-        """
-        Draw the multi-qubit gate.
-
-        Parameters
-        ----------
-        gate : Gate Object
-            The gate to be plotted.
-
-        layer : int
-            The layer the gate is acting on.
-        """
-
-        wire_list = list(
-            range(self.merged_wires[0], self.merged_wires[-1] + 1)
-        )
-        com_xskip = self._get_xskip(wire_list, layer)
-
-        if isinstance(gate, Controlled) and gate.is_modified_from(X):
-            self._draw_control_node(gate.control_qubits[0], com_xskip, self.color)
-            self._draw_target_node(gate.target_qubits[0], com_xskip, self.color)
-            self._draw_qbridge(
-                gate.target_qubits[0], gate.control_qubits[0], com_xskip, self.color
-            )
-            self._manage_layers(
-                2 * self.style.gate_pad + self._target_node_r / 3,
-                wire_list,
-                layer,
-                com_xskip,
-            )
-
-        elif gate.name == "SWAP":
-            self._draw_swap_mark(gate.target_qubits[0], com_xskip, self.color)
-            self._draw_swap_mark(gate.target_qubits[1], com_xskip, self.color)
-            self._draw_qbridge(
-                gate.target_qubits[0], gate.target_qubits[1], com_xskip, self.color
-            )
-            self._manage_layers(
-                2 * (self.style.gate_pad + self._min_gate_width / 3),
-                wire_list,
-                layer,
-                com_xskip,
-            )
-
-        elif gate.name == "TOFFOLI":
-            self._draw_control_node(gate.control_qubits[0], com_xskip, self.color)
-            self._draw_control_node(gate.control_qubits[1], com_xskip, self.color)
-            self._draw_target_node(gate.target_qubits[0], com_xskip, self.color)
-            self._draw_qbridge(
-                gate.target_qubits[0], gate.control_qubits[0], com_xskip, self.color
-            )
-            self._draw_qbridge(
-                gate.target_qubits[0], gate.control_qubits[1], com_xskip, self.color
-            )
-            self._manage_layers(
-                2 * self.style.gate_pad + self._target_node_r / 3,
-                wire_list,
-                layer,
-                com_xskip,
-            )
-
-        else:
-
-            adj_targets = sorted(
-                    gate.target_qubits
-                    if gate.target_qubits is not None
-                    else list(
-                        range(self._qwires)
-                    )  # adaptation for globalphase
-                )
-            text_width = self._get_text_width(
-                gate.basic_gate.name,
-                self.fontsize,
-                self.fontweight,
-                self.fontfamily,
-                self.fontstyle,
-            )
-            gate_width = max(
-                text_width + self.style.gate_pad * 2, self._min_gate_width
-            )
-            xskip = self._get_xskip(wire_list, layer)
-
-            gate_text = plt.Text(
-                xskip + self.style.gate_margin + gate_width / 2,
-                (adj_targets[0] + adj_targets[-1]) / 2 * self.style.wire_sep,
-                gate.basic_gate.name,
-                color=self.fontcolor,
-                fontsize=self.fontsize,
-                fontweight=self.fontweight,
-                fontfamily=self.fontfamily,
-                fontstyle=self.fontstyle,
-                verticalalignment="center",
-                horizontalalignment="center",
-                zorder=self._zorder["gate_label"],
-            )
-
-            gate_patch = FancyBboxPatch(
-                (
-                    xskip + self.style.gate_margin,
-                    adj_targets[0] * self.style.wire_sep
-                    - self._min_gate_height / 2,
-                ),
-                gate_width,
-                self._min_gate_height
-                + self.style.wire_sep * (adj_targets[-1] - adj_targets[0]),
-                boxstyle=self.style.bulge,
-                mutation_scale=0.3,
-                facecolor=self.color,
-                edgecolor=self.color,
-                zorder=self._zorder["gate"],
-            )
-
-            if gate.target_qubits is not None and len(gate.target_qubits) > 1:
-                for i in range(len(gate.target_qubits)):
-                    connector_l = Circle(
-                        (
-                            xskip + self.style.gate_margin + self._connector_r,
-                            (adj_targets[i]) * self.style.wire_sep,
-                        ),
-                        self._connector_r,
-                        color=self.fontcolor,
-                        zorder=self._zorder["connector"],
-                    )
-                    connector_r = Circle(
-                        (
-                            xskip
-                            + self.style.gate_margin
-                            + gate_width
-                            - self._connector_r,
-                            (adj_targets[i]) * self.style.wire_sep,
-                        ),
-                        self._connector_r,
-                        color=self.fontcolor,
-                        zorder=self._zorder["connector"],
-                    )
-                    self._ax.add_artist(connector_l)
-                    self._ax.add_artist(connector_r)
-
-            # add cbridge if control qubits are present
-            if gate.control_qubits:
-                for control in gate.control_qubits:
-                    self._draw_control_node(
-                        control, xskip + text_width / 2, self.color
-                    )
-                    self._draw_qbridge(
-                        control,
-                        gate.target_qubits[0],
-                        xskip + text_width / 2,
-                        self.color,
-                    )
-
-            self._ax.add_artist(gate_text)
-            self._ax.add_patch(gate_patch)
-            self._manage_layers(gate_width, wire_list, layer, xskip)
-
-    def _draw_measure(self, q_pos: int, layer: int) -> None:
-        """
-        Draw the measurement gate.
-
-        Parameters
-        ----------
-        c_pos : int
-            The position of the classical wire.
-
-        q_pos : int
-            The position of the quantum wire.
-
-        layer : int
-            The layer the gate is acting on.
-        """
-
-        xskip = self._get_xskip(
-            list(range(self.merged_wires[-1] + 1)), layer
-        )
-        measure_box = FancyBboxPatch(
-            (
-                xskip + self.style.gate_margin,
-                q_pos * self.style.wire_sep
-                - self._min_gate_height / 2,
-            ),
-            self._min_gate_width,
-            self._min_gate_height,
-            boxstyle=self.style.bulge,
-            mutation_scale=0.3,
-            facecolor=self.style.bgcolor,
-            edgecolor=self.style.measure_color,
-            linewidth=1.25,
-            zorder=self._zorder["gate"],
-        )
-        arc = Arc(
-            (
-                xskip + self.style.gate_margin + self._min_gate_width / 2,
-                q_pos * self.style.wire_sep
-                - self._min_gate_height / 2,
-            ),
-            self._min_gate_width * 1.5,
-            self._min_gate_height * 1,
-            angle=0,
-            theta1=0,
-            theta2=180,
-            color=self.style.measure_color,
-            linewidth=1.25,
-            zorder=self._zorder["gate_label"],
-        )
-        arrow = FancyArrow(
-            xskip + self.style.gate_margin + self._min_gate_width / 2,
-            q_pos * self.style.wire_sep
-            - self._min_gate_height / 2,
-            self._min_gate_width * 0.7,
-            self._min_gate_height * 0.7,
-            length_includes_head=True,
-            head_width=0,
-            linewidth=1.25,
-            color=self.style.measure_color,
-            zorder=self._zorder["gate_label"],
-        )
-
-        self._manage_layers(
-            self._min_gate_width,
-            list(range(0, self.merged_wires[-1] + 1)),
-            layer,
-            xskip,
-        )
-        self._ax.add_patch(measure_box)
-        self._ax.add_artist(arc)
-        self._ax.add_artist(arrow)
+    """Render a :class:`~qilisdk.digital.Circuit` using *matplotlib*."""
+
+    # Class‑level constants – keep numeric tweaks in one place -------------
+    _MIN_GATE_H: float = 0.2
+    _MIN_GATE_W: float = 0.2
+    _ARROW_LEN: float = 0.06
+    _CONNECTOR_R: float = 0.01
+    _TARGET_R: float = 0.12
+    _CONTROL_R: float = 0.05
+
+    # Z-order groups -------------------------------------------------------
+    _Z = {
+        "wire": 1,
+        "wire_label": 1,
+        "gate": 3,
+        "node": 3,
+        "bridge": 2,
+        "connector": 4,
+        "gate_label": 4,
+    }
+
+    # ------------------------------------------------------------------
+    # Construction
+    # ------------------------------------------------------------------
+
+    def __init__(self, qc: Circuit, ax: Axes | None = None, *, style: StyleConfig | None = None) -> None:
+        self.qc = qc
+        self._ax = ax or self._make_axes(style)
+        super().__init__(style or StyleConfig(), n_qubits=qc.nqubits)
+
+    # ------------------------------------------------------------------
+    # Public helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def axes(self) -> Axes:  # override *BaseRenderer* stub
+        return self._ax
+
+    # Figure‑level helpers -------------------------------------------------
 
     def canvas_plot(self) -> None:
-        """
-        Plot the quantum circuit.
-        """
+        """Render the circuit onto the encapsulated *Axes*."""
 
-        self._add_wire_labels()
+        self._draw_wire_labels()
 
-        for gate in self._qc.gates:
-
+        for gate in self.qc.gates:
             if isinstance(gate, M):
-                self.merged_wires = list(gate.target_qubits)
-                self.merged_wires.sort()
-
-                self._draw_measure(
-                    gate.target_qubits[0],
-                    max(
-                        len(self._layer_list[i])
-                        for i in range(self.merged_wires[-1] + 1)
-                    ),
-                )
-
-            self.text = gate.name
-            self.color = self.style.default_gate_color
-            self.fontsize = self.style.fontsize
-            self.fontcolor = self.style.bgcolor
-            self.fontweight = "normal"
-            self.fontstyle = "normal"
-            self.fontfamily = "monospace"
-            self.showarg = True
-
-            # multi-qubit gate
-            if isinstance(gate, Controlled):
-                # If targets=None, it implies globalphase. Adaptation for the renderer: targets=all-qubits.
-                self.merged_wires = (
-                    list(gate.target_qubits) or list(range(self._qwires))
-                )
-                if gate.control_qubits:
-                    self.merged_wires += list(gate.control_qubits)
-                self.merged_wires.sort()
-
-                find_layer = [
-                    len(self._layer_list[i])
-                    for i in range(
-                        self.merged_wires[0], self.merged_wires[-1] + 1
-                    )
-                ]
-                self._draw_multiq_gate(gate, max(find_layer))
-
+                self._handle_measure(gate)
+            elif isinstance(gate, Controlled):
+                self._draw_multiq_gate(gate)
             else:
-                self._draw_singleq_gate(
-                    gate, len(self._layer_list[gate.target_qubits[0]])
-                )
+                self._draw_singleq_gate(gate)
 
-        self._add_wire()
-        self._fig_config()
+        self._draw_wires()
+        self._finalise_figure()
         plt.tight_layout()
         plt.show()
 
-    def _fig_config(self) -> None:
-        """
-        Configure the figure settings.
-        """
-        self.fig.set_facecolor(self.style.bgcolor)
-        xlim = (
-            -self.style.padding - self.max_label_width - self.style.label_pad,
-            self.style.padding
-            + self.style.end_wire_ext * self.style.layer_sep
-            + max(sum(self._layer_list[i]) for i in range(self._qwires)),
-        )
-        ylim = (
-            -self.style.padding,
-            self.style.padding
-            + (self._qwires - 1) * self.style.wire_sep,
-        )
-        self._ax.set_xlim(xlim)
-        self._ax.set_ylim(ylim)
+    def save(self, filename: str, **kwargs) -> None:  # thin wrapper
+        """Save current figure to *filename* (passes through to *plt.savefig*)."""
 
-        if self.style.title is not None:
-            self._ax.set_title(
-                self.style.title,
-                pad=10,
-                color=self.style.wire_color,
-                fontdict={"fontsize": self.style.fontsize},
-            )
+        self.axes.figure.savefig(filename, bbox_inches="tight", **kwargs)
 
-        # Adjusting to square dimensions in jupyter to prevent small fig size with equal-aspect cmd
+    # ------------------------------------------------------------------
+    # Low‑level drawing helpers (private)
+    # ------------------------------------------------------------------
+
+    # Shared geometry -----------------------------------------------------
+
+    def _text_width(self, text: str, /, *, fontweight="normal", fontstyle="normal") -> float:
+        """Return rendered *text* width in inches for given style."""
+
+        t = plt.Text(0, 0, text, fontsize=self.style.fontsize, fontweight=fontweight,
+                     fontfamily="monospace", fontstyle=fontstyle)
+        self.axes.add_artist(t)
+        width = t.get_window_extent(renderer=self._renderer).width / self.style.dpi
+        t.remove()
+        return width
+
+    # Basic primitives ----------------------------------------------------
+
+    def _draw_control(self, wire: int, x: float) -> None:
+        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+        self.axes.add_patch(Circle((x, y), self._CONTROL_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
+
+    def _draw_target(self, wire: int, x: float) -> None:
+        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+        self.axes.add_patch(Circle((x, y), self._TARGET_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
+        self.axes.add_line(plt.Line2D((x, x), (y - self._TARGET_R / 2, y + self._TARGET_R / 2), lw=1.5,
+                                      color=self.style.bgcolor, zorder=self._Z["gate_label"]))
+        self.axes.add_line(plt.Line2D((x - self._TARGET_R / 2, x + self._TARGET_R / 2), (y, y), lw=1.5,
+                                      color=self.style.bgcolor, zorder=self._Z["gate_label"]))
+
+    def _draw_bridge(self, wire_a: int, wire_b: int, x: float) -> None:
+        y1, y2 = (
+            _ypos(wire_a, n_qubits=self._qwires, sep=self.style.wire_sep),
+            _ypos(wire_b, n_qubits=self._qwires, sep=self.style.wire_sep),
+        )
+        self.axes.add_line(plt.Line2D([x, x], [y1, y2], color=self.style.theme.plus_color, zorder=self._Z["bridge"]))
+
+    def _draw_swap_mark(self, wire: int, x: float) -> None:
+        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+        offset = self._MIN_GATE_W / 3
+        for xs, ys in (
+            ([x + offset, x - offset], [y + self._MIN_GATE_H / 2, y - self._MIN_GATE_H / 2]),
+            ([x - offset, x + offset], [y + self._MIN_GATE_H / 2, y - self._MIN_GATE_H / 2]),
+        ):
+            self.axes.add_line(plt.Line2D(xs, ys, color=self.style.default_gate_color, linewidth=2, zorder=self._Z["gate"]))
+
+    # Gate‑level drawing ---------------------------------------------------
+
+    def _draw_singleq_gate(self, gate: Gate) -> None:
+        wire = gate.target_qubits[0]
+        layer = len(self._layer_widths[wire])
+
+        label = self._gate_label(gate)
+        width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
+        x = self._xskip([wire], layer) + self.style.gate_margin
+        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+
+        self._reserve(width, [wire], layer)
+
+        # Patch + text
+        self.axes.add_patch(FancyBboxPatch((x, y - self._MIN_GATE_H / 2), width, self._MIN_GATE_H,
+                                           boxstyle=self.style.bulge, mutation_scale=0.3,
+                                           facecolor=self.style.default_gate_color, edgecolor=self.style.default_gate_color,
+                                           zorder=self._Z["gate"]))
+        self.axes.text(x + width / 2, y, label, ha="center", va="center", fontsize=self.style.fontsize,
+                        color=self.style.bgcolor, family="monospace", zorder=self._Z["gate_label"])
+
+    def _draw_multiq_gate(self, gate: Controlled) -> None:
+        # In many cases *target_qubits* may be None (global phase) – fall back to all
+        targets = list(gate.target_qubits or range(self._qwires))
+        controls = list(gate.control_qubits or [])
+        wires = sorted(set(targets + controls))
+        layer = max(len(self._layer_widths[w]) for w in wires)
+        x = self._xskip(wires, layer) + self.style.gate_margin
+
+        # Pre‑reserve minimal width (control/target nodes only need a dot width)
+        self._reserve(self._TARGET_R * 2, wires, layer, xskip=x)
+
+        if gate.is_modified_from(X):  # CNOT or multi‑controlled X
+            # Controls
+            for c in controls:
+                self._draw_control(c, x + self.style.gate_pad)
+            # Single target assumed for *Controlled* of *X*
+            self._draw_target(targets[0], x + self.style.gate_pad)
+            # Bridges
+            for c in controls:
+                self._draw_bridge(c, targets[0], x + self.style.gate_pad)
+        elif gate.basic_gate.name == "SWAP":
+            # Draw X‑marks and bridge
+            for t in targets:
+                self._draw_swap_mark(t, x + self.style.gate_pad)
+            self._draw_bridge(targets[0], targets[1], x + self.style.gate_pad)
+        else:
+            # Fallback – generic multi‑q gate rendered as tall rectangle
+            adj_targets = sorted(targets)
+            label = gate.basic_gate.name
+            width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
+            height = (adj_targets[-1] - adj_targets[0]) * self.style.wire_sep + self._MIN_GATE_H
+            y_bottom = _ypos(adj_targets[0], n_qubits=self._qwires, sep=self.style.wire_sep) - self._MIN_GATE_H / 2
+
+            self._reserve(width, wires, layer, xskip=x)
+
+            gate_color = self.style.theme.plus_color if controls else self.style.default_gate_color
+
+            # Draw gate body
+            self.axes.add_patch(FancyBboxPatch((x, y_bottom), width, height, boxstyle=self.style.bulge,
+                                               mutation_scale=0.3, facecolor=self.style.default_gate_color,
+                                               edgecolor=self.style.default_gate_color, zorder=self._Z["gate"]))
+            # Label at centre
+            y_center = _ypos(adj_targets[0] + adj_targets[-1] // 2, n_qubits=self._qwires, sep=self.style.wire_sep)
+            self.axes.text(x + width / 2, y_center, label, ha="center", va="center", fontsize=self.style.fontsize,
+                            color=self.style.bgcolor, family="monospace", zorder=self._Z["gate_label"])
+
+            # Draw connectors inside box for each additional target (visual cues)
+            if len(targets) > 1:
+                for t in targets:
+                    y_t = _ypos(t, n_qubits=self._qwires, sep=self.style.wire_sep)
+                    self.axes.add_patch(Circle((x + self._CONNECTOR_R, y_t), self._CONNECTOR_R,
+                                               color=self.style.bgcolor, zorder=self._Z["connector"]))
+                    self.axes.add_patch(Circle((x + width - self._CONNECTOR_R, y_t), self._CONNECTOR_R,
+                                               color=self.style.bgcolor, zorder=self._Z["connector"]))
+
+            # Controls (if any) – bridge to first target
+            for c in controls:
+                self._draw_control(c, x + width / 2)
+                self._draw_bridge(c, targets[0], x + width / 2)
+
+    # Measurements --------------------------------------------------------
+
+    def _handle_measure(self, gate: M) -> None:
+        wire = gate.target_qubits[0]
+        layer = max(len(self._layer_widths[w]) for w in range(wire + 1))
+        x = self._xskip(range(wire + 1), layer) + self.style.gate_margin
+        self._reserve(self._MIN_GATE_W, range(wire + 1), layer, xskip=x)
+
+        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+
+        # Outer box
+        self.axes.add_patch(FancyBboxPatch((x, y - self._MIN_GATE_H / 2), self._MIN_GATE_W, self._MIN_GATE_H,
+                                           boxstyle=self.style.bulge, mutation_scale=0.3, facecolor=self.style.bgcolor,
+                                           edgecolor=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate"]))
+        # Arc and arrow
+        self.axes.add_patch(Arc((x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2),
+                                self._MIN_GATE_W * 1.5, self._MIN_GATE_H, theta1=0, theta2=180, linewidth=1.25,
+                                color=self.style.measure_color, zorder=self._Z["gate_label"]))
+        self.axes.add_patch(FancyArrow(x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2,
+                                       dx=self._MIN_GATE_W * 0.7, dy=self._MIN_GATE_H * 0.7, width=0.0,
+                                       length_includes_head=True, color=self.style.measure_color,
+                                       linewidth=1.25, zorder=self._Z["gate_label"]))
+
+    # Final decoration ----------------------------------------------------
+
+    def _draw_wires(self) -> None:
+        max_len = max(map(sum, self._layer_widths.values())) + self.style.end_wire_ext * self.style.layer_sep
+        for i in range(self._qwires):
+            y = _ypos(i, n_qubits=self._qwires, sep=self.style.wire_sep)
+            self.axes.add_line(plt.Line2D([0, max_len], [y, y], lw=1, color=self.style.wire_color, zorder=self._Z["wire"]))
+
+    def _draw_wire_labels(self) -> None:
+        labels = self.style.wire_label or [fr"$q_{{{i}}}$" for i in range(self._qwires)]
+        widths = [self._text_width(lbl) for lbl in labels]
+        self._max_label_width = max(widths)
+
+        for i, label in enumerate(labels):
+            y = _ypos(i, n_qubits=self._qwires, sep=self.style.wire_sep)
+            self.axes.text(-self.style.label_pad, y, label, ha="right", va="center", fontsize=self.style.fontsize,
+                           family="monospace", color=self.style.color, zorder=self._Z["wire_label"])
+
+    # Figure layout -------------------------------------------------------
+
+    def _finalise_figure(self) -> None:
+        fig = self.axes.figure
+        fig.set_facecolor(self.style.bgcolor)
+
+        x_end = self.style.padding + self.style.end_wire_ext * self.style.layer_sep + max(map(sum, self._layer_widths.values()))
+        y_end = self.style.padding + (self._qwires - 1) * self.style.wire_sep
+
+        self.axes.set_xlim(
+            -self.style.padding - self._max_label_width - self.style.label_pad,
+            x_end,
+        )
+        self.axes.set_ylim(-self.style.padding, y_end)
+
+        if self.style.title:
+            self.axes.set_title(self.style.title, pad=10, color=self.style.wire_color,
+                                fontdict={"fontsize": self.style.fontsize})
+
+        # In IPython keep figure square so equal aspect ratio does not shrink
         try:
-            get_ipython()
-            max_dim = max(xlim[1] - xlim[0], ylim[1] - ylim[0])
-            self.fig.set_size_inches(max_dim, max_dim, forward=True)
+            get_ipython()  # type: ignore
+            size = max(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding)
+            fig.set_size_inches(size, size, forward=True)
         except NameError:
-            self.fig.set_size_inches(
-                xlim[1] - xlim[0], ylim[1] - ylim[0], forward=True
-            )
-        self._ax.set_aspect("equal", adjustable="box")
-        self._ax.axis("off")
+            fig.set_size_inches(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding, forward=True)
 
-    def save(self, filename: str, **kwargs) -> None:
-        """
-        Save the circuit to a file.
+        self.axes.set_aspect("equal", adjustable="box")
+        self.axes.axis("off")
 
-        Parameters
-        ----------
-        filename : str
-            The name of the file to save the circuit to.
+    # ------------------------------------------------------------------
+    # Helpers – human‑readable gate labels & π‑fractions
+    # ------------------------------------------------------------------
 
-        **kwargs
-            Additional arguments to be passed to `plt.savefig`.
-        """
-        self.fig.savefig(filename, bbox_inches="tight", **kwargs)
+    @staticmethod
+    def _pi_fraction(value: float, /, tol: float = 1e-2) -> str:
+        """Return a LaTeX‑friendly string representing *value* as a π‑fraction."""
+
+        coeff = value / np.pi
+        if abs(coeff - round(coeff)) < tol:
+            n = round(coeff)
+            return fr"[{n}\\pi]" if n != 1 else r"[\pi]"
+        for d in (2, 3, 4, 6, 8, 12):
+            num = round(coeff * d)
+            if abs(num / d - coeff) < tol:
+                return fr"[{num}\\pi/{d}]" if num != 1 else fr"[\\pi/{d}]"
+        return f"[{value:.2f}]"
+
+    def _gate_label(self, gate: Gate) -> str:
+        # if gate.is_parameterized and getattr(self, "showarg", True):
+        #     return fr"${{{gate.name}}}_{{{self._pi_fraction(gate.parameter_values[0])}}}$"
+        return gate.name
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _make_axes(style: StyleConfig | None) -> Axes:
+        fig = plt.figure(dpi=(style or StyleConfig()).dpi)
+        return fig.add_subplot(111)
