@@ -41,7 +41,7 @@ def test_add_non_parameterized_gate():
     # Verify internal state
     # The gate should be in _gates, but not in _parameterized_gates
     assert x_gate in c._gates
-    assert x_gate not in c._parameterized_gates
+    assert len(c._parameters) == 0
 
     # Property should also work
     assert x_gate in c.gates
@@ -61,7 +61,8 @@ def test_add_parameterized_gate():
 
     # rx_gate should be in both _gates and _parameterized_gates
     assert rx_gate in c._gates
-    assert rx_gate in c._parameterized_gates
+    assert len(c._parameters) == 1
+    assert any(rx_gate.name in label for label in c._parameters)
 
     # Property should also work
     assert rx_gate in c.gates
