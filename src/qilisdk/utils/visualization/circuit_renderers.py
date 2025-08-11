@@ -15,14 +15,14 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import TYPE_CHECKING, Any, Final, Iterable, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, Final, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 from pydantic import BaseModel, Field
 
-from qilisdk.digital.gates import BasicGate, Controlled, Gate, M, X
+from qilisdk.digital.gates import Controlled, Gate, M, X
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -58,7 +58,7 @@ light = Theme(
     wire_color=LIGHT_GRAY,
     gate_color=VIOLET,
     plus_color=MAGENTA,
-    measure_color=BLACK
+    measure_color=BLACK,
 )
 
 dark = Theme(
@@ -67,7 +67,7 @@ dark = Theme(
     wire_color=LIGHT_GRAY,
     gate_color=MAGENTA,
     plus_color=VIOLET,
-    measure_color=WHITE
+    measure_color=WHITE,
 )
 
 
@@ -76,7 +76,8 @@ class StyleConfig(BaseModel):
 
     dpi: int = Field(150, description="Figure DPI.")
     fontsize: int = Field(10, description="Base font size (pt).")
-    fontweight: Literal
+    fontweight: str = Field("normal")
+    fontstyle: str = Field("normal")
     end_wire_ext: int = Field(2, description="Extra space after last layer.")
     padding: float = Field(0.3, description="Padding around drawing (inches).")
     gate_margin: float = Field(0.15, description="Left/right margin per gate.")
@@ -87,8 +88,8 @@ class StyleConfig(BaseModel):
     bulge: str = Field("round", description="Box-style for gate rectangles.")
     align_layer: bool = Field(True, description="Align layers across wires.")
     theme: Theme = Field(light, description="Colour theme.")
-    title: Optional[str] = Field(None, description="Figure title.")
-    wire_label: Optional[List[Any]] = Field(None, description="Custom wire labels.")
+    title: str | None = Field(None, description="Figure title.")
+    wire_label: list[Any] | None = Field(None, description="Custom wire labels.")
 
     # ---------------------------------------------------------------------
     # Convenience derived properties - keep as *property* for live updates.
@@ -141,25 +142,37 @@ class CircuitRenderer:
         self.style = style
         self._qwires = n_qubits
         # *layer_widths[w][l]* - width (inches) of layer *l* on wire *w*
-        self._layer_widths: dict[int, list[float]] = {
-            w: [self._START_PAD] for w in range(n_qubits)
-        }
-
-    # ------------------------------------------------------------------
-    # Layer helpers
-    # ------------------------------------------------------------------
-
+        self._layer_widths: dict[int, list[float]] = {w: [self._START_PAD] for w in range(n_qubits)}
 
     def _xskip(self, wires: Iterable[int], layer: int) -> float:
-        """Total horizontal offset needed to start *layer* on *wires*."""
+        """
+        Compute the left x of a given layer.
+
+        With align_layer=True, this ignores *wires* and aligns across all wires.
+
+        Args:
+            wires: Wires considered (ignored when `align_layer` is True).
+            layer: Column index (0 = the initial label pad entry).
+
+        Returns:
+            The x-coordinate (inches) of the left edge of this column.
+        """
 
         if self.style.align_layer:
             wires = range(self._qwires)
         return max(sum(self._layer_widths[w][:layer]) for w in wires)
 
     def _reserve(self, width: float, wires: Iterable[int], layer: int, *, xskip: float = 0.0) -> None:
-        """Reserve *width* (plus margins) on *wires* for *layer* at *xskip*."""
+        """
+        Reserve width in a column for a set of wires.
 
+        Args:
+            width: Box width (inches), *excluding* left/right gate margins.
+            wires: Wires to update.
+            layer: Column index to reserve.
+            xskip: If a wire does not yet have this column, use this absolute
+                left x to compute and append the left gap before the width.
+        """
         full_width = width + self.style.gate_margin * 2
         for w in wires:
             layers = self._layer_widths[w]
@@ -168,26 +181,6 @@ class CircuitRenderer:
             else:
                 gap = xskip - sum(layers) if xskip else 0.0
                 layers.append(gap + full_width)
-
-    # ------------------------------------------------------------------
-    # Convenience metrics - exposed as *property* so subclasses can use them
-    # without redundant locals.
-    # ------------------------------------------------------------------
-
-    @property
-    def _renderer(self):
-        """Matplotlib backend renderer for text size measurements."""
-
-        # Lazily created when first needed - figure must already exist
-        return self.axes.figure.canvas.get_renderer()
-
-    # ------------------------------------------------------------------
-    # Abstract API expected by subclasses
-    # ------------------------------------------------------------------
-
-    @property
-    def axes(self) -> Axes:  # noqa: D401 - to be implemented by subclass
-        raise NotImplementedError
 
 
 ###############################################################################
@@ -238,6 +231,13 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
     # Figure-level helpers -------------------------------------------------
 
     def canvas_plot(self) -> None:
+        """
+        Render the circuit on the current axes and show the figure.
+
+        Traverses the circuit gates once, placing and drawing each element,
+        deferring final-column measurements as needed, draws wires and finalizes
+        the figure.
+        """
         self._draw_wire_labels()
 
         gates = list(self.qc.gates)
@@ -298,7 +298,11 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         plt.show()
 
     def save(self, filename: str) -> None:  # thin wrapper
-        """Save current figure to *filename* (passes through to *plt.savefig*)."""
+        """Save current figure to disk.
+
+        Args:
+            filename: Path to save the figure (e.g., 'circuit.png').
+        """
 
         self.axes.figure.savefig(filename, bbox_inches="tight")
 
@@ -307,6 +311,22 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
     # ------------------------------------------------------------------
 
     def _place(self, wires: Iterable[int], *, min_width: float = 0.0) -> tuple[float, int, list[int]]:
+        """
+        Choose a column and compute its left x for a set of wires.
+
+        This does *not* draw anything; it optionally reserves a minimal width
+        for the selected column to create the column on those wires.
+
+        Args:
+            wires: Wires that must participate in this column.
+            min_width: Optional minimal content width to reserve (inches).
+
+        Returns:
+            A tuple ``(x, layer, wires_sorted)``:
+                - x: Left x of the column (including left margin).
+                - layer: Column index.
+                - wires_sorted: Sorted unique wires used for placement.
+        """
         wires = sorted(set(wires))
         layer = max(len(self._layer_widths[w]) for w in wires)
         x = self._xskip(wires, layer) + self.style.gate_margin
@@ -314,13 +334,31 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             self._reserve(min_width, wires, layer, xskip=x)
         return x, layer, wires
 
-    def _text_width(self, text: str, /, *, fontweight="normal", fontstyle="normal") -> float:
-        """Return rendered *text* width in inches for given style."""
+    def _text_width(self, text: str) -> float:
+        """
+        Measure rendered text width in inches for current DPI/style.
 
-        t = plt.Text(0, 0, text, fontsize=self.style.fontsize, fontweight=fontweight,
-                     fontfamily="monospace", fontstyle=fontstyle)
+        Args:
+            text: Text to measure (mathtext is supported).
+            fontweight: Matplotlib font weight.
+            fontstyle: Matplotlib font style.
+
+        Returns:
+            The rendered width in inches.
+        """
+
+        t = plt.Text(
+            0,
+            0,
+            text,
+            fontsize=self.style.fontsize,
+            fontweight=self.style.fontweight,
+            fontfamily="monospace",
+            fontstyle=self.style.fontstyle,
+        )
         self.axes.add_artist(t)
-        width = t.get_window_extent(renderer=self._renderer).width / self.style.dpi
+        renderer = self.axes.figure.canvas.get_renderer()
+        width = t.get_window_extent(renderer=renderer).width / self.style.dpi
         t.remove()
         return width
 
@@ -335,6 +373,25 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         layer: int | None = None,
         color: str | None = None,
     ) -> tuple[float, int, float]:
+        """
+        Draw a box gate that touches only *targets* (no controls).
+
+        If ``x``/``layer`` are not provided, the earliest column that all
+        targets can share is used.
+
+        Args:
+            label: Text label to show inside the box.
+            targets: Target qubit indices. If None, defaults to all wires.
+            x: Optional left x of the column (from a prior `_place`).
+            layer: Optional column index (from a prior `_place`).
+            color: Optional box fill/edge color.
+
+        Returns:
+            A tuple ``(x, layer, width)`` where:
+                - x: Left x used for this column.
+                - layer: Column index used.
+                - width: Content width (inches) of the box.
+        """
         targets = list(targets or range(self._qwires))
         t_sorted = sorted(targets)
         a, b = t_sorted[0], t_sorted[-1]
@@ -358,42 +415,103 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         gate_color = color or self.style.default_gate_color
 
         # Box
-        self.axes.add_patch(FancyBboxPatch(
-            (x, y_bottom), width, height,
-            boxstyle=self.style.bulge, mutation_scale=0.3,
-            facecolor=gate_color, edgecolor=gate_color, zorder=self._Z["gate"]
-        ))
+        self.axes.add_patch(
+            FancyBboxPatch(
+                (x, y_bottom),
+                width,
+                height,
+                boxstyle=self.style.bulge,
+                mutation_scale=0.3,
+                facecolor=gate_color,
+                edgecolor=gate_color,
+                zorder=self._Z["gate"],
+            )
+        )
         # Label
         self.axes.text(
-            x + width / 2, y_center, label,
-            ha="center", va="center", fontsize=self.style.fontsize,
-            color=self.style.bgcolor, family="monospace", zorder=self._Z["gate_label"]
+            x + width / 2,
+            y_center,
+            label,
+            ha="center",
+            va="center",
+            fontsize=self.style.fontsize,
+            color=self.style.bgcolor,
+            family="monospace",
+            zorder=self._Z["gate_label"],
         )
 
         # Visual connectors for multi-targets
         if len(t_sorted) > 1:
             for t in t_sorted:
                 y_t = _ypos(t, n_qubits=self._qwires, sep=self.style.wire_sep)
-                self.axes.add_patch(Circle((x + self._CONNECTOR_R, y_t), self._CONNECTOR_R,
-                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
-                self.axes.add_patch(Circle((x + width - self._CONNECTOR_R, y_t), self._CONNECTOR_R,
-                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
+                self.axes.add_patch(
+                    Circle(
+                        (x + self._CONNECTOR_R, y_t),
+                        self._CONNECTOR_R,
+                        color=self.style.bgcolor,
+                        zorder=self._Z["connector"],
+                    )
+                )
+                self.axes.add_patch(
+                    Circle(
+                        (x + width - self._CONNECTOR_R, y_t),
+                        self._CONNECTOR_R,
+                        color=self.style.bgcolor,
+                        zorder=self._Z["connector"],
+                    )
+                )
 
         return x, layer, width
 
     def _draw_control_dot(self, wire: int, x: float) -> None:
+        """
+        Draw a filled control dot at the given wire/x.
+
+        Args:
+            wire: Qubit index.
+            x: Column anchor x coordinate.
+        """
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
         self.axes.add_patch(Circle((x, y), self._CONTROL_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
 
     def _draw_plus_sign(self, wire: int, x: float) -> None:
+        """
+        Draw a target ⊕ marker at the given wire/x.
+
+        Args:
+            wire: Qubit index.
+            x: Column anchor x coordinate.
+        """
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
         self.axes.add_patch(Circle((x, y), self._TARGET_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
-        self.axes.add_line(plt.Line2D((x, x), (y - self._TARGET_R / 2, y + self._TARGET_R / 2), lw=1.5,
-                                      color=self.style.bgcolor, zorder=self._Z["gate_label"]))
-        self.axes.add_line(plt.Line2D((x - self._TARGET_R / 2, x + self._TARGET_R / 2), (y, y), lw=1.5,
-                                      color=self.style.bgcolor, zorder=self._Z["gate_label"]))
+        self.axes.add_line(
+            plt.Line2D(
+                (x, x),
+                (y - self._TARGET_R / 2, y + self._TARGET_R / 2),
+                lw=1.5,
+                color=self.style.bgcolor,
+                zorder=self._Z["gate_label"],
+            )
+        )
+        self.axes.add_line(
+            plt.Line2D(
+                (x - self._TARGET_R / 2, x + self._TARGET_R / 2),
+                (y, y),
+                lw=1.5,
+                color=self.style.bgcolor,
+                zorder=self._Z["gate_label"],
+            )
+        )
 
     def _draw_bridge(self, wire_a: int, wire_b: int, x: float) -> None:
+        """
+        Draw a vertical bridge line between two wires at x.
+
+        Args:
+            wire_a: First wire.
+            wire_b: Second wire.
+            x: Column x coordinate where the bridge is drawn.
+        """
         y1, y2 = (
             _ypos(wire_a, n_qubits=self._qwires, sep=self.style.wire_sep),
             _ypos(wire_b, n_qubits=self._qwires, sep=self.style.wire_sep),
@@ -401,6 +519,13 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         self.axes.add_line(plt.Line2D([x, x], [y1, y2], color=self.style.theme.plus_color, zorder=self._Z["bridge"]))
 
     def _draw_swap_mark(self, wire: int, x: float) -> None:
+        """
+        Draw one X of a SWAP marker on a given wire at x.
+
+        Args:
+            wire: Qubit index.
+            x: Column anchor x coordinate.
+        """
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
         offset = self._MIN_GATE_W / 3
         color = self.style.theme.plus_color  # instead of default_gate_color
@@ -417,11 +542,18 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         x: float | None = None,
         layer: int | None = None,
     ) -> float:
+        """
+        Draw a SWAP between two target wires.
+
+        Args:
+            targets: Exactly two wires to swap.
+            x: Optional left x (from `_place`).
+            layer: Optional column index (from `_place`).
+
+        Returns:
+            The anchor x within the column where the swap glyph is centered.
+        """
         t_sorted = sorted(targets)
-        if len(t_sorted) != 2:
-            # Fall back: draw a box if malformed
-            self._draw_targets_gate(label="SWAP", targets=t_sorted)
-            return 0.0
 
         if layer is None or x is None:
             x, layer, _ = self._place(t_sorted, min_width=self._TARGET_R * 2)
@@ -437,6 +569,17 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         return x_anchor
 
     def _draw_controlled_gate(self, gate: Controlled) -> None:
+        """
+        Draw a controlled gate (controls + targets).
+
+        Handles:
+          - MCX family as control dots + ⊕ (no box),
+          - Controlled-SWAP by reusing swap glyphs,
+          - Generic controlled gates as a box over targets with control stems.
+
+        Args:
+            gate: Controlled gate instance.
+        """
         targets = list(gate.target_qubits or range(self._qwires))
         controls = list(gate.control_qubits or [])
         all_wires = sorted(set(targets + controls))
@@ -481,14 +624,26 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
     # Measurements --------------------------------------------------------
 
-    def _draw_inline_measure(self, qubits: List[int]) -> None:
+    def _draw_inline_measure(self, qubits: list[int]) -> None:
+        """
+        Draw measurement boxes interleaved with gates (same column).
+
+        Args:
+            qubits: Wires to measure in this column.
+        """
         layer = max(len(self._layer_widths[q]) for q in qubits)
         x = self._xskip(qubits, layer) + self.style.gate_margin
         self._reserve(self._MIN_GATE_W, qubits, layer, xskip=x)
         for q in qubits:
             self._draw_measure_symbol(q, x)
 
-    def _draw_concurrent_measures(self, qubits: List[int]) -> None:
+    def _draw_concurrent_measures(self, qubits: list[int]) -> None:
+        """
+        Draw a final column of measurements (one shared column).
+
+        Args:
+            qubits: Wires to measure concurrently.
+        """
         layer = max(len(v) for v in self._layer_widths.values())
         x = self._xskip(range(self._qwires), layer) + self.style.gate_margin
         self._reserve(self._MIN_GATE_W, range(self._qwires), layer, xskip=x)
@@ -496,18 +651,61 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             self._draw_measure_symbol(q, x)
 
     def _draw_measure_symbol(self, wire: int, x: float) -> None:
+        """
+        Draw a measurement glyph at the given wire/x.
+
+        Args:
+            wire: Qubit index.
+            x: Shared left x for this measurement column.
+        """
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
-        self.axes.add_patch(FancyBboxPatch((x, y - self._MIN_GATE_H / 2), self._MIN_GATE_W, self._MIN_GATE_H, boxstyle=self.style.bulge, mutation_scale=0.3, facecolor=self.style.bgcolor, edgecolor=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate"]))
-        self.axes.add_patch(Arc((x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2), self._MIN_GATE_W * 1.5, self._MIN_GATE_H, theta1=0, theta2=180, linewidth=1.25, color=self.style.measure_color, zorder=self._Z["gate_label"]))
-        self.axes.add_patch(FancyArrow(x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2, dx=self._MIN_GATE_W * 0.7, dy=self._MIN_GATE_H * 0.7, length_includes_head=True, width=0, color=self.style.measure_color, linewidth=1.25, zorder=self._Z["gate_label"]))
+        self.axes.add_patch(
+            FancyBboxPatch(
+                (x, y - self._MIN_GATE_H / 2),
+                self._MIN_GATE_W,
+                self._MIN_GATE_H,
+                boxstyle=self.style.bulge,
+                mutation_scale=0.3,
+                facecolor=self.style.bgcolor,
+                edgecolor=self.style.measure_color,
+                linewidth=1.25,
+                zorder=self._Z["gate"],
+            )
+        )
+        self.axes.add_patch(
+            Arc(
+                (x + self._MIN_GATE_W / 2, y - self._MIN_GATE_H / 2),
+                self._MIN_GATE_W * 1.5,
+                self._MIN_GATE_H,
+                theta1=0,
+                theta2=180,
+                linewidth=1.25,
+                color=self.style.measure_color,
+                zorder=self._Z["gate_label"],
+            )
+        )
+        self.axes.add_patch(
+            FancyArrow(
+                x + self._MIN_GATE_W / 2,
+                y - self._MIN_GATE_H / 2,
+                dx=self._MIN_GATE_W * 0.7,
+                dy=self._MIN_GATE_H * 0.7,
+                length_includes_head=True,
+                width=0,
+                color=self.style.measure_color,
+                linewidth=1.25,
+                zorder=self._Z["gate_label"],
+            )
+        )
 
     # Final decoration ----------------------------------------------------
 
     def _draw_wires(self) -> None:
         """
-        Draw horizontal wires.  For qubits whose *final* operation is a measurement,
-        stop the wire exactly at the edge of the measurement symbol; otherwise add
-        the usual right-hand extension.
+        Draw horizontal wires up to the last occupied x (plus tail).
+
+        For wires whose last operation is a measurement, the wire stops at the
+        measurement edge with no right-hand tail.
         """
         ext = self.style.end_wire_ext * self.style.layer_sep
         for q in range(self._qwires):
@@ -518,25 +716,31 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             if q not in self._end_meas_qubits:
                 x_end += ext
             self.axes.add_line(
-                plt.Line2D([0, x_end], [y, y],
-                        lw=1,
-                        color=self.style.wire_color,
-                        zorder=self._Z["wire"])
+                plt.Line2D([0, x_end], [y, y], lw=1, color=self.style.wire_color, zorder=self._Z["wire"])
             )
 
     def _draw_wire_labels(self) -> None:
-        labels = self.style.wire_label or [fr"$q_{{{i}}}$" for i in range(self._qwires)]
+        """Draw wire labels to the left of the drawing."""
+        labels = self.style.wire_label or [rf"$q_{{{i}}}$" for i in range(self._qwires)]
         widths = [self._text_width(lbl) for lbl in labels]
         self._max_label_width = max(widths)
 
         for i, label in enumerate(labels):
             y = _ypos(i, n_qubits=self._qwires, sep=self.style.wire_sep)
-            self.axes.text(-self.style.label_pad, y, label, ha="right", va="center", fontsize=self.style.fontsize,
-                           family="monospace", color=self.style.color, zorder=self._Z["wire_label"])
-
-    # Figure layout -------------------------------------------------------
+            self.axes.text(
+                -self.style.label_pad,
+                y,
+                label,
+                ha="right",
+                va="center",
+                fontsize=self.style.fontsize,
+                family="monospace",
+                color=self.style.color,
+                zorder=self._Z["wire_label"],
+            )
 
     def _finalise_figure(self) -> None:
+        """Finalize axes limits, aspect, background, and title."""
         fig = self.axes.figure
         fig.set_facecolor(self.style.bgcolor)
 
@@ -553,8 +757,9 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         self.axes.set_ylim(-self.style.padding, y_end)
 
         if self.style.title:
-            self.axes.set_title(self.style.title, pad=10, color=self.style.wire_color,
-                                fontdict={"fontsize": self.style.fontsize})
+            self.axes.set_title(
+                self.style.title, pad=10, color=self.style.wire_color, fontdict={"fontsize": self.style.fontsize}
+            )
 
         # In IPython keep figure square so equal aspect ratio does not shrink
         try:
@@ -562,7 +767,9 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             size = max(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding)
             fig.set_size_inches(size, size, forward=True)
         except NameError:
-            fig.set_size_inches(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding, forward=True)
+            fig.set_size_inches(
+                self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding, forward=True
+            )
 
         self.axes.set_aspect("equal", adjustable="box")
         self.axes.axis("off")
@@ -573,6 +780,16 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
     @staticmethod
     def _pi_fraction(value: float, /, tol: float = 1e-2) -> str:
+        """
+        Format a float as a π-fraction (mathtext) when close to a rational.
+
+        Args:
+            value: Angle value (radians).
+            tol: Tolerance for accepting the rational approximation.
+
+        Returns:
+            Mathtext string like ``"\\pi/5"`` or fallback decimal.
+        """
         coeff = value / np.pi
         frac = Fraction(coeff).limit_denominator(32)
         n, d = frac.numerator, frac.denominator
@@ -580,12 +797,20 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             if n == 0:
                 return "0"
             if d == 1:
-                return r"\pi" if n == 1 else fr"{n}\pi"
-            return fr"\pi/{d}" if n == 1 else fr"{n}\pi/{d}"
+                return r"\pi" if n == 1 else rf"{n}\pi"
+            return rf"\pi/{d}" if n == 1 else rf"{n}\pi/{d}"
         return f"{value:.2f}"
 
     @staticmethod
     def _gate_label(gate: Gate) -> str:
+        """Build a display label for a (possibly parameterized) gate.
+
+        Args:
+            gate: Gate object.
+
+        Returns:
+            Label text. Parameterized gates get ``name ( $args$ )``.
+        """
         if gate.is_parameterized and gate.parameter_values:
             parameters = ", ".join(MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.parameter_values)
             return rf"{gate.name} (${parameters}$)"
@@ -593,6 +818,15 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
     @staticmethod
     def _make_axes(style: StyleConfig | None) -> Axes:
+        """
+        Create a new figure and axes with the given DPI.
+
+        Args:
+            style: Optional style configuration (for DPI).
+
+        Returns:
+            A newly created Matplotlib Axes.
+        """
         style = style or StyleConfig()
         _, ax = plt.subplots(dpi=style.dpi, constrained_layout=True)
         return ax
