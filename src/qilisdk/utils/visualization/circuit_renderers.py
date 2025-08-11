@@ -260,7 +260,7 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
         for idx, gate in enumerate(gates):
             if isinstance(gate, M):
-                inline_qubits: List[int] = []
+                inline_qubits: list[int] = []
                 for q in gate.target_qubits:
                     if last_idx.get(q) == idx:
                         deferred_qubits.add(q)
@@ -269,12 +269,19 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
                         inline_qubits.append(q)
                 if inline_qubits:
                     self._draw_inline_measure(inline_qubits)
-                continue  # move to next gate
+                continue
 
+            # NEW dispatch
             if isinstance(gate, Controlled):
-                self._draw_multiq_gate(gate)
-            else:
-                self._draw_singleq_gate(gate)
+                self._draw_controlled_gate(gate)
+                continue
+
+            if gate.name == "SWAP":
+                self._draw_swap_gate(list(gate.target_qubits or []))
+                continue
+
+            # Targets-only (single or multi-qubit) box
+            self._draw_targets_gate(label=self._gate_label(gate), targets=list(gate.target_qubits or []))
 
         # ------------------------------------------------------------------
         # 3. draw any deferred (final-column) measurements -----------------
@@ -299,7 +306,13 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
     # Low-level drawing helpers (private)
     # ------------------------------------------------------------------
 
-    # Shared geometry -----------------------------------------------------
+    def _place(self, wires: Iterable[int], *, min_width: float = 0.0) -> tuple[float, int, list[int]]:
+        wires = sorted(set(wires))
+        layer = max(len(self._layer_widths[w]) for w in wires)
+        x = self._xskip(wires, layer) + self.style.gate_margin
+        if min_width:
+            self._reserve(min_width, wires, layer, xskip=x)
+        return x, layer, wires
 
     def _text_width(self, text: str, /, *, fontweight="normal", fontstyle="normal") -> float:
         """Return rendered *text* width in inches for given style."""
@@ -313,11 +326,66 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
     # Basic primitives ----------------------------------------------------
 
-    def _draw_control(self, wire: int, x: float) -> None:
+    def _draw_targets_gate(
+        self,
+        *,
+        label: str,
+        targets: list[int] | None,
+        x: float | None = None,
+        layer: int | None = None,
+        color: str | None = None,
+    ) -> tuple[float, int, float]:
+        targets = list(targets or range(self._qwires))
+        t_sorted = sorted(targets)
+        a, b = t_sorted[0], t_sorted[-1]
+
+        # Decide layer/x if not given (no-controls: only target wires matter)
+        if layer is None or x is None:
+            layer = max(len(self._layer_widths[w]) for w in t_sorted)
+            x = self._xskip(t_sorted, layer) + self.style.gate_margin
+
+        # Measure and reserve the full width at the given x/layer
+        width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
+        self._reserve(width, t_sorted, layer, xskip=x)
+
+        # Geometry
+        y_a = _ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)
+        y_b = _ypos(b, n_qubits=self._qwires, sep=self.style.wire_sep)
+        y_bottom = min(y_a, y_b) - self._MIN_GATE_H / 2
+        height = abs(y_b - y_a) + self._MIN_GATE_H
+        y_center = (y_a + y_b) / 2.0
+
+        gate_color = color or self.style.default_gate_color
+
+        # Box
+        self.axes.add_patch(FancyBboxPatch(
+            (x, y_bottom), width, height,
+            boxstyle=self.style.bulge, mutation_scale=0.3,
+            facecolor=gate_color, edgecolor=gate_color, zorder=self._Z["gate"]
+        ))
+        # Label
+        self.axes.text(
+            x + width / 2, y_center, label,
+            ha="center", va="center", fontsize=self.style.fontsize,
+            color=self.style.bgcolor, family="monospace", zorder=self._Z["gate_label"]
+        )
+
+        # Visual connectors for multi-targets
+        if len(t_sorted) > 1:
+            for t in t_sorted:
+                y_t = _ypos(t, n_qubits=self._qwires, sep=self.style.wire_sep)
+                self.axes.add_patch(Circle((x + self._CONNECTOR_R, y_t), self._CONNECTOR_R,
+                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
+                self.axes.add_patch(Circle((x + width - self._CONNECTOR_R, y_t), self._CONNECTOR_R,
+                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
+
+        return x, layer, width
+
+    def _draw_control_dot(self, wire: int, x: float) -> None:
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
         self.axes.add_patch(Circle((x, y), self._CONTROL_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
 
-    def _draw_target(self, wire: int, x: float) -> None:
+    def _draw_plus_sign(self, wire: int, x: float) -> None:
         y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
         self.axes.add_patch(Circle((x, y), self._TARGET_R, color=self.style.theme.plus_color, zorder=self._Z["node"]))
         self.axes.add_line(plt.Line2D((x, x), (y - self._TARGET_R / 2, y + self._TARGET_R / 2), lw=1.5,
@@ -342,96 +410,74 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         ):
             self.axes.add_line(plt.Line2D(xs, ys, color=color, linewidth=2, zorder=self._Z["gate"]))
 
-    # Gate-level drawing ---------------------------------------------------
+    def _draw_swap_gate(
+        self,
+        targets: list[int],
+        *,
+        x: float | None = None,
+        layer: int | None = None,
+    ) -> float:
+        t_sorted = sorted(targets)
+        if len(t_sorted) != 2:
+            # Fall back: draw a box if malformed
+            self._draw_targets_gate(label="SWAP", targets=t_sorted)
+            return 0.0
 
-    def _draw_singleq_gate(self, gate: Gate) -> None:
-        wire = gate.target_qubits[0]
-        layer = len(self._layer_widths[wire])
+        if layer is None or x is None:
+            x, layer, _ = self._place(t_sorted, min_width=self._TARGET_R * 2)
+        else:
+            self._reserve(self._TARGET_R * 2, t_sorted, layer, xskip=x)
 
-        label = self._gate_label(gate)
-        width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
-        x = self._xskip([wire], layer) + self.style.gate_margin
-        y = _ypos(wire, n_qubits=self._qwires, sep=self.style.wire_sep)
+        x_anchor = x + self.style.gate_pad
 
-        # FIX: record the gap we draw at
-        self._reserve(width, [wire], layer)
+        for t in t_sorted:
+            self._draw_swap_mark(t, x_anchor)
+        # vertical bridge between the two targets
+        self._draw_bridge(t_sorted[0], t_sorted[1], x_anchor)
+        return x_anchor
 
-        self.axes.add_patch(FancyBboxPatch(
-            (x, y - self._MIN_GATE_H / 2), width, self._MIN_GATE_H,
-            boxstyle=self.style.bulge, mutation_scale=0.3,
-            facecolor=self.style.default_gate_color, edgecolor=self.style.default_gate_color,
-            zorder=self._Z["gate"]))
-        self.axes.text(x + width / 2, y, label, ha="center", va="center",
-                    fontsize=self.style.fontsize, color=self.style.bgcolor,
-                    family="monospace", zorder=self._Z["gate_label"])
-
-
-    def _draw_multiq_gate(self, gate: Controlled) -> None:
+    def _draw_controlled_gate(self, gate: Controlled) -> None:
         targets = list(gate.target_qubits or range(self._qwires))
         controls = list(gate.control_qubits or [])
-        wires = sorted(set(targets + controls))
-        layer = max(len(self._layer_widths[w]) for w in wires)
-        x = self._xskip(wires, layer) + self.style.gate_margin
+        all_wires = sorted(set(targets + controls))
 
-        # Pre-reserve minimal width for the node column
-        self._reserve(self._TARGET_R * 2, wires, layer, xskip=x)
+        # Place a column shared by all involved wires; reserve minimal node width
+        x, layer, _ = self._place(all_wires, min_width=self._TARGET_R * 2)
 
-        if gate.is_modified_from(X):  # CNOT or multi-controlled X
+        # Controlled-X family (CNOT / multi-controlled X): target glyph, not a box
+        if gate.is_modified_from(X):
+            x_anchor = x + self.style.gate_pad
             for c in controls:
-                self._draw_control(c, x + self.style.gate_pad)
-            self._draw_target(targets[0], x + self.style.gate_pad)
-            for c in controls:
-                self._draw_bridge(c, targets[0], x + self.style.gate_pad)
+                self._draw_control_dot(c, x_anchor)
+                self._draw_bridge(c, targets[0], x_anchor)
+            self._draw_plus_sign(targets[0], x_anchor)
             return
 
-        if gate.basic_gate.name == "SWAP":
-            if len(targets) != 2:
-                # Safe fallback: draw as a generic 2-q gate if malformed.
-                pass
-            else:
-                for t in targets:
-                    self._draw_swap_mark(t, x + self.style.gate_pad)
-                self._draw_bridge(targets[0], targets[1], x + self.style.gate_pad)
-                return
+        # Controlled SWAP (Fredkin): reuse the SWAP primitive, then add controls
+        if getattr(gate.basic_gate, "name", "") == "SWAP":
+            x_anchor = self._draw_swap_gate(targets, x=x, layer=layer)
+            for c in controls:
+                self._draw_control_dot(c, x_anchor)
+                self._draw_bridge(c, targets[0], x_anchor)
+            return
 
-        # Fallback - generic multi-q gate rendered as tall rectangle
-        adj_targets = sorted(targets)
-        a, b = adj_targets[0], adj_targets[-1]
-        label = gate.basic_gate.name
-        width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
+        # Generic controlled gate: draw the target box at this same column,
+        # then widen control wires for that layer and add stems to the center.
+        label = getattr(gate.basic_gate, "name", self._gate_label(gate))
+        gate_color = self.style.theme.plus_color  # distinguish controlled blocks
+        x_box, layer_box, width = self._draw_targets_gate(
+            label=label, targets=targets, x=x, layer=layer, color=gate_color
+        )
 
-        y_bottom = _ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep) - self._MIN_GATE_H / 2
-        height = (_ypos(b, n_qubits=self._qwires, sep=self.style.wire_sep)
-                - _ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)) + self._MIN_GATE_H
+        # Ensure control wires also reserve the same width for this layer
+        extra_controls = [c for c in controls if c not in targets]
+        if extra_controls:
+            self._reserve(width, extra_controls, layer_box, xskip=x_box)
 
-        self._reserve(width, wires, layer, xskip=x)
-
-        gate_color = self.style.theme.plus_color if controls else self.style.default_gate_color
-
-        self.axes.add_patch(FancyBboxPatch(
-            (x, y_bottom), width, height, boxstyle=self.style.bulge,
-            mutation_scale=0.3, facecolor=gate_color, edgecolor=gate_color,
-            zorder=self._Z["gate"]))
-
-        # Correct center between top & bottom (by y, not index arithmetic)
-        y_center = (_ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)
-                + _ypos(b, n_qubits=self._qwires, sep=self.style.wire_sep)) / 2.0
-
-        self.axes.text(x + width / 2, y_center, label, ha="center", va="center",
-                    fontsize=self.style.fontsize, color=self.style.bgcolor,
-                    family="monospace", zorder=self._Z["gate_label"])
-
-        if len(targets) > 1:
-            for t in targets:
-                y_t = _ypos(t, n_qubits=self._qwires, sep=self.style.wire_sep)
-                self.axes.add_patch(Circle((x + self._CONNECTOR_R, y_t), self._CONNECTOR_R,
-                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
-                self.axes.add_patch(Circle((x + width - self._CONNECTOR_R, y_t), self._CONNECTOR_R,
-                                        color=self.style.bgcolor, zorder=self._Z["connector"]))
-
+        x_center = x_box + width / 2.0
         for c in controls:
-            self._draw_control(c, x + width / 2)
-            self._draw_bridge(c, targets[0], x + width / 2)
+            self._draw_control_dot(c, x_center)
+            self._draw_bridge(c, targets[0], x_center)
 
     # Measurements --------------------------------------------------------
 
@@ -538,9 +584,10 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             return fr"\pi/{d}" if n == 1 else fr"{n}\pi/{d}"
         return f"{value:.2f}"
 
-    def _gate_label(self, gate: Gate) -> str:
+    @staticmethod
+    def _gate_label(gate: Gate) -> str:
         if gate.is_parameterized and gate.parameter_values:
-            parameters = ", ".join(self._pi_fraction(value) for value in gate.parameter_values)
+            parameters = ", ".join(MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.parameter_values)
             return rf"{gate.name} (${parameters}$)"
         return gate.name
 

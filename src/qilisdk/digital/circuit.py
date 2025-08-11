@@ -104,3 +104,11 @@ class Circuit:
         if gate.is_parameterized:
             self._parameterized_gates.append(gate)
         self._gates.append(gate)
+
+    def draw(self, save_to_file: str | None = None) -> None:
+        from qilisdk.utils.visualization import MatplotlibCircuitRenderer  # noqa: PLC0415
+
+        renderer = MatplotlibCircuitRenderer(self)
+        renderer.canvas_plot()
+        if save_to_file:
+            renderer.save(save_to_file)
