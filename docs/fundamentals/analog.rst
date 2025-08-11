@@ -99,8 +99,8 @@ Example 1: Dictionary-Based Schedule
     h2 = -1 * Z(0) - 1 * Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
 
     schedule = Schedule(
-        total_time=T,
-        time_step=dt,
+        T=T,
+        dt=dt,
         hamiltonians={"h1": h1, "h2": h2},
         schedule={
             t: {

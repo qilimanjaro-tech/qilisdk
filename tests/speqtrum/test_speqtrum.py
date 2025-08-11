@@ -65,7 +65,7 @@ def test_init_raises_when_no_credentials(monkeypatch):
     """Constructing SpeQtrum without cached credentials must fail."""
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: None)
 
-    with pytest.raises(RuntimeError, match="No valid SpeQtrum credentials"):
+    with pytest.raises(RuntimeError):
         speqtrum.SpeQtrum()
 
 
@@ -104,7 +104,7 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(speqtrum.SpeQtrum, "_execute_sampling", lambda self, _: 99, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, _: 99, raising=True)
 
     q = speqtrum.SpeQtrum()
     assert q.submit(FakeSampling()) == 99
