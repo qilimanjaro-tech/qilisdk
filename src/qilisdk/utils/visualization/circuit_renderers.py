@@ -414,8 +414,8 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             zorder=self._Z["gate"]))
 
         # Correct center between top & bottom (by y, not index arithmetic)
-        y_center = ( _ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)
-                + _ypos(b, n_qubits=self._qwires, sep=self.style.wire_sep) ) / 2.0
+        y_center = (_ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)
+                + _ypos(b, n_qubits=self._qwires, sep=self.style.wire_sep)) / 2.0
 
         self.axes.text(x + width / 2, y_center, label, ha="center", va="center",
                     fontsize=self.style.fontsize, color=self.style.bgcolor,
@@ -531,8 +531,10 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         frac = Fraction(coeff).limit_denominator(32)
         n, d = frac.numerator, frac.denominator
         if abs(frac - coeff) < tol:
-            if n == 0: return "0"
-            if d == 1: return r"\pi" if n == 1 else fr"{n}\pi"
+            if n == 0:
+                return "0"
+            if d == 1:
+                return r"\pi" if n == 1 else fr"{n}\pi"
             return fr"\pi/{d}" if n == 1 else fr"{n}\pi/{d}"
         return f"{value:.2f}"
 
