@@ -12,24 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, Literal, Union
+from typing import Any, Literal, Type, Union
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, M
 from qilisdk.yaml import yaml
 
 
 class Ansatz(ABC):
-    _ONE_QUBIT_GATES: ClassVar[dict[str, type[Union[U1, U2, U3]]]] = {
-        "U1": U1,
-        "U2": U2,
-        "U3": U3,
-    }
-    _TWO_QUBITS_GATES: ClassVar[dict[str, type[Union[CNOT, CZ]]]] = {
-        "CZ": CZ,
-        "CNOT": CNOT,
-    }
-
     def __init__(self, nqubits: int, layers: int = 1) -> None:
         self.nqubits = nqubits
         self.layers = layers
@@ -73,8 +63,8 @@ class HardwareEfficientAnsatz(Ansatz):
         layers: int = 1,
         connectivity: Literal["Circular", "Linear", "Full"] | list[tuple[int, int]] = "Linear",
         structure: Literal["grouped", "interposed"] = "grouped",
-        one_qubit_gate: Literal["U1", "U2", "U3"] = "U1",
-        two_qubit_gate: Literal["CZ", "CNOT"] = "CZ",
+        one_qubit_gate: Type[U1] | Type[U2] | Type[U3] = U1,
+        two_qubit_gate: Type[CZ] | Type[CNOT] = CZ,
     ) -> None:
         """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
 
@@ -94,10 +84,10 @@ class HardwareEfficientAnsatz(Ansatz):
                 - 'grouped'   : Applies all single-qubit gates followed by all two-qubit gates.
                 - 'interposed': Interleaves single- and two-qubit gates.
                 Defaults to "grouped".
-            one_qubit_gate (Literal["U1", "U2", "U3"], optional): the single-qubit gate class name to be used
-                as parameterized gates (e.g., `U1`, `U2`, or `U3`). Defaults to "U1".
-            two_qubit_gate (Literal["CZ", "CNOT"], optional):  the two-qubit gate class name used for
-                entanglement (e.g., `CNOT` or `CZ`). Defaults to "CZ".
+            one_qubit_gate (Type[U1] | Type[U2] | Type[U3], optional): the single-qubit gate class name to be used
+                as parameterized gates (e.g., `U1`, `U2`, or `U3`). Defaults to U1.
+            two_qubit_gate (Type[CZ] | Type[CNOT], optional):  the two-qubit gate class name used for
+                entanglement (e.g., `CNOT` or `CZ`). Defaults to CZ.
 
         Raises:
             ValueError: If an unsupported connectivity or structure type is specified.
@@ -132,9 +122,12 @@ class HardwareEfficientAnsatz(Ansatz):
         else:
             raise ValueError(f"Unrecognized connectivity type ({connectivity}).")
 
-        self.gate_types: dict[str, str] = {"one_qubit_gate": one_qubit_gate, "two_qubit_gates": two_qubit_gate}
-        self.one_qubit_gate: type[Union[U1, U2, U3]] = self._ONE_QUBIT_GATES[one_qubit_gate]
-        self.two_qubit_gate: type[Union[CNOT, CZ]] = self._TWO_QUBITS_GATES[two_qubit_gate]
+        self.gate_types: dict[str, type[Gate]] = {
+            "one_qubit_gate": one_qubit_gate,
+            "two_qubit_gates": two_qubit_gate,
+        }
+        self.one_qubit_gate: type[Union[U1, U2, U3]] = one_qubit_gate
+        self.two_qubit_gate: type[Union[CNOT, CZ]] = two_qubit_gate
 
         if structure not in {"grouped", "interposed"}:
             raise ValueError(f"provided structure {structure} is not supported.")
