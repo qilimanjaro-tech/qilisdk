@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Final, Iterable, List, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,6 +76,7 @@ class StyleConfig(BaseModel):
 
     dpi: int = Field(150, description="Figure DPI.")
     fontsize: int = Field(10, description="Base font size (pt).")
+    fontweight: Literal
     end_wire_ext: int = Field(2, description="Extra space after last layer.")
     padding: float = Field(0.3, description="Padding around drawing (inches).")
     gate_margin: float = Field(0.15, description="Left/right margin per gate.")
@@ -206,7 +207,7 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
     _CONTROL_R: float = 0.05
 
     # Z-order groups -------------------------------------------------------
-    _Z = {
+    _Z: Final = {
         "wire": 1,
         "wire_label": 1,
         "gate": 3,
@@ -271,7 +272,6 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
                     self._draw_inline_measure(inline_qubits)
                 continue
 
-            # NEW dispatch
             if isinstance(gate, Controlled):
                 self._draw_controlled_gate(gate)
                 continue
@@ -297,10 +297,10 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         # plt.tight_layout()
         plt.show()
 
-    def save(self, filename: str, **kwargs) -> None:  # thin wrapper
+    def save(self, filename: str) -> None:  # thin wrapper
         """Save current figure to *filename* (passes through to *plt.savefig*)."""
 
-        self.axes.figure.savefig(filename, bbox_inches="tight", **kwargs)
+        self.axes.figure.savefig(filename, bbox_inches="tight")
 
     # ------------------------------------------------------------------
     # Low-level drawing helpers (private)
@@ -346,7 +346,7 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
 
         # Measure and reserve the full width at the given x/layer
         width = max(self._text_width(label) + self.style.gate_pad * 2, self._MIN_GATE_W)
-        self._reserve(width, t_sorted, layer, xskip=x)
+        self._reserve(width, t_sorted, layer)
 
         # Geometry
         y_a = _ypos(a, n_qubits=self._qwires, sep=self.style.wire_sep)
@@ -426,7 +426,7 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
         if layer is None or x is None:
             x, layer, _ = self._place(t_sorted, min_width=self._TARGET_R * 2)
         else:
-            self._reserve(self._TARGET_R * 2, t_sorted, layer, xskip=x)
+            self._reserve(self._TARGET_R * 2, t_sorted, layer)
 
         x_anchor = x + self.style.gate_pad
 
@@ -590,10 +590,6 @@ class MatplotlibCircuitRenderer(CircuitRenderer):
             parameters = ", ".join(MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.parameter_values)
             return rf"{gate.name} (${parameters}$)"
         return gate.name
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _make_axes(style: StyleConfig | None) -> Axes:
