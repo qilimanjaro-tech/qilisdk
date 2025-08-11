@@ -13,13 +13,54 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Protocol, Type, TypeVar
+from abc import abstractmethod
+from typing import TYPE_CHECKING, List, Protocol, Type, TypeVar
 
 from qilisdk.common.result import Result
 
-TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
+if TYPE_CHECKING:
+    from qilisdk.common.model import Model
+    from qilisdk.common.variables import Number
+
+TResult = TypeVar("TResult", bound=Result, covariant=False)
 
 
-class Functional(Protocol[TResult_co]):
+class Functional(Protocol[TResult]):
     @property
-    def result_type(self) -> Type[TResult_co]: ...
+    def result_type(self) -> Type[TResult]: ...
+
+    @abstractmethod
+    def set_parameters(self, parameters: dict[str, Number]) -> None:
+        """Sets the parameters of the functional.
+
+        Args:
+            parameters (dict[str, Number]): a dictionary with the parameter label and new value.
+        """
+
+    @abstractmethod
+    def get_parameters(self) -> dict[str, Number]:
+        """Gets the values of the parameters of the functional.
+
+        Returns:
+            dict[str, Number]: a dictionary with the parameter label and its current value.
+        """
+
+    @abstractmethod
+    def get_parameter_names(self) -> List[str]:
+        """Gets the values of the parameters of the functional.
+
+        Returns:
+            dict[str, Number]: a dictionary with the parameter label and its current value.
+        """
+
+    @abstractmethod
+    def compute_cost(self, results: TResult, cost_model: Model) -> float:
+        """Compute the cost of the functional given a cost model.
+
+        Args:
+            results (Result): The functional results
+            cost_model (Model): The Model object used to represent the cost of different states.
+
+        Returns:
+            float: the cost of the results.
+        """

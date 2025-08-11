@@ -127,8 +127,8 @@ class Circuit:
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
         if gate.is_parameterized:
-            param_base_label = f"{gate.name}_{'_'.join(map(str, gate.qubits))}"
+            param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
             for p in gate.parameter_names:
-                parameter_label = str(override_parameter_name) or param_base_label + f"_{len(self._parameters)}_{p}"
+                parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
                 self._parameters[parameter_label] = gate.parameters[p]
         self._gates.append(gate)

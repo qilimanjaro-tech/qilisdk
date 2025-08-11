@@ -12,9 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .parameterized_program import ParameterizedProgram
+from .parameterized_program_results import ParameterizedProgramResults
 from .sampling import Sampling
 from .sampling_result import SamplingResult
 from .time_evolution import TimeEvolution
 from .time_evolution_result import TimeEvolutionResult
 
-__all__ = ["Sampling", "SamplingResult", "TimeEvolution", "TimeEvolutionResult"]
+__all__ = [
+    "ParameterizedProgram",
+    "ParameterizedProgramResults",
+    "Sampling",
+    "SamplingResult",
+    "TimeEvolution",
+    "TimeEvolutionResult",
+]

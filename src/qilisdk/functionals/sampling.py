@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from qilisdk.common.model import Model
+from qilisdk.common.variables import Number
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import Functional
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -25,3 +27,23 @@ class Sampling(Functional[SamplingResult]):
     def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
         self.circuit = circuit
         self.nshots = nshots
+
+    def set_parameters(self, parameters: dict[str, Number]) -> None:
+        self.circuit.set_parameters(parameters)
+
+    def get_parameters(self) -> dict[str, Number]:
+        return self.circuit.get_parameters()
+
+    def get_parameter_names(self) -> list[str]:
+        return list(self.circuit.get_parameters().keys())
+
+    def compute_cost(self, results: SamplingResult, cost_model: Model) -> float:  # noqa: PLR6301
+        total_cost = 0.0
+        for sample, prob in results.get_probabilities():
+            bit_configuration = [int(i) for i in sample]
+            if len(cost_model.variables()) != len(bit_configuration):
+                raise ValueError("Mapping samples to the model's variables is ambiguous.")
+            variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
+            evaluate_results = cost_model.evaluate(variable_map)
+            total_cost += sum(v for v in evaluate_results.values()) * prob
+        return total_cost

@@ -14,14 +14,16 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, List, TypeVar, cast, overload
 
 from qilisdk.common.result import Result
+from qilisdk.functionals.parameterized_program_results import ParameterizedProgramResults
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional
+    from qilisdk.functionals.parameterized_program import ParameterizedProgram
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -59,3 +61,28 @@ class Backend(ABC):
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
+
+    def optimize(
+        self, parameterized_program: ParameterizedProgram, store_intermediate_results: bool = False
+    ) -> ParameterizedProgramResults:
+        def evaluate_sample(parameters: List[float]) -> float:
+            param_names = parameterized_program.functional.get_parameter_names()
+            parameterized_program.functional.set_parameters(
+                {param_names[i]: param for i, param in enumerate(parameters)}
+            )
+            results = self.execute(parameterized_program.functional)
+            return parameterized_program.functional.compute_cost(results, parameterized_program.cost_model)
+
+        optimizer_result = parameterized_program.optimizer.optimize(
+            cost_function=evaluate_sample,
+            init_parameters=list(parameterized_program.functional.get_parameters().values()),
+            store_intermediate_results=store_intermediate_results,
+        )
+
+        param_names = parameterized_program.functional.get_parameter_names()
+        parameterized_program.functional.set_parameters(
+            {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
+        )
+        optimal_results = self.execute(parameterized_program.functional)
+
+        return ParameterizedProgramResults(optimizer_result=optimizer_result, result=optimal_results)

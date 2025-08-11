@@ -14,7 +14,9 @@
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
+from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.variables import Number
 from qilisdk.functionals.functional import Functional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -50,3 +52,14 @@ class TimeEvolution(Functional[TimeEvolutionResult]):
         self.observables = observables
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
+
+    def get_parameters(self) -> dict[str, Number]:  # noqa: PLR6301
+        return {}
+
+    def set_parameters(self, parameters: dict[str, Number]) -> None: ...
+
+    def get_parameter_names(self) -> list[str]:  # noqa: PLR6301
+        return []
+
+    def compute_cost(self, results: TimeEvolutionResult, cost_model: Model) -> float:
+        raise NotImplementedError
