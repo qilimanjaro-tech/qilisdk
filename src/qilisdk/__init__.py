@@ -14,6 +14,10 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
+from ._logging import configure_logging
+
+configure_logging()
+
 try:
     __version__ = version("qilisdk")
 except PackageNotFoundError:

@@ -94,10 +94,10 @@ class HardwareEfficientAnsatz(Ansatz):
                 - 'grouped'   : Applies all single-qubit gates followed by all two-qubit gates.
                 - 'interposed': Interleaves single- and two-qubit gates.
                 Defaults to "grouped".
-            one_qubit_gate (Literal["U1", "U2", "U3"], optional): A list of single-qubit gate classes to be used
-                as parameterized gates (e.g., [`U1`, `U2`, `U3`]). Defaults to "U1".
-            two_qubit_gate (Literal["CZ", "CNOT"], optional):  A list of two-qubit gate classes used for
-                entanglement (e.g., [`CNOT`, `CZ`]). Defaults to "CZ".
+            one_qubit_gate (Literal["U1", "U2", "U3"], optional): the single-qubit gate class name to be used
+                as parameterized gates (e.g., `U1`, `U2`, or `U3`). Defaults to "U1".
+            two_qubit_gate (Literal["CZ", "CNOT"], optional):  the two-qubit gate class name used for
+                entanglement (e.g., `CNOT` or `CZ`). Defaults to "CZ".
 
         Raises:
             ValueError: If an unsupported connectivity or structure type is specified.
