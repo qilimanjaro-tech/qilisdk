@@ -63,8 +63,8 @@ class HardwareEfficientAnsatz(Ansatz):
         layers: int = 1,
         connectivity: Literal["Circular", "Linear", "Full"] | list[tuple[int, int]] = "Linear",
         structure: Literal["grouped", "interposed"] = "grouped",
-        one_qubit_gate: Type[U1] | Type[U2] | Type[U3] = U1,
-        two_qubit_gate: Type[CZ] | Type[CNOT] = CZ,
+        one_qubit_gate: Type[U1 | U2 | U3] = U1,
+        two_qubit_gate: Type[CZ | CNOT] = CZ,
     ) -> None:
         """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
 
@@ -97,13 +97,14 @@ class HardwareEfficientAnsatz(Ansatz):
         .. code-block:: python
 
             from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+            from qilisdk.digital.gates import U3, CNOT
 
             ansatz = HardwareEfficientAnsatz(
                 num_qubits=4,
                 layers=3,
                 connectivity="Linear",
-                on_qubit_gates="U3",
-                two_qubit_gates="CNOT",
+                on_qubit_gates=U3,
+                two_qubit_gates=CNOT,
                 structure="grouped",
             )
             print(ansatz.circuit)
@@ -126,8 +127,8 @@ class HardwareEfficientAnsatz(Ansatz):
             "one_qubit_gate": one_qubit_gate,
             "two_qubit_gates": two_qubit_gate,
         }
-        self.one_qubit_gate: type[Union[U1, U2, U3]] = one_qubit_gate
-        self.two_qubit_gate: type[Union[CNOT, CZ]] = two_qubit_gate
+        self.one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
+        self.two_qubit_gate: type[CNOT | CZ] = two_qubit_gate
 
         if structure not in {"grouped", "interposed"}:
             raise ValueError(f"provided structure {structure} is not supported.")
