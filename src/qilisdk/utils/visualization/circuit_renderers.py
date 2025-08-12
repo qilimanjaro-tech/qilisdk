@@ -22,7 +22,7 @@ import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from qilisdk.digital.gates import Controlled, Gate, M, X
 
@@ -39,7 +39,9 @@ MAGENTA: Final[str] = "#AC115F"
 
 
 class Theme(BaseModel):
-    """Simple colour theme configuration."""
+    """Colour Theme."""
+
+    model_config = ConfigDict(frozen=True)
 
     background: str = Field(description="Figure background colour.")
     foreground: str = Field(description="Primary text colour.")
@@ -47,11 +49,6 @@ class Theme(BaseModel):
     gate_color: str = Field(description="Default gate fill colour.")
     plus_color: str = Field(description="Colour of ⊕ and control dots.")
     measure_color: str = Field(description="Colour of the measurement symbol.")
-
-    class Config:
-        """Make *Theme* immutable so that it can be shared safely."""
-
-        frozen = True
 
 
 light = Theme(
@@ -76,7 +73,7 @@ dark = Theme(
 _DEFAULT_FONT_PATH = Path(__file__).parent / "PlusJakartaSans-SemiBold.ttf"
 
 
-class StyleConfig(BaseModel):
+class CircuitStyle(BaseModel):
     """All visual parameters controlling the appearance of a circuit plot."""
 
     # --- FontProperties-mapped fields (mirror matplotlib.font_manager.FontProperties) ---
@@ -104,25 +101,29 @@ class StyleConfig(BaseModel):
     )
     math_fontfamily: str | None = Field(default=None, description="Math text family, e.g. 'dejavusans', 'cm', or None.")
 
-    dpi: int = Field(150, description="Figure DPI.")
-    end_wire_ext: int = Field(2, description="Extra space after last layer.")
-    padding: float = Field(0.3, description="Padding around drawing (inches).")
-    gate_margin: float = Field(0.15, description="Left/right margin per gate.")
-    wire_sep: float = Field(0.5, description="Vertical separation of wires.")
-    layer_sep: float = Field(0.5, description="Horizontal separation of layers.")
-    gate_pad: float = Field(0.05, description="Padding around gate text.")
-    label_pad: float = Field(0.1, description="Padding before wire label.")
-    bulge: str = Field("round", description="Box-style for gate rectangles.")
-    align_layer: bool = Field(True, description="Align layers across wires.")
-    theme: Theme = Field(light, description="Colour theme.")
-    title: str | None = Field(None, description="Figure title.")
-    wire_label: list[Any] | None = Field(None, description="Custom wire labels.")
-    start_pad: float = Field(0.1, description="Minimum spacing (inches) before the first layer so wire labels fit.")
-    min_gate_h: float = Field(0.2, description="Minimum gate box height (inches).")
-    min_gate_w: float = Field(0.2, description="Minimum gate box width (inches).")
-    connector_r: float = Field(0.01, description="Radius (inches) of small connector dots on multi-target gates.")
-    target_r: float = Field(0.12, description="Radius (inches) of ⊕ target circle and SWAP half-width.")
-    control_r: float = Field(0.05, description="Radius (inches) of a filled control dot.")
+    dpi: int = Field(default=150, description="Figure DPI.")
+    end_wire_ext: int = Field(default=2, description="Extra space after last layer.")
+    padding: float = Field(default=0.3, description="Padding around drawing (inches).")
+    gate_margin: float = Field(default=0.15, description="Left/right margin per gate.")
+    wire_sep: float = Field(default=0.5, description="Vertical separation of wires.")
+    layer_sep: float = Field(default=0.5, description="Horizontal separation of layers.")
+    gate_pad: float = Field(default=0.05, description="Padding around gate text.")
+    label_pad: float = Field(default=0.1, description="Padding before wire label.")
+    bulge: str = Field(default="round", description="Box-style for gate rectangles.")
+    align_layer: bool = Field(default=True, description="Align layers across wires.")
+    theme: Theme = Field(default=light, description="Colour theme.")
+    title: str | None = Field(default=None, description="Figure title.")
+    wire_label: list[Any] | None = Field(default=None, description="Custom wire labels.")
+    start_pad: float = Field(
+        default=0.1, description="Minimum spacing (inches) before the first layer so wire labels fit."
+    )
+    min_gate_h: float = Field(default=0.2, description="Minimum gate box height (inches).")
+    min_gate_w: float = Field(default=0.2, description="Minimum gate box width (inches).")
+    connector_r: float = Field(
+        default=0.01, description="Radius (inches) of small connector dots on multi-target gates."
+    )
+    target_r: float = Field(default=0.12, description="Radius (inches) of ⊕ target circle and SWAP half-width.")
+    control_r: float = Field(default=0.05, description="Radius (inches) of a filled control dot.")
 
     @property
     def font(self) -> fm.FontProperties:
@@ -187,7 +188,7 @@ class MatplotlibCircuitRenderer:
     # Construction
     # ------------------------------------------------------------------
 
-    def __init__(self, circuit: Circuit, ax: Axes | None = None, *, style: StyleConfig = StyleConfig()) -> None:  # type: ignore[call-arg]
+    def __init__(self, circuit: Circuit, ax: Axes | None = None, *, style: CircuitStyle = CircuitStyle()) -> None:
         self.circuit = circuit
         self.style = style
         self._ax = ax or self._make_axes(style.dpi)
@@ -196,17 +197,11 @@ class MatplotlibCircuitRenderer:
         # *layer_widths[w][l]* - width (inches) of layer *l* on wire *w*
         self._layer_widths: dict[int, list[float]] = {w: [self.style.start_pad] for w in range(circuit.nqubits)}
 
-    # ------------------------------------------------------------------
-    # Public helpers
-    # ------------------------------------------------------------------
-
     @property
-    def axes(self) -> Axes:  # override *BaseRenderer* stub
+    def axes(self) -> Axes:
         return self._ax
 
-    # Figure-level helpers -------------------------------------------------
-
-    def canvas_plot(self) -> None:
+    def plot(self) -> None:
         """
         Render the circuit on the current axes and show the figure.
 
