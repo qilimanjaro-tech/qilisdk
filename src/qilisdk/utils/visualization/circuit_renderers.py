@@ -544,8 +544,8 @@ class MatplotlibCircuitRenderer:
         offset = self.style.min_gate_w / 3
         color = self.style.theme.plus_color
         for xs, ys in (
-            ([x + offset, x - offset], [y + self.style.min_gate_h / 2, y - self.style.min_gate_h / 2]),
-            ([x - offset, x + offset], [y + self.style.min_gate_h / 2, y - self.style.min_gate_h / 2]),
+            ([x + offset, x - offset], [y + self.style.min_gate_h / 4, y - self.style.min_gate_h / 4]),
+            ([x - offset, x + offset], [y + self.style.min_gate_h / 4, y - self.style.min_gate_h / 4]),
         ):
             self.axes.add_line(plt.Line2D(xs, ys, color=color, linewidth=2, zorder=self._Z["gate"]))
 
