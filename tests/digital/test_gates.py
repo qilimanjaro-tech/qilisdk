@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 
@@ -358,15 +358,13 @@ def test_cz_gate(control, target):
 )
 def test_swap_gate(qubit_a, qubit_b):
     """
-    Basic tests for the 2-qubit CZ gate.
-    The code and docstring currently show a matrix identical to CNOT's,
-    but let's just confirm it matches what's in the code:
+    Basic tests for the 2-qubit SWAP gate.
       [[1, 0, 0, 0],
+       [0, 0, 1, 0],
        [0, 1, 0, 0],
-       [0, 0, 0, 1],
-       [0, 0, 1, 0]]
+       [0, 0, 0, 1]]
     """
-    gate = CZ(qubit_a, qubit_b)
+    gate = SWAP(qubit_a, qubit_b)
 
     assert gate.name == "SWAP"
     assert gate.nqubits == 2
