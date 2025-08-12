@@ -65,6 +65,17 @@ class Backend(ABC):
     def optimize(
         self, parameterized_program: ParameterizedProgram, store_intermediate_results: bool = False
     ) -> ParameterizedProgramResults:
+        """Optimize a Parameterized Program (:class:`~qilisdk.functionals.parameterized_program.ParameterizedProgram`)
+            and returns the optimal parameters and results.
+
+        Args:
+            parameterized_program (ParameterizedProgram): The parameterized program to be optimized.
+            store_intermediate_results (bool, optional): Store intermediate results from the optimizer. Defaults to False.
+
+        Returns:
+            ParameterizedProgramResults: The final optimizer and functional results.
+        """
+
         def evaluate_sample(parameters: List[float]) -> float:
             param_names = parameterized_program.functional.get_parameter_names()
             parameterized_program.functional.set_parameters(

@@ -19,13 +19,27 @@ from qilisdk.optimizers.optimizer import Optimizer
 
 class ParameterizedProgram:
     def __init__(self, functional: Functional, optimizer: Optimizer, cost_model: Model) -> None:
-        """The Parameterized Program provides a way to optimized a parameterized functional.
+        """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
+        functional.
 
         Args:
-            functional (Functional): the parameterized functional.
-            optimizer (Optimizer): the optimizer to be used.
-            cost_model (Model): the model that evaluates the cost for a given set of parameters.
+            functional (Functional): A parameterized Functional to be optimized.
+            optimizer (Optimizer): A QiliSDK optimizer, to be used in optimizing the Functional's parameters.
+            cost_model (Model): A Model object to evaluate the cost of a given set of parameters. This model
+                                is the cost function used by the optimizer.
         """
-        self.functional = functional
-        self.optimizer = optimizer
-        self.cost_model = cost_model
+        self._functional = functional
+        self._optimizer = optimizer
+        self._cost_model = cost_model
+
+    @property
+    def functional(self) -> Functional:
+        return self._functional
+
+    @property
+    def optimizer(self) -> Optimizer:
+        return self._optimizer
+
+    @property
+    def cost_model(self) -> Model:
+        return self._cost_model

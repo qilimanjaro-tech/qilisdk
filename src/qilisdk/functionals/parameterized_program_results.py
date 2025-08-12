@@ -24,15 +24,23 @@ TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
 
 class ParameterizedProgramResults(Generic[TResult_co]):
     """
-    Represents the result of a VQE calculation.
+    Represents the result of a Parameterized Program calculation.
 
     Attributes:
         optimal_cost (float): The estimated ground state energy (optimal cost).
         optimal_parameters (list[float]): The optimal parameters found during the optimization.
-        probabilities (list[tuple[str, float]]): the list of samples and their probabilities.
+        optimal_execution_results (TResult_co): The results of executing the Functional with the optimal parameters
+                                                found by the optimizer.
+        intermediate_results(list[OptimizerIntermediateResult]): A list of intermediate results stored during the
+                                                optimization process.
     """
 
     def __init__(self, optimizer_result: OptimizerResult, result: TResult_co) -> None:
+        """
+        Args:
+            optimizer_result (OptimizerResult): The optimizer's final results. (depends on the optimizer used)
+            result (TResult_co): The results of executing the Functional with the optimal parameters. (depends on the Functional)
+        """
         super().__init__()
         self._optimizer_result = optimizer_result
         self._result = result
@@ -49,6 +57,11 @@ class ParameterizedProgramResults(Generic[TResult_co]):
 
     @property
     def optimal_execution_results(self) -> TResult_co:
+        """The results of executing the Functional with the optimal parameters found by the optimizer.
+
+        Returns:
+            TResult_co: The results object corresponding to the Functional.
+        """
         return self._result
 
     @property
