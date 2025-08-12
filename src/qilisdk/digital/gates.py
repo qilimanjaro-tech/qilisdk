@@ -121,7 +121,7 @@ class Gate(ABC):
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return [p.label for p in self.parameters.values()]
+        return list(self.parameters)
 
     @property
     def parameter_values(self) -> list[float]:

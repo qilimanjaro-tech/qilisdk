@@ -820,7 +820,7 @@ class BaseVariable(ABC):
             float: the evaluated vale of the variable.
         """
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """Replaces the information of the variable with those coming from the dictionary
         if the variable label is in the dictionary
 
@@ -944,7 +944,7 @@ class BinaryVariable(BaseVariable):
             raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
         return value[0]
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
     def to_binary(self) -> Term:
@@ -964,7 +964,7 @@ class SpinVariable(BaseVariable):
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
     def evaluate(self, value: list[int] | Number) -> float:
@@ -1052,7 +1052,10 @@ class Variable(BaseVariable):
         return self._bin_vars[item]
 
     def update_variable(
-        self, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] | None = None
+        self,
+        domain: Domain,
+        bounds: tuple[float | None, float | None] = (None, None),
+        encoding: type[Encoding] | None = None,
     ) -> None:
         self._encoding = encoding if encoding is not None else self._encoding
         self._term = None
@@ -1121,9 +1124,10 @@ class Parameter(BaseVariable):
 
         if not self.domain.check_value(value):
             raise ValueError(
-                f"Parameter value provided {value} doesn't correspond to the parameter's domain ({self.domain.name})"
+                f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
         self._value = value
+        self.set_bounds(bounds[0], bounds[1])
 
     @property
     def value(self) -> Number:
@@ -1132,8 +1136,10 @@ class Parameter(BaseVariable):
     def set_value(self, value: Number) -> None:
         if not self.domain.check_value(value):
             raise ValueError(
-                f"Parameter value provided {value} doesn't correspond to the parameter's domain ({self.domain.name})"
+                f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
+        if value > self.bounds[1] or value < self.bounds[0]:
+            raise ValueError(f"The value provided ({value}) is outside the bound of the parameter {self.bounds}")
         self._value = value
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
@@ -1164,6 +1170,31 @@ class Parameter(BaseVariable):
             Term: the binary representation of a variable.
         """
         return Term([self.value], operation=Operation.ADD)
+
+    def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
+        upper_bound = upper_bound if upper_bound is not None else self.domain.max()
+        lower_bound = lower_bound if lower_bound is not None else self.domain.min()
+        if self.value > upper_bound or self.value < lower_bound:
+            raise ValueError(
+                f"The current value of the parameter ({self.value}) is outside the bounds ({lower_bound}, {upper_bound})"
+            )
+        super().set_bounds(lower_bound, upper_bound)
+
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
+
+        if len(bounds) != 2:  # noqa: PLR2004
+            raise ValueError(
+                "Invalid bounds provided: the bounds need to be a tuple with the format (lowe_bound, upper_bound)"
+            )
+
+        if domain.check_value(self.value):
+            self._domain = domain
+        else:
+            raise ValueError(
+                f"The provided domain ({domain.name}) is incompatible with the current parameter value ({self.value})"
+            )
+
+        self.set_bounds(lower_bound=bounds[0], upper_bound=bounds[1])
 
 
 # Terms ###

@@ -41,6 +41,7 @@ from qilisdk.common.variables import (
     NotEqual,
     OneHot,
     Operation,
+    Parameter,
     SpinVariable,
     Term,
     Variable,
@@ -1058,3 +1059,45 @@ def test_Comparison_Term_printing():
     expected_t = "(2) * (x * y) + x < (5)"
 
     assert repr(t) == expected_t
+
+
+####################
+# Parameter
+####################
+
+
+def test_parameter_value():
+    p = Parameter("p", 2, domain=Domain.POSITIVE_INTEGER, bounds=(2, 4))
+    assert p.value == 2
+    assert p.domain == Domain.POSITIVE_INTEGER
+    assert p.bounds == (2, 4)
+
+    p.set_value(3)
+    assert p.value == 3
+
+    p.set_bounds(None, 6)
+    assert p.bounds == (0, 6)
+
+    p.update_variable(domain=Domain.INTEGER)
+    assert p.domain == Domain.INTEGER
+
+    with pytest.raises(
+        ValueError, match=r"Parameter value provided \(0.5\) doesn't correspond to the parameter's domain \(INTEGER\)"
+    ):
+        Parameter("p", 0.5, Domain.INTEGER, (0, 10))
+
+    with pytest.raises(ValueError, match=r"The current value of the parameter \(9\) is outside the bounds \(2, 4\)"):
+        Parameter("p", 9, Domain.INTEGER, (2, 4))
+
+    p.set_bounds(2, 9)
+    p.set_value(9)
+    with pytest.raises(ValueError, match=r"The current value of the parameter \(9\) is outside the bounds \(2, 4\)"):
+        p.set_bounds(2, 4)
+
+    p.update_variable(Domain.REAL, (0, 10))
+    p.set_value(0.5)
+    with pytest.raises(
+        ValueError,
+        match=r"The provided domain \(INTEGER\) is incompatible with the current parameter value \(0.5\)",
+    ):
+        p.update_variable(Domain.INTEGER, (0, 10))

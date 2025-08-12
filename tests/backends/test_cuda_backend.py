@@ -1,32 +1,22 @@
-from unittest.mock import patch
+from unittest import mock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
+from qilisdk.common.model import Constraint, Model, Objective
+from qilisdk.common.variables import BinaryVariable
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import (
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Adjoint,
-    BasicGate,
-    Controlled,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.functionals.parameterized_program import ParameterizedProgram
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 # --- Dummy classes and helper functions ---
 
@@ -352,3 +342,52 @@ def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
             yield 3, [PauliY(0), PauliZ(0)]
 
     assert be._hamiltonian_to_cuda(DummyHam()) == 40
+
+
+###################
+# Parameterized Program
+###################
+
+
+@pytest.fixture
+def dummy_optimizer():
+    """
+    Create a dummy optimizer that, upon optimization, returns a tuple of
+    (optimal_cost, optimal_parameters). For testing, we use (0.2, [0.9, 0.1]).
+    """
+    optimizer = MagicMock()
+    optimizer.optimize.side_effect = lambda cost_function, init_parameters, store_intermediate_results: OptimizerResult(
+        0.2, [0.9, 0.1]
+    )
+    return optimizer
+
+
+def test_parameterized_program_properties_assignment(dummy_optimizer):
+    """
+    Test that the VQE instance correctly stores its initial properties.
+
+    Verifies that the ansatz, initial parameters, and cost function are assigned properly.
+    """
+    mock_instance = MagicMock(spec=Model)
+    ansatz = HardwareEfficientAnsatz(2)
+    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+
+    vqe = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    assert isinstance(vqe.functional, Sampling)
+    assert vqe.functional.circuit == circuit
+    assert vqe.optimizer == dummy_optimizer
+    assert vqe.cost_model == mock_instance
+
+
+def test_real_example():
+    backend = CudaBackend()
+    b = BinaryVariable("b")
+    model = Model("test")
+    model.set_objective(2 * b - 1)
+
+    cr = Circuit(1)
+    cr.add(U1(0, phi=0.1))
+
+    output = backend.optimize(ParameterizedProgram(Sampling(cr), SciPyOptimizer(), model))
+    assert output.optimal_cost == -1
+    assert output.optimal_execution_results.samples == {"0": 1000}
