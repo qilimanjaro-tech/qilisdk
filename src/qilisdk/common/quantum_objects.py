@@ -18,7 +18,7 @@ import string
 from typing import Literal
 
 import numpy as np
-from scipy.sparse import csc_array, csr_matrix, issparse, kron, sparray, spmatrix
+from scipy.sparse import csc_array, csc_matrix, issparse, kron, sparray, spmatrix
 from scipy.sparse.linalg import expm
 from scipy.sparse.linalg import norm as scipy_norm
 
@@ -62,7 +62,7 @@ class QuantumObject:
                 or if the data's shape does not correspond to a valid quantum state/operator.
         """
         if isinstance(data, np.ndarray):
-            self._data = csr_matrix(data)
+            self._data = csc_matrix(data)
         elif issparse(data):
             self._data = data.tocsr()
         else:
@@ -80,12 +80,12 @@ class QuantumObject:
     # ------------- Properties --------------
 
     @property
-    def data(self) -> csr_matrix:
+    def data(self) -> csc_matrix:
         """
         Get the internal sparse matrix representation of the QuantumObject.
 
         Returns:
-            csr_matrix: The internal representation as a CSR matrix.
+            csc_matrix: The internal representation as a CSR matrix.
         """
         return self._data
 
