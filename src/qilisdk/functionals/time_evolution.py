@@ -61,5 +61,8 @@ class TimeEvolution(Functional[TimeEvolutionResult]):
     def get_parameter_names(self) -> list[str]:  # noqa: PLR6301
         return []
 
+    def get_parameter_values(self) -> list[Number]:  # noqa: PLR6301
+        return []
+
     def compute_cost(self, results: TimeEvolutionResult, cost_model: Model) -> float:
         raise NotImplementedError

@@ -120,8 +120,8 @@ def test_set_parameter_values_correct():
     c.set_parameter_values(new_values)
 
     # Verify that each gate's parameters are updated
-    assert rx_gate.parameter_values == [0.5]
-    assert rz_gate.parameter_values == [1.0]
+    assert rx_gate.get_parameter_values() == [0.5]
+    assert rz_gate.get_parameter_values() == [1.0]
 
     # get_parameter_values should reflect the new updates
     assert c.get_parameter_values() == new_values

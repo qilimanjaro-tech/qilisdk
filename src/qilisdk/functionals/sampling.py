@@ -37,6 +37,9 @@ class Sampling(Functional[SamplingResult]):
     def get_parameter_names(self) -> list[str]:
         return list(self.circuit.get_parameters().keys())
 
+    def get_parameter_values(self) -> list[Number]:
+        return list(self.circuit.get_parameters().values())
+
     def compute_cost(self, results: SamplingResult, cost_model: Model) -> float:  # noqa: PLR6301
         total_cost = 0.0
         for sample, prob in results.get_probabilities():

@@ -26,24 +26,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, Pauli
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import (
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Adjoint,
-    BasicGate,
-    Controlled,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -344,17 +327,17 @@ class CudaBackend(Backend):
     @staticmethod
     def _handle_RX(kernel: cudaq.Kernel, gate: RX, qubit: cudaq.QuakeValue) -> None:
         """Handle an RX gate operation."""
-        kernel.rx(*gate.parameter_values, qubit)
+        kernel.rx(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_RY(kernel: cudaq.Kernel, gate: RY, qubit: cudaq.QuakeValue) -> None:
         """Handle an RY gate operation."""
-        kernel.ry(*gate.parameter_values, qubit)
+        kernel.ry(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_RZ(kernel: cudaq.Kernel, gate: RZ, qubit: cudaq.QuakeValue) -> None:
         """Handle an RZ gate operation."""
-        kernel.rz(*gate.parameter_values, qubit)
+        kernel.rz(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_U1(kernel: cudaq.Kernel, gate: U1, qubit: cudaq.QuakeValue) -> None:

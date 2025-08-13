@@ -381,17 +381,17 @@ class QutipBackend(Backend):
     @staticmethod
     def _handle_RX(circuit: QubitCircuit, gate: RX, qubit: int) -> None:
         """Handle an RX gate operation."""
-        circuit.add_gate(q_RX(targets=[qubit], arg_value=gate.parameter_values[0]))
+        circuit.add_gate(q_RX(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _handle_RY(circuit: QubitCircuit, gate: RY, qubit: int) -> None:
         """Handle an RY gate operation."""
-        circuit.add_gate(q_RY(targets=[qubit], arg_value=gate.parameter_values[0]))
+        circuit.add_gate(q_RY(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _handle_RZ(circuit: QubitCircuit, gate: RZ, qubit: int) -> None:
         """Handle an RZ gate operation."""
-        circuit.add_gate(q_RZ(targets=[qubit], arg_value=gate.parameter_values[0]))
+        circuit.add_gate(q_RZ(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _qutip_U1(phi: float) -> Qobj:

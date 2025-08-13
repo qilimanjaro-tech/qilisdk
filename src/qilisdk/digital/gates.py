@@ -104,36 +104,6 @@ class Gate(ABC):
         return len(self.qubits)
 
     @property
-    def parameters(self) -> dict[str, Parameter]:
-        """
-        Retrieve a mapping of parameter names to their corresponding values.
-
-        Returns:
-            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
-        """
-        return {}
-
-    @property
-    def parameter_names(self) -> list[str]:
-        """
-        Retrieve the symbolic names of the gate's parameters.
-
-        Returns:
-            list[str]: A list containing the names of the parameters.
-        """
-        return list(self.parameters)
-
-    @property
-    def parameter_values(self) -> list[float]:
-        """
-        Retrieve the numerical values assigned to the gate's parameters.
-
-        Returns:
-            list[float]: A list containing the parameter values.
-        """
-        return [p.value for p in self.parameters.values()]
-
-    @property
     def nparameters(self) -> int:
         """
         Retrieve the number of parameters for the gate.
@@ -141,7 +111,7 @@ class Gate(ABC):
         Returns:
             int: The count of parameters needed by the gate.
         """
-        return len(self.parameters)
+        return len(self.get_parameters())
 
     @property
     def is_parameterized(self) -> bool:
@@ -152,6 +122,42 @@ class Gate(ABC):
             bool: True if the gate is parameterized; otherwise, False.
         """
         return self.nparameters != 0
+
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        """Returns the raw parameter objects stored in the gate.
+
+        Returns:
+            dict[str, Parameter]: A dictionary mapping each Parameter object to its label.
+        """
+        return {}
+
+    def get_parameters(self) -> dict[str, float]:  # noqa: PLR6301
+        """
+        Retrieve a mapping of parameter names to their corresponding values.
+
+        Returns:
+            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
+        """
+        return {}
+
+    def get_parameter_names(self) -> list[str]:
+        """
+        Retrieve the symbolic names of the gate's parameters.
+
+        Returns:
+            list[str]: A list containing the names of the parameters.
+        """
+        return list(self.get_parameters())
+
+    def get_parameter_values(self) -> list[float]:
+        """
+        Retrieve the numerical values assigned to the gate's parameters.
+
+        Returns:
+            list[float]: A list containing the parameter values.
+        """
+        return list(self.get_parameters().values())
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -167,7 +173,7 @@ class Gate(ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if any(name not in self.parameters for name in parameters):
+        if any(name not in self.get_parameters() for name in parameters):
             raise InvalidParameterNameError
 
     def set_parameter_values(self, values: list[float]) -> None:
@@ -184,7 +190,7 @@ class Gate(ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if len(values) != len(self.parameters):
+        if len(values) != len(self.get_parameters()):
             raise ParametersNotEqualError
 
     def __repr__(self) -> str:
@@ -217,7 +223,10 @@ class BasicGate(Gate):
 
     @property
     def parameters(self) -> dict[str, Parameter]:
-        return dict(self._parameters)
+        return self._parameters
+
+    def get_parameters(self) -> dict[str, float]:
+        return {k: v.value for k, v in self._parameters.items()}
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -228,7 +237,7 @@ class BasicGate(Gate):
     def set_parameter_values(self, values: list[float]) -> None:
         super().set_parameter_values(values=values)
 
-        for key, value in zip(self.parameters, values):
+        for key, value in zip(self.get_parameters(), values):
             self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
@@ -297,24 +306,21 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate.target_qubits
 
     @property
-    def parameters(self) -> dict[str, Parameter]:
-        return self._basic_gate.parameters
-
-    @property
-    def parameter_names(self) -> list[str]:
-        return self._basic_gate.parameter_names
-
-    @property
-    def parameter_values(self) -> list[float]:
-        return self._basic_gate.parameter_values
-
-    @property
     def nparameters(self) -> int:
         return self._basic_gate.nparameters
 
     @property
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
+
+    def get_parameters(self) -> dict[str, float]:
+        return self._basic_gate.get_parameters()
+
+    def get_parameter_names(self) -> list[str]:
+        return self._basic_gate.get_parameter_names()
+
+    def get_parameter_values(self) -> list[float]:
+        return self._basic_gate.get_parameter_values()
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
@@ -682,7 +688,7 @@ class RX(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"].value
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta
@@ -728,7 +734,7 @@ class RY(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"].value
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta
@@ -782,7 +788,7 @@ class RZ(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"].value
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
@@ -833,7 +839,7 @@ class U1(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"].value
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
@@ -889,11 +895,11 @@ class U2(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"].value
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
-        return self.parameters["gamma"].value
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
@@ -961,15 +967,15 @@ class U3(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"].value
+        return self.get_parameters()["theta"]
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"].value
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
-        return self.parameters["gamma"].value
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta

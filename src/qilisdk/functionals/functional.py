@@ -47,10 +47,18 @@ class Functional(Protocol[TResult]):
 
     @abstractmethod
     def get_parameter_names(self) -> List[str]:
+        """Gets the names of the parameters of the functional.
+
+        Returns:
+            list[str]: a list of parameter names.
+        """
+
+    @abstractmethod
+    def get_parameter_values(self) -> List[Number]:
         """Gets the values of the parameters of the functional.
 
         Returns:
-            dict[str, Number]: a dictionary with the parameter label and its current value.
+            list[Number]: a list of parameter values.
         """
 
     @abstractmethod

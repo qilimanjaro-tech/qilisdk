@@ -75,6 +75,15 @@ class Circuit:
         """
         return [param.value for param in self._parameters.values()]
 
+    def get_parameter_names(self) -> list[str]:
+        """
+        Retrieve the parameter values from all parameterized gates in the circuit.
+
+        Returns:
+            list[float]: A list of parameter values from each parameterized gate.
+        """
+        return list(self._parameters.keys())
+
     def get_parameters(self) -> dict[str, float]:
         """
         Retrieve the parameter names and values from all parameterized gates in the circuit.
@@ -128,7 +137,7 @@ class Circuit:
             raise QubitOutOfRangeError
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
-            for p in gate.parameter_names:
+            for p in gate.get_parameter_names():
                 parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
                 self._parameters[parameter_label] = gate.parameters[p]
         self._gates.append(gate)

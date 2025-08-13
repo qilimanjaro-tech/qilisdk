@@ -70,7 +70,7 @@ def to_qasm2(circuit: Circuit) -> str:
             # Format parameter string, if any.
             param_str = ""
             if gate.is_parameterized:
-                parameters = ", ".join(str(p) for p in gate.parameter_values)
+                parameters = ", ".join(str(p) for p in gate.get_parameter_values())
                 param_str = f"({parameters})"
             # Format qubit operands.
             qubit_str = ", ".join(f"q[{q}]" for q in gate.qubits)
