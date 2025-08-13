@@ -1,4 +1,3 @@
-from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -6,7 +5,7 @@ import pytest
 
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
-from qilisdk.common.model import Constraint, Model, Objective
+from qilisdk.common.model import Model
 from qilisdk.common.variables import BinaryVariable
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit

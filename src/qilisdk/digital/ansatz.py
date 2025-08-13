@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
-from typing import Any, Literal, Type, Union
+from typing import Any, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, M
