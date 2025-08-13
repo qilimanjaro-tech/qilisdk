@@ -385,7 +385,7 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return job.id
 
-    def _submit_parameterized_program(
+    def submit_parameterized_program(
         self,
         parameterized_program: ParameterizedProgram,
         optimizer: Optimizer,
