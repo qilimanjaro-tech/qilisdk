@@ -388,8 +388,6 @@ class SpeQtrum:
     def submit_parameterized_program(
         self,
         parameterized_program: ParameterizedProgram,
-        optimizer: Optimizer,
-        nshots: int = 1000,
         store_intermediate_results: bool = False,
     ) -> int:
         """Run a Variational Quantum Eigensolver on the selected device.
@@ -411,8 +409,6 @@ class SpeQtrum:
             type=ExecuteType.PARAMETERIZED_PROGRAM,
             parameterized_program_payload=ParameterizedProgramPayload(
                 parameterized_program=parameterized_program,
-                optimizer=optimizer,
-                nshots=nshots,
                 store_intermediate_results=store_intermediate_results,
             ),
         )

@@ -117,8 +117,6 @@ class TimeEvolutionPayload(SpeQtrumModel):
 
 class ParameterizedProgramPayload(SpeQtrumModel):
     parameterized_program: ParameterizedProgram = Field(...)
-    optimizer: Optimizer = Field(...)
-    nshots: int = Field(...)
     store_intermediate_results: bool = Field(...)
 
     @field_serializer("parameterized_program")
