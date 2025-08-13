@@ -64,7 +64,7 @@ class QuantumObject:
         if isinstance(data, np.ndarray):
             self._data = csc_matrix(data)
         elif issparse(data):
-            self._data = data.tocsr()
+            self._data = data.tocsc()
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
 
