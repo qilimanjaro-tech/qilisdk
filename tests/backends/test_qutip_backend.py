@@ -238,7 +238,7 @@ def dummy_optimizer():
 
 def test_parameterized_program_properties_assignment(dummy_optimizer):
     """
-    Test that the VQE instance correctly stores its initial properties.
+    Test that the parameterized_program instance correctly stores its initial properties.
 
     Verifies that the ansatz, initial parameters, and cost function are assigned properly.
     """
@@ -246,11 +246,11 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     ansatz = HardwareEfficientAnsatz(2)
     circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
 
-    vqe = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
-    assert isinstance(vqe.functional, Sampling)
-    assert vqe.functional.circuit == circuit
-    assert vqe.optimizer == dummy_optimizer
-    assert vqe.cost_model == mock_instance
+    parameterized_program = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    assert isinstance(parameterized_program.functional, Sampling)
+    assert parameterized_program.functional.circuit == circuit
+    assert parameterized_program.optimizer == dummy_optimizer
+    assert parameterized_program.cost_model == mock_instance
 
 
 def test_obtain_cost_calls_backend(dummy_optimizer):
@@ -279,10 +279,10 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     ansatz = HardwareEfficientAnsatz(2)
     circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
 
-    vqe = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    parameterized_program = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
     # Call obtain_cost with a custom number of shots.
     backend = QutipBackend()
-    output = backend.optimize(vqe)
+    output = backend.optimize(parameterized_program)
 
     # The dummy_cost_function returns 0.7 regardless of input.
     assert output.optimal_cost == 0.2

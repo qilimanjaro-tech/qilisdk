@@ -17,7 +17,8 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.digital.vqe import VQE, VQEResult
+from qilisdk.functionals.parameterized_program import ParameterizedProgram
+from qilisdk.functionals.parameterized_program_results import ParameterizedProgramResults
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -83,7 +84,7 @@ class Device(SpeQtrumModel):
 class ExecuteType(str, Enum):
     SAMPLING = "sampling"
     TIME_EVOLUTION = "time_evolution"
-    VQE = "vqe"
+    PARAMETERIZED_PROGRAM = "parameterized_program"
 
 
 class SamplingPayload(SpeQtrumModel):
@@ -114,20 +115,20 @@ class TimeEvolutionPayload(SpeQtrumModel):
         return v
 
 
-class VQEPayload(SpeQtrumModel):
-    vqe: VQE = Field(...)
+class ParameterizedProgramPayload(SpeQtrumModel):
+    parameterized_program: ParameterizedProgram = Field(...)
     optimizer: Optimizer = Field(...)
     nshots: int = Field(...)
     store_intermediate_results: bool = Field(...)
 
-    @field_serializer("vqe")
-    def _serialize_vqe(self, vqe: VQE, _info):
-        return serialize(vqe)
+    @field_serializer("parameterized_program")
+    def _serialize_parameterized_program(self, parameterized_program: ParameterizedProgram, _info):
+        return serialize(parameterized_program)
 
-    @field_validator("vqe", mode="before")
-    def _load_vqe(cls, v):
+    @field_validator("parameterized_program", mode="before")
+    def _load_parameterized_program(cls, v):
         if isinstance(v, str):
-            return deserialize(v, VQE)
+            return deserialize(v, ParameterizedProgram)
         return v
 
     @field_serializer("optimizer")
@@ -145,14 +146,14 @@ class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_payload: SamplingPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
-    vqe_payload: VQEPayload | None = None
+    parameterized_program_payload: ParameterizedProgramPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
-    vqe_result: VQEResult | None = None
+    parameterized_program_result: ParameterizedProgramResults | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -174,14 +175,14 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, TimeEvolutionResult)
         return v
 
-    @field_serializer("vqe_result")
-    def _serialize_vqe_result(self, vqe_result: VQEResult, _info):
-        return serialize(vqe_result) if vqe_result is not None else None
+    @field_serializer("parameterized_program_result")
+    def _serialize_parameterized_program_result(self, parameterized_program_result: ParameterizedProgramResults, _info):
+        return serialize(parameterized_program_result) if parameterized_program_result is not None else None
 
-    @field_validator("vqe_result", mode="before")
-    def _load_vqe_result(cls, v):
+    @field_validator("parameterized_program_result", mode="before")
+    def _load_parameterized_program_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, VQEResult)
+            return deserialize(v, ParameterizedProgramResults)
         return v
 
 

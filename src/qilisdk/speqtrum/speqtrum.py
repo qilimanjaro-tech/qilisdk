@@ -38,15 +38,15 @@ from .speqtrum_models import (
     JobId,
     JobInfo,
     JobStatus,
+    ParameterizedProgramPayload,
     SamplingPayload,
     TimeEvolutionPayload,
     Token,
-    VQEPayload,
 )
 
 if TYPE_CHECKING:
-    from qilisdk.digital.vqe import VQE
     from qilisdk.functionals.functional import Functional
+    from qilisdk.functionals.parameterized_program import ParameterizedProgram
     from qilisdk.optimizers.optimizer import Optimizer
 
 TResult = TypeVar("TResult", bound=Result)
@@ -385,13 +385,17 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return job.id
 
-    def submit_vqe(
-        self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
+    def _submit_parameterized_program(
+        self,
+        parameterized_program: ParameterizedProgram,
+        optimizer: Optimizer,
+        nshots: int = 1000,
+        store_intermediate_results: bool = False,
     ) -> int:
         """Run a Variational Quantum Eigensolver on the selected device.
 
         Args:
-            vqe: Problem definition containing Hamiltonian and ansatz.
+            parameterized_program: Problem definition containing Hamiltonian and ansatz.
             optimizer: Classical optimizer that updates the variational
                 parameters between circuit evaluations.
             nshots: Number of shots per circuit evaluation. Defaults to
@@ -404,9 +408,12 @@ class SpeQtrum:
         """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecuteType.VQE,
-            vqe_payload=VQEPayload(
-                vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
+            type=ExecuteType.PARAMETERIZED_PROGRAM,
+            parameterized_program_payload=ParameterizedProgramPayload(
+                parameterized_program=parameterized_program,
+                optimizer=optimizer,
+                nshots=nshots,
+                store_intermediate_results=store_intermediate_results,
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
