@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .circuit_renderers import CircuitStyle, Theme, dark, light
+from .circuit_renderers import CircuitStyle
+from .themes import Theme, dark, light
 
 __all__ = [
     "CircuitStyle",

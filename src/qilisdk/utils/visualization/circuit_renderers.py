@@ -22,52 +22,16 @@ import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from qilisdk.digital.gates import Controlled, Gate, M, X
+
+from .themes import Theme, light
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from qilisdk.digital import Circuit
-
-WHITE: Final[str] = "#FFFFFF"
-BLACK: Final[str] = "#000000"
-LIGHT_GRAY: Final[str] = "#F0F0F0"
-VIOLET: Final[str] = "#5E56A1"
-MAGENTA: Final[str] = "#AC115F"
-
-
-class Theme(BaseModel):
-    """Colour Theme."""
-
-    model_config = ConfigDict(frozen=True)
-
-    background: str = Field(description="Figure background colour.")
-    foreground: str = Field(description="Primary text colour.")
-    wire_color: str = Field(description="Colour of inactive wires.")
-    gate_color: str = Field(description="Default gate fill colour.")
-    plus_color: str = Field(description="Colour of ⊕ and control dots.")
-    measure_color: str = Field(description="Colour of the measurement symbol.")
-
-
-light = Theme(
-    background=WHITE,
-    foreground=BLACK,
-    wire_color=LIGHT_GRAY,
-    gate_color=VIOLET,
-    plus_color=MAGENTA,
-    measure_color=BLACK,
-)
-
-dark = Theme(
-    background=BLACK,
-    foreground=WHITE,
-    wire_color=LIGHT_GRAY,
-    gate_color=MAGENTA,
-    plus_color=VIOLET,
-    measure_color=WHITE,
-)
 
 
 _DEFAULT_FONT_PATH = Path(__file__).parent / "PlusJakartaSans-SemiBold.ttf"
@@ -141,28 +105,6 @@ class CircuitStyle(BaseModel):
             fname=self.fontfname,
             math_fontfamily=self.math_fontfamily,
         )
-
-    @property
-    def measure_color(self) -> str:
-        """Colour of measurement symbol - high contrast vs background."""
-        # pick black/white for best contrast against the *background*
-        return self.theme.measure_color
-
-    @property
-    def bgcolor(self) -> str:
-        return self.theme.background
-
-    @property
-    def color(self) -> str:
-        return self.theme.foreground
-
-    @property
-    def wire_color(self) -> str:
-        return self.theme.wire_color
-
-    @property
-    def default_gate_color(self) -> str:
-        return self.theme.gate_color
 
 
 ###############################################################################
@@ -418,7 +360,7 @@ class MatplotlibCircuitRenderer:
         height = abs(y_b - y_a) + self.style.min_gate_h
         y_center = (y_a + y_b) / 2.0
 
-        gate_color = color or self.style.default_gate_color
+        gate_color = color or self.style.theme.primary
 
         # Box
         self.axes.add_patch(
@@ -440,7 +382,7 @@ class MatplotlibCircuitRenderer:
             label,
             ha="center",
             va="center",
-            color=self.style.bgcolor,
+            color=self.style.theme.on_primary,
             fontproperties=self.style.font,
             zorder=self._Z["gate_label"],
         )
@@ -453,7 +395,7 @@ class MatplotlibCircuitRenderer:
                     Circle(
                         (x + self.style.connector_r, y_t),
                         self.style.connector_r,
-                        color=self.style.bgcolor,
+                        color=self.style.theme.background,
                         zorder=self._Z["connector"],
                     )
                 )
@@ -461,7 +403,7 @@ class MatplotlibCircuitRenderer:
                     Circle(
                         (x + width - self.style.connector_r, y_t),
                         self.style.connector_r,
-                        color=self.style.bgcolor,
+                        color=self.style.theme.background,
                         zorder=self._Z["connector"],
                     )
                 )
@@ -477,9 +419,7 @@ class MatplotlibCircuitRenderer:
             x: Column anchor x coordinate.
         """
         y = self._ypos(wire, n_qubits=self._wires, sep=self.style.wire_sep)
-        self.axes.add_patch(
-            Circle((x, y), self.style.control_r, color=self.style.theme.plus_color, zorder=self._Z["node"])
-        )
+        self.axes.add_patch(Circle((x, y), self.style.control_r, color=self.style.theme.accent, zorder=self._Z["node"]))
 
     def _draw_plus_sign(self, wire: int, x: float) -> None:
         """
@@ -490,15 +430,13 @@ class MatplotlibCircuitRenderer:
             x: Column anchor x coordinate.
         """
         y = self._ypos(wire, n_qubits=self._wires, sep=self.style.wire_sep)
-        self.axes.add_patch(
-            Circle((x, y), self.style.target_r, color=self.style.theme.plus_color, zorder=self._Z["node"])
-        )
+        self.axes.add_patch(Circle((x, y), self.style.target_r, color=self.style.theme.accent, zorder=self._Z["node"]))
         self.axes.add_line(
             plt.Line2D(
                 (x, x),
                 (y - self.style.target_r / 2, y + self.style.target_r / 2),
                 lw=1.5,
-                color=self.style.bgcolor,
+                color=self.style.theme.background,
                 zorder=self._Z["gate_label"],
             )
         )
@@ -507,7 +445,7 @@ class MatplotlibCircuitRenderer:
                 (x - self.style.target_r / 2, x + self.style.target_r / 2),
                 (y, y),
                 lw=1.5,
-                color=self.style.bgcolor,
+                color=self.style.theme.background,
                 zorder=self._Z["gate_label"],
             )
         )
@@ -525,7 +463,7 @@ class MatplotlibCircuitRenderer:
             self._ypos(wire_a, n_qubits=self._wires, sep=self.style.wire_sep),
             self._ypos(wire_b, n_qubits=self._wires, sep=self.style.wire_sep),
         )
-        self.axes.add_line(plt.Line2D([x, x], [y1, y2], color=self.style.theme.plus_color, zorder=self._Z["bridge"]))
+        self.axes.add_line(plt.Line2D([x, x], [y1, y2], color=self.style.theme.accent, zorder=self._Z["bridge"]))
 
     def _draw_swap_mark(self, wire: int, x: float) -> None:
         """
@@ -537,7 +475,7 @@ class MatplotlibCircuitRenderer:
         """
         y = self._ypos(wire, n_qubits=self._wires, sep=self.style.wire_sep)
         offset = self.style.min_gate_w / 3
-        color = self.style.theme.plus_color
+        color = self.style.theme.accent
         for xs, ys in (
             ([x + offset, x - offset], [y + self.style.min_gate_h / 4, y - self.style.min_gate_h / 4]),
             ([x - offset, x + offset], [y + self.style.min_gate_h / 4, y - self.style.min_gate_h / 4]),
@@ -616,7 +554,7 @@ class MatplotlibCircuitRenderer:
         # Generic controlled gate: draw the target box at this same column,
         # then widen control wires for that layer and add stems to the center.
         label = getattr(gate.basic_gate, "name", self._gate_label(gate))
-        gate_color = self.style.theme.plus_color  # distinguish controlled blocks
+        gate_color = self.style.theme.accent  # distinguish controlled blocks
         x_box, layer_box, width = self._draw_targets_gate(
             label=label, targets=targets, x=x, layer=layer, color=gate_color
         )
@@ -675,8 +613,8 @@ class MatplotlibCircuitRenderer:
                 self.style.min_gate_h,
                 boxstyle=self.style.bulge,
                 mutation_scale=0.3,
-                facecolor=self.style.bgcolor,
-                edgecolor=self.style.measure_color,
+                facecolor=self.style.theme.background,
+                edgecolor=self.style.theme.on_background,
                 linewidth=1.25,
                 zorder=self._Z["gate"],
             )
@@ -689,7 +627,7 @@ class MatplotlibCircuitRenderer:
                 theta1=0,
                 theta2=180,
                 linewidth=1.25,
-                color=self.style.measure_color,
+                color=self.style.theme.on_background,
                 zorder=self._Z["gate_label"],
             )
         )
@@ -701,7 +639,7 @@ class MatplotlibCircuitRenderer:
                 dy=self.style.min_gate_h * 0.7,
                 length_includes_head=True,
                 width=0,
-                color=self.style.measure_color,
+                color=self.style.theme.on_background,
                 linewidth=1.25,
                 zorder=self._Z["gate_label"],
             )
@@ -725,7 +663,7 @@ class MatplotlibCircuitRenderer:
             if q not in self._end_measure_qubits:
                 x_end += ext
             self.axes.add_line(
-                plt.Line2D([0, x_end], [y, y], lw=1, color=self.style.wire_color, zorder=self._Z["wire"])
+                plt.Line2D([0, x_end], [y, y], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"])
             )
 
     def _draw_wire_labels(self) -> None:
@@ -743,14 +681,14 @@ class MatplotlibCircuitRenderer:
                 ha="right",
                 va="center",
                 fontproperties=self.style.font,
-                color=self.style.color,
+                color=self.style.theme.on_background,
                 zorder=self._Z["wire_label"],
             )
 
     def _finalise_figure(self) -> None:
         """Finalize axes limits, aspect, background, and title."""
         fig = self.axes.figure
-        fig.set_facecolor(self.style.bgcolor)
+        fig.set_facecolor(self.style.theme.background)
 
         longest_wire = max(sum(w) for w in self._layer_widths.values())
         x_end = self.style.padding + longest_wire + self.style.end_wire_ext * self.style.layer_sep
@@ -766,7 +704,10 @@ class MatplotlibCircuitRenderer:
 
         if self.style.title:
             self.axes.set_title(
-                self.style.title, pad=10, color=self.style.wire_color, fontdict={"fontsize": self.style.fontsize}
+                self.style.title,
+                pad=10,
+                color=self.style.theme.surface_muted,
+                fontdict={"fontsize": self.style.fontsize},
             )
 
         # In IPython keep figure square so equal aspect ratio does not shrink
@@ -814,6 +755,14 @@ class MatplotlibCircuitRenderer:
         return f"{value:.2f}"
 
     @staticmethod
+    def _with_superscript_dagger(label: str) -> str:
+        # Convert trailing dagger to math superscript, e.g. "RX†" -> r"$\mathrm{RX}^{\dagger}$"
+        if label.endswith("†"):
+            base = label[:-1]
+            return rf"$\mathrm{{{base}}}^{{\dagger}}$"
+        return label
+
+    @staticmethod
     def _gate_label(gate: Gate) -> str:
         """Build a display label for a (possibly parameterized) gate.
 
@@ -823,9 +772,10 @@ class MatplotlibCircuitRenderer:
         Returns:
             Label text. Parameterized gates get ``name ( $args$ )``.
         """
+        name = MatplotlibCircuitRenderer._with_superscript_dagger(gate.name)
         if gate.is_parameterized and gate.parameter_values:
             parameters = ", ".join(MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.parameter_values)
-            return rf"{gate.name} (${parameters}$)"
+            return rf"{name} (${parameters}$)"
         return gate.name
 
     @staticmethod
