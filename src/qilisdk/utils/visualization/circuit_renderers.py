@@ -553,8 +553,8 @@ class MatplotlibCircuitRenderer:
 
         # Generic controlled gate: draw the target box at this same column,
         # then widen control wires for that layer and add stems to the center.
-        label = getattr(gate.basic_gate, "name", self._gate_label(gate))
-        gate_color = self.style.theme.accent  # distinguish controlled blocks
+        label = self._gate_label(gate.basic_gate)
+        gate_color = self.style.theme.accent
         x_box, layer_box, width = self._draw_targets_gate(
             label=label, targets=targets, x=x, layer=layer, color=gate_color
         )
