@@ -12,28 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .ansatz import HardwareEfficientAnsatz
-from .circuit import Circuit
-from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
+from .circuit_renderers import CircuitStyle
+from .themes import Theme, dark, light
 
 __all__ = [
-    "CNOT",
-    "CZ",
-    "RX",
-    "RY",
-    "RZ",
-    "SWAP",
-    "U1",
-    "U2",
-    "U3",
-    "Circuit",
-    "Gate",
-    "H",
-    "HardwareEfficientAnsatz",
-    "M",
-    "S",
-    "T",
-    "X",
-    "Y",
-    "Z",
+    "CircuitStyle",
+    "Theme",
+    "dark",
+    "light",
 ]

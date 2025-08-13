@@ -13,6 +13,7 @@
 # limitations under the License.
 import numpy as np
 
+from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
@@ -104,3 +105,24 @@ class Circuit:
         if gate.is_parameterized:
             self._parameterized_gates.append(gate)
         self._gates.append(gate)
+
+    def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:
+        """
+        Render this circuit with Matplotlib and optionally save it to a file.
+
+        The circuit is rendered using the provided style configuration. If ``filepath`` is
+        given, the resulting figure is saved to disk (the output format is inferred
+        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).
+
+        Args:
+            style (CircuitStyle): Visual style configuration applied to the plot.
+                If not provided, the default :class:`CircuitStyle` is used.
+            filepath (str | None): Destination file path for the rendered figure.
+                If ``None``, the figure is not saved.
+        """
+        from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer  # noqa: PLC0415
+
+        renderer = MatplotlibCircuitRenderer(self, style=style)
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
