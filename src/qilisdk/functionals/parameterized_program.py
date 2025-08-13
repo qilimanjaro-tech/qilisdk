@@ -15,8 +15,10 @@
 from qilisdk.common.model import Model
 from qilisdk.functionals.functional import Functional
 from qilisdk.optimizers.optimizer import Optimizer
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class ParameterizedProgram:
     def __init__(self, functional: Functional, optimizer: Optimizer, cost_model: Model) -> None:
         """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized

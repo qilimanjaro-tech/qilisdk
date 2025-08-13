@@ -18,10 +18,12 @@ from typing import Generic, TypeVar
 
 from qilisdk.common.result import Result
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
+from qilisdk.yaml import yaml
 
 TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
 
 
+@yaml.register_class
 class ParameterizedProgramResults(Generic[TResult_co]):
     """
     Represents the result of a Parameterized Program calculation.
@@ -86,7 +88,7 @@ class ParameterizedProgramResults(Generic[TResult_co]):
 
     def __repr__(self) -> str:
         """
-        Return a string representation of the VQEResult for debugging.
+        Return a string representation of the Parameterized Program Results for debugging.
 
         Returns:
             str: A formatted string detailing the optimal cost and parameters.

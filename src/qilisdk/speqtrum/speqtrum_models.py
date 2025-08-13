@@ -23,7 +23,6 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -127,16 +126,6 @@ class ParameterizedProgramPayload(SpeQtrumModel):
     def _load_parameterized_program(cls, v):
         if isinstance(v, str):
             return deserialize(v, ParameterizedProgram)
-        return v
-
-    @field_serializer("optimizer")
-    def _serialize_optimizer(self, optimizer: Optimizer, _info):
-        return serialize(optimizer)
-
-    @field_validator("optimizer", mode="before")
-    def _load_optimizer(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, Optimizer)
         return v
 
 

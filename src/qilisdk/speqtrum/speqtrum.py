@@ -47,7 +47,6 @@ from .speqtrum_models import (
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional
     from qilisdk.functionals.parameterized_program import ParameterizedProgram
-    from qilisdk.optimizers.optimizer import Optimizer
 
 TResult = TypeVar("TResult", bound=Result)
 
