@@ -40,7 +40,7 @@ Use these constructors to apply standard single- and two-qubit operations:
 - ``U2(qubit: int, *, phi: float, gamma: float)``  
   π/2 Y-rotation sandwiched by Z-rotations.  
 - ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``  
-  General single-qubit unitary: RZ–RY–RZ decomposition.  
+  General single-qubit unitary: RZ-RY-RZ decomposition.  
 - ``CNOT(control: int, target: int)``  
   Controlled-X: flips target if control is |1⟩.  
 - ``CZ(control: int, target: int)``  
@@ -135,6 +135,80 @@ To update parameter values:
 .. warning::
 
     The order of parameters in the list passed to ``set_parameter_values`` must match the order in which the gates were added to the circuit.
+
+Visualization
+-------------
+
+Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matplotlib. By default, the renderer applies the library's built-in styling (including the bundled default font if available). You can **bypass all defaults** by passing a custom :class:`~qilisdk.utils.visualization.CircuitStyle`, which confines styling to the specific call without modifying global Matplotlib settings.
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, H, CNOT
+
+    circuit = Circuit(num_qubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 2))
+
+    # Render in a window
+    circuit.draw()
+
+Saving to a file
+^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Save as SVG (use .png, .pdf, etc. as needed)
+    circuit.draw(filepath="my_circuit.svg")
+
+Custom styling with :class:`~qilisdk.utils.visualization.CircuitStyle`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to ``draw`` overrides the library defaults for this call.
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, H, CNOT
+    from qilisdk.utils.visualization import CircuitStyle, light, dark
+
+    circuit = Circuit(3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 2))
+
+    # Example 1: dark theme, larger text, higher DPI
+    style_dark = CircuitStyle(
+        theme=dark,
+        dpi=200,
+        fontsize=12,
+        title="Teleportation (fragment)",
+    )
+    circuit.draw(style=style_dark)
+
+    # Example 2: use a system font family and bypass the bundled font
+    style_font = CircuitStyle(
+        theme=light,
+        fontfname=None,                         # do not force a specific TTF file
+        fontfamily=["DejaVu Sans", "Arial"],    # fallback list
+        fontsize=11,
+    )
+    circuit.draw(style=style_font, filepath="circuit_custom_font.png")
+
+    # Example 3: adjust layout spacing
+    compact = CircuitStyle(
+        theme=dark,
+        wire_sep=0.45,      # vertical distance between wires (inches)
+        layer_sep=0.45,     # horizontal distance between layers (inches)
+        gate_margin=0.10,   # side margin inside each layer cell (inches)
+        label_pad=0.08,     # left padding for wire labels (inches)
+        title="Compact layout",
+    )
+    circuit.draw(style=compact)
+
+.. note::
+
+    ``CircuitStyle`` fields map directly to the renderer's layout and font configuration. In particular, you can switch fonts in two ways:
+    (1) provide a specific font file via ``fontfname="/path/to/MyFont.ttf"``; or
+    (2) set ``fontfname=None`` and choose a family list with ``fontfamily=[...]`` to use system-resolved fonts. Both approaches only affect the current draw call.
+
 
 Ansatz
 ------

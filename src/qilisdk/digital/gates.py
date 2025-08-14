@@ -1039,3 +1039,35 @@ class CZ(Controlled[Z]):
 
     def __init__(self, control: int, target: int) -> None:
         super().__init__(control, basic_gate=Z(target))
+
+
+@yaml.register_class
+class SWAP(BasicGate):
+    """
+    The SWAP gate.
+
+    The associated matrix is:
+
+    .. code-block:: text
+
+       [[1, 0, 0, 1],
+        [0, 0, 1, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1]]
+
+    """
+
+    def __init__(self, qubit_a: int, qubit_b: int) -> None:
+        """
+        Args:
+            qubit_a (int): First qubit to swap with.
+            qubit_b (int): Second qubit to swap with.
+        """
+        super().__init__(target_qubits=(qubit_a, qubit_b))
+
+    @property
+    def name(self) -> str:
+        return "SWAP"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[1, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)

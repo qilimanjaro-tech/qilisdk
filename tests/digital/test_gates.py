@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 
@@ -71,7 +71,7 @@ def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_m
     assert gate.control_qubits == ()
 
     # Check the matrix
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ def test_rx_gate(angle: float):
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
     expected_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
@@ -135,7 +135,7 @@ def test_ry_gate(angle: float):
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
     expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 @pytest.mark.parametrize("angle", [0.0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
@@ -152,7 +152,7 @@ def test_rz_gate(angle: float):
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
     expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ def test_u1_gate(angle: float):
     assert gate.nparameters == 1
 
     expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -211,7 +211,7 @@ def test_u2_gate(phi, gamma):
     d = np.exp(1j * (phi + gamma))
 
     expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ def test_u3_gate(theta, phi, gamma):
 
     expected_matrix = np.array([[a, b], [c, d]], dtype=complex)
 
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ def test_cnot_gate(control: int, target: int):
 
     # Check matrix
     expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
@@ -342,7 +342,44 @@ def test_cz_gate(control, target):
     # Check matrix
     # This is as coded, though it's unusual for a CZ gate:
     expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex)
-    assert_matrix_equal(gate._matrix, expected_matrix)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+# ------------------------------------------------------------------------------
+# SWAP Gate Tests
+# ------------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    ("qubit_a", "qubit_b"),
+    [
+        (0, 1),
+        (1, 0),
+        (2, 3),
+        (4, 7),
+    ],
+)
+def test_swap_gate(qubit_a, qubit_b):
+    """
+    Basic tests for the 2-qubit SWAP gate.
+      [[1, 0, 0, 0],
+       [0, 0, 1, 0],
+       [0, 1, 0, 0],
+       [0, 0, 0, 1]]
+    """
+    gate = SWAP(qubit_a, qubit_b)
+
+    assert gate.name == "SWAP"
+    assert gate.nqubits == 2
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
+
+    # Check qubits
+    assert gate.control_qubits == ()
+    assert gate.target_qubits == (qubit_a, qubit_b)
+    assert gate.qubits == (qubit_a, qubit_b)
+
+    # Check matrix
+    expected_matrix = np.array([[1, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 
 # ------------------------------------------------------------------------------
