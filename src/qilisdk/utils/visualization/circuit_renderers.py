@@ -773,8 +773,10 @@ class MatplotlibCircuitRenderer:
             Label text. Parameterized gates get ``name ( $args$ )``.
         """
         name = MatplotlibCircuitRenderer._with_superscript_dagger(gate.name)
-        if gate.is_parameterized and gate.parameter_values:
-            parameters = ", ".join(MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.parameter_values)
+        if gate.is_parameterized and gate.get_parameter_values():
+            parameters = ", ".join(
+                MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.get_parameter_values()
+            )
             return rf"{name} (${parameters}$)"
         return gate.name
 
