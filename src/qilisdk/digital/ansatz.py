@@ -111,17 +111,20 @@ class HardwareEfficientAnsatz(Ansatz):
         """
         super().__init__(n_qubits, layers)
 
+        _structure = str(structure).lower()
+        _connectivity = connectivity if not isinstance(connectivity, str) else str(connectivity).lower()
+
         # Define chip topology
-        if isinstance(connectivity, list):
-            self.connectivity = connectivity
-        elif connectivity == "Full":
+        if isinstance(_connectivity, list):
+            self.connectivity = _connectivity
+        elif _connectivity == "full":
             self.connectivity = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
-        elif connectivity == "Circular":
+        elif _connectivity == "circular":
             self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
-        elif connectivity == "Linear":
+        elif _connectivity == "linear":
             self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)]
         else:
-            raise ValueError(f"Unrecognized connectivity type ({connectivity}).")
+            raise ValueError(f"Unrecognized connectivity type ({_connectivity}).")
 
         self.gate_types: dict[str, type[Gate]] = {
             "one_qubit_gate": one_qubit_gate,
@@ -130,9 +133,9 @@ class HardwareEfficientAnsatz(Ansatz):
         self.one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
         self.two_qubit_gate: type[CNOT | CZ] = two_qubit_gate
 
-        if structure not in {"grouped", "interposed"}:
-            raise ValueError(f"provided structure {structure} is not supported.")
-        self.structure = structure
+        if _structure not in {"grouped", "interposed"}:
+            raise ValueError(f"provided structure {_structure} is not supported.")
+        self.structure = _structure
 
         self.construct_layer_handlers = {
             "interposed": self._construct_layer_interposed,

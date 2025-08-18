@@ -15,25 +15,20 @@ from pprint import pformat
 
 import numpy as np
 
+from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
-from qilisdk.common.result import Result
+from qilisdk.common.result import FunctionalResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class TimeEvolutionResult(Result):
+class TimeEvolutionResult(FunctionalResult):
     """
     Encapsulates the outcome of a Time Evolution.
 
     This result class stores key outputs from the simulation, including the
     final expected measurement values, the complete time-evolution of expectation
     values (if available), the final quantum state, and any intermediate quantum states.
-
-    Attributes:
-        _final_expected_values (np.ndarray): The final expectation values measured at the end of the simulation.
-        _expected_values (np.ndarray): The time-series of expectation values recorded during the simulation.
-        _final_state (QuantumObject | None): The final quantum state resulting from the simulation.
-        _intermediate_states (list[QuantumObject] | None): A list of intermediate quantum states obtained during evolution.
     """
 
     def __init__(
@@ -112,3 +107,6 @@ class TimeEvolutionResult(Result):
             f"  intermediate_states={pformat(self.intermediate_states)}\n"
             ")"
         )
+
+    def compute_cost(self, cost_model: Model) -> float:
+        raise NotImplementedError

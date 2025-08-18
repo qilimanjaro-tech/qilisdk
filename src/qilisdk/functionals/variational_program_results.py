@@ -16,25 +16,17 @@
 from pprint import pformat
 from typing import Generic, TypeVar
 
-from qilisdk.common.result import Result
+from qilisdk.common.result import FunctionalResult, Result
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
 
-TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
+TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 @yaml.register_class
-class ParameterizedProgramResults(Generic[TResult_co]):
+class VariationalProgramResults(Result, Generic[TResult_co]):
     """
     Represents the result of a Parameterized Program calculation.
-
-    Attributes:
-        optimal_cost (float): The estimated ground state energy (optimal cost).
-        optimal_parameters (list[float]): The optimal parameters found during the optimization.
-        optimal_execution_results (TResult_co): The results of executing the Functional with the optimal parameters
-                                                found by the optimizer.
-        intermediate_results(list[OptimizerIntermediateResult]): A list of intermediate results stored during the
-                                                optimization process.
     """
 
     def __init__(self, optimizer_result: OptimizerResult, result: TResult_co) -> None:

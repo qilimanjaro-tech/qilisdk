@@ -15,11 +15,11 @@ from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
-from qilisdk.functionals.parameterized_program import ParameterizedProgram
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
@@ -246,7 +246,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     ansatz = HardwareEfficientAnsatz(2)
     circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
 
-    parameterized_program = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, mock_instance)
     assert isinstance(parameterized_program.functional, Sampling)
     assert parameterized_program.functional.circuit == circuit
     assert parameterized_program.optimizer == dummy_optimizer
@@ -279,14 +279,14 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     ansatz = HardwareEfficientAnsatz(2)
     circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
 
-    parameterized_program = ParameterizedProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, mock_instance)
     # Call obtain_cost with a custom number of shots.
     backend = QutipBackend()
-    output = backend.optimize(parameterized_program)
+    output = backend.execute(parameterized_program)
 
     # The dummy_cost_function returns 0.7 regardless of input.
     assert output.optimal_cost == 0.2
-    assert Sampling(circuit).compute_cost(output.optimal_execution_results, mock_instance) == 8.0
+    assert output.optimal_execution_results.compute_cost(mock_instance) == 8.0
 
 
 def test_real_example():
@@ -298,6 +298,6 @@ def test_real_example():
     cr = Circuit(1)
     cr.add(U1(0, phi=0.1))
 
-    output = backend.optimize(ParameterizedProgram(Sampling(cr), SciPyOptimizer(), model))
+    output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), model))
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}

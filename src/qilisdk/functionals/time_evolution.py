@@ -17,7 +17,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.common.variables import Number
-from qilisdk.functionals.functional import Functional
+from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 
@@ -25,7 +25,7 @@ Complex = int | float | complex
 
 
 @yaml.register_class
-class TimeEvolution(Functional[TimeEvolutionResult]):
+class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
     result_type = TimeEvolutionResult
 
     def __init__(
@@ -63,6 +63,3 @@ class TimeEvolution(Functional[TimeEvolutionResult]):
 
     def get_parameter_values(self) -> list[Number]:  # noqa: PLR6301
         return []
-
-    def compute_cost(self, results: TimeEvolutionResult, cost_model: Model) -> float:
-        raise NotImplementedError

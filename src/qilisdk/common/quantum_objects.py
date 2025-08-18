@@ -484,27 +484,27 @@ class QuantumObject:
 
 
 def basis_state(n: int, N: int) -> QuantumObject:
-    """
+    r"""
     Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
 
-    This function creates a column vector (ket) representing the Fock state |n⟩ in a Hilbert space of dimension N.
+    This function creates a column vector (ket) representing the Fock state \|n⟩ in a Hilbert space of dimension N.
 
     Args:
         n (int): The desired number state (from 0 to N-1).
         N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
 
     Returns:
-        QuantumObject: A QuantumObject representing the |n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
+        QuantumObject: A QuantumObject representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
     """
     return QuantumObject(csc_array(([1], ([n], [0])), shape=(N, 1)))
 
 
 def ket(*state: int) -> QuantumObject:
-    """
+    r"""
     Generate a ket state for a multi-qubit system.
 
     This function creates a tensor product of individual qubit states (kets) based on the input values.
-    Each input must be either 0 or 1. For example, ket(0, 1) creates a two-qubit ket state |0⟩ ⊗ |1⟩.
+    Each input must be either 0 or 1. For example, ket(0, 1) creates a two-qubit ket state \|0⟩ ⊗ \|1⟩.
 
     Args:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
@@ -522,11 +522,11 @@ def ket(*state: int) -> QuantumObject:
 
 
 def bra(*state: int) -> QuantumObject:
-    """
+    r"""
     Generate a bra state for a multi-qubit system.
 
     This function creates a tensor product of individual qubit states (bras) based on the input values.
-    Each input must be either 0 or 1. For example, bra(0, 1) creates a two-qubit bra state ⟨0| ⊗ ⟨1|.
+    Each input must be either 0 or 1. For example, bra(0, 1) creates a two-qubit bra state ⟨0\| ⊗ ⟨1\|.
 
     Args:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
@@ -565,10 +565,10 @@ def tensor_prod(operators: list[QuantumObject]) -> QuantumObject:
 
 
 def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
-    """
+    r"""
     Calculate the expectation value of an operator with respect to a quantum state.
 
-    Computes the expectation value ⟨state| operator |state⟩. The function handles both
+    Computes the expectation value ⟨state\| operator \|state⟩. The function handles both
     pure state vectors and density matrices appropriately.
 
     Args:
@@ -579,8 +579,7 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
         ValueError: If the operator is not a square matrix.
 
     Returns:
-        Complex: The expectation value. The result is guaranteed to be real if the operator
-                 is Hermitian, and may be complex otherwise.
+        Complex: The expectation value. The result is guaranteed to be real if the operator is Hermitian, and may be complex otherwise.
     """
     if not operator.is_operator():
         raise ValueError("The operator must be a square matrix.")

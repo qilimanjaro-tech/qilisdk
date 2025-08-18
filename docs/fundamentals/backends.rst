@@ -13,7 +13,7 @@ Backends are optional; to install one, include its extra when installing QILISDK
 
     pip install qilisdk[<backend_name>]
 
-Once installed, any functional can be executed by passing it to the backend’s :meth:`~qilisdk.backends.backend.Backend.execute` method:
+Once installed, any primitive functional can be executed by passing it to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method:
 
 .. code-block:: python
 

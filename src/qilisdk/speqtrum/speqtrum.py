@@ -18,15 +18,15 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import httpx
 from loguru import logger
 from pydantic import TypeAdapter
 
-from qilisdk.common.result import Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -38,17 +38,14 @@ from .speqtrum_models import (
     JobId,
     JobInfo,
     JobStatus,
-    ParameterizedProgramPayload,
     SamplingPayload,
     TimeEvolutionPayload,
     Token,
+    VariationalProgramPayload,
 )
 
 if TYPE_CHECKING:
-    from qilisdk.functionals.functional import Functional
-    from qilisdk.functionals.parameterized_program import ParameterizedProgram
-
-TResult = TypeVar("TResult", bound=Result)
+    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 
 
 class SpeQtrum:
@@ -65,6 +62,7 @@ class SpeQtrum:
         self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], int]] = {
             Sampling: lambda f: self._submit_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._submit_time_evolution(cast("TimeEvolution", f)),
+            VariationalProgram: lambda f: self._submit_variational_program(cast("VariationalProgram", f)),
         }
         self._settings = get_settings()
         logger.success("QaaS client initialised for user '{}'", self._username)
@@ -309,7 +307,7 @@ class SpeQtrum:
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def submit(self, functional: Functional) -> int:
+    def submit(self, functional: PrimitiveFunctional) -> int:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -384,15 +382,14 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return job.id
 
-    def submit_parameterized_program(
+    def _submit_variational_program(
         self,
-        parameterized_program: ParameterizedProgram,
-        store_intermediate_results: bool = False,
+        variational_program: VariationalProgram,
     ) -> int:
-        """Run a Variational Quantum Eigensolver on the selected device.
+        """Run a Variational Program on the selected device.
 
         Args:
-            parameterized_program: Problem definition containing Hamiltonian and ansatz.
+            variational_program: Problem definition containing Hamiltonian and ansatz.
             optimizer: Classical optimizer that updates the variational
                 parameters between circuit evaluations.
             nshots: Number of shots per circuit evaluation. Defaults to
@@ -405,10 +402,9 @@ class SpeQtrum:
         """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecuteType.PARAMETERIZED_PROGRAM,
-            parameterized_program_payload=ParameterizedProgramPayload(
-                parameterized_program=parameterized_program,
-                store_intermediate_results=store_intermediate_results,
+            type=ExecuteType.VARIATIONAL_PROGRAM,
+            variational_program_payload=VariationalProgramPayload(
+                variational_program=variational_program,
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}

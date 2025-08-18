@@ -16,18 +16,18 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Callable, List, TypeVar, cast, overload
 
-from qilisdk.common.result import Result
-from qilisdk.functionals.parameterized_program_results import ParameterizedProgramResults
+from qilisdk.common.result import FunctionalResult, Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.functionals.variational_program_results import VariationalProgramResults
 
 if TYPE_CHECKING:
-    from qilisdk.functionals.functional import Functional
-    from qilisdk.functionals.parameterized_program import ParameterizedProgram
+    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
-TResult = TypeVar("TResult", bound=Result)
+TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class Backend(ABC):
@@ -35,6 +35,7 @@ class Backend(ABC):
         self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], Result]] = {
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
+            VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
         }
 
     @overload
@@ -44,7 +45,7 @@ class Backend(ABC):
     def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
 
     @overload
-    def execute(self, functional: Functional[TResult]) -> TResult: ...
+    def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
 
     def execute(self, functional: Functional[Any]) -> Any:
         try:
@@ -62,9 +63,7 @@ class Backend(ABC):
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
-    def optimize(
-        self, parameterized_program: ParameterizedProgram, store_intermediate_results: bool = False
-    ) -> ParameterizedProgramResults:
+    def _execute_variational_program(self, functional: VariationalProgram) -> VariationalProgramResults:
         """Optimize a Parameterized Program (:class:`~qilisdk.functionals.parameterized_program.ParameterizedProgram`)
             and returns the optimal parameters and results.
 
@@ -77,23 +76,21 @@ class Backend(ABC):
         """
 
         def evaluate_sample(parameters: List[float]) -> float:
-            param_names = parameterized_program.functional.get_parameter_names()
-            parameterized_program.functional.set_parameters(
-                {param_names[i]: param for i, param in enumerate(parameters)}
-            )
-            results = self.execute(parameterized_program.functional)
-            return parameterized_program.functional.compute_cost(results, parameterized_program.cost_model)
+            param_names = functional.functional.get_parameter_names()
+            functional.functional.set_parameters({param_names[i]: param for i, param in enumerate(parameters)})
+            results = self.execute(functional.functional)
+            return results.compute_cost(functional.cost_model)
 
-        optimizer_result = parameterized_program.optimizer.optimize(
+        optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,
-            init_parameters=list(parameterized_program.functional.get_parameters().values()),
-            store_intermediate_results=store_intermediate_results,
+            init_parameters=list(functional.functional.get_parameters().values()),
+            store_intermediate_results=functional.store_intermediate_results,
         )
 
-        param_names = parameterized_program.functional.get_parameter_names()
-        parameterized_program.functional.set_parameters(
+        param_names = functional.functional.get_parameter_names()
+        functional.functional.set_parameters(
             {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
         )
-        optimal_results = self.execute(parameterized_program.functional)
+        optimal_results = self.execute(functional.functional)
 
-        return ParameterizedProgramResults(optimizer_result=optimizer_result, result=optimal_results)
+        return VariationalProgramResults(optimizer_result=optimizer_result, result=optimal_results)

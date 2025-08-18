@@ -13,14 +13,21 @@
 # limitations under the License.
 
 from qilisdk.common.model import Model
-from qilisdk.functionals.functional import Functional
+from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+from qilisdk.functionals.variational_program_results import VariationalProgramResults
 from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class ParameterizedProgram:
-    def __init__(self, functional: Functional, optimizer: Optimizer, cost_model: Model) -> None:
+class VariationalProgram(Functional[VariationalProgramResults]):
+    def __init__(
+        self,
+        functional: PrimitiveFunctional,
+        optimizer: Optimizer,
+        cost_model: Model,
+        store_intermediate_results: bool = False,
+    ) -> None:
         """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
         functional.
 
@@ -33,9 +40,10 @@ class ParameterizedProgram:
         self._functional = functional
         self._optimizer = optimizer
         self._cost_model = cost_model
+        self._store_intermediate_results = store_intermediate_results
 
     @property
-    def functional(self) -> Functional:
+    def functional(self) -> PrimitiveFunctional:
         return self._functional
 
     @property
@@ -45,3 +53,7 @@ class ParameterizedProgram:
     @property
     def cost_model(self) -> Model:
         return self._cost_model
+
+    @property
+    def store_intermediate_results(self) -> bool:
+        return self._store_intermediate_results

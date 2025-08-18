@@ -14,20 +14,23 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Protocol, Type, TypeVar
+from typing import TYPE_CHECKING, Protocol, Type, TypeVar
 
-from qilisdk.common.result import Result
+from qilisdk.common.result import FunctionalResult, Result
 
 if TYPE_CHECKING:
-    from qilisdk.common.model import Model
     from qilisdk.common.variables import Number
 
-TResult = TypeVar("TResult", bound=Result, covariant=False)
+TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
+TGenericResult_co = TypeVar("TGenericResult_co", bound=Result, covariant=True)
 
 
-class Functional(Protocol[TResult]):
+class Functional(Protocol[TGenericResult_co]): ...
+
+
+class PrimitiveFunctional(Functional, Protocol[TResult_co]):
     @property
-    def result_type(self) -> Type[TResult]: ...
+    def result_type(self) -> Type[TResult_co]: ...
 
     @abstractmethod
     def set_parameters(self, parameters: dict[str, Number]) -> None:
@@ -46,7 +49,7 @@ class Functional(Protocol[TResult]):
         """
 
     @abstractmethod
-    def get_parameter_names(self) -> List[str]:
+    def get_parameter_names(self) -> list[str]:
         """Gets the names of the parameters of the functional.
 
         Returns:
@@ -54,21 +57,9 @@ class Functional(Protocol[TResult]):
         """
 
     @abstractmethod
-    def get_parameter_values(self) -> List[Number]:
+    def get_parameter_values(self) -> list[Number]:
         """Gets the values of the parameters of the functional.
 
         Returns:
             list[Number]: a list of parameter values.
-        """
-
-    @abstractmethod
-    def compute_cost(self, results: TResult, cost_model: Model) -> float:
-        """Compute the cost of the functional given a cost model.
-
-        Args:
-            results (Result): The functional results
-            cost_model (Model): The Model object used to represent the cost of different states.
-
-        Returns:
-            float: the cost of the results.
         """

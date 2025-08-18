@@ -685,7 +685,7 @@ class BaseVariable(ABC):
     """Represents an abstract structure of any variable that can be included in the optimization ``Model``
     (It's the ``Model``'s minimum mathematical expression).
 
-    ``Variable``'s are used to construct ``Term``s that can then be used to build ``Model``s.
+    ``Variable``'s are used to construct ``Term`` objects that can then be used to build ``Model`` objects.
     """
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -1663,7 +1663,7 @@ class Term:
 
 @yaml.register_class
 class ComparisonTerm:
-    """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term``s
+    """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term`` objects
     (e.g. x+y>0, x>2, ...).
 
     They are built from a left and a right hand part, each of which can contain:

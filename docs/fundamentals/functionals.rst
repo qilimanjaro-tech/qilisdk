@@ -1,17 +1,20 @@
 Functionals
 ===========
 
-The :mod:`~qilisdk.functionals` module provides high‑level quantum execution procedures by combining tools from the
-:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.common` modules. Currently, it includes two primary functionals:
+The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
+:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.common` modules. Currently, it includes two primitive functionals:
 
 - :class:`~qilisdk.functionals.sampling.Sampling` — Executes repeated sampling of a digital quantum circuit.
 - :class:`~qilisdk.functionals.time_evolution.TimeEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
-- :class:`~qilisdk.functionals.parameterized_program.ParameterizedProgram` — Builds a parameterized program to be optimized.
+
+Moreover, it provides more complex functionals that are used to execute more complex algorithms:
+
+- :class:`~qilisdk.functionals.variational_program.VariationalProgram` — Builds parameterized program to be optimized in a hybrid quantum-classical environment.
 
 Sampling
 --------
 
-The **Sampling** functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes.
+The :class:`~qilisdk.functionals.sampling.Sampling` functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes.
 
 **Parameters**
 
@@ -44,7 +47,7 @@ The **Sampling** functional runs a digital quantum circuit multiple times (shots
 Time Evolution
 --------------
 
-The **TimeEvolution** functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time‑dependent schedule.
+The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time‑dependent schedule.
 
 **Parameters**
 
@@ -103,16 +106,16 @@ The **TimeEvolution** functional simulates analog evolution of a quantum system 
     print(results)
 
 
-Parameterized Program
---------------
+Variational Programs
+---------------------
 
-The **Parameterized Program** functional defines the components for a variational quantum algorithm. It takes in a 
+The :class:`~qilisdk.functionals.variational_program.VariationalProgram` functional which defines the components for a variational quantum algorithm. It takes in a 
 parameterized Functional, an optimizer, and a model defining the cost function. Then using the 
 :meth:`~qilisdk.backend.backend.optimize` of a backend, you can try to find the optimal parameters for the functional. 
 
 **Parameters**
 
-- **functional** (:class:`~qilisdk.functionals.functional.Functional`): A parameterized Functional to be optimized.
+- **functional** (:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): A parameterized Functional to be optimized.
 - **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): A QiliSDK optimizer, to be used in optimizing the Functional's parameters.
 - **cost_model** (:class:`~qilisdk.common.model.Model`): A Model object to evaluate the cost of a given set of parameters. This model is the cost function used by the optimizer.
 
@@ -127,7 +130,7 @@ parameterized Functional, an optimizer, and a model defining the cost function. 
     from qilisdk.common.variables import LEQ, BinaryVariable
     from qilisdk.digital import CNOT, U2, HardwareEfficientAnsatz
     from qilisdk.functionals import Sampling
-    from qilisdk.functionals.parameterized_program import ParameterizedProgram
+    from qilisdk.functionals.variational_program import VariationalProgram
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 
@@ -145,14 +148,14 @@ parameterized Functional, an optimizer, and a model defining the cost function. 
 
     n_qubits = 3
     ansatz = HardwareEfficientAnsatz(
-        n_qubits=n_qubits, layers=3, connectivity="Linear", structure="grouped", one_qubit_gate="U2", two_qubit_gate="CNOT"
+        n_qubits=n_qubits, layers=3, connectivity="Linear", structure="grouped", one_qubit_gate=U2, two_qubit_gate=CNOT
     )
     circuit = ansatz.get_circuit([np.random.uniform(0, np.pi) for _ in range(ansatz.nparameters)])
 
     optimizer = SciPyOptimizer(method="Powell")
 
     backend = QutipBackend()
-    result = backend.optimize(ParameterizedProgram(functional=Sampling(circuit), optimizer=optimizer, cost_model=model))
+    result = backend.optimize(VariationalProgram(functional=Sampling(circuit), optimizer=optimizer, cost_model=model))
 
     print(result)
 

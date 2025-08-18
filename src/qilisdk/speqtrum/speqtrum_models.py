@@ -17,12 +17,12 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.functionals.parameterized_program import ParameterizedProgram
-from qilisdk.functionals.parameterized_program_results import ParameterizedProgramResults
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.functionals.variational_program_results import VariationalProgramResults
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -37,11 +37,11 @@ class Token(SpeQtrumModel):
     """
     Represents the structure of the login response:
     {
-        "accessToken": "...",
-        "expiresIn": 123456789,
-        "issuedAt": "123456789",
-        "refreshToken": "...",
-        "tokenType": "bearer"
+    "accessToken": "...",
+    "expiresIn": 123456789,
+    "issuedAt": "123456789",
+    "refreshToken": "...",
+    "tokenType": "bearer"
     }
     """
 
@@ -83,7 +83,7 @@ class Device(SpeQtrumModel):
 class ExecuteType(str, Enum):
     SAMPLING = "sampling"
     TIME_EVOLUTION = "time_evolution"
-    PARAMETERIZED_PROGRAM = "parameterized_program"
+    VARIATIONAL_PROGRAM = "variational_program"
 
 
 class SamplingPayload(SpeQtrumModel):
@@ -114,18 +114,17 @@ class TimeEvolutionPayload(SpeQtrumModel):
         return v
 
 
-class ParameterizedProgramPayload(SpeQtrumModel):
-    parameterized_program: ParameterizedProgram = Field(...)
-    store_intermediate_results: bool = Field(...)
+class VariationalProgramPayload(SpeQtrumModel):
+    variational_program: VariationalProgram = Field(...)
 
-    @field_serializer("parameterized_program")
-    def _serialize_parameterized_program(self, parameterized_program: ParameterizedProgram, _info):
-        return serialize(parameterized_program)
+    @field_serializer("variational_program")
+    def _serialize_parameterized_program(self, variational_program: VariationalProgram, _info):
+        return serialize(variational_program)
 
-    @field_validator("parameterized_program", mode="before")
+    @field_validator("variational_program", mode="before")
     def _load_parameterized_program(cls, v):
         if isinstance(v, str):
-            return deserialize(v, ParameterizedProgram)
+            return deserialize(v, VariationalProgram)
         return v
 
 
@@ -133,14 +132,14 @@ class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_payload: SamplingPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
-    parameterized_program_payload: ParameterizedProgramPayload | None = None
+    variational_program_payload: VariationalProgramPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
-    parameterized_program_result: ParameterizedProgramResults | None = None
+    parameterized_program_result: VariationalProgramResults | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -163,13 +162,13 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("parameterized_program_result")
-    def _serialize_parameterized_program_result(self, parameterized_program_result: ParameterizedProgramResults, _info):
+    def _serialize_parameterized_program_result(self, parameterized_program_result: VariationalProgramResults, _info):
         return serialize(parameterized_program_result) if parameterized_program_result is not None else None
 
     @field_validator("parameterized_program_result", mode="before")
     def _load_parameterized_program_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, ParameterizedProgramResults)
+            return deserialize(v, VariationalProgramResults)
         return v
 
 
