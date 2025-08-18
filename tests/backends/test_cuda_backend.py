@@ -6,7 +6,6 @@ import pytest
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.common.model import Model
-from qilisdk.common.result import FunctionalResult
 from qilisdk.common.variables import BinaryVariable
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit

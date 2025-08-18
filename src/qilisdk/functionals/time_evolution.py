@@ -14,7 +14,6 @@
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.common.variables import Number
 from qilisdk.functionals.functional import PrimitiveFunctional
