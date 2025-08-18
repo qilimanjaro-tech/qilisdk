@@ -64,12 +64,11 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_variational_program(self, functional: VariationalProgram) -> VariationalProgramResults:
-        """Optimize a Parameterized Program (:class:`~qilisdk.functionals.parameterized_program.ParameterizedProgram`)
+        """Optimize a Parameterized Program (:class:`~qilisdk.functionals.variational_program.VariationalProgram`)
             and returns the optimal parameters and results.
 
         Args:
-            parameterized_program (ParameterizedProgram): The parameterized program to be optimized.
-            store_intermediate_results (bool, optional): Store intermediate results from the optimizer. Defaults to False.
+            functional (VariationalProgram): The variational program to be optimized.
 
         Returns:
             ParameterizedProgramResults: The final optimizer and functional results.
