@@ -396,7 +396,7 @@ class Hamiltonian:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
 
-    def get_evaluate_hamiltonian(self) -> Hamiltonian:
+    def get_static_hamiltonian(self) -> Hamiltonian:
         out = Hamiltonian()
         for pauli, value in self.elements.items():
             aux: Hamiltonian | PauliOperator = pauli[0]

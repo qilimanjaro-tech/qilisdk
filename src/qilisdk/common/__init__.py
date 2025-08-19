@@ -22,6 +22,7 @@ from .variables import (
     LessThan,
     LessThanOrEqual,
     NotEqual,
+    Parameter,
     SpinVariable,
     Variable,
 )
@@ -38,6 +39,7 @@ __all__ = [
     "NotEqual",
     "Objective",
     "ObjectiveSense",
+    "Parameter",
     "QuantumObject",
     "SpinVariable",
     "Variable",

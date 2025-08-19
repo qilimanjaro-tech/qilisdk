@@ -351,7 +351,7 @@ class Schedule:
                         coeff = aux.evaluate({}) if isinstance(aux, Term) else aux
                         ham += coeff * self._hamiltonians[label]
                         break
-        return ham.get_evaluate_hamiltonian()
+        return ham.get_static_hamiltonian()
 
     def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
         """
@@ -379,7 +379,7 @@ class Schedule:
             time_idx -= 1
         return 0
 
-    def get_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.
