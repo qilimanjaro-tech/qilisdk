@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.common.variables import Number
+from qilisdk.common.variables import RealNumber
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -27,14 +27,14 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
         self.circuit = circuit
         self.nshots = nshots
 
-    def set_parameters(self, parameters: dict[str, Number]) -> None:
+    def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         self.circuit.set_parameters(parameters)
 
-    def get_parameters(self) -> dict[str, Number]:
+    def get_parameters(self) -> dict[str, RealNumber]:
         return self.circuit.get_parameters()
 
     def get_parameter_names(self) -> list[str]:
         return list(self.circuit.get_parameters().keys())
 
-    def get_parameter_values(self) -> list[Number]:
+    def get_parameter_values(self) -> list[RealNumber]:
         return list(self.circuit.get_parameters().values())

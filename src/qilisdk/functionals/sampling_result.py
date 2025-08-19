@@ -17,6 +17,7 @@ from pprint import pformat
 
 from qilisdk.common.model import Model
 from qilisdk.common.result import FunctionalResult
+from qilisdk.common.variables import Number
 from qilisdk.yaml import yaml
 
 
@@ -140,8 +141,8 @@ class SamplingResult(FunctionalResult):
         class_name = self.__class__.__name__
         return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"
 
-    def compute_cost(self, cost_model: Model) -> float:
-        total_cost = 0.0
+    def compute_cost(self, cost_model: Model) -> Number:
+        total_cost = complex(0.0)
         for sample, prob in self.get_probabilities():
             bit_configuration = [int(i) for i in sample]
             if len(cost_model.variables()) != len(bit_configuration):
@@ -149,4 +150,7 @@ class SamplingResult(FunctionalResult):
             variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
             evaluate_results = cost_model.evaluate(variable_map)
             total_cost += sum(v for v in evaluate_results.values()) * prob
+
+        if total_cost.imag == 0:
+            return total_cost.real
         return total_cost

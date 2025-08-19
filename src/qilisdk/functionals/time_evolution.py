@@ -15,7 +15,7 @@
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.common.quantum_objects import QuantumObject
-from qilisdk.common.variables import Number
+from qilisdk.common.variables import RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -52,13 +52,13 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
 
-    def get_parameters(self) -> dict[str, Number]:  # noqa: PLR6301
+    def get_parameters(self) -> dict[str, RealNumber]:  # noqa: PLR6301
         return {}
 
-    def set_parameters(self, parameters: dict[str, Number]) -> None: ...
+    def set_parameters(self, parameters: dict[str, RealNumber]) -> None: ...
 
     def get_parameter_names(self) -> list[str]:  # noqa: PLR6301
         return []
 
-    def get_parameter_values(self) -> list[Number]:  # noqa: PLR6301
+    def get_parameter_values(self) -> list[RealNumber]:  # noqa: PLR6301
         return []

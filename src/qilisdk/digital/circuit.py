@@ -15,7 +15,7 @@ from typing import Any
 
 import numpy as np
 
-from qilisdk.common.variables import Number, Parameter
+from qilisdk.common.variables import Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -27,10 +27,10 @@ from .gates import Gate
 class Circuit:
     def __init__(self, nqubits: int) -> None:
         """
-        Initialize a Circuit instance with a specified number of qubits.
+        Initialize a Circuit instance with a specified RealNumber of qubits.
 
         Args:
-            nqubits (int): The number of qubits in the circuit.
+            nqubits (int): The RealNumber of qubits in the circuit.
         """
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
@@ -40,17 +40,17 @@ class Circuit:
     @property
     def nqubits(self) -> int:
         """
-        Retrieve the number of qubits in the circuit.
+        Retrieve the RealNumber of qubits in the circuit.
 
         Returns:
-            int: The total number of qubits.
+            int: The total RealNumber of qubits.
         """
         return self._nqubits
 
     @property
     def nparameters(self) -> int:
         """
-        Retrieve the total number of parameters required by all parameterized gates in the circuit.
+        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
 
         Returns:
             int: The total count of parameters from all parameterized gates.
@@ -102,18 +102,18 @@ class Circuit:
             values (list[float]): A list containing new parameter values to assign to the parameterized gates.
 
         Raises:
-            ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
+            ParametersNotEqualError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
         """
         if len(values) != self.nparameters:
             raise ParametersNotEqualError
         for i, parameter in enumerate(self._parameters.values()):
             parameter.set_value(values[i])
 
-    def set_parameters(self, parameter_dict: dict[str, Number]) -> None:
+    def set_parameters(self, parameter_dict: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
-            parameter_dict (dict[str, Number]): _description_
+            parameter_dict (dict[str, RealNumber]): _description_
 
         Raises:
             ValueError: _description_

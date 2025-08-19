@@ -102,7 +102,7 @@ def test_invalid_subtraction_operation():
 @pytest.mark.parametrize(
     ("hamiltonian", "expected_hamiltonian"),
     [
-        (Z(0) * Z(0), Hamiltonian({(I(0),): 1})),
+        (Z(0) * Z(0), Hamiltonian({(PauliI(0),): 1})),
         (Z(0) * X(0), 1j * Y(0)),
         (X(0) * Z(0), -1j * Y(0)),
         (Z(0) * Z(1), Z(0) * Z(1)),
@@ -156,10 +156,10 @@ class MockPauli(PauliOperator):
 
 def test_multiply_pauli_errors():
     with pytest.raises(ValueError, match=r"Operators must act on the same qubit for multiplication."):
-        Hamiltonian._multiply_pauli(Z(0), Z(1))
+        Hamiltonian._multiply_pauli(PauliZ(0), PauliZ(1))
 
     with pytest.raises(InvalidHamiltonianOperation, match=r"Multiplying Z\(0\) and M\(0\) not supported."):
-        Hamiltonian._multiply_pauli(Z(0), MockPauli(0))
+        Hamiltonian._multiply_pauli(PauliZ(0), MockPauli(0))
 
 
 # -----------------------------
@@ -171,7 +171,7 @@ def test_multiply_pauli_errors():
         (Z(0) / 2, 0.5 * Z(0)),
         ((Z(0) + Z(1)) / 2, 0.5 * Z(0) + 0.5 * Z(1)),
         ((Z(0) + 3) / 2, 1.5 + 0.5 * Z(0)),
-        (5 / 2, Hamiltonian({(I(0),): 2.5})),
+        (5 / 2, Hamiltonian({(PauliI(0),): 2.5})),
         ((Z(0) + X(1)) / 1j, -1j * Z(0) + -1j * X(1)),
     ],
 )
@@ -185,23 +185,23 @@ def test_truediv_raises_not_supported():
 
 
 def test_equality():
-    pauli1 = Z(0)
-    assert pauli1 == Z(0)
-    assert pauli1 != Z(1)
+    pauli1 = PauliZ(0)
+    assert pauli1 == PauliZ(0)
+    assert pauli1 != PauliZ(1)
     assert pauli1 != 1
 
 
 @pytest.mark.parametrize(
     ("pauli", "expected_output"),
     [
-        (Z(0), "Z(0)"),
-        (Z(9), "Z(9)"),
-        (X(0), "X(0)"),
-        (X(9), "X(9)"),
-        (Y(0), "Y(0)"),
-        (Y(3), "Y(3)"),
-        (I(0), "I(0)"),
-        (I(5), "I(5)"),
+        (PauliZ(0), "Z(0)"),
+        (PauliZ(9), "Z(9)"),
+        (PauliX(0), "X(0)"),
+        (PauliX(9), "X(9)"),
+        (PauliY(0), "Y(0)"),
+        (PauliY(3), "Y(3)"),
+        (PauliI(0), "I(0)"),
+        (PauliI(5), "I(5)"),
     ],
 )
 def test_str_and_repr(pauli: PauliOperator, expected_output: str):
@@ -281,9 +281,9 @@ def test_parse_value_error():
     ("hamiltonian", "expected"),
     [
         # Identity Hamiltonian on qubit 0.
-        (I(0).to_hamiltonian(), np.eye(2, dtype=complex)),
+        (PauliI(0).to_hamiltonian(), np.eye(2, dtype=complex)),
         # 2 * Z operator: 2*[[1, 0],[0, -1]]
-        (2 * Z(0).to_hamiltonian(), 2 * np.array([[1, 0], [0, -1]], dtype=complex)),
+        (2 * PauliZ(0).to_hamiltonian(), 2 * np.array([[1, 0], [0, -1]], dtype=complex)),
         # Sum of 0.5*Z and 1*X: 0.5*[[1, 0],[0, -1]] + [[0, 1],[1, 0]]
         (
             0.5 * Z(0) + X(0),
@@ -310,7 +310,7 @@ def test_to_matrix_two_qubit_single_term():
     A two-qubit Hamiltonian with a single term (e.g. 2 * (Z(0) ⊗ X(1)))
     should return the correct Kronecker product.
     """
-    H = Hamiltonian({(Z(0), X(1)): 2})
+    H = Hamiltonian({(PauliZ(0), PauliX(1)): 2})
     Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
     X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
     expected = 2 * np.kron(Z_matrix, X_matrix)
@@ -322,7 +322,7 @@ def test_to_matrix_two_qubit_multiple_terms():
     For a Hamiltonian defined as 0.5 * (Z(0) ⊗ I) + 1.5 * (I ⊗ X(1)),
     the matrix representation should be the sum of the two Kronecker products.
     """
-    H = 0.5 * Z(0).to_hamiltonian() + 1.5 * X(1).to_hamiltonian()
+    H = 0.5 * PauliZ(0).to_hamiltonian() + 1.5 * PauliX(1).to_hamiltonian()
     Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
     I_matrix = np.eye(2, dtype=complex)
     X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -339,7 +339,7 @@ def test_to_matrix_three_qubit():
     For example, a term 3*(Z(1) ⊗ X(2)) acting on qubits 1 and 2.
     The full Hamiltonian should be embedded as I ⊗ Z ⊗ X.
     """
-    H = Hamiltonian({(Z(1), X(2)): 3})
+    H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
     I2 = np.eye(2, dtype=complex)
     Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
     X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
