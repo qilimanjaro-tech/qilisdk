@@ -273,6 +273,10 @@ class Hamiltonian:
         """
         return len(self._parameters)
 
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        return self._parameters
+
     def get_parameter_values(self) -> list[float]:
         """
         Retrieve the parameter values from all parameterized gates in the circuit.
@@ -326,7 +330,7 @@ class Hamiltonian:
         """
         for label, param in parameter_dict.items():
             if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this circuit.")
+                raise ValueError(f"Parameter {label} is not defined in this hamiltonian.")
             self._parameters[label].set_value(param)
 
     def simplify(self) -> Hamiltonian:
@@ -743,7 +747,7 @@ class Hamiltonian:
             for key, val in other._elements.items():  # noqa: SLF001
                 self._elements[key] += val
 
-            self._parameters.update(other._parameters)  # noqa: SLF001
+            self._parameters.update(other.parameters)
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1

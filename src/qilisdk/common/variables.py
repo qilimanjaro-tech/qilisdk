@@ -1572,7 +1572,7 @@ class Term:
         return all(isinstance(var, Parameter) for var in self.variables())
 
     def __copy__(self) -> Term:
-        return Term(copy.copy(self.to_list()), self.operation)
+        return Term(copy.copy(self.to_list()), copy.copy(self.operation))
 
     def __repr__(self) -> str:
         if len(self) == 0:

@@ -25,6 +25,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.variables import Number
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -159,7 +160,7 @@ class CudaBackend(Backend):
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
         def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
-            def compute_value(param_name: str, step_idx: int) -> float:
+            def compute_value(param_name: str, step_idx: int) -> Number:
                 return functional.schedule.get_coefficient(time_steps[int(step_idx)], param_name)
 
             return cuda_schedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
