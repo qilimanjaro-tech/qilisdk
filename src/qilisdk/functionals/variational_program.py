@@ -15,7 +15,6 @@
 from typing import Generic, Type, TypeVar, cast
 
 from qilisdk.common.model import Model
-from qilisdk.common.variables import Number
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
