@@ -15,6 +15,7 @@
 from typing import Generic, Type, TypeVar, cast
 
 from qilisdk.common.model import Model
+from qilisdk.common.variables import Number
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
@@ -51,6 +52,18 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
     def result_type(self) -> Type[VariationalProgramResult[R]]:
         # Generics are erased at runtime; cast helps static analyzers.
         return cast("Type[VariationalProgramResult[R]]", VariationalProgramResult)
+
+    def set_parameters(self, parameters: dict[str, Number]) -> None:
+        self.functional.set_parameters(parameters)
+
+    def get_parameters(self) -> dict[str, Number]:
+        return self.functional.get_parameters()
+
+    def get_parameter_names(self) -> list[str]:
+        return list(self.functional.get_parameters().keys())
+
+    def get_parameter_values(self) -> list[Number]:
+        return list(self.functional.get_parameters().values())
 
     @property
     def functional(self) -> PrimitiveFunctional[R]:
