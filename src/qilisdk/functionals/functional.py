@@ -29,7 +29,6 @@ class Functional(ABC):
 
 
 class PrimitiveFunctional(Functional, ABC, Generic[TResult_co]):
-
     @abstractmethod
     def set_parameters(self, parameters: dict[str, Number]) -> None:
         """Sets the parameters of the functional.
