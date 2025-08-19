@@ -15,11 +15,12 @@ from abc import abstractmethod
 
 from qilisdk.common.model import Model
 from qilisdk.common.result import Result
+from qilisdk.common.variables import Number
 
 
 class FunctionalResult(Result):
     @abstractmethod
-    def compute_cost(self, cost_model: Model) -> float:
+    def compute_cost(self, cost_model: Model) -> Number:
         """Compute the cost of the functional given a cost model.
 
         Args:

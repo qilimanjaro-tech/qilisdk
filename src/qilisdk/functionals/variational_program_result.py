@@ -17,6 +17,7 @@ from pprint import pformat
 from typing import Generic, TypeVar
 
 from qilisdk.common.model import Model
+from qilisdk.common.variables import Number
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
@@ -94,5 +95,5 @@ class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
             + f"\n  Optimal results={pformat(self.optimal_execution_results)})"
         )
 
-    def compute_cost(self, cost_model: Model) -> float:
+    def compute_cost(self, cost_model: Model) -> Number:
         return self.optimal_execution_results.compute_cost(cost_model)

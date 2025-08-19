@@ -17,6 +17,7 @@ import numpy as np
 
 from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.variables import Number
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
@@ -108,5 +109,5 @@ class TimeEvolutionResult(FunctionalResult):
             ")"
         )
 
-    def compute_cost(self, cost_model: Model) -> float:
+    def compute_cost(self, cost_model: Model) -> Number:
         raise NotImplementedError

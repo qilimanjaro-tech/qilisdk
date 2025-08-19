@@ -31,7 +31,7 @@ from qutip_qip.operations import Y as q_Y
 from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
-from qilisdk.analog.hamiltonian import Hamiltonian, I, PauliOperator
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
@@ -188,7 +188,7 @@ class QutipBackend(Backend):
 
         qutip_obs: list[Qobj] = []
 
-        identity = QuantumObject(I(0).matrix)
+        identity = QuantumObject(PauliI(0).matrix)
         for obs in functional.observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
