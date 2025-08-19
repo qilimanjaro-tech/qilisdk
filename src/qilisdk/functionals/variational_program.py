@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Generic, Type, TypeVar, cast
+
 from qilisdk.common.model import Model
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-from qilisdk.functionals.variational_program_results import VariationalProgramResults
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.yaml import yaml
 
+R = TypeVar("R", bound=FunctionalResult)
+
 
 @yaml.register_class
-class VariationalProgram(Functional[VariationalProgramResults]):
+class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
     def __init__(
         self,
-        functional: PrimitiveFunctional,
+        functional: PrimitiveFunctional[R],
         optimizer: Optimizer,
         cost_model: Model,
         store_intermediate_results: bool = False,
@@ -43,7 +48,12 @@ class VariationalProgram(Functional[VariationalProgramResults]):
         self._store_intermediate_results = store_intermediate_results
 
     @property
-    def functional(self) -> PrimitiveFunctional:
+    def result_type(self) -> Type[VariationalProgramResult[R]]:
+        # Generics are erased at runtime; cast helps static analyzers.
+        return cast("Type[VariationalProgramResult[R]]", VariationalProgramResult)
+
+    @property
+    def functional(self) -> PrimitiveFunctional[R]:
         return self._functional
 
     @property

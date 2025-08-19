@@ -16,13 +16,14 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Callable, List, TypeVar, cast, overload
 
-from qilisdk.common.result import FunctionalResult, Result
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.functionals.variational_program_results import VariationalProgramResults
+from qilisdk.functionals.variational_program_result import VariationalProgramResult
 
 if TYPE_CHECKING:
+    from qilisdk.common.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
@@ -45,6 +46,9 @@ class Backend(ABC):
     def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
 
     @overload
+    def execute(self, functional: VariationalProgram[TResult]) -> VariationalProgramResult[TResult]: ...
+
+    @overload
     def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
 
     def execute(self, functional: Functional[Any]) -> Any:
@@ -63,7 +67,7 @@ class Backend(ABC):
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
-    def _execute_variational_program(self, functional: VariationalProgram) -> VariationalProgramResults:
+    def _execute_variational_program(self, functional: VariationalProgram) -> VariationalProgramResult:
         """Optimize a Parameterized Program (:class:`~qilisdk.functionals.variational_program.VariationalProgram`)
             and returns the optimal parameters and results.
 
@@ -92,4 +96,4 @@ class Backend(ABC):
         )
         optimal_results = self.execute(functional.functional)
 
-        return VariationalProgramResults(optimizer_result=optimizer_result, result=optimal_results)
+        return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)

@@ -17,7 +17,7 @@ from .sampling_result import SamplingResult
 from .time_evolution import TimeEvolution
 from .time_evolution_result import TimeEvolutionResult
 from .variational_program import VariationalProgram
-from .variational_program_results import VariationalProgramResults
+from .variational_program_result import VariationalProgramResult
 
 __all__ = [
     "Sampling",
@@ -25,5 +25,5 @@ __all__ = [
     "TimeEvolution",
     "TimeEvolutionResult",
     "VariationalProgram",
-    "VariationalProgramResults",
+    "VariationalProgramResult",
 ]

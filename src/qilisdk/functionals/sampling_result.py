@@ -16,7 +16,7 @@ import operator
 from pprint import pformat
 
 from qilisdk.common.model import Model
-from qilisdk.common.result import FunctionalResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 

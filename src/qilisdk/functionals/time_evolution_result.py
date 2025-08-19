@@ -17,7 +17,7 @@ import numpy as np
 
 from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
-from qilisdk.common.result import FunctionalResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 

@@ -22,7 +22,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.functionals.variational_program_results import VariationalProgramResults
+from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -139,7 +139,7 @@ class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
-    parameterized_program_result: VariationalProgramResults | None = None
+    parameterized_program_result: VariationalProgramResult | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -162,13 +162,13 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("parameterized_program_result")
-    def _serialize_parameterized_program_result(self, parameterized_program_result: VariationalProgramResults, _info):
+    def _serialize_parameterized_program_result(self, parameterized_program_result: VariationalProgramResult, _info):
         return serialize(parameterized_program_result) if parameterized_program_result is not None else None
 
     @field_validator("parameterized_program_result", mode="before")
     def _load_parameterized_program_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, VariationalProgramResults)
+            return deserialize(v, VariationalProgramResult)
         return v
 
 
