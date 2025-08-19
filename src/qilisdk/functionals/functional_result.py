@@ -11,7 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC
+from abc import abstractmethod
+
+from qilisdk.common.model import Model
+from qilisdk.common.result import Result
 
 
-class Result(ABC): ...
+class FunctionalResult(Result):
+    @abstractmethod
+    def compute_cost(self, cost_model: Model) -> float:
+        """Compute the cost of the functional given a cost model.
+
+        Args:
+            cost_model (Model): The Model object used to represent the cost of different states.
+
+        Returns:
+            float: the cost of the results.
+        """

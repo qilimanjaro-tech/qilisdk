@@ -16,7 +16,8 @@
 from pprint import pformat
 from typing import Generic, TypeVar
 
-from qilisdk.common.result import FunctionalResult, Result
+from qilisdk.common.model import Model
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
 
@@ -24,7 +25,7 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 @yaml.register_class
-class VariationalProgramResults(Result, Generic[TResult_co]):
+class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
     """
     Represents the result of a Parameterized Program calculation.
     """
@@ -92,3 +93,6 @@ class VariationalProgramResults(Result, Generic[TResult_co]):
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
             + f"\n  Optimal results={pformat(self.optimal_execution_results)})"
         )
+
+    def compute_cost(self, cost_model: Model) -> float:
+        return self.optimal_execution_results.compute_cost(cost_model)

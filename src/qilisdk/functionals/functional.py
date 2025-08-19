@@ -16,21 +16,20 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Protocol, Type, TypeVar
 
-from qilisdk.common.result import FunctionalResult, Result
+from qilisdk.functionals.functional_result import FunctionalResult
 
 if TYPE_CHECKING:
     from qilisdk.common.variables import RealNumber
 
 TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
-TGenericResult_co = TypeVar("TGenericResult_co", bound=Result, covariant=True)
 
 
-class Functional(Protocol[TGenericResult_co]): ...
-
-
-class PrimitiveFunctional(Functional, Protocol[TResult_co]):
+class Functional(Protocol[TResult_co]):
     @property
     def result_type(self) -> Type[TResult_co]: ...
+
+
+class PrimitiveFunctional(Functional[TResult_co]):
 
     @abstractmethod
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
