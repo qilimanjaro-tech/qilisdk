@@ -34,7 +34,7 @@ class Ansatz(ABC):
         """
         raise NotImplementedError
 
-    def get_circuit(self, parameters: list[float]) -> Circuit:
+    def get_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
         """Get the underlying circuit with the given list of parameters.
 
         Args:
@@ -49,10 +49,10 @@ class Ansatz(ABC):
         if len(parameters) != self.nparameters:
             raise ValueError(f"Expecting {self.nparameters} but received {len(parameters)}")
 
-        return self._construct_circuit(parameters=list(parameters))
+        return self._construct_circuit(parameters=list(parameters), measure=measure)
 
     @abstractmethod
-    def _construct_circuit(self, parameters: list[float]) -> Circuit: ...
+    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit: ...
 
 
 @yaml.register_class
@@ -169,7 +169,7 @@ class HardwareEfficientAnsatz(Ansatz):
         """
         return self.nqubits * (self.layers + 1) * len(self.one_qubit_gate.PARAMETER_NAMES)
 
-    def _construct_circuit(self, parameters: list[float]) -> Circuit:
+    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
         self._circuit = Circuit(self.nqubits)
         # Add initial layer of unitaries
         for i in range(self.nqubits):
@@ -178,7 +178,10 @@ class HardwareEfficientAnsatz(Ansatz):
         construct_layer_handler = self.construct_layer_handlers[self.structure]
         for _ in range(self.layers):
             construct_layer_handler(parameters)
-        self._circuit.add(M(*list(range(self.nqubits))))
+
+        if measure is None:
+            measure = list(range(self.nqubits))
+        self._circuit.add(M(*measure))
 
         return self._circuit
 

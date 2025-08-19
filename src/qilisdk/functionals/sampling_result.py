@@ -145,7 +145,9 @@ class SamplingResult(FunctionalResult):
         for sample, prob in self.get_probabilities():
             bit_configuration = [int(i) for i in sample]
             if len(cost_model.variables()) != len(bit_configuration):
-                raise ValueError("Mapping samples to the model's variables is ambiguous.")
+                raise ValueError(
+                    f"Model contains {len(cost_model.variables())} variables while the Functional returned a sample bit-string of size {len(bit_configuration)}. The bit-string to the model's variables have to be of the same size."
+                )
             variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
             evaluate_results = cost_model.evaluate(variable_map)
             total_cost += sum(v for v in evaluate_results.values()) * prob

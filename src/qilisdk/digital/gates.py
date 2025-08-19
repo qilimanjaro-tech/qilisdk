@@ -292,6 +292,7 @@ class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
         self._basic_gate: TBasicGate = basic_gate
         self._matrix: np.ndarray
+        self._parameters: dict[str, Parameter] = self._basic_gate.parameters
 
     @property
     def basic_gate(self) -> TBasicGate:
@@ -312,6 +313,10 @@ class Modified(Gate, Generic[TBasicGate]):
     @property
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
+
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        return self._parameters
 
     def get_parameters(self) -> dict[str, float]:
         return self._basic_gate.get_parameters()

@@ -102,12 +102,29 @@ class QutipBackend(Backend):
         counts: Counter[str] = Counter()
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
+        measurements_set = set()
+        for m in functional.circuit.gates:
+            if isinstance(m, M):
+                measurements_set.update(list(m.target_qubits))
+
+        measurements = sorted(measurements_set)
+
         sim = CircuitSimulator(qutip_circuit)
         sim.initialize(init_state)
 
         res = sim.run_statistics(init_state)  # runs the full circuit for one shot
-        bits = res.cbits  # classical measurement bits
+        _bits = res.cbits  # classical measurement bits
+        bits = []
         probs = res.probabilities
+
+        if len(measurements) > 0:
+            for b in _bits:
+                aux = []
+                for i in measurements:
+                    aux.append(b[i])
+                bits.append(aux)
+        else:
+            bits = _bits
 
         bits_list = ["".join(map(str, cb)) for cb in bits]
 
