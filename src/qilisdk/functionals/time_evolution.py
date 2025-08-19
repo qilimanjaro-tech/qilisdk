@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import ClassVar
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
@@ -20,12 +21,10 @@ from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 
-Complex = int | float | complex
-
 
 @yaml.register_class
 class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
-    result_type = TimeEvolutionResult
+    result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
 
     def __init__(
         self,

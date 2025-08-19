@@ -426,9 +426,9 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
     gate.set_parameters(valid_dict)
     # Verify the gate's 'parameters' match the new values
     for param_name, param_value in valid_dict.items():
-        assert (
-            gate.parameters[param_name].value == param_value
-        ), f"Parameter '{param_name}' not updated to {param_value}"
+        assert gate.parameters[param_name].value == param_value, (
+            f"Parameter '{param_name}' not updated to {param_value}"
+        )
 
     # 2) set_parameters() with an invalid dict (unknown parameter name)
     with pytest.raises(InvalidParameterNameError):

@@ -1181,7 +1181,6 @@ class Parameter(BaseVariable):
         super().set_bounds(lower_bound, upper_bound)
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
-
         if len(bounds) != 2:  # noqa: PLR2004
             raise ValueError(
                 "Invalid bounds provided: the bounds need to be a tuple with the format (lowe_bound, upper_bound)"

@@ -13,8 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, Type, TypeVar
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 from qilisdk.functionals.functional_result import FunctionalResult
 
@@ -24,12 +24,12 @@ if TYPE_CHECKING:
 TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
-class Functional(Protocol[TResult_co]):
-    @property
-    def result_type(self) -> Type[TResult_co]: ...
+class Functional(ABC):
+    result_type: ClassVar[type[FunctionalResult]]
 
 
-class PrimitiveFunctional(Functional[TResult_co]):
+class PrimitiveFunctional(Functional, ABC, Generic[TResult_co]):
+    result_type: ClassVar[type[TResult_co]]
 
     @abstractmethod
     def set_parameters(self, parameters: dict[str, Number]) -> None:
