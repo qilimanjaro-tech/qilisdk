@@ -53,18 +53,6 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         # Generics are erased at runtime; cast helps static analyzers.
         return cast("Type[VariationalProgramResult[R]]", VariationalProgramResult)
 
-    def set_parameters(self, parameters: dict[str, Number]) -> None:
-        self.functional.set_parameters(parameters)
-
-    def get_parameters(self) -> dict[str, Number]:
-        return self.functional.get_parameters()
-
-    def get_parameter_names(self) -> list[str]:
-        return list(self.functional.get_parameters().keys())
-
-    def get_parameter_values(self) -> list[Number]:
-        return list(self.functional.get_parameters().values())
-
     @property
     def functional(self) -> PrimitiveFunctional[R]:
         return self._functional
