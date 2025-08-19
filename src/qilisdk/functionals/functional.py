@@ -29,7 +29,6 @@ class Functional(ABC):
 
 
 class PrimitiveFunctional(Functional, ABC, Generic[TResult_co]):
-    result_type: ClassVar[type[TResult_co]]
 
     @abstractmethod
     def set_parameters(self, parameters: dict[str, Number]) -> None:

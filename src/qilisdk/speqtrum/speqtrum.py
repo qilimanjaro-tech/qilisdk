@@ -59,7 +59,7 @@ class SpeQtrum:
             raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
         self._selected_device: int | None = None
-        self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], int]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional], int]] = {
             Sampling: lambda f: self._submit_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._submit_time_evolution(cast("TimeEvolution", f)),
             VariationalProgram: lambda f: self._submit_variational_program(cast("VariationalProgram", f)),

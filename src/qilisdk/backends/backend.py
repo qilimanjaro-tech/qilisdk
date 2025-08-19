@@ -52,6 +52,9 @@ class Backend(ABC):
         self, functional: VariationalProgram[TimeEvolution]
     ) -> VariationalProgramResult[TimeEvolutionResult]: ...
 
+    @overload
+    def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
+
     def execute(self, functional: Functional) -> FunctionalResult:
         try:
             handler = self._handlers[type(functional)]
