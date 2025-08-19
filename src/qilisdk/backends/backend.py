@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Callable, List, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.sampling import Sampling
@@ -84,7 +84,7 @@ class Backend(ABC):
             ParameterizedProgramResults: The final optimizer and functional results.
         """
 
-        def evaluate_sample(parameters: List[float]) -> float:
+        def evaluate_sample(parameters: list[float]) -> float:
             param_names = functional.functional.get_parameter_names()
             functional.functional.set_parameters({param_names[i]: param for i, param in enumerate(parameters)})
             results: TResult = cast("TResult", self.execute(functional.functional))
