@@ -113,10 +113,10 @@ class Circuit:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
-            parameter_dict (dict[str, RealNumber]): _description_
+            parameter_dict (dict[str, RealNumber]): A dictionary with the labels of the parameters to be modified and their new value.
 
         Raises:
-            ValueError: _description_
+            ValueError: if the label provided doesn't correspond to a parameter defined in this circuit.
         """
         for label, param in parameter_dict.items():
             if label not in self._parameters:

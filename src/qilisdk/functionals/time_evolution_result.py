@@ -15,6 +15,7 @@ from pprint import pformat
 
 import numpy as np
 
+from qilisdk.common.model import Model
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -106,3 +107,6 @@ class TimeEvolutionResult(FunctionalResult):
             f"  intermediate_states={pformat(self.intermediate_states)}\n"
             ")"
         )
+
+    def compute_cost(self, cost_model: Model) -> float:
+        raise NotImplementedError

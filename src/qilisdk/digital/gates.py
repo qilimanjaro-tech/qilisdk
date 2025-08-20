@@ -313,6 +313,10 @@ class Modified(Gate, Generic[TBasicGate]):
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
 
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        return self._basic_gate.parameters
+
     def get_parameters(self) -> dict[str, float]:
         return self._basic_gate.get_parameters()
 

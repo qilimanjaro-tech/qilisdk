@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, List, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.sampling import Sampling
@@ -33,7 +33,7 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 
 class Backend(ABC):
     def __init__(self) -> None:
-        self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], Result]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional], FunctionalResult]] = {
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
             VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
@@ -46,12 +46,17 @@ class Backend(ABC):
     def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
 
     @overload
-    def execute(self, functional: VariationalProgram[TResult]) -> VariationalProgramResult[TResult]: ...
+    def execute(self, functional: VariationalProgram[Sampling]) -> VariationalProgramResult[SamplingResult]: ...
+
+    @overload
+    def execute(
+        self, functional: VariationalProgram[TimeEvolution]
+    ) -> VariationalProgramResult[TimeEvolutionResult]: ...
 
     @overload
     def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
 
-    def execute(self, functional: Functional[Any]) -> Any:
+    def execute(self, functional: Functional) -> FunctionalResult:
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -67,7 +72,9 @@ class Backend(ABC):
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
-    def _execute_variational_program(self, functional: VariationalProgram) -> VariationalProgramResult:
+    def _execute_variational_program(
+        self, functional: VariationalProgram[PrimitiveFunctional[TResult]]
+    ) -> VariationalProgramResult[TResult]:
         """Optimize a Parameterized Program (:class:`~qilisdk.functionals.variational_program.VariationalProgram`)
             and returns the optimal parameters and results.
 
@@ -78,7 +85,7 @@ class Backend(ABC):
             ParameterizedProgramResults: The final optimizer and functional results.
         """
 
-        def evaluate_sample(parameters: List[float]) -> float:
+        def evaluate_sample(parameters: list[float]) -> float:
             param_names = functional.functional.get_parameter_names()
             functional.functional.set_parameters({param_names[i]: param for i, param in enumerate(parameters)})
             results = self.execute(functional.functional)
@@ -99,6 +106,6 @@ class Backend(ABC):
         functional.functional.set_parameters(
             {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
         )
-        optimal_results = self.execute(functional.functional)
+        optimal_results: TResult = cast("TResult", self.execute(functional.functional))
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)

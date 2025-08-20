@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Generic, Type, TypeVar, cast
+from typing import ClassVar, Generic, TypeVar
 
-from qilisdk.common.model import Model
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -22,14 +21,16 @@ from qilisdk.functionals.variational_program_result import VariationalProgramRes
 from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.yaml import yaml
 
-R = TypeVar("R", bound=FunctionalResult)
+TFunctional = TypeVar("TFunctional", bound=PrimitiveFunctional[FunctionalResult])
 
 
 @yaml.register_class
-class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
+class VariationalProgram(Functional, Generic[TFunctional]):
+    result_type: ClassVar[type[FunctionalResult]] = VariationalProgramResult
+
     def __init__(
         self,
-        functional: PrimitiveFunctional[R],
+        functional: TFunctional,
         optimizer: Optimizer,
         cost_function: CostFunction,
         store_intermediate_results: bool = False,
@@ -38,10 +39,10 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         functional.
 
         Args:
-            functional (Functional): A parameterized Functional to be optimized.
-            optimizer (Optimizer): A QiliSDK optimizer, to be used in optimizing the Functional's parameters.
-            cost_model (Model): A Model object to evaluate the cost of a given set of parameters. This model
-                                is the cost function used by the optimizer.
+            functional (Functional): The parameterized Functional to be optimized.
+            optimizer (Optimizer): The optimizer to be used in optimizing the Functional's parameters.
+            cost_function (CostFunction): A CostFunction object that defines how the cost is being computed.
+            store_intermediate_results (bool, optional): If True, stores a list of intermediate results.
         """
         self._functional = functional
         self._optimizer = optimizer
@@ -49,12 +50,7 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         self._store_intermediate_results = store_intermediate_results
 
     @property
-    def result_type(self) -> Type[VariationalProgramResult[R]]:
-        # Generics are erased at runtime; cast helps static analyzers.
-        return cast("Type[VariationalProgramResult[R]]", VariationalProgramResult)
-
-    @property
-    def functional(self) -> PrimitiveFunctional[R]:
+    def functional(self) -> TFunctional:
         return self._functional
 
     @property

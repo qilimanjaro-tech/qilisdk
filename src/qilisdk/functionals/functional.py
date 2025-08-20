@@ -13,24 +13,23 @@
 # limitations under the License.
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, Type, TypeVar
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 from qilisdk.functionals.functional_result import FunctionalResult
 
 if TYPE_CHECKING:
     from qilisdk.common.variables import RealNumber
 
+
 TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
-class Functional(Protocol[TResult_co]):
-    @property
-    def result_type(self) -> Type[TResult_co]: ...
+class Functional(ABC):
+    result_type: ClassVar[type[FunctionalResult]]
 
 
-class PrimitiveFunctional(Functional[TResult_co]):
-
+class PrimitiveFunctional(Functional, ABC, Generic[TResult_co]):
     @abstractmethod
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Sets the parameters of the functional.
@@ -60,6 +59,5 @@ class PrimitiveFunctional(Functional[TResult_co]):
         """Gets the values of the parameters of the functional.
 
         Returns:
-            list[RealNumber]: a list of parameter values.
             list[RealNumber]: a list of parameter values.
         """

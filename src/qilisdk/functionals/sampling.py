@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import ClassVar
 
 from qilisdk.common.variables import RealNumber
 from qilisdk.digital.circuit import Circuit
@@ -21,7 +22,7 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class Sampling(PrimitiveFunctional[SamplingResult]):
-    result_type = SamplingResult
+    result_type: ClassVar[type[SamplingResult]] = SamplingResult
 
     def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
         self.circuit = circuit
@@ -31,6 +32,7 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
         self.circuit.set_parameters(parameters)
 
     def get_parameters(self) -> dict[str, RealNumber]:
+
         return self.circuit.get_parameters()
 
     def get_parameter_names(self) -> list[str]:

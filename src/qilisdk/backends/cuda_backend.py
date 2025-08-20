@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
-from cudaq import Schedule as cuda_schedule
+from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
@@ -159,13 +159,13 @@ class CudaBackend(Backend):
         cuda_hamiltonian = None
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
-        def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
+        def parameter_values(time_steps: np.ndarray) -> CudaSchedule:
             def compute_value(param_name: str, step_idx: int) -> Number:
                 return functional.schedule.get_coefficient(time_steps[int(step_idx)], param_name)
 
-            return cuda_schedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
+            return CudaSchedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
 
-        _cuda_schedule = parameter_values(steps)
+        _CudaSchedule = parameter_values(steps)
 
         def get_schedule(key: str) -> Callable:
             return lambda **args: args[key]
@@ -190,7 +190,7 @@ class CudaBackend(Backend):
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
-            schedule=_cuda_schedule,
+            schedule=_CudaSchedule,
             initial_state=State.from_data(
                 np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)
             ),
