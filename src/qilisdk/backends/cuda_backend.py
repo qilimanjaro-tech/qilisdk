@@ -19,31 +19,14 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
-from cudaq import Schedule as cuda_schedule
+from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import (
-    RX,
-    RY,
-    RZ,
-    U1,
-    U2,
-    U3,
-    Adjoint,
-    BasicGate,
-    Controlled,
-    H,
-    M,
-    S,
-    T,
-    X,
-    Y,
-    Z,
-)
+from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -175,13 +158,13 @@ class CudaBackend(Backend):
         cuda_hamiltonian = None
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
-        def parameter_values(time_steps: np.ndarray) -> cuda_schedule:
+        def parameter_values(time_steps: np.ndarray) -> CudaSchedule:
             def compute_value(param_name: str, step_idx: int) -> float:
                 return functional.schedule.get_coefficient(time_steps[int(step_idx)], param_name)
 
-            return cuda_schedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
+            return CudaSchedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
 
-        _cuda_schedule = parameter_values(steps)
+        _CudaSchedule = parameter_values(steps)
 
         def get_schedule(key: str) -> Callable:
             return lambda **args: args[key]
@@ -206,7 +189,7 @@ class CudaBackend(Backend):
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
-            schedule=_cuda_schedule,
+            schedule=_CudaSchedule,
             initial_state=State.from_data(
                 np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)
             ),
@@ -344,17 +327,17 @@ class CudaBackend(Backend):
     @staticmethod
     def _handle_RX(kernel: cudaq.Kernel, gate: RX, qubit: cudaq.QuakeValue) -> None:
         """Handle an RX gate operation."""
-        kernel.rx(*gate.parameter_values, qubit)
+        kernel.rx(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_RY(kernel: cudaq.Kernel, gate: RY, qubit: cudaq.QuakeValue) -> None:
         """Handle an RY gate operation."""
-        kernel.ry(*gate.parameter_values, qubit)
+        kernel.ry(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_RZ(kernel: cudaq.Kernel, gate: RZ, qubit: cudaq.QuakeValue) -> None:
         """Handle an RZ gate operation."""
-        kernel.rz(*gate.parameter_values, qubit)
+        kernel.rz(*gate.get_parameter_values(), qubit)
 
     @staticmethod
     def _handle_U1(kernel: cudaq.Kernel, gate: U1, qubit: cudaq.QuakeValue) -> None:

@@ -11,19 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import abstractmethod
 
-from .sampling import Sampling
-from .sampling_result import SamplingResult
-from .time_evolution import TimeEvolution
-from .time_evolution_result import TimeEvolutionResult
-from .variational_program import VariationalProgram
-from .variational_program_result import VariationalProgramResult
+from qilisdk.common.model import Model
+from qilisdk.common.result import Result
 
-__all__ = [
-    "Sampling",
-    "SamplingResult",
-    "TimeEvolution",
-    "TimeEvolutionResult",
-    "VariationalProgram",
-    "VariationalProgramResult",
-]
+
+class FunctionalResult(Result):
+    @abstractmethod
+    def compute_cost(self, cost_model: Model) -> float:
+        """Compute the cost of the functional given a cost model.
+
+        Args:
+            cost_model (Model): The Model object used to represent the cost of different states.
+
+        Returns:
+            float: the cost of the results.
+        """

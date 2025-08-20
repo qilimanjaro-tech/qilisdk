@@ -62,7 +62,7 @@ def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_m
     # Check that it has no parameters
     assert gate.is_parameterized is False
     assert gate.nparameters == 0
-    assert gate.parameter_names == []
+    assert gate.get_parameter_names() == []
     assert gate.parameters == {}
 
     # Check target qubits
@@ -89,8 +89,8 @@ def test_measurement_gate():
     assert gate.nqubits == 1
     assert gate.is_parameterized is False
     assert gate.nparameters == 0
-    assert gate.parameter_names == []
-    assert gate.parameters == {}
+    assert gate.get_parameter_names() == []
+    assert gate.get_parameters() == {}
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
@@ -110,9 +110,10 @@ def test_rx_gate(angle: float):
     assert gate.name == "RX"
     assert gate.is_parameterized is True
     assert gate.nparameters == 1
-    assert gate.parameter_names == ["theta"]
-    assert list(gate.parameters.keys()) == ["theta"]
-    assert list(gate.parameters.values()) == [angle]
+    assert gate.get_parameter_names() == ["theta"]
+    assert list(gate.get_parameters().keys()) == ["theta"]
+    assert list(gate.get_parameters().values()) == [angle]
+    assert list(gate.get_parameter_values()) == [angle]
 
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
@@ -194,13 +195,13 @@ def test_u2_gate(phi, gamma):
     assert gate.nqubits == 1
     assert gate.is_parameterized is True
     assert gate.nparameters == 2
-    assert gate.parameter_names == ["phi", "gamma"]
+    assert gate.get_parameter_names() == ["phi", "gamma"]
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
     # Check parameter values
-    assert gate.parameters["phi"] == phi
-    assert gate.parameters["gamma"] == gamma
+    assert gate.get_parameters()["phi"] == phi
+    assert gate.get_parameters()["gamma"] == gamma
 
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
@@ -237,14 +238,14 @@ def test_u3_gate(theta, phi, gamma):
     assert gate.nqubits == 1
     assert gate.is_parameterized is True
     assert gate.nparameters == 3
-    assert gate.parameter_names == ["theta", "phi", "gamma"]
+    assert gate.get_parameter_names() == ["theta", "phi", "gamma"]
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
 
     # Check parameter values
-    assert gate.parameters["theta"] == theta
-    assert gate.parameters["phi"] == phi
-    assert gate.parameters["gamma"] == gamma
+    assert gate.get_parameters()["theta"] == theta
+    assert gate.get_parameters()["phi"] == phi
+    assert gate.get_parameters()["gamma"] == gamma
 
     # Reconstruct the expected matrix.
     a = np.cos(theta / 2)
@@ -291,8 +292,8 @@ def test_cnot_gate(control: int, target: int):
     assert gate.nqubits == 2
     assert gate.is_parameterized is False
     assert gate.nparameters == 0
-    assert gate.parameter_names == []
-    assert gate.parameters == {}
+    assert gate.get_parameter_names() == []
+    assert gate.get_parameters() == {}
 
     # Check qubits
     assert gate.control_qubits == (control,)
@@ -425,7 +426,9 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
     gate.set_parameters(valid_dict)
     # Verify the gate's 'parameters' match the new values
     for param_name, param_value in valid_dict.items():
-        assert gate.parameters[param_name] == param_value, f"Parameter '{param_name}' not updated to {param_value}"
+        assert gate.parameters[param_name].value == param_value, (
+            f"Parameter '{param_name}' not updated to {param_value}"
+        )
 
     # 2) set_parameters() with an invalid dict (unknown parameter name)
     with pytest.raises(InvalidParameterNameError):
@@ -433,9 +436,9 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
 
     # 3) set_parameter_values() with a valid list
     gate.set_parameter_values(valid_list)
-    param_names = gate.parameter_names
+    param_names = gate.get_parameter_names()
     for i, val in enumerate(valid_list):
-        assert gate.parameters[param_names[i]] == val, f"Parameter '{param_names[i]}' not updated to {val}"
+        assert gate.parameters[param_names[i]].value == val, f"Parameter '{param_names[i]}' not updated to {val}"
 
     # 4) set_parameter_values() with an invalid list (length mismatch)
     with pytest.raises(ParametersNotEqualError):
@@ -528,7 +531,7 @@ def test_controlled_gate_parameter_update():
     new_theta = np.pi / 2
     controlled_gate.set_parameters({"theta": new_theta})
     # Underlying gate parameters should be updated.
-    assert controlled_gate.parameters["theta"] == new_theta
+    assert controlled_gate.get_parameters()["theta"] == new_theta
 
     # Compute the updated RX matrix.
     cos_half = np.cos(new_theta / 2)
@@ -584,7 +587,7 @@ def test_adjoint_gate_parameter_update():
     new_theta = np.pi / 4
     adj_gate.set_parameters({"theta": new_theta})
     # Underlying gate parameters should be updated.
-    assert adj_gate.parameters["theta"] == new_theta
+    assert adj_gate.get_parameters()["theta"] == new_theta
     # The adjoint matrix should update to be the conjugate transpose of the new base matrix.
     expected_matrix = base_gate.matrix.conj().T
     assert_matrix_equal(adj_gate.matrix, expected_matrix)
@@ -632,7 +635,7 @@ def test_exponential_gate_parameter_update():
     new_theta = np.pi / 6
     exp_gate.set_parameters({"theta": new_theta})
     # Underlying gate parameters should be updated.
-    assert exp_gate.parameters["theta"] == new_theta
+    assert exp_gate.get_parameters()["theta"] == new_theta
     # The matrix should update to the exponential of the new base matrix.
     expected_matrix = expm(base_gate.matrix)
     assert_matrix_equal(exp_gate.matrix, expected_matrix)

@@ -238,12 +238,14 @@ HardwareEfficientAnsatz
 .. code-block:: python
 
     from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+    from qilisdk.digital import U3, CNOT
 
+    
     ansatz = HardwareEfficientAnsatz(
-        num_qubits=4,
-        layers=3,
-        connectivity="circular",
-        one_qubit_gate="U3",
-        two_qubit_gate="CNOT",
-        structure="interleaved"
+        n_qubits=4, 
+        layers=3, 
+        connectivity="Circular", 
+        one_qubit_gate=U3, 
+        two_qubit_gate=CNOT, 
+        structure="Interposed"
     )

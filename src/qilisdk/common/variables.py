@@ -685,7 +685,7 @@ class BaseVariable(ABC):
     """Represents an abstract structure of any variable that can be included in the optimization ``Model``
     (It's the ``Model``'s minimum mathematical expression).
 
-    ``Variable``'s are used to construct ``Term``s that can then be used to build ``Model``s.
+    ``Variable``'s are used to construct ``Term`` objects that can then be used to build ``Model`` objects.
     """
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -820,7 +820,7 @@ class BaseVariable(ABC):
             float: the evaluated vale of the variable.
         """
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """Replaces the information of the variable with those coming from the dictionary
         if the variable label is in the dictionary
 
@@ -834,7 +834,7 @@ class BaseVariable(ABC):
 
     @abstractmethod
     def to_binary(self) -> Term:
-        """Returns the binary representation of a variable.º
+        """Returns the binary representation of a variable.
 
         Returns:
             Term: the binary representation of a variable.
@@ -944,7 +944,7 @@ class BinaryVariable(BaseVariable):
             raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
         return value[0]
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
     def to_binary(self) -> Term:
@@ -964,7 +964,7 @@ class SpinVariable(BaseVariable):
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None]) -> None:
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
     def evaluate(self, value: list[int] | Number) -> float:
@@ -1052,7 +1052,10 @@ class Variable(BaseVariable):
         return self._bin_vars[item]
 
     def update_variable(
-        self, domain: Domain, bounds: tuple[float | None, float | None], encoding: type[Encoding] | None = None
+        self,
+        domain: Domain,
+        bounds: tuple[float | None, float | None] = (None, None),
+        encoding: type[Encoding] | None = None,
     ) -> None:
         self._encoding = encoding if encoding is not None else self._encoding
         self._term = None
@@ -1104,6 +1107,93 @@ class Variable(BaseVariable):
             ComparisonTerm: a Comparison Term that ensures the encoding is respected.
         """
         return self.encoding.encoding_constraint(self, precision=self._precision)
+
+
+@yaml.register_class
+class Parameter(BaseVariable):
+    """ """
+
+    def __init__(
+        self,
+        label: str,
+        value: Number,
+        domain: Domain = Domain.REAL,
+        bounds: tuple[float | None, float | None] = (None, None),
+    ) -> None:
+        super().__init__(label=label, domain=domain, bounds=bounds)
+
+        if not self.domain.check_value(value):
+            raise ValueError(
+                f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
+            )
+        self._value = value
+        self.set_bounds(bounds[0], bounds[1])
+
+    @property
+    def value(self) -> Number:
+        return self._value
+
+    def set_value(self, value: Number) -> None:
+        if not self.domain.check_value(value):
+            raise ValueError(
+                f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
+            )
+        if value > self.bounds[1] or value < self.bounds[0]:
+            raise ValueError(f"The value provided ({value}) is outside the bound of the parameter {self.bounds}")
+        self._value = value
+
+    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+        """
+        Returns:
+        int: the number of binary variables that are needed to represent this variable in the given encoding.
+        """
+        return 0
+
+    def evaluate(self, value: list[int] | Number) -> float:
+        """Evaluates the value of the variable given a binary string or a number.
+
+        Args:
+            value (list[int] | int | float): the value used to evaluate the variable.
+                If the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+                its binary representation. This representation is constructed using the encoding, bounds and domain
+                of the variable. To check the binary representation of a variable you can check the method `to_binary()`
+
+        Returns:
+            float: the evaluated vale of the variable.
+        """
+        return self.value
+
+    def to_binary(self) -> Term:
+        """Returns the binary representation of a variable.
+
+        Returns:
+            Term: the binary representation of a variable.
+        """
+        return Term([self.value], operation=Operation.ADD)
+
+    def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
+        upper_bound = upper_bound if upper_bound is not None else self.domain.max()
+        lower_bound = lower_bound if lower_bound is not None else self.domain.min()
+        if self.value > upper_bound or self.value < lower_bound:
+            raise ValueError(
+                f"The current value of the parameter ({self.value}) is outside the bounds ({lower_bound}, {upper_bound})"
+            )
+        super().set_bounds(lower_bound, upper_bound)
+
+    def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
+        if len(bounds) != 2:  # noqa: PLR2004
+            raise ValueError(
+                "Invalid bounds provided: the bounds need to be a tuple with the format (lowe_bound, upper_bound)"
+            )
+
+        if domain.check_value(self.value):
+            self._domain = domain
+        else:
+            raise ValueError(
+                f"The provided domain ({domain.name}) is incompatible with the current parameter value ({self.value})"
+            )
+
+        self.set_bounds(lower_bound=bounds[0], upper_bound=bounds[1])
 
 
 # Terms ###
@@ -1395,21 +1485,23 @@ class Term:
         Returns:
             float: the result from evaluating the term.
         """
-        var_hash_dict = {hash(v): var_values[v] for v in var_values}
+        _var_values = dict(var_values)
         for var in self.variables():
-            if hash(var) not in var_hash_dict:
+            if isinstance(var, Parameter):
+                _var_values[var] = var.value
+            if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
         for e in self:
             if isinstance(e, Term):
-                output = self._apply_operation_on_constants([output, e.evaluate(var_values) * self[e]])
+                output = self._apply_operation_on_constants([output, e.evaluate(_var_values) * self[e]])
             elif isinstance(e, BaseVariable):
                 if e == self.CONST:
                     output = self._apply_operation_on_constants([output, self[e]])
                 elif self.operation == Operation.MUL:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) ** self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) ** self[e]])
                 else:
-                    output = self._apply_operation_on_constants([output, e.evaluate(var_hash_dict[hash(e)]) * self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
         return output
 
     def get_constant(self) -> Number:
@@ -1570,7 +1662,7 @@ class Term:
 
 @yaml.register_class
 class ComparisonTerm:
-    """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term``s
+    """Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term`` objects
     (e.g. x+y>0, x>2, ...).
 
     They are built from a left and a right hand part, each of which can contain:

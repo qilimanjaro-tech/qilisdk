@@ -15,13 +15,13 @@
 import pytest
 
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.gates import U1, M
+from qilisdk.digital.gates import CNOT, CZ, U1, M
 
 # --- Helper functions for tests ---
 
 
 def create_ansatz(
-    n_qubits: int, layers: int = 1, connectivity="Linear", structure="grouped", one_qubit_gate="U1", two_qubit_gate="CZ"
+    n_qubits: int, layers: int = 1, connectivity="Linear", structure="grouped", one_qubit_gate=U1, two_qubit_gate=CZ
 ) -> HardwareEfficientAnsatz:
     return HardwareEfficientAnsatz(
         n_qubits=n_qubits,
@@ -98,7 +98,7 @@ def test_insufficient_parameters():
     n_qubits = 4
     layers = 1
     ansatz = create_ansatz(
-        n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped", two_qubit_gate="CNOT"
+        n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped", two_qubit_gate=CNOT
     )
     params = [0.1] * (ansatz.nparameters - 1)
     with pytest.raises(ValueError, match="Expecting"):

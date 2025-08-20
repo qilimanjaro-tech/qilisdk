@@ -21,10 +21,6 @@ from qilisdk.yaml import yaml
 class OptimizerIntermediateResult(Result):
     """
     Represents an intermediate result.
-
-    Attributes:
-        cost (float): The optimal cost value (e.g., minimum energy) found.
-        parameters (List[float]): The parameters that yield the optimal cost.
     """
 
     def __init__(
@@ -54,12 +50,6 @@ class OptimizerIntermediateResult(Result):
 class OptimizerResult(Result):
     """
     Represents the result of an optimization run.
-
-    Attributes:
-        optimal_cost (float): The optimal cost value (e.g., minimum energy) found.
-        optimal_parameters (List[float]): The parameters that yield the optimal cost.
-        intermediate_results (List[OptimizerResult]): A list of intermediate optimization results.
-            Each intermediate result is an instance of OptimizerResult containing the current cost and parameters.
     """
 
     def __init__(

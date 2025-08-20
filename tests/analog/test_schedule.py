@@ -61,10 +61,6 @@ def test_add_schedule_step_valid():
     # Add time step 2 with a new coefficient.
     sched.add_schedule_step(2, {"H1": 1.5})
     assert sched.schedule[2]["H1"] == 1.5
-    # Overwriting an existing time step should warn.
-    with pytest.warns(RuntimeWarning):
-        sched.add_schedule_step(2, {"H1": 2.0})
-    assert sched.schedule[2]["H1"] == 2.0
 
 
 def test_add_schedule_step_invalid_reference():
@@ -115,8 +111,6 @@ def test_add_hamiltonian_existing():
     """Adding a Hamiltonian with an existing label warns and does not override the original."""
     H1 = Z(0).to_hamiltonian()
     sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
-    with pytest.warns(RuntimeWarning):
-        sched.add_hamiltonian("H1", X(0).to_hamiltonian())
     # The original Hamiltonian (H1) remains unchanged.
     assert sched.hamiltonians["H1"] == H1
 

@@ -1,3 +1,6 @@
+from unittest import mock
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
@@ -5,14 +8,20 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
+from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.quantum_objects import ket, tensor_prod
+from qilisdk.common.variables import BinaryVariable
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 
 @pytest.fixture
@@ -207,3 +216,88 @@ def test_time_dependent_hamiltonian_with_3_qubits():
     assert pytest.approx(res.final_expected_values[0], rel=1e-2) == -1.0
     assert pytest.approx(res.final_expected_values[1], rel=1e-2) == -1.0
     assert pytest.approx(res.final_expected_values[2], rel=1e-2) == -1.0
+
+
+###################
+# Parameterized Program
+###################
+
+
+@pytest.fixture
+def dummy_optimizer():
+    """
+    Create a dummy optimizer that, upon optimization, returns a tuple of
+    (optimal_cost, optimal_parameters). For testing, we use (0.2, [0.9, 0.1]).
+    """
+    optimizer = MagicMock()
+    optimizer.optimize.side_effect = lambda cost_function, init_parameters, store_intermediate_results: OptimizerResult(
+        0.2, [0.9, 0.1]
+    )
+    return optimizer
+
+
+def test_parameterized_program_properties_assignment(dummy_optimizer):
+    """
+    Test that the parameterized_program instance correctly stores its initial properties.
+
+    Verifies that the ansatz, initial parameters, and cost function are assigned properly.
+    """
+    mock_instance = MagicMock(spec=Model)
+    ansatz = HardwareEfficientAnsatz(2)
+    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+
+    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    assert isinstance(parameterized_program.functional, Sampling)
+    assert parameterized_program.functional.circuit == circuit
+    assert parameterized_program.optimizer == dummy_optimizer
+    assert parameterized_program.cost_model == mock_instance
+
+
+def test_obtain_cost_calls_backend(dummy_optimizer):
+    """
+    Test that the obtain_cost method correctly generates the circuit, calls the backend,
+    and applies the cost function.
+
+    This ensures:
+      - ansatz.get_circuit is called with the provided parameters.
+      - backend.execute is called with the generated circuit and specified number of shots.
+      - The returned cost is as defined by the dummy cost function.
+    """
+    mock_instance = MagicMock(spec=Model)
+    mock_instance.variables = mock.Mock(return_value=[BinaryVariable("b0"), BinaryVariable("b1")])
+
+    mock_objective = MagicMock(spec=Objective)
+    mock_objective.label = "obj"
+
+    mock_con = MagicMock(spec=Constraint)
+    mock_con.label = "con1"
+
+    mock_instance.objective = mock_objective
+    mock_instance.constraints = [mock_con]
+    mock_instance.evaluate.return_value = {"obj": -2, "con1": 10}
+
+    ansatz = HardwareEfficientAnsatz(2)
+    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+
+    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, mock_instance)
+    # Call obtain_cost with a custom number of shots.
+    backend = QutipBackend()
+    output = backend.execute(parameterized_program)
+
+    # The dummy_cost_function returns 0.7 regardless of input.
+    assert output.optimal_cost == 0.2
+    assert output.optimal_execution_results.compute_cost(mock_instance) == 8.0
+
+
+def test_real_example():
+    backend = QutipBackend()
+    b = BinaryVariable("b")
+    model = Model("test")
+    model.set_objective(2 * b - 1)
+
+    cr = Circuit(1)
+    cr.add(U1(0, phi=0.1))
+
+    output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), model))
+    assert output.optimal_cost == -1
+    assert output.optimal_execution_results.samples == {"0": 1000}

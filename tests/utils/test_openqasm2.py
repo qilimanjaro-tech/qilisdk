@@ -114,7 +114,7 @@ def test_full_circuit_to_qasm_and_from_qasm():
         # Compare qubit assignments.
         assert orig_gate.qubits == recon_gate.qubits
         # Compare parameters.
-        assert orig_gate.parameter_values == recon_gate.parameter_values
+        assert orig_gate.get_parameter_values() == recon_gate.get_parameter_values()
 
 
 def test_from_qasm2_no_qreg():
@@ -146,4 +146,4 @@ def test_to_qasm2_file_and_from_qasm2_file(tmp_path):
     for orig_gate, recon_gate in zip(circuit.gates, reconstructed_circuit.gates):
         assert orig_gate.name == recon_gate.name
         assert orig_gate.qubits == recon_gate.qubits
-        assert orig_gate.parameter_values == recon_gate.parameter_values
+        assert orig_gate.get_parameter_values() == recon_gate.get_parameter_values()

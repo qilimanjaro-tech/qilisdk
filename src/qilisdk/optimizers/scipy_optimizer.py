@@ -62,8 +62,8 @@ class SciPyOptimizer(Optimizer):
                     for each element in parameter list.
 
         Extra Args:
-            Any argument supported by `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ can be passed.
-            Note: the parameters, cost function and the ``args``that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.
+            Any argument supported by `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>` can be passed.
+            Note: the parameters, cost function and the ``args`` that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.
         """
         super().__init__()
         self.method = method

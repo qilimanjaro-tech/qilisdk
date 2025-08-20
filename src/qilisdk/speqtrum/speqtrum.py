@@ -18,15 +18,15 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 import httpx
 from loguru import logger
 from pydantic import TypeAdapter
 
-from qilisdk.common.result import Result
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -41,15 +41,11 @@ from .speqtrum_models import (
     SamplingPayload,
     TimeEvolutionPayload,
     Token,
-    VQEPayload,
+    VariationalProgramPayload,
 )
 
 if TYPE_CHECKING:
-    from qilisdk.digital.vqe import VQE
     from qilisdk.functionals.functional import Functional
-    from qilisdk.optimizers.optimizer import Optimizer
-
-TResult = TypeVar("TResult", bound=Result)
 
 
 class SpeQtrum:
@@ -63,9 +59,10 @@ class SpeQtrum:
             raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
         self._selected_device: int | None = None
-        self._handlers: dict[type[Functional[Any]], Callable[[Functional[Any]], int]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional], int]] = {
             Sampling: lambda f: self._submit_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._submit_time_evolution(cast("TimeEvolution", f)),
+            VariationalProgram: lambda f: self._submit_variational_program(cast("VariationalProgram", f)),
         }
         self._settings = get_settings()
         logger.success("QaaS client initialised for user '{}'", self._username)
@@ -385,13 +382,14 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return job.id
 
-    def submit_vqe(
-        self, vqe: VQE, optimizer: Optimizer, nshots: int = 1000, store_intermediate_results: bool = False
+    def _submit_variational_program(
+        self,
+        variational_program: VariationalProgram,
     ) -> int:
-        """Run a Variational Quantum Eigensolver on the selected device.
+        """Run a Variational Program on the selected device.
 
         Args:
-            vqe: Problem definition containing Hamiltonian and ansatz.
+            variational_program: Problem definition containing Hamiltonian and ansatz.
             optimizer: Classical optimizer that updates the variational
                 parameters between circuit evaluations.
             nshots: Number of shots per circuit evaluation. Defaults to
@@ -404,9 +402,9 @@ class SpeQtrum:
         """
         device = self._ensure_device_selected()
         payload = ExecutePayload(
-            type=ExecuteType.VQE,
-            vqe_payload=VQEPayload(
-                vqe=vqe, optimizer=optimizer, nshots=nshots, store_intermediate_results=store_intermediate_results
+            type=ExecuteType.VARIATIONAL_PROGRAM,
+            variational_program_payload=VariationalProgramPayload(
+                variational_program=variational_program,
             ),
         )
         json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}

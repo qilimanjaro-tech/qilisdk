@@ -13,13 +13,50 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Protocol, Type, TypeVar
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-from qilisdk.common.result import Result
+from qilisdk.functionals.functional_result import FunctionalResult
 
-TResult_co = TypeVar("TResult_co", bound=Result, covariant=True)
+if TYPE_CHECKING:
+    from qilisdk.common.variables import Number
+
+TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
-class Functional(Protocol[TResult_co]):
-    @property
-    def result_type(self) -> Type[TResult_co]: ...
+class Functional(ABC):
+    result_type: ClassVar[type[FunctionalResult]]
+
+
+class PrimitiveFunctional(Functional, ABC, Generic[TResult_co]):
+    @abstractmethod
+    def set_parameters(self, parameters: dict[str, Number]) -> None:
+        """Sets the parameters of the functional.
+
+        Args:
+            parameters (dict[str, Number]): a dictionary with the parameter label and new value.
+        """
+
+    @abstractmethod
+    def get_parameters(self) -> dict[str, Number]:
+        """Gets the values of the parameters of the functional.
+
+        Returns:
+            dict[str, Number]: a dictionary with the parameter label and its current value.
+        """
+
+    @abstractmethod
+    def get_parameter_names(self) -> list[str]:
+        """Gets the names of the parameters of the functional.
+
+        Returns:
+            list[str]: a list of parameter names.
+        """
+
+    @abstractmethod
+    def get_parameter_values(self) -> list[Number]:
+        """Gets the values of the parameters of the functional.
+
+        Returns:
+            list[Number]: a list of parameter values.
+        """

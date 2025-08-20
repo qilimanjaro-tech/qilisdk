@@ -20,6 +20,7 @@ import numpy as np
 from scipy.linalg import expm
 from typing_extensions import Self
 
+from qilisdk.common.variables import Parameter
 from qilisdk.yaml import yaml
 
 from .exceptions import (
@@ -103,36 +104,6 @@ class Gate(ABC):
         return len(self.qubits)
 
     @property
-    def parameters(self) -> dict[str, float]:
-        """
-        Retrieve a mapping of parameter names to their corresponding values.
-
-        Returns:
-            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
-        """
-        return {}
-
-    @property
-    def parameter_names(self) -> list[str]:
-        """
-        Retrieve the symbolic names of the gate's parameters.
-
-        Returns:
-            list[str]: A list containing the names of the parameters.
-        """
-        return list(self.parameters.keys())
-
-    @property
-    def parameter_values(self) -> list[float]:
-        """
-        Retrieve the numerical values assigned to the gate's parameters.
-
-        Returns:
-            list[float]: A list containing the parameter values.
-        """
-        return list(self.parameters.values())
-
-    @property
     def nparameters(self) -> int:
         """
         Retrieve the number of parameters for the gate.
@@ -140,7 +111,7 @@ class Gate(ABC):
         Returns:
             int: The count of parameters needed by the gate.
         """
-        return len(self.parameters)
+        return len(self.get_parameters())
 
     @property
     def is_parameterized(self) -> bool:
@@ -151,6 +122,42 @@ class Gate(ABC):
             bool: True if the gate is parameterized; otherwise, False.
         """
         return self.nparameters != 0
+
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        """Returns the raw parameter objects stored in the gate.
+
+        Returns:
+            dict[str, Parameter]: A dictionary mapping each Parameter object to its label.
+        """
+        return {}
+
+    def get_parameters(self) -> dict[str, float]:  # noqa: PLR6301
+        """
+        Retrieve a mapping of parameter names to their corresponding values.
+
+        Returns:
+            dict[str, float]: A dictionary mapping each parameter name to its numeric value.
+        """
+        return {}
+
+    def get_parameter_names(self) -> list[str]:
+        """
+        Retrieve the symbolic names of the gate's parameters.
+
+        Returns:
+            list[str]: A list containing the names of the parameters.
+        """
+        return list(self.get_parameters())
+
+    def get_parameter_values(self) -> list[float]:
+        """
+        Retrieve the numerical values assigned to the gate's parameters.
+
+        Returns:
+            list[float]: A list containing the parameter values.
+        """
+        return list(self.get_parameters().values())
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -166,7 +173,7 @@ class Gate(ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if any(name not in self.parameters for name in parameters):
+        if any(name not in self.get_parameters() for name in parameters):
             raise InvalidParameterNameError
 
     def set_parameter_values(self, values: list[float]) -> None:
@@ -183,7 +190,7 @@ class Gate(ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if len(values) != len(self.parameters):
+        if len(values) != len(self.get_parameters()):
             raise ParametersNotEqualError
 
     def __repr__(self) -> str:
@@ -197,13 +204,13 @@ class BasicGate(Gate):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, float] = {}) -> None:
+    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] = {}) -> None:
         # Check for duplicate integers in target_qubits.
         if len(target_qubits) != len(set(target_qubits)):
             raise ValueError("Duplicate target qubits found.")
 
         self._target_qubits: tuple[int, ...] = target_qubits
-        self._parameters: dict[str, float] = parameters
+        self._parameters: dict[str, Parameter] = parameters
         self._matrix: np.ndarray = self._generate_matrix()
 
     @property
@@ -215,19 +222,23 @@ class BasicGate(Gate):
         return self._target_qubits
 
     @property
-    def parameters(self) -> dict[str, float]:
-        return dict(self._parameters)
+    def parameters(self) -> dict[str, Parameter]:
+        return self._parameters
+
+    def get_parameters(self) -> dict[str, float]:
+        return {k: v.value for k, v in self._parameters.items()}
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
-        self._parameters.update(parameters)
+        for k, v in parameters.items():
+            self._parameters[k].set_value(v)
         self._matrix = self._generate_matrix()
 
     def set_parameter_values(self, values: list[float]) -> None:
         super().set_parameter_values(values=values)
 
-        for key, value in zip(self.parameters, values):
-            self._parameters[key] = value
+        for key, value in zip(self.get_parameters(), values):
+            self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
 
@@ -281,6 +292,7 @@ class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
         self._basic_gate: TBasicGate = basic_gate
         self._matrix: np.ndarray
+        self._parameters: dict[str, Parameter] = self._basic_gate.parameters
 
     @property
     def basic_gate(self) -> TBasicGate:
@@ -295,24 +307,25 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate.target_qubits
 
     @property
-    def parameters(self) -> dict[str, float]:
-        return self._basic_gate.parameters
-
-    @property
-    def parameter_names(self) -> list[str]:
-        return self._basic_gate.parameter_names
-
-    @property
-    def parameter_values(self) -> list[float]:
-        return self._basic_gate.parameter_values
-
-    @property
     def nparameters(self) -> int:
         return self._basic_gate.nparameters
 
     @property
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
+
+    @property
+    def parameters(self) -> dict[str, Parameter]:
+        return self._parameters
+
+    def get_parameters(self) -> dict[str, float]:
+        return self._basic_gate.get_parameters()
+
+    def get_parameter_names(self) -> list[str]:
+        return self._basic_gate.get_parameter_names()
+
+    def get_parameter_values(self) -> list[float]:
+        return self._basic_gate.get_parameter_values()
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
@@ -661,7 +674,7 @@ class RX(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, theta: float | Parameter) -> None:
         """
         Initialize an RX gate.
 
@@ -669,7 +682,10 @@ class RX(BasicGate):
             qubit (int): The target qubit index for the rotation.
             theta (float): The rotation angle (polar) in radians.
         """
-        super().__init__(target_qubits=(qubit,), parameters={"theta": theta})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={"theta": theta if isinstance(theta, Parameter) else Parameter("theta", theta)},
+        )
 
     @property
     def name(self) -> str:
@@ -677,10 +693,10 @@ class RX(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"]
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
-        theta = self.parameters["theta"]
+        theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
@@ -704,7 +720,7 @@ class RY(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float) -> None:
+    def __init__(self, qubit: int, *, theta: float | Parameter) -> None:
         """
         Initialize an RY gate.
 
@@ -712,7 +728,10 @@ class RY(BasicGate):
             qubit (int): The target qubit index for the rotation.
             theta (float): The rotation angle (polar) in radians.
         """
-        super().__init__(target_qubits=(qubit,), parameters={"theta": theta})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={"theta": theta if isinstance(theta, Parameter) else Parameter("theta", theta)},
+        )
 
     @property
     def name(self) -> str:
@@ -720,10 +739,10 @@ class RY(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"]
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
-        theta = self.parameters["theta"]
+        theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
@@ -755,7 +774,7 @@ class RZ(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float) -> None:
+    def __init__(self, qubit: int, *, phi: float | Parameter) -> None:
         """
         Initialize an RZ gate.
 
@@ -763,18 +782,21 @@ class RZ(BasicGate):
             qubit (int): The target qubit index for the rotation.
             phi (float): The rotation angle (azimuthal) in radians.
         """
-        super().__init__(target_qubits=(qubit,), parameters={"phi": phi})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={"phi": phi if isinstance(phi, Parameter) else Parameter("phi", phi)},
+        )
 
     @property
     def name(self) -> str:
         return "RZ"
 
     @property
-    def theta(self) -> float:
-        return self.parameters["theta"]
+    def phi(self) -> float:
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
-        phi = self.parameters["phi"]
+        phi = self.phi
         cos_half = np.cos(phi / 2)
         sin_half = np.sin(phi / 2)
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
@@ -803,7 +825,7 @@ class U1(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float) -> None:
+    def __init__(self, qubit: int, *, phi: float | Parameter) -> None:
         """
         Initialize a U1 gate.
 
@@ -811,7 +833,10 @@ class U1(BasicGate):
             qubit (int): The target qubit index for the U1 gate.
             phi (float): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
-        super().__init__(target_qubits=(qubit,), parameters={"phi": phi})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={"phi": phi if isinstance(phi, Parameter) else Parameter("phi", phi)},
+        )
 
     @property
     def name(self) -> str:
@@ -819,10 +844,10 @@ class U1(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"]
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
-        phi = self.parameters["phi"]
+        phi = self.phi
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
 
 
@@ -852,7 +877,7 @@ class U2(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
-    def __init__(self, qubit: int, *, phi: float, gamma: float) -> None:
+    def __init__(self, qubit: int, *, phi: float | Parameter, gamma: float | Parameter) -> None:
         """
         Initialize a U2 gate.
 
@@ -861,7 +886,13 @@ class U2(BasicGate):
             phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians..
         """
-        super().__init__(target_qubits=(qubit,), parameters={"phi": phi, "gamma": gamma})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={
+                "phi": phi if isinstance(phi, Parameter) else Parameter("phi", phi),
+                "gamma": gamma if isinstance(gamma, Parameter) else Parameter("gamma", gamma),
+            },
+        )
 
     @property
     def name(self) -> str:
@@ -869,15 +900,15 @@ class U2(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"]
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
-        return self.parameters["gamma"]
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
-        phi = self.parameters["phi"]
-        gamma = self.parameters["gamma"]
+        phi = self.phi
+        gamma = self.gamma
         return (1 / np.sqrt(2)) * np.array(
             [
                 [1, -np.exp(1j * gamma)],
@@ -914,7 +945,9 @@ class U3(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
-    def __init__(self, qubit: int, *, theta: float, phi: float, gamma: float) -> None:
+    def __init__(
+        self, qubit: int, *, theta: float | Parameter, phi: float | Parameter, gamma: float | Parameter
+    ) -> None:
         """
         Initialize a U3 gate.
 
@@ -924,7 +957,14 @@ class U3(BasicGate):
             phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
         """
-        super().__init__(target_qubits=(qubit,), parameters={"theta": theta, "phi": phi, "gamma": gamma})
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={
+                "theta": theta if isinstance(theta, Parameter) else Parameter("theta", theta),
+                "phi": phi if isinstance(phi, Parameter) else Parameter("phi", phi),
+                "gamma": gamma if isinstance(gamma, Parameter) else Parameter("gamma", gamma),
+            },
+        )
 
     @property
     def name(self) -> str:
@@ -932,20 +972,20 @@ class U3(BasicGate):
 
     @property
     def theta(self) -> float:
-        return self.parameters["theta"]
+        return self.get_parameters()["theta"]
 
     @property
     def phi(self) -> float:
-        return self.parameters["phi"]
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
-        return self.parameters["gamma"]
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
-        theta = self.parameters["theta"]
-        phi = self.parameters["phi"]
-        gamma = self.parameters["gamma"]
+        theta = self.theta
+        phi = self.phi
+        gamma = self.gamma
         return np.array(
             [
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],

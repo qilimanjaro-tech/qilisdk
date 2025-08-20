@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any
+
 import numpy as np
 
+from qilisdk.common.variables import Number, Parameter
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -32,7 +35,7 @@ class Circuit:
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
-        self._parameterized_gates: list[Gate] = []
+        self._parameters: dict[str, Parameter] = {}
 
     @property
     def nqubits(self) -> int:
@@ -52,7 +55,7 @@ class Circuit:
         Returns:
             int: The total count of parameters from all parameterized gates.
         """
-        return len([value for gate in self._gates if gate.is_parameterized for value in gate.parameter_values])
+        return len(self._parameters)
 
     @property
     def gates(self) -> list[Gate]:
@@ -71,7 +74,25 @@ class Circuit:
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return [value for gate in self._gates if gate.is_parameterized for value in gate.parameter_values]
+        return [param.value for param in self._parameters.values()]
+
+    def get_parameter_names(self) -> list[str]:
+        """
+        Retrieve the parameter values from all parameterized gates in the circuit.
+
+        Returns:
+            list[float]: A list of parameter values from each parameterized gate.
+        """
+        return list(self._parameters.keys())
+
+    def get_parameters(self) -> dict[str, float]:
+        """
+        Retrieve the parameter names and values from all parameterized gates in the circuit.
+
+        Returns:
+            dict[str, float]: A dictionary of the parameters with their current values.
+        """
+        return {label: param.value for label, param in self._parameters.items()}
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
@@ -85,12 +106,24 @@ class Circuit:
         """
         if len(values) != self.nparameters:
             raise ParametersNotEqualError
-        k = 0
-        for i, gate in enumerate(self._parameterized_gates):
-            gate.set_parameter_values(values[i + k : i + k + gate.nparameters])
-            k += gate.nparameters - 1
+        for i, parameter in enumerate(self._parameters.values()):
+            parameter.set_value(values[i])
 
-    def add(self, gate: Gate) -> None:
+    def set_parameters(self, parameter_dict: dict[str, Number]) -> None:
+        """Set the parameter values by their label. No need to provide the full list of parameters.
+
+        Args:
+            parameter_dict (dict[str, Number]): _description_
+
+        Raises:
+            ValueError: _description_
+        """
+        for label, param in parameter_dict.items():
+            if label not in self._parameters:
+                raise ValueError(f"Parameter {label} is not defined in this circuit.")
+            self._parameters[label].set_value(param)
+
+    def add(self, gate: Gate, **kwargs: dict[str, Any]) -> None:
         """
         Add a quantum gate to the circuit.
 
@@ -100,10 +133,14 @@ class Circuit:
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
+        override_parameter_name = kwargs.get("override_parameter_name", "")
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
         if gate.is_parameterized:
-            self._parameterized_gates.append(gate)
+            param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
+            for p in gate.get_parameter_names():
+                parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
+                self._parameters[parameter_label] = gate.parameters[p]
         self._gates.append(gate)
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:

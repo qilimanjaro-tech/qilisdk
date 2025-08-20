@@ -12,24 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, Literal, Union
+from typing import Any, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, M
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, M
 from qilisdk.yaml import yaml
 
 
 class Ansatz(ABC):
-    _ONE_QUBIT_GATES: ClassVar[dict[str, type[Union[U1, U2, U3]]]] = {
-        "U1": U1,
-        "U2": U2,
-        "U3": U3,
-    }
-    _TWO_QUBITS_GATES: ClassVar[dict[str, type[Union[CNOT, CZ]]]] = {
-        "CZ": CZ,
-        "CNOT": CNOT,
-    }
-
     def __init__(self, nqubits: int, layers: int = 1) -> None:
         self.nqubits = nqubits
         self.layers = layers
@@ -44,7 +34,7 @@ class Ansatz(ABC):
         """
         raise NotImplementedError
 
-    def get_circuit(self, parameters: list[float]) -> Circuit:
+    def get_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
         """Get the underlying circuit with the given list of parameters.
 
         Args:
@@ -59,10 +49,10 @@ class Ansatz(ABC):
         if len(parameters) != self.nparameters:
             raise ValueError(f"Expecting {self.nparameters} but received {len(parameters)}")
 
-        return self._construct_circuit(parameters=list(parameters))
+        return self._construct_circuit(parameters=list(parameters), measure=measure)
 
     @abstractmethod
-    def _construct_circuit(self, parameters: list[float]) -> Circuit: ...
+    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit: ...
 
 
 @yaml.register_class
@@ -73,8 +63,8 @@ class HardwareEfficientAnsatz(Ansatz):
         layers: int = 1,
         connectivity: Literal["Circular", "Linear", "Full"] | list[tuple[int, int]] = "Linear",
         structure: Literal["grouped", "interposed"] = "grouped",
-        one_qubit_gate: Literal["U1", "U2", "U3"] = "U1",
-        two_qubit_gate: Literal["CZ", "CNOT"] = "CZ",
+        one_qubit_gate: Type[U1 | U2 | U3] = U1,
+        two_qubit_gate: Type[CZ | CNOT] = CZ,
     ) -> None:
         """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
 
@@ -94,10 +84,10 @@ class HardwareEfficientAnsatz(Ansatz):
                 - 'grouped'   : Applies all single-qubit gates followed by all two-qubit gates.
                 - 'interposed': Interleaves single- and two-qubit gates.
                 Defaults to "grouped".
-            one_qubit_gate (Literal["U1", "U2", "U3"], optional): the single-qubit gate class name to be used
-                as parameterized gates (e.g., `U1`, `U2`, or `U3`). Defaults to "U1".
-            two_qubit_gate (Literal["CZ", "CNOT"], optional):  the two-qubit gate class name used for
-                entanglement (e.g., `CNOT` or `CZ`). Defaults to "CZ".
+            one_qubit_gate (Type[U1] | Type[U2] | Type[U3], optional): the single-qubit gate class name to be used
+                as parameterized gates (e.g., `U1`, `U2`, or `U3`). Defaults to U1.
+            two_qubit_gate (Type[CZ] | Type[CNOT], optional):  the two-qubit gate class name used for
+                entanglement (e.g., `CNOT` or `CZ`). Defaults to CZ.
 
         Raises:
             ValueError: If an unsupported connectivity or structure type is specified.
@@ -107,38 +97,45 @@ class HardwareEfficientAnsatz(Ansatz):
         .. code-block:: python
 
             from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+            from qilisdk.digital.gates import U3, CNOT
 
             ansatz = HardwareEfficientAnsatz(
                 num_qubits=4,
                 layers=3,
                 connectivity="Linear",
-                on_qubit_gates="U3",
-                two_qubit_gates="CNOT",
+                on_qubit_gates=U3,
+                two_qubit_gates=CNOT,
                 structure="grouped",
             )
             print(ansatz.circuit)
         """
         super().__init__(n_qubits, layers)
 
+        _structure = str(structure).lower()
+        _connectivity = connectivity if not isinstance(connectivity, str) else str(connectivity).lower()
+
         # Define chip topology
-        if isinstance(connectivity, list):
-            self.connectivity = connectivity
-        elif connectivity == "Full":
+        if isinstance(_connectivity, list):
+            self.connectivity = _connectivity
+        elif _connectivity == "full":
             self.connectivity = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
-        elif connectivity == "Circular":
+        elif _connectivity == "circular":
             self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
-        elif connectivity == "Linear":
+        elif _connectivity == "linear":
             self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)]
         else:
-            raise ValueError(f"Unrecognized connectivity type ({connectivity}).")
+            raise ValueError(f"Unrecognized connectivity type ({_connectivity}).")
 
-        self.gate_types: dict[str, str] = {"one_qubit_gate": one_qubit_gate, "two_qubit_gates": two_qubit_gate}
-        self.one_qubit_gate: type[Union[U1, U2, U3]] = self._ONE_QUBIT_GATES[one_qubit_gate]
-        self.two_qubit_gate: type[Union[CNOT, CZ]] = self._TWO_QUBITS_GATES[two_qubit_gate]
+        self.gate_types: dict[str, type[Gate]] = {
+            "one_qubit_gate": one_qubit_gate,
+            "two_qubit_gates": two_qubit_gate,
+        }
+        self.one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
+        self.two_qubit_gate: type[CNOT | CZ] = two_qubit_gate
 
-        if structure not in {"grouped", "interposed"}:
-            raise ValueError(f"provided structure {structure} is not supported.")
-        self.structure = structure
+        if _structure not in {"grouped", "interposed"}:
+            raise ValueError(f"provided structure {_structure} is not supported.")
+        self.structure = _structure
 
         self.construct_layer_handlers = {
             "interposed": self._construct_layer_interposed,
@@ -172,7 +169,7 @@ class HardwareEfficientAnsatz(Ansatz):
         """
         return self.nqubits * (self.layers + 1) * len(self.one_qubit_gate.PARAMETER_NAMES)
 
-    def _construct_circuit(self, parameters: list[float]) -> Circuit:
+    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
         self._circuit = Circuit(self.nqubits)
         # Add initial layer of unitaries
         for i in range(self.nqubits):
@@ -181,7 +178,10 @@ class HardwareEfficientAnsatz(Ansatz):
         construct_layer_handler = self.construct_layer_handlers[self.structure]
         for _ in range(self.layers):
             construct_layer_handler(parameters)
-        self._circuit.add(M(*list(range(self.nqubits))))
+
+        if measure is None:
+            measure = list(range(self.nqubits))
+        self._circuit.add(M(*measure))
 
         return self._circuit
 

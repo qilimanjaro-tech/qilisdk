@@ -60,6 +60,11 @@ autoapi_options = [
     "show-module-summary",
 ]
 autoapi_python_class_content = "both"
+autoapi_python_use_implicit_namespaces = False
+
+add_module_names = False
+autoapi_keep_files = False
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

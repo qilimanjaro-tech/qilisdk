@@ -67,6 +67,8 @@ class SlackCounter:
 
 @yaml.register_class
 class ObjectiveSense(str, Enum):
+    """An Enumeration of the Objective sense options."""
+
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
@@ -182,9 +184,7 @@ class Constraint:
 class Objective:
     def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
-
         A ``Model`` can have only one ``Objective``, unlike ``Constraints``, which can be multiple.
-
         The ``Objective`` is constructed using ``Term`` objects (e.g., ``3x*y``, ``2x``). Each ``Term`` may include:
         - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
         - Other ``Term`` objects: Allowing for the construction of complex expressions.
@@ -483,12 +483,9 @@ class Model:
     ) -> QUBO:
         """Export the model to a qubo model.
         Args:
-            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values
-                                        to scale the model's constraints. Defaults to None.
-            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to
-                            handel inequality constraints. Defaults to "slack".
-            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
-                            Defaults to None.
+            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values to scale the model's constraints. Defaults to None.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to handel inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method. Defaults to None.
 
         Note:
             this exportation only works if the model doesn't violate the QUBO format.
@@ -520,8 +517,7 @@ class QUBO(Model):
     def qubo_objective(self) -> Objective | None:
         """
         Returns:
-            Objective | None: The QUBO objective (factoring in the constraints and objective of the model).
-                If the objective and constraints are not defined in the model, this property returns None.
+            Objective | None: The QUBO objective (factoring in the constraints and objective of the model). If the objective and constraints are not defined in the model, this property returns None.
         """
         self.__qubo_objective = None
         if self.objective is not None:

@@ -11,20 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import ClassVar
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.common.quantum_objects import QuantumObject
-from qilisdk.functionals.functional import Functional
+from qilisdk.common.variables import Number
+from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
 
-Complex = int | float | complex
-
 
 @yaml.register_class
-class TimeEvolution(Functional[TimeEvolutionResult]):
-    result_type = TimeEvolutionResult
+class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
+    result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
 
     def __init__(
         self,
@@ -50,3 +50,14 @@ class TimeEvolution(Functional[TimeEvolutionResult]):
         self.observables = observables
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
+
+    def get_parameters(self) -> dict[str, Number]:  # noqa: PLR6301
+        return {}
+
+    def set_parameters(self, parameters: dict[str, Number]) -> None: ...
+
+    def get_parameter_names(self) -> list[str]:  # noqa: PLR6301
+        return []
+
+    def get_parameter_values(self) -> list[Number]:  # noqa: PLR6301
+        return []

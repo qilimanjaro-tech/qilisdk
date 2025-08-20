@@ -15,22 +15,18 @@ import heapq
 import operator
 from pprint import pformat
 
-from qilisdk.common.result import Result
+from qilisdk.common.model import Model
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class SamplingResult(Result):
+class SamplingResult(FunctionalResult):
     """
     Class representing the result of a quantum circuit measurement.
 
     DigitalResult encapsulates the outcome of a digital measurement performed on a quantum circuit.
     It includes the total number of measurement shots, the measurement samples and measurement probabilities.
-
-    Attributes:
-        nshots (int): The number of measurement shots performed in the experiment.
-        nqubits (int): The number of qubits measured.
-        samples (dict[str, int]): A dictionary where keys are bitstrings representing measurement outcomes and values are the number of times each outcome was observed.
     """
 
     def __init__(self, nshots: int, samples: dict[str, int]) -> None:
@@ -143,3 +139,16 @@ class SamplingResult(Result):
         """
         class_name = self.__class__.__name__
         return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"
+
+    def compute_cost(self, cost_model: Model) -> float:
+        total_cost = 0.0
+        for sample, prob in self.get_probabilities():
+            bit_configuration = [int(i) for i in sample]
+            if len(cost_model.variables()) != len(bit_configuration):
+                raise ValueError(
+                    f"Model contains {len(cost_model.variables())} variables while the Functional returned a sample bit-string of size {len(bit_configuration)}. The bit-string to the model's variables have to be of the same size."
+                )
+            variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
+            evaluate_results = cost_model.evaluate(variable_map)
+            total_cost += sum(v for v in evaluate_results.values()) * prob
+        return total_cost

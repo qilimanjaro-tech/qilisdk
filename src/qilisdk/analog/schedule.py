@@ -14,7 +14,8 @@
 from __future__ import annotations
 
 from typing import Callable
-from warnings import warn
+
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.yaml import yaml
@@ -145,12 +146,11 @@ class Schedule:
             self._schedule[0][label] = 0
             self._nqubits = max(self._nqubits, hamiltonian.nqubits)
         else:
-            warn(
+            logger.warning(
                 (
                     f"label {label} is already assigned to a hamiltonian, "
                     + "ignoring new hamiltonian and updating schedule of existing hamiltonian."
-                ),
-                RuntimeWarning,
+                )
             )
 
         if schedule is not None:
@@ -172,9 +172,8 @@ class Schedule:
             ValueError: If hamiltonian_coefficient_list references a Hamiltonian that is not defined in the schedule.
         """
         if time_step in self._schedule:
-            warn(
+            logger.warning(
                 f"time step {time_step} is already defined in the schedule, the values are going to be overwritten.",
-                RuntimeWarning,
             )
         for key in hamiltonian_coefficient_list:
             if key not in self._hamiltonians:
