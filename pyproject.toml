@@ -23,12 +23,13 @@ classifiers = [
 ]
 dependencies = [
     "dill>=0.3.9",
-    "numpy>=1.26.0",
-    "ruamel-yaml>=0.18.10",
+    "numpy>=1.26.4",
+    "ruamel-yaml>=0.18.15",
     "scipy>=1.15.3",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.0",
     "loguru>=0.7.3",
+    "matplotlib>=3.10.5",
 ]
 
 [project.optional-dependencies]
@@ -45,20 +46,19 @@ speqtrum = [
     "keyrings-alt>=5.0.2",
 ]
 qutip = [
-    "matplotlib>=3.10.3",
     "qutip>=5.2.0",
     "qutip-qip>=0.4.1",
 ]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.136.6",
-    "ipykernel>=6.29.5",
+    "hypothesis>=6.138.2",
+    "ipykernel>=6.30.1",
     "mypy>=1.17.1",
-    "pre-commit>=4.1.0",
+    "pre-commit>=4.3.0",
     "pytest>=8.3.4",
-    "pytest-sugar>=1.0.0",
-    "ruff>=0.12.7",
+    "pytest-sugar>=1.1.0",
+    "ruff>=0.12.9",
     "towncrier>=24.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=6.2.1",
@@ -183,6 +183,7 @@ exclude = ["\\.ipynb$"]
 markers = [
     "core: tests that only exercise the core library",
     "cuda: tests that require the cuda extra",
+    "qutip: tests that require the qutip extra",
     "speqtrum: tests that require the speqtrum extra"
 ]
 
