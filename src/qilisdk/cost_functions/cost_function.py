@@ -39,6 +39,9 @@ class CostFunction(ABC):
     @overload
     def compute_cost(self, results: TimeEvolutionResult) -> Number: ...
 
+    @overload
+    def compute_cost(self, results: FunctionalResult) -> Number: ...
+
     def compute_cost(self, results: TResult) -> Number:
         """Compute the cost of a results object
 
