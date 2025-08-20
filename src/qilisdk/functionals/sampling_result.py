@@ -140,17 +140,3 @@ class SamplingResult(FunctionalResult):
         """
         class_name = self.__class__.__name__
         return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"
-
-    def compute_cost(self, cost_model: Model) -> Number:
-        total_cost = complex(0.0)
-        for sample, prob in self.get_probabilities():
-            bit_configuration = [int(i) for i in sample]
-            if len(cost_model.variables()) != len(bit_configuration):
-                raise ValueError("Mapping samples to the model's variables is ambiguous.")
-            variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
-            evaluate_results = cost_model.evaluate(variable_map)
-            total_cost += sum(v for v in evaluate_results.values()) * prob
-
-        if total_cost.imag == 0:
-            return total_cost.real
-        return total_cost

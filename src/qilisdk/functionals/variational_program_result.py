@@ -94,6 +94,3 @@ class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
             + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
             + f"\n  Optimal results={pformat(self.optimal_execution_results)})"
         )
-
-    def compute_cost(self, cost_model: Model) -> Number:
-        return self.optimal_execution_results.compute_cost(cost_model)

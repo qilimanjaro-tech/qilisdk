@@ -41,6 +41,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
+    from qilisdk.common.variables import Number
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
 
@@ -149,9 +150,9 @@ class QutipBackend(Backend):
             )
 
         def get_hamiltonian_schedule(
-            hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
+            hamiltonian: str, dt: float, schedule: dict[int, dict[str, Number]], T: float
         ) -> Callable:
-            def get_coeff(t: float) -> float:
+            def get_coeff(t: float) -> Number:
                 if int(t / dt) in schedule:
                     return schedule[int(t / dt)][hamiltonian]
                 time_step = int(t / dt)

@@ -15,6 +15,7 @@
 from typing import Generic, Type, TypeVar, cast
 
 from qilisdk.common.model import Model
+from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
@@ -30,7 +31,7 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         self,
         functional: PrimitiveFunctional[R],
         optimizer: Optimizer,
-        cost_model: Model,
+        cost_function: CostFunction,
         store_intermediate_results: bool = False,
     ) -> None:
         """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
@@ -44,7 +45,7 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         """
         self._functional = functional
         self._optimizer = optimizer
-        self._cost_model = cost_model
+        self._cost_function = cost_function
         self._store_intermediate_results = store_intermediate_results
 
     @property
@@ -61,8 +62,8 @@ class VariationalProgram(Functional[VariationalProgramResult[R]], Generic[R]):
         return self._optimizer
 
     @property
-    def cost_model(self) -> Model:
-        return self._cost_model
+    def cost_function(self) -> CostFunction:
+        return self._cost_function
 
     @property
     def store_intermediate_results(self) -> bool:

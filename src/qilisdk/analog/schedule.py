@@ -96,7 +96,7 @@ class Schedule:
         return self._hamiltonians
 
     @property
-    def schedule(self) -> dict[int, dict[str, float | Term]]:
+    def schedule(self) -> dict[int, dict[str, Number]]:
         """
         Get the full schedule of Hamiltonian coefficients.
 
@@ -105,7 +105,17 @@ class Schedule:
         Returns:
             dict[int, dict[str, float]]: The mapping of time steps to coefficient dictionaries.
         """
-        return dict(sorted(self._schedule.items()))
+        out_dict = {}
+        for k, v in self._schedule.items():
+            out_dict[k] = {
+                ham: (
+                    coeff
+                    if isinstance(coeff, Number)
+                    else (coeff.evaluate() if isinstance(coeff, Parameter) else coeff.evaluate({}))
+                )
+                for ham, coeff in v.items()
+            }
+        return dict(sorted(out_dict.items()))
 
     @property
     def T(self) -> float:

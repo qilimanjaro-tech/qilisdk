@@ -82,7 +82,12 @@ class Backend(ABC):
             param_names = functional.functional.get_parameter_names()
             functional.functional.set_parameters({param_names[i]: param for i, param in enumerate(parameters)})
             results = self.execute(functional.functional)
-            return results.compute_cost(functional.cost_model)
+            final_results = functional.cost_function.compute_cost(results)
+            if isinstance(final_results, float):
+                return final_results
+            if isinstance(final_results, complex) and final_results.imag == 0:
+                return final_results.real
+            raise ValueError(f"Unsupported result type {type(final_results)}.")
 
         optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,
