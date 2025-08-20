@@ -16,6 +16,7 @@ import pytest
 
 from qilisdk.common.model import Model, ObjectiveSense
 from qilisdk.common.variables import EQ, BinaryVariable
+from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
 
 
@@ -41,8 +42,6 @@ def test_sample_results_probabilities():
 
 
 def test_sample_results_compute_cost():
-    from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-
     sr = SamplingResult(100, {"000": 10, "010": 20, "101": 40, "001": 30})
 
     model = Model("test")

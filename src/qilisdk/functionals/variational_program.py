@@ -11,15 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
-from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.cost_functions.cost_function import CostFunction
+    from qilisdk.optimizers.optimizer import Optimizer
 
 TFunctional = TypeVar("TFunctional", bound=PrimitiveFunctional[FunctionalResult])
 
