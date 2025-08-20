@@ -118,11 +118,11 @@ class VariationalProgramPayload(SpeQtrumModel):
     variational_program: VariationalProgram = Field(...)
 
     @field_serializer("variational_program")
-    def _serialize_parameterized_program(self, variational_program: VariationalProgram, _info):
+    def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
         return serialize(variational_program)
 
     @field_validator("variational_program", mode="before")
-    def _load_parameterized_program(cls, v):
+    def _load_variational_program(cls, v):
         if isinstance(v, str):
             return deserialize(v, VariationalProgram)
         return v
@@ -139,7 +139,7 @@ class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
-    parameterized_program_result: VariationalProgramResult | None = None
+    variational_program_result: VariationalProgramResult | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -161,12 +161,12 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, TimeEvolutionResult)
         return v
 
-    @field_serializer("parameterized_program_result")
-    def _serialize_parameterized_program_result(self, parameterized_program_result: VariationalProgramResult, _info):
-        return serialize(parameterized_program_result) if parameterized_program_result is not None else None
+    @field_serializer("variational_program_result")
+    def _serialize_parameterized_program_result(self, variational_program_result: VariationalProgramResult, _info):
+        return serialize(variational_program_result) if variational_program_result is not None else None
 
-    @field_validator("parameterized_program_result", mode="before")
-    def _load_parameterized_program_result(cls, v):
+    @field_validator("variational_program_result", mode="before")
+    def _load_variational_program_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, VariationalProgramResult)
         return v
