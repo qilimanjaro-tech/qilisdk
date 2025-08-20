@@ -162,7 +162,7 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("variational_program_result")
-    def _serialize_parameterized_program_result(self, variational_program_result: VariationalProgramResult, _info):
+    def _serialize_variational_program_result(self, variational_program_result: VariationalProgramResult, _info):
         return serialize(variational_program_result) if variational_program_result is not None else None
 
     @field_validator("variational_program_result", mode="before")
