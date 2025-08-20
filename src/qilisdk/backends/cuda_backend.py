@@ -25,13 +25,13 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject
-from qilisdk.common.variables import Number
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
+    from qilisdk.common.variables import Number
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution

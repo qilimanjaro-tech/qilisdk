@@ -7,6 +7,7 @@ from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.common.model import Model
 from qilisdk.common.variables import BinaryVariable
+from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
@@ -367,7 +368,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
 
     Verifies that the ansatz, initial parameters, and cost function are assigned properly.
     """
-    mock_instance = MagicMock(spec=Model)
+    mock_instance = MagicMock(spec=ModelCostFunction)
     ansatz = HardwareEfficientAnsatz(2)
     circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
 
@@ -375,7 +376,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     assert isinstance(parameterized_program.functional, Sampling)
     assert parameterized_program.functional.circuit == circuit
     assert parameterized_program.optimizer == dummy_optimizer
-    assert parameterized_program.cost_model == mock_instance
+    assert parameterized_program.cost_function == mock_instance
 
 
 def test_real_example():
@@ -387,6 +388,6 @@ def test_real_example():
     cr = Circuit(1)
     cr.add(U1(0, phi=0.1))
 
-    output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), model))
+    output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), ModelCostFunction(model)))
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}

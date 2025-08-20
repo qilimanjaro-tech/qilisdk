@@ -41,11 +41,14 @@ def test_sample_results_probabilities():
 
 
 def test_sample_results_compute_cost():
+    from qilisdk.cost_functions.model_cost_function import ModelCostFunction
+
     sr = SamplingResult(100, {"000": 10, "010": 20, "101": 40, "001": 30})
 
     model = Model("test")
     b = [BinaryVariable(f"b({i})") for i in range(sr.nqubits)]
     model.set_objective(sum(b), sense=ObjectiveSense.MAXIMIZE)
     model.add_constraint("second_b_bad", EQ(b[1], 0), lagrange_multiplier=10)
+    mcf = ModelCostFunction(model)
 
-    assert sr.compute_cost(model) == (-2 * 0.4 + -1 * 0.3 + 9 * 0.2 + 0 * 0.1)
+    assert mcf.compute_cost(sr) == (-2 * 0.4 + -1 * 0.3 + 9 * 0.2 + 0 * 0.1)

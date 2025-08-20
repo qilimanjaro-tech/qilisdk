@@ -23,7 +23,6 @@ from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 
 if TYPE_CHECKING:
-    from qilisdk.common.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
