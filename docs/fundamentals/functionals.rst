@@ -64,13 +64,13 @@ The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simula
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.common import ket, tensor_prod
-    from qilisdk.backends import QutipBackend
+    from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
     # Define total time and timestep
     T = 10.0
     dt = 0.1
-    times = np.arange(0, T + dt, dt)
+    steps = np.linspace(0, T + dt, int(T / dt))
     nqubits = 1
 
     # Define Hamiltonians
@@ -78,18 +78,16 @@ The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simula
     Hz = sum(Z(i) for i in range(nqubits))
 
     # Build a time‑dependent schedule
-    schedule = Schedule(
-        total_time=T,
-        time_step=dt,
-        hamiltonians={"hx": Hx, "hz": Hz},
-        schedule_map={
-            t: {"hx": 1.0 - t / T, "hz": t / T}
-            for t in times
-        },
-    )
+    schedule = Schedule(T, dt)
+
+    # Add hx with a time‐dependent coefficient function
+    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
+
+    # Add hz similarly
+    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
 
     # Prepare an equal superposition initial state
-    initial_state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
+    initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
     # Create the TimeEvolution functional
     time_evolution = TimeEvolution(
@@ -97,7 +95,7 @@ The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simula
         initial_state=initial_state,
         observables=[Z(0), X(0), Y(0)],
         nshots=100,
-        store_intermediate_results=True,
+        store_intermediate_results=False,
     )
 
     # Execute on Qutip backend and inspect results

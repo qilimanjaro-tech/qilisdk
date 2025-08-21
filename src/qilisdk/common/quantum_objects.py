@@ -426,7 +426,7 @@ class QuantumObject:
             return False
 
         # Check if the trace is 1
-        return np.isclose(self._data.trace(), 1, atol=tol)
+        return bool(np.isclose(self._data.trace(), 1, atol=tol))
 
     def is_hermitian(self, tol: float = 1e-8) -> bool:
         """

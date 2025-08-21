@@ -59,6 +59,7 @@ class Schedule:
         self._dt = dt
         self.iter_time_step = 0
         self._nqubits = 0
+
         for ham_label, hamiltonian in self._hamiltonians.items():
             self._nqubits = max(self._nqubits, hamiltonian.nqubits)
             for l, param in hamiltonian.parameters.items():
@@ -247,7 +248,7 @@ class Schedule:
             )
 
         if schedule is not None:
-            for t in range(int(self.T / self.dt) + 1):
+            for t in range(int(self.T / self.dt)):
                 time_step = schedule(t, **kwargs)
                 self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
                 if isinstance(time_step, Term):

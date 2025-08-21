@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
 from loguru import logger
-from qutip import Qobj, basis, sesolve, tensor
+from qutip import Qobj, basis, mesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
 from qutip_qip.operations import RY as q_RY
@@ -154,9 +154,7 @@ class QutipBackend(Backend):
             ValueError: if the initial state provided is invalid.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        tlist = np.linspace(
-            0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt)
-        )
+        tlist = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
@@ -229,12 +227,12 @@ class QutipBackend(Backend):
                     Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
                 )
 
-        results = sesolve(
+        results = mesolve(
             H=H_t,
             e_ops=qutip_obs,
-            psi0=qutip_init_state,
+            rho0=qutip_init_state,
             tlist=tlist,
-            options={"store_states": functional.store_intermediate_results, "store_final_state": True},
+            options={"store_states": functional.store_intermediate_results, "store_final_state": True, "nsteps": 10000},
         )
 
         logger.success("TimeEvolution finished")
@@ -247,12 +245,14 @@ class QutipBackend(Backend):
                         for i in range(len(results.expect[0]))
                     ]
                 )
-                if len(results.expect) > 0
+                if len(results.expect) > 0 and functional.store_intermediate_results
                 else None
             ),
             final_state=(QuantumObject(results.final_state.full()) if results.final_state is not None else None),
             intermediate_states=(
-                [QuantumObject(state.full()) for state in results.states] if len(results.states) > 1 else None
+                [QuantumObject(state.full()) for state in results.states]
+                if len(results.states) > 1 and functional.store_intermediate_results
+                else None
             ),
         )
 

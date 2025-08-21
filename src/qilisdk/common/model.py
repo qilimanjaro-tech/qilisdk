@@ -894,7 +894,7 @@ class QUBO(Model):
         results = {}
 
         results[self.objective.label] = self.objective.term.evaluate(sample)
-        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MINIMIZE else 1
+        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MAXIMIZE else 1
 
         for c in self.constraints:
             results[c.label] = c.term.lhs.evaluate(sample) - c.term.rhs.evaluate(sample)

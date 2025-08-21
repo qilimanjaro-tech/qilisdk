@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from qilisdk.common.model import QUBO, Model
-from qilisdk.common.quantum_objects import QuantumObject, expect_val
+from qilisdk.common.quantum_objects import QuantumObject, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 
 if TYPE_CHECKING:
@@ -46,27 +46,23 @@ class ModelCostFunction(CostFunction):
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
-            return expect_val(QuantumObject(ham.to_matrix()), results.final_state)
+            total_cost = complex(np.real_if_close(expect_val(QuantumObject(ham.to_matrix()), results.final_state)))
+            if total_cost.imag == 0:
+                return total_cost.real
+            return total_cost
 
         total_cost = complex(0.0)
 
-        if results.final_state.is_density_matrix():
+        if results.final_state.is_density_matrix(tol=1e-5):
             rho = results.final_state.dense
-            atol = 1e-12
-            if not np.allclose(rho, rho.conj().T, atol=1e-10):
-                raise ValueError("rho must be Hermitian (within numerical tolerance).")
-
-            vals, vecs = np.linalg.eigh(rho)  # ascending eigenvalues
-            vals = np.clip(vals, 0.0, None)
-            s = vals.sum()
-            if s <= atol:
-                raise ValueError("rho has (near-)zero trace after clipping; not a valid density matrix.")
-            probs = vals / s
-
-            for vec, prob in zip(vecs, probs):
-                variable_map = {v: vec[i] for i, v in enumerate(self.model.variables())}
+            n = results.final_state.nqubits
+            for i in range(rho.shape[0]):
+                state = [int(b) for b in f"{i:0{n}b}"]
+                _ket_state = ket(*state)
+                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense @ rho)))
+                variable_map = {v: int(state[i]) for i, v in enumerate(self.model.variables())}
                 evaluate_results = self.model.evaluate(variable_map)
-                total_cost += sum(v for v in evaluate_results.values()) * prob
+                total_cost += sum(v for v in evaluate_results.values()) * _prob
             if total_cost.imag == 0:
                 return total_cost.real
             return total_cost
@@ -86,8 +82,9 @@ class ModelCostFunction(CostFunction):
             state = [int(b) for b in f"{i:0{n}b}"]
             variable_map = {v: state[i] for i, v in enumerate(self.model.variables())}
             evaluate_results = self.model.evaluate(variable_map)
-            total_cost += sum(v for v in evaluate_results.values()) * prob
+            total_cost += sum(v for v in evaluate_results.values()) * np.abs(prob**2)
 
+        total_cost = complex(np.real_if_close(total_cost, tol=1e-12))
         if total_cost.imag == 0:
             return total_cost.real
         return total_cost

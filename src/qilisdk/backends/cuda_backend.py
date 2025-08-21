@@ -31,7 +31,6 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
@@ -156,24 +155,18 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
-        cuda_hamiltonian = None
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
-        def parameter_values(time_steps: np.ndarray) -> CudaSchedule:
-            def compute_value(param_name: str, step_idx: int) -> Number:
-                return functional.schedule.get_coefficient(time_steps[int(step_idx)], param_name)
-
-            return CudaSchedule(list(range(len(time_steps))), list(functional.schedule.hamiltonians), compute_value)
-
-        _CudaSchedule = parameter_values(steps)
+        cuda_schedule = CudaSchedule(steps, ["t"])
 
         def get_schedule(key: str) -> Callable:
-            return lambda **args: args[key]
+            return lambda t: (functional.schedule.get_coefficient(t.real, key))
 
         cuda_hamiltonian = sum(
             ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
             for key, ham in functional.schedule.hamiltonians.items()
         )
+
         logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
@@ -181,7 +174,9 @@ class CudaBackend(Backend):
             if isinstance(observable, PauliOperator):
                 cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
             elif isinstance(observable, Hamiltonian):
-                cuda_observables.append(self._hamiltonian_to_cuda(observable))
+                cuda_observables.append(
+                    self._hamiltonian_to_cuda(observable, padding=functional.schedule.nqubits - observable.nqubits)
+                )
             else:
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
@@ -190,10 +185,8 @@ class CudaBackend(Backend):
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
-            schedule=_CudaSchedule,
-            initial_state=State.from_data(
-                np.array(functional.initial_state.to_density_matrix().dense, dtype=np.complex128)
-            ),
+            schedule=cuda_schedule,
+            initial_state=State.from_data(np.array(functional.initial_state.dense, dtype=np.complex128)),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,
@@ -202,13 +195,13 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
             final_expected_values=np.array(
-                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()[0]]
+                [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
             ),
             expected_values=(
                 np.array(
                     [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()]
                 )
-                if evolution_result.expectation_values() is not None
+                if evolution_result.expectation_values() is not None and functional.store_intermediate_results
                 else None
             ),
             final_state=(
@@ -218,7 +211,7 @@ class CudaBackend(Backend):
             ),
             intermediate_states=(
                 [QuantumObject(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
-                if evolution_result.intermediate_states() is not None
+                if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
                 else None
             ),
         )
@@ -356,13 +349,17 @@ class CudaBackend(Backend):
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
 
-    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:  # type: ignore
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian, padding: int = 0) -> OperatorSum:  # type: ignore
         out = None
         for offset, terms in hamiltonian:
             if out is None:
                 out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
             else:
                 out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+        if padding > 0:
+            n = hamiltonian.nqubits
+            for p in range(padding):
+                out += spin.i(n + p)
         return out
 
     @staticmethod
