@@ -101,8 +101,8 @@ def test_add_hamiltonian_new():
     H1 = PauliZ(0).to_hamiltonian()
     sched.add_hamiltonian("H1", H1, schedule=coeff_func, factor=2)
     # For T=4, dt=1, time steps are 0,1,2,3,4; expect coefficient = 2*t.
-    for t in range(int(sched.T / sched.dt) + 1):
-        assert sched.schedule.get(t, {}).get("H1", 0) == 2 * t
+    for t in range(int(sched.T / sched.dt)):
+        assert sched.get_coefficient(t, "H1") == 2 * t
     # nqubits should update based on the new Hamiltonian.
     assert sched.nqubits >= 1
 
