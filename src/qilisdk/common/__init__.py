@@ -15,6 +15,12 @@
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
+    EQ,
+    GEQ,
+    GT,
+    LEQ,
+    LT,
+    NEQ,
     BinaryVariable,
     Equal,
     GreaterThan,
@@ -28,6 +34,12 @@ from .variables import (
 )
 
 __all__ = [
+    "EQ",
+    "GEQ",
+    "GT",
+    "LEQ",
+    "LT",
+    "NEQ",
     "BinaryVariable",
     "Constraint",
     "Equal",
