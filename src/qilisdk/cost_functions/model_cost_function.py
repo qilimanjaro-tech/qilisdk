@@ -35,14 +35,9 @@ class ModelCostFunction(CostFunction):
 
     def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
         if results.final_state is None:
-            if len(self.model.variables()) != len(results.expected_values):
-                raise ValueError("Mapping samples to the model's variables is ambiguous.")
-            variable_map = {v: results.expected_values[i] for i, v in enumerate(self.model.variables())}
-            cost = self.model.evaluate(variable_map)
-            total_cost = sum(cost.values())
-            if total_cost.imag == 0:
-                return total_cost.real
-            return total_cost
+            raise ValueError(
+                "can't compute cost using Models from time evolution results when the state is not provided."
+            )
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
