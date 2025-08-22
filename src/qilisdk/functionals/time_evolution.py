@@ -51,13 +51,27 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
 
-    def get_parameters(self) -> dict[str, RealNumber]:  # noqa: PLR6301
-        return {}
+    @property
+    def nparameters(self) -> int:
+        return self.schedule.nparameters
 
-    def set_parameters(self, parameters: dict[str, RealNumber]) -> None: ...
+    def get_parameters(self) -> dict[str, RealNumber]:
+        return self.schedule.get_parameters()
 
-    def get_parameter_names(self) -> list[str]:  # noqa: PLR6301
-        return []
+    def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
+        self.schedule.set_parameters(parameters)
 
-    def get_parameter_values(self) -> list[RealNumber]:  # noqa: PLR6301
-        return []
+    def get_parameter_names(self) -> list[str]:
+        return self.schedule.get_parameter_names()
+
+    def get_parameter_values(self) -> list[RealNumber]:
+        return self.schedule.get_parameter_values()
+
+    def set_parameter_values(self, values: list[float]) -> None:
+        self.schedule.set_parameter_values(values)
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return self.schedule.get_parameter_bounds()
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        self.schedule.set_parameter_bounds(ranges)

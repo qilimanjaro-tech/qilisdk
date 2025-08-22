@@ -15,6 +15,7 @@ from typing import Any
 
 import numpy as np
 
+from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.variables import Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
@@ -24,7 +25,7 @@ from .gates import Gate
 
 
 @yaml.register_class
-class Circuit:
+class Circuit(Parameterizable):
     def __init__(self, nqubits: int) -> None:
         """
         Initialize a Circuit instance with a specified RealNumber of qubits.
@@ -122,6 +123,17 @@ class Circuit:
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
             self._parameters[label].set_value(param)
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return {k: v.bounds for k, v in self._parameters.items()}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
 
     def add(self, gate: Gate, **kwargs: dict[str, Any]) -> None:
         """

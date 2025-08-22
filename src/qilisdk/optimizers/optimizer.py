@@ -24,18 +24,16 @@ class Optimizer(ABC):
         self,
         cost_function: Callable[[list[float]], float],
         init_parameters: list[float],
+        bounds: list[tuple[float, float]],
         store_intermediate_results: bool = False,
     ) -> OptimizerResult:
-        """
-        Optimize the cost function and return an OptimizerResult.
+        """optimize the cost function and return the optimal parameters.
 
         Args:
-            cost_function (Callable[[List[float]], float]): A function that takes a list of parameters and returns the cost.
-            init_parameters (List[float]): The initial parameters for the optimization.
-            store_intermediate_results (bool, optional): If True, stores a list of intermediate optimization results.
-                Each intermediate result is recorded as an OptimizerResult containing the parameters and cost at that iteration.
-                Defaults to False.
+            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.
+            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.
+            bounds (list[float, float]): a list of the variable value bounds.
 
         Returns:
-            OptimizerResult: An object containing the optimal cost, optimal parameters, and, if requested, the intermediate results.
+            list[float]: the optimal set of parameters that minimize the cost function.
         """

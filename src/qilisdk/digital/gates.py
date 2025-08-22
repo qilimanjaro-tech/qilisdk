@@ -20,6 +20,7 @@ import numpy as np
 from scipy.linalg import expm
 from typing_extensions import Self
 
+from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.variables import Parameter
 from qilisdk.yaml import yaml
 
@@ -33,7 +34,7 @@ from .exceptions import (
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
 
-class Gate(ABC):
+class Gate(Parameterizable, ABC):
     """
     Represents a quantum gate that can be used in quantum circuits.
     """
@@ -193,6 +194,14 @@ class Gate(ABC):
         if len(values) != len(self.get_parameters()):
             raise ParametersNotEqualError
 
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:  # noqa: PLR6301
+        return {}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+
+        if not self.is_parameterized:
+            raise GateNotParameterizedError
+
     def __repr__(self) -> str:
         qubits_str = f"({self.qubits[0]})" if self.nqubits == 1 else str(self.qubits)
         return f"{self.name}{qubits_str}"
@@ -241,6 +250,18 @@ class BasicGate(Gate):
             self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return {k: v.bounds for k, v in self._parameters.items()}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        super().set_parameter_bounds(ranges=ranges)
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
 
     def controlled(self: Self, *control_qubits: int) -> Controlled[Self]:
         """
@@ -333,6 +354,12 @@ class Modified(Gate, Generic[TBasicGate]):
     def set_parameter_values(self, values: list[float]) -> None:
         self._basic_gate.set_parameter_values(values=values)
         self._matrix = self._generate_matrix()
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return self._basic_gate.get_parameter_bounds()
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        self._basic_gate.set_parameter_bounds(ranges)
 
     @abstractmethod
     def _generate_matrix(self) -> np.ndarray: ...

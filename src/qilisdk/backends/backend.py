@@ -82,6 +82,9 @@ class Backend(ABC):
 
         Returns:
             ParameterizedProgramResults: The final optimizer and functional results.
+
+        Raises:
+            ValueError: If the functional is not parameterized.
         """
 
         def evaluate_sample(parameters: list[float]) -> float:
@@ -95,9 +98,13 @@ class Backend(ABC):
                 return final_results.real
             raise ValueError(f"Unsupported result type {type(final_results)}.")
 
+        if len(functional.functional.get_parameters()) == 0:
+            raise ValueError("Functional provided is not parameterized.")
+
         optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,
             init_parameters=list(functional.functional.get_parameters().values()),
+            bounds=list(functional.functional.get_parameter_bounds().values()),
             store_intermediate_results=functional.store_intermediate_results,
         )
 

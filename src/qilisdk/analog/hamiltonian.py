@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
+from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.variables import Parameter, Term
 from qilisdk.yaml import yaml
 
@@ -196,7 +197,7 @@ class PauliI(PauliOperator):
 
 
 @yaml.register_class
-class Hamiltonian:
+class Hamiltonian(Parameterizable):
     _EPS: float = 1e-14
     _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, Callable[..., PauliOperator]]]] = {
         ("X", "X"): (1, PauliI),
@@ -332,6 +333,17 @@ class Hamiltonian:
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this hamiltonian.")
             self._parameters[label].set_value(param)
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return {k: v.bounds for k, v in self._parameters.items()}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
