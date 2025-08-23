@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
 
 import numpy as np
 
@@ -135,7 +134,7 @@ class Circuit(Parameterizable):
                 )
             self._parameters[label].set_bounds(bound[0], bound[1])
 
-    def add(self, gate: Gate, **kwargs: dict[str, Any]) -> None:
+    def add(self, gate: Gate) -> None:
         """
         Add a quantum gate to the circuit.
 
@@ -145,14 +144,16 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        override_parameter_name = kwargs.get("override_parameter_name", "")
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
-            for p in gate.get_parameter_names():
-                parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
-                self._parameters[parameter_label] = gate.parameters[p]
+            for label, parameter in gate.parameters.items():
+                if label == parameter.label:
+                    parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
+                else:
+                    parameter_label = parameter.label
+                self._parameters[parameter_label] = gate.parameters[label]
         self._gates.append(gate)
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:

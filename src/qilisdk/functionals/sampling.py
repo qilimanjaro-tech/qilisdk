@@ -36,7 +36,6 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
         self.circuit.set_parameters(parameters)
 
     def get_parameters(self) -> dict[str, RealNumber]:
-
         return self.circuit.get_parameters()
 
     def get_parameter_names(self) -> list[str]:

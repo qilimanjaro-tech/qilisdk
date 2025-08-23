@@ -24,7 +24,6 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
 def test_compute_cost_time_evolution():
-
     n = 2
     b = [BinaryVariable(f"b({i})") for i in range(n)]
 
@@ -95,7 +94,6 @@ def test_compute_cost_time_evolution():
 
 
 def test_compute_cost_sampling():
-
     n = 2
     b = [BinaryVariable(f"b({i})") for i in range(n)]
 

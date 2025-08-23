@@ -17,7 +17,6 @@ from abc import ABC, abstractmethod
 
 
 class Parameterizable(ABC):
-
     @property
     @abstractmethod
     def nparameters(self) -> int:

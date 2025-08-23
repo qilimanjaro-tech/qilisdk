@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 
 
 class ModelCostFunction(CostFunction):
-
     def __init__(self, model: Model) -> None:
         super().__init__()
         self.model = model
