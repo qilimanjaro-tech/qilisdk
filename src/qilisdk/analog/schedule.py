@@ -61,10 +61,10 @@ class Schedule(Parameterizable):
         self.iter_time_step = 0
         self._nqubits = 0
 
-        for ham_label, hamiltonian in self._hamiltonians.items():
+        for hamiltonian in self._hamiltonians.values():
             self._nqubits = max(self._nqubits, hamiltonian.nqubits)
             for l, param in hamiltonian.parameters.items():
-                self._parameters[ham_label + "_" + param.label] = param
+                self._parameters[param.label] = param
 
         if 0 not in self._schedule:
             self._schedule[0] = dict.fromkeys(self._hamiltonians, 0.0)
@@ -256,7 +256,7 @@ class Schedule(Parameterizable):
             self._schedule[0][label] = 0
             self._nqubits = max(self._nqubits, hamiltonian.nqubits)
             for l, param in hamiltonian.parameters.items():
-                self._parameters[label + "_" + param.label] = param
+                self._parameters[param.label] = param
         else:
             logger.warning(
                 (

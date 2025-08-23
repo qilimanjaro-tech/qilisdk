@@ -1535,6 +1535,8 @@ class Term:
         Returns:
             float: the result from evaluating the term.
         """
+        if len(self._elements) == 0:
+            return 0
         _var_values = dict(var_values)
         for var in self.variables():
             if isinstance(var, Parameter):
