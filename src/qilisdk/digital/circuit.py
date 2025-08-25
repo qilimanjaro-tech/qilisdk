@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
 
 import numpy as np
 
@@ -28,10 +27,10 @@ from .gates import Gate
 class Circuit(Parameterizable):
     def __init__(self, nqubits: int) -> None:
         """
-        Initialize a Circuit instance with a specified RealNumber of qubits.
+        Initialize a Circuit instance with a specified number of qubits.
 
         Args:
-            nqubits (int): The RealNumber of qubits in the circuit.
+            nqubits (int): The number of qubits in the circuit.
         """
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
@@ -41,17 +40,17 @@ class Circuit(Parameterizable):
     @property
     def nqubits(self) -> int:
         """
-        Retrieve the RealNumber of qubits in the circuit.
+        Retrieve the number of qubits in the circuit.
 
         Returns:
-            int: The total RealNumber of qubits.
+            int: The total number of qubits.
         """
         return self._nqubits
 
     @property
     def nparameters(self) -> int:
         """
-        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
+        Retrieve the total number of parameters required by all parameterized gates in the circuit.
 
         Returns:
             int: The total count of parameters from all parameterized gates.
@@ -103,7 +102,7 @@ class Circuit(Parameterizable):
             values (list[float]): A list containing new parameter values to assign to the parameterized gates.
 
         Raises:
-            ParametersNotEqualError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
+            ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
         if len(values) != self.nparameters:
             raise ParametersNotEqualError
@@ -135,7 +134,7 @@ class Circuit(Parameterizable):
                 )
             self._parameters[label].set_bounds(bound[0], bound[1])
 
-    def add(self, gate: Gate, **kwargs: dict[str, Any]) -> None:
+    def add(self, gate: Gate) -> None:
         """
         Add a quantum gate to the circuit.
 
@@ -145,14 +144,16 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        override_parameter_name = kwargs.get("override_parameter_name", "")
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
-            for p in gate.get_parameter_names():
-                parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
-                self._parameters[parameter_label] = gate.parameters[p]
+            for label, parameter in gate.parameters.items():
+                if label == parameter.label:
+                    parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
+                else:
+                    parameter_label = parameter.label
+                self._parameters[parameter_label] = gate.parameters[label]
         self._gates.append(gate)
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:

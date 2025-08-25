@@ -198,7 +198,6 @@ class Gate(Parameterizable, ABC):
         return {}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
