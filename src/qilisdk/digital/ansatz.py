@@ -125,7 +125,7 @@ class HardwareEfficientAnsatz(Ansatz):
             raise ValueError("layers must be >= 0")
 
         self._layers = int(layers)
-        self._connectivity = self._normalize_connectivity(connectivity)
+        self._connectivity = tuple(self._normalize_connectivity(connectivity))
         self._structure: Structure = "grouped" if structure.lower() == "grouped" else "interposed"
         self._one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
         self._two_qubit_gate: type[CZ | CNOT] = two_qubit_gate
