@@ -24,7 +24,7 @@ def create_ansatz(
     n_qubits: int, layers: int = 1, connectivity="Linear", structure="grouped", one_qubit_gate=U1, two_qubit_gate=CZ
 ) -> HardwareEfficientAnsatz:
     return HardwareEfficientAnsatz(
-        n_qubits=n_qubits,
+        nqubits=n_qubits,
         layers=layers,
         connectivity=connectivity,
         structure=structure,
