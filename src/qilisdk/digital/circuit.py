@@ -27,10 +27,10 @@ from .gates import Gate
 class Circuit(Parameterizable):
     def __init__(self, nqubits: int) -> None:
         """
-        Initialize a Circuit instance with a specified RealNumber of qubits.
+        Initialize a Circuit instance with a specified number of qubits.
 
         Args:
-            nqubits (int): The RealNumber of qubits in the circuit.
+            nqubits (int): The number of qubits in the circuit.
         """
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
@@ -40,17 +40,17 @@ class Circuit(Parameterizable):
     @property
     def nqubits(self) -> int:
         """
-        Retrieve the RealNumber of qubits in the circuit.
+        Retrieve the number of qubits in the circuit.
 
         Returns:
-            int: The total RealNumber of qubits.
+            int: The total number of qubits.
         """
         return self._nqubits
 
     @property
     def nparameters(self) -> int:
         """
-        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
+        Retrieve the total number of parameters required by all parameterized gates in the circuit.
 
         Returns:
             int: The total count of parameters from all parameterized gates.
@@ -102,7 +102,7 @@ class Circuit(Parameterizable):
             values (list[float]): A list containing new parameter values to assign to the parameterized gates.
 
         Raises:
-            ParametersNotEqualError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
+            ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
         if len(values) != self.nparameters:
             raise ParametersNotEqualError
