@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
 
 import numpy as np
 
-from qilisdk.common.variables import Number, Parameter
+from qilisdk.common.parameterizable import Parameterizable
+from qilisdk.common.variables import Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -24,7 +24,7 @@ from .gates import Gate
 
 
 @yaml.register_class
-class Circuit:
+class Circuit(Parameterizable):
     def __init__(self, nqubits: int) -> None:
         """
         Initialize a Circuit instance with a specified number of qubits.
@@ -109,21 +109,32 @@ class Circuit:
         for i, parameter in enumerate(self._parameters.values()):
             parameter.set_value(values[i])
 
-    def set_parameters(self, parameter_dict: dict[str, Number]) -> None:
+    def set_parameters(self, parameter_dict: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
-            parameter_dict (dict[str, Number]): _description_
+            parameter_dict (dict[str, RealNumber]): A dictionary with the labels of the parameters to be modified and their new value.
 
         Raises:
-            ValueError: _description_
+            ValueError: if the label provided doesn't correspond to a parameter defined in this circuit.
         """
         for label, param in parameter_dict.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
             self._parameters[label].set_value(param)
 
-    def add(self, gate: Gate, **kwargs: dict[str, Any]) -> None:
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        return {k: v.bounds for k, v in self._parameters.items()}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
+
+    def add(self, gate: Gate) -> None:
         """
         Add a quantum gate to the circuit.
 
@@ -133,14 +144,16 @@ class Circuit:
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        override_parameter_name = kwargs.get("override_parameter_name", "")
         if any(qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
-            for p in gate.get_parameter_names():
-                parameter_label = str(override_parameter_name) or param_base_label + f"_{p}_{len(self._parameters)}"
-                self._parameters[parameter_label] = gate.parameters[p]
+            for label, parameter in gate.parameters.items():
+                if label == parameter.label:
+                    parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
+                else:
+                    parameter_label = parameter.label
+                self._parameters[parameter_label] = gate.parameters[label]
         self._gates.append(gate)
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:

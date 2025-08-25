@@ -32,7 +32,8 @@ def test_optimize_sets_optimal_parameters():
 
         optimizer = SciPyOptimizer(method="BFGS")
         initial_parameters = [0.0, 0.0, 0.0]
-        optimizer_result = optimizer.optimize(dummy_cost, initial_parameters)
+        bounds = None
+        optimizer_result = optimizer.optimize(dummy_cost, initial_parameters, bounds)
 
         # Check that the optimizer returned the fake result.
         assert optimizer_result.optimal_cost == fake_result.fun
@@ -62,9 +63,9 @@ def test_extra_arguments_are_propagated():
         mock_minimize.return_value = fake_result
 
         # Pass extra keyword arguments.
-        optimizer = SciPyOptimizer(method="BFGS", jac="dummy_jac", bounds=[(0, 1), (0, 2)])
+        optimizer = SciPyOptimizer(method="BFGS", jac="dummy_jac")
         initial_parameters = [0.0, 0.0]
-        optimizer.optimize(dummy_cost, initial_parameters)
+        optimizer.optimize(dummy_cost, initial_parameters, bounds=[(0, 1), (0, 2)])
 
         # Assert that extra arguments were forwarded to scipy.optimize.minimize.
         mock_minimize.assert_called_once_with(

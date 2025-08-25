@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+from qilisdk.common import Parameter
 from qilisdk.digital import RX, RZ, Circuit, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
 
@@ -154,3 +155,47 @@ def test_empty_circuit_set_parameter_values():
     c.set_parameter_values([])  # Should not raise any error
     # Still no parameters
     assert c.get_parameter_values() == []
+
+
+def test_user_provides_custom_parameter():
+    """
+    Test that providing a custom Parameter to one or more gates,
+    overrides default naming scheme
+    and allows setting multiple gates' parameters at once.
+    """
+    angle = Parameter("angle", 0.0)
+    c = Circuit(nqubits=2)
+    c.add(RX(0, theta=angle))
+    c.add(RZ(1, phi=angle))
+
+    # Circuit has 1 parameter.
+    assert c.nparameters == 1
+
+    # Even though the total parameters of gates are 2.
+    assert sum(gate.nparameters for gate in c.gates) == 2
+
+    # Check that circuit's parameter has the correct label and value
+    assert c.get_parameters() == {angle.label: angle.value}
+
+    # Check that gates' parameters have the correct label and value
+    assert all(
+        label in gate.PARAMETER_NAMES and parameter.label == angle.label and parameter.value == angle.value
+        for gate in c.gates
+        for label, parameter in gate.parameters.items()
+    )
+
+    # Change circuit's parameter value
+    c.set_parameter_values([1.0])
+
+    # Check that Parameter object has changed its value
+    assert angle.value == 1.0
+
+    # Check that circuit's parameter has the correct label and value
+    assert c.get_parameters() == {angle.label: angle.value}
+
+    # Check that gates' parameters have the correct label and value
+    assert all(
+        label in gate.PARAMETER_NAMES and parameter.label == angle.label and parameter.value == angle.value
+        for gate in c.gates
+        for label, parameter in gate.parameters.items()
+    )

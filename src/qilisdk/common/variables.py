@@ -30,7 +30,8 @@ if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
     from ruamel.yaml.representer import RoundTripRepresenter
 
-Number = int | float
+Number = int | float | complex
+RealNumber = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
@@ -38,12 +39,12 @@ MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
 
 
-def LT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def LT(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Less Than' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs < rhs.
@@ -54,12 +55,12 @@ def LT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
 LessThan = LT
 
 
-def LEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def LEQ(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Less Than or equal to' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs <= rhs.
@@ -70,12 +71,12 @@ def LEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) ->
 LessThanOrEqual = LEQ
 
 
-def EQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def EQ(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Equal to' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs == rhs.
@@ -86,12 +87,12 @@ def EQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
 Equal = EQ
 
 
-def NEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def NEQ(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Not Equal to' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs != rhs.
@@ -102,12 +103,12 @@ def NEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) ->
 NotEqual = NEQ
 
 
-def GT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def GT(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Greater Than' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs > rhs.
@@ -118,12 +119,12 @@ def GT(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> 
 GreaterThan = GT
 
 
-def GEQ(lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term) -> ComparisonTerm:
+def GEQ(lhs: RealNumber | BaseVariable | Term, rhs: RealNumber | BaseVariable | Term) -> ComparisonTerm:
     """'Greater Than or equal to' mathematical operation
 
     Args:
-        lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-        rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+        lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+        rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
 
     Returns:
         ComparisonTerm: a comparison term with the structure lhs >= rhs.
@@ -150,6 +151,21 @@ def _extract_number(label: str) -> int:
     return 0
 
 
+def _float_if_real(value: Number) -> Number:
+    if isinstance(value, RealNumber):
+        return value
+    if isinstance(value, complex) and value.imag == 0:
+        return value.real
+    return value
+
+
+def _assert_real(value: Number) -> RealNumber:
+    _value = _float_if_real(value)
+    if isinstance(_value, RealNumber):
+        return _value
+    raise ValueError(f"Only Real values are allowed but {_value} was provided.")
+
+
 @yaml.register_class
 class Domain(str, Enum):
     INTEGER = "Integer Domain"
@@ -168,9 +184,9 @@ class Domain(str, Enum):
             bool: True if the value provided is valid, False otherwise.
         """
         if self == Domain.BINARY:
-            return isinstance(value, int) and value in {0, 1}
+            return isinstance(value, Number) and value in {0, 1}
         if self == Domain.SPIN:
-            return isinstance(value, int) and value in {-1, 1}
+            return isinstance(value, Number) and value in {-1, 1}
         if self == Domain.REAL:
             return isinstance(value, (int, float))
         if self == Domain.INTEGER:
@@ -428,7 +444,14 @@ class Bitwise(Encoding):
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        out = term.evaluate(binary_dict)
+        _out = term.evaluate(binary_dict)
+
+        if isinstance(_out, RealNumber):
+            out = float(_out)
+        elif isinstance(_out, complex) and _out.imag == 0:
+            out = float(_out.real)
+        else:
+            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -533,7 +556,14 @@ class OneHot(Encoding):
             if i > zero_index:
                 binary_dict[binary_var[i - 1]] = [binary_list[i]]
 
-        out = term.evaluate(binary_dict)
+        _out = term.evaluate(binary_dict)
+
+        if isinstance(_out, RealNumber):
+            out = float(_out)
+        elif isinstance(_out, complex) and _out.imag == 0:
+            out = float(_out.real)
+        else:
+            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -623,7 +653,9 @@ class DomainWall(Encoding):
             key=lambda x: _extract_number(x.label),
         )
 
-        binary_list = DomainWall._domain_wall_encode(value, len(binary_var)) if isinstance(value, int) else value
+        binary_list: list[int] = (
+            DomainWall._domain_wall_encode(value, len(binary_var)) if isinstance(value, RealNumber) else value
+        )
 
         if not DomainWall.check_valid(binary_list)[0]:
             raise ValueError(f"invalid binary string {binary_list} with the domain wall encoding.")
@@ -636,7 +668,14 @@ class DomainWall(Encoding):
 
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
-        out = term.evaluate(binary_dict)
+        _out = term.evaluate(binary_dict)
+
+        if isinstance(_out, RealNumber):
+            out = float(_out)
+        elif isinstance(_out, complex) and _out.imag == 0:
+            out = float(_out.real)
+        else:
+            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
 
         out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
@@ -807,7 +846,7 @@ class BaseVariable(ABC):
         """
 
     @abstractmethod
-    def evaluate(self, value: list[int] | Number) -> float:
+    def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
         """Evaluates the value of the variable given a binary string or a number.
 
         Args:
@@ -817,7 +856,7 @@ class BaseVariable(ABC):
                 of the variable. To check the binary representation of a variable you can check the method `to_binary()`
 
         Returns:
-            float: the evaluated vale of the variable.
+            int | float | complex: the evaluated vale of the variable.
         """
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -847,6 +886,8 @@ class BaseVariable(ABC):
         return f"{self._label}"
 
     def __add__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         if isinstance(other, Term):
             return other + self
 
@@ -856,12 +897,16 @@ class BaseVariable(ABC):
     __iadd__ = __add__
 
     def __mul__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         if isinstance(other, Term):
             return other * self
 
         return Term(elements=[self, other], operation=Operation.MUL)
 
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         if isinstance(other, Term):
             return other * self
 
@@ -870,9 +915,13 @@ class BaseVariable(ABC):
     __imul__ = __mul__
 
     def __sub__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         return self + -1 * other
 
     def __rsub__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         return -1 * self + other
 
     __isub__ = __sub__
@@ -880,9 +929,9 @@ class BaseVariable(ABC):
     def __neg__(self) -> Term:
         return -1 * self
 
-    def __truediv__(self, other: Number) -> Term:
-        if not isinstance(other, Number):
-            raise NotImplementedError("Only division by numbers is currently supported")
+    def __truediv__(self, other: RealNumber) -> Term:
+        if not isinstance(other, RealNumber):
+            raise NotImplementedError("Only division by real numbers is currently supported")
 
         if other == 0:
             raise ValueError("Division by zero is not allowed")
@@ -933,8 +982,8 @@ class BinaryVariable(BaseVariable):
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         return 1
 
-    def evaluate(self, value: list[int] | Number) -> float:
-        if isinstance(value, Number):
+    def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
+        if isinstance(value, int | float):
             if value in {1.0, 0.0}:
                 return int(value)
             if not self.domain.check_value(value):
@@ -967,7 +1016,7 @@ class SpinVariable(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
-    def evaluate(self, value: list[int] | Number) -> float:
+    def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
         if isinstance(value, Number):
             if not self.domain.check_value(value) and value != 0:
                 raise EvaluationError(f"Evaluating a Spin variable with a value {value} that is outside the domain.")
@@ -996,7 +1045,7 @@ class Variable(BaseVariable):
         encoding: type[Encoding] = Bitwise,
         precision: float = 1e-2,
     ) -> None:
-        """_summary_
+        """
 
         Args:
             label (str): The name of the variable.
@@ -1061,8 +1110,8 @@ class Variable(BaseVariable):
         self._term = None
         return super().update_variable(domain, bounds)
 
-    def evaluate(self, value: list[int] | Number) -> float:
-        if isinstance(value, Number):
+    def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
+        if isinstance(value, int | float):
             if not self.domain.check_value(value):
                 raise ValueError(f"The value {value} is invalid for the domain {self.domain.value}")
             if value < self.lower_bound or value > self.upper_bound:
@@ -1116,7 +1165,7 @@ class Parameter(BaseVariable):
     def __init__(
         self,
         label: str,
-        value: Number,
+        value: RealNumber,
         domain: Domain = Domain.REAL,
         bounds: tuple[float | None, float | None] = (None, None),
     ) -> None:
@@ -1130,10 +1179,10 @@ class Parameter(BaseVariable):
         self.set_bounds(bounds[0], bounds[1])
 
     @property
-    def value(self) -> Number:
+    def value(self) -> RealNumber:
         return self._value
 
-    def set_value(self, value: Number) -> None:
+    def set_value(self, value: RealNumber) -> None:
         if not self.domain.check_value(value):
             raise ValueError(
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
@@ -1149,7 +1198,7 @@ class Parameter(BaseVariable):
         """
         return 0
 
-    def evaluate(self, value: list[int] | Number) -> float:
+    def evaluate(self, value: list[int] | RealNumber = 0) -> RealNumber:
         """Evaluates the value of the variable given a binary string or a number.
 
         Args:
@@ -1258,7 +1307,7 @@ class Term:
                             self[key] = e[key]
                 else:
                     e_copy = copy.copy(e)
-                    coeff = 1.0
+                    coeff = complex(1.0)
                     if e_copy.operation == Operation.MUL and self.CONST in e_copy:
                         coeff = e_copy.pop(self.CONST)
                     simple_e = e_copy._simplify()  # noqa: SLF001
@@ -1272,7 +1321,7 @@ class Term:
                         self[simple_e] = coeff
             else:
                 raise ValueError(
-                    f"Term accepts object of types Term or Variable but an object of type {e.__class__()} was given"
+                    f"Term accepts object of types Term or Variable but an object of type {e.__class__} was given"
                 )
         self._remove_zeros()
 
@@ -1296,7 +1345,7 @@ class Term:
                 if isinstance(element, Term):
                     degree += element.degree
                 elif isinstance(element, BaseVariable) and not self._is_constant(element):
-                    degree += int(self[element])
+                    degree += int(_assert_real(self[element]))
             return degree
 
         for element in self:
@@ -1329,7 +1378,7 @@ class Term:
                 elif isinstance(e, Variable):
                     x = e.to_binary()
                     if self.operation == Operation.MUL:
-                        out_list.append(x ** int(self[e]))
+                        out_list.append(x ** int(_assert_real(self[e])))
                     else:
                         out_list.append(self[e] * x)
                 else:
@@ -1340,16 +1389,16 @@ class Term:
         return Term(out_list, self.operation)
 
     def _apply_operation_on_constants(self, const_list: list[Number]) -> Number:
-        out = const_list[0]
+        out = complex(const_list[0])
         for i in range(1, len(const_list)):
             if self.operation is Operation.ADD:
-                out += float(const_list[i])
+                out += const_list[i]
             elif self.operation is Operation.SUB:
-                out -= float(const_list[i])
+                out -= const_list[i]
             elif self.operation is Operation.MUL:
-                out *= float(const_list[i])
+                out *= const_list[i]
             elif self.operation is Operation.DIV:
-                out /= float(const_list[i])
+                out /= const_list[i]
 
         return out
 
@@ -1418,7 +1467,7 @@ class Term:
             if isinstance(e, BaseVariable) and self._is_constant(e):
                 out_list.append(self[e])
             elif self.operation == Operation.MUL:
-                for _ in range(int(self[e])):
+                for _ in range(int(_assert_real(self[e]))):
                     out_list.append(e)
             else:
                 out_list.append(self[e] * e if self[e] != 1 else e)
@@ -1448,8 +1497,9 @@ class Term:
 
         for _term, coeff in parentheses:
             term = copy.copy(_term)
-            if coeff > 1:
-                term **= int(coeff)
+            _coeff = _assert_real(coeff)
+            if _coeff > 1:
+                term **= int(_coeff)
             final_out = []
             for t in term:
                 final_out.append(t * out * term[t])
@@ -1470,7 +1520,7 @@ class Term:
         for p in to_be_popped:
             self._elements.pop(p)
 
-    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | Number]) -> float:
+    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
         """Evaluates the term given a set of values for the variables in the term.
 
         Args:
@@ -1485,13 +1535,15 @@ class Term:
         Returns:
             float: the result from evaluating the term.
         """
+        if len(self._elements) == 0:
+            return 0
         _var_values = dict(var_values)
         for var in self.variables():
             if isinstance(var, Parameter):
                 _var_values[var] = var.value
             if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
-        output = 0.0 if self.operation in {Operation.ADD, Operation.SUB} else 1.0
+        output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
         for e in self:
             if isinstance(e, Term):
                 output = self._apply_operation_on_constants([output, e.evaluate(_var_values) * self[e]])
@@ -1502,6 +1554,10 @@ class Term:
                     output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) ** self[e]])
                 else:
                     output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
+        if isinstance(output, RealNumber):
+            return float(output)
+        if isinstance(output, complex) and output.imag == 0:
+            return float(output.real)
         return output
 
     def get_constant(self) -> Number:
@@ -1513,8 +1569,11 @@ class Term:
             return self[self.CONST]
         return 0 if self.operation in {Operation.ADD, Operation.SUB} else 1
 
+    def is_parameterized_term(self) -> bool:
+        return all(isinstance(var, Parameter) for var in self.variables())
+
     def __copy__(self) -> Term:
-        return Term(copy.copy(self.to_list()), self.operation)
+        return Term(copy.copy(self.to_list()), copy.copy(self.operation))
 
     def __repr__(self) -> str:
         if len(self) == 0:
@@ -1535,18 +1594,20 @@ class Term:
                 if len(term_str) > 0:
                     if term_str[0] == "(" and term_str[-1] == ")":
                         term_str = term_str.removeprefix("(").removesuffix(")")
-                    output_string += f"({term_str}) " if self[e] == 1 else f"({self[e]}) * ({term_str}) "
+                    output_string += (
+                        f"({term_str}) " if self[e] == 1 else f"({_float_if_real(self[e])}) * ({term_str}) "
+                    )
             elif isinstance(e, BaseVariable):
                 if self._is_constant(e):
                     if self.operation in {Operation.ADD, Operation.SUB} and self[e] == 0:
                         continue
                     if self.operation in {Operation.MUL, Operation.DIV} and self[e] == 1:
                         continue
-                    output_string += f"({self[e]}) "
-                elif (self.operation is Operation.MUL or self.operation is Operation.DIV) and self[e] > 1:
-                    output_string += f"({e}^{self[e]}) "
+                    output_string += f"({_float_if_real(self[e])}) "
+                elif (self.operation is Operation.MUL or self.operation is Operation.DIV) and _assert_real(self[e]) > 1:
+                    output_string += f"({e}^{_float_if_real(self[e])}) "
                 else:
-                    output_string += f"{e} " if self[e] == 1 else f"({self[e]}) * {e} "
+                    output_string += f"{e} " if self[e] == 1 else f"({_float_if_real(self[e])}) * {e} "
             else:
                 output_string += f"{e} "
             if i < len(keys) - 1:
@@ -1574,6 +1635,8 @@ class Term:
         return len(self._elements)
 
     def __add__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
         out.append(other)
         return Term(out, Operation.ADD)
@@ -1581,11 +1644,15 @@ class Term:
     __iadd__ = __add__
 
     def __radd__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
         out.insert(0, other)
         return Term(out, Operation.ADD)
 
     def __mul__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         if len(out) == 0:
             out = [0]
@@ -1595,6 +1662,8 @@ class Term:
     __imul__ = __mul__
 
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         if len(out) == 0:
             out = [0]
@@ -1605,9 +1674,13 @@ class Term:
         return -1 * self
 
     def __sub__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         return self + -1 * other
 
     def __rsub__(self, other: Number | BaseVariable | Term) -> Term:
+        if not isinstance(other, (Number, BaseVariable, Term)):
+            return NotImplemented
         return -1 * self + other
 
     __isub__ = __sub__
@@ -1631,6 +1704,8 @@ class Term:
         raise NotSupportedOperation("Only division by numbers is currently supported")
 
     def __pow__(self, a: int) -> Term:
+        if not isinstance(a, int):
+            raise ValueError(f"Only integer exponents are allowed, but provided {type(a)}")
         if self.operation == Operation.ADD:
             out = copy.copy(self)
             for _ in range(a - 1):
@@ -1671,13 +1746,16 @@ class ComparisonTerm:
     """
 
     def __init__(
-        self, lhs: Number | BaseVariable | Term, rhs: Number | BaseVariable | Term, operation: ComparisonOperation
+        self,
+        lhs: RealNumber | BaseVariable | Term,
+        rhs: RealNumber | BaseVariable | Term,
+        operation: ComparisonOperation,
     ) -> None:
         """Initializes a new comparison term.
 
         Args:
-            lhs (Number | BaseVariable | Term): the left hand side of the comparison term.
-            rhs (Number | BaseVariable | Term): the right hand side of the comparison term.
+            lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.
+            rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.
             operation (ComparisonOperation): the comparison operations between the left and right hand sides.
         """
         term = lhs - rhs
@@ -1759,7 +1837,7 @@ class ComparisonTerm:
         """
         return ComparisonTerm(rhs=self.rhs.to_binary(), lhs=self.lhs.to_binary(), operation=self.operation)
 
-    def _apply_comparison_operation(self, v1: Number, v2: Number) -> bool:
+    def _apply_comparison_operation(self, v1: RealNumber, v2: RealNumber) -> bool:
         """Compare two arguments.
 
         Args:
@@ -1787,16 +1865,29 @@ class ComparisonTerm:
             return v1 != v2
         raise ValueError(f"Unsupported Operation of type {self.operation.value}")
 
-    def evaluate(self, var_values: Mapping[BaseVariable, Number | list[int]]) -> bool:
+    def evaluate(self, var_values: Mapping[BaseVariable, RealNumber | list[int]]) -> bool:
         """Evaluates the comparison term given a set of values for the variables in the term.
 
         Args:
-            var_values (Mapping[BaseVariable, list[int]  |  Number]): the values of the variables in the comparison term.
+            var_values (Mapping[BaseVariable, list[int]  |  RealNumber]): the values of the variables in the comparison term.
 
         Returns:
             bool: the result from evaluating the comparison term.
+
+        Raises:
+            ValueError: if the constraint contains imaginary numbers.
         """
-        return self._apply_comparison_operation(self._lhs.evaluate(var_values), self._rhs.evaluate(var_values))
+        lhs = self._lhs.evaluate(var_values)
+        rhs = self._rhs.evaluate(var_values)
+        if isinstance(lhs, complex):
+            if lhs.imag != 0:
+                raise ValueError("evaluating inequality constraints with complex values is not allowed")
+            lhs = lhs.real
+        if isinstance(rhs, complex):
+            if rhs.imag != 0:
+                raise ValueError("evaluating inequality constraints with complex values is not allowed")
+            rhs = rhs.real
+        return self._apply_comparison_operation(lhs, rhs)
 
     def __copy__(self) -> ComparisonTerm:
         return ComparisonTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)

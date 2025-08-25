@@ -1,6 +1,6 @@
 import pytest
 
-from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.analog.hamiltonian import PauliX, PauliZ
 from qilisdk.analog.schedule import Schedule
 
 # --- Constructor and Property Tests ---
@@ -21,8 +21,8 @@ def test_schedule_constructor_default():
 def test_schedule_constructor_with_hamiltonians_and_schedule():
     """When Hamiltonians and a partial schedule are provided, missing coefficients default to 0."""
     # H1 acts on qubit 0 (nqubits = 1); H2 acts on qubit 1 (nqubits = 2).
-    H1 = Z(0).to_hamiltonian()
-    H2 = X(1).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
+    H2 = PauliX(1).to_hamiltonian()
     hams = {"H1": H1, "H2": H2}
     # Provide a schedule that sets only H1 at time step 0.
     sch = {0: {"H1": 0.5}}
@@ -36,7 +36,7 @@ def test_schedule_constructor_with_hamiltonians_and_schedule():
 
 def test_schedule_constructor_invalid_schedule_reference():
     """Providing a schedule that references a non-declared Hamiltonian raises ValueError."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sch = {0: {"H1": 0.5, "H_unknown": 1.0}}
     with pytest.raises(ValueError):  # noqa: PT011
@@ -55,7 +55,7 @@ def test_len_schedule(T, dt):
 
 def test_add_schedule_step_valid():
     """Adding a new schedule step inserts the coefficient and warns on overwrite."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sched = Schedule(T=10, dt=1, hamiltonians=hams)
     # Add time step 2 with a new coefficient.
@@ -65,7 +65,7 @@ def test_add_schedule_step_valid():
 
 def test_add_schedule_step_invalid_reference():
     """Attempting to add a schedule step referencing an undefined Hamiltonian raises ValueError."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sched = Schedule(T=10, dt=1, hamiltonians=hams)
     with pytest.raises(ValueError):  # noqa: PT011
@@ -74,7 +74,7 @@ def test_add_schedule_step_invalid_reference():
 
 def test_update_hamiltonian_coefficient_valid():
     """Updating the Hamiltonian coefficient at a valid time step works correctly."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sched = Schedule(T=10, dt=1, hamiltonians=hams)
     sched.update_hamiltonian_coefficient_at_time_step(5, "H1", 3.0)
@@ -83,7 +83,7 @@ def test_update_hamiltonian_coefficient_valid():
 
 def test_update_hamiltonian_coefficient_invalid_time():
     """Updating a coefficient at a time step after the end of the annealing schedule raises ValueError."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sched = Schedule(T=10, dt=1, hamiltonians=hams)
     with pytest.raises(ValueError):  # noqa: PT011
@@ -98,18 +98,18 @@ def test_add_hamiltonian_new():
     def coeff_func(t, factor=1):
         return t * factor
 
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     sched.add_hamiltonian("H1", H1, schedule=coeff_func, factor=2)
     # For T=4, dt=1, time steps are 0,1,2,3,4; expect coefficient = 2*t.
-    for t in range(int(sched.T / sched.dt) + 1):
-        assert sched.schedule.get(t, {}).get("H1", 0) == 2 * t
+    for t in range(int(sched.T / sched.dt)):
+        assert sched.get_coefficient(t, "H1") == 2 * t
     # nqubits should update based on the new Hamiltonian.
     assert sched.nqubits >= 1
 
 
 def test_add_hamiltonian_existing():
     """Adding a Hamiltonian with an existing label warns and does not override the original."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
     # The original Hamiltonian (H1) remains unchanged.
     assert sched.hamiltonians["H1"] == H1
@@ -120,8 +120,8 @@ def test_add_hamiltonian_existing():
 
 def test_getitem_with_exact_time_step():
     """__getitem__ returns the correct Hamiltonian when the time step is defined, including fallback for missing keys."""
-    H1 = Z(0).to_hamiltonian()
-    H2 = X(1).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
+    H2 = PauliX(1).to_hamiltonian()
     hams = {"H1": H1, "H2": H2}
     # At time step 0: H1 coefficient 0.5, H2 coefficient 0.0; at time step 2: update H2 to 1.0.
     sch = {0: {"H1": 0.5, "H2": 0.0}, 2: {"H2": 1.0}}
@@ -138,7 +138,7 @@ def test_getitem_with_exact_time_step():
 
 def test_getitem_without_direct_time_step():
     """If a time step is not directly defined, __getitem__ falls back to the most recent earlier time step."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sch = {0: {"H1": 0.5}}
     sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
@@ -150,7 +150,7 @@ def test_getitem_without_direct_time_step():
 
 def test_get_coefficient():
     """get_coefficient returns the correct coefficient with fallback to earlier time steps."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sch = {0: {"H1": 0.5}, 4: {"H1": 1.0}}
     sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
@@ -164,7 +164,7 @@ def test_get_coefficient():
 
 def test_iteration():
     """Iterating over the Schedule yields Hamiltonians for time steps 0 through T/dt inclusive."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     # For T=4, dt=1, __len__() returns 4 but iteration yields time steps 0,1,2,3,4 (5 items).
     sched = Schedule(T=4, dt=1, hamiltonians=hams, schedule={0: {"H1": 0.5}})
@@ -176,7 +176,7 @@ def test_iteration():
 
 def test_schedule_property_sorting():
     """The schedule property returns a dictionary sorted by time step keys."""
-    H1 = Z(0).to_hamiltonian()
+    H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     unsorted_schedule = {3: {"H1": 0.3}, 0: {"H1": 0.1}, 2: {"H1": 0.2}}
     sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=unsorted_schedule)

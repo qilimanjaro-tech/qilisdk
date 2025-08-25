@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
 from loguru import logger
-from qutip import Qobj, basis, sesolve, tensor
+from qutip import Qobj, basis, mesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
 from qutip_qip.operations import RY as q_RY
@@ -31,7 +31,7 @@ from qutip_qip.operations import Y as q_Y
 from qutip_qip.operations import Z as q_Z
 from qutip_qip.operations import controlled_gate
 
-from qilisdk.analog.hamiltonian import Hamiltonian, I, PauliOperator
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.common.quantum_objects import QuantumObject, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
@@ -41,6 +41,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
+    from qilisdk.common.variables import Number
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
 
@@ -153,9 +154,7 @@ class QutipBackend(Backend):
             ValueError: if the initial state provided is invalid.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        tlist = np.linspace(
-            0, functional.schedule.T - functional.schedule.dt, int(functional.schedule.T / functional.schedule.dt)
-        )
+        tlist = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
 
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
@@ -166,9 +165,9 @@ class QutipBackend(Backend):
             )
 
         def get_hamiltonian_schedule(
-            hamiltonian: str, dt: float, schedule: dict[int, dict[str, float]], T: float
+            hamiltonian: str, dt: float, schedule: dict[int, dict[str, Number]], T: float
         ) -> Callable:
-            def get_coeff(t: float) -> float:
+            def get_coeff(t: float) -> Number:
                 if int(t / dt) in schedule:
                     return schedule[int(t / dt)][hamiltonian]
                 time_step = int(t / dt)
@@ -205,7 +204,7 @@ class QutipBackend(Backend):
 
         qutip_obs: list[Qobj] = []
 
-        identity = QuantumObject(I(0).matrix)
+        identity = QuantumObject(PauliI(0).matrix)
         for obs in functional.observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
@@ -228,12 +227,12 @@ class QutipBackend(Backend):
                     Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
                 )
 
-        results = sesolve(
+        results = mesolve(
             H=H_t,
             e_ops=qutip_obs,
-            psi0=qutip_init_state,
+            rho0=qutip_init_state,
             tlist=tlist,
-            options={"store_states": functional.store_intermediate_results, "store_final_state": True},
+            options={"store_states": functional.store_intermediate_results, "store_final_state": True, "nsteps": 10000},
         )
 
         logger.success("TimeEvolution finished")
@@ -246,12 +245,14 @@ class QutipBackend(Backend):
                         for i in range(len(results.expect[0]))
                     ]
                 )
-                if len(results.expect) > 0
+                if len(results.expect) > 0 and functional.store_intermediate_results
                 else None
             ),
             final_state=(QuantumObject(results.final_state.full()) if results.final_state is not None else None),
             intermediate_states=(
-                [QuantumObject(state.full()) for state in results.states] if len(results.states) > 1 else None
+                [QuantumObject(state.full()) for state in results.states]
+                if len(results.states) > 1 and functional.store_intermediate_results
+                else None
             ),
         )
 

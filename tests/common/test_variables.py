@@ -995,9 +995,7 @@ def test_Comparison_Term_to_binary():
 
     _t = Term([], operation=Operation.ADD)
     _t._elements[""] = 1
-    with pytest.raises(
-        ValueError, match=r"Term accepts object of types Term or Variable but an object of type  was given"
-    ):
+    with pytest.raises(ValueError, match=r"Term accepts object of types Term or Variable but an object of type "):
         t = EQ(_t, 0)
 
 

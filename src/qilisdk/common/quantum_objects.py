@@ -426,7 +426,7 @@ class QuantumObject:
             return False
 
         # Check if the trace is 1
-        return np.isclose(self._data.trace(), 1, atol=tol)
+        return bool(np.isclose(self._data.trace(), 1, atol=tol))
 
     def is_hermitian(self, tol: float = 1e-8) -> bool:
         """
@@ -577,6 +577,7 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
 
     Raises:
         ValueError: If the operator is not a square matrix.
+        ValueError: If the state provided is not a valid quantum state.
 
     Returns:
         Complex: The expectation value. The result is guaranteed to be real if the operator is Hermitian, and may be complex otherwise.
@@ -584,7 +585,13 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
     if not operator.is_operator():
         raise ValueError("The operator must be a square matrix.")
 
-    if state.data.shape[1] == state.data.shape[0]:
+    if state.is_density_matrix():
         return (operator @ state).dense.trace()
 
-    return (state.adjoint() @ operator @ state).dense[0, 0]
+    if state.is_ket():
+        return (state.adjoint() @ operator @ state).dense[0, 0]
+
+    if state.is_bra():
+        return (state @ operator @ state.adjoint()).dense[0, 0]
+
+    raise ValueError("The state provided is invalid.")

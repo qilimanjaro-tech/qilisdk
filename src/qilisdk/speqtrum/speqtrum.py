@@ -45,7 +45,7 @@ from .speqtrum_models import (
 )
 
 if TYPE_CHECKING:
-    from qilisdk.functionals.functional import Functional
+    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 
 
 class SpeQtrum:
@@ -307,7 +307,7 @@ class SpeQtrum:
             raise ValueError("Device not selected.")
         return self._selected_device
 
-    def submit(self, functional: Functional) -> int:
+    def submit(self, functional: PrimitiveFunctional) -> int:
         """
         Submit a quantum functional for execution on the selected device.
 

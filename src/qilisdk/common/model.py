@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 import numpy as np
 from loguru import logger
 
-from qilisdk.analog.hamiltonian import Hamiltonian, Z
 from qilisdk.yaml import yaml
 
 from .variables import (
@@ -35,6 +34,7 @@ from .variables import (
     Domain,
     Number,
     Operation,
+    RealNumber,
     Term,
     Variable,
 )
@@ -42,6 +42,8 @@ from .variables import (
 if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
     from ruamel.yaml.representer import RoundTripRepresenter
+
+    from qilisdk.analog.hamiltonian import Hamiltonian
 
 
 class SlackCounter:
@@ -449,7 +451,7 @@ class Model:
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
         self._generate_encoding_constraints()
 
-    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+    def evaluate(self, sample: Mapping[BaseVariable, RealNumber | list[int]]) -> dict[str, Number]:
         """Evaluates the objective and the constraints of the model given a set of values for the variables.
 
         Args:
@@ -587,9 +589,18 @@ class QUBO(Model):
         """
         ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GEQ, ComparisonOperation.GT} else 0
         lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else 0
-        const, terms = self._parse_term(term)
-        term_upper_limit = sum(coeff for coeff, _ in terms if coeff > 0)
-        term_lower_limit = sum(coeff for coeff, _ in terms if coeff < 0)
+        _const, terms = self._parse_term(term)
+
+        def to_real(num: Number) -> RealNumber:
+            if isinstance(num, RealNumber):
+                return num
+            if isinstance(num, complex) and num.imag == 0:
+                return num.real
+            raise ValueError("Complex values encountered in the constraint.")
+
+        const = to_real(_const)
+        term_upper_limit: RealNumber = sum(to_real(coeff) for coeff, _ in terms if to_real(coeff) > 0)
+        term_lower_limit: RealNumber = sum(to_real(coeff) for coeff, _ in terms if to_real(coeff) < 0)
 
         if operation == ComparisonOperation.GT and term_upper_limit + const <= 0:
             raise ValueError(f"Constraint {label} is unsatisfiable.")
@@ -804,7 +815,7 @@ class QUBO(Model):
         term = term.to_binary()
         self._objective = Objective(label=label, term=term, sense=sense)
 
-    def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: Number = 100) -> None:
+    def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
         encoding constraint for supported continuous variables.
 
@@ -863,11 +874,11 @@ class QUBO(Model):
                 sense=ObjectiveSense.MINIMIZE,
             )
 
-    def evaluate(self, sample: Mapping[BaseVariable, Number | list[int]]) -> dict[str, float]:
+    def evaluate(self, sample: Mapping[BaseVariable, RealNumber | list[int]]) -> dict[str, Number]:
         """Evaluates the objective and the constraints of the model given a set of values for the variables.
 
         Args:
-            sample (Mapping[BaseVariable, Number  |  list[int]]): The dictionary maps the variable to the value to be
+            sample (Mapping[BaseVariable, RealNumber  |  list[int]]): The dictionary maps the variable to the value to be
                                                                 used during the evaluation. In case the variable is
                                                                 continuous (Not Binary or Spin) then the value could
                                                                 either be a number or a list of binary bits that
@@ -883,7 +894,7 @@ class QUBO(Model):
         results = {}
 
         results[self.objective.label] = self.objective.term.evaluate(sample)
-        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MINIMIZE else 1
+        results[self.objective.label] *= -1 if self.objective.sense is ObjectiveSense.MAXIMIZE else 1
 
         for c in self.constraints:
             results[c.label] = c.term.lhs.evaluate(sample) - c.term.rhs.evaluate(sample)
@@ -939,6 +950,8 @@ class QUBO(Model):
         Returns:
             Hamiltonian: An ising hamiltonian that represents the QUBO model.
         """
+        from qilisdk.analog.hamiltonian import Hamiltonian, Z  # noqa: PLC0415
+
         spins: dict[BaseVariable, Hamiltonian] = {}
         obj = self.qubo_objective
 

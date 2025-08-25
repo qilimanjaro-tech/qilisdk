@@ -73,6 +73,7 @@ class SciPyOptimizer(Optimizer):
         self,
         cost_function: Callable[[list[float]], float],
         init_parameters: list[float],
+        bounds: list[tuple[float, float]],
         store_intermediate_results: bool = False,
     ) -> OptimizerResult:
         """optimize the cost function and return the optimal parameters.
@@ -80,6 +81,7 @@ class SciPyOptimizer(Optimizer):
         Args:
             cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.
             init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.
+            bounds (list[float, float]): a list of the variable value bounds.
 
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
@@ -99,10 +101,10 @@ class SciPyOptimizer(Optimizer):
             cost_function,
             x0=init_parameters,
             method=self.method,
+            bounds=bounds,
             jac=self.extra_arguments.get("jac", None),
             hess=self.extra_arguments.get("hess", None),
             hessp=self.extra_arguments.get("hessp", None),
-            bounds=self.extra_arguments.get("bounds", None),
             constraints=self.extra_arguments.get("constraints", ()),
             tol=self.extra_arguments.get("tol", None),
             options=self.extra_arguments.get("options", None),

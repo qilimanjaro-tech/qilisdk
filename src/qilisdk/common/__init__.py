@@ -15,6 +15,12 @@
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
+    EQ,
+    GEQ,
+    GT,
+    LEQ,
+    LT,
+    NEQ,
     BinaryVariable,
     Equal,
     GreaterThan,
@@ -22,11 +28,18 @@ from .variables import (
     LessThan,
     LessThanOrEqual,
     NotEqual,
+    Parameter,
     SpinVariable,
     Variable,
 )
 
 __all__ = [
+    "EQ",
+    "GEQ",
+    "GT",
+    "LEQ",
+    "LT",
+    "NEQ",
     "BinaryVariable",
     "Constraint",
     "Equal",
@@ -38,6 +51,7 @@ __all__ = [
     "NotEqual",
     "Objective",
     "ObjectiveSense",
+    "Parameter",
     "QuantumObject",
     "SpinVariable",
     "Variable",

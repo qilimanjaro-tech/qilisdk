@@ -520,7 +520,7 @@ def test_qubo_model_evaluation():
     m = QUBO("test")
     v = Variable("v", Domain.POSITIVE_INTEGER, (0, 10), encoding=OneHot)
 
-    m.set_objective(v * 2 + 3)
+    m.set_objective(v * 2 + 3, sense=ObjectiveSense.MAXIMIZE)
     m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
     variables = m.variables()
     values = dict.fromkeys(m.variables(), 0)

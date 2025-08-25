@@ -11,15 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-from qilisdk.common.model import Model
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
-from qilisdk.optimizers.optimizer import Optimizer
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.cost_functions.cost_function import CostFunction
+    from qilisdk.optimizers.optimizer import Optimizer
 
 TFunctional = TypeVar("TFunctional", bound=PrimitiveFunctional[FunctionalResult])
 
@@ -32,7 +35,7 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         self,
         functional: TFunctional,
         optimizer: Optimizer,
-        cost_model: Model,
+        cost_function: CostFunction,
         store_intermediate_results: bool = False,
     ) -> None:
         """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
@@ -41,13 +44,12 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         Args:
             functional (Functional): The parameterized Functional to be optimized.
             optimizer (Optimizer): The optimizer to be used in optimizing the Functional's parameters.
-            cost_model (Model): A Model object to evaluate the cost of a given set of parameters. This model
-                                is the cost function used by the optimizer.
+            cost_function (CostFunction): A CostFunction object that defines how the cost is being computed.
             store_intermediate_results (bool, optional): If True, stores a list of intermediate results.
         """
         self._functional = functional
         self._optimizer = optimizer
-        self._cost_model = cost_model
+        self._cost_function = cost_function
         self._store_intermediate_results = store_intermediate_results
 
     @property
@@ -59,8 +61,8 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         return self._optimizer
 
     @property
-    def cost_model(self) -> Model:
-        return self._cost_model
+    def cost_function(self) -> CostFunction:
+        return self._cost_function
 
     @property
     def store_intermediate_results(self) -> bool:

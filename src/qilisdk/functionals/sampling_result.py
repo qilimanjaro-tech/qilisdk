@@ -15,7 +15,6 @@ import heapq
 import operator
 from pprint import pformat
 
-from qilisdk.common.model import Model
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
@@ -139,16 +138,3 @@ class SamplingResult(FunctionalResult):
         """
         class_name = self.__class__.__name__
         return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"
-
-    def compute_cost(self, cost_model: Model) -> float:
-        total_cost = 0.0
-        for sample, prob in self.get_probabilities():
-            bit_configuration = [int(i) for i in sample]
-            if len(cost_model.variables()) != len(bit_configuration):
-                raise ValueError(
-                    f"Model contains {len(cost_model.variables())} variables while the Functional returned a sample bit-string of size {len(bit_configuration)}. The bit-string to the model's variables have to be of the same size."
-                )
-            variable_map = {v: bit_configuration[i] for i, v in enumerate(cost_model.variables())}
-            evaluate_results = cost_model.evaluate(variable_map)
-            total_cost += sum(v for v in evaluate_results.values()) * prob
-        return total_cost

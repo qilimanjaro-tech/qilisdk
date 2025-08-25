@@ -15,6 +15,7 @@
         "qilisdk": "src",
         "functionals": "organism",
         "optimizers": "target",
-        "speqtrum": "cloudflare"
+        "speqtrum": "cloudflare",
+        "cost_functions": "cart"
     },
 }
