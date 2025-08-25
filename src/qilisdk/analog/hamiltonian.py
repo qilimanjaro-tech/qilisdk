@@ -320,7 +320,7 @@ class Hamiltonian(Parameterizable):
         for i, parameter in enumerate(self._parameters.values()):
             parameter.set_value(values[i])
 
-    def set_parameters(self, parameter_dict: dict[str, int | float]) -> None:
+    def set_parameters(self, parameter_dict: dict[str, float]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
