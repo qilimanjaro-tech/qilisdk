@@ -17,8 +17,8 @@ import pytest
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.gates import CNOT, CZ, U1, U3
 
-
 # ------------------------------ Helpers ------------------------------
+
 
 def _gate_counts(ansatz: HardwareEfficientAnsatz) -> tuple[int, int]:
     """(one_qubit_count, two_qubit_count) by simple isinstance checks."""
@@ -33,6 +33,7 @@ def _gate_counts(ansatz: HardwareEfficientAnsatz) -> tuple[int, int]:
 
 
 # ------------------------------ Tests ------------------------------
+
 
 def test_nparameters_property():
     """

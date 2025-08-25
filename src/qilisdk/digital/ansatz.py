@@ -70,6 +70,7 @@ class HardwareEfficientAnsatz(Ansatz):
     - No measurement operations are appended here; measurement should be added
       by the caller if required.
     """
+
     def __init__(
         self,
         nqubits: int,
@@ -164,7 +165,9 @@ class HardwareEfficientAnsatz(Ansatz):
             if kind == "full":
                 edges = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
             elif kind == "circular":
-                edges = [] if self.nqubits < 2 else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]  # noqa: PLR2004
+                edges = (
+                    [] if self.nqubits < 2 else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
+                )  # noqa: PLR2004
             elif kind == "linear":
                 edges = [(i, i + 1) for i in range(self.nqubits - 1)]
             else:
