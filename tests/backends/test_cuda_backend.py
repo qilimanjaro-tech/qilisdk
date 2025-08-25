@@ -369,8 +369,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     Verifies that the ansatz, initial parameters, and cost function are assigned properly.
     """
     mock_instance = MagicMock(spec=ModelCostFunction)
-    ansatz = HardwareEfficientAnsatz(2)
-    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+    circuit = HardwareEfficientAnsatz(2)
 
     parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, mock_instance)
     assert isinstance(parameterized_program.functional, Sampling)

@@ -29,6 +29,47 @@ class Ansatz(Circuit, ABC):
 
 @yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
+    """
+    Hardware-efficient ansatz with (layers + 1) single-qubit blocks and `layers`
+    entangling blocks. The initial block `U(0)` is applied to **all** qubits, and
+    then the subsequent `layers` are scheduled according to `structure`:
+
+    Schedules
+    ---------
+    grouped
+        `U(0);` for each layer `l = 1..L`: **U(all qubits)** → **E(all edges)**
+
+        I.e., a full parameterized single-qubit block is applied across all
+        qubits, then a single entangler block `E` (covering every edge in
+        `connectivity`). This yields exactly one entangler block per layer.
+
+    interposed
+        `U(0);` for each layer `l = 1..L`: **for q in 0..n-1: U(q) → E(all edges)**
+
+        I.e., within each layer the ansatz applies a parameterized single-qubit
+        gate on a **single qubit** and **immediately** follows with the **full**
+        entangler block `E`. This repeats for every qubit, so `E` is applied
+        `nqubits` times per layer. Depth increases accordingly, but it can
+        emulate a more finely interleaved hardware execution.
+
+    Parameter accounting
+    --------------------
+    The total number of single-qubit applications is `(layers + 1) * nqubits`,
+    independent of `structure`. Parameters are consumed in build order:
+    within each U-block the qubits are visited in ascending order,
+    and for each gate the keyword order follows `one_qubit_gate.PARAMETER_NAMES`.
+
+    Connectivity
+    ------------
+    `connectivity` is a set of directed (or implicitly undirected) pairs
+    `(i, j)` with `i != j`. Presets: `"linear"`, `"circular"`, `"full"`, or a
+    custom list of pairs. Edges are validated to be in-range.
+
+    Notes
+    -----
+    - No measurement operations are appended here; measurement should be added
+      by the caller if required.
+    """
     def __init__(
         self,
         nqubits: int,
@@ -39,12 +80,7 @@ class HardwareEfficientAnsatz(Ansatz):
         two_qubit_gate: Type[CZ | CNOT] = CZ,
         initial_parameters: Sequence[float] | None = None,
     ) -> None:
-        """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
-
-        The ansatz is composed of multiple layers of parameterized single-qubit gates
-        and two-qubit entangling gates, arranged according to the specified connectivity
-        and structural strategy.
-
+        """
         Args:
             nqubits (int): The number of qubits in the circuit.
             layers (int, optional): Number of repeating layers of gates.. Defaults to 1.
@@ -73,11 +109,11 @@ class HardwareEfficientAnsatz(Ansatz):
             from qilisdk.digital.gates import U3, CNOT
 
             ansatz = HardwareEfficientAnsatz(
-                num_qubits=4,
+                nqubits=4,
                 layers=3,
                 connectivity="linear",
                 structure="grouped",
-                on_qubit_gates=U3,
+                one_qubit_gates=U3,
                 two_qubit_gates=CNOT,
             )
             ansatz.draw()
@@ -142,7 +178,7 @@ class HardwareEfficientAnsatz(Ansatz):
                 raise ValueError(f"Self-edge {(a, b)} is not allowed.")
         return edges
 
-    def _param_blocks(self, initial_parameters: Sequence[float] | None) -> Iterator[dict[str, float]]:
+    def _parameter_blocks(self, initial_parameters: Sequence[float] | None) -> Iterator[dict[str, float]]:
         names = tuple(self.one_qubit_gate.PARAMETER_NAMES)
         per_gate = len(names)
         blocks = (self.layers + 1) * self.nqubits
@@ -167,10 +203,14 @@ class HardwareEfficientAnsatz(Ansatz):
             vals = [next(it) for _ in range(per_gate)]
             yield dict(zip(names, vals))
 
-    def _apply_single_qubit_block(self, param_block_iter: Iterator[dict[str, float]]) -> None:
-        for q in range(self.nqubits):
-            params = next(param_block_iter)
-            self.add(self.one_qubit_gate(q, **params))
+    def _apply_single_qubit(self, qubit: int, parameter_iterator: Iterator[dict[str, float]]) -> None:
+        params = next(parameter_iterator)
+        self.add(self.one_qubit_gate(qubit, **params))
+
+    def _apply_single_qubit_block(self, parameter_iterator: Iterator[dict[str, float]]) -> None:
+        for qubit in range(self.nqubits):
+            params = next(parameter_iterator)
+            self.add(self.one_qubit_gate(qubit, **params))
 
     def _apply_entanglers(self) -> None:
         for i, j in self.connectivity:
@@ -178,12 +218,18 @@ class HardwareEfficientAnsatz(Ansatz):
 
     def _build_circuit(self, initial_parameters: Sequence[float] | None) -> None:
         # Parameter iterator covering all single-qubit blocks, in order
-        param_iter = iter(self._param_blocks(initial_parameters))
+        parameter_iterator = iter(self._parameter_blocks(initial_parameters))
 
         # U(0)
-        self._apply_single_qubit_block(param_iter)
+        self._apply_single_qubit_block(parameter_iterator)
 
-        # For each remaining layer: E -> U
-        for _ in range(self.layers):
-            self._apply_entanglers()
-            self._apply_single_qubit_block(param_iter)
+        # For each remaining layer: U -> E
+        if self.structure == "grouped":
+            for _ in range(self.layers):
+                self._apply_single_qubit_block(parameter_iterator)
+                self._apply_entanglers()
+        else:
+            for _ in range(self.layers):
+                for q in range(self.nqubits):
+                    self._apply_single_qubit(q, parameter_iterator)
+                    self._apply_entanglers()
