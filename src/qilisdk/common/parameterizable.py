@@ -68,11 +68,11 @@ class Parameterizable(ABC):
         """
 
     @abstractmethod
-    def set_parameters(self, parameter_dict: dict[str, int | float]) -> None:
+    def set_parameters(self, parameter_dict: dict[str, float]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
-            parameter_dict (dict[str, RealNumber]): a dictionary mapping each parameter label to its value.
+            parameter_dict (dict[str, float]): a dictionary mapping each parameter label to its value.
 
         Raises:
             ValueError: if the provided parameter label is not defined in the list of parameters contained in this object.
