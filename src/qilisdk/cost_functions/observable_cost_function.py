@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from os import name
 from typing import TYPE_CHECKING
 
 import numpy as np

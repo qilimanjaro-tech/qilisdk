@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
 from loguru import logger
-from qutip import Qobj, basis, ket2dm, mesolve, tensor
+from qutip import Qobj, basis, mesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
 from qutip_qip.operations import RY as q_RY
