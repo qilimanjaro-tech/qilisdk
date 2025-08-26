@@ -13,10 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
+from os import name
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.common.quantum_objects import QuantumObject, expect_val, ket, tensor_prod
 from qilisdk.cost_functions.cost_function import CostFunction
 
@@ -27,9 +29,18 @@ if TYPE_CHECKING:
 
 
 class ObservableCostFunction(CostFunction):
-    def __init__(self, observable: QuantumObject) -> None:
+    def __init__(self, observable: QuantumObject | Hamiltonian | PauliOperator) -> None:
         super().__init__()
-        self._observable = observable
+        if isinstance(observable, QuantumObject):
+            self._observable = observable
+        elif isinstance(observable, Hamiltonian):
+            self._observable = QuantumObject(observable.to_matrix())
+        elif isinstance(observable, PauliOperator):
+            self._observable = QuantumObject(observable.matrix)
+        else:
+            raise ValueError(
+                f"Observable needs to be of type QuantumObject, Hamiltonian, or PauliOperator but {type(observable)} was provided"
+            )
 
     @property
     def observable(self) -> QuantumObject:
