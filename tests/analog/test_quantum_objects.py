@@ -20,7 +20,7 @@ def test_constructor_valid_sparse():
     sparse_mat = csc_array([[1, 0], [0, 1]])
     qobj = QuantumObject(sparse_mat)
     # Should be stored as a CSR matrix.
-    assert qobj.data.format == "csc"
+    assert qobj.data.format == "csr"
 
 
 @pytest.mark.parametrize("invalid_input", [1, "string", [1, 2, 3]])
