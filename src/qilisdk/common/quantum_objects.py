@@ -13,14 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
-import math
-import string
 from collections import defaultdict
 from typing import Iterable, Literal
 
 import numpy as np
-from scipy.sparse import coo_matrix, csc_array, csr_matrix, issparse, kron, sparray, spmatrix
-from scipy.sparse.linalg import eigsh, expm
+from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatrix
+from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
 from qilisdk.yaml import yaml
@@ -39,6 +37,26 @@ def _prod(xs: Iterable[int]) -> int:
     return p
 
 
+def _qo_state_from_csr(A) -> dict:
+    A = A.tocsr()  # ensure CSR
+    return {
+        "_format": "csr",
+        "shape": (int(A.shape[0]), int(A.shape[1])),
+        "dtype": str(A.dtype),
+        "data": A.data.tolist(),
+        "indices": A.indices.tolist(),
+        "indptr": A.indptr.tolist(),
+    }
+
+def _csr_from_qo_state(st: dict):
+    shape = tuple(st["shape"])
+    dtype = np.dtype(st.get("dtype", "complex128"))
+    data = np.array(st["data"], dtype=dtype)
+    indices = np.array(st["indices"], dtype=np.int32)
+    indptr = np.array(st["indptr"], dtype=np.int32)
+    return csr_matrix((data, indices, indptr), shape=shape)
+
+
 ###############################################################################
 # Main Class Definition
 ###############################################################################
@@ -46,7 +64,22 @@ def _prod(xs: Iterable[int]) -> int:
 
 @yaml.register_class
 class QuantumObject:
-    __slots__ = ("_data", "_nqubits")
+    __slots__ = ("__dict__", "_data", "_nqubits")
+
+    # def __getstate__(self) -> dict:
+    #     return _qo_state_from_csr(self._data)
+
+    # def __setstate__(self, st: dict) -> None:
+    #     A = _csr_from_qo_state(st)
+    #     object.__setattr__(self, "_data", A)
+    #     r, c = A.shape
+    #     if r == c:
+    #         nqb = int(np.log2(r))
+    #     elif r == 1:
+    #         nqb = int(np.log2(c))
+    #     else:
+    #         nqb = int(np.log2(r))
+    #     object.__setattr__(self, "_nqubits", nqb)
 
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """Represents a quantum state or operator using a sparse matrix representation.
@@ -83,20 +116,19 @@ class QuantumObject:
             self._data = data.tocsr()
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
-        
+
         r, c = self._data.shape
 
         # Validate "qubit-like" shapes
         valid = (
-            (r == c and _is_pow2(r)) or                         # operator/density
-            (c == 1 and _is_pow2(r)) or                         # ket
-            (r == 1 and _is_pow2(c)) or                         # bra
-            (r == c == 1)                                       # scalar
+            (r == c and _is_pow2(r))  # operator/density
+            or (c == 1 and _is_pow2(r))  # ket
+            or (r == 1 and _is_pow2(c))  # bra
+            or (r == c == 1)  # scalar
         )
         if not valid:
             raise ValueError(
-                "Data must have shape (2**N, 2**N), (2**N, 1), (1, 2**N), or (1,1). "
-                f"Got {self._data.shape}."
+                f"Data must have shape (2**N, 2**N), (2**N, 1), (1, 2**N), or (1,1). Got {self._data.shape}."
             )
         # Cache nqubits (immutable once constructed since we never resize in-place)
         if r == c:
@@ -175,7 +207,7 @@ class QuantumObject:
             QuantumObject: A new QuantumObject that is the adjoint of this object.
         """
         return QuantumObject(self._data.getH())
-    
+
     def trace(self) -> complex:
         # diagonal() returns dense 1D array; summing it is cheap
         return complex(self._data.diagonal().sum())
@@ -214,7 +246,9 @@ class QuantumObject:
             dims = [2] * self.nqubits
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
-        if _prod(dims) != (self.shape[0] if self.is_operator() else (self.shape[0] if self.is_ket() else self.shape[1])):
+        if _prod(dims) != (
+            self.shape[0] if self.is_operator() else (self.shape[0] if self.is_ket() else self.shape[1])
+        ):
             # Basic consistency: not bulletproof but avoids silent bugs
             pass
 
@@ -225,25 +259,25 @@ class QuantumObject:
         if any(i < 0 or i >= nsub for i in keep_set):
             raise ValueError("keep indices out of range")
 
-        keep_idx = sorted(keep_set)            # return order is “original” ordering
+        keep_idx = sorted(keep_set)  # return order is “original” ordering
         drop_idx = [i for i in range(nsub) if i not in keep_set]
         dims_keep = [dims[i] for i in keep_idx]
         dims_drop = [dims[i] for i in drop_idx]
         Kdim = _prod(dims_keep) if dims_keep else 1
 
-        # Pure-state path ψ ⇒ ρ_keep = M @ M† (no N×N density matrix created)
+        # Pure-state path ψ ⇒ p_keep = M @ M† (no NxN density matrix created)
         if self.is_ket() or self.is_bra():
             psi = self._data
             if self.is_bra():
-                psi = psi.T.conj()            # make it a column vector
+                psi = psi.T.conj()  # make it a column vector
             # Decide whether to process as dense vector or sparse-vector path
             N = _prod(dims)
             density = psi.nnz / N
             # Dense vector path is faster once the vector is reasonably filled
             if density >= 0.05 or N <= (1 << 20):  # noqa: PLR2004
-                psi1d = np.asarray(psi.toarray().reshape(-1))      # only vector, not matrix
+                psi1d = np.asarray(psi.toarray().reshape(-1))  # only vector, not matrix
                 psi_nd = psi1d.reshape(dims)
-                perm = keep_idx + drop_idx                         # bring keep first
+                perm = keep_idx + drop_idx  # bring keep first
                 psi_perm = np.transpose(psi_nd, perm)
                 M = psi_perm.reshape(Kdim, -1)
                 rho_keep = M @ M.conj().T
@@ -253,7 +287,7 @@ class QuantumObject:
             nz_idx = coo.row
             nz_val = coo.data
             # unravel all non-zero positions once
-            digits = np.vstack(np.unravel_index(nz_idx, dims))             # (nsub, nnz)
+            digits = np.vstack(np.unravel_index(nz_idx, dims))  # (nsub, nnz)
             k_digits = digits[keep_idx, :] if keep_idx else np.zeros((0, nz_val.size), dtype=int)
             t_digits = digits[drop_idx, :] if drop_idx else np.zeros((0, nz_val.size), dtype=int)
             k_lin = np.ravel_multi_index(k_digits, dims_keep) if keep_idx else np.zeros(nz_val.size, dtype=int)
@@ -274,7 +308,9 @@ class QuantumObject:
                 r = np.repeat(ks, ks.size)
                 c = np.tile(ks, ks.size)
                 d = (vs[:, None] * np.conj(vs[None, :])).ravel()
-                row.append(r); col.append(c); data.append(d)
+                row.append(r)
+                col.append(c)
+                data.append(d)
 
             if data:
                 row = np.concatenate(row)
@@ -289,7 +325,7 @@ class QuantumObject:
         if self.is_operator():
             rho = self._data.tocoo()
             # unravel rows/cols to multi-indices
-            r_multi = np.vstack(np.unravel_index(rho.row, dims))   # (nsub, nnz)
+            r_multi = np.vstack(np.unravel_index(rho.row, dims))  # (nsub, nnz)
             c_multi = np.vstack(np.unravel_index(rho.col, dims))
             if drop_idx:
                 mask = np.all(r_multi[drop_idx, :] == c_multi[drop_idx, :], axis=0)
@@ -352,7 +388,7 @@ class QuantumObject:
         if self.is_bra():
             v = v.T.conj()
         return float(np.sqrt(np.real(v.conj().multiply(v).sum())))
-    
+
     def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
         """
         Normalize the QuantumObject.
@@ -374,7 +410,7 @@ class QuantumObject:
         if norm == 0:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
 
-        return QuantumObject(self._data / norm) 
+        return QuantumObject(self._data / norm)
 
     def expm(self) -> QuantumObject:
         """
@@ -446,7 +482,7 @@ class QuantumObject:
         # PSD check via smallest eigenvalue of Hermitian matrix
         try:
             lam_min = float(eigsh(self._data, k=1, which="SA", return_eigenvectors=False, tol=1e-6))
-        except Exception:  # noqa: BLE001
+        except ArpackNoConvergence:
             # If ARPACK fails, fall back to dense only if small
             r, _ = self.shape
             if r <= 2048:  # noqa: PLR2004
@@ -536,7 +572,7 @@ def basis_state(n: int, N: int) -> QuantumObject:
     """
     data = np.array([1.0])
     indptr = np.zeros(N + 1, dtype=int)
-    indptr[n + 1:] = 1
+    indptr[n + 1 :] = 1
     indices = np.array([0], dtype=int)
     return QuantumObject(csr_matrix((data, indices, indptr), shape=(N, 1)))
 
@@ -585,15 +621,9 @@ def bra(*state: int) -> QuantumObject:
     Args:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
 
-    Raises:
-        ValueError: If any of the provided qubit states is not 0 or 1.
-
     Returns:
         QuantumObject: A QuantumObject representing the multi-qubit bra state.
     """
-    if any(s not in {0, 1} for s in state):
-        raise ValueError(f"state must contain only 0s/1s, got {state}")
-    # Create ⟨s| by transposing |s⟩
     return ket(*state).adjoint()
 
 
@@ -642,14 +672,14 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
     """
     if not operator.is_operator():
         raise ValueError("operator must be square")
-    # ρ case: tr(O ρ) = sum((O.T) ⊙ ρ)
+    # p case: tr(O p) = sum((O.T) ⊙ p)
     if state.is_density_matrix():
         return complex((operator.data.T.multiply(state.data)).sum())
     # |ψ⟩ case: ⟨ψ| O |ψ⟩ = (ψ† (O ψ))
     if state.is_ket():
-        v = operator.data @ state.data                    # (N,1)
+        v = operator.data @ state.data  # (N,1)
         return complex((state.data.getH() @ v).toarray()[0, 0])
     if state.is_bra():
-        v = state.data @ operator.data                    # (1,N)
+        v = state.data @ operator.data  # (1,N)
         return complex((v @ state.data.getH()).toarray()[0, 0])
     raise ValueError("state is invalid for expect_val")
