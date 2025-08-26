@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
 from loguru import logger
-from qutip import Qobj, basis, mesolve, tensor
+from qutip import Qobj, basis, ket2dm, mesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations import RX as q_RX
 from qutip_qip.operations import RY as q_RY
@@ -96,6 +96,7 @@ class QutipBackend(Backend):
 
         Returns:
             DigitalResult: A result object containing the measurement samples and computed probabilities.
+
         """
         logger.info("Executing Sampling (shots={})", functional.nshots)
         qutip_circuit = self._get_qutip_circuit(functional.circuit)
@@ -111,12 +112,15 @@ class QutipBackend(Backend):
         measurements = sorted(measurements_set)
 
         sim = CircuitSimulator(qutip_circuit)
-        sim.initialize(init_state)
+        # sim.initialize(init_state)
 
         res = sim.run_statistics(init_state)  # runs the full circuit for one shot
         _bits = res.cbits  # classical measurement bits
         bits = []
         probs = res.probabilities
+
+        if sum(probs) != 1:
+            probs /= sum(probs)
 
         if len(measurements) > 0:
             for b in _bits:
