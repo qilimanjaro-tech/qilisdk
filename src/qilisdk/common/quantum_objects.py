@@ -37,26 +37,6 @@ def _prod(xs: Iterable[int]) -> int:
     return p
 
 
-def _qo_state_from_csr(A) -> dict:
-    A = A.tocsr()  # ensure CSR
-    return {
-        "_format": "csr",
-        "shape": (int(A.shape[0]), int(A.shape[1])),
-        "dtype": str(A.dtype),
-        "data": A.data.tolist(),
-        "indices": A.indices.tolist(),
-        "indptr": A.indptr.tolist(),
-    }
-
-def _csr_from_qo_state(st: dict):
-    shape = tuple(st["shape"])
-    dtype = np.dtype(st.get("dtype", "complex128"))
-    data = np.array(st["data"], dtype=dtype)
-    indices = np.array(st["indices"], dtype=np.int32)
-    indptr = np.array(st["indptr"], dtype=np.int32)
-    return csr_matrix((data, indices, indptr), shape=shape)
-
-
 ###############################################################################
 # Main Class Definition
 ###############################################################################
@@ -65,21 +45,6 @@ def _csr_from_qo_state(st: dict):
 @yaml.register_class
 class QuantumObject:
     __slots__ = ("__dict__", "_data", "_nqubits")
-
-    # def __getstate__(self) -> dict:
-    #     return _qo_state_from_csr(self._data)
-
-    # def __setstate__(self, st: dict) -> None:
-    #     A = _csr_from_qo_state(st)
-    #     object.__setattr__(self, "_data", A)
-    #     r, c = A.shape
-    #     if r == c:
-    #         nqb = int(np.log2(r))
-    #     elif r == 1:
-    #         nqb = int(np.log2(c))
-    #     else:
-    #         nqb = int(np.log2(r))
-    #     object.__setattr__(self, "_nqubits", nqb)
 
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """Represents a quantum state or operator using a sparse matrix representation.
