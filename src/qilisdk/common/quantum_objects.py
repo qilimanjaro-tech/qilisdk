@@ -255,8 +255,8 @@ class QuantumObject:
             digits = np.vstack(np.unravel_index(nz_idx, dims))  # (nsub, nnz)
             k_digits = digits[keep_idx, :] if keep_idx else np.zeros((0, nz_val.size), dtype=int)
             t_digits = digits[drop_idx, :] if drop_idx else np.zeros((0, nz_val.size), dtype=int)
-            k_lin = np.ravel_multi_index(k_digits, dims_keep) if keep_idx else np.zeros(nz_val.size, dtype=int)
-            t_lin = np.ravel_multi_index(t_digits, dims_drop) if drop_idx else np.zeros(nz_val.size, dtype=int)
+            k_lin = np.ravel_multi_index(k_digits, dims_keep) if keep_idx else np.zeros(nz_val.size, dtype=int)  # type: ignore[call-overload]
+            t_lin = np.ravel_multi_index(t_digits, dims_drop) if drop_idx else np.zeros(nz_val.size, dtype=int)  # type: ignore[call-overload]
 
             # For each traced index t, accumulate outer products of the K-dimensional slice
             buckets: dict[int, list[tuple[int, complex]]] = defaultdict(list)
@@ -300,8 +300,8 @@ class QuantumObject:
             if keep_idx:
                 rK = r_multi[keep_idx, :][:, mask]
                 cK = c_multi[keep_idx, :][:, mask]
-                new_r = np.ravel_multi_index(rK, dims_keep)
-                new_c = np.ravel_multi_index(cK, dims_keep)
+                new_r = np.ravel_multi_index(rK, dims_keep)  # type: ignore[call-overload]
+                new_c = np.ravel_multi_index(cK, dims_keep)  # type: ignore[call-overload]
                 data = rho.data[mask]
             else:
                 # keep nothing → scalar
