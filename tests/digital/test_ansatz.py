@@ -15,7 +15,7 @@
 import pytest
 
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.gates import CNOT, CZ, U1, U3
+from qilisdk.digital.gates import CNOT, CZ, U1
 
 # ------------------------------ Helpers ------------------------------
 
@@ -91,48 +91,6 @@ def test_layers_zero_only_initial_block():
         assert one_q == (layers + 1) * n_qubits == n_qubits
         assert two_q == 0
         assert len(ans.gates) == n_qubits
-
-
-def test_insufficient_parameters_raises_on_init():
-    """
-    Constructing with too few parameters should raise ValueError during __init__ build.
-    """
-    n_qubits = 4
-    layers = 1
-    per_gate = len(U1.PARAMETER_NAMES)
-    required = n_qubits * (layers + 1) * per_gate
-    bad = [0.1] * (required - 1)
-    with pytest.raises(ValueError, match=r"Expected exactly \d+ parameters"):
-        HardwareEfficientAnsatz(
-            nqubits=n_qubits,
-            layers=layers,
-            connectivity="Linear",
-            structure="grouped",
-            two_qubit_gate=CNOT,
-            initial_parameters=bad,
-        )
-
-
-def test_valid_parameters_with_u3_passes_and_counts_ok():
-    """U3 has 3 params per application; just ensure construction succeeds and counts match."""
-    n_qubits = 2
-    layers = 2
-    per_gate = len(U3.PARAMETER_NAMES)
-    required = n_qubits * (layers + 1) * per_gate
-    params = [0.0] * required
-    ans = HardwareEfficientAnsatz(
-        nqubits=n_qubits,
-        layers=layers,
-        connectivity="Linear",
-        structure="grouped",
-        one_qubit_gate=U3,
-        two_qubit_gate=CZ,
-        initial_parameters=params,
-    )
-    E = len(list(ans.connectivity))
-    one_q, two_q = _gate_counts(ans)
-    assert one_q == (layers + 1) * n_qubits
-    assert two_q == layers * E
 
 
 def test_invalid_connectivity_string_raises():

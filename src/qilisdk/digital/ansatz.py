@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC
-from typing import Iterator, Literal, Sequence, Type
+from typing import Iterator, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3
@@ -79,7 +79,6 @@ class HardwareEfficientAnsatz(Ansatz):
         structure: Structure = "grouped",
         one_qubit_gate: Type[U1 | U2 | U3] = U1,
         two_qubit_gate: Type[CZ | CNOT] = CZ,
-        initial_parameters: Sequence[float] | None = None,
     ) -> None:
         """
         Args:
@@ -130,7 +129,7 @@ class HardwareEfficientAnsatz(Ansatz):
         self._one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
         self._two_qubit_gate: type[CZ | CNOT] = two_qubit_gate
 
-        self._build_circuit(initial_parameters)
+        self._build_circuit()
 
     @property
     def layers(self) -> int:
@@ -181,30 +180,14 @@ class HardwareEfficientAnsatz(Ansatz):
                 raise ValueError(f"Self-edge {(a, b)} is not allowed.")
         return edges
 
-    def _parameter_blocks(self, initial_parameters: Sequence[float] | None) -> Iterator[dict[str, float]]:
+    def _parameter_blocks(self) -> Iterator[dict[str, float]]:
         names = tuple(self.one_qubit_gate.PARAMETER_NAMES)
-        per_gate = len(names)
         blocks = (self.layers + 1) * self.nqubits
-        required = per_gate * blocks
 
-        if initial_parameters is None:
-            zero = dict.fromkeys(names, 0.0)
-            for _ in range(blocks):
-                # fresh dict each time
-                yield dict(zero)
-            return
-
-        values = list(initial_parameters)
-        if len(values) != required:
-            raise ValueError(
-                f"Expected exactly {required} parameters "
-                f"({blocks} applications x {per_gate} per gate), got {len(values)}."
-            )
-
-        it = iter(values)
+        zero = dict.fromkeys(names, 0.0)
         for _ in range(blocks):
-            vals = [next(it) for _ in range(per_gate)]
-            yield dict(zip(names, vals))
+            # fresh dict each time
+            yield dict(zero)
 
     def _apply_single_qubit(self, qubit: int, parameter_iterator: Iterator[dict[str, float]]) -> None:
         params = next(parameter_iterator)
@@ -219,9 +202,9 @@ class HardwareEfficientAnsatz(Ansatz):
         for i, j in self.connectivity:
             self.add(self.two_qubit_gate(i, j))
 
-    def _build_circuit(self, initial_parameters: Sequence[float] | None) -> None:
+    def _build_circuit(self) -> None:
         # Parameter iterator covering all single-qubit blocks, in order
-        parameter_iterator = iter(self._parameter_blocks(initial_parameters))
+        parameter_iterator = iter(self._parameter_blocks())
 
         # U(0)
         self._apply_single_qubit_block(parameter_iterator)
