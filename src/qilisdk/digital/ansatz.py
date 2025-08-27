@@ -11,75 +11,84 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
-from typing import Any, Literal, Type
+from abc import ABC
+from typing import Iterator, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, M
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3
 from qilisdk.yaml import yaml
 
+Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
+Structure = Literal["grouped", "interposed"]
 
-class Ansatz(ABC):
-    def __init__(self, nqubits: int, layers: int = 1) -> None:
-        self.nqubits = nqubits
-        self.layers = layers
 
-    @property
-    def nparameters(self) -> int:
-        """
-        Retrieve the total number of parameters required by all parameterized gates in the ansatz's circuit.
-
-        Returns:
-            int: The total count of parameters from all parameterized gates.
-        """
-        raise NotImplementedError
-
-    def get_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
-        """Get the underlying circuit with the given list of parameters.
-
-        Args:
-            params (list[float]): the list of parameters for the unitary gates.
-
-        Raises:
-            ValueError: if the number of parameters provided are less than the parameters expected by the ansatz.
-
-        Returns:
-            Circuit: The underlying circuit with the updated parameters.
-        """
-        if len(parameters) != self.nparameters:
-            raise ValueError(f"Expecting {self.nparameters} but received {len(parameters)}")
-
-        return self._construct_circuit(parameters=list(parameters), measure=measure)
-
-    @abstractmethod
-    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit: ...
+class Ansatz(Circuit, ABC):
+    def __init__(self, nqubits: int) -> None:
+        super().__init__(nqubits=nqubits)
 
 
 @yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
+    """
+    Hardware-efficient ansatz with (layers + 1) single-qubit blocks and `layers`
+    entangling blocks. The initial block `U(0)` is applied to **all** qubits, and
+    then the subsequent `layers` are scheduled according to `structure`:
+
+    Schedules
+    ---------
+    grouped
+        `U(0);` for each layer `l = 1..L`: **U(all qubits)** → **E(all edges)**
+
+        I.e., a full parameterized single-qubit block is applied across all
+        qubits, then a single entangler block `E` (covering every edge in
+        `connectivity`). This yields exactly one entangler block per layer.
+
+    interposed
+        `U(0);` for each layer `l = 1..L`: **for q in 0..n-1: U(q) → E(all edges)**
+
+        I.e., within each layer the ansatz applies a parameterized single-qubit
+        gate on a **single qubit** and **immediately** follows with the **full**
+        entangler block `E`. This repeats for every qubit, so `E` is applied
+        `nqubits` times per layer. Depth increases accordingly, but it can
+        emulate a more finely interleaved hardware execution.
+
+    Parameter accounting
+    --------------------
+    The total number of single-qubit applications is `(layers + 1) * nqubits`,
+    independent of `structure`. Parameters are consumed in build order:
+    within each U-block the qubits are visited in ascending order,
+    and for each gate the keyword order follows `one_qubit_gate.PARAMETER_NAMES`.
+
+    Connectivity
+    ------------
+    `connectivity` is a set of directed (or implicitly undirected) pairs
+    `(i, j)` with `i != j`. Presets: `"linear"`, `"circular"`, `"full"`, or a
+    custom list of pairs. Edges are validated to be in-range.
+
+    Notes
+    -----
+    - No measurement operations are appended here; measurement should be added
+      by the caller if required.
+    """
+
     def __init__(
         self,
-        n_qubits: int,
+        nqubits: int,
         layers: int = 1,
-        connectivity: Literal["Circular", "Linear", "Full"] | list[tuple[int, int]] = "Linear",
-        structure: Literal["grouped", "interposed"] = "grouped",
+        connectivity: Connectivity = "linear",
+        structure: Structure = "grouped",
         one_qubit_gate: Type[U1 | U2 | U3] = U1,
         two_qubit_gate: Type[CZ | CNOT] = CZ,
     ) -> None:
-        """Constructs a hardware-efficient ansatz circuit for variational quantum algorithms.
-
-        The ansatz is composed of multiple layers of parameterized single-qubit gates
-        and two-qubit entangling gates, arranged according to the specified connectivity
-        and structural strategy.
-
+        """
         Args:
-            n_qubits (int): The number of qubits in the circuit.
+            nqubits (int): The number of qubits in the circuit.
             layers (int, optional): Number of repeating layers of gates.. Defaults to 1.
-            connectivity (Literal["Circular", "Linear", "Full"] | list[tuple[int, int]], optional): Topology of qubit connectivity. Options include:
-                - 'Circular': Qubits form a closed loop.
-                - 'Linear' : Qubits are connected in a line.
-                - 'Full'   : All-to-all connectivity between qubits
-                Defaults to "Linear".
+            connectivity (Literal["circular", "linear", "full"] | list[tuple[int, int]], optional): Topology of qubit connectivity. Options include:
+                - 'circular': Qubits form a closed loop.
+                - 'linear' : Qubits are connected in a line.
+                - 'full'   : All-to-all connectivity between qubits
+                Defaults to "linear".
             structure (Literal["grouped", "interposed"], optional): Structure of each layer. Options include:
                 - 'grouped'   : Applies all single-qubit gates followed by all two-qubit gates.
                 - 'interposed': Interleaves single- and two-qubit gates.
@@ -100,103 +109,113 @@ class HardwareEfficientAnsatz(Ansatz):
             from qilisdk.digital.gates import U3, CNOT
 
             ansatz = HardwareEfficientAnsatz(
-                num_qubits=4,
+                nqubits=4,
                 layers=3,
-                connectivity="Linear",
-                on_qubit_gates=U3,
-                two_qubit_gates=CNOT,
+                connectivity="linear",
                 structure="grouped",
+                one_qubit_gates=U3,
+                two_qubit_gates=CNOT,
             )
-            print(ansatz.circuit)
+            ansatz.draw()
         """
-        super().__init__(n_qubits, layers)
+        super().__init__(nqubits)
 
-        _structure = str(structure).lower()
-        _connectivity = connectivity if not isinstance(connectivity, str) else str(connectivity).lower()
+        if layers < 0:
+            raise ValueError("layers must be >= 0")
 
-        # Define chip topology
-        if isinstance(_connectivity, list):
-            self.connectivity = _connectivity
-        elif _connectivity == "full":
-            self.connectivity = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
-        elif _connectivity == "circular":
-            self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
-        elif _connectivity == "linear":
-            self.connectivity = [(i, i + 1) for i in range(self.nqubits - 1)]
-        else:
-            raise ValueError(f"Unrecognized connectivity type ({_connectivity}).")
+        self._layers = int(layers)
+        self._connectivity = tuple(self._normalize_connectivity(connectivity))
+        self._structure: Structure = "grouped" if structure.lower() == "grouped" else "interposed"
+        self._one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
+        self._two_qubit_gate: type[CZ | CNOT] = two_qubit_gate
 
-        self.gate_types: dict[str, type[Gate]] = {
-            "one_qubit_gate": one_qubit_gate,
-            "two_qubit_gates": two_qubit_gate,
-        }
-        self.one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
-        self.two_qubit_gate: type[CNOT | CZ] = two_qubit_gate
-
-        if _structure not in {"grouped", "interposed"}:
-            raise ValueError(f"provided structure {_structure} is not supported.")
-        self.structure = _structure
-
-        self.construct_layer_handlers = {
-            "interposed": self._construct_layer_interposed,
-            "grouped": self._construct_layer_grouped,
-        }
-
-    def __getstate__(self) -> dict[str, Any]:
-        state = self.__dict__.copy()
-        # Exclude the mapping that contains bound methods (not serializable).
-        state.pop("construct_layer_handlers", None)
-        return state
-
-    def __setstate__(self, state) -> None:  # noqa: ANN001
-        """
-        Restore the object's state after deserialization and reinitialize any attributes that were omitted.
-        """
-        self.__dict__.update(state)
-        # Reconstruct the mapping with the proper bound methods.
-        self.construct_layer_handlers = {
-            "interposed": self._construct_layer_interposed,
-            "grouped": self._construct_layer_grouped,
-        }
+        self._build_circuit()
 
     @property
-    def nparameters(self) -> int:
-        """
-        Retrieve the total number of parameters required by all parameterized gates in the ansatz's circuit.
+    def layers(self) -> int:
+        """Number of entangling layers."""
+        return self._layers
 
-        Returns:
-            int: The total count of parameters from all parameterized gates.
-        """
-        return self.nqubits * (self.layers + 1) * len(self.one_qubit_gate.PARAMETER_NAMES)
+    @property
+    def connectivity(self) -> tuple[tuple[int, int], ...]:
+        """Entangling edges as an immutable tuple of (control, target) pairs."""
+        return self._connectivity
 
-    def _construct_circuit(self, parameters: list[float], measure: list[int] | None = None) -> Circuit:
-        self._circuit = Circuit(self.nqubits)
-        # Add initial layer of unitaries
-        for i in range(self.nqubits):
-            self._circuit.add(self.one_qubit_gate(i, **dict(zip(self.one_qubit_gate.PARAMETER_NAMES, parameters))))
+    @property
+    def structure(self) -> Structure:
+        """Declared structure ('grouped' or 'interposed')."""
+        return self._structure
 
-        construct_layer_handler = self.construct_layer_handlers[self.structure]
-        for _ in range(self.layers):
-            construct_layer_handler(parameters)
+    @property
+    def one_qubit_gate(self) -> type[U1 | U2 | U3]:
+        """Single-qubit gate class used for parameterized layers (U1, U2, or U3)."""
+        return self._one_qubit_gate
 
-        if measure is None:
-            measure = list(range(self.nqubits))
-        self._circuit.add(M(*measure))
+    @property
+    def two_qubit_gate(self) -> type[CZ | CNOT]:
+        """Two-qubit entangling gate class (CZ or CNOT)."""
+        return self._two_qubit_gate
 
-        return self._circuit
+    def _normalize_connectivity(self, connectivity: Connectivity) -> list[tuple[int, int]]:
+        if isinstance(connectivity, list):
+            edges = connectivity
+        else:
+            kind = connectivity.lower()
+            if kind == "full":
+                edges = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
+            elif kind == "circular":
+                edges = (
+                    [] if self.nqubits < 2 else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]  # noqa: PLR2004
+                )
+            elif kind == "linear":
+                edges = [(i, i + 1) for i in range(self.nqubits - 1)]
+            else:
+                raise ValueError(f"Unrecognized connectivity: {connectivity!r}")
 
-    def _construct_layer_interposed(self, parameters: list[float]) -> None:
-        for i in range(self.nqubits):
-            self._circuit.add(
-                self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
-            )
-            for p, j in self.connectivity:
-                self._circuit.add(self.two_qubit_gate(p, j))
+        # basic validation
+        for a, b in edges:
+            if not (0 <= a < self.nqubits and 0 <= b < self.nqubits):
+                raise ValueError(f"Edge {(a, b)} out of range for {self.nqubits} qubits.")
+            if a == b:
+                raise ValueError(f"Self-edge {(a, b)} is not allowed.")
+        return edges
 
-    def _construct_layer_grouped(self, parameters: list[float]) -> None:
-        for i in range(self.nqubits):
-            self._circuit.add(
-                self.one_qubit_gate(i, **{name: parameters.pop() for name in self.one_qubit_gate.PARAMETER_NAMES})
-            )
+    def _parameter_blocks(self) -> Iterator[dict[str, float]]:
+        names = tuple(self.one_qubit_gate.PARAMETER_NAMES)
+        blocks = (self.layers + 1) * self.nqubits
+
+        zero = dict.fromkeys(names, 0.0)
+        for _ in range(blocks):
+            # fresh dict each time
+            yield dict(zero)
+
+    def _apply_single_qubit(self, qubit: int, parameter_iterator: Iterator[dict[str, float]]) -> None:
+        params = next(parameter_iterator)
+        self.add(self.one_qubit_gate(qubit, **params))
+
+    def _apply_single_qubit_block(self, parameter_iterator: Iterator[dict[str, float]]) -> None:
+        for qubit in range(self.nqubits):
+            params = next(parameter_iterator)
+            self.add(self.one_qubit_gate(qubit, **params))
+
+    def _apply_entanglers(self) -> None:
         for i, j in self.connectivity:
-            self._circuit.add(self.two_qubit_gate(i, j))
+            self.add(self.two_qubit_gate(i, j))
+
+    def _build_circuit(self) -> None:
+        # Parameter iterator covering all single-qubit blocks, in order
+        parameter_iterator = iter(self._parameter_blocks())
+
+        # U(0)
+        self._apply_single_qubit_block(parameter_iterator)
+
+        # For each remaining layer: U -> E
+        if self.structure == "grouped":
+            for _ in range(self.layers):
+                self._apply_single_qubit_block(parameter_iterator)
+                self._apply_entanglers()
+        else:
+            for _ in range(self.layers):
+                for q in range(self.nqubits):
+                    self._apply_single_qubit(q, parameter_iterator)
+                    self._apply_entanglers()
