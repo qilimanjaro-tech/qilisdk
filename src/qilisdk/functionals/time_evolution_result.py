@@ -16,7 +16,7 @@ from pprint import pformat
 import numpy as np
 
 from qilisdk.common.model import Model
-from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
@@ -35,8 +35,8 @@ class TimeEvolutionResult(FunctionalResult):
         self,
         final_expected_values: np.ndarray | None = None,
         expected_values: np.ndarray | None = None,
-        final_state: QuantumObject | None = None,
-        intermediate_states: list[QuantumObject] | None = None,
+        final_state: QTensor | None = None,
+        intermediate_states: list[QTensor] | None = None,
     ) -> None:
         """
         Initialize an AnalogResult instance with simulation outputs.
@@ -78,7 +78,7 @@ class TimeEvolutionResult(FunctionalResult):
         return self._expected_values
 
     @property
-    def final_state(self) -> QuantumObject | None:
+    def final_state(self) -> QTensor | None:
         """
         Get the final quantum state produced by the simulation.
 
@@ -88,7 +88,7 @@ class TimeEvolutionResult(FunctionalResult):
         return self._final_state
 
     @property
-    def intermediate_states(self) -> list[QuantumObject] | None:
+    def intermediate_states(self) -> list[QTensor] | None:
         """
         Get the list of intermediate quantum states recorded during the simulation.
 

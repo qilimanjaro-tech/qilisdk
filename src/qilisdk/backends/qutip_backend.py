@@ -33,7 +33,7 @@ from qutip_qip.operations import controlled_gate
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.common.quantum_objects import QuantumObject, tensor_prod
+from qilisdk.common.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
@@ -204,21 +204,21 @@ class QutipBackend(Backend):
 
         qutip_obs: list[Qobj] = []
 
-        identity = QuantumObject(PauliI(0).matrix)
+        identity = QTensor(PauliI(0).matrix)
         for obs in functional.observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
                 for i in range(functional.schedule.nqubits):
                     if aux_obs is None:
-                        aux_obs = identity if i != obs.qubit else QuantumObject(obs.matrix)
+                        aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
                     else:
                         aux_obs = (
                             tensor_prod([aux_obs, identity])
                             if i != obs.qubit
-                            else tensor_prod([aux_obs, QuantumObject(obs.matrix)])
+                            else tensor_prod([aux_obs, QTensor(obs.matrix)])
                         )
             elif isinstance(obs, Hamiltonian):
-                aux_obs = QuantumObject(obs.to_matrix())
+                aux_obs = QTensor(obs.to_matrix())
                 if obs.nqubits < functional.schedule.nqubits:
                     for _ in range(functional.schedule.nqubits - obs.nqubits):
                         aux_obs = tensor_prod([aux_obs, identity])
@@ -248,9 +248,9 @@ class QutipBackend(Backend):
                 if len(results.expect) > 0 and functional.store_intermediate_results
                 else None
             ),
-            final_state=(QuantumObject(results.final_state.full()) if results.final_state is not None else None),
+            final_state=(QTensor(results.final_state.full()) if results.final_state is not None else None),
             intermediate_states=(
-                [QuantumObject(state.full()) for state in results.states]
+                [QTensor(state.full()) for state in results.states]
                 if len(results.states) > 1 and functional.store_intermediate_results
                 else None
             ),

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
@@ -21,6 +22,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 def default_logging_config_path() -> Path:
     return Path(__file__).with_name("logging_config.yaml").resolve()
+
+
+class Precision(str, Enum):
+    COMPLEX_64 = "COMPLEX_64"
+    COMPLEX_128 = "COMPLEX_128"
 
 
 class QiliSDKSettings(BaseSettings):
@@ -33,6 +39,9 @@ class QiliSDKSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8")
 
+    arithmetic_precision: Precision = Field(
+        default=Precision.COMPLEX_128, description="[env: QILISDK_ARITHMETIC_PRECISION]"
+    )
     logging_config_path: Path = Field(
         default_factory=default_logging_config_path,
         description="YAML file used for logging configuration. [env: QILISDK_LOGGING_CONFIG_PATH]",

@@ -43,13 +43,11 @@ def _prod(xs: Iterable[int]) -> int:
 
 
 @yaml.register_class
-class QuantumObject:
-    __slots__ = ("__dict__", "_data", "_nqubits")
-
+class QTensor:
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """Represents a quantum state or operator using a sparse matrix representation.
 
-        The QuantumObject class is a wrapper around sparse matrices (or NumPy arrays,
+        The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
         which are converted to sparse matrices) that represent quantum states (kets, bras)
         or operators. It provides utility methods for common quantum operations such as
         taking the adjoint (dagger), computing tensor products, partial traces, and norms.
@@ -108,7 +106,7 @@ class QuantumObject:
     @property
     def data(self) -> csr_matrix:
         """
-        Get the internal sparse matrix representation of the QuantumObject.
+        Get the internal sparse matrix representation of the QTensor.
 
         Returns:
             csc_matrix: The internal representation as a CSR matrix.
@@ -118,7 +116,7 @@ class QuantumObject:
     @property
     def nqubits(self) -> int:
         """
-        Compute the number of qubits represented by the QuantumObject.
+        Compute the number of qubits represented by the QTensor.
 
         Returns:
             int: The number of qubits if determinable; otherwise, -1.
@@ -128,7 +126,7 @@ class QuantumObject:
     @property
     def shape(self) -> tuple[int, int]:
         """
-        Get the shape of the QuantumObject's internal matrix.
+        Get the shape of the QTensor's internal matrix.
 
         Returns:
             tuple[int, ...]: The shape of the internal matrix.
@@ -138,7 +136,7 @@ class QuantumObject:
     @property
     def dense(self) -> np.ndarray:
         """
-        Get the dense (NumPy array) representation of the QuantumObject.
+        Get the dense (NumPy array) representation of the QTensor.
 
         Returns:
             np.ndarray: The dense array representation.
@@ -164,20 +162,20 @@ class QuantumObject:
 
     # ----------- Matrix Operations ------------
 
-    def adjoint(self) -> QuantumObject:
+    def adjoint(self) -> QTensor:
         """
-        Compute the adjoint (conjugate transpose) of the QuantumObject.
+        Compute the adjoint (conjugate transpose) of the QTensor.
 
         Returns:
-            QuantumObject: A new QuantumObject that is the adjoint of this object.
+            QTensor: A new QTensor that is the adjoint of this object.
         """
-        return QuantumObject(self._data.getH())
+        return QTensor(self._data.getH())
 
     def trace(self) -> complex:
         # diagonal() returns dense 1D array; summing it is cheap
         return complex(self._data.diagonal().sum())
 
-    def ptrace(self, keep: list[int], dims: list[int] | None = None) -> "QuantumObject":
+    def ptrace(self, keep: list[int], dims: list[int] | None = None) -> QTensor:
         """
         Compute the partial trace over subsystems not in 'keep'.
 
@@ -186,7 +184,7 @@ class QuantumObject:
         The input 'dims' represents the dimensions of each subsystem (optional),
         and 'keep' indicates the indices of those subsystems to be retained.
 
-        If the QuantumObject is a ket or bra, it will first be converted to a density matrix.
+        If the QTensor is a ket or bra, it will first be converted to a density matrix.
 
         Args:
             keep (list[int]): A list of indices corresponding to the subsystems to retain.
@@ -198,24 +196,25 @@ class QuantumObject:
 
         Raises:
             ValueError: If the product of the dimensions in dims does not match the
-                shape of the QuantumObject's dense representation or if any dimension is non-positive.
+                shape of the QTensor's dense representation or if any dimension is non-positive.
             ValueError: If the indices in 'keep' are not unique or are out of range.
-            ValueError: If the QuantumObject is not a valid density matrix or state vector.
+            ValueError: If the QTensor is not a valid density matrix or state vector.
             ValueError: If the number of subsystems exceeds the available ASCII letters.
 
         Returns:
-            QuantumObject: A new QuantumObject representing the reduced density matrix
+            QTensor: A new QTensor representing the reduced density matrix
                 for the subsystems specified in 'keep'.
         """
         if dims is None:
             dims = [2] * self.nqubits
         if any(d <= 0 for d in dims):
             raise ValueError("All subsystem dimensions must be positive")
-        if _prod(dims) != (
-            self.shape[0] if self.is_operator() else (self.shape[0] if self.is_ket() else self.shape[1])
-        ):
-            # Basic consistency: not bulletproof but avoids silent bugs
-            pass
+
+        dim_total = self.shape[0] if self.is_operator() else (self.shape[0] if self.is_ket() else self.shape[1])
+        if _prod(dims) != dim_total:
+            raise ValueError(
+                f"Product of dims {dims} = {_prod(dims)} does not match Hilbert space dimension {dim_total}."
+            )
 
         nsub = len(dims)
         keep_set = set(keep)
@@ -246,7 +245,7 @@ class QuantumObject:
                 psi_perm = np.transpose(psi_nd, perm)
                 M = psi_perm.reshape(Kdim, -1)
                 rho_keep = M @ M.conj().T
-                return QuantumObject(csr_matrix(rho_keep))
+                return QTensor(csr_matrix(rho_keep))
             # Truly sparse ψ: build M implicitly by grouping by the traced index
             coo = psi.tocoo()
             nz_idx = coo.row
@@ -283,8 +282,8 @@ class QuantumObject:
                 data = np.concatenate(data)
                 out = coo_matrix((data, (row, col)), shape=(Kdim, Kdim))
                 out.sum_duplicates()
-                return QuantumObject(out.tocsr())
-            return QuantumObject(csr_matrix((Kdim, Kdim)))
+                return QTensor(out.tocsr())
+            return QTensor(csr_matrix((Kdim, Kdim)))
 
         # Operator/density-matrix path: COO remapping with traced-equal mask
         if self.is_operator():
@@ -311,122 +310,126 @@ class QuantumObject:
 
             out = coo_matrix((data, (new_r, new_c)), shape=(Kdim, Kdim))
             out.sum_duplicates()
-            return QuantumObject(out.tocsr())
+            return QTensor(out.tocsr())
 
-        raise ValueError("The QuantumObject is not a valid state or operator for ptrace().")
+        raise ValueError("The QTensor is not a valid state or operator for ptrace().")
 
     def norm(self, order: int | Literal["fro", "tr"] = 1) -> float:
         """
-        Compute the norm of the QuantumObject.
+        Compute the norm of the QTensor.
 
         For density matrices, the norm order can be specified. For state vectors, the norm is computed accordingly.
 
         Args:
             order (int or {"fro", "tr"}, optional): The order of the norm.
-                Only applies if the QuantumObject represents a density matrix. Other than all the
+                Only applies if the QTensor represents a density matrix. Other than all the
                 orders accepted by scipy, it also accepts 'tr' for the trace norm. Defaults to 1.
 
         Raises:
-            ValueError: If the QuantumObject is not a valid density matrix or state vector,
+            ValueError: If the QTensor is not a valid density matrix or state vector,
 
         Returns:
-            float: The computed norm of the QuantumObject.
+            float: The computed norm of the QTensor.
         """
         if self.is_scalar():
-            return float(self._data.toarray()[0, 0])
+            return float(abs(self._data.toarray()[0, 0]))
 
         if self.is_operator():
             if order == "tr":
-                # For valid density matrices, the trace norm is 1
                 if self.is_density_matrix():
                     return 1.0
-                # Otherwise approximate via eigenvalues if small, or avoid
+                # Only correct for Hermitian; otherwise, nuclear norm requires SVD
+                if self.is_hermitian():
+                    r, _ = self.shape
+                    if r <= 1024:  # noqa: PLR2004
+                        w = np.linalg.eigvalsh(self._data.toarray())
+                        return float(np.sum(np.abs(w)))
+                    raise ValueError("Trace norm for large Hermitian operators is not implemented without densifying.")
                 r, _ = self.shape
                 if r <= 1024:  # noqa: PLR2004
-                    w = np.linalg.eigvalsh(self._data.toarray())
-                    return float(np.sum(np.abs(w)))
-                raise ValueError("Trace norm for large non-DM operators is not supported without densifying.")
+                    s = np.linalg.svd(self._data.toarray(), compute_uv=False)
+                    return float(np.sum(s))
+                raise ValueError(
+                    "Trace (nuclear) norm for large non-Hermitian operators requires SVD; not implemented."
+                )
+            # Delegate other norms to SciPy; supported: 'fro', 1, np.inf, etc.
             return float(scipy_norm(self._data, ord=order))
 
-        # kets/bras
+        # kets/bras: 2-norm of vector
         v = self._data
         if self.is_bra():
             v = v.T.conj()
         return float(np.sqrt(np.real(v.conj().multiply(v).sum())))
 
-    def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QuantumObject:
+    def unit(self, order: int | Literal["fro", "tr"] = "tr") -> QTensor:
         """
-        Normalize the QuantumObject.
+        Normalize the QTensor.
 
-        Scales the QuantumObject so that its norm becomes 1, according to the specified norm order.
+        Scales the QTensor so that its norm becomes 1, according to the specified norm order.
 
         Args:
             order (int or {"fro", "tr"}, optional): The order of the norm to use for normalization.
-                Only applies if the QuantumObject represents a density matrix. Other than all the
+                Only applies if the QTensor represents a density matrix. Other than all the
                 orders accepted by scipy, it also accepts 'tr' for the trace norm. Defaults to "tr".
 
         Raises:
-            ValueError: If the norm of the QuantumObject is 0, making normalization impossible.
+            ValueError: If the norm of the QTensor is 0, making normalization impossible.
 
         Returns:
-            QuantumObject: A new QuantumObject that is the normalized version of this object.
+            QTensor: A new QTensor that is the normalized version of this object.
         """
         norm = self.norm(order=order)
         if norm == 0:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
 
-        return QuantumObject(self._data / norm)
+        return QTensor(self._data / norm)
 
-    def expm(self) -> QuantumObject:
+    def expm(self) -> QTensor:
         """
-        Compute the matrix exponential of the QuantumObject.
+        Compute the matrix exponential of the QTensor.
 
         Returns:
-            QuantumObject: A new QuantumObject representing the matrix exponential.
+            QTensor: A new QTensor representing the matrix exponential.
         """
-        return QuantumObject(expm(self._data))
+        return QTensor(expm(self._data.tocsc()))
 
-    def to_density_matrix(self) -> QuantumObject:
+    def to_density_matrix(self) -> QTensor:
         """
-        Convert the QuantumObject to a density matrix.
+        Convert the QTensor to a density matrix.
 
-        If the QuantumObject represents a state vector (ket or bra), this method
+        If the QTensor represents a state vector (ket or bra), this method
         calculates the corresponding density matrix by taking the outer product.
-        If the QuantumObject is already a density matrix, it is returned unchanged.
+        If the QTensor is already a density matrix, it is returned unchanged.
         The resulting density matrix is normalized.
 
         Raises:
-            ValueError: If the QuantumObject is a scalar, as a density matrix cannot be derived.
-            ValueError: If the QuantumObject is an operator that is not a density matrix.
+            ValueError: If the QTensor is a scalar, as a density matrix cannot be derived.
+            ValueError: If the QTensor is an operator that is not a density matrix.
 
         Returns:
-            QuantumObject: A new QuantumObject representing the density matrix.
+            QTensor: A new QTensor representing the density matrix.
         """
         if self.is_scalar():
-            raise ValueError("Cannot make a density matrix from scalar.")
-
-        if self.is_bra():
-            return (self.adjoint() @ self).unit(order="tr")
-
-        if self.is_ket():
-            return (self @ self.adjoint()).unit(order="tr")
-
+            raise ValueError("Cannot make a density matrix from a scalar.")
         if self.is_density_matrix():
             return self
+        if self.is_ket():
+            rho = self @ self.adjoint()
+        elif self.is_bra():
+            rho = self.adjoint() @ self
+        elif self.is_operator():
+            raise ValueError("Operator is not a density matrix (trace≠1 or not Hermitian).")
+        else:
+            raise ValueError("Invalid object for density matrix conversion.")
 
-        if self.is_operator():
-            raise ValueError(
-                "Cannot make a density matrix from an operator, which is not a density matrix already (trace=1 and hermitian)."
-            )
-
-        raise ValueError(
-            "Cannot make a density matrix from this QuantumObject. "
-            "It must be either a ket, a bra or already a density matrix."
-        )
+        tr = float(np.real(rho.trace()))
+        if tr == 0.0:
+            raise ValueError("Cannot normalize density matrix with zero trace.")
+        return QTensor(rho.data / tr)  # keep it sparse
 
     def is_density_matrix(self, tol: float = 1e-8) -> bool:
         """
-        Determine if the QuantumObject is a valid density matrix.
+        Determine if the QTensor is a valid density matrix.
 
         A valid density matrix must be square, Hermitian, positive semi-definite, and have a trace equal to 1.
 
@@ -435,7 +438,7 @@ class QuantumObject:
                 eigenvalue non-negativity, and trace. Defaults to 1e-8.
 
         Returns:
-            bool: True if the QuantumObject is a valid density matrix, False otherwise.
+            bool: True if the QTensor is a valid density matrix, False otherwise.
         """
         # Check if rho is a square matrix
         if not self.is_operator():
@@ -446,7 +449,8 @@ class QuantumObject:
             return False
         # PSD check via smallest eigenvalue of Hermitian matrix
         try:
-            lam_min = float(eigsh(self._data, k=1, which="SA", return_eigenvectors=False, tol=1e-6))
+            vals = eigsh(self._data, k=1, which="SA", return_eigenvectors=False, tol=1e-6)
+            lam_min = float(np.real(vals[0]))
         except ArpackNoConvergence:
             # If ARPACK fails, fall back to dense only if small
             r, _ = self.shape
@@ -459,14 +463,14 @@ class QuantumObject:
 
     def is_hermitian(self, tol: float = 1e-8) -> bool:
         """
-        Check if the QuantumObject is Hermitian.
+        Check if the QTensor is Hermitian.
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity.
                 Defaults to 1e-8.
 
         Returns:
-            bool: True if the QuantumObject is Hermitian, False otherwise.
+            bool: True if the QTensor is Hermitian, False otherwise.
         """
         if not self.is_operator():
             return False
@@ -477,41 +481,40 @@ class QuantumObject:
 
     # ----------- Basic Arithmetic Operators ------------
 
-    def __add__(self, other: QuantumObject | Complex) -> QuantumObject:
-        if isinstance(other, QuantumObject):
-            return QuantumObject(self._data + other._data)
-        if isinstance(other, Complex) and other == 0:
+    def __add__(self, other: QTensor | Complex) -> QTensor:
+        if isinstance(other, QTensor):
+            return QTensor(self._data + other._data)
+        if other == 0:
             return self
+        return NotImplemented
 
-        raise TypeError("Addition is only supported between QuantumState instances")
+    def __radd__(self, other: QTensor | Complex) -> QTensor:
+        return self.__add__(other)
 
-    def __sub__(self, other: QuantumObject) -> QuantumObject:
-        if isinstance(other, QuantumObject):
-            return QuantumObject(self._data - other._data)
+    def __sub__(self, other: QTensor) -> QTensor:
+        if isinstance(other, QTensor):
+            return QTensor(self._data - other._data)
+        return NotImplemented
 
-        raise TypeError("Subtraction is only supported between QuantumState instances")
-
-    def __mul__(self, other: QuantumObject | Complex) -> QuantumObject:
+    def __mul__(self, other: QTensor | Complex) -> QTensor:
         if isinstance(other, (int, float, complex)):
-            return QuantumObject(self._data * other)
-        if isinstance(other, QuantumObject):
-            return QuantumObject(self._data * other._data)
+            return QTensor(self._data * other)
+        if isinstance(other, QTensor):
+            return QTensor(self._data * other._data)
+        return NotImplemented
 
-        raise TypeError("Unsupported multiplication type")
+    def __matmul__(self, other: QTensor) -> QTensor:
+        if isinstance(other, QTensor):
+            return QTensor(self._data @ other._data)
+        return NotImplemented
 
-    def __matmul__(self, other: QuantumObject) -> QuantumObject:
-        if isinstance(other, QuantumObject):
-            return QuantumObject(self._data @ other._data)
-
-        raise TypeError("Dot product is only supported between QuantumState instances")
-
-    def __rmul__(self, other: QuantumObject | Complex) -> QuantumObject:
+    def __rmul__(self, other: QTensor | Complex) -> QTensor:
         return self.__mul__(other)
 
     def __repr__(self) -> str:
         r, c = self.shape
         nnz = self._data.nnz
-        s = f"QuantumObject(shape={r}x{c}, nnz={nnz}, format='csr')"
+        s = f"QTensor(shape={r}x{c}, nnz={nnz}, format='csr')"
         if r * c <= 64:  # noqa: PLR2004
             s += f"\n{self._data.toarray()}"
         return s
@@ -522,7 +525,7 @@ class QuantumObject:
 ###############################################################################
 
 
-def basis_state(n: int, N: int) -> QuantumObject:
+def basis_state(n: int, N: int) -> QTensor:
     r"""
     Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
 
@@ -533,16 +536,16 @@ def basis_state(n: int, N: int) -> QuantumObject:
         N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
 
     Returns:
-        QuantumObject: A QuantumObject representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
+        QTensor: A QTensor representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
     """
     data = np.array([1.0])
     indptr = np.zeros(N + 1, dtype=int)
     indptr[n + 1 :] = 1
     indices = np.array([0], dtype=int)
-    return QuantumObject(csr_matrix((data, indices, indptr), shape=(N, 1)))
+    return QTensor(csr_matrix((data, indices, indptr), shape=(N, 1)))
 
 
-def ket(*state: int) -> QuantumObject:
+def ket(*state: int) -> QTensor:
     r"""
     Generate a ket state for a multi-qubit system.
 
@@ -556,7 +559,7 @@ def ket(*state: int) -> QuantumObject:
         ValueError: If any of the provided qubit states is not 0 or 1.
 
     Returns:
-        QuantumObject: A QuantumObject representing the multi-qubit ket state.
+        QTensor: A QTensor representing the multi-qubit ket state.
     """
     if not state:
         raise ValueError("ket() requires at least one qubit (0/1).")
@@ -576,7 +579,7 @@ def ket(*state: int) -> QuantumObject:
     return basis_state(idx, N)
 
 
-def bra(*state: int) -> QuantumObject:
+def bra(*state: int) -> QTensor:
     r"""
     Generate a bra state for a multi-qubit system.
 
@@ -587,23 +590,23 @@ def bra(*state: int) -> QuantumObject:
         *state (int): A sequence of integers representing the state of each qubit (0 or 1).
 
     Returns:
-        QuantumObject: A QuantumObject representing the multi-qubit bra state.
+        QTensor: A QTensor representing the multi-qubit bra state.
     """
     return ket(*state).adjoint()
 
 
-def tensor_prod(operators: list[QuantumObject]) -> QuantumObject:
+def tensor_prod(operators: list[QTensor]) -> QTensor:
     """
-    Calculate the tensor product of a list of QuantumObjects.
+    Calculate the tensor product of a list of QTensors.
 
-    This function computes the tensor (Kronecker) product of all input QuantumObjects,
-    resulting in a composite QuantumObject that represents the combined state or operator.
+    This function computes the tensor (Kronecker) product of all input QTensors,
+    resulting in a composite QTensor that represents the combined state or operator.
 
     Args:
-        operators (list[QuantumObject]): A list of QuantumObjects to be combined via tensor product.
+        operators (list[QTensor]): A list of QTensors to be combined via tensor product.
 
     Returns:
-        QuantumObject: A new QuantumObject representing the tensor product of the inputs.
+        QTensor: A new QTensor representing the tensor product of the inputs.
 
     Raises:
         ValueError: If operators list is empty.
@@ -614,10 +617,10 @@ def tensor_prod(operators: list[QuantumObject]) -> QuantumObject:
     for op in operators[1:]:
         # Sparse kron returns same sparse type; keep CSR at the end
         out = kron(out, op.data).tocsr()
-    return QuantumObject(out)
+    return QTensor(out)
 
 
-def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
+def expect_val(operator: QTensor, state: QTensor) -> Complex:
     r"""
     Calculate the expectation value of an operator with respect to a quantum state.
 
@@ -625,8 +628,8 @@ def expect_val(operator: QuantumObject, state: QuantumObject) -> Complex:
     pure state vectors and density matrices appropriately.
 
     Args:
-        operator (QuantumObject): The quantum operator represented as a QuantumObject.
-        state (QuantumObject): The quantum state or density matrix represented as a QuantumObject.
+        operator (QTensor): The quantum operator represented as a QTensor.
+        state (QTensor): The quantum state or density matrix represented as a QTensor.
 
     Raises:
         ValueError: If the operator is not a square matrix.

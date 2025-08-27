@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.qtensor import QTensor
 from qilisdk.common.variables import RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
@@ -30,7 +30,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self,
         schedule: Schedule,
         observables: list[PauliOperator | Hamiltonian],
-        initial_state: QuantumObject,
+        initial_state: QTensor,
         nshots: int = 1000,
         store_intermediate_results: bool = False,
     ) -> None:

@@ -9,7 +9,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
 from qilisdk.common.model import Constraint, Model, Objective
-from qilisdk.common.quantum_objects import ket, tensor_prod
+from qilisdk.common.qtensor import ket, tensor_prod
 from qilisdk.common.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z

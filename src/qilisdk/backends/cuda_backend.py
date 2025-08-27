@@ -24,7 +24,7 @@ from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
-from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.qtensor import QTensor
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -205,12 +205,12 @@ class CudaBackend(Backend):
                 else None
             ),
             final_state=(
-                QuantumObject(np.array(evolution_result.final_state())).adjoint()
+                QTensor(np.array(evolution_result.final_state())).adjoint()
                 if evolution_result.final_state() is not None
                 else None
             ),
             intermediate_states=(
-                [QuantumObject(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
+                [QTensor(np.array(state)).adjoint() for state in evolution_result.intermediate_states()]
                 if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
                 else None
             ),

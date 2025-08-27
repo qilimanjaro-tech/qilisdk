@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .model import Constraint, Model, Objective, ObjectiveSense
-from .quantum_objects import QuantumObject, basis_state, bra, expect_val, ket, tensor_prod
+from .qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
     EQ,
     GEQ,
@@ -52,7 +52,7 @@ __all__ = [
     "Objective",
     "ObjectiveSense",
     "Parameter",
-    "QuantumObject",
+    "QTensor",
     "SpinVariable",
     "Variable",
     "basis_state",

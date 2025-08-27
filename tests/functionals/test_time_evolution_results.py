@@ -13,7 +13,7 @@
 # limitations under the License.
 import numpy as np
 
-from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.qtensor import QTensor
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
@@ -41,7 +41,7 @@ def test_time_evolution_results_initialization():
     ter = TimeEvolutionResult(
         final_expected_values=np.array([0, 0, 0]),
         expected_values=np.array([[0, 0, 0], [1, 0, 1]]),
-        final_state=QuantumObject(np.array([[0], [1]])),
+        final_state=QTensor(np.array([[0], [1]])),
     )
 
     expected_list = [[0], [1]]
