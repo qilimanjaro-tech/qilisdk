@@ -30,7 +30,11 @@ if TYPE_CHECKING:
 class ModelCostFunction(CostFunction):
     def __init__(self, model: Model) -> None:
         super().__init__()
-        self.model = model
+        self._model = model
+
+    @property
+    def model(self) -> Model:
+        return self._model
 
     def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
         if results.final_state is None:
