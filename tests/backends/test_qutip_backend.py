@@ -244,8 +244,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     Verifies that the ansatz, initial parameters, and cost function are assigned properly.
     """
     mock_instance = MagicMock(spec=ModelCostFunction)
-    ansatz = HardwareEfficientAnsatz(2)
-    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+    circuit = HardwareEfficientAnsatz(2)
     cost_function = ModelCostFunction(mock_instance)
 
     parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)
@@ -278,8 +277,7 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     mock_instance.constraints = [mock_con]
     mock_instance.evaluate.return_value = {"obj": -2, "con1": 10}
 
-    ansatz = HardwareEfficientAnsatz(2)
-    circuit = ansatz.get_circuit([0 for _ in range(ansatz.nparameters)])
+    circuit = HardwareEfficientAnsatz(2)
 
     cost_function = ModelCostFunction(mock_instance)
     parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)

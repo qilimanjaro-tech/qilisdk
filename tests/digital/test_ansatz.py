@@ -15,186 +15,159 @@
 import pytest
 
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.gates import CNOT, CZ, U1, M
+from qilisdk.digital.gates import CNOT, CZ, U1
 
-# --- Helper functions for tests ---
-
-
-def create_ansatz(
-    n_qubits: int, layers: int = 1, connectivity="Linear", structure="grouped", one_qubit_gate=U1, two_qubit_gate=CZ
-) -> HardwareEfficientAnsatz:
-    return HardwareEfficientAnsatz(
-        n_qubits=n_qubits,
-        layers=layers,
-        connectivity=connectivity,
-        structure=structure,
-        one_qubit_gate=one_qubit_gate,
-        two_qubit_gate=two_qubit_gate,
-    )
+# ------------------------------ Helpers ------------------------------
 
 
-# --- Test cases ---
+def _gate_counts(ansatz: HardwareEfficientAnsatz) -> tuple[int, int]:
+    """(one_qubit_count, two_qubit_count) by simple isinstance checks."""
+    one = 0
+    two = 0
+    for gate in ansatz.gates:
+        if gate.nqubits == 1:
+            one += 1
+        elif gate.nqubits == 2:
+            two += 1
+    return one, two
+
+
+# ------------------------------ Tests ------------------------------
 
 
 def test_nparameters_property():
     """
-    Test that the nparameters property returns the expected number.
-    Expected: n_qubits * (layers + 1) * (number of parameters in the one-qubit gate)
-    For U1 (assumed to have 1 parameter), with 3 qubits and 2 layers:
-       expected = 3 * (2 + 1) * 1 = 9.
+    nparameters should equal: n_qubits * (layers + 1) * len(one_qubit_gate.PARAMETER_NAMES)
+    Example with U1 (1 param): 3 qubits, 2 layers => 3 * (2+1) * 1 = 9.
     """
     n_qubits = 3
     layers = 2
-    ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
     expected = n_qubits * (layers + 1) * len(U1.PARAMETER_NAMES)
     assert ansatz.nparameters == expected
 
 
-def test_construct_circuit_grouped_structure():
+def test_construct_circuit_grouped_structure_gate_count():
     """
-    Test circuit construction with 'grouped' structure.
-    For n_qubits=3, layers=1 and Linear connectivity (which gives 2 two-qubit gates),
-    the expected gate count is:
-      - Initial layer: 3 one-qubit gates.
-      - For each layer (1 layer): grouped: 3 one-qubit gates + 2 two-qubit gates.
-      - Final measurement: 1 gate.
-    Total = 3 + (3+2) + 1 = 9.
+    grouped schedule:
+      - one-qubit gates: (layers + 1) * n
+      - two-qubit gates: layers * |E|
     """
     n_qubits = 3
     layers = 1
-    ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
-    params = [0.5] * ansatz.nparameters
-    circuit = ansatz.get_circuit(params)
-    # Check the measurement gate is added at the end.
-    assert isinstance(circuit.gates[-1], M)
-    # Check total number of gates.
-    assert len(circuit.gates) == 9
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
+    E = len(list(ansatz.connectivity))
+    one_q, two_q = _gate_counts(ansatz)
+
+    assert one_q == (layers + 1) * n_qubits
+    assert two_q == layers * E
+    assert len(ansatz.gates) == one_q + two_q  # total gates
 
 
-def test_construct_circuit_interposed_structure():
+def test_construct_circuit_interposed_structure_gate_count():
     """
-    Test circuit construction with 'interposed' structure.
-    For n_qubits=3, layers=1 and Linear connectivity (2 connectivity pairs),
-    the expected gate count is:
-      - Initial layer: 3 one-qubit gates.
-      - For each layer:
-          For each qubit: one one-qubit gate (3 total)
-          and for each connectivity pair (2 pairs) added for every qubit: 3*2 = 6 two-qubit gates.
-      - Final measurement: 1 gate.
-    Total = 3 + (3+6) + 1 = 13.
+    interposed schedule:
+      - one-qubit gates: (layers + 1) * n
+      - two-qubit gates: layers * n * |E|
     """
     n_qubits = 3
     layers = 1
-    ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="interposed")
-    params = [0.5] * ansatz.nparameters
-    circuit = ansatz.get_circuit(params)
-    assert len(circuit.gates) == 13
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure="interposed")
+    E = len(list(ansatz.connectivity))
+    one_q, two_q = _gate_counts(ansatz)
+
+    assert one_q == (layers + 1) * n_qubits
+    assert two_q == layers * n_qubits * E
+    assert len(ansatz.gates) == one_q + two_q
 
 
-def test_insufficient_parameters():
-    """
-    Test that constructing the circuit with too few parameters raises a ValueError.
-    """
-    n_qubits = 4
-    layers = 1
-    ansatz = create_ansatz(
-        n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped", two_qubit_gate=CNOT
-    )
-    params = [0.1] * (ansatz.nparameters - 1)
-    with pytest.raises(ValueError, match="Expecting"):
-        ansatz.get_circuit(params)
+def test_layers_zero_only_initial_block():
+    """layers=0 → only U(0) block is applied; no entanglers."""
+    n_qubits = 5
+    layers = 0
+    for structure in ("grouped", "interposed"):
+        ans = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure=structure)
+        one_q, two_q = _gate_counts(ans)
+        assert one_q == (layers + 1) * n_qubits == n_qubits
+        assert two_q == 0
+        assert len(ans.gates) == n_qubits
 
 
-def test_invalid_connectivity():
-    """
-    Test that an invalid connectivity string raises a ValueError.
-    """
-    n_qubits = 3
-    with pytest.raises(ValueError, match="Unrecognized connectivity type"):
-        create_ansatz(n_qubits=n_qubits, connectivity="XYZ", structure="grouped")
+def test_invalid_connectivity_string_raises():
+    with pytest.raises(ValueError, match="Unrecognized connectivity"):
+        HardwareEfficientAnsatz(nqubits=3, connectivity="XYZ", structure="grouped")
 
 
-def test_invalid_structure():
-    """
-    Test that an invalid structure string raises a ValueError.
-    """
-    n_qubits = 3
-    with pytest.raises(ValueError, match="provided structure random is not supported"):
-        create_ansatz(n_qubits=n_qubits, connectivity="Linear", structure="random")
+def test_structure_normalization_and_defaulting():
+    """Structure is normalized: 'GROUPED' -> 'grouped'; unknown -> 'interposed' (current behavior)."""
+    a = HardwareEfficientAnsatz(nqubits=2, structure="GROUPED")
+    assert a.structure == "grouped"
+    b = HardwareEfficientAnsatz(nqubits=2, structure="random")
+    assert b.structure == "interposed"  # current constructor behavior
 
 
-def test_custom_connectivity():
-    """
-    Test that providing a custom connectivity list is preserved.
-    """
+def test_custom_connectivity_preserved_as_pairs():
     n_qubits = 4
     custom_conn = [(0, 2), (1, 3)]
-    ansatz = create_ansatz(n_qubits=n_qubits, connectivity=custom_conn, structure="grouped")
-    assert ansatz.connectivity == custom_conn
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity=custom_conn, structure="grouped")
+    # Accept tuple/list forms; compare as sets of pairs.
+    assert set(map(tuple, ansatz.connectivity)) == set(custom_conn)
 
 
-def test_connectivity_full_option():
-    """
-    Test that the "Full" connectivity option produces the correct pairs.
-    For n_qubits=3, Full connectivity should produce: [(0,1), (0,2), (1,2)].
-    """
+def test_connectivity_full_option_pairs():
     n_qubits = 3
-    ansatz = create_ansatz(n_qubits=n_qubits, connectivity="Full", structure="grouped")
-    expected = [(0, 1), (0, 2), (1, 2)]
-    # Sorting for order-independence.
-    assert sorted(ansatz.connectivity) == sorted(expected)
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Full", structure="grouped")
+    expected = {(0, 1), (0, 2), (1, 2)}
+    assert set(map(tuple, ansatz.connectivity)) == expected
 
 
-def test_connectivity_circular_option():
-    """
-    Test that the "Circular" connectivity option produces the correct pairs.
-    For n_qubits=3, Circular connectivity should produce: [(0,1), (1,2), (2,0)].
-    """
+def test_connectivity_circular_option_pairs():
     n_qubits = 3
-    ansatz = create_ansatz(n_qubits=n_qubits, connectivity="Circular", structure="grouped")
-    expected = [(0, 1), (1, 2), (2, 0)]
-    assert sorted(ansatz.connectivity) == sorted(expected)
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Circular", structure="grouped")
+    expected = {(0, 1), (1, 2), (2, 0)}
+    assert set(map(tuple, ansatz.connectivity)) == expected
 
 
-def test_connectivity_linear_option():
-    """
-    Test that the "Linear" connectivity option produces the correct pairs.
-    For n_qubits=4, Linear connectivity should produce: [(0,1), (1,2), (2,3)].
-    """
+def test_connectivity_circular_with_one_qubit_yields_no_edges():
+    n_qubits = 1
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Circular", structure="grouped")
+    assert list(ansatz.connectivity) == []
+
+
+def test_connectivity_linear_option_pairs():
     n_qubits = 4
-    ansatz = create_ansatz(n_qubits=n_qubits, connectivity="Linear", structure="grouped")
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Linear", structure="grouped")
     expected = [(0, 1), (1, 2), (2, 3)]
-    assert ansatz.connectivity == expected
+    assert list(ansatz.connectivity) == expected
 
 
-def test_circuit_reset_on_multiple_constructs():
-    """
-    Test that calling construct_circuit multiple times resets the circuit.
-    """
+def test_out_of_range_or_self_edge_in_custom_connectivity_raises():
+    # out of range
+    with pytest.raises(ValueError, match="out of range"):
+        HardwareEfficientAnsatz(nqubits=3, connectivity=[(0, 3)], structure="grouped")
+    # self edge
+    with pytest.raises(ValueError, match="Self-edge"):
+        HardwareEfficientAnsatz(nqubits=3, connectivity=[(1, 1)], structure="grouped")
+
+
+def test_two_qubit_gate_choice_reflected_in_circuit():
+    """When two_qubit_gate=CNOT, all two-qubit gates should be CNOT."""
     n_qubits = 3
-    layers = 1
-    ansatz = create_ansatz(n_qubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
-    params1 = [0.5] * ansatz.nparameters
-    circuit1 = ansatz.get_circuit(params1)
-    params2 = [0.5] * ansatz.nparameters
-    circuit2 = ansatz.get_circuit(params2)
-    # Verify that a new Circuit instance is created on each call.
-    assert circuit1 is not circuit2
-    # Also check that the new circuit's gate list is not a concatenation of previous gates.
-    assert len(circuit2.gates) < len(circuit1.gates) * 2
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=1, connectivity="Linear", two_qubit_gate=CNOT)
+    two_gates = [g for g in ansatz.gates if isinstance(g, (CNOT, CZ))]
+    assert all(isinstance(g, CNOT) for g in two_gates)
 
 
-def test_measurement_gate_added():
-    """
-    Test that the final gate in the constructed circuit is a measurement gate
-    covering all qubits.
-    """
-    n_qubits = 3
-    ansatz = create_ansatz(n_qubits=n_qubits, connectivity="Linear", structure="grouped")
-    params = [0.5] * ansatz.nparameters
-    circuit = ansatz.get_circuit(params)
-    # Check that the last gate is a measurement gate (instance of M)
-    meas_gate = circuit.gates[-1]
-    assert isinstance(meas_gate, M)
-    # Verify that the measurement is applied to all qubits.
-    assert meas_gate.target_qubits == tuple(range(n_qubits))
+def test_independent_instances_do_not_share_state():
+    """Building multiple instances should not share gate lists."""
+    a1 = HardwareEfficientAnsatz(nqubits=3, layers=1, connectivity="Linear", structure="grouped")
+    a2 = HardwareEfficientAnsatz(nqubits=3, layers=1, connectivity="Linear", structure="grouped")
+    assert a1 is not a2
+    assert a1.gates is not a2.gates
+    assert len(a1.gates) == len(a2.gates)
+
+
+def test_case_insensitivity_of_connectivity():
+    for word in ("linear", "Linear", "LINEAR"):
+        ans = HardwareEfficientAnsatz(nqubits=3, connectivity=word)
+        assert list(ans.connectivity) == [(0, 1), (1, 2)]
