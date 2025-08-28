@@ -9,14 +9,14 @@ from qilisdk.common.qtensor import QTensor, basis_state, bra, expect_val, ket, t
 
 
 def test_constructor_valid_ndarray():
-    """QuantumObject should accept a valid NumPy array and convert it to sparse."""
+    """QTensor should accept a valid NumPy array and convert it to sparse."""
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     assert issparse(qobj.data)
 
 
 def test_constructor_valid_sparse():
-    """QuantumObject should accept a valid SciPy sparse matrix."""
+    """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
     qobj = QTensor(sparse_mat)
     # Should be stored as a CSR matrix.
@@ -25,7 +25,7 @@ def test_constructor_valid_sparse():
 
 @pytest.mark.parametrize("invalid_input", [1, "string", [1, 2, 3]])
 def test_constructor_invalid_input(invalid_input):
-    """QuantumObject should raise ValueError for inputs that are not arrays or sparse matrices."""
+    """QTensor should raise ValueError for inputs that are not arrays or sparse matrices."""
     with pytest.raises(ValueError):  # noqa: PT011
         QTensor(invalid_input)
 
@@ -41,7 +41,7 @@ def test_constructor_invalid_input(invalid_input):
     ],
 )
 def test_constructor_invalid_shape(shape):
-    """QuantumObject should raise ValueError for arrays with invalid shapes."""
+    """QTensor should raise ValueError for arrays with invalid shapes."""
     arr = np.zeros(shape)
     with pytest.raises(ValueError):  # noqa: PT011
         QTensor(arr)
@@ -133,7 +133,7 @@ def test_ptrace_works_for_operators_which_are_not_density_matrices():
 # def test_ptrace_invalid_dims():
 #     """Partial trace should raise ValueError if dims do not match the matrix dimensions."""
 #     arr = np.eye(2)
-#     qobj = QuantumObject(arr)
+#     qobj = QTensor(arr)
 #     with pytest.raises(ValueError):
 #         qobj.ptrace(keep=[0], dims=[2, 2])
 #     with pytest.raises(ValueError):
@@ -157,15 +157,15 @@ def test_ptrace_invalid_keep():
 
 @pytest.mark.parametrize("other", [0, 0 + 0j])
 def test_add_scalar_zero(other):
-    """Adding zero (of complex/int type) should return the same QuantumObject."""
+    """Adding zero (of complex/int type) should return the same QTensor."""
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     result = qobj + other
     np.testing.assert_array_equal(result.dense, qobj.dense)
 
 
-def test_add_quantumobject():
-    """Test addition between two QuantumObjects."""
+def test_add_QTensor():
+    """Test addition between two QTensors."""
     arr = np.array([[1, 0], [0, 1]])
     q1 = QTensor(arr)
     q2 = QTensor(arr)
@@ -181,8 +181,8 @@ def test_add_invalid_type():
         _ = qobj + "invalid"
 
 
-def test_sub_quantumobject():
-    """Test subtraction between two QuantumObjects."""
+def test_sub_QTensor():
+    """Test subtraction between two QTensors."""
     arr1 = np.array([[2, 0], [0, 2]])
     arr2 = np.eye(2)
     q1 = QTensor(arr1)
@@ -208,8 +208,8 @@ def test_mul_scalar(scalar):
     np.testing.assert_array_equal(result.dense, arr * scalar)
 
 
-def test_mul_quantumobject():
-    """Test multiplication between two QuantumObjects (elementwise multiplication)."""
+def test_mul_QTensor():
+    """Test multiplication between two QTensors (elementwise multiplication)."""
     arr1 = np.array([[2, 0], [0, 2]])
     arr2 = np.eye(2)
     q1 = QTensor(arr1)
@@ -227,7 +227,7 @@ def test_mul_invalid_type():
 
 
 def test_rmul():
-    """Test right multiplication (scalar * QuantumObject)."""
+    """Test right multiplication (scalar * QTensor)."""
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     result = 3 * qobj
@@ -235,7 +235,7 @@ def test_rmul():
 
 
 def test_matmul():
-    """Test matrix multiplication using the @ operator between QuantumObjects."""
+    """Test matrix multiplication using the @ operator between QTensors."""
     arr = np.array([[1, 2], [3, 4]])
     q1 = QTensor(arr)
     q2 = QTensor(np.eye(2))
@@ -255,7 +255,7 @@ def test_matmul_invalid_type():
 
 
 def test_norm_scalar():
-    """For a scalar QuantumObject, norm should return the single element."""
+    """For a scalar QTensor, norm should return the single element."""
     qobj = QTensor(np.array([[5]]))
     assert qobj.norm() == 5
 
@@ -287,7 +287,7 @@ def test_unit_normalizes():
 
 
 def test_unit_zero_norm():
-    """Normalization of a zero-norm QuantumObject should raise a ValueError."""
+    """Normalization of a zero-norm QTensor should raise a ValueError."""
     zero_vector = np.zeros((2, 1))
     qobj = QTensor(zero_vector)
     with pytest.raises(ValueError):  # noqa: PT011
@@ -323,7 +323,7 @@ def test_is_bra():
 
 
 def test_is_scalar():
-    """Test is_scalar for scalar vs non-scalar QuantumObjects."""
+    """Test is_scalar for scalar vs non-scalar QTensors."""
     qscalar = QTensor(np.array([[42]]))
     assert qscalar.is_scalar()
     qket_obj = ket(0)
@@ -415,7 +415,7 @@ def test_bra_invalid(state):
 
 
 def test_tensor():
-    """Test the tensor product function on a list of QuantumObjects."""
+    """Test the tensor product function on a list of QTensors."""
     q1 = ket(0)
     q2 = ket(1)
     qt = tensor_prod([q1, q2])

@@ -41,7 +41,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             backend (AnalogBackend): The backend to use for simulating the dynamics.
             schedule (Schedule): The evolution schedule defining the time-dependent Hamiltonian.
             observables (list[PauliOperator | Hamiltonian]): A list of observables to measure at the end of the evolution.
-            initial_state (QuantumObject): The initial quantum state from which the simulation starts.
+            initial_state (QTensor): The initial quantum state from which the simulation starts.
             n_shots (int, optional): The number of simulation repetitions (shots). Defaults to 1000.
         """
         super().__init__()

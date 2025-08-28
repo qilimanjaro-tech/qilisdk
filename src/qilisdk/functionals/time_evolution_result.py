@@ -46,9 +46,9 @@ class TimeEvolutionResult(FunctionalResult):
                 values measured at the end of the simulation. Defaults to an empty array if None.
             expected_values (np.ndarray | None, optional): An array containing the evolution of
                 expectation values during the simulation. Defaults to an empty array if None.
-            final_state (QuantumObject | None, optional): The final quantum state as a QuantumObject.
+            final_state (QTensor | None, optional): The final quantum state as a QTensor.
                 Defaults to None.
-            intermediate_states (list[QuantumObject] | None, optional): A list of QuantumObjects representing
+            intermediate_states (list[QTensor] | None, optional): A list of QTensors representing
                 the intermediate states during the simulation. Defaults to None.
         """
         super().__init__()
@@ -83,7 +83,7 @@ class TimeEvolutionResult(FunctionalResult):
         Get the final quantum state produced by the simulation.
 
         Returns:
-            QuantumObject | None: The final quantum state, or None if not available.
+            QTensor | None: The final quantum state, or None if not available.
         """
         return self._final_state
 
@@ -93,7 +93,7 @@ class TimeEvolutionResult(FunctionalResult):
         Get the list of intermediate quantum states recorded during the simulation.
 
         Returns:
-            list[QuantumObject] | None: A list of intermediate quantum states, or None if not stored.
+            list[QTensor] | None: A list of intermediate quantum states, or None if not stored.
         """
         return self._intermediate_states
 

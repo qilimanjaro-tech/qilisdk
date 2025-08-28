@@ -415,9 +415,9 @@ Once in QUBO form, translate directly into an analog Ising Hamiltonian for simul
 Quantum Objects
 ---------------
 
-The :mod:`~qilisdk.common.quantum_objects` module defines the :class:`~qilisdk.common.quantum_objects.QuantumObject` class and related helpers for representing and manipulating quantum states and operators in sparse form.
+The :mod:`~qilisdk.common.quantum_objects` module defines the :class:`~qilisdk.common.quantum_objects.QTensor` class and related helpers for representing and manipulating quantum states and operators in sparse form.
 
-The :class:`~qilisdk.common.quantum_objects.QuantumObject` wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:
+The :class:`~qilisdk.common.quantum_objects.QTensor` wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:
 
 - **Kets** (column vectors of shape ``(2**N, 1)``)  
 - **Bras** (row vectors of shape ``(1, 2**N)`` or ``(2**N,)``)  
@@ -429,25 +429,25 @@ Examples of creating various quantum objects:
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.common.quantum_objects import QuantumObject
+    from qilisdk.common.quantum_objects import QTensor
 
     # 1‑qubit |0> ket
-    psi_ket = QuantumObject(np.array([[1], [0]]))
+    psi_ket = QTensor(np.array([[1], [0]]))
     print("Ket:", psi_ket.dense, "is_ket?", psi_ket.is_ket())
     print("-" * 20)
 
     # 1‑qubit <0| bra
-    psi_bra = QuantumObject(np.array([1, 0]))
+    psi_bra = QTensor(np.array([1, 0]))
     print("Bra:", psi_bra.dense, "is_bra?", psi_bra.is_bra())
     print("-" * 20)
 
     # Density matrix |0><0|
-    rho = QuantumObject(np.array([[1, 0], [0, 0]]))
+    rho = QTensor(np.array([[1, 0], [0, 0]]))
     print("Density matrix:\n", rho.dense, "is_density_matrix?", rho.is_density_matrix())
     print("-" * 20)
 
     # Scalar 0.5
-    scalar = QuantumObject(np.array([[0.5]]))
+    scalar = QTensor(np.array([[0.5]]))
     print("Scalar:", scalar.dense, "is_scalar?", scalar.is_scalar())
 
 **Output**
@@ -513,21 +513,21 @@ Examples:
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.common.quantum_objects import QuantumObject
+    from qilisdk.common.quantum_objects import QTensor
 
     # Adjoint of a non-Hermitian operator
-    A = QuantumObject(np.array([[1+1j, 2], [3, 4]]))
+    A = QTensor(np.array([[1+1j, 2], [3, 4]]))
     A_dag = A.adjoint()
     print("A:\n", A.dense)
     print("A†:\n", A_dag.dense)
 
     # Matrix exponential of Pauli-X
-    X = QuantumObject(np.array([[0, 1], [1, 0]]))
+    X = QTensor(np.array([[0, 1], [1, 0]]))
     expX = X.expm()
     print("exp(X):\n", np.round(expX.dense, 3))
 
     # Norm of a ket and a density matrix
-    ket0 = QuantumObject(np.array([[1], [0]]))
+    ket0 = QTensor(np.array([[1], [0]]))
     dm = ket0.to_density_matrix()
     print("||ket0|| =", ket0.norm())
     print("trace norm(dm) =", dm.norm(order='tr'))
@@ -573,16 +573,16 @@ Extra Utilities
 
 .. code-block:: python
 
-    from qilisdk.common.quantum_objects import tensor_prod, expect_val, ket, QuantumObject
+    from qilisdk.common.quantum_objects import tensor_prod, expect_val, ket, QTensor
     import numpy as np
 
     # Two‑qubit Hadamard tensor
-    H = QuantumObject(np.array([[1, 1], [1, -1]]) / np.sqrt(2))
+    H = QTensor(np.array([[1, 1], [1, -1]]) / np.sqrt(2))
     H2 = tensor_prod([H, H])
     print("H ⊗ H:\n", np.round(H2.dense, 3))
 
     # Expectation of Z⊗Z on |00>
-    Z = QuantumObject(np.array([[1, 0], [0, -1]]))
+    Z = QTensor(np.array([[1, 0], [0, -1]]))
     zz = tensor_prod([Z, Z])
     psi00 = tensor_prod([ket(0), ket(0)])
     rho00 = psi00.to_density_matrix()

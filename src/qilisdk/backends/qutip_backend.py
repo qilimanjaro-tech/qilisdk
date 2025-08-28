@@ -146,7 +146,7 @@ class QutipBackend(Backend):
 
         Args:
             schedule (Schedule): The evolution schedule of the system.
-            initial_state (QuantumObject): the initial state of the evolution.
+            initial_state (QTensor): the initial state of the evolution.
             observables (list[PauliOperator  |  Hamiltonian]): the list of observables to be measured at the end of the evolution.
             store_intermediate_results (bool): A flag to store the intermediate results along the evolution.
 
