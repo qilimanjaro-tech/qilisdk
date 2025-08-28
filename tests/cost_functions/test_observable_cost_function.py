@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import Z
-from qilisdk.common.quantum_objects import ket, tensor_prod
+from qilisdk.common.qtensor import ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
