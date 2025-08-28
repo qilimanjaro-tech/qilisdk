@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from .model_cost_function import ModelCostFunction
+from .observable_cost_function import ObservableCostFunction
 
-__all__ = [
-    "ModelCostFunction",
-]
+__all__ = ["ModelCostFunction", "ObservableCostFunction"]
