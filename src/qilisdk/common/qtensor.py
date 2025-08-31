@@ -535,14 +535,17 @@ def basis_state(n: int, N: int) -> QTensor:
         n (int): The desired number state (from 0 to N-1).
         N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
 
+    Raises:
+        ValueError: If n >= N.
+
     Returns:
         QTensor: A QTensor representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
     """
-    data = np.array([1.0])
-    indptr = np.zeros(N + 1, dtype=int)
-    indptr[n + 1 :] = 1
-    indices = np.array([0], dtype=int)
-    return QTensor(csr_matrix((data, indices, indptr), shape=(N, 1)))
+    if not (0 <= n < N):
+        raise ValueError(f"n must be in [0, {N - 1}]")
+    # one nonzero at (row=n, col=0), value=1.0
+    mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
+    return QTensor(mat)
 
 
 def ket(*state: int) -> QTensor:
@@ -575,7 +578,7 @@ def ket(*state: int) -> QTensor:
     for s in state:
         idx = (idx << 1) | s
 
-    # Reuse your existing basis_state creator (sparse, single 1 at (idx, 0))
+    # Reuse existing basis_state creator (sparse, single 1 at (idx, 0))
     return basis_state(idx, N)
 
 
