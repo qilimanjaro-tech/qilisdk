@@ -96,6 +96,17 @@ def test_ptrace_valid():
     reduced_double_qubit_2 = rho.ptrace(keep=[2, 3], dims=[2, 2, 2, 2])
     reduced_double_qubit_3 = rho.ptrace(keep=[3, 2], dims=[2, 2, 2, 2])
 
+    reduced_ket_qubit_1 = qket.ptrace(keep=[1])
+    reduced_ket_qubit_0 = qket.ptrace(keep=[0])
+
+    qket = ket(0, 1, 0, *[0 for _ in range(20)])
+    reduced_ket_qubit_1_big = qket.ptrace(keep=[1])
+    reduced_ket_qubit_0_big = qket.ptrace(keep=[0])
+
+    qket = bra(0, 1, 0, *[0 for _ in range(20)])
+    reduced_ket_qubit_1_big_bra = qket.ptrace(keep=[1])
+    reduced_ket_qubit_0_big_bra = qket.ptrace(keep=[0])
+
     # Expected reduced density matrices:
     expected_single_qubit_ground = ket(0).to_density_matrix()
     expected_single_qubit_excited = ket(1).to_density_matrix()
@@ -107,6 +118,12 @@ def test_ptrace_valid():
     np.testing.assert_allclose(reduced_double_qubit_1.dense, expected_double_qubit.dense, atol=1e-8)
     np.testing.assert_allclose(reduced_double_qubit_2.dense, expected_double_qubit.dense, atol=1e-8)
     np.testing.assert_allclose(reduced_double_qubit_3.dense, expected_double_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1.dense, expected_single_qubit_excited.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0.dense, expected_single_qubit_ground.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1_big.dense, expected_single_qubit_excited.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0_big.dense, expected_single_qubit_ground.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1_big_bra.dense, expected_single_qubit_excited.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0_big_bra.dense, expected_single_qubit_ground.dense, atol=1e-8)
 
 
 def test_ptrace_valid_keep_with_automatic_dims_and_density_matrix():
@@ -270,6 +287,11 @@ def test_norm_density_matrix():
     # Also test norm with an integer order via scipy_norm.
     expected_norm = scipy_norm(qdm.data, ord=1)
     assert np.isclose(qdm.norm(order=1), expected_norm)
+
+    s = ket(0) + ket(1)
+    qdm = s @ s.adjoint()
+
+    assert qdm.norm("tr") == 2
 
 
 def test_norm_ket():
@@ -438,3 +460,20 @@ def test_expect_ket():
     exp_val = expect_val(identity, qket_obj)
     # For a normalized ket, ⟨ψ|I|ψ⟩ should equal 1.
     assert np.isclose(exp_val, 1)
+
+
+def test_to_density_matrix():
+
+    s = ket(0) + ket(1)
+    qdm = s @ s.adjoint()
+
+    with pytest.raises(ValueError, match=r"Operator is not a density matrix \(trace\≠1 or not Hermitian\)."):
+        qdm.to_density_matrix()
+
+    s = ket(0)
+    qdm = s.to_density_matrix()
+    np.testing.assert_allclose(qdm.dense, np.array([[1, 0], [0, 0]]), atol=1e-8)
+
+    s = bra(0)
+    qdm = s.to_density_matrix()
+    np.testing.assert_allclose(qdm.dense, np.array([[1, 0], [0, 0]]), atol=1e-8)
