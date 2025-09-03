@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.common.quantum_objects import QuantumObject, expect_val, ket, tensor_prod
+from qilisdk.common.qtensor import QTensor, expect_val, ket, tensor_prod
 from qilisdk.cost_functions.cost_function import CostFunction
 
 if TYPE_CHECKING:
@@ -28,21 +28,21 @@ if TYPE_CHECKING:
 
 
 class ObservableCostFunction(CostFunction):
-    def __init__(self, observable: QuantumObject | Hamiltonian | PauliOperator) -> None:
+    def __init__(self, observable: QTensor | Hamiltonian | PauliOperator) -> None:
         super().__init__()
-        if isinstance(observable, QuantumObject):
+        if isinstance(observable, QTensor):
             self._observable = observable
         elif isinstance(observable, Hamiltonian):
-            self._observable = QuantumObject(observable.to_matrix())
+            self._observable = QTensor(observable.to_matrix())
         elif isinstance(observable, PauliOperator):
-            self._observable = QuantumObject(observable.matrix)
+            self._observable = QTensor(observable.matrix)
         else:
             raise ValueError(
-                f"Observable needs to be of type QuantumObject, Hamiltonian, or PauliOperator but {type(observable)} was provided"
+                f"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but {type(observable)} was provided"
             )
 
     @property
-    def observable(self) -> QuantumObject:
+    def observable(self) -> QTensor:
         return self._observable
 
     def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:

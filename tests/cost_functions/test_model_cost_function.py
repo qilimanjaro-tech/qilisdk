@@ -16,7 +16,7 @@ import pytest
 
 from qilisdk.common import Model
 from qilisdk.common.model import ObjectiveSense
-from qilisdk.common.quantum_objects import QuantumObject, bra, ket, tensor_prod
+from qilisdk.common.qtensor import QTensor, bra, ket, tensor_prod
 from qilisdk.common.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -75,7 +75,7 @@ def test_compute_cost_time_evolution():
     te_results = TimeEvolutionResult(
         final_expected_values=np.array([[-0.9, 0]]),
         expected_values=None,
-        final_state=QuantumObject(np.array([[1, 1], [0, 0]])),
+        final_state=QTensor(np.array([[1, 1], [0, 0]])),
         intermediate_states=None,
     )
     with pytest.raises(ValueError, match=r"The final state is invalid."):

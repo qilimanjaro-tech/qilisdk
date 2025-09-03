@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from qilisdk.common.model import QUBO, Model
-from qilisdk.common.quantum_objects import QuantumObject, expect_val, ket
+from qilisdk.common.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ class ModelCostFunction(CostFunction):
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
-            total_cost = complex(np.real_if_close(expect_val(QuantumObject(ham.to_matrix()), results.final_state)))
+            total_cost = complex(np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state)))
             if total_cost.imag == 0:
                 return total_cost.real
             return total_cost

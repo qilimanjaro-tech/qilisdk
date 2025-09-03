@@ -52,7 +52,7 @@ The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simula
 **Parameters**
 
 - **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.
-- **initial_state** (:class:`~qilisdk.common.quantum_objects.QuantumObject`): Initial state of the system.
+- **initial_state** (:class:`~qilisdk.common.quantum_objects.QTensor`): Initial state of the system.
 - **observables** (List[:class:`~qilisdk.analog.hamiltonian.Hamiltonian` or :class:`~qilisdk.analog.hamiltonian.PauliOperator`]): Operators to measure after evolution.
 - **nshots** (int, optional): Number of repetitions for each observable measurement. Default is 1.
 - **store_intermediate_results** (bool, optional): If True, records the state at each time step. Default is False.

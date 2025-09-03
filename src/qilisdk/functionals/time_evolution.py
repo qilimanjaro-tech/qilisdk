@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.quantum_objects import QuantumObject
+from qilisdk.common.qtensor import QTensor
 from qilisdk.common.variables import RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
@@ -30,7 +30,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self,
         schedule: Schedule,
         observables: list[PauliOperator | Hamiltonian],
-        initial_state: QuantumObject,
+        initial_state: QTensor,
         nshots: int = 1000,
         store_intermediate_results: bool = False,
     ) -> None:
@@ -41,7 +41,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             backend (AnalogBackend): The backend to use for simulating the dynamics.
             schedule (Schedule): The evolution schedule defining the time-dependent Hamiltonian.
             observables (list[PauliOperator | Hamiltonian]): A list of observables to measure at the end of the evolution.
-            initial_state (QuantumObject): The initial quantum state from which the simulation starts.
+            initial_state (QTensor): The initial quantum state from which the simulation starts.
             n_shots (int, optional): The number of simulation repetitions (shots). Defaults to 1000.
         """
         super().__init__()
