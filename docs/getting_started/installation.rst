@@ -43,7 +43,7 @@ Below are minimal examples to get you running digital circuits and analog evolut
 Digital Circuit Example
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Build a 2‑qubit circuit, sample it, and inspect measurement counts:
+Build a 2-qubit circuit, sample it, and inspect measurement counts:
 
 .. code-block:: python
 
@@ -120,11 +120,11 @@ Define two Hamiltonians, build a linear interpolation schedule, and run on Qutip
 Next Steps
 ----------
 
-Once you’ve confirmed everything works, explore:
+Once you've confirmed everything works, explore:
 
-- **Digital module** (:doc:`/digital`) for advanced gate sets, parameter sweeps, and QASM 2.0 serialization.
-- **Analog module** (:doc:`/analog`) for custom Hamiltonians, functional schedules, and intermediate-state storage.  
-- **Backends** (:doc:`/backends`) to compare CPU (Qutip), GPU (CUDA), or cloud (QaaS) performance.  
+- **Digital module** (:doc:`/fundamentals/digital`) for advanced gate sets, parameter sweeps, and QASM 2.0 serialization.
+- **Analog module** (:doc:`/fundamentals/analog`) for custom Hamiltonians, functional schedules, and intermediate-state storage.  
+- **Backends** (:doc:`/fundamentals/backends`) to compare CPU (Qutip), GPU (CUDA), or cloud (SpeQtrum) performance.  
 - **Extras & utilities**: VQE workflows, result handling, optimizer gallery, and serialization tools.
 
-For in‑depth reference, see the module pages in this documentation. Happy quantum coding!
+For in-depth reference, see the module pages in this documentation. Happy quantum coding!

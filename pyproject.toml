@@ -67,6 +67,7 @@ docs = [
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.6.1",
     "sphinx-mdinclude>=0.6.2",
+    "sphinx-multiversion",
     "sphinxawesome-theme>=5.3.2",
 ]
 
@@ -76,6 +77,7 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
+sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
 
 [tool.ruff]
 line-length = 120

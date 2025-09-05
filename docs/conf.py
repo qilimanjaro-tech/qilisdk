@@ -32,6 +32,7 @@ extensions = [
     "nbsphinx",
     "sphinx_design",
     "sphinx_mdinclude",
+    "sphinx_multiversion"
 ]
 
 templates_path = ["_templates"]
@@ -65,6 +66,25 @@ autoapi_python_use_implicit_namespaces = False
 add_module_names = False
 autoapi_keep_files = False
 
+# Multiversion settings
+# Whitelist pattern for tags (set to None to ignore all tags)
+smv_tag_whitelist = r'^.*$'
+
+# Whitelist pattern for branches (set to None to ignore all branches)
+smv_branch_whitelist = r'main'
+
+# Whitelist pattern for remotes (set to None to use local branches only)
+smv_remote_whitelist = None
+
+# Pattern for released versions
+smv_released_pattern = r'^tags/.*$'
+
+# Format for versioned output directories inside the build directory
+smv_outputdir_format = '{ref.name}'
+
+# Determines whether remote or local git branches/tags are preferred if their output dirs conflict
+smv_prefer_remote_refs = False
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -78,6 +98,9 @@ html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_copy_source = False
 html_show_sourcelink = False
+html_sidebars = {
+    "**": ["sidebar_main_nav_links.html", "sidebar_toc.html", "versioning.html"],
+}
 
 theme_options = ThemeOptions(
     logo_light="_static/q_trans.png", logo_dark="_static/q_trans.png", awesome_external_links=True
