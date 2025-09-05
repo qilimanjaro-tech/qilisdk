@@ -25,20 +25,17 @@ from qilisdk.yaml import yaml
 @yaml.register_class
 class StateTomographyResult(FunctionalResult):
     """
-    Class representing the result of a quantum circuit measurement.
+    Class representing the result of the state after a  quantum circuit execution.
 
-    DigitalResult encapsulates the outcome of a digital measurement performed on a quantum circuit.
-    It includes the total number of measurement shots, the measurement samples and measurement probabilities.
+    StateTomographyResult encapsulates the outcome of a quantum circuit.
+    This includes the final state and the probabilities of the various states.
     """
 
     def __init__(self, state: QTensor) -> None:
         """
-        Initializes a DigitalResult instance.
-
         Args:
-            nshots (int): The total number of measurement shots performed.
-            samples (dict[str, int]): A dictionary mapping bitstring outcomes to their occurrence counts.
-                All keys (bitstrings) must have the same length, which determines the number of qubits.
+            state (QTensor): the state at the end of the execution.
+
         Raises:
             ValueError: if the final state is not a ket of a density matrix
         """

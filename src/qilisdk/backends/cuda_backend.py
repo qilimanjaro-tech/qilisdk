@@ -210,6 +210,18 @@ class CudaBackend(Backend):
     def _execute_state_tomography(
         self, functional: StateTomography, initial_state: QTensor | None = None, tol: float = -1e12
     ) -> StateTomographyResult:
+        """execute a state tomography protocol.
+
+        Args:
+            functional (StateTomography): the state tomography functional.
+            initial_state (QTensor | None, optional): the initial state of the circuit. Defaults to None.
+                NOTE: this is only used for the quantum reservoir and is not a public attribute.
+            tol (float, optional): the tolerance when computing if the state is positive semi-definite. Defaults to -1e12.
+                TODO (ameer): Move this somewhere else -> will do that in the reservoir pr.
+
+        Returns:
+            StateTomographyResult: the final results of the state tomography
+        """
         logger.info("Executing state tomography")
         self._apply_digital_simulation_method()
         kernel = self._get_cuda_kernel(functional.circuit, initial_state, ignore_measurement=True)

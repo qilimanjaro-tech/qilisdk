@@ -22,9 +22,15 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class StateTomography(PrimitiveFunctional[SamplingResult]):
+    """State Tomography functional reconstructs the state at the end of the circuit execution."""
+
     result_type: ClassVar[type[SamplingResult]] = SamplingResult
 
     def __init__(self, circuit: Circuit) -> None:
+        """
+        Args:
+            circuit (Circuit): The circuit to be executed.
+        """
         self.circuit = circuit
 
     @property

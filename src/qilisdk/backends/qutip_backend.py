@@ -264,6 +264,19 @@ class QutipBackend(Backend):
     def _execute_state_tomography(
         self, functional: StateTomography, initial_state: QTensor | None = None
     ) -> StateTomographyResult:
+        """execute a state tomography protocol.
+
+        Args:
+            functional (StateTomography): the state tomography functional.
+            initial_state (QTensor | None, optional): the initial state of the circuit. Defaults to None.
+                NOTE: this is only used for the quantum reservoir and is not a public attribute.
+
+        Raises:
+            ValueError: if the final initial state is invalid.
+
+        Returns:
+            StateTomographyResult: the final results of the state tomography
+        """
         qutip_circuit = self._get_qutip_circuit(functional.circuit)
         U = gate_sequence_product(qutip_circuit.propagators(ignore_measurement=True))
 
