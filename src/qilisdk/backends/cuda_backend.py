@@ -29,13 +29,13 @@ from qilisdk.common.qtensor import QTensor, ket, tensor_prod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.state_tomography import StateTomography
 from qilisdk.functionals.state_tomography_result import StateTomographyResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.state_tomography import StateTomography
     from qilisdk.functionals.time_evolution import TimeEvolution
 
 
