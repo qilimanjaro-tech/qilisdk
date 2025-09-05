@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.state_tomography import StateTomography
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
@@ -25,6 +26,7 @@ from qilisdk.functionals.variational_program_result import VariationalProgramRes
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
+    from qilisdk.functionals.state_tomography_result import StateTomographyResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
@@ -36,6 +38,7 @@ class Backend(ABC):
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
             VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
+            StateTomography: lambda f: self._execute_state_tomography(cast("StateTomography", f)),
         }
 
     @overload
@@ -43,6 +46,9 @@ class Backend(ABC):
 
     @overload
     def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
+
+    @overload
+    def execute(self, functional: StateTomography) -> StateTomographyResult: ...
 
     @overload
     def execute(self, functional: VariationalProgram[Sampling]) -> VariationalProgramResult[SamplingResult]: ...
@@ -69,6 +75,9 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
+
+    def _execute_state_tomography(self, functional: StateTomography) -> StateTomographyResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_variational_program(

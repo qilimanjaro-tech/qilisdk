@@ -29,20 +29,22 @@ from qutip_qip.operations import T as q_T
 from qutip_qip.operations import X as q_X
 from qutip_qip.operations import Y as q_Y
 from qutip_qip.operations import Z as q_Z
-from qutip_qip.operations import controlled_gate
+from qutip_qip.operations import controlled_gate, gate_sequence_product
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.common.qtensor import QTensor, tensor_prod
+from qilisdk.common.qtensor import QTensor, ket, tensor_prod
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.state_tomography_result import StateTomographyResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
     from qilisdk.common.variables import Number
     from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.state_tomography import StateTomography
     from qilisdk.functionals.time_evolution import TimeEvolution
 
 
@@ -258,6 +260,29 @@ class QutipBackend(Backend):
                 else None
             ),
         )
+
+    def _execute_state_tomography(
+        self, functional: StateTomography, initial_state: QTensor | None = None
+    ) -> StateTomographyResult:
+        qutip_circuit = self._get_qutip_circuit(functional.circuit)
+        U = gate_sequence_product(qutip_circuit.propagators(ignore_measurement=True))
+
+        if initial_state is None:
+            initial_state = tensor_prod([ket(0)] * functional.circuit.nqubits)
+
+        state_dim = []
+        if initial_state.is_density_matrix():
+            state_dim = [[2 for _ in range(initial_state.nqubits)] for _ in range(2)]
+        elif initial_state.is_ket():
+            state_dim = [[2 for _ in range(initial_state.nqubits)], [1]]
+        else:
+            logger.error("Invalid initial state provided")
+            raise ValueError("invalid initial state provided.")
+
+        psi0 = Qobj(initial_state.dense, dims=state_dim)
+
+        res = U * psi0 * U.dag() if initial_state.is_density_matrix() else U * psi0
+        return StateTomographyResult(state=QTensor(res.full()))
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
         """_summary_

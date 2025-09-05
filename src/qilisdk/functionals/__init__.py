@@ -14,6 +14,8 @@
 
 from .sampling import Sampling
 from .sampling_result import SamplingResult
+from .state_tomography import StateTomography
+from .state_tomography_result import StateTomographyResult
 from .time_evolution import TimeEvolution
 from .time_evolution_result import TimeEvolutionResult
 from .variational_program import VariationalProgram
@@ -22,6 +24,8 @@ from .variational_program_result import VariationalProgramResult
 __all__ = [
     "Sampling",
     "SamplingResult",
+    "StateTomography",
+    "StateTomographyResult",
     "TimeEvolution",
     "TimeEvolutionResult",
     "VariationalProgram",
