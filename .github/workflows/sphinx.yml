@@ -3,8 +3,6 @@ name: Publish Documentation
 on:
   release:
     types: [released]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs: 
@@ -17,31 +15,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
           python-version: "3.10"
 
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
-      - name: Install the requierements
-        run: uv sync --all-groups --all-extras  
+      - name: Install the requirements
+        run: uv sync --group docs 
 
       - name: Install ghp-import
         run: uv pip install ghp-import
       
-      - name: activate venv
-        run: source .venv/bin/activate
-      
-      - name: Build HTML
-        run: | 
-          cd docs/
-          sphinx-multiversion . build/html
+      - name: Build multiversion HTML
+        working-directory: docs
+        run: make multiversion
+
+      - name: Redirect root to main
+        run: |
+          echo '<!doctype html><meta http-equiv="refresh" content="0; url=main/">' > docs/build/_html/index.html
 
       - name: Deploy to GitHub Pages
         env:
@@ -49,5 +50,4 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          ghp-import -n -f docs/build/html
-          git push -f https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} gh-pages
+          uv run ghp-import -n -f -p docs/_build/html
