@@ -70,7 +70,7 @@ class QutipBackend(Backend):
             U1: QutipBackend._handle_U1,
             U2: QutipBackend._handle_U2,
             U3: QutipBackend._handle_U3,
-            SWAP: QutipBackend._handle_SWAP,
+            SWAP: QutipBackend._handle_SWAP,  # type: ignore[dict-item]
         }
         logger.success("QutipBackend initialised")
 

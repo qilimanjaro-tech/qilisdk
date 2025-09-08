@@ -86,7 +86,7 @@ class CudaBackend(Backend):
             U1: CudaBackend._handle_U1,
             U2: CudaBackend._handle_U2,
             U3: CudaBackend._handle_U3,
-            SWAP: CudaBackend._handle_SWAP,
+            SWAP: CudaBackend._handle_SWAP,  # type: ignore[dict-item]
         }
         self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
             PauliX: CudaBackend._handle_PauliX,
