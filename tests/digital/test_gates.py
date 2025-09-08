@@ -378,7 +378,7 @@ def test_swap_gate(qubit_a, qubit_b):
     assert gate.qubits == (qubit_a, qubit_b)
 
     # Check matrix
-    expected_matrix = np.array([[1, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
