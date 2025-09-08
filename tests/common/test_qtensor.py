@@ -463,7 +463,6 @@ def test_expect_ket():
 
 
 def test_to_density_matrix():
-
     s = ket(0) + ket(1)
     qdm = s @ s.adjoint()
 
