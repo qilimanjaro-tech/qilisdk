@@ -11,7 +11,7 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -61,6 +61,9 @@ class DummyKernel:
 
     def u3(self, theta, phi, delta, target):
         self.calls.append(("u3", theta, phi, delta, target))
+
+    def swap(self, qubit_0, qubit_1):
+        self.calls.append(("swap", qubit_0, qubit_1))
 
     def control(self, target_kernel, control_qubit, target_qubit):
         self.calls.append(("control", control_qubit, target_qubit))
@@ -112,6 +115,7 @@ basic_gate_test_cases = [
     (U2(0, phi=0.9, gamma=1.0), ("u3", np.pi / 2, 0.9, 1.0, "q0")),
     (U3(0, theta=1.1, phi=1.2, gamma=1.3), ("u3", 1.1, 1.2, 1.3, "q0")),
 ]
+swap_test_case = [(SWAP(0, 1), ("swap", "q0", "q1"))]
 
 
 # --- Simulation method tests ---
@@ -174,7 +178,7 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
 # --- Parameterized tests for basic gate execution ---
 
 
-@pytest.mark.parametrize(("gate_instance", "expected_call"), basic_gate_test_cases)
+@pytest.mark.parametrize(("gate_instance", "expected_call"), basic_gate_test_cases + swap_test_case)
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
@@ -182,7 +186,7 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
     # Reset the main dummy kernel for a clean slate.
     dummy_make_kernel.main_kernel = DummyKernel()
     backend = CudaBackend()
-    circuit = Circuit(nqubits=1)
+    circuit = Circuit(nqubits=2)
     circuit._gates.append(gate_instance)
     backend.execute(Sampling(circuit, nshots=10))
     calls = dummy_make_kernel.main_kernel.calls

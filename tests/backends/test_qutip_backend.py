@@ -12,7 +12,7 @@ from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.qtensor import ket, tensor_prod
 from qilisdk.common.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
@@ -100,12 +100,15 @@ basic_gate_test_cases = [
     (U2(0, phi=0.9, gamma=1.0), ("u3", np.pi / 2, 0.9, 1.0, "q0")),
     (U3(0, theta=1.1, phi=1.2, gamma=1.3), ("u3", 1.1, 1.2, 1.3, "q0")),
 ]
+swap_test_case = [
+    (SWAP(0, 1), ("swap", "q0", "q1")),
+]
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
 def test_adjoint_handler(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=1)
+    circuit = Circuit(nqubits=10)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
@@ -113,21 +116,21 @@ def test_adjoint_handler(gate_instance):
     assert any(g.name == "Adjoint_" + adjoint_gate.name for g in qutip_circuit.gates)
 
 
-@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_controlled_handler(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=1)
-    controlled_gate = Controlled(1, basic_gate=gate_instance)
-    circuit._gates.append(controlled_gate)
+    circuit = Circuit(nqubits=10)
+    controlled_gate = Controlled(9, basic_gate=gate_instance)
+    circuit.add(controlled_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
     assert any(g.name == "Controlled_" + controlled_gate.name for g in qutip_circuit.gates)
 
 
-@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_handlers(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=1)
+    circuit = Circuit(nqubits=10)
     circuit.add(gate_instance)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
