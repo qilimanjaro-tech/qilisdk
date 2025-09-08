@@ -29,7 +29,7 @@ class DummyKernel:
         self.qubits = []
 
     def qalloc(self, n):
-        self.qubits = [f"q{i}" for i in range(n)]
+        self.qubits = [f"q{i}" for i in range(len(n))]
         return self.qubits
 
     def x(self, qubit):

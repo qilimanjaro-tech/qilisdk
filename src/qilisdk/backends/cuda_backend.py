@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from itertools import product
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
@@ -24,15 +25,17 @@ from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
-from qilisdk.common.qtensor import QTensor
+from qilisdk.common.qtensor import QTensor, ket, tensor_prod
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.state_tomography_result import StateTomographyResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.state_tomography import StateTomography
     from qilisdk.functionals.time_evolution import TimeEvolution
 
 
@@ -132,21 +135,7 @@ class CudaBackend(Backend):
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
-        kernel = cudaq.make_kernel()
-        qubits = kernel.qalloc(functional.circuit.nqubits)
-
-        for gate in functional.circuit.gates:
-            if isinstance(gate, Controlled):
-                self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
-            elif isinstance(gate, Adjoint):
-                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
-            elif isinstance(gate, M):
-                self._handle_M(kernel, gate, functional.circuit, qubits)
-            else:
-                handler = self._basic_gate_handlers.get(type(gate), None)
-                if handler is None:
-                    raise UnsupportedGateError
-                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
+        kernel = self._get_cuda_kernel(functional.circuit)
 
         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
@@ -164,8 +153,11 @@ class CudaBackend(Backend):
             return lambda t: (functional.schedule.get_coefficient(t.real, key))
 
         cuda_hamiltonian = sum(
-            ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
-            for key, ham in functional.schedule.hamiltonians.items()
+            (
+                ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
+                for key, ham in functional.schedule.hamiltonians.items()
+            ),
+            cudaq.SpinOperator.empty(),
         )
 
         logger.trace("Hamiltonian compiled for evolution")
@@ -182,7 +174,6 @@ class CudaBackend(Backend):
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
         logger.trace("Observables compiled for evolution")
-
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
@@ -216,6 +207,102 @@ class CudaBackend(Backend):
                 else None
             ),
         )
+
+    def _execute_state_tomography(
+        self, functional: StateTomography, initial_state: QTensor | None = None, tol: float = -1e12
+    ) -> StateTomographyResult:
+        """execute a state tomography protocol.
+
+        Args:
+            functional (StateTomography): the state tomography functional.
+            initial_state (QTensor | None, optional): the initial state of the circuit. Defaults to None.
+                NOTE: this is only used for the quantum reservoir and is not a public attribute.
+            tol (float, optional): the tolerance when computing if the state is positive semi-definite. Defaults to -1e12.
+                TODO (ameer): Move this somewhere else -> will do that in the reservoir pr.
+
+        Returns:
+            StateTomographyResult: the final results of the state tomography
+        """
+        logger.info("Executing state tomography")
+        self._apply_digital_simulation_method()
+        kernel = self._get_cuda_kernel(functional.circuit, initial_state, ignore_measurement=True)
+
+        operators: list[tuple[type[PauliOperator], ...]] = list(
+            product([PauliI, PauliZ, PauliX, PauliY], repeat=functional.circuit.nqubits)
+        )
+        _identity_tuple: tuple[type[PauliOperator], ...] = tuple(PauliI for _ in range(functional.circuit.nqubits))
+        operators.remove(_identity_tuple)
+
+        def pauli_spin_operator(label: tuple[type[PauliOperator], ...]) -> cudaq.SpinOperatorTerm:
+            # Build a cudaq spin operator like X(0)*Y(1)*Z(2)...
+            ops = {PauliI: spin.i, PauliX: spin.x, PauliY: spin.y, PauliZ: spin.z}
+
+            term = ops[label[0]](0)
+            for idx, ch in enumerate(label[1:], start=1):
+                term *= ops[ch](idx)
+            return term
+
+        # Build list of spin operators once
+        spin_ops = [pauli_spin_operator(op) for op in operators]
+        # 2) Get expectations in one call (broadcasting list of SpinOperators)
+        res_list = cudaq.observe(kernel, spin_ops)
+        # res_list is a list of ObserveResult; pull expectations
+        exps = np.array([r.expectation() for r in res_list], dtype=float)
+
+        # 3) Assemble rho = (1/2^n) sum_P <P> P
+        def pauli_string_matrix(label: tuple[type[PauliOperator], ...]) -> np.ndarray:
+            mats = [ch._MATRIX for ch in label]  # noqa: SLF001
+            out = mats[0]
+            for m in mats[1:]:
+                out = np.kron(out, m)
+            return out
+
+        dim = 2**functional.circuit.nqubits
+        rho = np.identity(dim, dtype=complex)
+        for op, val in zip(operators, exps):
+            aux = val * pauli_string_matrix(op)
+            rho += aux
+        rho /= dim
+
+        # Hermitize & renormalize
+        rho = 0.5 * (rho + rho.conj().T)
+        rho /= np.trace(rho)
+        rho = 0.5 * (rho + rho.conj().T)
+        rho /= np.trace(rho)
+
+        eigvals, eigvecs = np.linalg.eigh(rho)
+        if any(e < tol for e in eigvals):
+            eigvals_clipped = np.clip(eigvals, 0, None)
+            rho = eigvecs @ np.diag(eigvals_clipped) @ eigvecs.conj().T
+            rho /= np.trace(rho)
+
+        logger.success("Sampling finished; ")
+        return StateTomographyResult(state=QTensor(rho))
+
+    def _get_cuda_kernel(
+        self, circuit: Circuit, initial_state: QTensor | None = None, ignore_measurement: bool = False
+    ) -> cudaq.Kernel:
+        kernel = cudaq.make_kernel()
+
+        if initial_state is None:
+            initial_state = tensor_prod([ket(0)] * circuit.nqubits)
+        state = State.from_data(np.array(initial_state.dense, dtype=cudaq.complex()))
+        qubits = kernel.qalloc(state)
+
+        for gate in circuit.gates:
+            if isinstance(gate, Controlled):
+                self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
+            elif isinstance(gate, Adjoint):
+                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+            elif isinstance(gate, M):
+                if not ignore_measurement:
+                    self._handle_M(kernel, gate, circuit, qubits)
+            else:
+                handler = self._basic_gate_handlers.get(type(gate), None)
+                if handler is None:
+                    raise UnsupportedGateError
+                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
+        return kernel
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
