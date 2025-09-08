@@ -1080,7 +1080,7 @@ class SWAP(BasicGate):
 
     .. code-block:: text
 
-       [[1, 0, 0, 1],
+       [[1, 0, 0, 0],
         [0, 0, 1, 0],
         [0, 1, 0, 0],
         [0, 0, 0, 1]]
@@ -1100,4 +1100,4 @@ class SWAP(BasicGate):
         return "SWAP"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
+        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
