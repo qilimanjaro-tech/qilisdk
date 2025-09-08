@@ -26,7 +26,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, Pauli
 from qilisdk.backends.backend import Backend
 from qilisdk.common.qtensor import QTensor
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -86,6 +86,7 @@ class CudaBackend(Backend):
             U1: CudaBackend._handle_U1,
             U2: CudaBackend._handle_U2,
             U3: CudaBackend._handle_U3,
+            SWAP: CudaBackend._handle_SWAP,
         }
         self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
             PauliX: CudaBackend._handle_PauliX,
@@ -145,7 +146,7 @@ class CudaBackend(Backend):
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
                     raise UnsupportedGateError
-                handler(kernel, gate, qubits[gate.target_qubits[0]])
+                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
@@ -347,7 +348,10 @@ class CudaBackend(Backend):
     def _handle_U3(kernel: cudaq.Kernel, gate: U3, qubit: cudaq.QuakeValue) -> None:
         """Handle an U3 gate operation."""
         kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
-        kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
+
+    @staticmethod
+    def _handle_SWAP(kernel: cudaq.Kernel, gate: SWAP, qubit_0: cudaq.QuakeValue, qubit_1: cudaq.QuakeValue) -> None:
+        kernel.swap(qubit_0, qubit_1)
 
     def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian, padding: int = 0) -> OperatorSum:  # type: ignore
         out = None

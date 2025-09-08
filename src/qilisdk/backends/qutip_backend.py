@@ -17,24 +17,15 @@ from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
+import qutip_qip.operations as QutipGates
 from loguru import logger
 from qutip import Qobj, basis, mesolve, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
-from qutip_qip.operations import RX as q_RX
-from qutip_qip.operations import RY as q_RY
-from qutip_qip.operations import RZ as q_RZ
-from qutip_qip.operations import H as q_H
-from qutip_qip.operations import S as q_S
-from qutip_qip.operations import T as q_T
-from qutip_qip.operations import X as q_X
-from qutip_qip.operations import Y as q_Y
-from qutip_qip.operations import Z as q_Z
-from qutip_qip.operations import controlled_gate
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.common.qtensor import QTensor, tensor_prod
-from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -79,6 +70,7 @@ class QutipBackend(Backend):
             U1: QutipBackend._handle_U1,
             U2: QutipBackend._handle_U2,
             U3: QutipBackend._handle_U3,
+            SWAP: QutipBackend._handle_SWAP,
         }
         logger.success("QutipBackend initialised")
 
@@ -287,7 +279,7 @@ class QutipBackend(Backend):
                 if handler is None:
                     logger.error("Unsupported gate {}", type(gate).__name__)
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
-                handler(qutip_circuit, gate, gate.target_qubits[0])
+                handler(qutip_circuit, gate, *(qubit for qubit in gate.target_qubits))
 
         no_measurement = True
 
@@ -321,7 +313,7 @@ class QutipBackend(Backend):
             raise UnsupportedGateError
 
         def qutip_controlled_gate() -> Qobj:
-            return controlled_gate(Qobj(gate.basic_gate.matrix), controls=0, targets=1)
+            return QutipGates.controlled_gate(Qobj(gate.basic_gate.matrix), controls=0, targets=1)
 
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
@@ -372,47 +364,47 @@ class QutipBackend(Backend):
     @staticmethod
     def _handle_X(circuit: QubitCircuit, gate: X, qubit: int) -> None:
         """Handle an X gate operation."""
-        circuit.add_gate(q_X(targets=qubit))
+        circuit.add_gate(QutipGates.X(targets=qubit))
 
     @staticmethod
     def _handle_Y(circuit: QubitCircuit, gate: Y, qubit: int) -> None:
         """Handle an Y gate operation."""
-        circuit.add_gate(q_Y(targets=qubit))
+        circuit.add_gate(QutipGates.Y(targets=qubit))
 
     @staticmethod
     def _handle_Z(circuit: QubitCircuit, gate: Z, qubit: int) -> None:
         """Handle an Z gate operation."""
-        circuit.add_gate(q_Z(targets=qubit))
+        circuit.add_gate(QutipGates.Z(targets=qubit))
 
     @staticmethod
     def _handle_H(circuit: QubitCircuit, gate: H, qubit: int) -> None:
         """Handle an H gate operation."""
-        circuit.add_gate(q_H(targets=qubit))
+        circuit.add_gate(QutipGates.H(targets=qubit))
 
     @staticmethod
     def _handle_S(circuit: QubitCircuit, gate: S, qubit: int) -> None:
         """Handle an S gate operation."""
-        circuit.add_gate(q_S(targets=qubit))
+        circuit.add_gate(QutipGates.S(targets=qubit))
 
     @staticmethod
     def _handle_T(circuit: QubitCircuit, gate: T, qubit: int) -> None:
         """Handle an T gate operation."""
-        circuit.add_gate(q_T(targets=qubit))
+        circuit.add_gate(QutipGates.T(targets=qubit))
 
     @staticmethod
     def _handle_RX(circuit: QubitCircuit, gate: RX, qubit: int) -> None:
         """Handle an RX gate operation."""
-        circuit.add_gate(q_RX(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
+        circuit.add_gate(QutipGates.RX(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _handle_RY(circuit: QubitCircuit, gate: RY, qubit: int) -> None:
         """Handle an RY gate operation."""
-        circuit.add_gate(q_RY(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
+        circuit.add_gate(QutipGates.RY(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _handle_RZ(circuit: QubitCircuit, gate: RZ, qubit: int) -> None:
         """Handle an RZ gate operation."""
-        circuit.add_gate(q_RZ(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
+        circuit.add_gate(QutipGates.RZ(targets=[qubit], arg_value=gate.get_parameter_values()[0]))
 
     @staticmethod
     def _qutip_U1(phi: float) -> Qobj:
@@ -472,3 +464,8 @@ class QutipBackend(Backend):
         if U3_label not in circuit.user_gates:
             circuit.user_gates[U3_label] = QutipBackend._qutip_U3
         circuit.add_gate(U3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])
+
+    @staticmethod
+    def _handle_SWAP(circuit: QubitCircuit, gate: SWAP, qubit_0: int, qubit_1: int) -> None:
+        """Handle a SWAP gate operation."""
+        circuit.add_gate(QutipGates.SWAP(targets=[qubit_0, qubit_1]))
