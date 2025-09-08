@@ -41,7 +41,7 @@ jobs:
       - name: Build HTML
         run: | 
           cd docs/
-          make html
+          sphinx-multiversion . build/html
 
       - name: Deploy to GitHub Pages
         env:
@@ -49,5 +49,5 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          ghp-import -n -f docs/_build/html
+          ghp-import -n -f docs/build/html
           git push -f https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} gh-pages
