@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+
+<html :class="{'dark': darkMode === 'dark' || (darkMode === 'system' &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches)}" class="scroll-smooth" data-content_root="../../../../../" lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }" x-init="$watch('darkMode', val =&gt; localStorage.setItem('darkMode', val))">
+<head>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>qilisdk.common.qtensor | QiliSDK</title>
+<meta content="qilisdk.common.qtensor | QiliSDK" property="og:title"/>
+<meta content="qilisdk.common.qtensor | QiliSDK" name="twitter:title"/>
+<link href="../../../../../_static/pygments.css?v=6aa05603" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/custom.css?v=a05de1eb" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/q_trans.png" rel="icon"/>
+<link href="../../../../../search.html" rel="search" title="Search"/>
+<link href="../../../../../genindex.html" rel="index" title="Index"/>
+<link href="../result/index.html" rel="next" title="qilisdk.common.result"/>
+<link href="../parameterizable/index.html" rel="prev" title="qilisdk.common.parameterizable"/>
+<script>
+    <!-- Prevent Flash of wrong theme -->
+      const userPreference = localStorage.getItem('darkMode');
+      let mode;
+      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        mode = 'dark';
+        document.documentElement.classList.add('dark');
+      } else {
+        mode = 'light';
+      }
+      if (!userPreference) {localStorage.setItem('darkMode', mode)}
+    </script>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../../../../../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../../../../_static/q_trans.png" width="24"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../../../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../../../../../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center space-x-1">
+<button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'" aria-label="Color theme switcher" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="!justify-start text-sm md:!hidden bg-background" href="../../../../../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../../../../_static/q_trans.png" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../../../../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started/installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/analog.html">Analog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../index.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.common<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../algorithm/index.html">qilisdk.common.algorithm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.common.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../model/index.html">qilisdk.common.model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parameterizable/index.html">qilisdk.common.parameterizable</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.common.qtensor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../result/index.html">qilisdk.common.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../variables/index.html">qilisdk.common.variables</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../cost_functions/index.html">qilisdk.cost_functions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../cost_functions/cost_function/index.html">qilisdk.cost_functions.cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cost_functions/model_cost_function/index.html">qilisdk.cost_functions.model_cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../cost_functions/observable_cost_function/index.html">qilisdk.cost_functions.observable_cost_function</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/functional/index.html">qilisdk.functionals.functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../yaml/index.html">qilisdk.yaml</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<h3>Versions</h3>
+<ul>
+<li><a href="index.html">main</a></li>
+</ul>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../../../../../index.html">
+<span class="hidden md:inline">QiliSDK</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../../../index.html">API Reference</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../../index.html">qilisdk</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../index.html">qilisdk.common</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.common.qtensor</span>
+</nav>
+<div id="content" role="main">
+<section id="module-qilisdk.common.qtensor">
+<span id="qilisdk-common-qtensor"></span><h1>qilisdk.common.qtensor<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-qilisdk.common.qtensor"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<section id="attributes">
+<h2>Attributes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#attributes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#attributes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.Complex" title="qilisdk.common.qtensor.Complex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Complex</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#classes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#classes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensor</span></code></a></p></td>
+<td><p>Represents a quantum state or operator using a sparse matrix representation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functions" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#functions'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.basis_state" title="qilisdk.common.qtensor.basis_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">basis_state</span></code></a>(→ QTensor)</p></td>
+<td><p>Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.ket" title="qilisdk.common.qtensor.ket"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ket</span></code></a>(→ QTensor)</p></td>
+<td><p>Generate a ket state for a multi-qubit system.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.bra" title="qilisdk.common.qtensor.bra"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bra</span></code></a>(→ QTensor)</p></td>
+<td><p>Generate a bra state for a multi-qubit system.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.tensor_prod" title="qilisdk.common.qtensor.tensor_prod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tensor_prod</span></code></a>(→ QTensor)</p></td>
+<td><p>Calculate the tensor product of a list of QTensors.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.expect_val" title="qilisdk.common.qtensor.expect_val"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expect_val</span></code></a>(→ Complex)</p></td>
+<td><p>Calculate the expectation value of an operator with respect to a quantum state.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-contents" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#module-contents'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.Complex">
+<span class="sig-name descname"><span class="pre">Complex</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#Complex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.Complex" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.Complex'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">scipy.sparse.sparray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">scipy.sparse.spmatrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Represents a quantum state or operator using a sparse matrix representation.</p>
+<p>The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
+which are converted to sparse matrices) that represent quantum states (kets, bras)
+or operators. It provides utility methods for common quantum operations such as
+taking the adjoint (dagger), computing tensor products, partial traces, and norms.</p>
+<p>The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
+efficient arithmetic and manipulation. The expected shapes for the data are:
+- (2**N, 2**N) for operators or density matrices (or scalars),
+- (2**N, 1) for ket states,
+- (1, 2**N) or (2**N,) for bra states.</p>
+<p>Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
+The input must represent a valid quantum state or operator with appropriate dimensions.
+Notice that 1D arrays of shape (2N,) are considered/transformed to bras with shape (1, 2N).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span> <span class="pre">|</span> <span class="pre">sparray</span> <span class="pre">|</span> <span class="pre">spmatrix</span></code>) – A dense NumPy array or a SciPy sparse matrix
+representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
+(1, 2**N) for ket states, (2**N, 1) or (2**N,) for bra states, or (1, 1) for scalars.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input data is not a NumPy array or a SciPy sparse matrix,
+or if the data’s shape does not correspond to a valid quantum state/operator.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">scipy.sparse.csr_matrix</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.data" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.data'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Get the internal sparse matrix representation of the QTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The internal representation as a CSR matrix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>csc_matrix</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.nqubits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nqubits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.nqubits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.nqubits" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.nqubits'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Compute the number of qubits represented by the QTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The number of qubits if determinable; otherwise, -1.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.shape" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.shape'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Get the shape of the QTensor’s internal matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The shape of the internal matrix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[int, …]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.dense">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dense</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.dense"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.dense" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.dense'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Get the dense (NumPy array) representation of the QTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The dense array representation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_ket">
+<span class="sig-name descname"><span class="pre">is_ket</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_ket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_ket" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_ket'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_bra">
+<span class="sig-name descname"><span class="pre">is_bra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_bra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_bra" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_bra'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_scalar">
+<span class="sig-name descname"><span class="pre">is_scalar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_scalar" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_scalar'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_operator">
+<span class="sig-name descname"><span class="pre">is_operator</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_operator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_operator" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_operator'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.adjoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.adjoint" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.adjoint'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Compute the adjoint (conjugate transpose) of the QTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new QTensor that is the adjoint of this object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.trace">
+<span class="sig-name descname"><span class="pre">trace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">complex</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.trace" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.trace'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.ptrace">
+<span class="sig-name descname"><span class="pre">ptrace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.ptrace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.ptrace" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.ptrace'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Compute the partial trace over subsystems not in ‘keep’.</p>
+<p>This method calculates the reduced density matrix by tracing out
+the subsystems that are not specified in the ‘keep’ parameter.
+The input ‘dims’ represents the dimensions of each subsystem (optional),
+and ‘keep’ indicates the indices of those subsystems to be retained.</p>
+<p>If the QTensor is a ket or bra, it will first be converted to a density matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[int]</span></code>) – A list of indices corresponding to the subsystems to retain.
+The order of the indices in ‘keep’ is not important, since dimensions will
+be returned in the tensor original order, but the indices must be unique.</p></li>
+<li><p><strong>dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[int],</span> <span class="pre">optional</span></code>) – A list specifying the dimensions of each subsystem.
+If not specified, a density matrix of qubit states is assumed, and the
+dimensions are inferred accordingly (i.e. we split the state in dim 2 states).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the product of the dimensions in dims does not match the
+shape of the QTensor’s dense representation or if any dimension is non-positive.</p></li>
+<li><p><strong>ValueError</strong> – If the indices in ‘keep’ are not unique or are out of range.</p></li>
+<li><p><strong>ValueError</strong> – If the QTensor is not a valid density matrix or state vector.</p></li>
+<li><p><strong>ValueError</strong> – If the number of subsystems exceeds the available ASCII letters.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A new QTensor representing the reduced density matrix</dt><dd><p>for the subsystems specified in ‘keep’.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.norm">
+<span class="sig-name descname"><span class="pre">norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'fro'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'tr'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.norm" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.norm'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Compute the norm of the QTensor.</p>
+<p>For density matrices, the norm order can be specified. For state vectors, the norm is computed accordingly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span> <span class="pre">or</span> <span class="pre">{"fro",</span> <span class="pre">"tr"},</span> <span class="pre">optional</span></code>) – The order of the norm.
+Only applies if the QTensor represents a density matrix. Other than all the
+orders accepted by scipy, it also accepts ‘tr’ for the trace norm. Defaults to 1.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the QTensor is not a valid density matrix or state vector,</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The computed norm of the QTensor.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.unit">
+<span class="sig-name descname"><span class="pre">unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'fro'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'tr'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'tr'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.unit" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.unit'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Normalize the QTensor.</p>
+<p>Scales the QTensor so that its norm becomes 1, according to the specified norm order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>order</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span> <span class="pre">or</span> <span class="pre">{"fro",</span> <span class="pre">"tr"},</span> <span class="pre">optional</span></code>) – The order of the norm to use for normalization.
+Only applies if the QTensor represents a density matrix. Other than all the
+orders accepted by scipy, it also accepts ‘tr’ for the trace norm. Defaults to “tr”.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the norm of the QTensor is 0, making normalization impossible.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new QTensor that is the normalized version of this object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.expm">
+<span class="sig-name descname"><span class="pre">expm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.expm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.expm" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.expm'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Compute the matrix exponential of the QTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new QTensor representing the matrix exponential.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.to_density_matrix">
+<span class="sig-name descname"><span class="pre">to_density_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.to_density_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.to_density_matrix" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.to_density_matrix'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Convert the QTensor to a density matrix.</p>
+<p>If the QTensor represents a state vector (ket or bra), this method
+calculates the corresponding density matrix by taking the outer product.
+If the QTensor is already a density matrix, it is returned unchanged.
+The resulting density matrix is normalized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the QTensor is a scalar, as a density matrix cannot be derived.</p></li>
+<li><p><strong>ValueError</strong> – If the QTensor is an operator that is not a density matrix.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new QTensor representing the density matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_density_matrix">
+<span class="sig-name descname"><span class="pre">is_density_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_density_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_density_matrix" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_density_matrix'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Determine if the QTensor is a valid density matrix.</p>
+<p>A valid density matrix must be square, Hermitian, positive semi-definite, and have a trace equal to 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float,</span> <span class="pre">optional</span></code>) – The numerical tolerance for verifying Hermiticity,
+eigenvalue non-negativity, and trace. Defaults to 1e-8.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the QTensor is a valid density matrix, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor.is_hermitian">
+<span class="sig-name descname"><span class="pre">is_hermitian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor.is_hermitian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor.is_hermitian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor.is_hermitian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Check if the QTensor is Hermitian.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float,</span> <span class="pre">optional</span></code>) – The numerical tolerance for verifying Hermiticity.
+Defaults to 1e-8.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the QTensor is Hermitian, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.basis_state">
+<span class="sig-name descname"><span class="pre">basis_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#basis_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.basis_state" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.basis_state'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Generate the n’th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).</p>
+<p>This function creates a column vector (ket) representing the Fock state |n⟩ in a Hilbert space of dimension N.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The desired number state (from 0 to N-1).</p></li>
+<li><p><strong>N</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the Hilbert space, has a value 2**num_qubits.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If n &gt;= N.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A QTensor representing the |n⟩’th basis state on a N-size Hilbert space (N=2**num_qubits).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.ket">
+<span class="sig-name descname"><span class="pre">ket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#ket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.ket" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.ket'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Generate a ket state for a multi-qubit system.</p>
+<p>This function creates a tensor product of individual qubit states (kets) based on the input values.
+Each input must be either 0 or 1. For example, ket(0, 1) creates a two-qubit ket state |0⟩ ⊗ |1⟩.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*state</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – A sequence of integers representing the state of each qubit (0 or 1).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the provided qubit states is not 0 or 1.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A QTensor representing the multi-qubit ket state.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.bra">
+<span class="sig-name descname"><span class="pre">bra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#bra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.bra" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.bra'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Generate a bra state for a multi-qubit system.</p>
+<p>This function creates a tensor product of individual qubit states (bras) based on the input values.
+Each input must be either 0 or 1. For example, bra(0, 1) creates a two-qubit bra state ⟨0| ⊗ ⟨1|.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*state</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – A sequence of integers representing the state of each qubit (0 or 1).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A QTensor representing the multi-qubit bra state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.tensor_prod">
+<span class="sig-name descname"><span class="pre">tensor_prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#tensor_prod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.tensor_prod" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.tensor_prod'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Calculate the tensor product of a list of QTensors.</p>
+<p>This function computes the tensor (Kronecker) product of all input QTensors,
+resulting in a composite QTensor that represents the combined state or operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>operators</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[QTensor]</span></code>) – A list of QTensors to be combined via tensor product.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new QTensor representing the tensor product of the inputs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor">QTensor</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If operators list is empty.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.common.qtensor.expect_val">
+<span class="sig-name descname"><span class="pre">expect_val</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">QTensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Complex</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#expect_val"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.expect_val" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.expect_val'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Calculate the expectation value of an operator with respect to a quantum state.</p>
+<p>Computes the expectation value ⟨state| operator |state⟩. The function handles both
+pure state vectors and density matrices appropriately.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operator</strong> (<a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>) – The quantum operator represented as a QTensor.</p></li>
+<li><p><strong>state</strong> (<a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>) – The quantum state or density matrix represented as a QTensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the operator is not a square matrix.</p></li>
+<li><p><strong>ValueError</strong> – If the state provided is not a valid quantum state.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The expectation value. The result is guaranteed to be real if the operator is Hermitian, and may be complex otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complex</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</section>
+</div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
+<div class="mr-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../parameterizable/index.html">
+<svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+        qilisdk.common.parameterizable
+      </a>
+</div>
+<div class="ml-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../result/index.html">
+        qilisdk.common.result
+        <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</a>
+</div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#attributes'" class="reference internal" href="#attributes">Attributes</a></li>
+<li><a :data-current="activeSection === '#classes'" class="reference internal" href="#classes">Classes</a></li>
+<li><a :data-current="activeSection === '#functions'" class="reference internal" href="#functions">Functions</a></li>
+<li><a :data-current="activeSection === '#module-contents'" class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.Complex'" class="reference internal" href="#qilisdk.common.qtensor.Complex"><code class="docutils literal notranslate"><span class="pre">Complex</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor'" class="reference internal" href="#qilisdk.common.qtensor.QTensor"><code class="docutils literal notranslate"><span class="pre">QTensor</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.data'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.data"><code class="docutils literal notranslate"><span class="pre">QTensor.data</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.nqubits'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.nqubits"><code class="docutils literal notranslate"><span class="pre">QTensor.nqubits</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.shape'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.shape"><code class="docutils literal notranslate"><span class="pre">QTensor.shape</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.dense'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.dense"><code class="docutils literal notranslate"><span class="pre">QTensor.dense</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_ket'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_ket"><code class="docutils literal notranslate"><span class="pre">QTensor.is_ket()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_bra'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_bra"><code class="docutils literal notranslate"><span class="pre">QTensor.is_bra()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_scalar'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_scalar"><code class="docutils literal notranslate"><span class="pre">QTensor.is_scalar()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_operator'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_operator"><code class="docutils literal notranslate"><span class="pre">QTensor.is_operator()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.adjoint'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.adjoint"><code class="docutils literal notranslate"><span class="pre">QTensor.adjoint()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.trace'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.trace"><code class="docutils literal notranslate"><span class="pre">QTensor.trace()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.ptrace'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.ptrace"><code class="docutils literal notranslate"><span class="pre">QTensor.ptrace()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.norm'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.norm"><code class="docutils literal notranslate"><span class="pre">QTensor.norm()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.unit'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.unit"><code class="docutils literal notranslate"><span class="pre">QTensor.unit()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.expm'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.expm"><code class="docutils literal notranslate"><span class="pre">QTensor.expm()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.to_density_matrix'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.to_density_matrix"><code class="docutils literal notranslate"><span class="pre">QTensor.to_density_matrix()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_density_matrix'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_density_matrix"><code class="docutils literal notranslate"><span class="pre">QTensor.is_density_matrix()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.QTensor.is_hermitian'" class="reference internal" href="#qilisdk.common.qtensor.QTensor.is_hermitian"><code class="docutils literal notranslate"><span class="pre">QTensor.is_hermitian()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.basis_state'" class="reference internal" href="#qilisdk.common.qtensor.basis_state"><code class="docutils literal notranslate"><span class="pre">basis_state()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.ket'" class="reference internal" href="#qilisdk.common.qtensor.ket"><code class="docutils literal notranslate"><span class="pre">ket()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.bra'" class="reference internal" href="#qilisdk.common.qtensor.bra"><code class="docutils literal notranslate"><span class="pre">bra()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.tensor_prod'" class="reference internal" href="#qilisdk.common.qtensor.tensor_prod"><code class="docutils literal notranslate"><span class="pre">tensor_prod()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.common.qtensor.expect_val'" class="reference internal" href="#qilisdk.common.qtensor.expect_val"><code class="docutils literal notranslate"><span class="pre">expect_val()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech </p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../../../../../_static/documentation_options.js?v=7f41d439"></script>
+<script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+<script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script defer="defer" src="../../../../../_static/theme.js?v=073f68d9"></script>
+<script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+</body>
+</html>
