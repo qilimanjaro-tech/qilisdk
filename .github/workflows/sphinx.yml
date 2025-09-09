@@ -42,7 +42,7 @@ jobs:
 
       - name: Redirect root to main
         run: |
-          echo '<!doctype html><meta http-equiv="refresh" content="0; url=main/">' > docs/build/_html/index.html
+          echo '<!doctype html><meta http-equiv="refresh" content="0; url=main/">' > docs/_build/html/index.html
 
       - name: Deploy to GitHub Pages
         env:
