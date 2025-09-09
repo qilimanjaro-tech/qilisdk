@@ -3,7 +3,6 @@ name = "qilisdk"
 version = "0.1.5"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
-license = { file = "LICENSE" }
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
 requires-python = ">=3.10"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
