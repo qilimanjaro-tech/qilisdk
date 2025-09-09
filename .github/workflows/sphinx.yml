@@ -38,7 +38,7 @@ jobs:
       
       - name: Build multiversion HTML
         working-directory: docs
-        run: make multiversion
+        run: uv run make multiversion
 
       - name: Redirect root to main
         run: |
