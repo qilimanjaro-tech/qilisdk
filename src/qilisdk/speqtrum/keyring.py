@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import keyring
+from keyring.errors import PasswordDeleteError
 from pydantic import ValidationError
 
 from .speqtrum_models import Token
@@ -32,8 +33,11 @@ def delete_credentials() -> None:
     """
     Delete username and token from the keyring.
     """
-    keyring.delete_password(KEYRING_IDENTIFIER, "username")
-    keyring.delete_password(KEYRING_IDENTIFIER, "token")
+    try:
+        keyring.delete_password(KEYRING_IDENTIFIER, "username")
+        keyring.delete_password(KEYRING_IDENTIFIER, "token")
+    except PasswordDeleteError:
+        return
 
 
 def load_credentials() -> tuple[str, Token] | None:
