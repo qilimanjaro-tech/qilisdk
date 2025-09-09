@@ -56,7 +56,7 @@ class QTensor:
         efficient arithmetic and manipulation. The expected shapes for the data are:
         - (2**N, 2**N) for operators or density matrices (or scalars),
         - (2**N, 1) for ket states,
-        - (1, 2**N) or (2**N,) for bra states.
+        - (1, 2**N) for bra states.
 
         Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
         The input must represent a valid quantum state or operator with appropriate dimensions.
@@ -65,7 +65,7 @@ class QTensor:
         Args:
             data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
                 representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
-                (1, 2**N) for ket states, (2**N, 1) or (2**N,) for bra states, or (1, 1) for scalars.
+                (1, 2**N) for ket states, (2**N, 1) for bra states, or (1, 1) for scalars.
 
         Raises:
             ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,
