@@ -37,13 +37,13 @@ Use these constructors to apply standard single- and two-qubit operations:
   Rotation by angle `phi` around Z.  
 - ``U1(qubit: int, *, phi: float)``  
   Phase shift equivalent to RZ plus global phase.  
-- ``U2(qubit: int, *, phi: float, gamma: float)``  
-  π/2 Y-rotation sandwiched by Z-rotations.  
-- ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``  
-  General single-qubit unitary: RZ-RY-RZ decomposition.  
-- ``CNOT(control: int, target: int)``  
-  Controlled-X: flips target if control is |1⟩.  
-- ``CZ(control: int, target: int)``  
+- ``U2(qubit: int, *, phi: float, gamma: float)``
+  π/2 Y-rotation sandwiched by Z-rotations.
+- ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``
+  General single-qubit unitary: RZ-RY-RZ decomposition.
+- ``CNOT(control: int, target: int)``
+  Controlled-X: flips target if control is |1⟩.
+- ``CZ(control: int, target: int)``
   Controlled-Z: applies Z on target if control is |1⟩.
 
 Controlled Gates
@@ -161,7 +161,7 @@ Saving to a file
     circuit.draw(filepath="my_circuit.svg")
 
 Custom styling with :class:`~qilisdk.utils.visualization.CircuitStyle`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to ``draw`` overrides the library defaults for this call.
 

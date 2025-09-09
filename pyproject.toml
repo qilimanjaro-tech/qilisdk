@@ -6,8 +6,9 @@ readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
 requires-python = ">=3.10"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
+urls = { "Homepage" = "https://github.com/qilimanjaro-tech/qilisdk", "Documentation" = "https://qilimanjaro-tech.github.io/qilisdk/", "Source" = "https://github.com/qilimanjaro-tech/qilisdk", "Issues" = "https://github.com/qilimanjaro-tech/qilisdk/issues", "Changelog" = "https://github.com/qilimanjaro-tech/qilisdk/blob/main/CHANGELOG.md" }
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
     "License :: OSI Approved :: Apache Software License",
@@ -67,6 +68,7 @@ docs = [
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.6.1",
     "sphinx-mdinclude>=0.6.2",
+    "sphinx-multiversion",
     "sphinxawesome-theme>=5.3.2",
 ]
 
@@ -74,8 +76,27 @@ docs = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "/.hypothesis",
+    "/.devcontainer",
+    "/.vscode",
+    "/.pytest_cache",
+    "/.ruff_cache",
+    "/.mypy_cache",
+    "/dist",
+    "/docs",
+    "/changes",
+    "/tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qilisdk"]
+
 [tool.uv.sources]
 cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
+sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
 
 [tool.ruff]
 line-length = 120

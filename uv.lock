@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -2330,6 +2330,7 @@ docs = [
     { name = "sphinx-automodapi" },
     { name = "sphinx-design" },
     { name = "sphinx-mdinclude" },
+    { name = "sphinx-multiversion" },
     { name = "sphinxawesome-theme" },
 ]
 
@@ -2373,6 +2374,7 @@ docs = [
     { name = "sphinx-automodapi", specifier = ">=0.20.0" },
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
+    { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?branch=main" },
     { name = "sphinxawesome-theme", specifier = ">=5.3.2" },
 ]
 
@@ -2908,6 +2910,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b6/a7/c9a7888bb2187fdb06955d71e75f6f266b7e179b356ac76138d160a5b7eb/sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c", size = 65257, upload-time = "2024-08-03T19:07:37.643Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/42/3d/6b41fe1637cd53c4b10d56e0e6f396546f837973dabf9c4b2a1de44620ac/sphinx_mdinclude-0.6.2-py3-none-any.whl", hash = "sha256:648e78edb067c0e4bffc22943278d49d54a0714494743592032fa3ad82a86984", size = 16911, upload-time = "2024-08-03T19:07:30.406Z" },
+]
+
+[[package]]
+name = "sphinx-multiversion"
+version = "0.2.5"
+source = { git = "https://github.com/sphinx-contrib/multiversion?branch=main#dce0171b3a5fe16eef51e9065ae81af7370db87f" }
+dependencies = [
+    { name = "sphinx" },
 ]
 
 [[package]]

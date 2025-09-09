@@ -395,22 +395,22 @@ Example: Unbalanced Penalization
 Interoperability
 ~~~~~~~~~~~~~~~~
 
-- **Convert any Model to QUBO**  
-If you have a generic :class:`~qilisdk.common.model.Model` with only linear/quadratic terms, you can automatically produce a QUBO:  
+- **Convert any Model to QUBO**
+    If you have a generic :class:`~qilisdk.common.model.Model` with only linear/quadratic terms, you can automatically produce a QUBO:  
 
-.. code-block:: python
+    .. code-block:: python
 
-    qubo_model = model.to_qubo()
+        qubo_model = model.to_qubo()
 
 - **Export to Hamiltonian**  
-Once in QUBO form, translate directly into an analog Ising Hamiltonian for simulation or hardware:  
+    Once in QUBO form, translate directly into an analog Ising Hamiltonian for simulation or hardware:  
 
-.. code-block:: python
+    .. code-block:: python
 
-    from qilisdk.analog.hamiltonian import Hamiltonian
-    h = qubo_model.to_hamiltonian()
+        from qilisdk.analog.hamiltonian import Hamiltonian
+        h = qubo_model.to_hamiltonian()
 
-.. [1] Montañez-Barrera, Jhon Alejandro, et al. "Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms." Quantum Science and Technology 9.2 (2024): 025022.
+    .. [1] Montañez-Barrera, Jhon Alejandro, et al. "Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms." Quantum Science and Technology 9.2 (2024): 025022.
 
 Quantum Objects
 ---------------

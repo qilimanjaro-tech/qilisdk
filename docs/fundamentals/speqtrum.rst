@@ -1,5 +1,5 @@
 SpeQtrum
-====
+========
 
 The :mod:`~qilisdk.speqtrum` module provides a synchronous client for the Qilimanjaro SpeQtrum API via the
 :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class. It handles authentication, device selection, job management, and submission

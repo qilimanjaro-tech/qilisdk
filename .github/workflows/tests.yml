@@ -37,11 +37,13 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv sync --all-groups --all-extras
+        run: uv sync --group dev --all-extras
 
       - name: Run tests
         run: uv run pytest tests
