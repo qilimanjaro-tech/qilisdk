@@ -197,24 +197,24 @@ class CudaBackend(Backend):
 
         logger.success("TimeEvolution finished")
 
-        final_expected_values = np.array([exp_val.expectation() for exp_val in evolution_result.final_expectation_values()])
+        final_expected_values = np.array(
+            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+        )
         expected_values = (
-                np.array(
-                    [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()]
-                )
-                if evolution_result.expectation_values() is not None and functional.store_intermediate_results
-                else None
-            )
+            np.array([[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()])
+            if evolution_result.expectation_values() is not None and functional.store_intermediate_results
+            else None
+        )
         final_state = (
-                QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))
-                if evolution_result.final_state() is not None
-                else None
-            )
+            QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))
+            if evolution_result.final_state() is not None
+            else None
+        )
         intermediate_states = (
-                [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]
-                if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
-                else None
-            )
+            [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]
+            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
+            else None
+        )
 
         return TimeEvolutionResult(
             final_expected_values=final_expected_values,
