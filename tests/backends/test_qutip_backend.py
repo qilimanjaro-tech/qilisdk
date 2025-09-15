@@ -12,7 +12,7 @@ from qilisdk.common.model import Constraint, Model, Objective
 from qilisdk.common.qtensor import ket, tensor_prod
 from qilisdk.common.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, Adjoint, Controlled
@@ -87,6 +87,7 @@ def test_nshots():
 
 
 basic_gate_test_cases = [
+    (I(0), ("i", "q0")),
     (X(0), ("x", "q0")),
     (Y(0), ("y", "q0")),
     (Z(0), ("z", "q0")),

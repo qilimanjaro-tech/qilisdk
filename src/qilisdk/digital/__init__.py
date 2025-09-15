@@ -14,7 +14,7 @@
 
 from .ansatz import HardwareEfficientAnsatz
 from .circuit import Circuit
-from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
+from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, I, M, S, T, X, Y, Z
 
 __all__ = [
     "CNOT",
@@ -30,6 +30,7 @@ __all__ = [
     "Gate",
     "H",
     "HardwareEfficientAnsatz",
+    "I",
     "M",
     "S",
     "T",

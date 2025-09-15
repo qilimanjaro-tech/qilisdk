@@ -32,6 +32,9 @@ class DummyKernel:
         self.qubits = [f"q{i}" for i in range(n)]
         return self.qubits
 
+    def i(self, qubit):
+        self.calls.append(("i", qubit))
+
     def x(self, qubit):
         self.calls.append(("x", qubit))
 

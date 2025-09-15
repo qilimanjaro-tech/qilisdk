@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 
@@ -40,6 +40,7 @@ def assert_matrix_equal(actual: np.ndarray, expected: np.ndarray, rtol=1e-7, ato
 @pytest.mark.parametrize(
     ("gate_class", "expected_name", "expected_matrix"),
     [
+        (I, "I", np.array([[1, 0], [0, 1]], dtype=complex)),
         (X, "X", np.array([[0, 1], [1, 0]], dtype=complex)),
         (Y, "Y", np.array([[0, -1j], [1j, 0]], dtype=complex)),
         (Z, "Z", np.array([[1, 0], [0, -1]], dtype=complex)),

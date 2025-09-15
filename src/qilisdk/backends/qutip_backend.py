@@ -19,13 +19,14 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 import numpy as np
 import qutip_qip.operations as QutipGates
 from loguru import logger
-from qutip import Qobj, basis, mesolve, tensor
+from qutip import Qobj, basis, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
+from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.common.qtensor import QTensor, tensor_prod
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -44,6 +45,29 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], Qobj]]
 
 
+class QutipI(SingleQubitGate):
+    """
+    Single-qubit I gate.
+
+    Examples
+    --------
+    >>> from qutip_qip.operations import X
+    >>> I(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE
+    Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True
+    Qobj data =
+    [[1. 0.]
+     [0. 1.]]
+    """
+
+    def __init__(self, targets, **kwargs) -> None:  # noqa: ANN001, ANN003
+        super().__init__(targets=targets, **kwargs)
+        self.name = "I"
+        self.latex_str = r"I"
+
+    def get_compact_qobj(self):  # noqa: ANN201, PLR6301
+        return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
+
+
 class QutipBackend(Backend):
     """
     Backend that runs both digital-circuit sampling and analog
@@ -58,6 +82,7 @@ class QutipBackend(Backend):
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
+            I: QutipBackend._handle_I,
             X: QutipBackend._handle_X,
             Y: QutipBackend._handle_Y,
             Z: QutipBackend._handle_Z,
@@ -360,6 +385,11 @@ class QutipBackend(Backend):
         """
         for i in gate.target_qubits:
             qutip_circuit.add_measurement(f"M{i}", targets=[i], classical_store=i)
+
+    @staticmethod
+    def _handle_I(circuit: QubitCircuit, gate: I, qubit: int) -> None:
+        """Handle an X gate operation."""
+        circuit.add_gate(QutipI(targets=qubit))
 
     @staticmethod
     def _handle_X(circuit: QubitCircuit, gate: X, qubit: int) -> None:
