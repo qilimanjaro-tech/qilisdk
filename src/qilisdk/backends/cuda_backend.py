@@ -26,7 +26,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, Pauli
 from qilisdk.backends.backend import Backend
 from qilisdk.common.qtensor import QTensor
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -73,7 +73,9 @@ class CudaBackend(Backend):
                 Defaults to STATE_VECTOR.
         """
         super().__init__()
+        cudaq.register_operation("i", np.array([1, 0, 0, 1]))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
+            I: CudaBackend._handle_I,
             X: CudaBackend._handle_X,
             Y: CudaBackend._handle_Y,
             Z: CudaBackend._handle_Z,
@@ -292,6 +294,11 @@ class CudaBackend(Backend):
         else:
             for idx in gate.target_qubits:
                 kernel.mz(qubits[idx])
+
+    @staticmethod
+    def _handle_I(kernel: cudaq.Kernel, gate: I, qubit: cudaq.QuakeValue) -> None:
+        """Handle an X gate operation."""
+        kernel.i(qubit)
 
     @staticmethod
     def _handle_X(kernel: cudaq.Kernel, gate: X, qubit: cudaq.QuakeValue) -> None:

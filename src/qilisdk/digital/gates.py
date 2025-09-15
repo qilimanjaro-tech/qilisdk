@@ -490,6 +490,37 @@ class M(Gate):
 
 
 @yaml.register_class
+class I(BasicGate):
+    """
+    The Identity gate.
+
+    The associated matrix is:
+
+    .. code-block:: text
+
+       [[1, 0],
+       [0, 1]]
+
+    """
+
+    def __init__(self, qubit: int) -> None:
+        """
+        Initialize a Pauli-X gate.
+
+        Args:
+            qubit (int): The target qubit index for the X gate.
+        """
+        super().__init__(target_qubits=(qubit,))
+
+    @property
+    def name(self) -> str:
+        return "I"
+
+    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+        return np.array([[1, 0], [0, 1]], dtype=complex)
+
+
+@yaml.register_class
 class X(BasicGate):
     """
     The Pauli-X gate.
