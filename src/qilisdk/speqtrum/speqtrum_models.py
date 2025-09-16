@@ -207,21 +207,21 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, VariationalProgramResult)
         return v
 
-    @field_serializer("Rabi_experiment_result")
+    @field_serializer("rabi_experiment_result")
     def _serialize_rabi_experiment_result(self, rabi_experiment_result: RabiExperimentResult, _info):
         return serialize(rabi_experiment_result) if rabi_experiment_result is not None else None
 
-    @field_validator("Rabi_experiment_result", mode="before")
+    @field_validator("rabi_experiment_result", mode="before")
     def _load_rabi_experiment_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, RabiExperimentResult)
         return v
 
-    @field_serializer("T1_experiment_result")
+    @field_serializer("t1_experiment_result")
     def _serialize_t1_experiment_result(self, t1_experiment_result: T1ExperimentResult, _info):
         return serialize(t1_experiment_result) if t1_experiment_result is not None else None
 
-    @field_validator("T1_experiment_result", mode="before")
+    @field_validator("t1_experiment_result", mode="before")
     def _load_t1_experiment_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, T1ExperimentResult)
