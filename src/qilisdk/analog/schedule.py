@@ -20,6 +20,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.variables import BaseVariable, Number, Parameter, Term
+from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
 
@@ -27,8 +28,8 @@ from qilisdk.yaml import yaml
 class Schedule(Parameterizable):
     def __init__(
         self,
-        T: float,
-        dt: float,
+        T: int,
+        dt: int = 1,
         hamiltonians: dict[str, Hamiltonian] | None = None,
         schedule: dict[int, dict[str, float | Term]] | None = None,
     ) -> None:
@@ -41,8 +42,8 @@ class Schedule(Parameterizable):
         at discrete time steps.
 
         Args:
-            T (float): The total annealing time.
-            dt (float): The time step for the annealing process. Note that T needs to be divisible by dt.
+            T (int): The total annealing time in units of 1ns.
+            dt (int): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
             hamiltonians (dict[str, Hamiltonian], optional): A dictionary mapping labels to Hamiltonian objects.
                 Defaults to an empty dictionary if None.
             schedule (dict[int, dict[str, float]], optional): A dictionary where keys are time step indices (integers)
@@ -52,7 +53,12 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-
+        if abs(T % dt) > 1e-12:  # noqa: PLR2004
+            raise ValueError("T must be divisible by dt.")
+        if not isinstance(T, int):
+            raise ValueError("T must be an integer")
+        if not isinstance(dt, int):
+            raise ValueError("dt must be an integer")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
@@ -126,22 +132,22 @@ class Schedule(Parameterizable):
         return dict(sorted(out_dict.items()))
 
     @property
-    def T(self) -> float:
+    def T(self) -> int:
         """
         Get the total annealing time.
 
         Returns:
-            float: The total time T.
+            int: The total time T.
         """
         return self._T
 
     @property
-    def dt(self) -> float:
+    def dt(self) -> int:
         """
         Get the time step duration.
 
         Returns:
-            float: The duration of each time step.
+            int: The duration of each time step.
         """
         return self._dt
 
@@ -493,3 +499,123 @@ class Schedule(Parameterizable):
             self.iter_time_step += 1
             return result
         raise StopIteration
+
+    def draw(self, style: ScheduleStyle | None = None, filepath: str | None = None, title: str | None = None) -> None:
+        """Render a plot of the schedule using matplotlib and optionally save it to a file.
+
+        The schedule is rendered using the provided style configuration. If ``filepath`` is
+        given, the resulting figure is saved to disk (the output format is inferred
+        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).
+
+        Args:
+            style (ScheduleStyle, optional): Customization options for the plot appearance.
+                Defaults to ScheduleStyle().
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+        """
+        from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer  # noqa: PLC0415
+
+        style = style or ScheduleStyle()
+        renderer = MatplotlibScheduleRenderer(self, style=style)
+        renderer.plot(title=title)
+        if filepath:
+            renderer.save(filepath)
+
+
+@yaml.register_class
+class LinearSchedule(Schedule):
+    """A Schedule that linearly interpolates between defined time steps."""
+
+    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
+        t = time_step / self.dt
+        t_idx = int(t)
+
+        # if exactly defined, return directly
+        if t_idx in self._schedule and hamiltonian_key in self._schedule[t_idx]:
+            val = self._schedule[t_idx][hamiltonian_key]
+            return (
+                val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
+            )
+
+        # search backwards for last defined
+        prev_idx, prev_val = None, None
+        for i in range(t_idx, -1, -1):
+            if i in self._schedule and hamiltonian_key in self._schedule[i]:
+                prev_idx = i
+                val = self._schedule[i][hamiltonian_key]
+                prev_val = (
+                    val.evaluate({})
+                    if isinstance(val, Term)
+                    else (val.evaluate() if isinstance(val, Parameter) else val)
+                )
+                break
+
+        # search forwards for next defined
+        next_idx, next_val = None, None
+        for i in range(t_idx + 1, int(self.T / self.dt) + 1):
+            if i in self._schedule and hamiltonian_key in self._schedule[i]:
+                next_idx = i
+                val = self._schedule[i][hamiltonian_key]
+                next_val = (
+                    val.evaluate({})
+                    if isinstance(val, Term)
+                    else (val.evaluate() if isinstance(val, Parameter) else val)
+                )
+                break
+
+        # cases
+        if prev_val is None and next_val is None:
+            return 0
+        if prev_val is None and next_val is not None:
+            return next_val
+        if next_val is None and prev_val is not None:
+            return prev_val
+
+        # linear interpolation
+        if next_idx is None or prev_idx is None or prev_val is None or next_val is None:
+            raise ValueError("Something unexpected happened while retrieving the coefficient.")
+        alpha: float = (t - prev_idx) / (next_idx - prev_idx)
+        return (1 - alpha) * prev_val + alpha * next_val
+
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+        t = time_step / self.dt
+        t_idx = int(t)
+
+        if t_idx in self._schedule and hamiltonian_key in self._schedule[t_idx]:
+            return self._schedule[t_idx][hamiltonian_key]
+
+        # search backwards
+        prev_idx, prev_expr = None, None
+        for i in range(t_idx, -1, -1):
+            if i in self._schedule and hamiltonian_key in self._schedule[i]:
+                prev_idx = i
+                prev_expr = self._schedule[i][hamiltonian_key]
+                break
+
+        # search forwards
+        next_idx, next_expr = None, None
+        for i in range(t_idx + 1, int(self.T / self.dt) + 1):
+            if i in self._schedule and hamiltonian_key in self._schedule[i]:
+                next_idx = i
+                next_expr = self._schedule[i][hamiltonian_key]
+                break
+
+        # cases
+        if prev_expr is None and next_expr is None:
+            return 0
+        if prev_expr is None and next_expr is not None:
+            return next_expr
+        if next_expr is None and prev_expr is not None:
+            return prev_expr
+
+        # linear interpolation (keeps expressions if they are Terms/Parameters)
+        if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
+            raise ValueError("Something unexpected happened while retrieving the coefficient.")
+        alpha: float = (t - prev_idx) / (next_idx - prev_idx)
+        return (1 - alpha) * prev_expr + alpha * next_expr
+
+    def __getitem__(self, time_step: int) -> Hamiltonian:
+        ham = Hamiltonian()
+        for ham_label in self._hamiltonians:
+            coeff = self.get_coefficient(time_step * self.dt, ham_label)
+            ham += coeff * self._hamiltonians[ham_label]
+        return ham.get_static_hamiltonian()
