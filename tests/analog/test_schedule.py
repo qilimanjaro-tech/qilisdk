@@ -1,7 +1,10 @@
+import numpy as np
 import pytest
 
+from qilisdk.analog import X, Z
 from qilisdk.analog.hamiltonian import PauliX, PauliZ
-from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.schedule import LinearSchedule, Schedule
+from qilisdk.common.variables import BinaryVariable, Parameter
 
 # --- Constructor and Property Tests ---
 
@@ -16,6 +19,75 @@ def test_schedule_constructor_default():
     assert sched.dt == 1
     # With no Hamiltonians, nqubits remains 0.
     assert sched.nqubits == 0
+
+    with pytest.raises(ValueError, match=r"T must be divisible by dt."):
+        Schedule(T=8, dt=3)
+
+    with pytest.raises(ValueError, match=r"T must be an integer"):
+        Schedule(T=8.0)
+
+    with pytest.raises(ValueError, match=r"dt must be an integer"):
+        Schedule(T=8, dt=1.0)
+
+
+def test_schedule_parameters():
+    p = [Parameter(f"p({i})", 0, bounds=(-10, 10)) for i in range(4)]
+
+    H0 = p[0] * X(1) + X(0)
+    H1 = p[1] * Z(1) + Z(0)
+
+    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
+
+    assert p[0] in list(schedule._parameters.values())
+    assert p[1] in list(schedule._parameters.values())
+    assert p[2] not in list(schedule._parameters.values())
+    assert schedule.nparameters == 2
+
+    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={0: {"H0": 1 + p[2], "H1": p[3]}})
+
+    assert p[2] in list(schedule._parameters.values())
+    assert p[3] in list(schedule._parameters.values())
+    assert schedule.nparameters == 4
+
+    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
+    schedule.add_schedule_step(0, {"H0": 1 + p[2], "H1": p[3]})
+
+    assert p[2] in list(schedule._parameters.values())
+    assert p[3] in list(schedule._parameters.values())
+    assert schedule.nparameters == 4
+
+    assert all(schedule.get_parameter_values()[i] == 0 for i in range(schedule.nparameters))
+    assert all(list(schedule.get_parameter_bounds().values())[i] == (-10, 10) for i in range(schedule.nparameters))
+    assert all(schedule.get_parameter_names()[i] == f"p({i})" for i in range(schedule.nparameters))
+
+    vals = [0, 1, 2, 3]
+    schedule.set_parameter_values(vals)
+    assert all(schedule.get_parameter_values()[i] == vals[i] for i in range(schedule.nparameters))
+    key_vals = {p[i].label: i + 1 for i in range(schedule.nparameters)}
+    schedule.set_parameters(key_vals)
+    assert all(schedule.get_parameter_values()[i] == list(key_vals.values())[i] for i in range(schedule.nparameters))
+
+    schedule.set_parameter_values([0] * schedule.nparameters)
+    schedule.set_parameter_bounds({f"p({i})": (-i, i) for i in range(schedule.nparameters)})
+    assert all(list(schedule.get_parameter_bounds().values())[i] == (-i, i) for i in range(schedule.nparameters))
+
+    with pytest.raises(
+        ValueError,
+        match=r"The provided parameter label test is not defined in the list of parameters in this object.",
+    ):
+        schedule.set_parameter_bounds({"test": (-10, 10)})
+
+    with pytest.raises(
+        ValueError,
+        match=r"Parameter test is not defined in this Schedule.",
+    ):
+        schedule.set_parameters({"test": 0})
+
+    with pytest.raises(ValueError, match=r"Provided 8 but Schedule has 4 parameters."):
+        schedule.set_parameter_values([0] * 8)
+
+    with pytest.raises(ValueError, match=r"Provided 2 but Schedule has 4 parameters."):
+        schedule.set_parameter_values([0] * 2)
 
 
 def test_schedule_constructor_with_hamiltonians_and_schedule():
@@ -182,3 +254,160 @@ def test_schedule_property_sorting():
     sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=unsorted_schedule)
     sorted_keys = list(sched.schedule.keys())
     assert sorted_keys == sorted(sorted_keys)
+
+
+def test_schedule_term_and_basevariable_errors():
+
+    # Term with non-Parameter variable
+    dummy = BinaryVariable("dummy")
+    term = (dummy) * 2
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {0: {"H1": term}}
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        Schedule(T=10, dt=1, hamiltonians={"H1": H1}, schedule=sch)
+
+    # BaseVariable that is not a Parameter
+    sch2 = {0: {"H1": dummy}}
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        Schedule(T=10, dt=1, hamiltonians={"H1": H1}, schedule=sch2)
+
+
+def test_add_schedule_step_term_basevariable_errors():
+
+    dummy = BinaryVariable("dummy")
+    term = dummy * 2
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_schedule_step(1, {"H1": term})
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_schedule_step(2, {"H1": dummy})
+
+
+def test_update_hamiltonian_coefficient_term_basevariable_errors():
+
+    dummy = BinaryVariable("dummy")
+    term = dummy * 2
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.update_hamiltonian_coefficient_at_time_step(1, "H1", term)
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.update_hamiltonian_coefficient_at_time_step(2, "H1", dummy)
+
+
+def test_draw_method_runs(monkeypatch):
+
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule(T=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
+
+    # Monkeypatch renderer to avoid actual plotting
+    class DummyRenderer:
+        def __init__(self, *a, **kw):
+            pass
+
+        def plot(self, *a, **kw):
+            return None
+
+        def save(self, *a, **kw):
+            return None
+
+    monkeypatch.setattr("qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer", DummyRenderer)
+    sched.draw()
+
+
+def test_linear_schedule_interpolation():
+
+    T = 10
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {0: {"H1": 0.0}, 5: {"H1": 1.0}, 10: {"H1": 2.0}}
+    sched = LinearSchedule(T=T, dt=dt, hamiltonians={"H1": H1}, schedule=sch)
+
+    # At t=0, should be 0.0
+    assert sched.get_coefficient(0, "H1") == 0.0
+
+    # At t=5, should be 1.0
+    assert sched.get_coefficient(5, "H1") == 1.0
+    # At t=10, should be 2.0
+    assert sched.get_coefficient(10, "H1") == 2.0
+
+    # At t=2, should interpolate between 0 and 1
+
+    assert sched.get_coefficient(2, "H1") == 0.4
+    # At t=7, should interpolate between 1 and 2
+
+    assert sched.get_coefficient(7, "H1") == 1.4
+
+
+def test_linear_schedule_edge_cases():
+
+    T = 10
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    # Only one time step defined
+    sch = {0: {"H1": 3.0}}
+    sched = LinearSchedule(T=T, dt=dt, hamiltonians={"H1": H1}, schedule=sch)
+    # All times should return 3.0
+    for t in range(0, T + 1, dt):
+        assert sched.get_coefficient(t, "H1") == 3.0
+    # Undefined Hamiltonian returns 0
+    assert sched.get_coefficient(5, "H_unknown") == 0
+
+
+def test_linear_schedule_expression():
+
+    T = 10
+    dt = 1
+    p = Parameter("p", 2.0)
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {0: {"H1": p}, 10: {"H1": 4.0}}
+    sched = LinearSchedule(T=T, dt=dt, hamiltonians={"H1": H1}, schedule=sch)
+    # At t=0, should be p
+    assert sched.get_coefficient_expression(0, "H1") == p
+    # At t=10, should be 4.0
+    assert sched.get_coefficient_expression(10, "H1") == 4.0
+    # At t=5, should interpolate between p and 4.0
+    expr = sched.get_coefficient_expression(5, "H1")
+    # Should be a linear combination of p and 4.0
+    alpha = (5 - 0) / (10 - 0)
+    expected = (1 - alpha) * p + alpha * 4.0
+    assert expr == expected
+
+
+def test_add_hamiltonian_term_basevariable_errors():
+    # Schedule function returns Term with non-Parameter variable
+    dummy = BinaryVariable("dummy")
+
+    def coeff_func_term(t):
+        return dummy * 2
+
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_hamiltonian("H2", H1, schedule=coeff_func_term)
+
+    # Schedule function returns Term with non-Parameter variable
+    dummy = BinaryVariable("dummy")
+
+    def coeff_func_term(t):
+        return dummy * 2
+
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_hamiltonian("H2", H1, schedule=coeff_func_term)
+
+    # Schedule function returns BaseVariable that is not a Parameter
+    def coeff_func_basevar(t):
+        return dummy
+
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_hamiltonian("H3", H1, schedule=coeff_func_basevar)
+
+    # Schedule function returns BaseVariable that is not a Parameter
+    def coeff_func_basevar(t):
+        return dummy
+
+    with pytest.raises(ValueError, match="can only contain Parameters"):
+        sched.add_hamiltonian("H3", H1, schedule=coeff_func_basevar)

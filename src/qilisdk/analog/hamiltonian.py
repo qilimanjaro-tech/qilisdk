@@ -24,7 +24,7 @@ import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
 from qilisdk.common.parameterizable import Parameterizable
-from qilisdk.common.variables import Parameter, Term
+from qilisdk.common.variables import BaseVariable, Parameter, Term
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -244,8 +244,14 @@ class Hamiltonian(Parameterizable):
                             raise ValueError(
                                 "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
                             )
-                elif isinstance(val, Parameter):
-                    self._parameters[val.label] = val
+                elif isinstance(val, BaseVariable):
+                    if isinstance(val, Parameter):
+                        self._parameters[val.label] = val
+
+                    else:
+                        raise ValueError(
+                            "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+                        )
                 self._elements[key] += val
             self.simplify()
 

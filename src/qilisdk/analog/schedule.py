@@ -274,7 +274,6 @@ class Schedule(Parameterizable):
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
                 time_step = schedule(t, **kwargs)
-                self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
                 if isinstance(time_step, Term):
                     for v in time_step.variables():
                         if not isinstance(v, Parameter):
@@ -288,6 +287,7 @@ class Schedule(Parameterizable):
                             f"The schedule can only contain Parameters, but a generic variable was provided ({time_step})"
                         )
                     self._parameters[time_step.label] = time_step
+                self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
 
     def add_schedule_step(self, time_step: int, hamiltonian_coefficient_list: dict[str, float | Term]) -> None:
         """
