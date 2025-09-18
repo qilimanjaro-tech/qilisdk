@@ -416,7 +416,7 @@ class Schedule(Parameterizable):
                         break
         return ham.get_static_hamiltonian()
 
-    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
+    def get_coefficient(self, time_step: int, hamiltonian_key: str) -> Number:
         """
         Retrieve the coefficient of a specified Hamiltonian at a given time.
 
@@ -424,7 +424,7 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (float): The time (in the same units as T) at which to query the coefficient.
+            time_step (int): The time (in the same units as T) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
@@ -442,7 +442,7 @@ class Schedule(Parameterizable):
             time_idx -= 1
         return 0
 
-    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: int, hamiltonian_key: str) -> Number | Term:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.
@@ -451,7 +451,7 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (float): The time (in the same units as T) at which to query the coefficient.
+            time_step (int): The time (in the same units as T) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
