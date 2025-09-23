@@ -1,8 +1,6 @@
-import pytest
-
-from qilisdk.analog import LinearSchedule, X, Z
-from qilisdk.analog.hamiltonian import PauliX, PauliZ
-from qilisdk.common.variables import BinaryVariable, Parameter
+from qilisdk.analog import LinearSchedule
+from qilisdk.analog.hamiltonian import PauliZ
+from qilisdk.common.variables import Parameter
 
 
 def test_linear_schedule_interpolation():
