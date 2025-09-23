@@ -118,7 +118,7 @@ basic_gate_test_cases = [
     (U2(0, phi=0.9, gamma=1.0), ("u3", np.pi / 2, 0.9, 1.0, "q0")),
     (U3(0, theta=1.1, phi=1.2, gamma=1.3), ("u3", 1.1, 1.2, 1.3, "q0")),
 ]
-swap_test_case = [(SWAP(0, 1), ("swap", "q0", "q1"))]
+swap_test_case: list[BasicGate, tuple[str, ...]] = [(SWAP(0, 1), ("swap", "q0", "q1"))]
 
 
 # --- Simulation method tests ---

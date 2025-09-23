@@ -7,18 +7,12 @@ from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.common.qtensor import ket, tensor_prod
 from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.utils.serialization import (
-    DeserializationError,
-    deserialize,
-    deserialize_from,
-    serialize,
-    serialize_to,
-)
+from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
 
 
 def test_time_evolution_algorithm_serialization():
-    T = 10
-    dt = 0.1
+    T = 100
+    dt = 1
     steps = np.linspace(0, T, int(T / dt))
 
     nqubits = 1

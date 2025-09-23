@@ -142,8 +142,8 @@ def test_constant_hamiltonian():
     x = 2.0
     schedule = Schedule(
         hamiltonians={"hz": x * pauli_z(0)},
-        dt=0.1,
-        T=1.0,
+        dt=1,
+        T=10,
         schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
     )
     psi0 = ket(0)
@@ -166,8 +166,8 @@ def test_constant_hamiltonian():
 
 def test_time_dependent_hamiltonian():
     o = 1.0
-    dt = 0.01
-    T = 10
+    dt = 1
+    T = 1000
 
     steps = np.linspace(0, T, int(T / dt))
 
@@ -193,8 +193,8 @@ def test_time_dependent_hamiltonian():
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():
-    dt = 0.01
-    T = 50
+    dt = 1
+    T = 5000
     # steps = int(T / dt) - 1
 
     steps = np.linspace(0, T, int(T / dt))

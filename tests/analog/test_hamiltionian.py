@@ -17,11 +17,26 @@ from qilisdk.analog.hamiltonian import (
     Z,
     _get_pauli,
 )
+from qilisdk.common.variables import BinaryVariable
 
 
 # Helper function to convert sparse matrix to dense NumPy array.
 def dense(ham: Hamiltonian) -> np.ndarray:
     return ham.to_matrix().toarray()
+
+
+def test_parameters():
+
+    x = BinaryVariable("x")
+
+    with pytest.raises(
+        ValueError, match=r"Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+    ):
+        Hamiltonian({(PauliX(0),): x, (PauliX(1),): 1})
+    with pytest.raises(
+        ValueError, match=r"Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+    ):
+        Hamiltonian({(PauliX(0),): x + 1, (PauliX(1),): 1})
 
 
 def test_get_pauli_returns_correct_instance():
