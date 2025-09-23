@@ -24,6 +24,7 @@ import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
 from qilisdk.common.parameterizable import Parameterizable
+from qilisdk.common.qtensor import QTensor
 from qilisdk.common.variables import Parameter, Term
 from qilisdk.yaml import yaml
 
@@ -370,7 +371,7 @@ class Hamiltonian(Parameterizable):
 
         return self
 
-    def _apply_operator_on_qubit(self, terms: list[PauliOperator]) -> spmatrix:
+    def _apply_operator_on_qubit(self, terms: list[PauliOperator], padding: int = 0) -> spmatrix:
         """Get the matrix representation of a single term by taking the tensor product
         of operators acting on each qubit. For qubits with no operator in `terms`,
         the identity is used.
@@ -383,7 +384,7 @@ class Hamiltonian(Parameterizable):
         """
         # Build a list of factors for each qubit
         factors = []
-        for q in range(self.nqubits):
+        for q in range(self.nqubits + padding):
             # Look for an operator acting on qubit q
             op = next((t for t in terms if t.qubit == q), None)
             if op is not None:
@@ -407,6 +408,23 @@ class Hamiltonian(Parameterizable):
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
+
+    def to_qtensor(self, padding: int = 0) -> QTensor:
+        """Return the full matrix representation of the Hamiltonian by summing over all terms in the form of a QTensor-
+
+        Args:
+            padding (int, optional): adding extra dimensions to the hamiltonian. Defaults to 0.
+
+        Returns:
+            QTensor: The QTensor object representation of the Hamiltonian.
+        """
+        dim = 2 ** (self.nqubits + padding)
+
+        # Initialize a zero matrix of the appropriate dimension.
+        result = csc_array(np.zeros((dim, dim), dtype=complex))
+        for coeff, term in self:
+            result += coeff * self._apply_operator_on_qubit(term, padding=padding)
+        return QTensor(result)
 
     def get_static_hamiltonian(self) -> Hamiltonian:
         out = Hamiltonian()
