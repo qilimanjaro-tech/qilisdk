@@ -242,6 +242,8 @@ class QutipBackend(Backend):
                 if obs.nqubits < functional.schedule.nqubits:
                     for _ in range(functional.schedule.nqubits - obs.nqubits):
                         aux_obs = tensor_prod([aux_obs, identity])
+            elif isinstance(obs, QTensor):
+                aux_obs = obs
             if aux_obs is not None:
                 qutip_obs.append(
                     Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
