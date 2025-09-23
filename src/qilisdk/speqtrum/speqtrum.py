@@ -61,13 +61,14 @@ class SpeQtrum:
             logger.error("No QaaS credentials found. Call `.login()` or set env vars before instantiation.")
             raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
-        self._selected_device: int | None = None
-        self._handlers: dict[type[Functional], Callable[[Functional], int]] = {
-            Sampling: lambda f: self._submit_sampling(cast("Sampling", f)),
-            TimeEvolution: lambda f: self._submit_time_evolution(cast("TimeEvolution", f)),
-            VariationalProgram: lambda f: self._submit_variational_program(cast("VariationalProgram", f)),
-            RabiExperiment: lambda f: self._submit_rabi_program(cast("RabiExperiment", f)),
-            T1Experiment: lambda f: self._submit_t1_program(cast("T1Experiment", f)),
+        self._handlers: dict[type[Functional], Callable[[Functional, int], int]] = {
+            Sampling: lambda f, device_id: self._submit_sampling(cast("Sampling", f), device_id),
+            TimeEvolution: lambda f, device_id: self._submit_time_evolution(cast("TimeEvolution", f), device_id),
+            VariationalProgram: lambda f, device_id: self._submit_variational_program(
+                cast("VariationalProgram", f), device_id
+            ),
+            RabiExperiment: lambda f, device_id: self._submit_rabi_program(cast("RabiExperiment", f), device_id),
+            T1Experiment: lambda f, device_id: self._submit_t1_program(cast("T1Experiment", f), device_id),
         }
         self._settings = get_settings()
         logger.success("QaaS client initialised for user '{}'", self._username)
@@ -80,24 +81,6 @@ class SpeQtrum:
 
     def _get_authorized_headers(self) -> dict:
         return {**self._get_headers(), "Authorization": f"Bearer {self._token.access_token}"}
-
-    # TODO (vyron): Change this to `code: str` when implemented server-side.
-    @property
-    def selected_device(self) -> int | None:
-        """ID of the currently selected device.
-
-        Returns:
-            The device identifier or ``None`` if no device is selected.
-        """
-        return self._selected_device
-
-    def set_device(self, id: int) -> None:
-        """Select the backend device for subsequent executions.
-
-        Args:
-            id: Device identifier returned by :py:meth:`list_devices`.
-        """
-        self._selected_device = id
 
     @classmethod
     def login(
@@ -306,13 +289,7 @@ class SpeQtrum:
             logger.debug("Job {} still {}, sleeping {}s", id, current.status.value, poll_interval)
             time.sleep(poll_interval)
 
-    def _ensure_device_selected(self) -> int:
-        if self._selected_device is None:
-            logger.error("Attempted execution without selecting a device")
-            raise ValueError("Device not selected.")
-        return self._selected_device
-
-    def submit(self, functional: PrimitiveFunctional | ExperimentFunctional) -> int:
+    def submit(self, functional: PrimitiveFunctional | ExperimentFunctional, device_id: int) -> int:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -331,6 +308,7 @@ class SpeQtrum:
             functional: A fully configured functional instance (e.g.,
                 ``Sampling`` or ``TimeEvolution``) that defines the quantum
                 workload to be executed.
+            device_id: Device identifier returned by :py:meth:`list_devices`.
 
         Returns:
             int: The numeric identifier of the created job on SpeQtrum.
@@ -347,17 +325,17 @@ class SpeQtrum:
             ) from exc
 
         logger.info("Submitting {}", type(functional).__qualname__)
-        job_id = handler(functional)
+        job_id = handler(functional, device_id)
         logger.success("Submission complete - job {}", job_id)
         return job_id
 
-    def _submit_sampling(self, sampling: Sampling) -> int:
-        device = self._ensure_device_selected()
+    def _submit_sampling(self, sampling: Sampling, device_id: int) -> int:
         payload = ExecutePayload(
             type=ExecuteType.SAMPLING,
             sampling_payload=SamplingPayload(sampling=sampling),
         )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        logger.debug("Executing Sampling on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
@@ -368,14 +346,13 @@ class SpeQtrum:
             job = JobId(**response.json())
         return job.id
 
-    def _submit_rabi_program(self, rabi_experiment: RabiExperiment) -> int:
-        device = self._ensure_device_selected()
+    def _submit_rabi_program(self, rabi_experiment: RabiExperiment, device_id: int) -> int:
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
         )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        logger.debug("Executing Rabi experiment on device {}", device)
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        logger.debug("Executing Rabi experiment on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
@@ -387,14 +364,13 @@ class SpeQtrum:
         logger.info("Rabi experiment job submitted: {}", job.id)
         return job.id
 
-    def _submit_t1_program(self, t1_experiment: T1Experiment) -> int:
-        device = self._ensure_device_selected()
+    def _submit_t1_program(self, t1_experiment: T1Experiment, device_id: int) -> int:
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
         )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        logger.debug("Executing T1 experiment on device {}", device)
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        logger.debug("Executing T1 experiment on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
@@ -406,14 +382,13 @@ class SpeQtrum:
         logger.info("T1 experiment job submitted: {}", job.id)
         return job.id
 
-    def _submit_time_evolution(self, time_evolution: TimeEvolution) -> int:
-        device = self._ensure_device_selected()
+    def _submit_time_evolution(self, time_evolution: TimeEvolution, device_id: int) -> int:
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
         )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
-        logger.debug("Executing time evolution on device {}", device)
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        logger.debug("Executing time evolution on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
@@ -425,10 +400,7 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return job.id
 
-    def _submit_variational_program(
-        self,
-        variational_program: VariationalProgram,
-    ) -> int:
+    def _submit_variational_program(self, variational_program: VariationalProgram, device_id: int) -> int:
         """Run a Variational Program on the selected device.
 
         Args:
@@ -443,14 +415,13 @@ class SpeQtrum:
         Returns:
             The numeric identifier of the created job.
         """
-        device = self._ensure_device_selected()
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(
                 variational_program=variational_program,
             ),
         )
-        json = {"device_id": device, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
