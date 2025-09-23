@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
+from typing import final
 
 import numpy as np
 
 from qilisdk.common.model import Model
-from qilisdk.common.qtensor import QTensor
+from qilisdk.common.qtensor import QTensor, expect_val
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
@@ -55,7 +56,7 @@ class TimeEvolutionResult(FunctionalResult):
         self._final_expected_values = final_expected_values if final_expected_values is not None else np.array([])
         self._expected_values = expected_values if expected_values is not None else np.array([])
         self._final_state = final_state
-        self._intermediate_states = intermediate_states
+        self._intermediate_states = intermediate_states or []
 
     @property
     def final_expected_values(self) -> np.ndarray:
@@ -88,12 +89,12 @@ class TimeEvolutionResult(FunctionalResult):
         return self._final_state
 
     @property
-    def intermediate_states(self) -> list[QTensor] | None:
+    def intermediate_states(self) -> list[QTensor]:
         """
         Get the list of intermediate quantum states recorded during the simulation.
 
         Returns:
-            list[QTensor] | None: A list of intermediate quantum states, or None if not stored.
+            list[QTensor]: A list of intermediate quantum states.
         """
         return self._intermediate_states
 
@@ -101,11 +102,15 @@ class TimeEvolutionResult(FunctionalResult):
         class_name = self.__class__.__name__
         return (
             f"{class_name}(\n"
-            f"  final_expected_values={pformat(self.final_expected_values)},\n"
-            f"  expected_values={pformat(self.expected_values)}\n"
-            f"  final_state={pformat(self.final_state)}\n"
-            f"  intermediate_states={pformat(self.intermediate_states)}\n"
-            ")"
+            + f"  final_expected_values={pformat(self.final_expected_values)},\n"
+            + (f"  expected_values={pformat(self.expected_values)}\n" if len(self.expected_values) > 0 else "")
+            + (f"  final_state={pformat(self.final_state)}\n" if self.final_state is not None else "")
+            + (
+                f"  intermediate_states={pformat(self.intermediate_states)}\n"
+                if len(self.intermediate_states) > 0
+                else ""
+            )
+            + ")"
         )
 
     def compute_cost(self, cost_model: Model) -> float:

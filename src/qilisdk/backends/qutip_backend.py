@@ -244,6 +244,9 @@ class QutipBackend(Backend):
                         aux_obs = tensor_prod([aux_obs, identity])
             elif isinstance(obs, QTensor):
                 aux_obs = obs
+            else:
+                logger.error("Unsupported observable type {}", obs.__class__.__name__)
+                raise ValueError(f"unsupported observable type of {obs.__class__}")
             if aux_obs is not None:
                 qutip_obs.append(
                     Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
