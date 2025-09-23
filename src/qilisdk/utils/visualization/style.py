@@ -23,11 +23,10 @@ from .themes import Theme, light
 _DEFAULT_FONT_PATH = Path(__file__).parent / "PlusJakartaSans-SemiBold.ttf"
 
 
-class CircuitStyle(BaseModel):
-    """All visual parameters controlling the appearance of a circuit plot."""
-
+class Style(BaseModel):
     # --- FontProperties-mapped fields (mirror matplotlib.font_manager.FontProperties) ---
     # If `fontfname` exists, it takes precedence and loads the exact TTF.
+    theme: Theme = Field(default=light, description="Colour theme.")
     fontfamily: str | list[str] | None = Field(
         default=None, description="Font family name(s), e.g. 'Outfit' or ['Outfit', 'DejaVu Sans']."
     )
@@ -50,8 +49,30 @@ class CircuitStyle(BaseModel):
         default=str(_DEFAULT_FONT_PATH), description="Absolute path to the TTF/OTF file. If present, overrides family."
     )
     math_fontfamily: str | None = Field(default=None, description="Math text family, e.g. 'dejavusans', 'cm', or None.")
-
     dpi: int = Field(default=150, description="Figure DPI.")
+    title: str | None = Field(default=None, description="Figure title.")
+
+    @property
+    def font(self) -> fm.FontProperties:
+        """
+        Construct a Matplotlib FontProperties from the configured fields.
+        If `fontfname` points to a real file, it is used (and overrides family).
+        """
+        return fm.FontProperties(
+            family=self.fontfamily,
+            style=self.fontstyle,
+            variant=self.fontvariant,
+            weight=self.fontweight,
+            stretch=self.fontstretch,
+            size=self.fontsize,
+            fname=self.fontfname,
+            math_fontfamily=self.math_fontfamily,
+        )
+
+
+class CircuitStyle(Style):
+    """All visual parameters controlling the appearance of a circuit plot."""
+
     end_wire_ext: int = Field(default=2, description="Extra space after last layer.")
     padding: float = Field(default=0.3, description="Padding around drawing (inches).")
     gate_margin: float = Field(default=0.15, description="Left/right margin per gate.")
@@ -61,8 +82,7 @@ class CircuitStyle(BaseModel):
     label_pad: float = Field(default=0.1, description="Padding before wire label.")
     bulge: str = Field(default="round", description="Box-style for gate rectangles.")
     align_layer: bool = Field(default=True, description="Align layers across wires.")
-    theme: Theme = Field(default=light, description="Colour theme.")
-    title: str | None = Field(default=None, description="Figure title.")
+
     wire_label: list[Any] | None = Field(default=None, description="Custom wire labels.")
     start_pad: float = Field(
         default=0.1, description="Minimum spacing (inches) before the first layer so wire labels fit."
@@ -75,102 +95,55 @@ class CircuitStyle(BaseModel):
     target_r: float = Field(default=0.12, description="Radius (inches) of ⊕ target circle and SWAP half-width.")
     control_r: float = Field(default=0.05, description="Radius (inches) of a filled control dot.")
 
-    @property
-    def font(self) -> fm.FontProperties:
-        """
-        Construct a Matplotlib FontProperties from the configured fields.
-        If `fontfname` points to a real file, it is used (and overrides family).
-        """
-        return fm.FontProperties(
-            family=self.fontfamily,
-            style=self.fontstyle,
-            variant=self.fontvariant,
-            weight=self.fontweight,
-            stretch=self.fontstretch,
-            size=self.fontsize,
-            fname=self.fontfname,
-            math_fontfamily=self.math_fontfamily,
-        )
 
-
-class ScheduleStyle(BaseModel):
+class ScheduleStyle(Style):
     """
     Customization options for matplotlib schedule plots, with theme support.
     """
 
-    theme: Theme = Field(default=light, description="Colour theme.")
-
     # Figure and axes
-    figsize: Optional[tuple] = (8, 5)
-    dpi: int = 150
-    grid: bool = True
-    grid_style: dict[str, Any] = Field(default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7})
+    figsize: Optional[tuple] = Field(default=(8, 5), description="Figure size in inches (width, height).")
+    grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
+    grid_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
+        description="Style dictionary for grid lines (linestyle, color, alpha, etc.).",
+    )
 
     # Title and labels
-    title_fontsize: int = 16
-    xlabel: str = "time (dt)"
-    ylabel: str = "coefficient value"
-    label_fontsize: int = 14
+    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+    xlabel: str = Field(default="time (dt)", description="Label for the x-axis.")
+    ylabel: str = Field(default="coefficient value", description="Label for the y-axis.")
+    label_fontsize: int = Field(default=14, description="Font size for axis labels.")
 
     # Legend
-    legend_loc: str = "best"
-    legend_fontsize: int = 12
-    legend_frame: bool = True
+    legend_loc: str = Field(
+        default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
+    )
+    legend_fontsize: int = Field(default=12, description="Font size for legend text.")
+    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+
     # Line style
     line_styles: dict[str, dict[str, Any]] = Field(
-        default_factory=dict
-    )  # e.g. {"Hinit": {"color": "red", "linestyle": "-", "linewidth": 2}}
-    default_line_style: dict[str, Any] = Field(default_factory=lambda: {"linestyle": "-", "linewidth": 2})
+        default_factory=dict,
+        description="Custom line style dictionary for each Hamiltonian (e.g. {label: {color, linestyle, linewidth}}).",
+    )
+    default_line_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "-", "linewidth": 2},
+        description="Default line style for Hamiltonians not in line_styles.",
+    )
 
     # Marker style
-    marker: Optional[str] = None
-    marker_size: int = 6
-
-    # Font
-    fontfamily: str | list[str] | None = Field(
-        default=None, description="Font family name(s), e.g. 'Outfit' or ['Outfit', 'DejaVu Sans']."
+    marker: Optional[str] = Field(
+        default=None, description="Matplotlib marker style for data points (e.g. 'o', 's', None for no marker)."
     )
-    fontstyle: Literal["normal", "italic", "oblique"] = Field(
-        default="normal", description="Font style: 'normal', 'italic', or 'oblique'."
-    )
-    fontvariant: Literal["normal", "small-caps"] = Field(
-        default="normal", description="Font variant: typically 'normal' or 'small-caps'."
-    )
-    fontweight: str | int = Field(
-        default="normal", description="Font weight: 'normal', 'bold', 'light', or numeric (100-900)."
-    )
-    fontstretch: str | int = Field(
-        default="normal", description="Width/condensation: 'ultra-condensed'..'ultra-expanded' or numeric."
-    )
-    fontsize: float | str = Field(
-        default=10, description="Font size in pt or keywords like 'small', 'medium', 'large'."
-    )
-    fontfname: str | None = Field(
-        default=str(_DEFAULT_FONT_PATH), description="Absolute path to the TTF/OTF file. If present, overrides family."
-    )
-    math_fontfamily: str | None = Field(default=None, description="Math text family, e.g. 'dejavusans', 'cm', or None.")
+    marker_size: int = Field(default=6, description="Size of markers if used.")
 
     # Ticks
-    xtick_fontsize: int = 12
-    ytick_fontsize: int = 12
-    tick_color: Optional[str] = None  # If None, use theme.on_background
+    xtick_fontsize: int = Field(default=12, description="Font size for x-axis tick labels.")
+    ytick_fontsize: int = Field(default=12, description="Font size for y-axis tick labels.")
+    tick_color: Optional[str] = Field(
+        default=None, description="Color for tick labels (None uses theme.on_background)."
+    )
 
     # Misc
-    tight_layout: bool = True
-
-    @property
-    def font(self) -> fm.FontProperties:
-        """
-        Construct a Matplotlib FontProperties from the configured fields.
-        If `fontfname` points to a real file, it is used (and overrides family).
-        """
-        return fm.FontProperties(
-            family=self.fontfamily,
-            style=self.fontstyle,
-            variant=self.fontvariant,
-            weight=self.fontweight,
-            stretch=self.fontstretch,
-            size=self.fontsize,
-            fname=self.fontfname,
-            math_fontfamily=self.math_fontfamily,
-        )
+    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")

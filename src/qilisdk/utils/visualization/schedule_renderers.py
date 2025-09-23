@@ -34,7 +34,7 @@ class MatplotlibScheduleRenderer:
         self.style = style or ScheduleStyle()
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
 
-    def plot(self, ax: plt.Axes | None = None, title: str | None = None) -> None:
+    def plot(self, ax: plt.Axes | None = None) -> None:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
         Args:
@@ -112,7 +112,7 @@ class MatplotlibScheduleRenderer:
             for text in leg.get_texts():
                 text.set_color(title_color)
         self.ax.set_title(
-            title or "Schedule Plot",
+            self.style.title or "Schedule Plot",
             fontsize=style.title_fontsize,
             color=title_color,
             fontweight=style.fontweight,

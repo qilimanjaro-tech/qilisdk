@@ -1,8 +1,7 @@
 import pytest
 
-from qilisdk.analog import X, Z
+from qilisdk.analog import LinearSchedule, Schedule, X, Z
 from qilisdk.analog.hamiltonian import PauliX, PauliZ
-from qilisdk.analog.schedule import LinearSchedule, Schedule
 from qilisdk.common.variables import BinaryVariable, Parameter
 
 # --- Constructor and Property Tests ---
