@@ -150,9 +150,7 @@ def test_rz_gate(angle: float):
 
     # The file's RZ uses the same form as RY in the code.
     # That might be a placeholder, but let's test correctness.
-    cos_half = np.cos(angle / 2)
-    sin_half = np.sin(angle / 2)
-    expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+    expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=complex)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
