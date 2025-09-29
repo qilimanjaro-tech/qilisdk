@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from .hamiltonian import Hamiltonian, I, PauliI, PauliX, PauliY, PauliZ, X, Y, Z
+from .linear_schedule import LinearSchedule
 from .schedule import Schedule
 
-__all__ = ["Hamiltonian", "I", "PauliI", "PauliX", "PauliY", "PauliZ", "Schedule", "X", "Y", "Z"]
+__all__ = ["Hamiltonian", "I", "LinearSchedule", "PauliI", "PauliX", "PauliY", "PauliZ", "Schedule", "X", "Y", "Z"]
