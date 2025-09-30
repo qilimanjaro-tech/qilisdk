@@ -42,7 +42,7 @@ class Schedule(Parameterizable):
         at discrete time steps.
 
         Args:
-            T (int): The total annealing time in units of 1ns.
+            T (int): The total annealing time in units of ns.
             dt (int): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
             hamiltonians (dict[str, Hamiltonian], optional): A dictionary mapping labels to Hamiltonian objects.
                 Defaults to an empty dictionary if None.

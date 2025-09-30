@@ -49,39 +49,46 @@ Install the core QiliSDK package using pip:
 pip install qilisdk
 ```
 
-### Optional Extras
+### Optional Dependencies
 
 QiliSDK supports optional modules for additional functionality:
 
-- **QaaS (Quantum-as-a-Service):**
-  To interface with Qilimanjaro’s cloud-based quantum services, install the QaaS extra:
+- **SpeQtrum:**
+  To interface with Qilimanjaro’s cloud-based quantum services, install the Speqtrum optional dependency:
 
   ```bash
-  pip install qilisdk[qaas]
+  pip install qilisdk[speqtrum]
   ```
 
-- **CUDA Acceleration:**
+- **CUDA Accelerated Simulator Backend:**
   For GPU-accelerated quantum simulation using NVIDIA GPUs, install the CUDA extra:
 
   ```bash
   pip install qilisdk[cuda]
   ```
 
-  You can also install both optional dependencies using a single command:
+- **Qutip Simulator Backend:**
+  For GPU-accelerated quantum simulation using NVIDIA GPUs, install the CUDA extra:
 
   ```bash
-  pip install qilisdk[cuda,qaas]
+  pip install qilisdk[qutip]
+  ```
+
+   **Note:**  You can also install both optional dependencies using a single command:
+
+  ```bash
+  pip install qilisdk[cuda,qutip,speqtrum]
   ```
 
 ---
 
 ## Usage
 
-QiliSDK is designed to simplify both digital and analog quantum computing workflows. This guide provides example code snippets for creating quantum circuits, performing Hamiltonian arithmetic, optimization, simulation on various backends (including CUDA and cloud-based QaaS), and using additional utility functions.
+QiliSDK is designed to simplify both digital and analog quantum computing workflows. This guide provides example code snippets for creating quantum circuits, performing Hamiltonian arithmetic, optimization, simulation on various backends (including CUDA and cloud-based using Speqtrum), and using additional utility functions.
 
 ### Digital Quantum Circuits
 
-Create and simulate quantum circuits with a flexible gate framework. The following example demonstrates how to assemble a circuit, adjust gate parameters, and execute it with the Qibo backend:
+Create and simulate quantum circuits with a flexible gate framework. The following example demonstrates how to assemble a circuit, adjust gate parameters:
 
 ```python
 import numpy as np
@@ -89,29 +96,20 @@ from qilisdk.digital import Circuit, H, RX, CNOT, M
 
 # Create a circuit with 2 qubits
 circuit = Circuit(2)
-circuit.add(H(0))              # Apply Hadamard on qubit 0
+circuit.add(H(0))  # Apply Hadamard on qubit 0
 circuit.add(RX(0, theta=np.pi))  # Apply RX rotation on qubit 0
-circuit.add(CNOT(0, 1))          # Add a CNOT gate between qubit 0 and 1
+circuit.add(CNOT(0, 1))  # Add a CNOT gate between qubit 0 and 1
 
 # Retrieve the current gate parameters
 print("Initial parameters:", circuit.get_parameter_values())
 
 # Update circuit parameters (e.g., update RX rotation angle)
 circuit.set_parameter_values([2 * np.pi])
-
-# Execute the circuit simulation using CudaBackend
-backend = CudaBackend()
-results = backend.execute(circuit)
-
-# Display the simulation output and measurement probabilities
-print("Simulation Results:")
-print(results)
-print("Probabilities:", results.probabilities)
 ```
 
-### Hamiltonian and Analog Operations
+### Hamiltonians
 
-Utilize the `Hamiltonian` class for Pauli operator arithmetic. Build expressions, iterate through terms, and even round-trip using the parse feature:
+Utilize the `Hamiltonian` class for Pauli operator arithmetic. Build expressions, iterate through terms:
 
 ```python
 from qilisdk.analog import Hamiltonian, X, Y, Z, I
@@ -124,10 +122,12 @@ print("Hamiltonian Expression:", H_expr)
 for coeff, ops in H_expr:
     print("Coefficient:", coeff, "Operators:", ops)
 
-# Parse a Hamiltonian from its string representation
-parsed_H = Hamiltonian.parse("-2j Y(0)")
-assert H_expr == parsed_H, "The Hamiltonian does not match after parsing."
+print("-"*10)
+# export hamiltonians to matrices
+print("Sparse Matrix from Hamiltonian: \n", H_expr.to_matrix()) # sparse matrix  
+# the returned matrix is sparse by default to get the dense representation call .toarray()
 ```
+
 
 ### Optimizers
 
@@ -169,13 +169,14 @@ results = client.submit(Sampling(circuit, 1000))
 print("Results:", results)
 ```
 
-### CUDA-Accelerated Simulation
+### Sample a quantum Circuit Using a CUDA-Accelerated Simulator
 
 For users with NVIDIA GPUs, the `CudaBackend` provides GPU-accelerated simulation using several simulation methods. For example, using the TENSOR_NETWORK method:
 
 ```python
-from qilisdk.extras import CudaBackend
-from qilisdk.digital import Circuit, H, M, DigitalSimulationMethod
+from qilisdk.backends import CudaBackend, CudaSamplingMethod
+from qilisdk.digital import Circuit, H, M
+from qilisdk.functionals import Sampling
 
 # Build a single-qubit circuit
 circuit = Circuit(nqubits=1)
@@ -183,65 +184,77 @@ circuit.add(H(0))
 circuit.add(M(0))
 
 # Initialize CudaBackend with the TENSOR_NETWORK simulation method
-cuda_backend = CudaBackend(digital_simulation_method=DigitalSimulationMethod.TENSOR_NETWORK)
-results = cuda_backend.execute(circuit, nshots=1000)
+backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
+results = backend.execute(Sampling(circuit))
 print("CUDA Backend Results:", results)
 ```
 
-### Time Evolution
+### Time Evolution using Qutip
 
-For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses a linear schedule to interpolate between two Hamiltonians on a CUDA backend:
+For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses a linear schedule to interpolate between two Hamiltonians on a Qutip backend:
 
 ```python
 import numpy as np
-from qilisdk.analog import Schedule, TimeEvolution, ket, X, Z, Y, tensor_prod
-from qilisdk.extras import CudaBackend
+from qilisdk.analog import Schedule, X, Z, Y
+from qilisdk.common import ket, tensor_prod
+from qilisdk.backends import QutipBackend
+from qilisdk.functionals import TimeEvolution
 
-T = 10       # Total evolution time
-dt = 0.1     # Time-step
-steps = np.linspace(0, T, int(T / dt))
+# Define total time and timestep
+T = 100
+steps = np.linspace(0, T, T)
 nqubits = 1
 
-# Define two Hamiltonians for the simulation
-H1 = sum(X(i) for i in range(nqubits))
-H2 = sum(Z(i) for i in range(nqubits))
+# Define Hamiltonians
+Hx = sum(X(i) for i in range(nqubits))
+Hz = sum(Z(i) for i in range(nqubits))
 
-# Create a schedule for the time evolution
-schedule = Schedule(
-    T,
-    dt,
-    hamiltonians={"h1": H1, "h2": H2},
-    schedule={
-        t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T}
-        for t in range(len(steps))
-    },
-)
+# Build a time‑dependent schedule
+schedule = Schedule(T)
 
-# Prepare an initial state (equal superposition)
-state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
+# Add hx with a time‐dependent coefficient function
+schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
 
-# Perform time evolution on the CUDA backend with observables to monitor
+# Add hz similarly
+schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+
+# draw the schedule
+schedule.draw()
+
+# Prepare an equal superposition initial state
+initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
+
+# Create the TimeEvolution functional
 time_evolution = TimeEvolution(
     schedule=schedule,
-    initial_state=state,
+    initial_state=initial_state,
     observables=[Z(0), X(0), Y(0)],
+    nshots=100,
+    store_intermediate_results=False,
 )
-results = time_evolution.evolve(backend=CudaBackend(), store_intermediate_results=True)
-print("Time Evolution Results:", results)
+
+# Execute on Qutip backend and inspect results
+backend = QutipBackend()
+results = backend.execute(time_evolution)
+print(results)
 ```
 
-### Variational Quantum Eigensolver (VQE)
+### Variational Programs
 
-The VQE algorithm integrates ansatz design, cost function evaluation, and classical optimization. Below is an illustrative example that sets up a VQE instance using a hardware-efficient ansatz and the SciPy optimizer:
+The `VariationalProgram` allows the user to optimized parameterized functionals, including `Sampling` and `TimeEvolution`.
+
+
+Here you find an example of building a Variational Quantum Eigensolver (VQE). To do this we need a circuit ansatz, cost function to optimize, and classical optimizer. Below is an illustrative example that sets up a VQE instance using a hardware-efficient ansatz and the SciPy optimizer:
 
 ```python
-from qilisdk.common import SciPyOptimizer
-from qilisdk.common.model import QUBO, Model
+from qilisdk.digital.gates import U2, CNOT
+from qilisdk.optimizers import SciPyOptimizer
+from qilisdk.common.model import Model
 from qilisdk.common.variables import LEQ, BinaryVariable
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.digital_result import DigitalResult
-from qilisdk.digital.vqe import VQE
-from qilisdk.extras import CudaBackend
+from qilisdk.functionals import VariationalProgram, Sampling
+from qilisdk.backends import CudaBackend
+from qilisdk.cost_functions import ModelCostFunction
 
 
 ## Define the model
@@ -260,29 +273,31 @@ con = LEQ(sum(b[i] * weights[i] for i in range(len(weights))), max_weight)
 
 model.add_constraint("max_weight", con)
 
-## Define the Ansatz: 
-n_qubits = 3
+## Define the Ansatz:
+nqubits = 3
 ansatz = HardwareEfficientAnsatz(
-    n_qubits=n_qubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate="U2", two_qubit_gate="CNOT"
+    nqubits=nqubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate=U2, two_qubit_gate=CNOT
 )
 
-## Build the VQE object
-vqe = VQE(
-    ansatz=ansatz,
-    initial_params=[0 for _ in range(ansatz.nparameters)],
-    model=model,
-)
-
-## Define the Backend and the Optimizer
-backend = CudaBackend()
+## Define the Optimizer
 optimizer = SciPyOptimizer(method="Powell")
 
+## Build the VQE object
+vqe = VariationalProgram(
+    functional=Sampling(ansatz),
+    optimizer=optimizer,
+    cost_function=ModelCostFunction(model),
+)
+
+## Define the Backend 
+backend = CudaBackend()
+
 ## Execute the VQE to find the optimal parameters
-result = vqe.execute(backend, optimizer, nshots=1000)
+result = backend.execute(vqe)
 
 ## Sample the circuit using the optimal parameters
-circuit = ansatz.get_circuit(result.optimal_parameters)
-results = backend.execute(circuit)
+ansatz.set_parameter_values(result.optimal_parameters)
+results = backend.execute(Sampling(ansatz))
 
 ## Print the probabilities
 print(results.get_probabilities())
@@ -294,7 +309,7 @@ Serialize and deserialize quantum circuits using Open QASM 2.0 grammar. The util
 
 ```python
 from qilisdk.digital import Circuit, CNOT, RX, H, M
-from qilisdk.utils import to_qasm2, from_qasm2, to_qasm2_file, from_qasm2_file
+from qilisdk.utils.openqasm2 import to_qasm2, from_qasm2, to_qasm2_file, from_qasm2_file
 
 # Create a sample circuit
 circuit = Circuit(3)
@@ -303,6 +318,8 @@ circuit.add(CNOT(0, 1))
 circuit.add(RX(2, theta=3.1415))
 circuit.add(M(0, 1, 2))
 
+print("Initial Circuit:")
+circuit.draw()
 # Serialize to QASM string
 qasm_code = to_qasm2(circuit)
 print("Generated QASM:")
@@ -314,20 +331,28 @@ reconstructed_circuit = from_qasm2(qasm_code)
 # Save to and load from a file
 to_qasm2_file(circuit, "circuit.qasm")
 reconstructed_circuit = from_qasm2_file("circuit.qasm")
+print()
+print("Reconstructed Circuit:")
+reconstructed_circuit.draw()
+
+
 ```
 
 ### YAML Serialization
 
-Easily save and restore circuits, hamiltonians, simulation and execution results, and virtually any other class in YAML format using the provided serialization functions:
+Easily save and restore circuits, Hamiltonians, simulation and execution results, and virtually any other class in YAML format using the provided serialization functions:
 
 ```python
 from qilisdk.digital import Circuit, H, CNOT, M
-from qilisdk.utils import serialize, deserialize, serialize_to, deserialize_from
+from qilisdk.utils.serialization import serialize, deserialize, serialize_to, deserialize_from
 
 circuit = Circuit(2)
 circuit.add(H(0))
 circuit.add(CNOT(0, 1))
 circuit.add(M(0, 1))
+
+print("Initial Circuit:")
+circuit.draw()
 
 # Serialize a circuit to a YAML string
 yaml_string = serialize(circuit)
@@ -336,8 +361,11 @@ yaml_string = serialize(circuit)
 restored_circuit = deserialize(yaml_string, cls=Circuit)
 
 # Alternatively, work with files:
-serialize_to(circuit, 'circuit.yml')
-restored_circuit = deserialize_from('circuit.yml', cls=Circuit)
+serialize_to(circuit, "circuit.yml")
+restored_circuit = deserialize_from("circuit.yml", cls=Circuit)
+print()
+print("Reconstructed Circuit:")
+restored_circuit.draw()
 ```
 
 ---
@@ -377,11 +405,15 @@ This section covers how to set up a local development environment for qilisdk, r
      uv sync
      ```
      This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `mypy`, `towncrier`, etc.).
-   - To install extra dependencies such as `qibo-backend`, run:
+   - To install extra dependencies such as `CudaBackend`, run:
      ```bash
-     uv sync --extra qibo-backend -extra ...
+     uv sync --extra cuda -extra ...
      ```
      This sets up a virtual environment and installs all pinned dependencies (previous), plus the specified extras.
+     you can also install all the optional dependencies and groups by running;
+     ```bash
+     uv sync --all-extras --all-groups
+     ```
 
 4. **Activate the virtual environment**:
    - uv typically creates and manages its own environment, e.g., `.venv/`.
@@ -451,7 +483,7 @@ changes/123.feature.rst
 ```
 Inside this file, you briefly describe the new feature:
 ```rst
-Added a new `cool_feature` in the `qilisdk.extras` module.
+Added a new `cool_feature` in the `qilisdk.backend` module.
 ```
 Instead of manually creating the file, you can run:
 ```bash
