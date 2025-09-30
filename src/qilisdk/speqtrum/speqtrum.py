@@ -28,7 +28,7 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.settings import get_settings
-from qilisdk.speqtrum.analog_experiments import ExperimentFunctional, RabiExperiment, T1Experiment
+from qilisdk.speqtrum.experiments.analog_experiments import ExperimentFunctional, RabiExperiment, T1Experiment
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .speqtrum_models import (

@@ -26,7 +26,6 @@ def dense(ham: Hamiltonian) -> np.ndarray:
 
 
 def test_parameters():
-
     x = BinaryVariable("x")
 
     with pytest.raises(

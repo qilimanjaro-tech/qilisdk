@@ -4,7 +4,6 @@ from qilisdk.common.variables import Parameter
 
 
 def test_linear_schedule_interpolation():
-
     T = 10
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
@@ -28,7 +27,6 @@ def test_linear_schedule_interpolation():
 
 
 def test_linear_schedule_edge_cases():
-
     T = 10
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
@@ -43,7 +41,6 @@ def test_linear_schedule_edge_cases():
 
 
 def test_linear_schedule_expression():
-
     T = 10
     dt = 1
     p = Parameter("p", 2.0)
