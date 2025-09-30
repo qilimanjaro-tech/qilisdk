@@ -726,6 +726,9 @@ class Hamiltonian(Parameterizable):
         out._sub_inplace(self)
         return out.simplify()
 
+    def __neg__(self) -> Hamiltonian:
+        return -1 * self
+
     def __mul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():
             raise ValueError("Term provided contains generic variables that are not Parameter.")

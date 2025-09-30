@@ -15,15 +15,15 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents an analyti
 
 **Common Pauli operators**:
 
-- ``X(i)`` - Pauli_X acting on qubit *i*  
-- ``Y(i)`` - Pauli_Y acting on qubit *i*  
-- ``Z(i)`` - Pauli_Z acting on qubit *i*  
+- ``X(i)`` - Pauli X acting on qubit *i*  
+- ``Y(i)`` - Pauli Y acting on qubit *i*  
+- ``Z(i)`` - Pauli Z acting on qubit *i*  
 
 **Arithmetic operations**:
 
 - Addition: ``H1 + H2``  
-- Scalar multiplication: ``alpha * H``  
-- Operator multiplication: ``Z(i) * Z(j)``  
+- Scalar multiplication: ``5 * H``  
+- Operator multiplication: ``Z(0) * Z(1)``  
 
 Example: Ising Hamiltonian
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -37,7 +37,6 @@ To define an Ising Hamiltonian of the form:
 you can use the Pauli ``Z`` operators from the library:
 
 .. code-block:: python
-
     from qilisdk.analog import Z, X, Y
 
     nqubits = 3
@@ -49,16 +48,13 @@ you can use the Pauli ``Z`` operators from the library:
     h = [1, 2, 3]
 
     # Pairwise ZZ couplings
-    coupling = sum(
-        J[i][j] * Z(i) * Z(j)
-        for i in range(nqubits) for j in range(i + 1, nqubits)
-    )
+    coupling = sum(J[i][j] * Z(i) * Z(j) for i in range(nqubits) for j in range(nqubits))
 
     # Local fields
     fields = sum(h[j] * Z(j) for j in range(nqubits))
 
     # Ising Hamiltonian
-    H = -coupling - fields
+    H = - coupling - fields
 
     print(H)
 
@@ -75,8 +71,8 @@ Schedule
 
 The :class:`~qilisdk.analog.schedule.Schedule` class defines how one or more Hamiltonians evolve over time. You specify:
 
-- **total_time** (float): Duration of the evolution.  
-- **time_step** (float): Time increment between discrete steps.  
+- **T** (int): The total duration of the time evolution in units of nano seconds.
+- **dt** (int): Time increment between discrete steps in units of nano seconds. The minimum allowed value is 1. 
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to Hamiltonian instances.  
 - **schedule_map** (dict[int, dict[str, float]]): For each time-step index, map labels to coefficients.
 
@@ -90,8 +86,8 @@ Example 1: Dictionary-Based Schedule
     from qilisdk.analog import Schedule
     from qilisdk.analog.hamiltonian import X, Z
 
-    dt = 0.1
-    T = 1
+    dt = 1
+    T = 10
     steps = np.linspace(0, T, int(T / dt))
 
     # Define two Hamiltonians
@@ -144,9 +140,7 @@ Once constructed, you can refine or extend the schedule:
 
 .. code-block:: python
 
-    schedule.add_schedule_step(time_step=11, {
-        "h1": 0.3
-    })
+    schedule.add_schedule_step(time_step=11, hamiltonian_coefficient_list={"h1": 0.3})
 
 **Update  an existing coefficient:**
 
