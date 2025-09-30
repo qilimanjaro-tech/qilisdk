@@ -17,47 +17,23 @@ from abc import ABC
 from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
+import numpy as np
+
 from qilisdk.functionals.functional import Functional
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.speqtrum.analog_experiments_result import RabiExperimentResult, T1ExperimentResult
+from qilisdk.speqtrum.analog_experiments_result import ExperimentResult, RabiExperimentResult, T1ExperimentResult
 from qilisdk.yaml import yaml
 
-if TYPE_CHECKING:
-    from ruamel.yaml.nodes import ScalarNode
-    from ruamel.yaml.representer import RoundTripRepresenter
+# if TYPE_CHECKING:
+#     from ruamel.yaml.nodes import ScalarNode
+#     from ruamel.yaml.representer import RoundTripRepresenter
 
-TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
-
-
-@yaml.register_class
-class ExperimentType(str, Enum):
-    Rabi = "rabi_experiment"
-    T1 = "t1_experiment"
-
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: ExperimentType) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the Operation.
-        """
-        return representer.represent_scalar("!Operation", f"{node.value}")
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> ExperimentType:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            Operation: The Operation instance created from the YAML node value.
-        """
-        return cls(node.value)
+TResult_co = TypeVar("TResult_co", bound=ExperimentResult, covariant=True)
 
 
 @yaml.register_class
 class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
-    experiment_type: ExperimentType
+    ...
 
 
 @yaml.register_class
@@ -65,50 +41,55 @@ class RabiExperiment(ExperimentFunctional[RabiExperimentResult]):
     """A Rabi experiment on a single qubit."""
 
     result_type: ClassVar[type[RabiExperimentResult]] = RabiExperimentResult
-    experiment_type = ExperimentType.Rabi
 
-    def __init__(self, qubit_id: int) -> None:
+    def __init__(self, qubit_id: int, drive_duration_values: np.ndarray) -> None:
         """
         Args:
             qubit_id (int): The id of the qubit on which the Rabi experiment is performed.
         """
         self._qubit_id = qubit_id
+        self._drive_duration_values = drive_duration_values
 
     @property
     def qubit_id(self) -> int:
         """The id of the qubit on which the Rabi experiment is performed."""
         return self._qubit_id
 
+    @property
+    def drive_duration_values(self) -> np.ndarray:
+        """The values for the drive duration."""
+        return self._drive_duration_values
+
 
 @yaml.register_class
 class T1Experiment(ExperimentFunctional[T1ExperimentResult]):
-    """A T1 experiment on a single qubit."""
+    ...
+#     """A T1 experiment on a single qubit."""
 
-    result_type: ClassVar[type[T1ExperimentResult]] = T1ExperimentResult
-    experiment_type = ExperimentType.T1
+#     result_type: ClassVar[type[T1ExperimentResult]] = T1ExperimentResult
 
-    def __init__(self, qubit_id: int, pulse_duration: int, delay_between_pulses: int) -> None:
-        """
-        Args:
-            qubit_id (int): The id of the qubit on which the T1 experiment is performed.
-            pulse_duration (int): The duration of the pulse used in the T1 experiment.
-            delay_between_pulses (int): The delay between the pulse and the measurement pulse in the T1 experiment.
-        """
-        self._qubit_id = qubit_id
-        self._pulse_duration = pulse_duration
-        self._delay_between_pulses = delay_between_pulses
+#     def __init__(self, qubit_id: int, pulse_duration: int, delay_between_pulses: int) -> None:
+#         """
+#         Args:
+#             qubit_id (int): The id of the qubit on which the T1 experiment is performed.
+#             pulse_duration (int): The duration of the pulse used in the T1 experiment.
+#             delay_between_pulses (int): The delay between the pulse and the measurement pulse in the T1 experiment.
+#         """
+#         self._qubit_id = qubit_id
+#         self._pulse_duration = pulse_duration
+#         self._delay_between_pulses = delay_between_pulses
 
-    @property
-    def qubit_id(self) -> int:
-        """The id of the qubit on which the T1 experiment is performed."""
-        return self._qubit_id
+#     @property
+#     def qubit_id(self) -> int:
+#         """The id of the qubit on which the T1 experiment is performed."""
+#         return self._qubit_id
 
-    @property
-    def pulse_duration(self) -> int:
-        """The duration of the pulse used in the T1 experiment."""
-        return self._pulse_duration
+#     @property
+#     def pulse_duration(self) -> int:
+#         """The duration of the pulse used in the T1 experiment."""
+#         return self._pulse_duration
 
-    @property
-    def delay_between_pulses(self) -> int:
-        """The delay between the pulse and the measurement pulse in the T1 experiment."""
-        return self._delay_between_pulses
+#     @property
+#     def delay_between_pulses(self) -> int:
+#         """The delay between the pulse and the measurement pulse in the T1 experiment."""
+#         return self._delay_between_pulses
