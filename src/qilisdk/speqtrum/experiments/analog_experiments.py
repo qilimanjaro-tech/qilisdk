@@ -56,7 +56,7 @@ class RabiExperiment(ExperimentFunctional[RabiExperimentResult]):
         Args:
             qubit (int): The id of the qubit on which the Rabi experiment is performed.
         """
-        self._qubit = qubit
+        super().__init__(qubit=qubit)
         self._drive_duration_values = drive_duration_values
 
     @property
