@@ -724,6 +724,63 @@ class Hamiltonian(Parameterizable):
         hamiltonian.simplify()
         return hamiltonian
 
+    def commutator(self, h: Hamiltonian) -> Hamiltonian:
+        """compute the commutator of the current hamiltonian with another hamiltonian (h)
+
+        Args:
+            h (Hamiltonian): the second hamiltonian.
+
+        Returns:
+            Hamiltonian: the commutator.
+        """
+        h0 = copy.copy(self)
+        return h0 * h - h * h0
+
+    def anticommutator(self, h: Hamiltonian) -> Hamiltonian:
+        """compute the anticommutator of the current hamiltonian with another hamiltonian (h)
+
+        Args:
+            h (Hamiltonian): the second hamiltonian.
+
+        Returns:
+            Hamiltonian: the anticommutator.
+        """
+        h0 = copy.copy(self)
+        return h0 * h + h * h0
+
+    def vector_norm(self) -> float:
+        """
+        Returns:
+            float: the vector norm of the hamiltonian.
+        """
+        s = 0
+        for coeff, _ in self:
+            s += np.conj(coeff) * coeff
+        return np.real(np.sqrt(s))
+
+    def frobenius_norm(self) -> float:
+        """
+        Returns:
+            float: the forbenius norm of the hamiltonian.
+        """
+        n = self.nqubits
+        s = 0
+        for coeff, _ in self:
+            s += np.conj(coeff) * coeff
+        return np.real(np.sqrt(s) * np.sqrt(2**n))
+
+    def trace(self) -> Number:
+        """
+        Returns:
+            float: the trace of the hamiltonian.
+        """
+        t = self._elements.get((PauliI(0),), 0)
+        if isinstance(t, Parameter):
+            return t.evaluate()
+        if isinstance(t, Term):
+            return t.evaluate({})
+        return t
+
     # ------- Internal multiplication helpers --------
 
     @staticmethod
