@@ -18,11 +18,13 @@ import re
 from abc import ABC
 from collections import defaultdict
 from functools import reduce
+from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
 from scipy.sparse import csc_array, identity, kron, spmatrix
 
+from qilisdk.common import qtensor
 from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.qtensor import QTensor
 from qilisdk.common.variables import Parameter, Term
@@ -409,16 +411,27 @@ class Hamiltonian(Parameterizable):
             result += coeff * self._apply_operator_on_qubit(term)
         return result
 
-    def to_qtensor(self, padding: int = 0) -> QTensor:
+    def to_qtensor(self, total_nqubits: int | None = None) -> QTensor:
         """Return the full matrix representation of the Hamiltonian by summing over all terms in the form of a QTensor-
 
         Args:
-            padding (int, optional): adding extra dimensions to the hamiltonian. Defaults to 0.
+            total_nqubits (int, optional): Specify the total number of qubits that this hamiltonian acts on. Defaults to None.
 
         Returns:
             QTensor: The QTensor object representation of the Hamiltonian.
+
+        Raises:
+            ValueError: If the total_nqubits provided is lower than the number of qubits effected by the hamiltonian.
         """
-        dim = 2 ** (self.nqubits + padding)
+
+        nqubits = total_nqubits or self.nqubits
+        padding = nqubits - self.nqubits
+        if nqubits < self.nqubits:
+            raise ValueError(
+                f"The total number of qubits can't be less than the number of the qubits effected by this hamiltonian ({self.nqubits})"
+            )
+
+        dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
         result = csc_array(np.zeros((dim, dim), dtype=complex))
@@ -538,6 +551,69 @@ class Hamiltonian(Parameterizable):
                 parts.append(coeff_str + ops_str)
 
         return " ".join(parts)
+
+    @classmethod
+    def from_qtensor(cls, tensor: QTensor, tol: float = 1e-10, prune: float = 1e-12) -> Hamiltonian:
+        """
+        Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
+        returning a qilisdk.analog.Hamiltonian.
+
+        Args:
+            tol (float): Hermiticity check tolerance.
+            prune (float): Drop coefficients with |c| < prune to reduce numerical noise.
+
+        Returns:
+            Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
+
+        Raises
+            ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
+        """
+        A = np.asarray(tensor.dense)
+
+        dim = tensor.shape[0]
+        n = round(np.log2(dim))
+        if 2**n != dim:
+            raise ValueError(f"Matrix dimension {dim} is not a power of two.")
+        if not np.allclose(A, A.conj().T, atol=tol):
+            raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
+
+        # QiliSDK Pauli constructors indexed by qubit id
+        pauli_for: dict[int, Callable[[int], Hamiltonian]] = {0: I, 1: X, 2: Y, 3: Z}
+
+        # Normalization from orthonormality: Tr(P_a P_b) = 2^n δ_ab
+        norm = 1.0 / (2**n)
+
+        # Prebuild per-qubit operator “letters” so we can construct full strings quickly
+
+        H = Hamiltonian()  # start additive Hamiltonian expression
+        # Full Pauli basis (includes identity on any subset automatically)
+        for word in product((0, 1, 2, 3), repeat=n):
+            # Compose the word into a QiliSDK operator acting on the proper qubits
+            # Example word=(3,1,0) for n=3 -> Z(0)*X(1)*I(2)
+            op = Hamiltonian()
+            for q, letter in enumerate(word):
+                # multiply by the operator on qubit q
+                op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
+
+            # Convert to dense once; no padding needed because it spans all n qubits
+            P_dense = op.to_qtensor(n).dense
+
+            # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
+            c = norm * np.trace(A @ P_dense)
+
+            # Numerical safety: coefficients should be real for Hermitian A and P
+            if abs(c.imag) < tol:
+                c = c.real
+
+            if abs(c) > prune:
+                H += c * op
+
+        # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
+        if not np.allclose(H.to_qtensor().dense, A, atol=max(10 * prune, 1e-9)):
+            # If this triggers, consider lowering `prune` or raising `tol`.
+            raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
+
+        return H
 
     @classmethod
     def parse(cls, hamiltonian_str: str) -> Hamiltonian:
