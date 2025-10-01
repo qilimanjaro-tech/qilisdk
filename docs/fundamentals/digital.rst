@@ -91,16 +91,17 @@ Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit
     from qilisdk.digital import Circuit
 
     # Create a 3-qubit circuit
-    circuit = Circuit(num_qubits=3)
+    circuit = Circuit(nqubits=3)
 
 **Adding Gates**
 
 .. code-block:: python
 
-    from qilisdk.digital import H, CNOT
+  from qilisdk.digital import H, CNOT
 
-    circuit.add(H(0))         # Hadamard on qubit 0
-    circuit.add(CNOT(0, 2))   # CNOT: control 0 → target 2
+  circuit.add(H(0))  # Hadamard on qubit 0
+  circuit.add(CNOT(0, 1))  # CNOT: control 0 → target 2
+  circuit.draw()
 
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -114,19 +115,43 @@ Circuits can include parameterized gates. Adding them is similar to regular gate
 
     circuit.add(RX(0, theta=np.pi))
 
-You can retrieve the current parameter values:
+You can retrieve the current parameter:
 
 .. code-block:: python
 
-    print("Initial parameters:", circuit.get_parameter_values())
+    print("Initial Parameters:", circuit.get_parameters())
+
 
 **Output:**
 
 ::
 
-    Initial parameters: [3.141592653589793]
+    Initial Parameters: {'RX(0)_theta_0': 3.141592653589793}
 
-To update parameter values:
+
+You can also retrieve the current parameter values only:
+
+.. code-block:: python
+
+    print("Initial parameter values:", circuit.get_parameter_values())
+
+
+**Output:**
+
+::
+
+    Initial parameter values: [3.141592653589793]
+
+
+To update parameter by key:
+
+.. code-block:: python
+
+    circuit.set_parameters({"RX(0)_theta_0": 2 * np.pi})
+
+
+
+To update parameter by value:
 
 .. code-block:: python
 
