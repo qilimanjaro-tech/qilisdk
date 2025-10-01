@@ -23,8 +23,8 @@ from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
-from qilisdk.speqtrum.experiments.analog_experiments import RabiExperiment, T1Experiment
-from qilisdk.speqtrum.experiments.analog_experiments_result import RabiExperimentResult, T1ExperimentResult
+from qilisdk.speqtrum.experiments.experiment_functional import RabiExperiment, T1Experiment
+from qilisdk.speqtrum.experiments.experiment_result import RabiExperimentResult, T1ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 

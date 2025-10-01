@@ -17,7 +17,7 @@ from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 from qilisdk.functionals.functional import Functional
-from qilisdk.speqtrum.experiments.experiment_functional_results import (
+from qilisdk.speqtrum.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
@@ -43,7 +43,6 @@ class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
     def qubit(self) -> int:
         """The id of the qubit on which the Rabi experiment is performed."""
         return self._qubit
-
 
 
 @yaml.register_class

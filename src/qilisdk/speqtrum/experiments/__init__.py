@@ -11,7 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .analog_experiments import RabiExperiment, T1Experiment
-from .analog_experiments_result import Dimension, RabiExperimentResult, T1ExperimentResult
+from .experiment_functional import ExperimentFunctional, RabiExperiment, T1Experiment
+from .experiment_result import Dimension, ExperimentResult, RabiExperimentResult, T1ExperimentResult
 
-__all__ = ["Dimension", "RabiExperiment", "RabiExperimentResult", "T1Experiment", "T1ExperimentResult"]
+__all__ = [
+    "Dimension",
+    "ExperimentFunctional",
+    "ExperimentResult",
+    "RabiExperiment",
+    "RabiExperimentResult",
+    "T1Experiment",
+    "T1ExperimentResult",
+]
