@@ -17,14 +17,15 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.functionals.variational_program_result import VariationalProgramResult
-from qilisdk.speqtrum.experiments.experiment_functional import RabiExperiment, T1Experiment
-from qilisdk.speqtrum.experiments.experiment_result import RabiExperimentResult, T1ExperimentResult
+from qilisdk.functionals import (
+    Sampling,
+    SamplingResult,
+    TimeEvolution,
+    TimeEvolutionResult,
+    VariationalProgram,
+    VariationalProgramResult,
+)
+from qilisdk.speqtrum.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 
