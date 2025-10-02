@@ -22,7 +22,7 @@ from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
-from scipy.sparse import csc_array, identity, kron, spmatrix
+from scipy.sparse import csr_matrix, identity, kron, spmatrix
 
 from qilisdk.common import qtensor
 from qilisdk.common.parameterizable import Parameterizable
@@ -391,7 +391,7 @@ class Hamiltonian(Parameterizable):
             op = next((t for t in terms if t.qubit == q), None)
             if op is not None:
                 # Wrap the operator's matrix as a sparse matrix.
-                factors.append(csc_array(np.array(op.matrix)))
+                factors.append(csr_matrix(np.array(op.matrix)))
             else:
                 factors.append(identity(2, format="csc"))
         # Compute the tensor (Kronecker) product over all qubits.
@@ -406,7 +406,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csc_array(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -434,7 +434,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csc_array(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
@@ -574,7 +574,7 @@ class Hamiltonian(Parameterizable):
         n = round(np.log2(dim))
         if 2**n != dim:
             raise ValueError(f"Matrix dimension {dim} is not a power of two.")
-        if not np.allclose(A, A.conj().T, atol=tol):
+        if not tensor.is_hermitian():
             raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
 
         # QiliSDK Pauli constructors indexed by qubit id
@@ -609,7 +609,7 @@ class Hamiltonian(Parameterizable):
                 H += c * op
 
         # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
-        if not np.allclose(H.to_qtensor().dense, A, atol=max(10 * prune, 1e-9)):
+        if not np.allclose(H.to_qtensor(n).dense, A, atol=max(10 * prune, 1e-9)):
             # If this triggers, consider lowering `prune` or raising `tol`.
             raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
 
