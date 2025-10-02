@@ -59,8 +59,8 @@ class Schedule(Parameterizable):
         # if not isinstance(dt, int):
         #     raise ValueError("dt must be an integer")
 
-        if not np.isclose(abs(T % dt), 0):
-            raise ValueError("T must be divisible by dt.")
+        # if not np.isclose(abs(T % dt), 0):
+        #     raise ValueError("T must be divisible by dt.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
