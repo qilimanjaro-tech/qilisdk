@@ -75,10 +75,10 @@ class Device(SpeQtrumModel):
     # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
     id: int = Field(...)
     code: str = Field(...)
+    nqubits: int = Field(...)
     name: str = Field(...)
     type: DeviceType = Field(...)
     status: DeviceStatus = Field(...)
-    pending_jobs: int = Field(alias="number_pending_jobs")
     static_features: dict
     dynamic_features: dict
 
@@ -230,13 +230,30 @@ class ExecuteResult(SpeQtrumModel):
 
 
 class JobStatus(str, Enum):
-    NOT_SENT = "not_sent"
+    "Job has not been submitted to the Lab api"
+
     PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    ERROR = "error"
+    "Job has been queued but not yet validated"
+    VALIDATING = "validating"
+    "Job has been validated and is queued for execution"
     QUEUED = "queued"
+    "Job is being executed on the device"
+    RUNNING = "running"
+    "Job finished successfully"
+    COMPLETED = "completed"
+    "Job failed due to an error"
+    ERROR = "error"
+    "Job was cancelled by the user or system"
     CANCELLED = "cancelled"
+    "Job failed due to timeout"
+    TIMEOUT = "timeout"
+
+
+class JobType(str, Enum):
+    DIGITAL = "digital"
+    PULSE = "pulse"
+    ANALOG = "analog"
+    VARIATIONAL = "variational"
 
 
 class JobId(SpeQtrumModel):
@@ -256,14 +273,19 @@ class JobInfo(JobId):
     device_id: int = Field(...)
     status: JobStatus = Field(...)
     created_at: AwareDatetime = Field(...)
-    modified_at: AwareDatetime | None = None
+    updated_at: AwareDatetime | None = None
+    completed_at: AwareDatetime | None = None
 
     @field_validator("created_at", mode="before")
     def _parse_created_at(cls, v):
         return parsedate_to_datetime(v) if isinstance(v, str) else v
 
-    @field_validator("modified_at", mode="before")
-    def _parse_modified_at(cls, v):
+    @field_validator("updated_at", mode="before")
+    def _parse_updated_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
+
+    @field_validator("completed_at", mode="before")
+    def _parse_completed_at(cls, v):
         return parsedate_to_datetime(v) if isinstance(v, str) else v
 
 
@@ -275,6 +297,7 @@ class JobDetail(JobInfo):
 
     payload: ExecutePayload | None = None
     result: ExecuteResult | None = None
+    jobType: JobType | None = None
     logs: str | None = None
     error: str | None = None
     error_logs: str | None = None
