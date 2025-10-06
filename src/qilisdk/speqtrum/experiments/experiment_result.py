@@ -24,40 +24,97 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class Dimension:
+    """Represents a labeled dimension in an experiment sweep.
+
+    A `Dimension` defines one or more sweep parameters, such as drive
+    amplitude, frequency, or delay time, together with their associated
+    numerical values.
+
+    Attributes:
+        labels (list[str]): Human-readable labels for the sweep parameters.
+        values (list[np.ndarray]): Numeric arrays representing the values
+            corresponding to each label.
+    """
     def __init__(self, labels: list[str], values: list[np.ndarray]) -> None:
+        """Initialize a Dimension object.
+
+        Args:
+            labels (list[str]): Labels describing each dimension (e.g. ``["Drive amplitude"]``).
+            values (list[np.ndarray]): Numerical arrays for the corresponding parameter values.
+        """
         self.labels = labels
         self.values = values
 
 
 @yaml.register_class
 class ExperimentResult(FunctionalResult):
+    """Base class for storing and visualizing experiment results.
+
+    This class defines common utilities for handling experimental data,
+    including computation of S21 parameters and automatic 1D or 2D plotting.
+    It can be subclassed to represent specific experiments (e.g. Rabi, T1).
+
+    Attributes:
+        plot_title (str): Default title for plots, defined by subclasses.
+        qubit (int): The qubit index associated with the experiment.
+        data (np.ndarray): Raw experiment data, with the last axis containing
+            the real and imaginary parts of the S21 parameter.
+        dims (list[Dimension]): Sweep dimensions describing the experiment.
+    """
     plot_title: ClassVar[str]
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
+        """Initialize an experiment result.
+
+        Args:
+            qubit (int): The qubit index on which the experiment was performed.
+            data (np.ndarray): Raw experimental data array.
+            dims (list[Dimension]): Sweep dimensions of the experiment.
+        """
         self.qubit = qubit
         self.data = data
         self.dims = dims
 
     @property
     def s21(self) -> np.ndarray:
+        """Complex S21 transmission parameter.
+
+        Returns:
+            np.ndarray: The complex-valued S21 response computed as ``Re + i·Im``.
+        """
         return self.data[..., 0] + 1j * self.data[..., 1]
 
     @property
     def s21_modulus(self) -> np.ndarray:
+        """Magnitude of the S21 parameter.
+
+        Returns:
+            np.ndarray: The absolute value of the S21 parameter.
+        """
         return np.abs(self.s21)
 
     @property
     def s21_db(self) -> np.ndarray:
+        """Magnitude of S21 in decibels (dB).
+
+        Returns:
+            np.ndarray: 20·log10(|S21|) expressed in dB.
+        """
         return 20 * np.log10(self.s21_modulus)
 
     def plot(self, save_to: str | None = None) -> None:
-        """Plots the S21 parameter from the experiment results.
+        """Plot the S21 parameter from experiment results.
+
+        Automatically detects whether the dataset is 1D or 2D and creates
+        the appropriate figure. Optionally saves the figure to disk.
 
         Args:
-            save_to (str, optional): If given, save the plot the the specified path. Defaults to None.
+            save_to (str | None): Optional path or directory to save the
+                generated plot. If a directory is provided, the filename is
+                automatically generated as ``{plot_title}_qubit{qubit}.png``.
 
         Raises:
-            NotImplementedError: If the data has more than 2 dimensions.
+            NotImplementedError: If the experiment data has more than 2 dimensions.
         """
 
         def save_figure(figure: Figure, save_to: str | Path) -> None:
@@ -164,9 +221,21 @@ class ExperimentResult(FunctionalResult):
 
 @yaml.register_class
 class RabiExperimentResult(ExperimentResult):
+    """Result container for Rabi experiments.
+
+    Attributes:
+        plot_title (str): Default title for the Rabi experiment plot.
+    """
+
     plot_title: ClassVar[str] = "Rabi"
 
 
 @yaml.register_class
 class T1ExperimentResult(ExperimentResult):
+    """Result container for T1 relaxation experiments.
+
+    Attributes:
+        plot_title (str): Default title for the T1 experiment plot.
+    """
+
     plot_title: ClassVar[str] = "T1"
