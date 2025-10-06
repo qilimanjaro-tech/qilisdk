@@ -24,7 +24,6 @@ import httpx
 from loguru import logger
 from pydantic import TypeAdapter
 
-import qilisdk
 from qilisdk.functionals import Sampling, TimeEvolution, VariationalProgram
 from qilisdk.settings import get_settings
 from qilisdk.speqtrum.experiments import ExperimentFunctional, RabiExperiment, T1Experiment
