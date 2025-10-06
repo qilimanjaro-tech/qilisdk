@@ -81,15 +81,6 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     assert q._token is tok
 
 
-def test_set_and_read_selected_device(monkeypatch):
-    """`set_device` should persist the chosen id and `selected_device` must return it."""
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    client = speqtrum.SpeQtrum()
-
-    client.set_device(3)
-    assert client.selected_device == 3
-
-
 def test_submit_dispatches_to_sampling_handler(monkeypatch):
     """`submit` must route to _execute_sampling when given a Sampling instance."""
 
@@ -104,10 +95,10 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, _: 99, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id: 99, raising=True)
 
     q = speqtrum.SpeQtrum()
-    assert q.submit(FakeSampling()) == 99
+    assert q.submit(FakeSampling(), 0) == 99
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
@@ -119,7 +110,7 @@ def test_submit_unknown_functional_raises(monkeypatch):
         pass
 
     with pytest.raises(NotImplementedError):
-        client.submit(SomethingElse())
+        client.submit(SomethingElse(), device_id=0)
 
 
 def test_wait_for_job_completes(monkeypatch):

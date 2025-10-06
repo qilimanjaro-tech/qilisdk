@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .circuit_renderers import CircuitStyle
+from .style import CircuitStyle, ScheduleStyle
 from .themes import Theme, dark, light
 
 __all__ = [
     "CircuitStyle",
+    "ScheduleStyle",
     "Theme",
     "dark",
     "light",

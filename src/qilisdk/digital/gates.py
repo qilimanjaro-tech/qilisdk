@@ -853,9 +853,7 @@ class RZ(BasicGate):
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
-        cos_half = np.cos(phi / 2)
-        sin_half = np.sin(phi / 2)
-        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
 
 
 @yaml.register_class

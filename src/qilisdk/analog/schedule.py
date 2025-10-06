@@ -20,6 +20,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.common.parameterizable import Parameterizable
 from qilisdk.common.variables import BaseVariable, Number, Parameter, Term
+from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
 
@@ -27,8 +28,8 @@ from qilisdk.yaml import yaml
 class Schedule(Parameterizable):
     def __init__(
         self,
-        T: float,
-        dt: float,
+        T: int,
+        dt: int = 1,
         hamiltonians: dict[str, Hamiltonian] | None = None,
         schedule: dict[int, dict[str, float | Term]] | None = None,
     ) -> None:
@@ -41,8 +42,8 @@ class Schedule(Parameterizable):
         at discrete time steps.
 
         Args:
-            T (float): The total annealing time.
-            dt (float): The time step for the annealing process. Note that T needs to be divisible by dt.
+            T (int): The total annealing time in units of 1ns.
+            dt (int): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
             hamiltonians (dict[str, Hamiltonian], optional): A dictionary mapping labels to Hamiltonian objects.
                 Defaults to an empty dictionary if None.
             schedule (dict[int, dict[str, float]], optional): A dictionary where keys are time step indices (integers)
@@ -52,7 +53,12 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-
+        if not isinstance(T, int):
+            raise ValueError("T must be an integer")
+        if not isinstance(dt, int):
+            raise ValueError("dt must be an integer")
+        if abs(T % dt) != 0:
+            raise ValueError("T must be divisible by dt.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
@@ -126,22 +132,22 @@ class Schedule(Parameterizable):
         return dict(sorted(out_dict.items()))
 
     @property
-    def T(self) -> float:
+    def T(self) -> int:
         """
         Get the total annealing time.
 
         Returns:
-            float: The total time T.
+            int: The total time T.
         """
         return self._T
 
     @property
-    def dt(self) -> float:
+    def dt(self) -> int:
         """
         Get the time step duration.
 
         Returns:
-            float: The duration of each time step.
+            int: The duration of each time step.
         """
         return self._dt
 
@@ -268,7 +274,6 @@ class Schedule(Parameterizable):
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
                 time_step = schedule(t, **kwargs)
-                self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
                 if isinstance(time_step, Term):
                     for v in time_step.variables():
                         if not isinstance(v, Parameter):
@@ -282,6 +287,7 @@ class Schedule(Parameterizable):
                             f"The schedule can only contain Parameters, but a generic variable was provided ({time_step})"
                         )
                     self._parameters[time_step.label] = time_step
+                self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
 
     def add_schedule_step(self, time_step: int, hamiltonian_coefficient_list: dict[str, float | Term]) -> None:
         """
@@ -410,7 +416,7 @@ class Schedule(Parameterizable):
                         break
         return ham.get_static_hamiltonian()
 
-    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
+    def get_coefficient(self, time_step: int, hamiltonian_key: str) -> Number:
         """
         Retrieve the coefficient of a specified Hamiltonian at a given time.
 
@@ -418,25 +424,16 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (float): The time (in the same units as T) at which to query the coefficient.
+            time_step (int): The time (in the same units as T) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
             float: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
         """
-        time_idx = int(time_step / self.dt)
-        while time_idx >= 0:
-            if time_idx in self._schedule and hamiltonian_key in self._schedule[time_idx]:
-                val = self._schedule[time_idx][hamiltonian_key]
-                return (
-                    val.evaluate({})
-                    if isinstance(val, Term)
-                    else (val.evaluate() if isinstance(val, Parameter) else val)
-                )
-            time_idx -= 1
-        return 0
+        val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
+        return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
-    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: int, hamiltonian_key: str) -> Number | Term:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.
@@ -445,7 +442,7 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (float): The time (in the same units as T) at which to query the coefficient.
+            time_step (int): The time (in the same units as T) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
@@ -493,3 +490,23 @@ class Schedule(Parameterizable):
             self.iter_time_step += 1
             return result
         raise StopIteration
+
+    def draw(self, style: ScheduleStyle | None = None, filepath: str | None = None) -> None:
+        """Render a plot of the schedule using matplotlib and optionally save it to a file.
+
+        The schedule is rendered using the provided style configuration. If ``filepath`` is
+        given, the resulting figure is saved to disk (the output format is inferred
+        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).
+
+        Args:
+            style (ScheduleStyle, optional): Customization options for the plot appearance.
+                Defaults to ScheduleStyle().
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+        """
+        from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer  # noqa: PLC0415
+
+        style = style or ScheduleStyle()
+        renderer = MatplotlibScheduleRenderer(self, style=style)
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
