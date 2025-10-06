@@ -35,6 +35,7 @@ class Dimension:
         values (list[np.ndarray]): Numeric arrays representing the values
             corresponding to each label.
     """
+
     def __init__(self, labels: list[str], values: list[np.ndarray]) -> None:
         """Initialize a Dimension object.
 
@@ -61,6 +62,7 @@ class ExperimentResult(FunctionalResult):
             the real and imaginary parts of the S21 parameter.
         dims (list[Dimension]): Sweep dimensions describing the experiment.
     """
+
     plot_title: ClassVar[str]
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
