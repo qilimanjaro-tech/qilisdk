@@ -270,7 +270,7 @@ class MatplotlibCircuitRenderer:
         # Decide layer/x if not given (no-controls: only target wires matter)
         if layer is None or x is None:
             layer = max(len(self._layer_widths[w]) for w in t_sorted)
-            x = self._xskip(t_sorted, layer)
+            x = self._xskip(t_sorted, layer) + self.style.gate_margin
 
         # Measure and reserve the full width at the given x/layer
         width = max(self._text_width(label) + self.style.gate_pad * 2, self.style.min_gate_w)
