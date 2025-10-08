@@ -77,8 +77,9 @@ class QutipBackend(Backend):
     ideal for local development, CI pipelines, and educational notebooks.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, nsteps: int | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`."""
+        self.nsteps = nsteps or 10000
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -257,7 +258,11 @@ class QutipBackend(Backend):
             e_ops=qutip_obs,
             rho0=qutip_init_state,
             tlist=tlist,
-            options={"store_states": functional.store_intermediate_results, "store_final_state": True, "nsteps": 10000},
+            options={
+                "store_states": functional.store_intermediate_results,
+                "store_final_state": True,
+                "nsteps": self.nsteps,
+            },
         )
 
         logger.success("TimeEvolution finished")
