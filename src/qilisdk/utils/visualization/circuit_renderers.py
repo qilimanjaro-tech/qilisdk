@@ -158,7 +158,6 @@ class MatplotlibCircuitRenderer:
         Returns:
             The x-coordinate (inches) of the left edge of this column.
         """
-
         if self.style.align_layer:
             wires = range(self._wires)
         return max(sum(self._layer_widths[w][:layer]) for w in wires)
@@ -180,6 +179,8 @@ class MatplotlibCircuitRenderer:
             if len(layers) > layer:
                 layers[layer] = max(layers[layer], full_width)
             else:
+                for dummy_layer in range(len(layers), layer):
+                    layers.append(0.0)
                 gap = xskip - sum(layers) if xskip else 0.0
                 layers.append(gap + full_width)
 
@@ -200,7 +201,7 @@ class MatplotlibCircuitRenderer:
                 - layer: Column index.
                 - wires_sorted: Sorted unique wires used for placement.
         """
-        wires = sorted(set(wires))
+        wires = range(min(wires), max(wires) + 1)
         layer = max(len(self._layer_widths[w]) for w in wires)
         x = self._xskip(wires, layer) + self.style.gate_margin
         if min_width:
@@ -269,7 +270,7 @@ class MatplotlibCircuitRenderer:
         # Decide layer/x if not given (no-controls: only target wires matter)
         if layer is None or x is None:
             layer = max(len(self._layer_widths[w]) for w in t_sorted)
-            x = self._xskip(t_sorted, layer) + self.style.gate_margin
+            x = self._xskip(t_sorted, layer)
 
         # Measure and reserve the full width at the given x/layer
         width = max(self._text_width(label) + self.style.gate_pad * 2, self.style.min_gate_w)
@@ -576,14 +577,11 @@ class MatplotlibCircuitRenderer:
         For wires whose last operation is a measurement, the wire stops at the
         measurement edge with no right-hand tail.
         """
-        ext = self.style.end_wire_ext * self.style.layer_sep
+        # how far the drawing for this wire actually goes
+        x_end = max(sum(self._layer_widths[w]) for w in range(self._wires))
         for q in range(self._wires):
             y = self._ypos(q, n_qubits=self._wires, sep=self.style.wire_sep)
-            # how far the drawing for this wire actually goes
-            x_end = sum(self._layer_widths[q])
             # keep the tail only for wires that KEEP going after their last gate
-            if q not in self._end_measure_qubits:
-                x_end += ext
             self.axes.add_line(
                 plt.Line2D([0, x_end], [y, y], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"])
             )
@@ -613,9 +611,8 @@ class MatplotlibCircuitRenderer:
         fig.set_facecolor(self.style.theme.background)
 
         longest_wire = max(sum(w) for w in self._layer_widths.values())
-        x_end = self.style.padding + longest_wire + self.style.end_wire_ext * self.style.layer_sep
+        x_end = self.style.padding + longest_wire  # + self.style.end_wire_ext * self.style.layer_sep
 
-        # x_end = self.style.padding + self.style.end_wire_ext * self.style.layer_sep + max(map(sum, self._layer_widths.values()))
         y_end = self.style.padding + (self._wires - 1) * self.style.wire_sep
 
         self.axes.set_xlim(
