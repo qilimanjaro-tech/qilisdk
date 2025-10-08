@@ -201,7 +201,7 @@ class MatplotlibCircuitRenderer:
                 - layer: Column index.
                 - wires_sorted: Sorted unique wires used for placement.
         """
-        wires = range(min(wires), max(wires) + 1)
+        wires = [*range(min(wires), max(wires) + 1)]
         layer = max(len(self._layer_widths[w]) for w in wires)
         x = self._xskip(wires, layer) + self.style.gate_margin
         if min_width:
