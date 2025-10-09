@@ -53,12 +53,8 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-        # if not isinstance(T, int):
-        #     raise ValueError("T must be an integer")
-        # if not isinstance(dt, int):
-        #     raise ValueError("dt must be an integer")
-        # if abs(T % dt) != 0:
-        #     raise ValueError("T must be divisible by dt.")
+        if dt == 0:
+            raise ValueError("dt must be different from zero.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
@@ -416,7 +412,7 @@ class Schedule(Parameterizable):
                         break
         return ham.get_static_hamiltonian()
 
-    def get_coefficient(self, time_step: int, hamiltonian_key: str) -> Number:
+    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
         """
         Retrieve the coefficient of a specified Hamiltonian at a given time.
 
@@ -433,7 +429,7 @@ class Schedule(Parameterizable):
         val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
-    def get_coefficient_expression(self, time_step: int, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.
