@@ -25,7 +25,7 @@ def test_time_evolution_results_initialization():
     assert isinstance(ter.expected_values, np.ndarray)
     assert len(ter.expected_values) == 0
     assert ter.final_state is None
-    assert ter.intermediate_states is None
+    assert len(ter.intermediate_states) == 0
 
     ter = TimeEvolutionResult(
         final_expected_values=np.array([0, 0, 0]), expected_values=np.array([[0, 0, 0], [1, 0, 1]])
@@ -36,7 +36,7 @@ def test_time_evolution_results_initialization():
     for i, l in enumerate(list(ter.expected_values)):
         assert list(l) == expected_list[i]
     assert ter.final_state is None
-    assert ter.intermediate_states is None
+    assert len(ter.intermediate_states) == 0
 
     ter = TimeEvolutionResult(
         final_expected_values=np.array([0, 0, 0]),

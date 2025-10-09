@@ -134,16 +134,19 @@ print("Sparse Matrix from Hamiltonian: \n", H_expr.to_matrix()) # sparse matrix
 Run optimization routines using the `SciPyOptimizer` and integrate them with a variational algorithm (VQE). In the example below, a simple quadratic cost function is minimized:
 
 ```python
-from qilisdk.common import SciPyOptimizer
+from qilisdk.optimizers import SciPyOptimizer
+
 
 def cost_function(params):
     # A simple quadratic cost: minimum at [1, 1, 1]
     return sum((p - 1) ** 2 for p in params)
 
+
 # Initialize the optimizer with the BFGS method
 optimizer = SciPyOptimizer(method="BFGS")
 initial_parameters = [0, 0, 0]
-result = optimizer.optimize(cost_function, initial_parameters)
+parameter_bounds = [(0, 1), (0, 1), (0, 1)]
+result = optimizer.optimize(cost_function, initial_parameters, parameter_bounds)
 
 print("Optimal cost:", result.optimal_cost)
 print("Optimal Parameters:", result.optimal_parameters)
@@ -164,9 +167,11 @@ SpeQtrum.login(username="your_username", apikey="your_apikey")
 # Instantiate QaaSBackend
 client = SpeQtrum()
 
-# Execute a pre-built circuit (see Digital Quantum Circuits section)
-results = client.submit(Sampling(circuit, 1000))
-print("Results:", results)
+# # Execute a pre-built circuit (see Digital Quantum Circuits section)
+job_id = client.submit(Sampling(circuit, 1000), device="cuda_state_vector")
+print("job id:", job_id)
+print("job status:", client.get_job_details(job_id).status)
+print("job result:", client.get_job_details(job_id).result)
 ```
 
 ### Sample a quantum Circuit Using a CUDA-Accelerated Simulator

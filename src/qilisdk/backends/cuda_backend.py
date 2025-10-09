@@ -158,7 +158,7 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
-        steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
+        steps = np.linspace(0, functional.schedule.T, (round(functional.schedule.T / functional.schedule.dt) + 1))
 
         cuda_schedule = CudaSchedule(steps, ["t"])
 
@@ -177,9 +177,7 @@ class CudaBackend(Backend):
             if isinstance(observable, PauliOperator):
                 cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
             elif isinstance(observable, Hamiltonian):
-                cuda_observables.append(
-                    self._hamiltonian_to_cuda(observable, padding=functional.schedule.nqubits - observable.nqubits)
-                )
+                cuda_observables.append(self._hamiltonian_to_cuda(observable))
             else:
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
@@ -189,7 +187,7 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.dense, dtype=np.complex128)),
+            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=np.complex128)),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,
@@ -371,10 +369,6 @@ class CudaBackend(Backend):
                 out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
             else:
                 out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
-        if padding > 0:
-            n = hamiltonian.nqubits
-            for p in range(padding):
-                out += spin.i(n + p)
         return out
 
     @staticmethod
