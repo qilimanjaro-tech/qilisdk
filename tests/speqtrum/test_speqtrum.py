@@ -98,7 +98,7 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id: 99, raising=True)
 
     q = speqtrum.SpeQtrum()
-    assert q.submit(FakeSampling(), 0) == 99
+    assert q.submit(FakeSampling(), "some_device") == 99
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
@@ -110,7 +110,7 @@ def test_submit_unknown_functional_raises(monkeypatch):
         pass
 
     with pytest.raises(NotImplementedError):
-        client.submit(SomethingElse(), device_id=0)
+        client.submit(SomethingElse(), device_code="some_device")
 
 
 def test_wait_for_job_completes(monkeypatch):
