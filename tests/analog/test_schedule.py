@@ -18,14 +18,8 @@ def test_schedule_constructor_default():
     # With no Hamiltonians, nqubits remains 0.
     assert sched.nqubits == 0
 
-    with pytest.raises(ValueError, match=r"T must be divisible by dt."):
-        Schedule(T=8, dt=3)
-
-    with pytest.raises(ValueError, match=r"T must be an integer"):
-        Schedule(T=8.0)
-
-    with pytest.raises(ValueError, match=r"dt must be an integer"):
-        Schedule(T=8, dt=1.0)
+    with pytest.raises(ValueError, match=r"dt must be different from zero."):
+        Schedule(T=8, dt=0)
 
 
 def test_schedule_parameters():
