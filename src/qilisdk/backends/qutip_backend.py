@@ -77,9 +77,11 @@ class QutipBackend(Backend):
     ideal for local development, CI pipelines, and educational notebooks.
     """
 
-    def __init__(self, nsteps: int | None = None) -> None:
-        """Instantiate a new :class:`QutipBackend`."""
-        self.nsteps = nsteps or 10000
+    def __init__(self, nsteps: int = 10_000) -> None:
+        """Instantiate a new :class:`QutipBackend`.
+        Args:
+            nsteps (int): The maximum number of internal steps for the ODE solver."""
+        self.nsteps = nsteps
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {

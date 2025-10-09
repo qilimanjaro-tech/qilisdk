@@ -738,8 +738,8 @@ class Hamiltonian(Parameterizable):
         Returns:
             Hamiltonian: the commutator.
         """
-        h0 = copy.copy(self)
-        return h0 * h - h * h0
+        
+        return self * h - h * self
 
     def anticommutator(self, h: Hamiltonian) -> Hamiltonian:
         """compute the anticommutator of the current hamiltonian with another hamiltonian (h)
@@ -750,8 +750,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             Hamiltonian: the anticommutator.
         """
-        h0 = copy.copy(self)
-        return h0 * h + h * h0
+        return self * h + h * self
 
     def vector_norm(self) -> float:
         """
