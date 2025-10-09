@@ -159,7 +159,7 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:  # noqa: PLR6301
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:

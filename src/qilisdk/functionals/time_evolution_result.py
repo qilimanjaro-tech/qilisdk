@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
-from typing import final
 
 import numpy as np
 
 from qilisdk.common.model import Model
-from qilisdk.common.qtensor import QTensor, expect_val
+from qilisdk.common.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
