@@ -72,15 +72,12 @@ class DeviceType(str, Enum):
 
 
 class Device(SpeQtrumModel):
-    # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
-    id: int = Field(...)
     code: str = Field(...)
     nqubits: int = Field(...)
     name: str = Field(...)
+    description: str = Field(...)
     type: DeviceType = Field(...)
     status: DeviceStatus = Field(...)
-    static_features: dict
-    dynamic_features: dict
 
 
 class ExecuteType(str, Enum):
