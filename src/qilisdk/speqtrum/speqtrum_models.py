@@ -17,12 +17,15 @@ from enum import Enum
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.functionals import (
+    Sampling,
+    SamplingResult,
+    TimeEvolution,
+    TimeEvolutionResult,
+    VariationalProgram,
+    VariationalProgramResult,
+)
+from qilisdk.speqtrum.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -69,21 +72,20 @@ class DeviceType(str, Enum):
 
 
 class Device(SpeQtrumModel):
-    # TODO (vyron): Remove `id: int` when `code` is implemented server-side.
-    id: int = Field(...)
     code: str = Field(...)
+    nqubits: int = Field(...)
     name: str = Field(...)
+    description: str = Field(...)
     type: DeviceType = Field(...)
     status: DeviceStatus = Field(...)
-    pending_jobs: int = Field(alias="number_pending_jobs")
-    static_features: dict
-    dynamic_features: dict
 
 
 class ExecuteType(str, Enum):
     SAMPLING = "sampling"
     TIME_EVOLUTION = "time_evolution"
     VARIATIONAL_PROGRAM = "variational_program"
+    RABI_EXPERIMENT = "rabi_experiment"
+    T1_EXPERIMENT = "t1_experiment"
 
 
 class SamplingPayload(SpeQtrumModel):
@@ -128,11 +130,41 @@ class VariationalProgramPayload(SpeQtrumModel):
         return v
 
 
+class RabiExperimentPayload(SpeQtrumModel):
+    rabi_experiment: RabiExperiment = Field(...)
+
+    @field_serializer("rabi_experiment")
+    def _serialize_rabi_experiment(self, rabi_experiment: RabiExperiment, _info):
+        return serialize(rabi_experiment)
+
+    @field_validator("rabi_experiment", mode="before")
+    def _load_rabi_experiment(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, RabiExperiment)
+        return v
+
+
+class T1ExperimentPayload(SpeQtrumModel):
+    t1_experiment: T1Experiment = Field(...)
+
+    @field_serializer("t1_experiment")
+    def _serialize_t1_experiment(self, t1_experiment: T1Experiment, _info):
+        return serialize(t1_experiment)
+
+    @field_validator("t1_experiment", mode="before")
+    def _load_t1_experiment(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, T1Experiment)
+        return v
+
+
 class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_payload: SamplingPayload | None = None
     time_evolution_payload: TimeEvolutionPayload | None = None
     variational_program_payload: VariationalProgramPayload | None = None
+    rabi_experiment_payload: RabiExperimentPayload | None = None
+    t1_experiment_payload: T1ExperimentPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
@@ -140,6 +172,8 @@ class ExecuteResult(SpeQtrumModel):
     sampling_result: SamplingResult | None = None
     time_evolution_result: TimeEvolutionResult | None = None
     variational_program_result: VariationalProgramResult | None = None
+    rabi_experiment_result: RabiExperimentResult | None = None
+    t1_experiment_result: T1ExperimentResult | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -171,15 +205,52 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, VariationalProgramResult)
         return v
 
+    @field_serializer("rabi_experiment_result")
+    def _serialize_rabi_experiment_result(self, rabi_experiment_result: RabiExperimentResult, _info):
+        return serialize(rabi_experiment_result) if rabi_experiment_result is not None else None
+
+    @field_validator("rabi_experiment_result", mode="before")
+    def _load_rabi_experiment_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, RabiExperimentResult)
+        return v
+
+    @field_serializer("t1_experiment_result")
+    def _serialize_t1_experiment_result(self, t1_experiment_result: T1ExperimentResult, _info):
+        return serialize(t1_experiment_result) if t1_experiment_result is not None else None
+
+    @field_validator("t1_experiment_result", mode="before")
+    def _load_t1_experiment_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, T1ExperimentResult)
+        return v
+
 
 class JobStatus(str, Enum):
-    NOT_SENT = "not_sent"
+    "Job has not been submitted to the Lab api"
+
     PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    ERROR = "error"
+    "Job has been queued but not yet validated"
+    VALIDATING = "validating"
+    "Job has been validated and is queued for execution"
     QUEUED = "queued"
+    "Job is being executed on the device"
+    RUNNING = "running"
+    "Job finished successfully"
+    COMPLETED = "completed"
+    "Job failed due to an error"
+    ERROR = "error"
+    "Job was cancelled by the user or system"
     CANCELLED = "cancelled"
+    "Job failed due to timeout"
+    TIMEOUT = "timeout"
+
+
+class JobType(str, Enum):
+    DIGITAL = "digital"
+    PULSE = "pulse"
+    ANALOG = "analog"
+    VARIATIONAL = "variational"
 
 
 class JobId(SpeQtrumModel):
@@ -199,14 +270,19 @@ class JobInfo(JobId):
     device_id: int = Field(...)
     status: JobStatus = Field(...)
     created_at: AwareDatetime = Field(...)
-    modified_at: AwareDatetime | None = None
+    updated_at: AwareDatetime | None = None
+    completed_at: AwareDatetime | None = None
 
     @field_validator("created_at", mode="before")
     def _parse_created_at(cls, v):
         return parsedate_to_datetime(v) if isinstance(v, str) else v
 
-    @field_validator("modified_at", mode="before")
-    def _parse_modified_at(cls, v):
+    @field_validator("updated_at", mode="before")
+    def _parse_updated_at(cls, v):
+        return parsedate_to_datetime(v) if isinstance(v, str) else v
+
+    @field_validator("completed_at", mode="before")
+    def _parse_completed_at(cls, v):
         return parsedate_to_datetime(v) if isinstance(v, str) else v
 
 
@@ -218,6 +294,7 @@ class JobDetail(JobInfo):
 
     payload: ExecutePayload | None = None
     result: ExecuteResult | None = None
+    jobType: JobType | None = None
     logs: str | None = None
     error: str | None = None
     error_logs: str | None = None

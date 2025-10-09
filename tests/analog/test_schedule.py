@@ -255,7 +255,6 @@ def test_schedule_property_sorting():
 
 
 def test_schedule_term_and_basevariable_errors():
-
     # Term with non-Parameter variable
     dummy = BinaryVariable("dummy")
     term = (dummy) * 2
@@ -271,7 +270,6 @@ def test_schedule_term_and_basevariable_errors():
 
 
 def test_add_schedule_step_term_basevariable_errors():
-
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
@@ -283,7 +281,6 @@ def test_add_schedule_step_term_basevariable_errors():
 
 
 def test_update_hamiltonian_coefficient_term_basevariable_errors():
-
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
@@ -295,7 +292,6 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
 
 
 def test_draw_method_runs(monkeypatch):
-
     H1 = PauliZ(0).to_hamiltonian()
     sched = Schedule(T=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
 
