@@ -28,8 +28,8 @@ from qilisdk.yaml import yaml
 class Schedule(Parameterizable):
     def __init__(
         self,
-        T: int,
-        dt: int = 1,
+        T: float,
+        dt: float = 1,
         hamiltonians: dict[str, Hamiltonian] | None = None,
         schedule: dict[int, dict[str, float | Term]] | None = None,
     ) -> None:
@@ -42,8 +42,8 @@ class Schedule(Parameterizable):
         at discrete time steps.
 
         Args:
-            T (int): The total annealing time in units of 1ns.
-            dt (int): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
+            T (float): The total annealing time in units of 1ns.
+            dt (float): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
             hamiltonians (dict[str, Hamiltonian], optional): A dictionary mapping labels to Hamiltonian objects.
                 Defaults to an empty dictionary if None.
             schedule (dict[int, dict[str, float]], optional): A dictionary where keys are time step indices (integers)
@@ -53,12 +53,8 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-        if not isinstance(T, int):
-            raise ValueError("T must be an integer")
-        if not isinstance(dt, int):
-            raise ValueError("dt must be an integer")
-        if abs(T % dt) != 0:
-            raise ValueError("T must be divisible by dt.")
+        if dt == 0:
+            raise ValueError("dt must be different from zero.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
@@ -132,7 +128,7 @@ class Schedule(Parameterizable):
         return dict(sorted(out_dict.items()))
 
     @property
-    def T(self) -> int:
+    def T(self) -> float:
         """
         Get the total annealing time.
 
@@ -142,7 +138,7 @@ class Schedule(Parameterizable):
         return self._T
 
     @property
-    def dt(self) -> int:
+    def dt(self) -> float:
         """
         Get the time step duration.
 
@@ -416,7 +412,7 @@ class Schedule(Parameterizable):
                         break
         return ham.get_static_hamiltonian()
 
-    def get_coefficient(self, time_step: int, hamiltonian_key: str) -> Number:
+    def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
         """
         Retrieve the coefficient of a specified Hamiltonian at a given time.
 
@@ -433,7 +429,7 @@ class Schedule(Parameterizable):
         val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
-    def get_coefficient_expression(self, time_step: int, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.

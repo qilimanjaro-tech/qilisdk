@@ -77,8 +77,11 @@ class QutipBackend(Backend):
     ideal for local development, CI pipelines, and educational notebooks.
     """
 
-    def __init__(self) -> None:
-        """Instantiate a new :class:`QutipBackend`."""
+    def __init__(self, nsteps: int = 10_000) -> None:
+        """Instantiate a new :class:`QutipBackend`.
+        Args:
+            nsteps (int): The maximum number of internal steps for the ODE solver."""
+        self.nsteps = nsteps
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -158,7 +161,7 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:  # noqa: PLR6301
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -242,6 +245,11 @@ class QutipBackend(Backend):
                 if obs.nqubits < functional.schedule.nqubits:
                     for _ in range(functional.schedule.nqubits - obs.nqubits):
                         aux_obs = tensor_prod([aux_obs, identity])
+            elif isinstance(obs, QTensor):
+                aux_obs = obs
+            else:
+                logger.error("Unsupported observable type {}", obs.__class__.__name__)
+                raise ValueError(f"unsupported observable type of {obs.__class__}")
             if aux_obs is not None:
                 qutip_obs.append(
                     Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
@@ -252,7 +260,11 @@ class QutipBackend(Backend):
             e_ops=qutip_obs,
             rho0=qutip_init_state,
             tlist=tlist,
-            options={"store_states": functional.store_intermediate_results, "store_final_state": True, "nsteps": 10000},
+            options={
+                "store_states": functional.store_intermediate_results,
+                "store_final_state": True,
+                "nsteps": self.nsteps,
+            },
         )
 
         logger.success("TimeEvolution finished")
