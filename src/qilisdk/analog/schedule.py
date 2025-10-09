@@ -53,8 +53,8 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-        if dt == 0:
-            raise ValueError("dt must be different from zero.")
+        if dt <= 0:
+            raise ValueError("dt must be greater than zero.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
@@ -253,19 +253,15 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: if the parameterized schedule contains generic variables instead of only Parameters.
         """
-        if label not in self._hamiltonians:
-            self._hamiltonians[label] = hamiltonian
-            self._schedule[0][label] = 0
-            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
-            for l, param in hamiltonian.parameters.items():
-                self._parameters[param.label] = param
-        else:
+        if label in self._hamiltonians:
             logger.warning(
-                (
-                    f"label {label} is already assigned to a hamiltonian, "
-                    + "ignoring new hamiltonian and updating schedule of existing hamiltonian."
-                )
+                (f"label {label} is already assigned to a hamiltonian, " + "updating schedule of existing hamiltonian.")
             )
+        self._hamiltonians[label] = hamiltonian
+        self._schedule[0][label] = 0
+        self._nqubits = max(self._nqubits, hamiltonian.nqubits)
+        for l, param in hamiltonian.parameters.items():
+            self._parameters[param.label] = param
 
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
