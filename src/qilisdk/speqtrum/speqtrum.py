@@ -37,6 +37,7 @@ from .speqtrum_models import (
     JobId,
     JobInfo,
     JobStatus,
+    JobType,
     RabiExperimentPayload,
     SamplingPayload,
     T1ExperimentPayload,
@@ -332,7 +333,7 @@ class SpeQtrum:
             type=ExecuteType.SAMPLING,
             sampling_payload=SamplingPayload(sampling=sampling),
         )
-        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "job_type": JobType.DIGITAL, "meta": {}}
         logger.debug("Executing Sampling on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
@@ -349,7 +350,7 @@ class SpeQtrum:
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
         )
-        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "job_type": JobType.PULSE, "meta": {}}
         logger.debug("Executing Rabi experiment on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
@@ -367,7 +368,7 @@ class SpeQtrum:
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
         )
-        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "job_type": JobType.PULSE, "meta": {}}
         logger.debug("Executing T1 experiment on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
@@ -385,7 +386,7 @@ class SpeQtrum:
             type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
         )
-        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "job_type": JobType.ANALOG, "meta": {}}
         logger.debug("Executing time evolution on device {}", device_id)
         with httpx.Client() as client:
             response = client.post(
@@ -419,7 +420,7 @@ class SpeQtrum:
                 variational_program=variational_program,
             ),
         )
-        json = {"device_id": device_id, "payload": payload.model_dump_json(), "meta": {}}
+        json = {"device_id": device_id, "payload": payload.model_dump_json(), "job_type": JobType.VARIATIONAL, "meta": {}}
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
