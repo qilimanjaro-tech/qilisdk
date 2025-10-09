@@ -738,7 +738,6 @@ class Hamiltonian(Parameterizable):
         Returns:
             Hamiltonian: the commutator.
         """
-        
         return self * h - h * self
 
     def anticommutator(self, h: Hamiltonian) -> Hamiltonian:
