@@ -25,6 +25,8 @@ Use these constructors to apply standard single- and two-qubit operations:
   Pauli Z (phase-flip).  
 - ``H(qubit: int)``  
   Hadamard: creates superposition.  
+- ``I(qubit: int)``  
+  Identity gate: leaves the qubit unchanged.  
 - ``S(qubit: int)``  
   Phase gate (π/2 rotation about Z).  
 - ``T(qubit: int)``  
@@ -41,10 +43,14 @@ Use these constructors to apply standard single- and two-qubit operations:
   π/2 Y-rotation sandwiched by Z-rotations.
 - ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``
   General single-qubit unitary: RZ-RY-RZ decomposition.
+- ``SWAP(a: int, b: int)``  
+  Exchanges the states of qubits ``a`` and ``b``.
 - ``CNOT(control: int, target: int)``
   Controlled-X: flips target if control is |1⟩.
 - ``CZ(control: int, target: int)``
   Controlled-Z: applies Z on target if control is |1⟩.
+- ``M(*qubits: int)``  
+  Measures the listed qubits in the computational basis.
 
 Controlled Gates
 ^^^^^^^^^^^^^^^^
@@ -267,10 +273,73 @@ HardwareEfficientAnsatz
 
     
     ansatz = HardwareEfficientAnsatz(
-        n_qubits=4, 
+        nqubits=4, 
         layers=3, 
         connectivity="Circular", 
         one_qubit_gate=U3, 
         two_qubit_gate=CNOT, 
         structure="Interposed"
     )
+
+Parameter Utilities
+-------------------
+
+Circuits collect the symbolic parameters contributed by each gate. Beyond the
+quick examples above, you can query names, current values, and bounds, or
+update them selectively:
+
+.. code-block:: python
+
+    import numpy as np
+
+    from qilisdk.common.variables import Parameter
+    from qilisdk.digital import Circuit, RX, RZ
+
+    circuit = Circuit(nqubits=2)
+    theta = Parameter("theta", value=np.pi / 4, bounds=(0.0, np.pi))
+
+    circuit.add(RX(0, theta=theta))
+    circuit.add(RZ(1, phi=np.pi / 2))
+
+    print(circuit.get_parameter_names())   # ['RX(0)_theta_0', 'RZ(1)_phi_1']
+    print(circuit.get_parameters())        # {'RX(0)_theta_0': 0.785..., 'RZ(1)_phi_1': 1.570...}
+    print(circuit.get_parameter_bounds())  # {'RX(0)_theta_0': (0.0, 3.1415...), 'RZ(1)_phi_1': (None, None)}
+
+    circuit.set_parameter_bounds({"RX(0)_theta_0": (0.1, np.pi / 2)})
+    circuit.set_parameters({"RX(0)_theta_0": np.pi / 3})
+    circuit.set_parameter_values([np.pi / 3, np.pi / 2])
+
+These helpers make it straightforward to plug the circuit into classical
+optimization loops while keeping parameter metadata synchronized.
+
+Gate Modifiers and Measurement
+------------------------------
+
+Every base gate inherits convenience methods to produce derived operations
+without manually instantiating :class:`~qilisdk.digital.gates.Controlled`,
+:class:`~qilisdk.digital.gates.Adjoint`, or
+:class:`~qilisdk.digital.gates.Exponential`. The measurement gate
+:class:`~qilisdk.digital.gates.M` lets you add classical readout at the end of
+the circuit.
+
+.. code-block:: python
+
+    import numpy as np
+
+    from qilisdk.digital import Circuit, H, X, RX, M
+
+    circuit = Circuit(2)
+    circuit.add(H(0))
+
+    # Promote a basic gate to a controlled version on the fly
+    circuit.add(X(1).controlled(0))
+
+    # Generate adjoint / exponential variants, preserving parameters
+    circuit.add(RX(1, theta=np.pi / 4).adjoint())
+    circuit.add(RX(0, theta=np.pi / 3).exponential())
+
+    # Record measurement results for both qubits
+    circuit.add(M(0, 1))
+
+Controlled gates validate that control and target qubits are disjoint, and all
+wrapper gates forward parameter accessors to the underlying operation. 

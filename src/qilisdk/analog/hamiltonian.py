@@ -565,7 +565,7 @@ class Hamiltonian(Parameterizable):
 
         Args:
             tol (float): Hermiticity check tolerance.
-            prune (float): Drop coefficients with |c| < prune to reduce numerical noise.
+            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise.
 
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n

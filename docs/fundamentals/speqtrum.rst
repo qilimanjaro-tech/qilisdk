@@ -1,147 +1,215 @@
 SpeQtrum
 ========
 
-The :mod:`~qilisdk.speqtrum` module provides a synchronous client for the Qilimanjaro SpeQtrum API via the
-:class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class. It handles authentication, device selection, job management, and submission
-of quantum functionals (Sampling, TimeEvolution) and VQE workflows to remote hardware or simulators.
+The :mod:`~qilisdk.speqtrum` package provides an optional, synchronous client for the Qilimanjaro SpeQtrum cloud.
+Through the :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class you can authenticate, inspect devices and jobs, and submit
+digital, analog, or pulse experiments for remote execution.
+
+Installation
+------------
+
+SpeQtrum support is shipped as an optional dependency group. Install it alongside QiliSDK with:
+
+.. code-block:: console
+
+    pip install "qilisdk[speqtrum]"
 
 Authentication
 --------------
 
-Before making any API calls, you must authenticate and cache credentials in your OS keyring.
-
-**Login**
+The API uses short-lived OAuth tokens that are cached in the system keyring. Call
+:meth:`SpeQtrum.login <qilisdk.speqtrum.speqtrum.SpeQtrum.login>` once and the credentials will be reused for subsequent
+sessions.
 
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
 
-    # You can provide credentials directly...
-    success = SpeQtrum.login(username="alice", apikey="MY_SECRET_KEY")
+    # Credentials can be provided explicitly…
+    logged_in = SpeQtrum.login(username="alice", apikey="MY_SECRET_KEY")
 
-    # ...or omit them to read from environment variables:
-    #   QILISDK_SPEQTRUM_USERNAME and QILISDK_SPEQTRUM_APIKEY
-    success = SpeQtrum.login()
+    # …or read from the environment (QILISDK_SPEQTRUM_USERNAME / QILISDK_SPEQTRUM_APIKEY)
+    logged_in = SpeQtrum.login()
 
-    if not success:
+    if not logged_in:
         raise RuntimeError("Authentication failed")
 
-**Logout**
+    # Remove cached credentials when they are no longer needed
+    SpeQtrum.logout()
+
+Client Construction
+-------------------
+
+Once credentials are stored, instantiate :class:`SpeQtrum` to start issuing requests. Construction fails with
+``RuntimeError`` if no cached credentials exist.
 
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
 
-    SpeQtrum.logout()
-    # Credentials removed from keyring
+    client = SpeQtrum()
 
-Device Management
------------------
+Device Catalogue
+----------------
 
-Once authenticated, you can list available devices, select one for subsequent jobs, and query the current selection.
-
-**List Devices**
+Devices are represented by :class:`~qilisdk.speqtrum.speqtrum_models.Device` models containing the device code, number of
+qubits, hardware type, and status. Use :meth:`SpeQtrum.list_devices
+<qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices>` to enumerate them. An optional ``where`` predicate allows client-side
+filtering.
 
 .. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum, DeviceStatus
 
     client = SpeQtrum()
-    devices = client.list_devices()
-    for dev in devices:
-        print(f"{dev.id}: {dev.name} ({dev.status})")
+    for device in client.list_devices(where=lambda d: d.status == DeviceStatus.ONLINE):
+        print(f"{device.code}: {device.name} ({device.type}) – {device.nqubits} qubits")
 
-**Select a Device**
+Remote Jobs
+-----------
 
-.. code-block:: python
-
-    client.set_device(device_id)
-    print("Selected device:", client.selected_device)
-
-**Properties**
-
-- **selected_device** (int | None): ID of the currently selected device, or ``None`` if unset.
-
-Job Management
---------------
-
-You can list existing jobs, inspect their details, and wait for completion.
-
-**List Jobs**
+:meth:`SpeQtrum.list_jobs <qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs>` returns lightweight :class:`JobInfo
+<qilisdk.speqtrum.speqtrum_models.JobInfo>` records. The ``where`` predicate works the same way as with devices.
 
 .. code-block:: python
 
-    jobs = client.list_jobs()
-    for job in jobs:
-        print(f"{job.id}: {job.status}")
+    from qilisdk.speqtrum import SpeQtrum
+    from qilisdk.speqtrum.speqtrum_models import JobStatus
 
-**Get Job Details**
+    client = SpeQtrum()
+    running = client.list_jobs(where=lambda job: job.status == JobStatus.RUNNING)
+    for job in running:
+        print(f"{job.id}: {job.status.value} on {job.device_id}")
+
+To inspect complete job metadata (payload, result, logs, decoded errors) call
+:meth:`SpeQtrum.get_job_details <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details>`. Binary fields are returned as
+decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
 
 .. code-block:: python
 
     detail = client.get_job_details(job_id)
-    print("Payload:", detail.payload)
-    print("Result:", detail.result)
-    print("Logs:", detail.logs)
+    if detail.result and detail.result.sampling_result:
+        print("Counts:", detail.result.sampling_result.samples)
+    if detail.logs:
+        print("Execution logs:\n", detail.logs)
 
-**Wait for Completion**
+Waiting for Completion
+----------------------
 
-.. code-block:: python
-
-    final = client.wait_for_job(job_id, poll_interval=2.0, timeout=300.0)
-    print("Final status:", final.status)
+Use :meth:`SpeQtrum.wait_for_job <qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job>` to poll until a job reaches a
+terminal state (``completed``, ``error``, or ``cancelled``). The method returns the final :class:`JobDetail` snapshot and
+raises :class:`TimeoutError` if the optional timeout elapses first.
 
 Functional Submission
 ---------------------
 
-Use :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit` to dispatch a :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional.
+SpeQtrum accepts the same primitive functionals used by local backends. The :meth:`SpeQtrum.submit
+<qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` method inspects the functional type and serializes the correct payload. You
+must supply a ``device`` argument with the device code obtained from :meth:`list_devices`.
 
 .. code-block:: python
 
-    from qilisdk.functionals import Sampling, TimeEvolution
     from qilisdk.digital import Circuit, H, CNOT
-    from qilisdk.analog import Schedule, X, Z
+    from qilisdk.functionals import Sampling
+    from qilisdk.speqtrum import SpeQtrum
 
-    # Prepare a Sampling functional
-    circ = Circuit(2)
-    circ.add(H(0)); circ.add(CNOT(0, 1))
-    sampling = Sampling(circuit=circ, nshots=200)
-    job_id = client.submit(sampling)
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    sampling = Sampling(circuit=circuit, nshots=1_000)
 
-    # Or prepare a TimeEvolution functional
-    schedule = Schedule(
-        total_time=5.0,
-        time_step=0.1,
-        hamiltonians={"hx": X(0), "hz": Z(0)},
-        schedule_map={t: {"hx": 1 - t/5, "hz": t/5} for t in [0,1,2,3,4,5]}
-    )
-    time_evolution = TimeEvolution(
-        schedule=schedule,
-        initial_state=..., 
-        observables=[Z(0)], 
-        nshots=50
-    )
-    job_id = client.submit(time_evolution)
+    client = SpeQtrum()
+    device = client.list_devices()[0].code
+    job_id = client.submit(sampling, device=device)
+    print("Submitted sampling job:", job_id)
 
-Variational Quantum Eigensolver (VQE)
--------------------------------------
-
-For end-to-end VQE workflows, use :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit_vqe`:
-
-**Parameters**
-
-- **vqe** (:class:`~qilisdk.digital.vqe.VQE`): VQE functional defining ansatz and Hamiltonian.
-- **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): Classical optimizer instance.
-- **nshots** (int, optional): Shots per circuit evaluation. Default: 1000.
-- **store_intermediate_results** (bool, optional): Record intermediate energies/parameters. Default: False.
-
-**Example**
+Time-evolution workloads serialize the :class:`~qilisdk.analog.schedule.Schedule` transparently:
 
 .. code-block:: python
 
-    from qilisdk.digital.vqe import VQE
-    from qilisdk.optimizers import COBYLA
+    from qilisdk.analog import Schedule, X, Z
+    from qilisdk.common import ket
+    from qilisdk.functionals import TimeEvolution
 
-    client.set_device(my_device_id)
-    vqe = VQE(hamiltonian=H2, ansatz=my_ansatz)
-    optimizer = COBYLA(maxiter=100)
-    job_id = client.submit_vqe(vqe, optimizer, nshots=500, store_intermediate_results=True)
-    print("VQE job submitted with id", job_id)
+    schedule = Schedule(T=5.0, dt=1.0, hamiltonians={"hx": X(0), "hz": Z(0)})
+    for step in range(6):
+        schedule.add_schedule_step(step, {"hx": 1 - step / 5, "hz": step / 5})
+
+    tevo = TimeEvolution(
+        schedule=schedule,
+        initial_state=ket(0),
+        observables=[Z(0)],
+        nshots=200,
+    )
+
+    job_id = client.submit(tevo, device=device)
+    final = client.wait_for_job(job_id)
+    print("Final expectation values:", final.result.time_evolution_result.final_expected_values)
+
+Variational Programs
+--------------------
+
+Hybrid optimization is handled through the same :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+functional used with local backends. Serialize the fully-configured variational program (ansatz, optimizer, cost
+function) and submit it as any other functional.
+
+.. code-block:: python
+
+    from qilisdk.common.model import Model, ObjectiveSense
+    from qilisdk.common.variables import BinaryVariable, LEQ
+    from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
+    from qilisdk.functionals import Sampling
+    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.speqtrum import SpeQtrum
+
+    # Build a small cost model
+    vars = [BinaryVariable(f"x{i}") for i in range(3)]
+    model = Model("toy")
+    model.set_objective(sum(vars), sense=ObjectiveSense.MAXIMIZE)
+    model.add_constraint("budget", LEQ(vars[0] + vars[1], 1))
+
+    ansatz = HardwareEfficientAnsatz(
+        nqubits=3,
+        layers=2,
+        one_qubit_gate=U2,
+        two_qubit_gate=CNOT,
+        connectivity="linear",
+        structure="grouped",
+    )
+    functional = Sampling(circuit=ansatz, nshots=1024)
+    optimizer = SciPyOptimizer(method="Powell")
+    vprog = VariationalProgram(functional=functional, optimizer=optimizer, cost_function=model)
+
+    client = SpeQtrum()
+    device = client.list_devices()[0].code
+    job_id = client.submit(vprog, device=device)
+
+Pulse Experiments
+-----------------
+
+The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.speqtrum.experiments`. These
+functional objects mirror the interfaces described in the :doc:`functionals` chapter and return rich result types.
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.speqtrum import DeviceType, SpeQtrum
+    from qilisdk.speqtrum.experiments import RabiExperiment, T1Experiment
+
+    client = SpeQtrum()
+    device = client.list_devices(
+        where=lambda d: d.type in (DeviceType.QPU_ANALOG, DeviceType.QPU_DIGITAL)
+    )[0].code
+
+    # Rabi experiment: sweep drive durations
+    rabi = RabiExperiment(qubit=0, drive_duration_values=np.linspace(0, 200, 21))
+    rabi_job = client.submit(rabi, device=device)
+
+    # T1 relaxation experiment: sweep wait durations
+    t1 = T1Experiment(qubit=0, wait_duration_values=np.linspace(0, 400, 41))
+    t1_job = client.submit(t1, device=device)
+
+The resulting :class:`~qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult` and
+:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` instances are automatically deserialized in
+``JobDetail.result``.
