@@ -24,6 +24,21 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
+    """
+    Simulate the dynamics induced by a time-dependent Hamiltonian schedule.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.analog import Schedule, Hamiltonian, Z
+            from qilisdk.common import ket
+            from qilisdk.functionals.time_evolution import TimeEvolution
+
+            h0 = Z(0)
+            schedule = Schedule(T=10.0, hamiltonians={"h0": h0})
+            functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
+    """
+
     result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
 
     def __init__(
@@ -35,14 +50,12 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         store_intermediate_results: bool = False,
     ) -> None:
         """
-        Initialize the TimeEvolution simulation.
-
         Args:
-            backend (AnalogBackend): The backend to use for simulating the dynamics.
-            schedule (Schedule): The evolution schedule defining the time-dependent Hamiltonian.
-            observables (list[PauliOperator | Hamiltonian]): A list of observables to measure at the end of the evolution.
-            initial_state (QTensor): The initial quantum state from which the simulation starts.
-            n_shots (int, optional): The number of simulation repetitions (shots). Defaults to 1000.
+            schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
+            observables (list[PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.
+            initial_state (QTensor): Quantum state used as the simulation starting point.
+            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
+            store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
         """
         super().__init__()
         self.initial_state = initial_state
@@ -53,25 +66,33 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
 
     @property
     def nparameters(self) -> int:
+        """Return the number of schedule parameters."""
         return self.schedule.nparameters
 
     def get_parameters(self) -> dict[str, RealNumber]:
+        """Return the schedule parameters and their current value."""
         return self.schedule.get_parameters()
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
+        """Update a subset of schedule parameters."""
         self.schedule.set_parameters(parameters)
 
     def get_parameter_names(self) -> list[str]:
+        """Return order-stable parameter labels from the schedule."""
         return self.schedule.get_parameter_names()
 
     def get_parameter_values(self) -> list[RealNumber]:
+        """Return parameter values in the order provided by ``get_parameter_names``."""
         return self.schedule.get_parameter_values()
 
     def set_parameter_values(self, values: list[float]) -> None:
+        """Assign all schedule parameters according to ``get_parameter_names`` order."""
         self.schedule.set_parameter_values(values)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return current bounds for schedule parameters."""
         return self.schedule.get_parameter_bounds()
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """Update bounds for selected schedule parameters."""
         self.schedule.set_parameter_bounds(ranges)
