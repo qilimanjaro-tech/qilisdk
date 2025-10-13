@@ -128,6 +128,6 @@ Once you've confirmed everything works, explore:
 - **Functionals** (:doc:`/fundamentals/functionals`) to see how experiments connect models with execution backends.
 - **Execution targets** (:doc:`/fundamentals/backends`) to compare Qutip (CPU) and CUDA (CPU/GPU) runtimes.
 - **SpeQtrum cloud** (:doc:`/fundamentals/speqtrum`) for account setup, calibration-aware jobs, and result retrieval.
-- **Example gallery** (:doc:`/examples/circuits`) for end-to-end notebooks you can adapt to your workflow.
+- **Example gallery** (:doc:`/examples/code_examples`) for end-to-end notebooks you can adapt to your workflow.
 
 Happy quantum coding!
