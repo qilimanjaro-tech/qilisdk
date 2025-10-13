@@ -85,13 +85,27 @@ To inspect complete job metadata (payload, result, logs, decoded errors) call
 :meth:`SpeQtrum.get_job_details <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details>`. Binary fields are returned as
 decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
 
+To obtain the results of a completed job, check the ``result`` attribute of the returned :class:`~qilisdk.speqtrum.speqtrum_models.JobDetail`. 
+The specific result type depends on the job type.
+
 .. code-block:: python
 
-    detail = client.get_job_details(job_id)
-    if detail.result and detail.result.sampling_result:
-        print("Counts:", detail.result.sampling_result.samples)
-    if detail.logs:
-        print("Execution logs:\n", detail.logs)
+    response = client.get_job_details(job_id)
+
+    # to get the results of the job depending on the type of job
+    if response.result:
+        if response.result.sampling_result:
+            print("Sampling results:", response.result.sampling_result)
+        elif response.result.variational_program_result:
+            print("Variational Program  results:", response.result.variational_program_result)
+        elif response.result.time_evolution_result:
+            print("Time Evolution results:", response.result.time_evolution_result)
+        elif response.result.rabi_experiment_result:
+            print("Rabi Experiment results:", response.result.rabi_experiment_result)
+        elif response.result.t1_experiment_result:
+            print("T1 Experiment results:", response.result.t1_experiment_result)
+    if response.logs:
+        print("Execution logs:\n", response.logs)
 
 Waiting for Completion
 ----------------------
@@ -123,28 +137,11 @@ must supply a ``device`` argument with the device code obtained from :meth:`list
     job_id = client.submit(sampling, device=device)
     print("Submitted sampling job:", job_id)
 
-Time-evolution workloads serialize the :class:`~qilisdk.analog.schedule.Schedule` transparently:
+.. Warning::
+    
+    The SpeQtrum backend currently supports only digital circuits and pulse experiments. Analog functionals such as
+    :class:`~qilisdk.functionals.time_evolution.TimeEvolution` are not yet supported.
 
-.. code-block:: python
-
-    from qilisdk.analog import Schedule, X, Z
-    from qilisdk.common import ket
-    from qilisdk.functionals import TimeEvolution
-
-    schedule = Schedule(T=5.0, dt=1.0, hamiltonians={"hx": X(0), "hz": Z(0)})
-    for step in range(6):
-        schedule.add_schedule_step(step, {"hx": 1 - step / 5, "hz": step / 5})
-
-    tevo = TimeEvolution(
-        schedule=schedule,
-        initial_state=ket(0),
-        observables=[Z(0)],
-        nshots=200,
-    )
-
-    job_id = client.submit(tevo, device=device)
-    final = client.wait_for_job(job_id)
-    print("Final expectation values:", final.result.time_evolution_result.final_expected_values)
 
 Variational Programs
 --------------------
@@ -157,6 +154,7 @@ function) and submit it as any other functional.
 
     from qilisdk.common.model import Model, ObjectiveSense
     from qilisdk.common.variables import BinaryVariable, LEQ
+    from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
     from qilisdk.functionals import Sampling
     from qilisdk.functionals.variational_program import VariationalProgram
@@ -179,7 +177,7 @@ function) and submit it as any other functional.
     )
     functional = Sampling(circuit=ansatz, nshots=1024)
     optimizer = SciPyOptimizer(method="Powell")
-    vprog = VariationalProgram(functional=functional, optimizer=optimizer, cost_function=model)
+    vprog = VariationalProgram(functional=functional, optimizer=optimizer, cost_function=ModelCostFunction(model))
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
@@ -205,11 +203,13 @@ functional objects mirror the interfaces described in the :doc:`functionals` cha
     # Rabi experiment: sweep drive durations
     rabi = RabiExperiment(qubit=0, drive_duration_values=np.linspace(0, 200, 21))
     rabi_job = client.submit(rabi, device=device)
+    rabi_response = client.wait_for_job(rabi_job, timeout=600)
 
     # T1 relaxation experiment: sweep wait durations
     t1 = T1Experiment(qubit=0, wait_duration_values=np.linspace(0, 400, 41))
     t1_job = client.submit(t1, device=device)
+    t1_response = client.wait_for_job(t1_job, timeout=600)
 
 The resulting :class:`~qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult` and
-:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` instances are automatically deserialized in
-``JobDetail.result``.
+:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` objects can be retrieved through 
+`rabi_response.result.rabi_experiment_result` and `t1_response.result.t1_experiment_result` respectively.
