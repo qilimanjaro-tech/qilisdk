@@ -23,17 +23,17 @@ QiliSDK and its optional extras are distributed via PyPI. Install the core packa
 
       pip install qilisdk[qutip]
 
-- **Quantum-as-a-Service (QaaS)** (cloud submission via :class:`~qilisdk.backends.qaas.QaaS`):
+- **SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):
 
   .. code-block:: bash
 
-      pip install qilisdk[qaas]
+      pip install qilisdk[speqtrum]
 
 You can combine extras:
 
 .. code-block:: bash
 
-    pip install qilisdk[cuda,qutip,qaas]
+    pip install qilisdk[cuda,qutip,speqtrum]
 
 Quickstart
 ----------
@@ -49,7 +49,7 @@ Build a 2-qubit circuit, sample it, and inspect measurement counts:
 
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import CudaBackend, CudaSamplingMethod
     from qilisdk.functionals import Sampling
 
     # 1. Define a simple 2‑qubit circuit
@@ -62,7 +62,7 @@ Build a 2-qubit circuit, sample it, and inspect measurement counts:
     sampling = Sampling(circuit=circuit, nshots=500)
 
     # 3. Execute on GPU
-    backend = CudaBackend(sampling_method=CudaBackend.STATE_VECTOR)
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     results = backend.execute(sampling)
 
     print("Counts:", results.probabilities)
@@ -95,10 +95,10 @@ Define two Hamiltonians, build a linear interpolation schedule, and run on Qutip
         for idx, t in enumerate(times)
     }
     schedule = Schedule(
-        total_time=T,
-        time_step=dt,
+        T=T,
+        dt=dt,
         hamiltonians={"h1": H1, "h2": H2},
-        schedule_map=sched_map,
+        schedule=sched_map,
     )
 
     # Initial state |+⟩
@@ -122,9 +122,12 @@ Next Steps
 
 Once you've confirmed everything works, explore:
 
-- **Digital module** (:doc:`/fundamentals/digital`) for advanced gate sets, parameter sweeps, and QASM 2.0 serialization.
-- **Analog module** (:doc:`/fundamentals/analog`) for custom Hamiltonians, functional schedules, and intermediate-state storage.  
-- **Backends** (:doc:`/fundamentals/backends`) to compare CPU (Qutip), GPU (CUDA), or cloud (SpeQtrum) performance.  
-- **Extras & utilities**: VQE workflows, result handling, optimizer gallery, and serialization tools.
+- **Core primitives** (:doc:`/fundamentals/common`) for state vectors, operators, and shared abstractions.
+- **Digital workflows** (:doc:`/fundamentals/digital`) covering circuit construction, parameter sweeps, and QASM export.
+- **Analog workflows** (:doc:`/fundamentals/analog`) for Hamiltonian builders, schedules, and time-evolution utilities.
+- **Functionals** (:doc:`/fundamentals/functionals`) to see how experiments connect models with execution backends.
+- **Execution targets** (:doc:`/fundamentals/backends`) to compare Qutip (CPU) and CUDA (CPU/GPU) runtimes.
+- **SpeQtrum cloud** (:doc:`/fundamentals/speqtrum`) for account setup, calibration-aware jobs, and result retrieval.
+- **Example gallery** (:doc:`/examples/circuits`) for end-to-end notebooks you can adapt to your workflow.
 
-For in-depth reference, see the module pages in this documentation. Happy quantum coding!
+Happy quantum coding!

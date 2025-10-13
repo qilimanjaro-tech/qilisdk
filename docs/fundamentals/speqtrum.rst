@@ -138,9 +138,9 @@ must supply a ``device`` argument with the device code obtained from :meth:`list
     print("Submitted sampling job:", job_id)
 
 .. Warning::
-    
-    The SpeQtrum backend currently supports only digital circuits and pulse experiments. Analog functionals such as
-    :class:`~qilisdk.functionals.time_evolution.TimeEvolution` are not yet supported.
+
+    Physical QPUs currently do not support analog functionals built on :class:`~qilisdk.functionals.time_evolution.TimeEvolution`.TimeEvolution; 
+    for now, analog hardware can run only pulse experiments from :mod:`~qilisdk.speqtrum.experiments`.
 
 
 Variational Programs
