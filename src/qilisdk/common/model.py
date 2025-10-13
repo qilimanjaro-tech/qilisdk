@@ -97,17 +97,22 @@ class ObjectiveSense(str, Enum):
 
 @yaml.register_class
 class Constraint:
+    """
+    Represent a symbolic constraint inside a ``Model``.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.model import Constraint
+            from qilisdk.common.variables import BinaryVariable, LEQ
+
+            x = BinaryVariable("x")
+            constraint = Constraint("limit", LEQ(x, 1))
+    """
+
     def __init__(self, label: str, term: ComparisonTerm) -> None:
-        """Represents a mathematical constraint within an optimization ``Model``.
-
-        Unlike the ``Objective``, which is unique, a ``Model`` can contain multiple ``Constraints``.
-
-        Each ``Constraint`` is defined by one or more ``ComparisonTerm`` objects (e.g., ``x + y > 2``),
-        where each term consists of a left-hand side and a right-hand side expression. These expressions
-        can be composed of:
-
-        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-        - Other ``Term`` objects: Enabling the construction of more complex expressions (e.g., ``x + y``).
+        """
+        Build a constraint defined by a comparison term such as ``x + y <= 2``.
 
         Args:
             label (str): The constraint's label.
@@ -184,18 +189,27 @@ class Constraint:
 
 @yaml.register_class
 class Objective:
+    """
+    Represent the scalar objective function optimized by a ``Model``.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.model import Objective, ObjectiveSense
+            from qilisdk.common.variables import BinaryVariable
+
+            x = BinaryVariable("x")
+            obj = Objective("profit", 3 * x, sense=ObjectiveSense.MAXIMIZE)
+    """
+
     def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
-        """Represents the objective function to optimize in an optimization ``Model`` (e.g., minimize ``3x*y + 2x``).
-        A ``Model`` can have only one ``Objective``, unlike ``Constraints``, which can be multiple.
-        The ``Objective`` is constructed using ``Term`` objects (e.g., ``3x*y``, ``2x``). Each ``Term`` may include:
-        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-        - Other ``Term`` objects: Allowing for the construction of complex expressions.
+        """
+        Build a new objective function.
 
         Args:
-            label (str): The objective's label.
-            term (Term): The term that defines the objective.
-            sense (ObjectiveSense, optional): The objective's sense of optimization
-                    (ObjectiveSense.MINIMIZE or ObjectiveSense.MAXIMIZE). Defaults to ObjectiveSense.MINIMIZE.
+            label (str): Objective label.
+            term (BaseVariable | Term): Expression to minimize or maximize.
+            sense (ObjectiveSense, optional): Optimization sense. Defaults to ``ObjectiveSense.MINIMIZE``.
 
         Raises:
             ValueError: if the term provided is not a Term Object.
@@ -255,26 +269,13 @@ class Objective:
 
 @yaml.register_class
 class Model:
-    def __init__(self, label: str) -> None:
-        """Represents a mathematical optimization model, consisting of an ``Objective`` function
-        and a set of ``Constraint`` objects.
+    """
+    Aggregate an objective and constraints into an optimization problem.
 
-        A ``Model`` includes:
-        - A single ``Objective`` that defines the goal of the optimization (e.g., minimize ``3x*y + 2x``).
-        - One or more ``Constraints`` that specify the limitations or requirements within which the
-        ``Objective`` must be optimized (e.g., ``x + y > 0``, ``x > 2``).
-
-        Both the ``Objective`` and ``Constraints`` are constructed from ``Term`` objects (e.g., ``3x*y``, ``2x``).
-        Each ``Term`` may include:
-        - ``Variable`` objects: The decision variables of the model (e.g., ``x``, ``y``).
-        - Nested ``Term`` objects: Enabling the construction of complex mathematical expressions.
-
-        Example:
-
+    Example:
         .. code-block:: python
 
-            from qilisdk.common.variables import BinaryVariable, LEQ
-            from qilisdk.common.model import Model
+            from qilisdk.common import BinaryVariable, LEQ, Model
 
             num_items = 4
             values = [1, 3, 5, 2]
@@ -287,8 +288,13 @@ class Model:
             constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
             model.add_constraint("maximum weight", constraint)
 
+            print(model)
+    """
+
+    def __init__(self, label: str) -> None:
+        """
         Args:
-            label (str): the model label.
+            label (str): Model label.
         """
         self._constraints: dict[str, Constraint] = {}
         self._encoding_constraints: dict[str, Constraint] = {}
@@ -505,11 +511,24 @@ class Model:
 
 @yaml.register_class
 class QUBO(Model):
-    def __init__(self, label: str) -> None:
-        """Represents a model that is used for Quadratic Unconstrained Binary Optimization.
+    """
+    Specialized ``Model`` constrained to Quadratic Unconstrained Binary Optimization form.
 
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.model import QUBO
+            from qilisdk.common.variables import BinaryVariable
+
+            x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
+            qubo = QUBO("Example")
+            qubo.set_objective((x0 + x1) ** 2)
+    """
+
+    def __init__(self, label: str) -> None:
+        """
         Args:
-            label (str): the QUBO model label.
+            label (str): QUBO model label.
         """
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
