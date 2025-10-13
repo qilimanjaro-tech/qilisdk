@@ -559,7 +559,7 @@ class MatplotlibCircuitRenderer:
         """
         layer = max(len(v) for v in self._layer_widths.values())
         x = self._xpos(layer) + self.style.gate_margin
-        self._reserve(self.style.min_gate_w, range(self._wires), layer)
+        self._max_layer_width.append(self.style.min_gate_w)
         for q in qubits:
             self._draw_measure_symbol(q, x)
 
@@ -621,7 +621,7 @@ class MatplotlibCircuitRenderer:
         measurement edge with no right-hand tail.
         """
         # how far the drawing for this wire actually goes
-        x_end = sum(self._max_layer_width) + self.style.end_wire_ext * self.style.layer_sep
+        x_end = sum(self._max_layer_width)
         for q in range(self._wires):
             y = self._ypos(q, n_qubits=self._wires, sep=self.style.wire_sep)
             # keep the tail only for wires that KEEP going after their last gate
@@ -654,7 +654,7 @@ class MatplotlibCircuitRenderer:
         fig.set_facecolor(self.style.theme.background)
 
         total_length = sum(self._max_layer_width)
-        x_end = self.style.padding + total_length + self.style.end_wire_ext * self.style.layer_sep
+        x_end = self.style.padding + total_length
 
         y_end = self.style.padding + (self._wires - 1) * self.style.wire_sep
 
