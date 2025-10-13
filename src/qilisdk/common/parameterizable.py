@@ -20,74 +20,56 @@ class Parameterizable(ABC):
     @property
     @abstractmethod
     def nparameters(self) -> int:
-        """
-        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
-
-        Returns:
-            int: The total count of parameters from all parameterized gates.
-        """
+        """Number of tunable parameters defined by the object."""
 
     @abstractmethod
     def get_parameter_values(self) -> list[float]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the current numerical values of the parameters."""
 
     @abstractmethod
     def get_parameter_names(self) -> list[str]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the ordered list of parameter labels."""
 
     @abstractmethod
     def get_parameters(self) -> dict[str, float]:
-        """
-        Retrieve the parameter names and values from all parameterized gates in the circuit.
-
-        Returns:
-            dict[str, float]: A dictionary of the parameters with their current values.
-        """
+        """Return a mapping from parameter labels to their current numerical values."""
 
     @abstractmethod
     def set_parameter_values(self, values: list[float]) -> None:
         """
-        Set new parameter values for all parameterized gates in the circuit.
+        Update all parameter values at once.
 
         Args:
-            values (list[float]): A list containing new parameter values to assign to the parameterized gates.
+            values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.
 
         Raises:
-            ValueError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
+            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
 
     @abstractmethod
     def set_parameters(self, parameters: dict[str, float]) -> None:
-        """Set the parameter values by their label. No need to provide the full list of parameters.
+        """
+        Update a subset of parameters by label.
 
         Args:
-            parameter_dict (dict[str, float]): a dictionary mapping each parameter label to its value.
+            parameters (dict[str, float]): Mapping from parameter labels to updated numeric values.
 
         Raises:
-            ValueError: if the provided parameter label is not defined in the list of parameters contained in this object.
+            ValueError: If an unknown parameter label is provided.
         """
 
     @abstractmethod
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Returns a dictionary specifying the bounds of each parameter."""
+        """Return the ``(lower, upper)`` bounds associated with each parameter."""
 
     @abstractmethod
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """Updates the ranges for the specified parameters.
+        """
+        Update the allowable ranges for the specified parameters.
 
         Args:
-            ranges (dict[str, tuple[RealNumber, RealNumber]]): A dictionary mapping each parameter to its new range.
+            ranges (dict[str, tuple[float, float]]): Mapping from parameter label to ``(lower, upper)`` bounds.
 
         Raises:
-            ValueError: if the provided parameter label is not defined in the list of parameters contained in this object.
+            ValueError: If an unknown parameter label is provided.
         """
