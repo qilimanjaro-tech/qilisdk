@@ -145,11 +145,16 @@ class MatplotlibCircuitRenderer:
         for qubit in range(self.circuit.nqubits):
             gate_maping[qubit] = []
         for gate in self.circuit.gates:
-            for qubit in gate.qubits:
-                gate_maping[qubit].append(gate)
+            qubits = gate.qubits
+            if len(qubits) == 1:
+                gate_maping[qubits[0]].append(gate)
+            elif len(qubits) > 1:
+                for qubit in range(min(qubits), max(qubits) + 1):
+                    gate_maping[qubit].append(gate)
 
-        layer = 0
-        waiting_list = {}
+
+        layer: int = 0
+        waiting_list: Dict[int, Gate] = {}
         completed = [False] * self.circuit.nqubits
         for q, l in gate_maping.items():
             completed[q] = not bool(l)
@@ -173,20 +178,22 @@ class MatplotlibCircuitRenderer:
                     gate_maping[q].pop(0)
                 if gate.nqubits > 1:
                     waiting_list[q] = gate
-                    if all(key in waiting_list for key in gate.qubits) and all(waiting_list[qr] == gate for qr in gate.qubits):
+                    qubits = gate.qubits
+                    affected_qubits = range(min(qubits), max(qubits) + 1)
+                    if all(key in waiting_list for key in affected_qubits) and all(waiting_list[qr] == gate for qr in affected_qubits):
                             self._layer_gate_mapping[layer][q] = gate
-                            for c_qubit in gate.qubits:
+                            for c_qubit in affected_qubits:
                                 gate_maping[c_qubit].pop(0)
                                 del waiting_list[c_qubit]
 
-                            for m_qubit in range(min(gate.qubits), q):
-                                if m_qubit not in gate.qubits and m_qubit in self._layer_gate_mapping[layer]:
-                                    ignore_q.append(m_qubit)
-                                    if layer + 1 not in self._layer_gate_mapping:
-                                        self._layer_gate_mapping[layer + 1] = {}
-                                    self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][m_qubit]
-                                    del self._layer_gate_mapping[layer][m_qubit]
-                            ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(gate.qubits) + 1))]
+                            # for m_qubit in range(min(qubits), q):
+                            #     if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
+                            #         ignore_q.append(m_qubit)
+                            #         if layer + 1 not in self._layer_gate_mapping:
+                            #             self._layer_gate_mapping[layer + 1] = {}
+                            #         self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][m_qubit]
+                            #         del self._layer_gate_mapping[layer][m_qubit]
+                            ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
                 if len(gate_maping[q]) == 0 and not completed[q]:
                     completed[q] = True
                     self.last_idx[q] = layer
