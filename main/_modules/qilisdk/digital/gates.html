@@ -137,6 +137,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -187,6 +188,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -914,748 +916,783 @@
 </span><span id="line-490">
 </span><span id="line-491">
 </span><span id="line-492"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="X">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.X">[docs]</a>
-</span><span id="line-493"><span class="k">class</span><span class="w"> </span><span class="nc">X</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+<div class="viewcode-block" id="I">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.I">[docs]</a>
+</span><span id="line-493"><span class="k">class</span><span class="w"> </span><span class="nc">I</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
 </span><span id="line-494"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-495"><span class="sd">    The Pauli-X gate.</span>
+</span><span id="line-495"><span class="sd">    The Identity gate.</span>
 </span><span id="line-496">
 </span><span id="line-497"><span class="sd">    The associated matrix is:</span>
 </span><span id="line-498">
 </span><span id="line-499"><span class="sd">    .. code-block:: text</span>
 </span><span id="line-500">
-</span><span id="line-501"><span class="sd">       [[0, 1],</span>
-</span><span id="line-502"><span class="sd">       [1, 0]]</span>
+</span><span id="line-501"><span class="sd">       [[1, 0],</span>
+</span><span id="line-502"><span class="sd">       [0, 1]]</span>
 </span><span id="line-503">
-</span><span id="line-504"><span class="sd">    This is a pi radians rotation around the X-axis in the Bloch sphere.</span>
-</span><span id="line-505"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-506">
-</span><span id="line-507">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-508"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-509"><span class="sd">        Initialize a Pauli-X gate.</span>
-</span><span id="line-510">
-</span><span id="line-511"><span class="sd">        Args:</span>
-</span><span id="line-512"><span class="sd">            qubit (int): The target qubit index for the X gate.</span>
-</span><span id="line-513"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-514">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-515">
-</span><span id="line-516">    <span class="nd">@property</span>
+</span><span id="line-504"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-505">
+</span><span id="line-506">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-507"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-508"><span class="sd">        Initialize a Pauli-X gate.</span>
+</span><span id="line-509">
+</span><span id="line-510"><span class="sd">        Args:</span>
+</span><span id="line-511"><span class="sd">            qubit (int): The target qubit index for the X gate.</span>
+</span><span id="line-512"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-513">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-514">
+</span><span id="line-515">    <span class="nd">@property</span>
+<div class="viewcode-block" id="I.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.I.name">[docs]</a>
+</span><span id="line-516">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-517">        <span class="k">return</span> <span class="s2">&quot;I&quot;</span></div>
+
+</span><span id="line-518">
+</span><span id="line-519">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-520">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+
+</span><span id="line-521">
+</span><span id="line-522">
+</span><span id="line-523"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="X">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.X">[docs]</a>
+</span><span id="line-524"><span class="k">class</span><span class="w"> </span><span class="nc">X</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-525"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-526"><span class="sd">    The Pauli-X gate.</span>
+</span><span id="line-527">
+</span><span id="line-528"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-529">
+</span><span id="line-530"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-531">
+</span><span id="line-532"><span class="sd">       [[0, 1],</span>
+</span><span id="line-533"><span class="sd">       [1, 0]]</span>
+</span><span id="line-534">
+</span><span id="line-535"><span class="sd">    This is a pi radians rotation around the X-axis in the Bloch sphere.</span>
+</span><span id="line-536"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-537">
+</span><span id="line-538">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-539"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-540"><span class="sd">        Initialize a Pauli-X gate.</span>
+</span><span id="line-541">
+</span><span id="line-542"><span class="sd">        Args:</span>
+</span><span id="line-543"><span class="sd">            qubit (int): The target qubit index for the X gate.</span>
+</span><span id="line-544"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-545">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-546">
+</span><span id="line-547">    <span class="nd">@property</span>
 <div class="viewcode-block" id="X.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.X.name">[docs]</a>
-</span><span id="line-517">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-518">        <span class="k">return</span> <span class="s2">&quot;X&quot;</span></div>
+</span><span id="line-548">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-549">        <span class="k">return</span> <span class="s2">&quot;X&quot;</span></div>
 
-</span><span id="line-519">
-</span><span id="line-520">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-521">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-550">
+</span><span id="line-551">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-552">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-522">
-</span><span id="line-523">
-</span><span id="line-524"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-553">
+</span><span id="line-554">
+</span><span id="line-555"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="Y">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Y">[docs]</a>
-</span><span id="line-525"><span class="k">class</span><span class="w"> </span><span class="nc">Y</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-526"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-527"><span class="sd">    The Pauli-Y gate.</span>
-</span><span id="line-528">
-</span><span id="line-529"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-530">
-</span><span id="line-531"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-532">
-</span><span id="line-533"><span class="sd">       [[ 0, -i ],</span>
-</span><span id="line-534"><span class="sd">        [ i,  0 ]]</span>
-</span><span id="line-535">
-</span><span id="line-536"><span class="sd">    This is a pi radians rotation around the Y-axis in the Bloch sphere.</span>
-</span><span id="line-537"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-538">
-</span><span id="line-539">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-540"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-541"><span class="sd">        Initialize a Pauli-Y gate.</span>
-</span><span id="line-542">
-</span><span id="line-543"><span class="sd">        Args:</span>
-</span><span id="line-544"><span class="sd">            qubit (int): The target qubit index for the Y gate.</span>
-</span><span id="line-545"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-546">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-547">
-</span><span id="line-548">    <span class="nd">@property</span>
+</span><span id="line-556"><span class="k">class</span><span class="w"> </span><span class="nc">Y</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-557"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-558"><span class="sd">    The Pauli-Y gate.</span>
+</span><span id="line-559">
+</span><span id="line-560"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-561">
+</span><span id="line-562"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-563">
+</span><span id="line-564"><span class="sd">       [[ 0, -i ],</span>
+</span><span id="line-565"><span class="sd">        [ i,  0 ]]</span>
+</span><span id="line-566">
+</span><span id="line-567"><span class="sd">    This is a pi radians rotation around the Y-axis in the Bloch sphere.</span>
+</span><span id="line-568"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-569">
+</span><span id="line-570">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-571"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-572"><span class="sd">        Initialize a Pauli-Y gate.</span>
+</span><span id="line-573">
+</span><span id="line-574"><span class="sd">        Args:</span>
+</span><span id="line-575"><span class="sd">            qubit (int): The target qubit index for the Y gate.</span>
+</span><span id="line-576"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-577">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-578">
+</span><span id="line-579">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Y.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Y.name">[docs]</a>
-</span><span id="line-549">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-550">        <span class="k">return</span> <span class="s2">&quot;Y&quot;</span></div>
+</span><span id="line-580">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-581">        <span class="k">return</span> <span class="s2">&quot;Y&quot;</span></div>
 
-</span><span id="line-551">
-</span><span id="line-552">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-553">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-582">
+</span><span id="line-583">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-584">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-554">
-</span><span id="line-555">
-</span><span id="line-556"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-585">
+</span><span id="line-586">
+</span><span id="line-587"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="Z">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Z">[docs]</a>
-</span><span id="line-557"><span class="k">class</span><span class="w"> </span><span class="nc">Z</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-558"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-559"><span class="sd">    The Pauli-Z gate.</span>
-</span><span id="line-560">
-</span><span id="line-561"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-562">
-</span><span id="line-563"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-564">
-</span><span id="line-565"><span class="sd">        [[1, 0],</span>
-</span><span id="line-566"><span class="sd">        [0, -1]]</span>
-</span><span id="line-567">
-</span><span id="line-568"><span class="sd">    This is a pi radians rotation around the Z-axis in the Bloch sphere.</span>
-</span><span id="line-569"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-570">
-</span><span id="line-571">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-572"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-573"><span class="sd">        Initialize a Pauli-Z gate.</span>
-</span><span id="line-574">
-</span><span id="line-575"><span class="sd">        Args:</span>
-</span><span id="line-576"><span class="sd">            qubit (int): The target qubit index for the Z gate.</span>
-</span><span id="line-577"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-578">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-579">
-</span><span id="line-580">    <span class="nd">@property</span>
+</span><span id="line-588"><span class="k">class</span><span class="w"> </span><span class="nc">Z</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-589"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-590"><span class="sd">    The Pauli-Z gate.</span>
+</span><span id="line-591">
+</span><span id="line-592"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-593">
+</span><span id="line-594"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-595">
+</span><span id="line-596"><span class="sd">        [[1, 0],</span>
+</span><span id="line-597"><span class="sd">        [0, -1]]</span>
+</span><span id="line-598">
+</span><span id="line-599"><span class="sd">    This is a pi radians rotation around the Z-axis in the Bloch sphere.</span>
+</span><span id="line-600"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-601">
+</span><span id="line-602">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-603"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-604"><span class="sd">        Initialize a Pauli-Z gate.</span>
+</span><span id="line-605">
+</span><span id="line-606"><span class="sd">        Args:</span>
+</span><span id="line-607"><span class="sd">            qubit (int): The target qubit index for the Z gate.</span>
+</span><span id="line-608"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-609">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-610">
+</span><span id="line-611">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Z.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Z.name">[docs]</a>
-</span><span id="line-581">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-582">        <span class="k">return</span> <span class="s2">&quot;Z&quot;</span></div>
+</span><span id="line-612">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-613">        <span class="k">return</span> <span class="s2">&quot;Z&quot;</span></div>
 
-</span><span id="line-583">
-</span><span id="line-584">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-585">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-614">
+</span><span id="line-615">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-616">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-586">
-</span><span id="line-587">
-</span><span id="line-588"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-617">
+</span><span id="line-618">
+</span><span id="line-619"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="H">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.H">[docs]</a>
-</span><span id="line-589"><span class="k">class</span><span class="w"> </span><span class="nc">H</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-590"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-591"><span class="sd">    The Hadamard gate.</span>
-</span><span id="line-592">
-</span><span id="line-593"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-594">
-</span><span id="line-595"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-596">
-</span><span id="line-597"><span class="sd">        [[1/sqrt(2),  1/sqrt(2)],</span>
-</span><span id="line-598"><span class="sd">         [1/sqrt(2), -1/sqrt(2)]]</span>
-</span><span id="line-599">
-</span><span id="line-600"><span class="sd">    This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.</span>
-</span><span id="line-601"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-602">
-</span><span id="line-603">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-604"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-605"><span class="sd">        Initialize a Hadamard gate.</span>
-</span><span id="line-606">
-</span><span id="line-607"><span class="sd">        Args:</span>
-</span><span id="line-608"><span class="sd">            qubit (int): The target qubit index for the Hadamard gate.</span>
-</span><span id="line-609"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-610">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-611">
-</span><span id="line-612">    <span class="nd">@property</span>
+</span><span id="line-620"><span class="k">class</span><span class="w"> </span><span class="nc">H</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-621"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-622"><span class="sd">    The Hadamard gate.</span>
+</span><span id="line-623">
+</span><span id="line-624"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-625">
+</span><span id="line-626"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-627">
+</span><span id="line-628"><span class="sd">        [[1/sqrt(2),  1/sqrt(2)],</span>
+</span><span id="line-629"><span class="sd">         [1/sqrt(2), -1/sqrt(2)]]</span>
+</span><span id="line-630">
+</span><span id="line-631"><span class="sd">    This is a pi radians rotation around the (X+Z)-axis in the Bloch sphere.</span>
+</span><span id="line-632"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-633">
+</span><span id="line-634">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-635"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-636"><span class="sd">        Initialize a Hadamard gate.</span>
+</span><span id="line-637">
+</span><span id="line-638"><span class="sd">        Args:</span>
+</span><span id="line-639"><span class="sd">            qubit (int): The target qubit index for the Hadamard gate.</span>
+</span><span id="line-640"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-641">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-642">
+</span><span id="line-643">    <span class="nd">@property</span>
 <div class="viewcode-block" id="H.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.H.name">[docs]</a>
-</span><span id="line-613">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-614">        <span class="k">return</span> <span class="s2">&quot;H&quot;</span></div>
+</span><span id="line-644">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-645">        <span class="k">return</span> <span class="s2">&quot;H&quot;</span></div>
 
-</span><span id="line-615">
-</span><span id="line-616">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-617">        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-646">
+</span><span id="line-647">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-648">        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-618">
-</span><span id="line-619">
-</span><span id="line-620"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-649">
+</span><span id="line-650">
+</span><span id="line-651"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="S">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.S">[docs]</a>
-</span><span id="line-621"><span class="k">class</span><span class="w"> </span><span class="nc">S</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-622"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-623"><span class="sd">    Represents the S gate, which induces a pi/2 phase.</span>
-</span><span id="line-624">
-</span><span id="line-625"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-626">
-</span><span id="line-627"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-628">
-</span><span id="line-629"><span class="sd">        [[1, 0],</span>
-</span><span id="line-630"><span class="sd">         [0, i]]</span>
-</span><span id="line-631">
-</span><span id="line-632"><span class="sd">    This gate is also known as the square root of Z gate: ``S**2=Z``, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.</span>
-</span><span id="line-633"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-634">
-</span><span id="line-635">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-636"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-637"><span class="sd">        Initialize an S gate.</span>
-</span><span id="line-638">
-</span><span id="line-639"><span class="sd">        Args:</span>
-</span><span id="line-640"><span class="sd">            qubit (int): The target qubit index for the S gate.</span>
-</span><span id="line-641"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-642">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-643">
-</span><span id="line-644">    <span class="nd">@property</span>
+</span><span id="line-652"><span class="k">class</span><span class="w"> </span><span class="nc">S</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-653"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-654"><span class="sd">    Represents the S gate, which induces a pi/2 phase.</span>
+</span><span id="line-655">
+</span><span id="line-656"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-657">
+</span><span id="line-658"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-659">
+</span><span id="line-660"><span class="sd">        [[1, 0],</span>
+</span><span id="line-661"><span class="sd">         [0, i]]</span>
+</span><span id="line-662">
+</span><span id="line-663"><span class="sd">    This gate is also known as the square root of Z gate: ``S**2=Z``, or equivalently it is a pi/2 radians rotation around the Z-axis in the Bloch sphere.</span>
+</span><span id="line-664"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-665">
+</span><span id="line-666">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-667"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-668"><span class="sd">        Initialize an S gate.</span>
+</span><span id="line-669">
+</span><span id="line-670"><span class="sd">        Args:</span>
+</span><span id="line-671"><span class="sd">            qubit (int): The target qubit index for the S gate.</span>
+</span><span id="line-672"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-673">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-674">
+</span><span id="line-675">    <span class="nd">@property</span>
 <div class="viewcode-block" id="S.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.S.name">[docs]</a>
-</span><span id="line-645">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-646">        <span class="k">return</span> <span class="s2">&quot;S&quot;</span></div>
+</span><span id="line-676">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-677">        <span class="k">return</span> <span class="s2">&quot;S&quot;</span></div>
 
-</span><span id="line-647">
-</span><span id="line-648">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-649">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-678">
+</span><span id="line-679">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-680">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-650">
-</span><span id="line-651">
-</span><span id="line-652"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-681">
+</span><span id="line-682">
+</span><span id="line-683"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.T">[docs]</a>
-</span><span id="line-653"><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-654"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-655"><span class="sd">    Represents the T gate, which induces a pi/4 phase.</span>
-</span><span id="line-656">
-</span><span id="line-657"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-658">
-</span><span id="line-659"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-660">
-</span><span id="line-661"><span class="sd">        [[1,           0],</span>
-</span><span id="line-662"><span class="sd">         [0, exp(i*pi/4)]]</span>
-</span><span id="line-663">
-</span><span id="line-664"><span class="sd">    This gate is also known as the fourth-root of Z gate: ``T**4=Z``, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.</span>
-</span><span id="line-665"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-666">
-</span><span id="line-667">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-668"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-669"><span class="sd">        Initialize a T gate.</span>
-</span><span id="line-670">
-</span><span id="line-671"><span class="sd">        Args:</span>
-</span><span id="line-672"><span class="sd">            qubit (int): The target qubit index for the T gate.</span>
-</span><span id="line-673"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-674">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
-</span><span id="line-675">
-</span><span id="line-676">    <span class="nd">@property</span>
+</span><span id="line-684"><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-685"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-686"><span class="sd">    Represents the T gate, which induces a pi/4 phase.</span>
+</span><span id="line-687">
+</span><span id="line-688"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-689">
+</span><span id="line-690"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-691">
+</span><span id="line-692"><span class="sd">        [[1,           0],</span>
+</span><span id="line-693"><span class="sd">         [0, exp(i*pi/4)]]</span>
+</span><span id="line-694">
+</span><span id="line-695"><span class="sd">    This gate is also known as the fourth-root of Z gate: ``T**4=Z``, or equivalently it is a pi/4 radians rotation around the Z-axis in the Bloch sphere.</span>
+</span><span id="line-696"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-697">
+</span><span id="line-698">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-699"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-700"><span class="sd">        Initialize a T gate.</span>
+</span><span id="line-701">
+</span><span id="line-702"><span class="sd">        Args:</span>
+</span><span id="line-703"><span class="sd">            qubit (int): The target qubit index for the T gate.</span>
+</span><span id="line-704"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-705">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,))</span>
+</span><span id="line-706">
+</span><span id="line-707">    <span class="nd">@property</span>
 <div class="viewcode-block" id="T.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.T.name">[docs]</a>
-</span><span id="line-677">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-678">        <span class="k">return</span> <span class="s2">&quot;T&quot;</span></div>
+</span><span id="line-708">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-709">        <span class="k">return</span> <span class="s2">&quot;T&quot;</span></div>
 
-</span><span id="line-679">
-</span><span id="line-680">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-681">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-710">
+</span><span id="line-711">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-712">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-682">
-</span><span id="line-683">
-</span><span id="line-684"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-713">
+</span><span id="line-714">
+</span><span id="line-715"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RX">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RX">[docs]</a>
-</span><span id="line-685"><span class="k">class</span><span class="w"> </span><span class="nc">RX</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-686"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-687"><span class="sd">    Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.</span>
-</span><span id="line-688">
-</span><span id="line-689"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-690">
-</span><span id="line-691"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-692">
-</span><span id="line-693"><span class="sd">        [[cos(theta/2),     -i*sin(theta/2)],</span>
-</span><span id="line-694"><span class="sd">         [-i*sin(theta/2),     cos(theta/2)]]</span>
-</span><span id="line-695">
-</span><span id="line-696"><span class="sd">    This is an exponential of the Pauli-X operator:</span>
-</span><span id="line-697"><span class="sd">        ``RX(theta) = exp(-i*theta*X/2)``</span>
-</span><span id="line-698"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-699">
+</span><span id="line-716"><span class="k">class</span><span class="w"> </span><span class="nc">RX</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-717"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-718"><span class="sd">    Represents a `theta` angle rotation around the X-axis (polar) in the Bloch sphere.</span>
+</span><span id="line-719">
+</span><span id="line-720"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-721">
+</span><span id="line-722"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-723">
+</span><span id="line-724"><span class="sd">        [[cos(theta/2),     -i*sin(theta/2)],</span>
+</span><span id="line-725"><span class="sd">         [-i*sin(theta/2),     cos(theta/2)]]</span>
+</span><span id="line-726">
+</span><span id="line-727"><span class="sd">    This is an exponential of the Pauli-X operator:</span>
+</span><span id="line-728"><span class="sd">        ``RX(theta) = exp(-i*theta*X/2)``</span>
+</span><span id="line-729"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-730">
 <div class="viewcode-block" id="RX.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RX.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-700">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+</span><span id="line-731">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-701">
-</span><span id="line-702">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-703"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-704"><span class="sd">        Initialize an RX gate.</span>
-</span><span id="line-705">
-</span><span id="line-706"><span class="sd">        Args:</span>
-</span><span id="line-707"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
-</span><span id="line-708"><span class="sd">            theta (float): The rotation angle (polar) in radians.</span>
-</span><span id="line-709"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-710">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-711">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-712">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">)},</span>
-</span><span id="line-713">        <span class="p">)</span>
-</span><span id="line-714">
-</span><span id="line-715">    <span class="nd">@property</span>
+</span><span id="line-732">
+</span><span id="line-733">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-734"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-735"><span class="sd">        Initialize an RX gate.</span>
+</span><span id="line-736">
+</span><span id="line-737"><span class="sd">        Args:</span>
+</span><span id="line-738"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
+</span><span id="line-739"><span class="sd">            theta (float): The rotation angle (polar) in radians.</span>
+</span><span id="line-740"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-741">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-742">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-743">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">)},</span>
+</span><span id="line-744">        <span class="p">)</span>
+</span><span id="line-745">
+</span><span id="line-746">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RX.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RX.name">[docs]</a>
-</span><span id="line-716">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-717">        <span class="k">return</span> <span class="s2">&quot;RX&quot;</span></div>
+</span><span id="line-747">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-748">        <span class="k">return</span> <span class="s2">&quot;RX&quot;</span></div>
 
-</span><span id="line-718">
-</span><span id="line-719">    <span class="nd">@property</span>
+</span><span id="line-749">
+</span><span id="line-750">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RX.theta">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RX.theta">[docs]</a>
-</span><span id="line-720">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-721">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+</span><span id="line-751">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-752">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-722">
-</span><span id="line-723">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-724">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
-</span><span id="line-725">        <span class="n">cos_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-726">        <span class="n">sin_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-727">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos_half</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sin_half</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sin_half</span><span class="p">,</span> <span class="n">cos_half</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-753">
+</span><span id="line-754">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-755">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
+</span><span id="line-756">        <span class="n">cos_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="line-757">        <span class="n">sin_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="line-758">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos_half</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sin_half</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sin_half</span><span class="p">,</span> <span class="n">cos_half</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-728">
-</span><span id="line-729">
-</span><span id="line-730"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-759">
+</span><span id="line-760">
+</span><span id="line-761"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RY">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RY">[docs]</a>
-</span><span id="line-731"><span class="k">class</span><span class="w"> </span><span class="nc">RY</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-732"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-733"><span class="sd">    Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.</span>
-</span><span id="line-734">
-</span><span id="line-735"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-736">
-</span><span id="line-737"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-738">
-</span><span id="line-739"><span class="sd">        [[cos(theta/2), -sin(theta/2)],</span>
-</span><span id="line-740"><span class="sd">         [sin(theta/2),  cos(theta/2)]]</span>
-</span><span id="line-741">
-</span><span id="line-742"><span class="sd">    This is an exponential of the Pauli-Y operator:</span>
-</span><span id="line-743"><span class="sd">        ``RY(theta) = exp(-i*theta*Y/2)``</span>
-</span><span id="line-744"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-745">
+</span><span id="line-762"><span class="k">class</span><span class="w"> </span><span class="nc">RY</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-763"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-764"><span class="sd">    Represents a `theta` angle rotation around the Y-axis (polar) in the Bloch sphere.</span>
+</span><span id="line-765">
+</span><span id="line-766"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-767">
+</span><span id="line-768"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-769">
+</span><span id="line-770"><span class="sd">        [[cos(theta/2), -sin(theta/2)],</span>
+</span><span id="line-771"><span class="sd">         [sin(theta/2),  cos(theta/2)]]</span>
+</span><span id="line-772">
+</span><span id="line-773"><span class="sd">    This is an exponential of the Pauli-Y operator:</span>
+</span><span id="line-774"><span class="sd">        ``RY(theta) = exp(-i*theta*Y/2)``</span>
+</span><span id="line-775"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-776">
 <div class="viewcode-block" id="RY.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RY.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-746">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+</span><span id="line-777">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-747">
-</span><span id="line-748">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-749"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-750"><span class="sd">        Initialize an RY gate.</span>
-</span><span id="line-751">
-</span><span id="line-752"><span class="sd">        Args:</span>
-</span><span id="line-753"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
-</span><span id="line-754"><span class="sd">            theta (float): The rotation angle (polar) in radians.</span>
-</span><span id="line-755"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-756">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-757">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-758">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">)},</span>
-</span><span id="line-759">        <span class="p">)</span>
-</span><span id="line-760">
-</span><span id="line-761">    <span class="nd">@property</span>
+</span><span id="line-778">
+</span><span id="line-779">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-780"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-781"><span class="sd">        Initialize an RY gate.</span>
+</span><span id="line-782">
+</span><span id="line-783"><span class="sd">        Args:</span>
+</span><span id="line-784"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
+</span><span id="line-785"><span class="sd">            theta (float): The rotation angle (polar) in radians.</span>
+</span><span id="line-786"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-787">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-788">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-789">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">)},</span>
+</span><span id="line-790">        <span class="p">)</span>
+</span><span id="line-791">
+</span><span id="line-792">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RY.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RY.name">[docs]</a>
-</span><span id="line-762">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-763">        <span class="k">return</span> <span class="s2">&quot;RY&quot;</span></div>
+</span><span id="line-793">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-794">        <span class="k">return</span> <span class="s2">&quot;RY&quot;</span></div>
 
-</span><span id="line-764">
-</span><span id="line-765">    <span class="nd">@property</span>
+</span><span id="line-795">
+</span><span id="line-796">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RY.theta">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RY.theta">[docs]</a>
-</span><span id="line-766">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-767">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+</span><span id="line-797">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-798">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-768">
-</span><span id="line-769">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-770">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
-</span><span id="line-771">        <span class="n">cos_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-772">        <span class="n">sin_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-773">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos_half</span><span class="p">,</span> <span class="o">-</span><span class="n">sin_half</span><span class="p">],</span> <span class="p">[</span><span class="n">sin_half</span><span class="p">,</span> <span class="n">cos_half</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-799">
+</span><span id="line-800">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-801">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
+</span><span id="line-802">        <span class="n">cos_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="line-803">        <span class="n">sin_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="line-804">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos_half</span><span class="p">,</span> <span class="o">-</span><span class="n">sin_half</span><span class="p">],</span> <span class="p">[</span><span class="n">sin_half</span><span class="p">,</span> <span class="n">cos_half</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-774">
-</span><span id="line-775">
-</span><span id="line-776"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-805">
+</span><span id="line-806">
+</span><span id="line-807"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RZ">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ">[docs]</a>
-</span><span id="line-777"><span class="k">class</span><span class="w"> </span><span class="nc">RZ</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-778"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-779"><span class="sd">    Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.</span>
-</span><span id="line-780">
-</span><span id="line-781"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-782">
-</span><span id="line-783"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-784">
-</span><span id="line-785"><span class="sd">        [[exp(-i*phi/2),              0],</span>
-</span><span id="line-786"><span class="sd">         [0,               exp(i*phi/2)]]</span>
-</span><span id="line-787">
-</span><span id="line-788"><span class="sd">    This is an exponential of the Pauli-Z operator:</span>
-</span><span id="line-789"><span class="sd">        ``RZ(phi) = exp(-i*phi*Z/2)``</span>
-</span><span id="line-790">
-</span><span id="line-791"><span class="sd">    Which is equivalent to the U1 gate plus a global phase:</span>
-</span><span id="line-792"><span class="sd">        ``RZ(phi) = exp(-i*phi/2)U1(phi)``</span>
-</span><span id="line-793">
-</span><span id="line-794"><span class="sd">    Other unitaries you can get from this one are:</span>
-</span><span id="line-795"><span class="sd">        - ``RZ(phi=pi) = exp(-i*pi/2) Z = -i Z``</span>
-</span><span id="line-796"><span class="sd">        - ``RZ(phi=pi/2) = exp(-i*pi/4) S``</span>
-</span><span id="line-797"><span class="sd">        - ``RZ(phi=pi/4) = exp(-i*pi/8) T``</span>
-</span><span id="line-798"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-799">
+</span><span id="line-808"><span class="k">class</span><span class="w"> </span><span class="nc">RZ</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-809"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-810"><span class="sd">    Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.</span>
+</span><span id="line-811">
+</span><span id="line-812"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-813">
+</span><span id="line-814"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-815">
+</span><span id="line-816"><span class="sd">        [[exp(-i*phi/2),              0],</span>
+</span><span id="line-817"><span class="sd">         [0,               exp(i*phi/2)]]</span>
+</span><span id="line-818">
+</span><span id="line-819"><span class="sd">    This is an exponential of the Pauli-Z operator:</span>
+</span><span id="line-820"><span class="sd">        ``RZ(phi) = exp(-i*phi*Z/2)``</span>
+</span><span id="line-821">
+</span><span id="line-822"><span class="sd">    Which is equivalent to the U1 gate plus a global phase:</span>
+</span><span id="line-823"><span class="sd">        ``RZ(phi) = exp(-i*phi/2)U1(phi)``</span>
+</span><span id="line-824">
+</span><span id="line-825"><span class="sd">    Other unitaries you can get from this one are:</span>
+</span><span id="line-826"><span class="sd">        - ``RZ(phi=pi) = exp(-i*pi/2) Z = -i Z``</span>
+</span><span id="line-827"><span class="sd">        - ``RZ(phi=pi/2) = exp(-i*pi/4) S``</span>
+</span><span id="line-828"><span class="sd">        - ``RZ(phi=pi/4) = exp(-i*pi/8) T``</span>
+</span><span id="line-829"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-830">
 <div class="viewcode-block" id="RZ.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-800">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+</span><span id="line-831">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-801">
-</span><span id="line-802">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-803"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-804"><span class="sd">        Initialize an RZ gate.</span>
-</span><span id="line-805">
-</span><span id="line-806"><span class="sd">        Args:</span>
-</span><span id="line-807"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
-</span><span id="line-808"><span class="sd">            phi (float): The rotation angle (azimuthal) in radians.</span>
-</span><span id="line-809"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-810">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-811">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-812">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)},</span>
-</span><span id="line-813">        <span class="p">)</span>
-</span><span id="line-814">
-</span><span id="line-815">    <span class="nd">@property</span>
+</span><span id="line-832">
+</span><span id="line-833">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-834"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-835"><span class="sd">        Initialize an RZ gate.</span>
+</span><span id="line-836">
+</span><span id="line-837"><span class="sd">        Args:</span>
+</span><span id="line-838"><span class="sd">            qubit (int): The target qubit index for the rotation.</span>
+</span><span id="line-839"><span class="sd">            phi (float): The rotation angle (azimuthal) in radians.</span>
+</span><span id="line-840"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-841">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-842">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-843">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)},</span>
+</span><span id="line-844">        <span class="p">)</span>
+</span><span id="line-845">
+</span><span id="line-846">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RZ.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ.name">[docs]</a>
-</span><span id="line-816">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-817">        <span class="k">return</span> <span class="s2">&quot;RZ&quot;</span></div>
+</span><span id="line-847">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-848">        <span class="k">return</span> <span class="s2">&quot;RZ&quot;</span></div>
 
-</span><span id="line-818">
-</span><span id="line-819">    <span class="nd">@property</span>
+</span><span id="line-849">
+</span><span id="line-850">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RZ.phi">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ.phi">[docs]</a>
-</span><span id="line-820">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-821">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+</span><span id="line-851">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-852">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-822">
-</span><span id="line-823">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-824">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
-</span><span id="line-825">        <span class="n">cos_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-826">        <span class="n">sin_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-827">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos_half</span><span class="p">,</span> <span class="o">-</span><span class="n">sin_half</span><span class="p">],</span> <span class="p">[</span><span class="n">sin_half</span><span class="p">,</span> <span class="n">cos_half</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-853">
+</span><span id="line-854">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-855">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
+</span><span id="line-856">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-828">
-</span><span id="line-829">
-</span><span id="line-830"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-857">
+</span><span id="line-858">
+</span><span id="line-859"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="U1">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U1">[docs]</a>
-</span><span id="line-831"><span class="k">class</span><span class="w"> </span><span class="nc">U1</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-832"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-833"><span class="sd">    Represents the U1 gate defined by an azimuthal angle `phi`.</span>
-</span><span id="line-834">
-</span><span id="line-835"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-836">
-</span><span id="line-837"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-838">
-</span><span id="line-839"><span class="sd">        [[1,            0],</span>
-</span><span id="line-840"><span class="sd">         [0, exp(i*phi)]]</span>
-</span><span id="line-841">
-</span><span id="line-842"><span class="sd">    Which is equivalent to the RZ gate plus a global phase:</span>
-</span><span id="line-843"><span class="sd">        ``U1(phi) = exp(i*phi/2)RZ(phi)``</span>
-</span><span id="line-844">
-</span><span id="line-845"><span class="sd">    Other unitaries you can get from this one are:</span>
-</span><span id="line-846"><span class="sd">        - ``U1(phi=np.pi) = Z``</span>
-</span><span id="line-847"><span class="sd">        - ``U1(phi=np.pi/2) = S``</span>
-</span><span id="line-848"><span class="sd">        - ``U1(phi=np.pi/4) = T``</span>
-</span><span id="line-849"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-850">
+</span><span id="line-860"><span class="k">class</span><span class="w"> </span><span class="nc">U1</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-861"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-862"><span class="sd">    Represents the U1 gate defined by an azimuthal angle `phi`.</span>
+</span><span id="line-863">
+</span><span id="line-864"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-865">
+</span><span id="line-866"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-867">
+</span><span id="line-868"><span class="sd">        [[1,            0],</span>
+</span><span id="line-869"><span class="sd">         [0, exp(i*phi)]]</span>
+</span><span id="line-870">
+</span><span id="line-871"><span class="sd">    Which is equivalent to the RZ gate plus a global phase:</span>
+</span><span id="line-872"><span class="sd">        ``U1(phi) = exp(i*phi/2)RZ(phi)``</span>
+</span><span id="line-873">
+</span><span id="line-874"><span class="sd">    Other unitaries you can get from this one are:</span>
+</span><span id="line-875"><span class="sd">        - ``U1(phi=np.pi) = Z``</span>
+</span><span id="line-876"><span class="sd">        - ``U1(phi=np.pi/2) = S``</span>
+</span><span id="line-877"><span class="sd">        - ``U1(phi=np.pi/4) = T``</span>
+</span><span id="line-878"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-879">
 <div class="viewcode-block" id="U1.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U1.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-851">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+</span><span id="line-880">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-852">
-</span><span id="line-853">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-854"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-855"><span class="sd">        Initialize a U1 gate.</span>
-</span><span id="line-856">
-</span><span id="line-857"><span class="sd">        Args:</span>
-</span><span id="line-858"><span class="sd">            qubit (int): The target qubit index for the U1 gate.</span>
-</span><span id="line-859"><span class="sd">            phi (float): The phase to add, or equivalently the rotation angle (azimuthal) in radians.</span>
-</span><span id="line-860"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-861">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-862">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-863">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)},</span>
-</span><span id="line-864">        <span class="p">)</span>
-</span><span id="line-865">
-</span><span id="line-866">    <span class="nd">@property</span>
+</span><span id="line-881">
+</span><span id="line-882">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-883"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-884"><span class="sd">        Initialize a U1 gate.</span>
+</span><span id="line-885">
+</span><span id="line-886"><span class="sd">        Args:</span>
+</span><span id="line-887"><span class="sd">            qubit (int): The target qubit index for the U1 gate.</span>
+</span><span id="line-888"><span class="sd">            phi (float): The phase to add, or equivalently the rotation angle (azimuthal) in radians.</span>
+</span><span id="line-889"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-890">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-891">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-892">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)},</span>
+</span><span id="line-893">        <span class="p">)</span>
+</span><span id="line-894">
+</span><span id="line-895">    <span class="nd">@property</span>
 <div class="viewcode-block" id="U1.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U1.name">[docs]</a>
-</span><span id="line-867">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-868">        <span class="k">return</span> <span class="s2">&quot;U1&quot;</span></div>
+</span><span id="line-896">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-897">        <span class="k">return</span> <span class="s2">&quot;U1&quot;</span></div>
 
-</span><span id="line-869">
-</span><span id="line-870">    <span class="nd">@property</span>
+</span><span id="line-898">
+</span><span id="line-899">    <span class="nd">@property</span>
 <div class="viewcode-block" id="U1.phi">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U1.phi">[docs]</a>
-</span><span id="line-871">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-872">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+</span><span id="line-900">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-901">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-873">
-</span><span id="line-874">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-875">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
-</span><span id="line-876">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-902">
+</span><span id="line-903">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-904">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
+</span><span id="line-905">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
-</span><span id="line-877">
-</span><span id="line-878">
-</span><span id="line-879"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-906">
+</span><span id="line-907">
+</span><span id="line-908"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="U2">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2">[docs]</a>
-</span><span id="line-880"><span class="k">class</span><span class="w"> </span><span class="nc">U2</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-881"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-882"><span class="sd">    Represents the U2 gate defined by the angles `phi` and `gamma`.</span>
-</span><span id="line-883">
-</span><span id="line-884"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-885">
-</span><span id="line-886"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-887">
-</span><span id="line-888"><span class="sd">        1/sqrt(2)*[[1,                   -exp(i*gamma)],</span>
-</span><span id="line-889"><span class="sd">                   [exp(i*phi),    exp(i*(phi+gamma))]]</span>
-</span><span id="line-890">
-</span><span id="line-891"><span class="sd">    Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:</span>
-</span><span id="line-892"><span class="sd">        ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)``</span>
-</span><span id="line-893">
-</span><span id="line-894"><span class="sd">    This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:</span>
-</span><span id="line-895"><span class="sd">        ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``</span>
-</span><span id="line-896">
-</span><span id="line-897"><span class="sd">    Other unitaries you can get from this one are:</span>
-</span><span id="line-898"><span class="sd">        - ``U2(phi=0, gamma=np.pi) = H``</span>
-</span><span id="line-899"><span class="sd">        - ``U2(phi=0, gamma=0) = RY(theta=pi/2)``</span>
-</span><span id="line-900"><span class="sd">        - ``U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)``</span>
-</span><span id="line-901"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-902">
+</span><span id="line-909"><span class="k">class</span><span class="w"> </span><span class="nc">U2</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-910"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-911"><span class="sd">    Represents the U2 gate defined by the angles `phi` and `gamma`.</span>
+</span><span id="line-912">
+</span><span id="line-913"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-914">
+</span><span id="line-915"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-916">
+</span><span id="line-917"><span class="sd">        1/sqrt(2)*[[1,                   -exp(i*gamma)],</span>
+</span><span id="line-918"><span class="sd">                   [exp(i*phi),    exp(i*(phi+gamma))]]</span>
+</span><span id="line-919">
+</span><span id="line-920"><span class="sd">    Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:</span>
+</span><span id="line-921"><span class="sd">        ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)``</span>
+</span><span id="line-922">
+</span><span id="line-923"><span class="sd">    This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:</span>
+</span><span id="line-924"><span class="sd">        ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``</span>
+</span><span id="line-925">
+</span><span id="line-926"><span class="sd">    Other unitaries you can get from this one are:</span>
+</span><span id="line-927"><span class="sd">        - ``U2(phi=0, gamma=np.pi) = H``</span>
+</span><span id="line-928"><span class="sd">        - ``U2(phi=0, gamma=0) = RY(theta=pi/2)``</span>
+</span><span id="line-929"><span class="sd">        - ``U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)``</span>
+</span><span id="line-930"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-931">
 <div class="viewcode-block" id="U2.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-903">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
-
-</span><span id="line-904">
-</span><span id="line-905">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-906"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-907"><span class="sd">        Initialize a U2 gate.</span>
-</span><span id="line-908">
-</span><span id="line-909"><span class="sd">        Args:</span>
-</span><span id="line-910"><span class="sd">            qubit (int): The target qubit index for the U2 gate.</span>
-</span><span id="line-911"><span class="sd">            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</span>
-</span><span id="line-912"><span class="sd">            gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians..</span>
-</span><span id="line-913"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-914">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-915">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-916">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
-</span><span id="line-917">                <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">),</span>
-</span><span id="line-918">                <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">gamma</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">),</span>
-</span><span id="line-919">            <span class="p">},</span>
-</span><span id="line-920">        <span class="p">)</span>
-</span><span id="line-921">
-</span><span id="line-922">    <span class="nd">@property</span>
-<div class="viewcode-block" id="U2.name">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.name">[docs]</a>
-</span><span id="line-923">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-924">        <span class="k">return</span> <span class="s2">&quot;U2&quot;</span></div>
-
-</span><span id="line-925">
-</span><span id="line-926">    <span class="nd">@property</span>
-<div class="viewcode-block" id="U2.phi">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.phi">[docs]</a>
-</span><span id="line-927">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-928">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
-
-</span><span id="line-929">
-</span><span id="line-930">    <span class="nd">@property</span>
-<div class="viewcode-block" id="U2.gamma">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.gamma">[docs]</a>
-</span><span id="line-931">    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-932">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
+</span><span id="line-932">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
 
 </span><span id="line-933">
-</span><span id="line-934">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-935">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
-</span><span id="line-936">        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
-</span><span id="line-937">        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-</span><span id="line-938">            <span class="p">[</span>
-</span><span id="line-939">                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)],</span>
-</span><span id="line-940">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))],</span>
-</span><span id="line-941">            <span class="p">],</span>
-</span><span id="line-942">            <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span>
-</span><span id="line-943">        <span class="p">)</span></div>
+</span><span id="line-934">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-935"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-936"><span class="sd">        Initialize a U2 gate.</span>
+</span><span id="line-937">
+</span><span id="line-938"><span class="sd">        Args:</span>
+</span><span id="line-939"><span class="sd">            qubit (int): The target qubit index for the U2 gate.</span>
+</span><span id="line-940"><span class="sd">            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</span>
+</span><span id="line-941"><span class="sd">            gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians..</span>
+</span><span id="line-942"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-943">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-944">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-945">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-946">                <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">),</span>
+</span><span id="line-947">                <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">gamma</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">),</span>
+</span><span id="line-948">            <span class="p">},</span>
+</span><span id="line-949">        <span class="p">)</span>
+</span><span id="line-950">
+</span><span id="line-951">    <span class="nd">@property</span>
+<div class="viewcode-block" id="U2.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.name">[docs]</a>
+</span><span id="line-952">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-953">        <span class="k">return</span> <span class="s2">&quot;U2&quot;</span></div>
 
-</span><span id="line-944">
-</span><span id="line-945">
-</span><span id="line-946"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-954">
+</span><span id="line-955">    <span class="nd">@property</span>
+<div class="viewcode-block" id="U2.phi">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.phi">[docs]</a>
+</span><span id="line-956">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-957">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+
+</span><span id="line-958">
+</span><span id="line-959">    <span class="nd">@property</span>
+<div class="viewcode-block" id="U2.gamma">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2.gamma">[docs]</a>
+</span><span id="line-960">    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-961">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
+
+</span><span id="line-962">
+</span><span id="line-963">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-964">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
+</span><span id="line-965">        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+</span><span id="line-966">        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+</span><span id="line-967">            <span class="p">[</span>
+</span><span id="line-968">                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)],</span>
+</span><span id="line-969">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))],</span>
+</span><span id="line-970">            <span class="p">],</span>
+</span><span id="line-971">            <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span>
+</span><span id="line-972">        <span class="p">)</span></div>
+
+</span><span id="line-973">
+</span><span id="line-974">
+</span><span id="line-975"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="U3">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3">[docs]</a>
-</span><span id="line-947"><span class="k">class</span><span class="w"> </span><span class="nc">U3</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-948"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-949"><span class="sd">    Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.</span>
-</span><span id="line-950">
-</span><span id="line-951"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-952">
-</span><span id="line-953"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-954">
-</span><span id="line-955"><span class="sd">        [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],</span>
-</span><span id="line-956"><span class="sd">         [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]</span>
-</span><span id="line-957">
-</span><span id="line-958"><span class="sd">    Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a &#39;theta&#39; polar rotation in between:</span>
-</span><span id="line-959"><span class="sd">        ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``</span>
-</span><span id="line-960">
-</span><span id="line-961"><span class="sd">    This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:</span>
-</span><span id="line-962"><span class="sd">        ``U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)``</span>
-</span><span id="line-963">
-</span><span id="line-964"><span class="sd">    Other unitaries you can get from this one are:</span>
-</span><span id="line-965"><span class="sd">        - ``U3(theta=pi/2, phi, gamma) = U2(phi, gamma)``</span>
-</span><span id="line-966"><span class="sd">        - ``U3(theta=0, phi=0, gamma) = U1(gamma)`` and ``U3(theta=0, phi, gamma=0) = U1(phi)``</span>
-</span><span id="line-967"><span class="sd">        - ``U3(theta, phi=0, gamma=0) = RY(theta)``</span>
-</span><span id="line-968"><span class="sd">        - ``U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)``</span>
-</span><span id="line-969"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-970">
+</span><span id="line-976"><span class="k">class</span><span class="w"> </span><span class="nc">U3</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-977"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-978"><span class="sd">    Represents the U3 gate defined by the angles `theta`, `phi` and `gamma`.</span>
+</span><span id="line-979">
+</span><span id="line-980"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-981">
+</span><span id="line-982"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-983">
+</span><span id="line-984"><span class="sd">        [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],</span>
+</span><span id="line-985"><span class="sd">         [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]</span>
+</span><span id="line-986">
+</span><span id="line-987"><span class="sd">    Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a &#39;theta&#39; polar rotation in between:</span>
+</span><span id="line-988"><span class="sd">        ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``</span>
+</span><span id="line-989">
+</span><span id="line-990"><span class="sd">    This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:</span>
+</span><span id="line-991"><span class="sd">        ``U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)``</span>
+</span><span id="line-992">
+</span><span id="line-993"><span class="sd">    Other unitaries you can get from this one are:</span>
+</span><span id="line-994"><span class="sd">        - ``U3(theta=pi/2, phi, gamma) = U2(phi, gamma)``</span>
+</span><span id="line-995"><span class="sd">        - ``U3(theta=0, phi=0, gamma) = U1(gamma)`` and ``U3(theta=0, phi, gamma=0) = U1(phi)``</span>
+</span><span id="line-996"><span class="sd">        - ``U3(theta, phi=0, gamma=0) = RY(theta)``</span>
+</span><span id="line-997"><span class="sd">        - ``U3(theta, phi=-pi/2, gamma=pi/2) = RX(theta)``</span>
+</span><span id="line-998"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-999">
 <div class="viewcode-block" id="U3.PARAMETER_NAMES">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.PARAMETER_NAMES">[docs]</a>
-</span><span id="line-971">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
-
-</span><span id="line-972">
-</span><span id="line-973">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-974">        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span>
-</span><span id="line-975">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-976"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-977"><span class="sd">        Initialize a U3 gate.</span>
-</span><span id="line-978">
-</span><span id="line-979"><span class="sd">        Args:</span>
-</span><span id="line-980"><span class="sd">            qubit (int): The target qubit index for the U3 gate.</span>
-</span><span id="line-981"><span class="sd">            theta (float): The rotation angle (polar), in between both phase rotations (azimuthal).</span>
-</span><span id="line-982"><span class="sd">            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</span>
-</span><span id="line-983"><span class="sd">            gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</span>
-</span><span id="line-984"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-985">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-986">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
-</span><span id="line-987">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
-</span><span id="line-988">                <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">),</span>
-</span><span id="line-989">                <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">),</span>
-</span><span id="line-990">                <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">gamma</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">),</span>
-</span><span id="line-991">            <span class="p">},</span>
-</span><span id="line-992">        <span class="p">)</span>
-</span><span id="line-993">
-</span><span id="line-994">    <span class="nd">@property</span>
-<div class="viewcode-block" id="U3.name">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.name">[docs]</a>
-</span><span id="line-995">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-996">        <span class="k">return</span> <span class="s2">&quot;U3&quot;</span></div>
-
-</span><span id="line-997">
-</span><span id="line-998">    <span class="nd">@property</span>
-<div class="viewcode-block" id="U3.theta">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.theta">[docs]</a>
-</span><span id="line-999">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-1000">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+</span><span id="line-1000">    <span class="n">PARAMETER_NAMES</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
 
 </span><span id="line-1001">
-</span><span id="line-1002">    <span class="nd">@property</span>
+</span><span id="line-1002">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-1003">        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span>
+</span><span id="line-1004">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1005"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1006"><span class="sd">        Initialize a U3 gate.</span>
+</span><span id="line-1007">
+</span><span id="line-1008"><span class="sd">        Args:</span>
+</span><span id="line-1009"><span class="sd">            qubit (int): The target qubit index for the U3 gate.</span>
+</span><span id="line-1010"><span class="sd">            theta (float): The rotation angle (polar), in between both phase rotations (azimuthal).</span>
+</span><span id="line-1011"><span class="sd">            phi (float): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</span>
+</span><span id="line-1012"><span class="sd">            gamma (float): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</span>
+</span><span id="line-1013"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1014">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-1015">            <span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit</span><span class="p">,),</span>
+</span><span id="line-1016">            <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-1017">                <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">theta</span><span class="p">),</span>
+</span><span id="line-1018">                <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">phi</span><span class="p">),</span>
+</span><span id="line-1019">                <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">gamma</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">),</span>
+</span><span id="line-1020">            <span class="p">},</span>
+</span><span id="line-1021">        <span class="p">)</span>
+</span><span id="line-1022">
+</span><span id="line-1023">    <span class="nd">@property</span>
+<div class="viewcode-block" id="U3.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.name">[docs]</a>
+</span><span id="line-1024">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-1025">        <span class="k">return</span> <span class="s2">&quot;U3&quot;</span></div>
+
+</span><span id="line-1026">
+</span><span id="line-1027">    <span class="nd">@property</span>
+<div class="viewcode-block" id="U3.theta">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.theta">[docs]</a>
+</span><span id="line-1028">    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-1029">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span></div>
+
+</span><span id="line-1030">
+</span><span id="line-1031">    <span class="nd">@property</span>
 <div class="viewcode-block" id="U3.phi">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.phi">[docs]</a>
-</span><span id="line-1003">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-1004">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
+</span><span id="line-1032">    <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-1033">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-1005">
-</span><span id="line-1006">    <span class="nd">@property</span>
+</span><span id="line-1034">
+</span><span id="line-1035">    <span class="nd">@property</span>
 <div class="viewcode-block" id="U3.gamma">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.gamma">[docs]</a>
-</span><span id="line-1007">    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-1008">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
+</span><span id="line-1036">    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-1037">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-1009">
-</span><span id="line-1010">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-1011">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
-</span><span id="line-1012">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
-</span><span id="line-1013">        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
-</span><span id="line-1014">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-</span><span id="line-1015">            <span class="p">[</span>
-</span><span id="line-1016">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
-</span><span id="line-1017">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
-</span><span id="line-1018">            <span class="p">],</span>
-</span><span id="line-1019">            <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span>
-</span><span id="line-1020">        <span class="p">)</span></div>
+</span><span id="line-1038">
+</span><span id="line-1039">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-1040">        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span>
+</span><span id="line-1041">        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
+</span><span id="line-1042">        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+</span><span id="line-1043">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+</span><span id="line-1044">            <span class="p">[</span>
+</span><span id="line-1045">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
+</span><span id="line-1046">                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
+</span><span id="line-1047">            <span class="p">],</span>
+</span><span id="line-1048">            <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span>
+</span><span id="line-1049">        <span class="p">)</span></div>
 
-</span><span id="line-1021">
-</span><span id="line-1022">
-</span><span id="line-1023"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-1050">
+</span><span id="line-1051">
+</span><span id="line-1052"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="CNOT">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT">[docs]</a>
-</span><span id="line-1024"><span class="k">class</span><span class="w"> </span><span class="nc">CNOT</span><span class="p">(</span><span class="n">Controlled</span><span class="p">[</span><span class="n">X</span><span class="p">]):</span>
-</span><span id="line-1025"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1026"><span class="sd">    Represents the CNOT gate.</span>
-</span><span id="line-1027">
-</span><span id="line-1028"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-1029">
-</span><span id="line-1030"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-1031">
-</span><span id="line-1032"><span class="sd">        [[1, 0, 0, 0],</span>
-</span><span id="line-1033"><span class="sd">         [0, 1, 0, 0],</span>
-</span><span id="line-1034"><span class="sd">         [0, 0, 0, 1],</span>
-</span><span id="line-1035"><span class="sd">         [0, 0, 1, 0]]</span>
-</span><span id="line-1036">
-</span><span id="line-1037"><span class="sd">    Which is equivalent to the CZ gate surrounded by two H&#39;s gates on the target qubit:</span>
-</span><span id="line-1038"><span class="sd">        ``CNOT(control, target) = H(target) CZ(control, target) H(target)``</span>
-</span><span id="line-1039"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-1040">
-</span><span id="line-1041">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1042">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">control</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">X</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
-</span><span id="line-1043">
-</span><span id="line-1044">    <span class="nd">@property</span>
-<div class="viewcode-block" id="CNOT.name">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT.name">[docs]</a>
-</span><span id="line-1045">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-1046">        <span class="k">return</span> <span class="s2">&quot;CNOT&quot;</span></div>
-</div>
-
-</span><span id="line-1047">
-</span><span id="line-1048">
-</span><span id="line-1049"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="CZ">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CZ">[docs]</a>
-</span><span id="line-1050"><span class="k">class</span><span class="w"> </span><span class="nc">CZ</span><span class="p">(</span><span class="n">Controlled</span><span class="p">[</span><span class="n">Z</span><span class="p">]):</span>
-</span><span id="line-1051"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1052"><span class="sd">    Represents the CZ gate.</span>
-</span><span id="line-1053">
-</span><span id="line-1054"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-1055">
-</span><span id="line-1056"><span class="sd">    .. code-block:: text</span>
-</span><span id="line-1057">
-</span><span id="line-1058"><span class="sd">        [[1, 0, 0, 0],</span>
-</span><span id="line-1059"><span class="sd">         [0, 1, 0, 0],</span>
-</span><span id="line-1060"><span class="sd">         [0, 0, 1, 0],</span>
-</span><span id="line-1061"><span class="sd">         [0, 0, 0, -1]]</span>
-</span><span id="line-1062">
-</span><span id="line-1063"><span class="sd">    This gate is totally symmetric respect control and target, meaning that both are control and target in reality:</span>
-</span><span id="line-1064"><span class="sd">        ``CZ(control, target) = CZ(target, control)``</span>
+</span><span id="line-1053"><span class="k">class</span><span class="w"> </span><span class="nc">CNOT</span><span class="p">(</span><span class="n">Controlled</span><span class="p">[</span><span class="n">X</span><span class="p">]):</span>
+</span><span id="line-1054"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1055"><span class="sd">    Represents the CNOT gate.</span>
+</span><span id="line-1056">
+</span><span id="line-1057"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-1058">
+</span><span id="line-1059"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-1060">
+</span><span id="line-1061"><span class="sd">        [[1, 0, 0, 0],</span>
+</span><span id="line-1062"><span class="sd">         [0, 1, 0, 0],</span>
+</span><span id="line-1063"><span class="sd">         [0, 0, 0, 1],</span>
+</span><span id="line-1064"><span class="sd">         [0, 0, 1, 0]]</span>
 </span><span id="line-1065">
-</span><span id="line-1066"><span class="sd">    It is also equivalent to the CNOT gate surrounded by two H&#39;s gates on the target qubit:</span>
-</span><span id="line-1067"><span class="sd">        ``CZ(control, target) = H(target) CNOT(control, target) H(target)``</span>
+</span><span id="line-1066"><span class="sd">    Which is equivalent to the CZ gate surrounded by two H&#39;s gates on the target qubit:</span>
+</span><span id="line-1067"><span class="sd">        ``CNOT(control, target) = H(target) CZ(control, target) H(target)``</span>
 </span><span id="line-1068"><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="line-1069">
 </span><span id="line-1070">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1071">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">control</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">Z</span><span class="p">(</span><span class="n">target</span><span class="p">))</span></div>
-
+</span><span id="line-1071">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">control</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">X</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
 </span><span id="line-1072">
-</span><span id="line-1073">
-</span><span id="line-1074"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="SWAP">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.SWAP">[docs]</a>
-</span><span id="line-1075"><span class="k">class</span><span class="w"> </span><span class="nc">SWAP</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
-</span><span id="line-1076"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1077"><span class="sd">    The SWAP gate.</span>
-</span><span id="line-1078">
-</span><span id="line-1079"><span class="sd">    The associated matrix is:</span>
-</span><span id="line-1080">
-</span><span id="line-1081"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-1073">    <span class="nd">@property</span>
+<div class="viewcode-block" id="CNOT.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT.name">[docs]</a>
+</span><span id="line-1074">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-1075">        <span class="k">return</span> <span class="s2">&quot;CNOT&quot;</span></div>
+</div>
+
+</span><span id="line-1076">
+</span><span id="line-1077">
+</span><span id="line-1078"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="CZ">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CZ">[docs]</a>
+</span><span id="line-1079"><span class="k">class</span><span class="w"> </span><span class="nc">CZ</span><span class="p">(</span><span class="n">Controlled</span><span class="p">[</span><span class="n">Z</span><span class="p">]):</span>
+</span><span id="line-1080"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1081"><span class="sd">    Represents the CZ gate.</span>
 </span><span id="line-1082">
-</span><span id="line-1083"><span class="sd">       [[1, 0, 0, 0],</span>
-</span><span id="line-1084"><span class="sd">        [0, 0, 1, 0],</span>
-</span><span id="line-1085"><span class="sd">        [0, 1, 0, 0],</span>
-</span><span id="line-1086"><span class="sd">        [0, 0, 0, 1]]</span>
-</span><span id="line-1087">
-</span><span id="line-1088"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-1089">
-</span><span id="line-1090">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit_a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qubit_b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1091"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1092"><span class="sd">        Args:</span>
-</span><span id="line-1093"><span class="sd">            qubit_a (int): First qubit to swap with.</span>
-</span><span id="line-1094"><span class="sd">            qubit_b (int): Second qubit to swap with.</span>
-</span><span id="line-1095"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1096">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit_a</span><span class="p">,</span> <span class="n">qubit_b</span><span class="p">))</span>
-</span><span id="line-1097">
-</span><span id="line-1098">    <span class="nd">@property</span>
-<div class="viewcode-block" id="SWAP.name">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.SWAP.name">[docs]</a>
-</span><span id="line-1099">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-1100">        <span class="k">return</span> <span class="s2">&quot;SWAP&quot;</span></div>
+</span><span id="line-1083"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-1084">
+</span><span id="line-1085"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-1086">
+</span><span id="line-1087"><span class="sd">        [[1, 0, 0, 0],</span>
+</span><span id="line-1088"><span class="sd">         [0, 1, 0, 0],</span>
+</span><span id="line-1089"><span class="sd">         [0, 0, 1, 0],</span>
+</span><span id="line-1090"><span class="sd">         [0, 0, 0, -1]]</span>
+</span><span id="line-1091">
+</span><span id="line-1092"><span class="sd">    This gate is totally symmetric respect control and target, meaning that both are control and target in reality:</span>
+</span><span id="line-1093"><span class="sd">        ``CZ(control, target) = CZ(target, control)``</span>
+</span><span id="line-1094">
+</span><span id="line-1095"><span class="sd">    It is also equivalent to the CNOT gate surrounded by two H&#39;s gates on the target qubit:</span>
+</span><span id="line-1096"><span class="sd">        ``CZ(control, target) = H(target) CNOT(control, target) H(target)``</span>
+</span><span id="line-1097"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-1098">
+</span><span id="line-1099">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1100">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">control</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">Z</span><span class="p">(</span><span class="n">target</span><span class="p">))</span></div>
 
 </span><span id="line-1101">
-</span><span id="line-1102">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-1103">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+</span><span id="line-1102">
+</span><span id="line-1103"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="SWAP">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.SWAP">[docs]</a>
+</span><span id="line-1104"><span class="k">class</span><span class="w"> </span><span class="nc">SWAP</span><span class="p">(</span><span class="n">BasicGate</span><span class="p">):</span>
+</span><span id="line-1105"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1106"><span class="sd">    The SWAP gate.</span>
+</span><span id="line-1107">
+</span><span id="line-1108"><span class="sd">    The associated matrix is:</span>
+</span><span id="line-1109">
+</span><span id="line-1110"><span class="sd">    .. code-block:: text</span>
+</span><span id="line-1111">
+</span><span id="line-1112"><span class="sd">       [[1, 0, 0, 0],</span>
+</span><span id="line-1113"><span class="sd">        [0, 0, 1, 0],</span>
+</span><span id="line-1114"><span class="sd">        [0, 1, 0, 0],</span>
+</span><span id="line-1115"><span class="sd">        [0, 0, 0, 1]]</span>
+</span><span id="line-1116">
+</span><span id="line-1117"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-1118">
+</span><span id="line-1119">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit_a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qubit_b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1120"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1121"><span class="sd">        Args:</span>
+</span><span id="line-1122"><span class="sd">            qubit_a (int): First qubit to swap with.</span>
+</span><span id="line-1123"><span class="sd">            qubit_b (int): Second qubit to swap with.</span>
+</span><span id="line-1124"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1125">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_qubits</span><span class="o">=</span><span class="p">(</span><span class="n">qubit_a</span><span class="p">,</span> <span class="n">qubit_b</span><span class="p">))</span>
+</span><span id="line-1126">
+</span><span id="line-1127">    <span class="nd">@property</span>
+<div class="viewcode-block" id="SWAP.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.SWAP.name">[docs]</a>
+</span><span id="line-1128">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-1129">        <span class="k">return</span> <span class="s2">&quot;SWAP&quot;</span></div>
+
+</span><span id="line-1130">
+</span><span id="line-1131">    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-1132">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

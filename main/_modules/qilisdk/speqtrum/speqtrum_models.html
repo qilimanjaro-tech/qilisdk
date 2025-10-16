@@ -137,6 +137,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -187,6 +188,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -270,143 +272,137 @@
 </span><span id="line-17">
 </span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwareDatetime</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_serializer</span><span class="p">,</span> <span class="n">field_validator</span>
 </span><span id="line-19">
-</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.sampling_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingResult</span>
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.time_evolution</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolution</span>
-</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.time_evolution_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolutionResult</span>
-</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.variational_program</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgram</span>
-</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.variational_program_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgramResult</span>
-</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">deserialize</span><span class="p">,</span> <span class="n">serialize</span>
-</span><span id="line-27">
-</span><span id="line-28">
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-21">    <span class="n">Sampling</span><span class="p">,</span>
+</span><span id="line-22">    <span class="n">SamplingResult</span><span class="p">,</span>
+</span><span id="line-23">    <span class="n">TimeEvolution</span><span class="p">,</span>
+</span><span id="line-24">    <span class="n">TimeEvolutionResult</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">VariationalProgram</span><span class="p">,</span>
+</span><span id="line-26">    <span class="n">VariationalProgramResult</span><span class="p">,</span>
+</span><span id="line-27"><span class="p">)</span>
+</span><span id="line-28"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">RabiExperiment</span><span class="p">,</span> <span class="n">RabiExperimentResult</span><span class="p">,</span> <span class="n">T1Experiment</span><span class="p">,</span> <span class="n">T1ExperimentResult</span>
+</span><span id="line-29"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">deserialize</span><span class="p">,</span> <span class="n">serialize</span>
+</span><span id="line-30">
+</span><span id="line-31">
 <div class="viewcode-block" id="SpeQtrumModel">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel">[docs]</a>
-</span><span id="line-29"><span class="k">class</span><span class="w"> </span><span class="nc">SpeQtrumModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="line-32"><span class="k">class</span><span class="w"> </span><span class="nc">SpeQtrumModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <div class="viewcode-block" id="SpeQtrumModel.model_config">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.model_config">[docs]</a>
-</span><span id="line-30">    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">validate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validate_by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</span><span id="line-33">    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">validate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validate_by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
-
-</span><span id="line-31">
-</span><span id="line-32">
-<div class="viewcode-block" id="LoginPayload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload">[docs]</a>
-</span><span id="line-33"><span class="k">class</span><span class="w"> </span><span class="nc">LoginPayload</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span> <span class="o">...</span></div>
 
 </span><span id="line-34">
 </span><span id="line-35">
+<div class="viewcode-block" id="LoginPayload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload">[docs]</a>
+</span><span id="line-36"><span class="k">class</span><span class="w"> </span><span class="nc">LoginPayload</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span> <span class="o">...</span></div>
+
+</span><span id="line-37">
+</span><span id="line-38">
 <div class="viewcode-block" id="Token">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token">[docs]</a>
-</span><span id="line-36"><span class="k">class</span><span class="w"> </span><span class="nc">Token</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
-</span><span id="line-37"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-38"><span class="sd">    Represents the structure of the login response:</span>
-</span><span id="line-39"><span class="sd">    {</span>
-</span><span id="line-40"><span class="sd">    &quot;accessToken&quot;: &quot;...&quot;,</span>
-</span><span id="line-41"><span class="sd">    &quot;expiresIn&quot;: 123456789,</span>
-</span><span id="line-42"><span class="sd">    &quot;issuedAt&quot;: &quot;123456789&quot;,</span>
-</span><span id="line-43"><span class="sd">    &quot;refreshToken&quot;: &quot;...&quot;,</span>
-</span><span id="line-44"><span class="sd">    &quot;tokenType&quot;: &quot;bearer&quot;</span>
-</span><span id="line-45"><span class="sd">    }</span>
-</span><span id="line-46"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-47">
+</span><span id="line-39"><span class="k">class</span><span class="w"> </span><span class="nc">Token</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+</span><span id="line-40"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-41"><span class="sd">    Represents the structure of the login response:</span>
+</span><span id="line-42"><span class="sd">    {</span>
+</span><span id="line-43"><span class="sd">    &quot;accessToken&quot;: &quot;...&quot;,</span>
+</span><span id="line-44"><span class="sd">    &quot;expiresIn&quot;: 123456789,</span>
+</span><span id="line-45"><span class="sd">    &quot;issuedAt&quot;: &quot;123456789&quot;,</span>
+</span><span id="line-46"><span class="sd">    &quot;refreshToken&quot;: &quot;...&quot;,</span>
+</span><span id="line-47"><span class="sd">    &quot;tokenType&quot;: &quot;bearer&quot;</span>
+</span><span id="line-48"><span class="sd">    }</span>
+</span><span id="line-49"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-50">
 <div class="viewcode-block" id="Token.access_token">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.access_token">[docs]</a>
-</span><span id="line-48">    <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;accessToken&quot;</span><span class="p">)</span></div>
+</span><span id="line-51">    <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;accessToken&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Token.expires_in">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.expires_in">[docs]</a>
-</span><span id="line-49">    <span class="n">expires_in</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;expiresIn&quot;</span><span class="p">)</span></div>
+</span><span id="line-52">    <span class="n">expires_in</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;expiresIn&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Token.issued_at">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.issued_at">[docs]</a>
-</span><span id="line-50">    <span class="n">issued_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;issuedAt&quot;</span><span class="p">)</span></div>
+</span><span id="line-53">    <span class="n">issued_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;issuedAt&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Token.refresh_token">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.refresh_token">[docs]</a>
-</span><span id="line-51">    <span class="n">refresh_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;refreshToken&quot;</span><span class="p">)</span></div>
+</span><span id="line-54">    <span class="n">refresh_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;refreshToken&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Token.token_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.token_type">[docs]</a>
-</span><span id="line-52">    <span class="n">token_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;tokenType&quot;</span><span class="p">)</span></div>
+</span><span id="line-55">    <span class="n">token_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;tokenType&quot;</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-53">
-</span><span id="line-54">
+</span><span id="line-56">
+</span><span id="line-57">
 <div class="viewcode-block" id="DeviceStatus">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus">[docs]</a>
-</span><span id="line-55"><span class="k">class</span><span class="w"> </span><span class="nc">DeviceStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-</span><span id="line-56"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Device status typing for posting&quot;&quot;&quot;</span>
-</span><span id="line-57">
+</span><span id="line-58"><span class="k">class</span><span class="w"> </span><span class="nc">DeviceStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+</span><span id="line-59"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Device status typing for posting&quot;&quot;&quot;</span>
+</span><span id="line-60">
 <div class="viewcode-block" id="DeviceStatus.ONLINE">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.ONLINE">[docs]</a>
-</span><span id="line-58">    <span class="n">ONLINE</span> <span class="o">=</span> <span class="s2">&quot;online&quot;</span></div>
+</span><span id="line-61">    <span class="n">ONLINE</span> <span class="o">=</span> <span class="s2">&quot;online&quot;</span></div>
 
 <div class="viewcode-block" id="DeviceStatus.MAINTENANCE">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.MAINTENANCE">[docs]</a>
-</span><span id="line-59">    <span class="n">MAINTENANCE</span> <span class="o">=</span> <span class="s2">&quot;maintenance&quot;</span></div>
+</span><span id="line-62">    <span class="n">MAINTENANCE</span> <span class="o">=</span> <span class="s2">&quot;maintenance&quot;</span></div>
 
 <div class="viewcode-block" id="DeviceStatus.OFFLINE">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.OFFLINE">[docs]</a>
-</span><span id="line-60">    <span class="n">OFFLINE</span> <span class="o">=</span> <span class="s2">&quot;offline&quot;</span></div>
+</span><span id="line-63">    <span class="n">OFFLINE</span> <span class="o">=</span> <span class="s2">&quot;offline&quot;</span></div>
 </div>
 
-</span><span id="line-61">
-</span><span id="line-62">
+</span><span id="line-64">
+</span><span id="line-65">
 <div class="viewcode-block" id="DeviceType">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType">[docs]</a>
-</span><span id="line-63"><span class="k">class</span><span class="w"> </span><span class="nc">DeviceType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-</span><span id="line-64"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Device type&quot;&quot;&quot;</span>
-</span><span id="line-65">
+</span><span id="line-66"><span class="k">class</span><span class="w"> </span><span class="nc">DeviceType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+</span><span id="line-67"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Device type&quot;&quot;&quot;</span>
+</span><span id="line-68">
 <div class="viewcode-block" id="DeviceType.QPU_ANALOG">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.QPU_ANALOG">[docs]</a>
-</span><span id="line-66">    <span class="n">QPU_ANALOG</span> <span class="o">=</span> <span class="s2">&quot;qpu.analog&quot;</span></div>
+</span><span id="line-69">    <span class="n">QPU_ANALOG</span> <span class="o">=</span> <span class="s2">&quot;qpu.analog&quot;</span></div>
 
 <div class="viewcode-block" id="DeviceType.QPU_DIGITAL">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.QPU_DIGITAL">[docs]</a>
-</span><span id="line-67">    <span class="n">QPU_DIGITAL</span> <span class="o">=</span> <span class="s2">&quot;qpu.digital&quot;</span></div>
+</span><span id="line-70">    <span class="n">QPU_DIGITAL</span> <span class="o">=</span> <span class="s2">&quot;qpu.digital&quot;</span></div>
 
 <div class="viewcode-block" id="DeviceType.SIMULATOR">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.SIMULATOR">[docs]</a>
-</span><span id="line-68">    <span class="n">SIMULATOR</span> <span class="o">=</span> <span class="s2">&quot;simulator&quot;</span></div>
+</span><span id="line-71">    <span class="n">SIMULATOR</span> <span class="o">=</span> <span class="s2">&quot;simulator&quot;</span></div>
 </div>
 
-</span><span id="line-69">
-</span><span id="line-70">
+</span><span id="line-72">
+</span><span id="line-73">
 <div class="viewcode-block" id="Device">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device">[docs]</a>
-</span><span id="line-71"><span class="k">class</span><span class="w"> </span><span class="nc">Device</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
-</span><span id="line-72">    <span class="c1"># TODO (vyron): Remove `id: int` when `code` is implemented server-side.</span>
-<div class="viewcode-block" id="Device.id">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.id">[docs]</a>
-</span><span id="line-73">    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
+</span><span id="line-74"><span class="k">class</span><span class="w"> </span><span class="nc">Device</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
 <div class="viewcode-block" id="Device.code">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.code">[docs]</a>
-</span><span id="line-74">    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-75">    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Device.nqubits">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.nqubits">[docs]</a>
+</span><span id="line-76">    <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Device.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.name">[docs]</a>
-</span><span id="line-75">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-77">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Device.description">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.description">[docs]</a>
+</span><span id="line-78">    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Device.type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.type">[docs]</a>
-</span><span id="line-76">    <span class="nb">type</span><span class="p">:</span> <span class="n">DeviceType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-79">    <span class="nb">type</span><span class="p">:</span> <span class="n">DeviceType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Device.status">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.status">[docs]</a>
-</span><span id="line-77">    <span class="n">status</span><span class="p">:</span> <span class="n">DeviceStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Device.pending_jobs">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.pending_jobs">[docs]</a>
-</span><span id="line-78">    <span class="n">pending_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;number_pending_jobs&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Device.static_features">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.static_features">[docs]</a>
-</span><span id="line-79">    <span class="n">static_features</span><span class="p">:</span> <span class="nb">dict</span></div>
-
-<div class="viewcode-block" id="Device.dynamic_features">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.dynamic_features">[docs]</a>
-</span><span id="line-80">    <span class="n">dynamic_features</span><span class="p">:</span> <span class="nb">dict</span></div>
+</span><span id="line-80">    <span class="n">status</span><span class="p">:</span> <span class="n">DeviceStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 </div>
 
 </span><span id="line-81">
@@ -425,133 +421,128 @@
 <div class="viewcode-block" id="ExecuteType.VARIATIONAL_PROGRAM">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.VARIATIONAL_PROGRAM">[docs]</a>
 </span><span id="line-86">    <span class="n">VARIATIONAL_PROGRAM</span> <span class="o">=</span> <span class="s2">&quot;variational_program&quot;</span></div>
+
+<div class="viewcode-block" id="ExecuteType.RABI_EXPERIMENT">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.RABI_EXPERIMENT">[docs]</a>
+</span><span id="line-87">    <span class="n">RABI_EXPERIMENT</span> <span class="o">=</span> <span class="s2">&quot;rabi_experiment&quot;</span></div>
+
+<div class="viewcode-block" id="ExecuteType.T1_EXPERIMENT">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.T1_EXPERIMENT">[docs]</a>
+</span><span id="line-88">    <span class="n">T1_EXPERIMENT</span> <span class="o">=</span> <span class="s2">&quot;t1_experiment&quot;</span></div>
 </div>
 
-</span><span id="line-87">
-</span><span id="line-88">
+</span><span id="line-89">
+</span><span id="line-90">
 <div class="viewcode-block" id="SamplingPayload">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload">[docs]</a>
-</span><span id="line-89"><span class="k">class</span><span class="w"> </span><span class="nc">SamplingPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+</span><span id="line-91"><span class="k">class</span><span class="w"> </span><span class="nc">SamplingPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
 <div class="viewcode-block" id="SamplingPayload.sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.sampling">[docs]</a>
-</span><span id="line-90">    <span class="n">sampling</span><span class="p">:</span> <span class="n">Sampling</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-92">    <span class="n">sampling</span><span class="p">:</span> <span class="n">Sampling</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
-</span><span id="line-91">
-</span><span id="line-92">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">)</span>
-</span><span id="line-93">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling</span><span class="p">:</span> <span class="n">Sampling</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-94">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
-</span><span id="line-95">
-</span><span id="line-96">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-97">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sampling</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-98">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="line-99">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Sampling</span><span class="p">)</span>
-</span><span id="line-100">        <span class="k">return</span> <span class="n">v</span></div>
+</span><span id="line-93">
+</span><span id="line-94">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">)</span>
+</span><span id="line-95">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling</span><span class="p">:</span> <span class="n">Sampling</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-96">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
+</span><span id="line-97">
+</span><span id="line-98">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-99">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sampling</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-100">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-101">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Sampling</span><span class="p">)</span>
+</span><span id="line-102">        <span class="k">return</span> <span class="n">v</span></div>
 
-</span><span id="line-101">
-</span><span id="line-102">
+</span><span id="line-103">
+</span><span id="line-104">
 <div class="viewcode-block" id="TimeEvolutionPayload">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload">[docs]</a>
-</span><span id="line-103"><span class="k">class</span><span class="w"> </span><span class="nc">TimeEvolutionPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+</span><span id="line-105"><span class="k">class</span><span class="w"> </span><span class="nc">TimeEvolutionPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
 <div class="viewcode-block" id="TimeEvolutionPayload.time_evolution">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.time_evolution">[docs]</a>
-</span><span id="line-104">    <span class="n">time_evolution</span><span class="p">:</span> <span class="n">TimeEvolution</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-106">    <span class="n">time_evolution</span><span class="p">:</span> <span class="n">TimeEvolution</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
-</span><span id="line-105">
-</span><span id="line-106">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;time_evolution&quot;</span><span class="p">)</span>
-</span><span id="line-107">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_time_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_evolution</span><span class="p">:</span> <span class="n">TimeEvolution</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-108">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
-</span><span id="line-109">
-</span><span id="line-110">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;time_evolution&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-111">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_time_evolution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-112">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="line-113">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">TimeEvolution</span><span class="p">)</span>
-</span><span id="line-114">        <span class="k">return</span> <span class="n">v</span></div>
+</span><span id="line-107">
+</span><span id="line-108">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;time_evolution&quot;</span><span class="p">)</span>
+</span><span id="line-109">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_time_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_evolution</span><span class="p">:</span> <span class="n">TimeEvolution</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-110">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-111">
+</span><span id="line-112">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;time_evolution&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-113">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_time_evolution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-114">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-115">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">TimeEvolution</span><span class="p">)</span>
+</span><span id="line-116">        <span class="k">return</span> <span class="n">v</span></div>
 
-</span><span id="line-115">
-</span><span id="line-116">
+</span><span id="line-117">
+</span><span id="line-118">
 <div class="viewcode-block" id="VariationalProgramPayload">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload">[docs]</a>
-</span><span id="line-117"><span class="k">class</span><span class="w"> </span><span class="nc">VariationalProgramPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+</span><span id="line-119"><span class="k">class</span><span class="w"> </span><span class="nc">VariationalProgramPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
 <div class="viewcode-block" id="VariationalProgramPayload.variational_program">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.variational_program">[docs]</a>
-</span><span id="line-118">    <span class="n">variational_program</span><span class="p">:</span> <span class="n">VariationalProgram</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-120">    <span class="n">variational_program</span><span class="p">:</span> <span class="n">VariationalProgram</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
-</span><span id="line-119">
-</span><span id="line-120">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;variational_program&quot;</span><span class="p">)</span>
-</span><span id="line-121">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_variational_program</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variational_program</span><span class="p">:</span> <span class="n">VariationalProgram</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-122">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">variational_program</span><span class="p">)</span>
-</span><span id="line-123">
-</span><span id="line-124">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;variational_program&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-125">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_variational_program</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-126">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="line-127">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">VariationalProgram</span><span class="p">)</span>
-</span><span id="line-128">        <span class="k">return</span> <span class="n">v</span></div>
+</span><span id="line-121">
+</span><span id="line-122">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;variational_program&quot;</span><span class="p">)</span>
+</span><span id="line-123">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_variational_program</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variational_program</span><span class="p">:</span> <span class="n">VariationalProgram</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-124">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">variational_program</span><span class="p">)</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;variational_program&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-127">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_variational_program</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-128">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-129">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">VariationalProgram</span><span class="p">)</span>
+</span><span id="line-130">        <span class="k">return</span> <span class="n">v</span></div>
 
-</span><span id="line-129">
-</span><span id="line-130">
-<div class="viewcode-block" id="ExecutePayload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload">[docs]</a>
-</span><span id="line-131"><span class="k">class</span><span class="w"> </span><span class="nc">ExecutePayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
-<div class="viewcode-block" id="ExecutePayload.type">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.type">[docs]</a>
-</span><span id="line-132">    <span class="nb">type</span><span class="p">:</span> <span class="n">ExecuteType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-131">
+</span><span id="line-132">
+<div class="viewcode-block" id="RabiExperimentPayload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload">[docs]</a>
+</span><span id="line-133"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperimentPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+<div class="viewcode-block" id="RabiExperimentPayload.rabi_experiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.rabi_experiment">[docs]</a>
+</span><span id="line-134">    <span class="n">rabi_experiment</span><span class="p">:</span> <span class="n">RabiExperiment</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ExecutePayload.sampling_payload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.sampling_payload">[docs]</a>
-</span><span id="line-133">    <span class="n">sampling_payload</span><span class="p">:</span> <span class="n">SamplingPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-135">
+</span><span id="line-136">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;rabi_experiment&quot;</span><span class="p">)</span>
+</span><span id="line-137">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_rabi_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rabi_experiment</span><span class="p">:</span> <span class="n">RabiExperiment</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-138">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">rabi_experiment</span><span class="p">)</span>
+</span><span id="line-139">
+</span><span id="line-140">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;rabi_experiment&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-141">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_rabi_experiment</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-142">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-143">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">RabiExperiment</span><span class="p">)</span>
+</span><span id="line-144">        <span class="k">return</span> <span class="n">v</span></div>
 
-<div class="viewcode-block" id="ExecutePayload.time_evolution_payload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.time_evolution_payload">[docs]</a>
-</span><span id="line-134">    <span class="n">time_evolution_payload</span><span class="p">:</span> <span class="n">TimeEvolutionPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-145">
+</span><span id="line-146">
+<div class="viewcode-block" id="T1ExperimentPayload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload">[docs]</a>
+</span><span id="line-147"><span class="k">class</span><span class="w"> </span><span class="nc">T1ExperimentPayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+<div class="viewcode-block" id="T1ExperimentPayload.t1_experiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.t1_experiment">[docs]</a>
+</span><span id="line-148">    <span class="n">t1_experiment</span><span class="p">:</span> <span class="n">T1Experiment</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ExecutePayload.variational_program_payload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.variational_program_payload">[docs]</a>
-</span><span id="line-135">    <span class="n">variational_program_payload</span><span class="p">:</span> <span class="n">VariationalProgramPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-</div>
-
-</span><span id="line-136">
-</span><span id="line-137">
-<div class="viewcode-block" id="ExecuteResult">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult">[docs]</a>
-</span><span id="line-138"><span class="k">class</span><span class="w"> </span><span class="nc">ExecuteResult</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
-<div class="viewcode-block" id="ExecuteResult.type">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.type">[docs]</a>
-</span><span id="line-139">    <span class="nb">type</span><span class="p">:</span> <span class="n">ExecuteType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="ExecuteResult.sampling_result">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.sampling_result">[docs]</a>
-</span><span id="line-140">    <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-<div class="viewcode-block" id="ExecuteResult.time_evolution_result">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.time_evolution_result">[docs]</a>
-</span><span id="line-141">    <span class="n">time_evolution_result</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-<div class="viewcode-block" id="ExecuteResult.variational_program_result">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.variational_program_result">[docs]</a>
-</span><span id="line-142">    <span class="n">variational_program_result</span><span class="p">:</span> <span class="n">VariationalProgramResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-</span><span id="line-143">
-</span><span id="line-144">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;sampling_result&quot;</span><span class="p">)</span>
-</span><span id="line-145">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_sampling_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-146">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">sampling_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">sampling_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-</span><span id="line-147">
-</span><span id="line-148">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;sampling_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-149">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sampling_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-150">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
-</span><span id="line-151">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SamplingResult</span><span class="p">)</span>
-</span><span id="line-152">        <span class="k">return</span> <span class="n">v</span>
+</span><span id="line-149">
+</span><span id="line-150">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;t1_experiment&quot;</span><span class="p">)</span>
+</span><span id="line-151">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_t1_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1_experiment</span><span class="p">:</span> <span class="n">T1Experiment</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-152">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">t1_experiment</span><span class="p">)</span>
 </span><span id="line-153">
-</span><span id="line-154">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;time_evolution_result&quot;</span><span class="p">)</span>
-</span><span id="line-155">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_time_evolution_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_evolution_result</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-156">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">time_evolution_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">time_evolution_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-</span><span id="line-157">
-</span><span id="line-158">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;time_evolution_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-159">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_time_evolution_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-160">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+</span><span id="line-154">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;t1_experiment&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-155">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_t1_experiment</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-156">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-157">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">T1Experiment</span><span class="p">)</span>
+</span><span id="line-158">        <span class="k">return</span> <span class="n">v</span></div>
+
+</span><span id="line-159">
+</span><span id="line-160">
 <div class="viewcode-block" id="ExecuteResult.__class_vars__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__class_vars__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__class_vars__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__class_vars__">[docs]</a>
+<div class="viewcode-block" id="ExecutePayload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__class_vars__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__class_vars__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__class_vars__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__class_vars__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__class_vars__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__class_vars__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__class_vars__">
@@ -564,7 +555,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__class_vars__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__class_vars__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__class_vars__">[docs]</a>
-</span><span id="line-161">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">TimeEvolutionResult</span><span class="p">)</span></div>
+</span><span id="line-161"><span class="k">class</span><span class="w"> </span><span class="nc">ExecutePayload</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -573,12 +566,24 @@
 </div>
 </div>
 
-</span><span id="line-162">        <span class="k">return</span> <span class="n">v</span>
-</span><span id="line-163">
+<div class="viewcode-block" id="ExecutePayload.type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.type">[docs]</a>
+</span><span id="line-162">    <span class="nb">type</span><span class="p">:</span> <span class="n">ExecuteType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExecutePayload.sampling_payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.sampling_payload">[docs]</a>
+</span><span id="line-163">    <span class="n">sampling_payload</span><span class="p">:</span> <span class="n">SamplingPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 <div class="viewcode-block" id="ExecuteResult.__private_attributes__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__private_attributes__">[docs]</a>
+<div class="viewcode-block" id="ExecutePayload.time_evolution_payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.time_evolution_payload">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__private_attributes__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__private_attributes__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__private_attributes__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__private_attributes__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__private_attributes__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__private_attributes__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__private_attributes__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__private_attributes__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__private_attributes__">
@@ -591,7 +596,10 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__private_attributes__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__private_attributes__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__private_attributes__">[docs]</a>
-</span><span id="line-164">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;variational_program_result&quot;</span><span class="p">)</span></div>
+</span><span id="line-164">    <span class="n">time_evolution_payload</span><span class="p">:</span> <span class="n">TimeEvolutionPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -600,12 +608,24 @@
 </div>
 </div>
 
-</span><span id="line-165">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_variational_program_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variational_program_result</span><span class="p">:</span> <span class="n">VariationalProgramResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
-</span><span id="line-166">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">variational_program_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">variational_program_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+<div class="viewcode-block" id="ExecutePayload.variational_program_payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.variational_program_payload">[docs]</a>
+</span><span id="line-165">    <span class="n">variational_program_payload</span><span class="p">:</span> <span class="n">VariationalProgramPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ExecutePayload.rabi_experiment_payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.rabi_experiment_payload">[docs]</a>
+</span><span id="line-166">    <span class="n">rabi_experiment_payload</span><span class="p">:</span> <span class="n">RabiExperimentPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 <div class="viewcode-block" id="ExecuteResult.__signature__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__signature__">[docs]</a>
+<div class="viewcode-block" id="ExecutePayload.t1_experiment_payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.t1_experiment_payload">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__signature__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__signature__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__signature__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__signature__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__signature__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__signature__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__signature__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__signature__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__signature__">
@@ -618,7 +638,11 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__signature__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__signature__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__signature__">[docs]</a>
-</span><span id="line-167"></div>
+</span><span id="line-167">    <span class="n">t1_experiment_payload</span><span class="p">:</span> <span class="n">T1ExperimentPayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -627,12 +651,18 @@
 </div>
 </div>
 
-</span><span id="line-168">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;variational_program_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-169">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_variational_program_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-168">
+</span><span id="line-169">
 <div class="viewcode-block" id="ExecuteResult.__pydantic_complete__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_complete__">[docs]</a>
+<div class="viewcode-block" id="ExecuteResult">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_complete__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_complete__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_complete__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_complete__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_complete__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_complete__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_complete__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_complete__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_complete__">
@@ -645,7 +675,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_complete__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_complete__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_complete__">[docs]</a>
-</span><span id="line-170">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span></div>
+</span><span id="line-170"><span class="k">class</span><span class="w"> </span><span class="nc">ExecuteResult</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -654,13 +686,24 @@
 </div>
 </div>
 
-</span><span id="line-171">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">VariationalProgramResult</span><span class="p">)</span>
-</span><span id="line-172">        <span class="k">return</span> <span class="n">v</span></div>
+<div class="viewcode-block" id="ExecuteResult.type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.type">[docs]</a>
+</span><span id="line-171">    <span class="nb">type</span><span class="p">:</span> <span class="n">ExecuteType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="ExecuteResult.sampling_result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.sampling_result">[docs]</a>
+</span><span id="line-172">    <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ExecuteResult.time_evolution_result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.time_evolution_result">[docs]</a>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_core_schema__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_core_schema__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_core_schema__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_core_schema__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_core_schema__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_core_schema__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_core_schema__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_core_schema__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_core_schema__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_core_schema__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_core_schema__">
@@ -673,7 +716,10 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_core_schema__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_core_schema__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_core_schema__">[docs]</a>
-</span><span id="line-173"></div>
+</span><span id="line-173">    <span class="n">time_evolution_result</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -682,16 +728,24 @@
 </div>
 </div>
 
-</span><span id="line-174">
-<div class="viewcode-block" id="JobStatus">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus">[docs]</a>
-</span><span id="line-175"><span class="k">class</span><span class="w"> </span><span class="nc">JobStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-<div class="viewcode-block" id="JobStatus.NOT_SENT">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.NOT_SENT">[docs]</a>
+<div class="viewcode-block" id="ExecuteResult.variational_program_result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.variational_program_result">[docs]</a>
+</span><span id="line-174">    <span class="n">variational_program_result</span><span class="p">:</span> <span class="n">VariationalProgramResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ExecuteResult.rabi_experiment_result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.rabi_experiment_result">[docs]</a>
+</span><span id="line-175">    <span class="n">rabi_experiment_result</span><span class="p">:</span> <span class="n">RabiExperimentResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ExecuteResult.t1_experiment_result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.t1_experiment_result">[docs]</a>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_custom_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_custom_init__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_custom_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_custom_init__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_custom_init__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_custom_init__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_custom_init__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_custom_init__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_custom_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_custom_init__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_custom_init__">
@@ -704,7 +758,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_custom_init__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_custom_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_custom_init__">[docs]</a>
-</span><span id="line-176">    <span class="n">NOT_SENT</span> <span class="o">=</span> <span class="s2">&quot;not_sent&quot;</span></div>
+</span><span id="line-176">    <span class="n">t1_experiment_result</span><span class="p">:</span> <span class="n">T1ExperimentResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -714,24 +770,17 @@
 </div>
 </div>
 
-<div class="viewcode-block" id="JobStatus.PENDING">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.PENDING">[docs]</a>
-</span><span id="line-177">    <span class="n">PENDING</span> <span class="o">=</span> <span class="s2">&quot;pending&quot;</span></div>
-
-<div class="viewcode-block" id="JobStatus.RUNNING">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.RUNNING">[docs]</a>
-</span><span id="line-178">    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span></div>
-
-<div class="viewcode-block" id="JobStatus.COMPLETED">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.COMPLETED">[docs]</a>
-</span><span id="line-179">    <span class="n">COMPLETED</span> <span class="o">=</span> <span class="s2">&quot;completed&quot;</span></div>
-
-<div class="viewcode-block" id="JobStatus.ERROR">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.ERROR">[docs]</a>
+</span><span id="line-177">
+</span><span id="line-178">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;sampling_result&quot;</span><span class="p">)</span>
+</span><span id="line-179">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_sampling_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_decorators__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_decorators__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_decorators__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_decorators__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_decorators__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_decorators__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_decorators__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_decorators__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_decorators__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_decorators__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_decorators__">
@@ -744,7 +793,7 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_decorators__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_decorators__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_decorators__">[docs]</a>
-</span><span id="line-180">    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span></div>
+</span><span id="line-180">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">sampling_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">sampling_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
 </div>
 </div>
 </div>
@@ -753,21 +802,19 @@
 </div>
 </div>
 </div>
-
-<div class="viewcode-block" id="JobStatus.QUEUED">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.QUEUED">[docs]</a>
-</span><span id="line-181">    <span class="n">QUEUED</span> <span class="o">=</span> <span class="s2">&quot;queued&quot;</span></div>
-
-<div class="viewcode-block" id="JobStatus.CANCELLED">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">[docs]</a>
-</span><span id="line-182">    <span class="n">CANCELLED</span> <span class="o">=</span> <span class="s2">&quot;cancelled&quot;</span></div>
 </div>
 
-</span><span id="line-183">
+</span><span id="line-181">
+</span><span id="line-182">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;sampling_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-183">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sampling_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_generic_metadata__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_generic_metadata__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_generic_metadata__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_generic_metadata__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_generic_metadata__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_generic_metadata__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_generic_metadata__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_generic_metadata__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_generic_metadata__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_generic_metadata__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_generic_metadata__">
@@ -780,7 +827,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_generic_metadata__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_generic_metadata__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_generic_metadata__">[docs]</a>
-</span><span id="line-184"></div>
+</span><span id="line-184">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -789,17 +838,17 @@
 </div>
 </div>
 
-<div class="viewcode-block" id="JobId">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId">[docs]</a>
-</span><span id="line-185"><span class="k">class</span><span class="w"> </span><span class="nc">JobId</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
-</span><span id="line-186"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle/reference you normally get back immediately after `POST /execute`.&quot;&quot;&quot;</span>
+</span><span id="line-185">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SamplingResult</span><span class="p">)</span>
+</span><span id="line-186">        <span class="k">return</span> <span class="n">v</span>
 </span><span id="line-187">
-<div class="viewcode-block" id="JobId.id">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId.id">[docs]</a>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_parent_namespace__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_parent_namespace__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_parent_namespace__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_parent_namespace__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_parent_namespace__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_parent_namespace__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_parent_namespace__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_parent_namespace__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_parent_namespace__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_parent_namespace__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_parent_namespace__">
@@ -812,7 +861,7 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_parent_namespace__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_parent_namespace__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_parent_namespace__">[docs]</a>
-</span><span id="line-188">    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-188">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;time_evolution_result&quot;</span><span class="p">)</span></div>
 </div>
 </div>
 </div>
@@ -823,14 +872,16 @@
 </div>
 </div>
 
-</span><span id="line-189">
-</span><span id="line-190">
-<div class="viewcode-block" id="JobInfo">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo">[docs]</a>
+</span><span id="line-189">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_time_evolution_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_evolution_result</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-190">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">time_evolution_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">time_evolution_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_post_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_post_init__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_post_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_post_init__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_post_init__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_post_init__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_post_init__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_post_init__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_post_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_post_init__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_post_init__">
@@ -843,7 +894,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_post_init__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_post_init__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_post_init__">[docs]</a>
-</span><span id="line-191"><span class="k">class</span><span class="w"> </span><span class="nc">JobInfo</span><span class="p">(</span><span class="n">JobId</span><span class="p">):</span></div>
+</span><span id="line-191"></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -852,12 +905,16 @@
 </div>
 </div>
 
-</span><span id="line-192"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-193"><span class="sd">    Light-weight representation suitable for &#39;list jobs&#39; and polling</span>
+</span><span id="line-192">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;time_evolution_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-193">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_time_evolution_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_root_model__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_root_model__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_root_model__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_root_model__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_root_model__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_root_model__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_root_model__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_root_model__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_root_model__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_root_model__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_root_model__">
@@ -870,7 +927,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_root_model__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_root_model__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_root_model__">[docs]</a>
-</span><span id="line-194"><span class="sd">    when you do *not* need logs or results.</span></div>
+</span><span id="line-194">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -879,14 +938,16 @@
 </div>
 </div>
 
-</span><span id="line-195"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-196">
-<div class="viewcode-block" id="JobInfo.name">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.name">[docs]</a>
+</span><span id="line-195">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">TimeEvolutionResult</span><span class="p">)</span>
+</span><span id="line-196">        <span class="k">return</span> <span class="n">v</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_serializer__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_serializer__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_serializer__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_serializer__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_serializer__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_serializer__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_serializer__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_serializer__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_serializer__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_serializer__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_serializer__">
@@ -899,7 +960,8 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_serializer__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_serializer__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_serializer__">[docs]</a>
-</span><span id="line-197">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-197"></div>
+</div>
 </div>
 </div>
 </div>
@@ -909,20 +971,16 @@
 </div>
 </div>
 
-<div class="viewcode-block" id="JobInfo.description">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.description">[docs]</a>
-</span><span id="line-198">    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="JobInfo.device_id">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.device_id">[docs]</a>
-</span><span id="line-199">    <span class="n">device_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="JobInfo.status">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.status">[docs]</a>
+</span><span id="line-198">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;variational_program_result&quot;</span><span class="p">)</span>
+</span><span id="line-199">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_variational_program_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variational_program_result</span><span class="p">:</span> <span class="n">VariationalProgramResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_validator__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_validator__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_validator__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_validator__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_validator__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_validator__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_validator__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_validator__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_validator__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_validator__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_validator__">
@@ -935,7 +993,8 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_validator__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_validator__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_validator__">[docs]</a>
-</span><span id="line-200">    <span class="n">status</span><span class="p">:</span> <span class="n">JobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</span><span id="line-200">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">variational_program_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">variational_program_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+</div>
 </div>
 </div>
 </div>
@@ -945,18 +1004,16 @@
 </div>
 </div>
 
-<div class="viewcode-block" id="JobInfo.created_at">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.created_at">[docs]</a>
-</span><span id="line-201">    <span class="n">created_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="JobInfo.modified_at">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.modified_at">[docs]</a>
-</span><span id="line-202">    <span class="n">modified_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
+</span><span id="line-201">
+</span><span id="line-202">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;variational_program_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_fields__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_fields__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_fields__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_fields__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_fields__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_fields__">
@@ -969,7 +1026,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_fields__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_fields__">[docs]</a>
-</span><span id="line-203"></div>
+</span><span id="line-203">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_variational_program_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -978,18 +1037,21 @@
 </div>
 </div>
 
-</span><span id="line-204">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-205">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_created_at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-206">        <span class="k">return</span> <span class="n">parsedate_to_datetime</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+</span><span id="line-204">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+</span><span id="line-205">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">VariationalProgramResult</span><span class="p">)</span>
+</span><span id="line-206">        <span class="k">return</span> <span class="n">v</span>
 </span><span id="line-207">
-</span><span id="line-208">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;modified_at&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
-</span><span id="line-209">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_modified_at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span id="line-210">        <span class="k">return</span> <span class="n">parsedate_to_datetime</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span></div>
-
+</span><span id="line-208">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;rabi_experiment_result&quot;</span><span class="p">)</span>
+</span><span id="line-209">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_rabi_experiment_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rabi_experiment_result</span><span class="p">:</span> <span class="n">RabiExperimentResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
+</span><span id="line-210">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">rabi_experiment_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">rabi_experiment_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_computed_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_computed_fields__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_computed_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_computed_fields__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_computed_fields__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_computed_fields__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_computed_fields__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_computed_fields__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_computed_fields__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_computed_fields__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_computed_fields__">
@@ -1010,15 +1072,19 @@
 </div>
 </div>
 </div>
+</div>
+</div>
 
-</span><span id="line-212">
-<div class="viewcode-block" id="JobDetail">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail">[docs]</a>
-</span><span id="line-213"><span class="k">class</span><span class="w"> </span><span class="nc">JobDetail</span><span class="p">(</span><span class="n">JobInfo</span><span class="p">):</span>
+</span><span id="line-212">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;rabi_experiment_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-213">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_rabi_experiment_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_extra__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_extra__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_extra__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_extra__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_extra__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_extra__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_extra__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_extra__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_extra__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_extra__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_extra__">
@@ -1031,7 +1097,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_extra__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_extra__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_extra__">[docs]</a>
-</span><span id="line-214"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span></div>
+</span><span id="line-214">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1040,12 +1108,16 @@
 </div>
 </div>
 
-</span><span id="line-215"><span class="sd">    Full representation returned by `GET /jobs/{id}` when payload/result/logs</span>
-</span><span id="line-216"><span class="sd">    are requested.</span>
+</span><span id="line-215">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">RabiExperimentResult</span><span class="p">)</span>
+</span><span id="line-216">        <span class="k">return</span> <span class="n">v</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_fields_set__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_fields_set__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_fields_set__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_fields_set__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_fields_set__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields_set__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_fields_set__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_fields_set__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_fields_set__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields_set__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_fields_set__">
@@ -1058,7 +1130,9 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_fields_set__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_fields_set__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_fields_set__">[docs]</a>
-</span><span id="line-217"><span class="sd">    &quot;&quot;&quot;</span></div>
+</span><span id="line-217"></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1067,17 +1141,16 @@
 </div>
 </div>
 
-</span><span id="line-218">
-<div class="viewcode-block" id="JobDetail.payload">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.payload">[docs]</a>
-</span><span id="line-219">    <span class="n">payload</span><span class="p">:</span> <span class="n">ExecutePayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-<div class="viewcode-block" id="JobDetail.result">
-<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.result">[docs]</a>
+</span><span id="line-218">    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;t1_experiment_result&quot;</span><span class="p">)</span>
+</span><span id="line-219">    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_t1_experiment_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1_experiment_result</span><span class="p">:</span> <span class="n">T1ExperimentResult</span><span class="p">,</span> <span class="n">_info</span><span class="p">):</span>
 <div class="viewcode-block" id="ExecuteResult.__pydantic_private__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_private__">[docs]</a>
 <div class="viewcode-block" id="ExecutePayload.__pydantic_private__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_private__">[docs]</a>
+<div class="viewcode-block" id="T1ExperimentPayload.__pydantic_private__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_private__">[docs]</a>
+<div class="viewcode-block" id="RabiExperimentPayload.__pydantic_private__">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_private__">[docs]</a>
 <div class="viewcode-block" id="VariationalProgramPayload.__pydantic_private__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_private__">[docs]</a>
 <div class="viewcode-block" id="TimeEvolutionPayload.__pydantic_private__">
@@ -1090,7 +1163,7 @@
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_private__">[docs]</a>
 <div class="viewcode-block" id="SpeQtrumModel.__pydantic_private__">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_private__">[docs]</a>
-</span><span id="line-220">    <span class="n">result</span><span class="p">:</span> <span class="n">ExecuteResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-220">        <span class="k">return</span> <span class="n">serialize</span><span class="p">(</span><span class="n">t1_experiment_result</span><span class="p">)</span> <span class="k">if</span> <span class="n">t1_experiment_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
 </div>
 </div>
 </div>
@@ -1099,18 +1172,180 @@
 </div>
 </div>
 </div>
+</div>
+
+</span><span id="line-221">
+</span><span id="line-222">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;t1_experiment_result&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-223">    <span class="k">def</span><span class="w"> </span><span class="nf">_load_t1_experiment_result</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-224">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+</span><span id="line-225">            <span class="k">return</span> <span class="n">deserialize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">T1ExperimentResult</span><span class="p">)</span>
+</span><span id="line-226">        <span class="k">return</span> <span class="n">v</span></div>
+
+</span><span id="line-227">
+</span><span id="line-228">
+<div class="viewcode-block" id="JobStatus">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus">[docs]</a>
+</span><span id="line-229"><span class="k">class</span><span class="w"> </span><span class="nc">JobStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+</span><span id="line-230">    <span class="s2">&quot;Job has not been submitted to the Lab api&quot;</span>
+</span><span id="line-231">
+<div class="viewcode-block" id="JobStatus.PENDING">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.PENDING">[docs]</a>
+</span><span id="line-232">    <span class="n">PENDING</span> <span class="o">=</span> <span class="s2">&quot;pending&quot;</span></div>
+
+</span><span id="line-233">    <span class="s2">&quot;Job has been queued but not yet validated&quot;</span>
+<div class="viewcode-block" id="JobStatus.VALIDATING">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.VALIDATING">[docs]</a>
+</span><span id="line-234">    <span class="n">VALIDATING</span> <span class="o">=</span> <span class="s2">&quot;validating&quot;</span></div>
+
+</span><span id="line-235">    <span class="s2">&quot;Job has been validated and is queued for execution&quot;</span>
+<div class="viewcode-block" id="JobStatus.QUEUED">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.QUEUED">[docs]</a>
+</span><span id="line-236">    <span class="n">QUEUED</span> <span class="o">=</span> <span class="s2">&quot;queued&quot;</span></div>
+
+</span><span id="line-237">    <span class="s2">&quot;Job is being executed on the device&quot;</span>
+<div class="viewcode-block" id="JobStatus.RUNNING">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.RUNNING">[docs]</a>
+</span><span id="line-238">    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span></div>
+
+</span><span id="line-239">    <span class="s2">&quot;Job finished successfully&quot;</span>
+<div class="viewcode-block" id="JobStatus.COMPLETED">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.COMPLETED">[docs]</a>
+</span><span id="line-240">    <span class="n">COMPLETED</span> <span class="o">=</span> <span class="s2">&quot;completed&quot;</span></div>
+
+</span><span id="line-241">    <span class="s2">&quot;Job failed due to an error&quot;</span>
+<div class="viewcode-block" id="JobStatus.ERROR">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.ERROR">[docs]</a>
+</span><span id="line-242">    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span></div>
+
+</span><span id="line-243">    <span class="s2">&quot;Job was cancelled by the user or system&quot;</span>
+<div class="viewcode-block" id="JobStatus.CANCELLED">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">[docs]</a>
+</span><span id="line-244">    <span class="n">CANCELLED</span> <span class="o">=</span> <span class="s2">&quot;cancelled&quot;</span></div>
+
+</span><span id="line-245">    <span class="s2">&quot;Job failed due to timeout&quot;</span>
+<div class="viewcode-block" id="JobStatus.TIMEOUT">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.TIMEOUT">[docs]</a>
+</span><span id="line-246">    <span class="n">TIMEOUT</span> <span class="o">=</span> <span class="s2">&quot;timeout&quot;</span></div>
+</div>
+
+</span><span id="line-247">
+</span><span id="line-248">
+<div class="viewcode-block" id="JobType">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType">[docs]</a>
+</span><span id="line-249"><span class="k">class</span><span class="w"> </span><span class="nc">JobType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="JobType.DIGITAL">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.DIGITAL">[docs]</a>
+</span><span id="line-250">    <span class="n">DIGITAL</span> <span class="o">=</span> <span class="s2">&quot;digital&quot;</span></div>
+
+<div class="viewcode-block" id="JobType.PULSE">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.PULSE">[docs]</a>
+</span><span id="line-251">    <span class="n">PULSE</span> <span class="o">=</span> <span class="s2">&quot;pulse&quot;</span></div>
+
+<div class="viewcode-block" id="JobType.ANALOG">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.ANALOG">[docs]</a>
+</span><span id="line-252">    <span class="n">ANALOG</span> <span class="o">=</span> <span class="s2">&quot;analog&quot;</span></div>
+
+<div class="viewcode-block" id="JobType.VARIATIONAL">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.VARIATIONAL">[docs]</a>
+</span><span id="line-253">    <span class="n">VARIATIONAL</span> <span class="o">=</span> <span class="s2">&quot;variational&quot;</span></div>
+</div>
+
+</span><span id="line-254">
+</span><span id="line-255">
+<div class="viewcode-block" id="JobId">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId">[docs]</a>
+</span><span id="line-256"><span class="k">class</span><span class="w"> </span><span class="nc">JobId</span><span class="p">(</span><span class="n">SpeQtrumModel</span><span class="p">):</span>
+</span><span id="line-257"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle/reference you normally get back immediately after `POST /execute`.&quot;&quot;&quot;</span>
+</span><span id="line-258">
+<div class="viewcode-block" id="JobId.id">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId.id">[docs]</a>
+</span><span id="line-259">    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+</div>
+
+</span><span id="line-260">
+</span><span id="line-261">
+<div class="viewcode-block" id="JobInfo">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo">[docs]</a>
+</span><span id="line-262"><span class="k">class</span><span class="w"> </span><span class="nc">JobInfo</span><span class="p">(</span><span class="n">JobId</span><span class="p">):</span>
+</span><span id="line-263"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-264"><span class="sd">    Light-weight representation suitable for &#39;list jobs&#39; and polling</span>
+</span><span id="line-265"><span class="sd">    when you do *not* need logs or results.</span>
+</span><span id="line-266"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-267">
+<div class="viewcode-block" id="JobInfo.name">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.name">[docs]</a>
+</span><span id="line-268">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobInfo.description">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.description">[docs]</a>
+</span><span id="line-269">    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobInfo.device_id">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.device_id">[docs]</a>
+</span><span id="line-270">    <span class="n">device_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobInfo.status">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.status">[docs]</a>
+</span><span id="line-271">    <span class="n">status</span><span class="p">:</span> <span class="n">JobStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobInfo.created_at">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.created_at">[docs]</a>
+</span><span id="line-272">    <span class="n">created_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobInfo.updated_at">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.updated_at">[docs]</a>
+</span><span id="line-273">    <span class="n">updated_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="JobInfo.completed_at">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.completed_at">[docs]</a>
+</span><span id="line-274">    <span class="n">completed_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+</span><span id="line-275">
+</span><span id="line-276">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-277">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_created_at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-278">        <span class="k">return</span> <span class="n">parsedate_to_datetime</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+</span><span id="line-279">
+</span><span id="line-280">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;updated_at&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-281">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_updated_at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-282">        <span class="k">return</span> <span class="n">parsedate_to_datetime</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+</span><span id="line-283">
+</span><span id="line-284">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+</span><span id="line-285">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_completed_at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span id="line-286">        <span class="k">return</span> <span class="n">parsedate_to_datetime</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span></div>
+
+</span><span id="line-287">
+</span><span id="line-288">
+<div class="viewcode-block" id="JobDetail">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail">[docs]</a>
+</span><span id="line-289"><span class="k">class</span><span class="w"> </span><span class="nc">JobDetail</span><span class="p">(</span><span class="n">JobInfo</span><span class="p">):</span>
+</span><span id="line-290"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-291"><span class="sd">    Full representation returned by `GET /jobs/{id}` when payload/result/logs</span>
+</span><span id="line-292"><span class="sd">    are requested.</span>
+</span><span id="line-293"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-294">
+<div class="viewcode-block" id="JobDetail.payload">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.payload">[docs]</a>
+</span><span id="line-295">    <span class="n">payload</span><span class="p">:</span> <span class="n">ExecutePayload</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="JobDetail.result">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.result">[docs]</a>
+</span><span id="line-296">    <span class="n">result</span><span class="p">:</span> <span class="n">ExecuteResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="JobDetail.jobType">
+<a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.jobType">[docs]</a>
+</span><span id="line-297">    <span class="n">jobType</span><span class="p">:</span> <span class="n">JobType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="JobDetail.logs">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.logs">[docs]</a>
-</span><span id="line-221">    <span class="n">logs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-298">    <span class="n">logs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="JobDetail.error">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.error">[docs]</a>
-</span><span id="line-222">    <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-299">    <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="JobDetail.error_logs">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.error_logs">[docs]</a>
-</span><span id="line-223">    <span class="n">error_logs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+</span><span id="line-300">    <span class="n">error_logs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 </div>
 
 </span></code></pre></div>

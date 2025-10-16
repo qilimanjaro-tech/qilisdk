@@ -137,6 +137,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -187,6 +188,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -314,7 +316,7 @@
 </span><span id="line-56"><span class="sd">        efficient arithmetic and manipulation. The expected shapes for the data are:</span>
 </span><span id="line-57"><span class="sd">        - (2**N, 2**N) for operators or density matrices (or scalars),</span>
 </span><span id="line-58"><span class="sd">        - (2**N, 1) for ket states,</span>
-</span><span id="line-59"><span class="sd">        - (1, 2**N) or (2**N,) for bra states.</span>
+</span><span id="line-59"><span class="sd">        - (1, 2**N) for bra states.</span>
 </span><span id="line-60">
 </span><span id="line-61"><span class="sd">        Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.</span>
 </span><span id="line-62"><span class="sd">        The input must represent a valid quantum state or operator with appropriate dimensions.</span>
@@ -323,7 +325,7 @@
 </span><span id="line-65"><span class="sd">        Args:</span>
 </span><span id="line-66"><span class="sd">            data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix</span>
 </span><span id="line-67"><span class="sd">                representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators</span>
-</span><span id="line-68"><span class="sd">                (1, 2**N) for ket states, (2**N, 1) or (2**N,) for bra states, or (1, 1) for scalars.</span>
+</span><span id="line-68"><span class="sd">                (1, 2**N) for ket states, (2**N, 1) for bra states, or (1, 1) for scalars.</span>
 </span><span id="line-69">
 </span><span id="line-70"><span class="sd">        Raises:</span>
 </span><span id="line-71"><span class="sd">            ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,</span>

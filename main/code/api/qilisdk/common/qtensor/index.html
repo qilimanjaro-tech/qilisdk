@@ -106,6 +106,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -156,6 +157,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -264,7 +266,7 @@ taking the adjoint (dagger), computing tensor products, partial traces, and norm
 efficient arithmetic and manipulation. The expected shapes for the data are:
 - (2**N, 2**N) for operators or density matrices (or scalars),
 - (2**N, 1) for ket states,
-- (1, 2**N) or (2**N,) for bra states.</p>
+- (1, 2**N) for bra states.</p>
 <p>Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
 The input must represent a valid quantum state or operator with appropriate dimensions.
 Notice that 1D arrays of shape (2N,) are considered/transformed to bras with shape (1, 2N).</p>
@@ -272,7 +274,7 @@ Notice that 1D arrays of shape (2N,) are considered/transformed to bras with sha
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span> <span class="pre">|</span> <span class="pre">sparray</span> <span class="pre">|</span> <span class="pre">spmatrix</span></code>) – A dense NumPy array or a SciPy sparse matrix
 representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
-(1, 2**N) for ket states, (2**N, 1) or (2**N,) for bra states, or (1, 1) for scalars.</p>
+(1, 2**N) for ket states, (2**N, 1) for bra states, or (1, 1) for scalars.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If the input data is not a NumPy array or a SciPy sparse matrix,

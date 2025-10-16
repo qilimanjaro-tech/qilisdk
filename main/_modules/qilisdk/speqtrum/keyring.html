@@ -137,6 +137,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -187,6 +188,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -266,56 +268,60 @@
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
 </span><span id="line-14">
 </span><span id="line-15"><span class="kn">import</span><span class="w"> </span><span class="nn">keyring</span>
-</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
-</span><span id="line-17">
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">.speqtrum_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Token</span>
-</span><span id="line-19">
+</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">keyring.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasswordDeleteError</span>
+</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">.speqtrum_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Token</span>
+</span><span id="line-20">
 <div class="viewcode-block" id="KEYRING_IDENTIFIER">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.KEYRING_IDENTIFIER">[docs]</a>
-</span><span id="line-20"><span class="n">KEYRING_IDENTIFIER</span> <span class="o">=</span> <span class="s2">&quot;SpeQtrumKeyring&quot;</span></div>
+</span><span id="line-21"><span class="n">KEYRING_IDENTIFIER</span> <span class="o">=</span> <span class="s2">&quot;SpeQtrumKeyring&quot;</span></div>
 
-</span><span id="line-21">
 </span><span id="line-22">
+</span><span id="line-23">
 <div class="viewcode-block" id="store_credentials">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.store_credentials">[docs]</a>
-</span><span id="line-23"><span class="k">def</span><span class="w"> </span><span class="nf">store_credentials</span><span class="p">(</span><span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="n">Token</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-24"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-25"><span class="sd">    Store the username and token in the keyring.</span>
-</span><span id="line-26"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-27">    <span class="n">keyring</span><span class="o">.</span><span class="n">set_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span>
-</span><span id="line-28">    <span class="n">keyring</span><span class="o">.</span><span class="n">set_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">())</span></div>
+</span><span id="line-24"><span class="k">def</span><span class="w"> </span><span class="nf">store_credentials</span><span class="p">(</span><span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="n">Token</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-25"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-26"><span class="sd">    Store the username and token in the keyring.</span>
+</span><span id="line-27"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-28">    <span class="n">keyring</span><span class="o">.</span><span class="n">set_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span>
+</span><span id="line-29">    <span class="n">keyring</span><span class="o">.</span><span class="n">set_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">())</span></div>
 
-</span><span id="line-29">
 </span><span id="line-30">
+</span><span id="line-31">
 <div class="viewcode-block" id="delete_credentials">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.delete_credentials">[docs]</a>
-</span><span id="line-31"><span class="k">def</span><span class="w"> </span><span class="nf">delete_credentials</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-32"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-33"><span class="sd">    Delete username and token from the keyring.</span>
-</span><span id="line-34"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-35">    <span class="n">keyring</span><span class="o">.</span><span class="n">delete_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">)</span>
-</span><span id="line-36">    <span class="n">keyring</span><span class="o">.</span><span class="n">delete_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">)</span></div>
+</span><span id="line-32"><span class="k">def</span><span class="w"> </span><span class="nf">delete_credentials</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-33"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-34"><span class="sd">    Delete username and token from the keyring.</span>
+</span><span id="line-35"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-36">    <span class="k">try</span><span class="p">:</span>
+</span><span id="line-37">        <span class="n">keyring</span><span class="o">.</span><span class="n">delete_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">)</span>
+</span><span id="line-38">        <span class="n">keyring</span><span class="o">.</span><span class="n">delete_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">)</span>
+</span><span id="line-39">    <span class="k">except</span> <span class="n">PasswordDeleteError</span><span class="p">:</span>
+</span><span id="line-40">        <span class="k">return</span></div>
 
-</span><span id="line-37">
-</span><span id="line-38">
+</span><span id="line-41">
+</span><span id="line-42">
 <div class="viewcode-block" id="load_credentials">
 <a class="viewcode-back" href="../../../code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.load_credentials">[docs]</a>
-</span><span id="line-39"><span class="k">def</span><span class="w"> </span><span class="nf">load_credentials</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Token</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-40"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-41"><span class="sd">    Attempt to load the stored username and token from the keyring.</span>
-</span><span id="line-42">
-</span><span id="line-43"><span class="sd">    Returns:</span>
-</span><span id="line-44"><span class="sd">        A tuple (username, Token) if both exist and can be parsed; otherwise, None.</span>
-</span><span id="line-45"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-46">    <span class="n">username</span> <span class="o">=</span> <span class="n">keyring</span><span class="o">.</span><span class="n">get_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">)</span>
-</span><span id="line-47">    <span class="n">token_json</span> <span class="o">=</span> <span class="n">keyring</span><span class="o">.</span><span class="n">get_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">)</span>
-</span><span id="line-48">    <span class="k">if</span> <span class="n">username</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">token_json</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-49">        <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-50">    <span class="k">try</span><span class="p">:</span>
-</span><span id="line-51">        <span class="n">token</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">token_json</span><span class="p">)</span>
-</span><span id="line-52">        <span class="k">return</span> <span class="n">username</span><span class="p">,</span> <span class="n">token</span>
-</span><span id="line-53">    <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
-</span><span id="line-54">        <span class="k">return</span> <span class="kc">None</span></div>
+</span><span id="line-43"><span class="k">def</span><span class="w"> </span><span class="nf">load_credentials</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Token</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-44"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-45"><span class="sd">    Attempt to load the stored username and token from the keyring.</span>
+</span><span id="line-46">
+</span><span id="line-47"><span class="sd">    Returns:</span>
+</span><span id="line-48"><span class="sd">        A tuple (username, Token) if both exist and can be parsed; otherwise, None.</span>
+</span><span id="line-49"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-50">    <span class="n">username</span> <span class="o">=</span> <span class="n">keyring</span><span class="o">.</span><span class="n">get_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">)</span>
+</span><span id="line-51">    <span class="n">token_json</span> <span class="o">=</span> <span class="n">keyring</span><span class="o">.</span><span class="n">get_password</span><span class="p">(</span><span class="n">KEYRING_IDENTIFIER</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">)</span>
+</span><span id="line-52">    <span class="k">if</span> <span class="n">username</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">token_json</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-53">        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-54">    <span class="k">try</span><span class="p">:</span>
+</span><span id="line-55">        <span class="n">token</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">token_json</span><span class="p">)</span>
+</span><span id="line-56">        <span class="k">return</span> <span class="n">username</span><span class="p">,</span> <span class="n">token</span>
+</span><span id="line-57">    <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+</span><span id="line-58">        <span class="k">return</span> <span class="kc">None</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

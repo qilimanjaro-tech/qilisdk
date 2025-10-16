@@ -106,6 +106,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -156,6 +157,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -239,49 +241,52 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-obj docutils literal notranslate"><span class="pre">M</span></code></a></p></td>
 <td><p>Measurement operation on a qubit. The measurement is performed in the computational basis and the</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.X" title="qilisdk.digital.gates.X"><code class="xref py py-obj docutils literal notranslate"><span class="pre">X</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.I" title="qilisdk.digital.gates.I"><code class="xref py py-obj docutils literal notranslate"><span class="pre">I</span></code></a></p></td>
+<td><p>The Identity gate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.X" title="qilisdk.digital.gates.X"><code class="xref py py-obj docutils literal notranslate"><span class="pre">X</span></code></a></p></td>
 <td><p>The Pauli-X gate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.Y" title="qilisdk.digital.gates.Y"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Y</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.Y" title="qilisdk.digital.gates.Y"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Y</span></code></a></p></td>
 <td><p>The Pauli-Y gate.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.Z" title="qilisdk.digital.gates.Z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Z</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.Z" title="qilisdk.digital.gates.Z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Z</span></code></a></p></td>
 <td><p>The Pauli-Z gate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.H" title="qilisdk.digital.gates.H"><code class="xref py py-obj docutils literal notranslate"><span class="pre">H</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.H" title="qilisdk.digital.gates.H"><code class="xref py py-obj docutils literal notranslate"><span class="pre">H</span></code></a></p></td>
 <td><p>The Hadamard gate.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.S" title="qilisdk.digital.gates.S"><code class="xref py py-obj docutils literal notranslate"><span class="pre">S</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.S" title="qilisdk.digital.gates.S"><code class="xref py py-obj docutils literal notranslate"><span class="pre">S</span></code></a></p></td>
 <td><p>Represents the S gate, which induces a pi/2 phase.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.T" title="qilisdk.digital.gates.T"><code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.T" title="qilisdk.digital.gates.T"><code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code></a></p></td>
 <td><p>Represents the T gate, which induces a pi/4 phase.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RX" title="qilisdk.digital.gates.RX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RX</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RX" title="qilisdk.digital.gates.RX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RX</span></code></a></p></td>
 <td><p>Represents a <cite>theta</cite> angle rotation around the X-axis (polar) in the Bloch sphere.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RY" title="qilisdk.digital.gates.RY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RY</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RY" title="qilisdk.digital.gates.RY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RY</span></code></a></p></td>
 <td><p>Represents a <cite>theta</cite> angle rotation around the Y-axis (polar) in the Bloch sphere.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RZ" title="qilisdk.digital.gates.RZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RZ</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.RZ" title="qilisdk.digital.gates.RZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RZ</span></code></a></p></td>
 <td><p>Represents a <cite>phi</cite> angle rotation around the Z-axis (azimuthal) in the Bloch sphere.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U1" title="qilisdk.digital.gates.U1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U1</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U1" title="qilisdk.digital.gates.U1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U1</span></code></a></p></td>
 <td><p>Represents the U1 gate defined by an azimuthal angle <cite>phi</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U2" title="qilisdk.digital.gates.U2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U2</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U2" title="qilisdk.digital.gates.U2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U2</span></code></a></p></td>
 <td><p>Represents the U2 gate defined by the angles <cite>phi</cite> and <cite>gamma</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U3" title="qilisdk.digital.gates.U3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U3</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.U3" title="qilisdk.digital.gates.U3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">U3</span></code></a></p></td>
 <td><p>Represents the U3 gate defined by the angles <cite>theta</cite>, <cite>phi</cite> and <cite>gamma</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.CNOT" title="qilisdk.digital.gates.CNOT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CNOT</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.CNOT" title="qilisdk.digital.gates.CNOT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CNOT</span></code></a></p></td>
 <td><p>Represents the CNOT gate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.CZ" title="qilisdk.digital.gates.CZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CZ</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.CZ" title="qilisdk.digital.gates.CZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CZ</span></code></a></p></td>
 <td><p>Represents the CZ gate.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.gates.SWAP" title="qilisdk.digital.gates.SWAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SWAP</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.gates.SWAP" title="qilisdk.digital.gates.SWAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SWAP</span></code></a></p></td>
 <td><p>The SWAP gate.</p></td>
 </tr>
 </tbody>
@@ -984,6 +989,36 @@ result is stored in a classical bit with the same label as the measured qubit.</
 </dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.digital.gates.I">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">I</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/gates.html#I"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.gates.I" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.gates.I'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qilisdk.digital.gates.BasicGate" title="qilisdk.digital.gates.BasicGate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasicGate</span></code></a></p>
+<p>The Identity gate.</p>
+<p>The associated matrix is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[[1, 0],
+</span><span id="line-2">[0, 1]]
+</span></code></pre></div>
+</div>
+<p>Initialize a Pauli-X gate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the X gate.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.digital.gates.I.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/digital/gates.html#I.name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.gates.I.name" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.gates.I.name'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Retrieve the name of the gate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The name of the gate.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.digital.gates.X">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/gates.html#X"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.gates.X" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.gates.X'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.digital.gates.BasicGate" title="qilisdk.digital.gates.BasicGate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasicGate</span></code></a></p>
@@ -1662,6 +1697,10 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <li><a :data-current="activeSection === '#qilisdk.digital.gates.M.name'" class="reference internal" href="#qilisdk.digital.gates.M.name"><code class="docutils literal notranslate"><span class="pre">M.name</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.gates.M.matrix'" class="reference internal" href="#qilisdk.digital.gates.M.matrix"><code class="docutils literal notranslate"><span class="pre">M.matrix</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.gates.M.target_qubits'" class="reference internal" href="#qilisdk.digital.gates.M.target_qubits"><code class="docutils literal notranslate"><span class="pre">M.target_qubits</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.digital.gates.I'" class="reference internal" href="#qilisdk.digital.gates.I"><code class="docutils literal notranslate"><span class="pre">I</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.digital.gates.I.name'" class="reference internal" href="#qilisdk.digital.gates.I.name"><code class="docutils literal notranslate"><span class="pre">I.name</span></code></a></li>
 </ul>
 </li>
 <li><a :data-current="activeSection === '#qilisdk.digital.gates.X'" class="reference internal" href="#qilisdk.digital.gates.X"><code class="docutils literal notranslate"><span class="pre">X</span></code></a><ul>

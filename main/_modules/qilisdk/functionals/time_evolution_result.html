@@ -137,6 +137,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -187,6 +188,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -310,7 +312,7 @@
 </span><span id="line-55">        <span class="bp">self</span><span class="o">.</span><span class="n">_final_expected_values</span> <span class="o">=</span> <span class="n">final_expected_values</span> <span class="k">if</span> <span class="n">final_expected_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
 </span><span id="line-56">        <span class="bp">self</span><span class="o">.</span><span class="n">_expected_values</span> <span class="o">=</span> <span class="n">expected_values</span> <span class="k">if</span> <span class="n">expected_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
 </span><span id="line-57">        <span class="bp">self</span><span class="o">.</span><span class="n">_final_state</span> <span class="o">=</span> <span class="n">final_state</span>
-</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_states</span> <span class="o">=</span> <span class="n">intermediate_states</span>
+</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_states</span> <span class="o">=</span> <span class="n">intermediate_states</span> <span class="ow">or</span> <span class="p">[]</span>
 </span><span id="line-59">
 </span><span id="line-60">    <span class="nd">@property</span>
 <div class="viewcode-block" id="TimeEvolutionResult.final_expected_values">
@@ -354,12 +356,12 @@
 </span><span id="line-90">    <span class="nd">@property</span>
 <div class="viewcode-block" id="TimeEvolutionResult.intermediate_states">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.intermediate_states">[docs]</a>
-</span><span id="line-91">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-91">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span>
 </span><span id="line-92"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="line-93"><span class="sd">        Get the list of intermediate quantum states recorded during the simulation.</span>
 </span><span id="line-94">
 </span><span id="line-95"><span class="sd">        Returns:</span>
-</span><span id="line-96"><span class="sd">            list[QTensor] | None: A list of intermediate quantum states, or None if not stored.</span>
+</span><span id="line-96"><span class="sd">            list[QTensor]: A list of intermediate quantum states.</span>
 </span><span id="line-97"><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="line-98">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_states</span></div>
 
@@ -368,17 +370,21 @@
 </span><span id="line-101">        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 </span><span id="line-102">        <span class="k">return</span> <span class="p">(</span>
 </span><span id="line-103">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">(</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-104">            <span class="sa">f</span><span class="s2">&quot;  final_expected_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_expected_values</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-105">            <span class="sa">f</span><span class="s2">&quot;  expected_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_values</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-106">            <span class="sa">f</span><span class="s2">&quot;  final_state=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_state</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-107">            <span class="sa">f</span><span class="s2">&quot;  intermediate_states=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-108">            <span class="s2">&quot;)&quot;</span>
-</span><span id="line-109">        <span class="p">)</span>
-</span><span id="line-110">
+</span><span id="line-104">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;  final_expected_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_expected_values</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-105">            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  expected_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_values</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</span><span id="line-106">            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  final_state=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_state</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</span><span id="line-107">            <span class="o">+</span> <span class="p">(</span>
+</span><span id="line-108">                <span class="sa">f</span><span class="s2">&quot;  intermediate_states=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-109">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span><span id="line-110">                <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+</span><span id="line-111">            <span class="p">)</span>
+</span><span id="line-112">            <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+</span><span id="line-113">        <span class="p">)</span>
+</span><span id="line-114">
 <div class="viewcode-block" id="TimeEvolutionResult.compute_cost">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.compute_cost">[docs]</a>
-</span><span id="line-111">    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cost_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-112">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</span><span id="line-115">    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cost_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-116">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </div>
 
 </span></code></pre></div>
