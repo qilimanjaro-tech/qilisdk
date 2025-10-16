@@ -140,7 +140,6 @@ class MatplotlibCircuitRenderer:
     # Low-level drawing helpers (private)
     # ------------------------------------------------------------------
     def _generate_layer_gate_mapping(self) -> None:
-        print(self.style.compact_depth)
         self._layer_gate_mapping: Dict[int, Dict[int, Gate]] = {}
         gate_maping: Dict[int, List[Gate]] = {}
         for qubit in range(self.circuit.nqubits):
