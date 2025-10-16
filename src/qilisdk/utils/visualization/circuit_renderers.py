@@ -152,7 +152,6 @@ class MatplotlibCircuitRenderer:
                 for qubit in range(min(qubits), max(qubits) + 1):
                     gate_maping[qubit].append(gate)
 
-
         layer: int = 0
         waiting_list: Dict[int, Gate] = {}
         completed = [False] * self.circuit.nqubits
@@ -185,14 +184,6 @@ class MatplotlibCircuitRenderer:
                             for c_qubit in affected_qubits:
                                 gate_maping[c_qubit].pop(0)
                                 del waiting_list[c_qubit]
-
-                            # for m_qubit in range(min(qubits), q):
-                            #     if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
-                            #         ignore_q.append(m_qubit)
-                            #         if layer + 1 not in self._layer_gate_mapping:
-                            #             self._layer_gate_mapping[layer + 1] = {}
-                            #         self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][m_qubit]
-                            #         del self._layer_gate_mapping[layer][m_qubit]
                             ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
                 if len(gate_maping[q]) == 0 and not completed[q]:
                     completed[q] = True
