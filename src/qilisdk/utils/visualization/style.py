@@ -95,6 +95,8 @@ class CircuitStyle(Style):
     target_r: float = Field(default=0.12, description="Radius (inches) of ⊕ target circle and SWAP half-width.")
     control_r: float = Field(default=0.05, description="Radius (inches) of a filled control dot.")
 
+    compact_depth: bool = Field(default=True, description="If True , minimizes the layers to highlight circuit depth")
+
 
 class ScheduleStyle(Style):
     """
@@ -146,4 +148,5 @@ class ScheduleStyle(Style):
     )
 
     # Misc
+    compact_depth: bool = Field(default=True, description="If True , minimizes the layers to highlight circuit depth")
     tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
