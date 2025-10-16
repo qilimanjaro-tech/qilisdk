@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import TYPE_CHECKING, Dict, Final, Iterable, List
+from typing import TYPE_CHECKING, Final, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -85,7 +85,7 @@ class MatplotlibCircuitRenderer:
         # 2. iterate through gates, drawing or deferring measurements -----
         # ------------------------------------------------------------------
         deferred_qubits: set[int] = set()
-        self._max_layer_width: List[float] = [self.style.start_pad]
+        self._max_layer_width: list[float] = [self.style.start_pad]
         for layer in self._layer_gate_mapping:
             for _, gate in self._layer_gate_mapping[layer].items():
                 if isinstance(gate, M):
@@ -140,8 +140,8 @@ class MatplotlibCircuitRenderer:
     # Low-level drawing helpers (private)
     # ------------------------------------------------------------------
     def _generate_layer_gate_mapping(self) -> None:
-        self._layer_gate_mapping: Dict[int, Dict[int, Gate]] = {}
-        gate_maping: Dict[int, List[Gate]] = {}
+        self._layer_gate_mapping: dict[int, dict[int, Gate]] = {}
+        gate_maping: dict[int, list[Gate]] = {}
         for qubit in range(self.circuit.nqubits):
             gate_maping[qubit] = []
         for gate in self.circuit.gates:
@@ -149,16 +149,19 @@ class MatplotlibCircuitRenderer:
             if len(qubits) == 1:
                 gate_maping[qubits[0]].append(gate)
             elif len(qubits) > 1:
-                con_qubits = qubits if self.style.compact_depth else range(min(qubits), max(qubits) + 1)
+                if self.style.layout == "compact":
+                    con_qubits = qubits
+                elif self.style.layout == "normal":
+                    con_qubits = range(min(qubits), max(qubits) + 1)
                 for qubit in con_qubits:
                     gate_maping[qubit].append(gate)
 
         layer: int = 0
-        waiting_list: Dict[int, Gate] = {}
+        waiting_list: dict[int, Gate] = {}
         completed = [False] * self.circuit.nqubits
         for q, l in gate_maping.items():
             completed[q] = not bool(l)
-        ignore_q: List[int] = []
+        ignore_q: list[int] = []
         self.last_idx: dict[int, int] = {}
         while not all(completed):
             if layer not in self._layer_gate_mapping:
@@ -179,14 +182,17 @@ class MatplotlibCircuitRenderer:
                 if gate.nqubits > 1:
                     waiting_list[q] = gate
                     qubits = gate.qubits
-                    con_qubits = qubits if self.style.compact_depth else range(min(qubits), max(qubits) + 1)
+                    if self.style.layout == "compact":
+                        con_qubits = qubits
+                    elif self.style.layout == "normal":
+                        con_qubits = range(min(qubits), max(qubits) + 1)
                     if all(key in waiting_list for key in con_qubits) and all(waiting_list[qr] == gate for qr in con_qubits):
                             self._layer_gate_mapping[layer][q] = gate
                             for c_qubit in con_qubits:
                                 gate_maping[c_qubit].pop(0)
                                 del waiting_list[c_qubit]
 
-                            if self.style.compact_depth:
+                            if self.style.layout == "compact":
                                 for m_qubit in range(min(qubits), q):
                                     if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
                                         ignore_q.append(m_qubit)
