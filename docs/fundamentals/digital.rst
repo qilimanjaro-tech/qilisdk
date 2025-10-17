@@ -164,6 +164,7 @@ Custom styling with :class:`~qilisdk.utils.visualization.CircuitStyle`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to ``draw`` overrides the library defaults for this call.
+You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible changing the patameter **layout** to *"normal"* (default) or *"compact"* respectively.
 
 .. code-block:: python
 
@@ -199,6 +200,7 @@ Create a style object to control theme, fonts, spacing, DPI, labels, and more. P
         layer_sep=0.45,     # horizontal distance between layers (inches)
         gate_margin=0.10,   # side margin inside each layer cell (inches)
         label_pad=0.08,     # left padding for wire labels (inches)
+        layout="compact",   # compresses the circuit whenever possible
         title="Compact layout",
     )
     circuit.draw(style=compact)
