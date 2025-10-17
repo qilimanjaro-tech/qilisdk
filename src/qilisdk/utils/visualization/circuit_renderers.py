@@ -59,7 +59,7 @@ class MatplotlibCircuitRenderer:
         self._end_measure_qubits: set[int] = set()
         self._wires = circuit.nqubits
         # *layer_widths[w][l]* - width (inches) of layer *l* on wire *w*
-        self._layer_widths: dict[int, list[float]] = {w: [self.style.start_pad] for w in range(circuit.nqubits)}
+        self._layer_widths: dict[int, list[float]] = {w: [] for w in range(circuit.nqubits)}
 
     @property
     def axes(self) -> Axes:
@@ -73,56 +73,51 @@ class MatplotlibCircuitRenderer:
         deferring final-column measurements as needed, draws wires and finalizes
         the figure.
         """
+        self._generate_layer_gate_mapping()
         self._draw_wire_labels()
-
-        gates = list(self.circuit.gates)
 
         # ------------------------------------------------------------------
         # 1. compute last-gate index for each qubit ------------------------
         # ------------------------------------------------------------------
-        last_idx: dict[int, int] = {}
-        for idx in reversed(range(len(gates))):
-            gate = gates[idx]
-            for q in gate.target_qubits or []:
-                if q not in last_idx:
-                    last_idx[q] = idx
-            if len(last_idx) == self._wires:
-                break
+        # done elswere
 
         # ------------------------------------------------------------------
         # 2. iterate through gates, drawing or deferring measurements -----
         # ------------------------------------------------------------------
         deferred_qubits: set[int] = set()
+        self._max_layer_width: list[float] = [self.style.start_pad]
+        for layer in self._layer_gate_mapping:
+            for _, gate in self._layer_gate_mapping[layer].items():
+                if isinstance(gate, M):
+                    inline_qubits: list[int] = []
+                    for q in gate.target_qubits:
+                        if self.last_idx.get(q) == layer:
+                            deferred_qubits.add(q)
+                            self._end_measure_qubits.add(q)
+                        else:
+                            inline_qubits.append(q)
+                    if inline_qubits:
+                        self._draw_inline_measure(inline_qubits, layer=layer)
+                    continue
 
-        for idx, gate in enumerate(gates):
-            if isinstance(gate, M):
-                inline_qubits: list[int] = []
-                for q in gate.target_qubits:
-                    if last_idx.get(q) == idx:
-                        deferred_qubits.add(q)
-                        self._end_measure_qubits.add(q)
-                    else:
-                        inline_qubits.append(q)
-                if inline_qubits:
-                    self._draw_inline_measure(inline_qubits)
-                continue
+                if isinstance(gate, Controlled):
+                    self._draw_controlled_gate(gate, layer=layer)
+                    continue
 
-            if isinstance(gate, Controlled):
-                self._draw_controlled_gate(gate)
-                continue
+                if gate.name == "SWAP":
+                    self._draw_swap_gate(list(gate.target_qubits or []), layer=layer)
+                    continue
 
-            if gate.name == "SWAP":
-                self._draw_swap_gate(list(gate.target_qubits or []))
-                continue
-
-            # Targets-only (single or multi-qubit) box
-            self._draw_targets_gate(label=self._gate_label(gate), targets=list(gate.target_qubits or []))
+                # Targets-only (single or multi-qubit) box
+                self._draw_targets_gate(label=self._gate_label(gate), targets=list(gate.target_qubits or []), layer=layer)
+            maxi = max([0.0, *(self._layer_widths[wire][layer] for wire in range(self._wires) if len(self._layer_widths[wire]) - 1 >= layer)])
+            self._max_layer_width.append(maxi)
 
         # ------------------------------------------------------------------
         # 3. draw any deferred (final-column) measurements -----------------
         # ------------------------------------------------------------------
         if deferred_qubits:
-            self._draw_concurrent_measures(sorted(deferred_qubits))
+            self._draw_concurrent_measures(sorted(deferred_qubits), layer=layer)
 
         # ------------------------------------------------------------------
         # final touches -----------------------------------------------------
@@ -144,8 +139,74 @@ class MatplotlibCircuitRenderer:
     # ------------------------------------------------------------------
     # Low-level drawing helpers (private)
     # ------------------------------------------------------------------
+    def _generate_layer_gate_mapping(self) -> None:
+        self._layer_gate_mapping: dict[int, dict[int, Gate]] = {}
+        gate_maping: dict[int, list[Gate]] = {}
+        for qubit in range(self.circuit.nqubits):
+            gate_maping[qubit] = []
+        for gate in self.circuit.gates:
+            qubits = gate.qubits
+            if len(qubits) == 1:
+                gate_maping[qubits[0]].append(gate)
+            elif len(qubits) > 1:
+                if self.style.layout == "compact":
+                    con_qubits = qubits
+                elif self.style.layout == "normal":
+                    con_qubits = tuple(range(min(qubits), max(qubits) + 1))
+                for qubit in con_qubits:
+                    gate_maping[qubit].append(gate)
 
-    def _xskip(self, wires: Iterable[int], layer: int) -> float:
+        layer: int = 0
+        waiting_list: dict[int, Gate] = {}
+        completed = [False] * self.circuit.nqubits
+        for q, l in gate_maping.items():
+            completed[q] = not bool(l)
+        ignore_q: list[int] = []
+        self.last_idx: dict[int, int] = {}
+        while not all(completed):
+            if layer not in self._layer_gate_mapping:
+                self._layer_gate_mapping[layer] = {}
+            for q in range(self.circuit.nqubits):
+                if q in ignore_q:
+                    ignore_q.remove(q)
+                    continue
+                if len(gate_maping[q]) == 0 and not completed[q]:
+                    completed[q] = True
+                    self.last_idx[q] = layer - 1
+                if q in waiting_list or completed[q]:
+                    continue
+                gate = gate_maping[q][0]
+                if gate.nqubits == 1:
+                    self._layer_gate_mapping[layer][q] = gate
+                    gate_maping[q].pop(0)
+                if gate.nqubits > 1:
+                    waiting_list[q] = gate
+                    qubits = gate.qubits
+                    if self.style.layout == "compact":
+                        con_qubits = qubits
+                    elif self.style.layout == "normal":
+                        con_qubits = tuple(range(min(qubits), max(qubits) + 1))
+                    if all(key in waiting_list for key in con_qubits) and all(waiting_list[qr] == gate for qr in con_qubits):
+                            self._layer_gate_mapping[layer][q] = gate
+                            for c_qubit in con_qubits:
+                                gate_maping[c_qubit].pop(0)
+                                del waiting_list[c_qubit]
+
+                            if self.style.layout == "compact":
+                                for m_qubit in range(min(qubits), q):
+                                    if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
+                                        ignore_q.append(m_qubit)
+                                        if layer + 1 not in self._layer_gate_mapping:
+                                            self._layer_gate_mapping[layer + 1] = {}
+                                        self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][m_qubit]
+                                        del self._layer_gate_mapping[layer][m_qubit]
+                            ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
+                if len(gate_maping[q]) == 0 and not completed[q]:
+                    completed[q] = True
+                    self.last_idx[q] = layer
+            layer += 1
+
+    def _xpos(self, layer: int) -> float:
         """
         Compute the left x of a given layer.
 
@@ -158,12 +219,9 @@ class MatplotlibCircuitRenderer:
         Returns:
             The x-coordinate (inches) of the left edge of this column.
         """
+        return sum(self._max_layer_width[:layer + 1])
 
-        if self.style.align_layer:
-            wires = range(self._wires)
-        return max(sum(self._layer_widths[w][:layer]) for w in wires)
-
-    def _reserve(self, width: float, wires: Iterable[int], layer: int, *, xskip: float = 0.0) -> None:
+    def _reserve(self, width: float, wires: Iterable[int], layer: int) -> None:
         """
         Reserve width in a column for a set of wires.
 
@@ -180,10 +238,11 @@ class MatplotlibCircuitRenderer:
             if len(layers) > layer:
                 layers[layer] = max(layers[layer], full_width)
             else:
-                gap = xskip - sum(layers) if xskip else 0.0
-                layers.append(gap + full_width)
+                for _ in range(len(layers), layer):
+                    layers.append(0.0)
+                layers.append(full_width)
 
-    def _place(self, wires: Iterable[int], *, min_width: float = 0.0) -> tuple[float, int, list[int]]:
+    def _place(self, wires: Iterable[int], layer: int, *, min_width: float = 0.0) -> float:
         """
         Choose a column and compute its left x for a set of wires.
 
@@ -200,12 +259,11 @@ class MatplotlibCircuitRenderer:
                 - layer: Column index.
                 - wires_sorted: Sorted unique wires used for placement.
         """
-        wires = sorted(set(wires))
-        layer = max(len(self._layer_widths[w]) for w in wires)
-        x = self._xskip(wires, layer) + self.style.gate_margin
+        wires = [*range(min(wires), max(wires) + 1)]
+        x = self._xpos(layer) + self.style.gate_margin
         if min_width:
-            self._reserve(min_width, wires, layer, xskip=x)
-        return x, layer, wires
+            self._reserve(min_width, wires, layer)
+        return x
 
     def _text_width(self, text: str) -> float:
         """
@@ -269,7 +327,7 @@ class MatplotlibCircuitRenderer:
         # Decide layer/x if not given (no-controls: only target wires matter)
         if layer is None or x is None:
             layer = max(len(self._layer_widths[w]) for w in t_sorted)
-            x = self._xskip(t_sorted, layer) + self.style.gate_margin
+            x = self._xpos(layer) + self.style.gate_margin
 
         # Measure and reserve the full width at the given x/layer
         width = max(self._text_width(label) + self.style.gate_pad * 2, self.style.min_gate_w)
@@ -407,9 +465,9 @@ class MatplotlibCircuitRenderer:
     def _draw_swap_gate(
         self,
         targets: list[int],
+        layer: int,
         *,
         x: float | None = None,
-        layer: int | None = None,
     ) -> float:
         """
         Draw a SWAP between two target wires.
@@ -424,8 +482,8 @@ class MatplotlibCircuitRenderer:
         """
         t_sorted = sorted(targets)
 
-        if layer is None or x is None:
-            x, layer, _ = self._place(t_sorted, min_width=self.style.target_r * 2)
+        if x is None:
+            x = self._place(t_sorted, layer, min_width=self.style.target_r * 2)
         else:
             self._reserve(self.style.target_r * 2, t_sorted, layer)
 
@@ -437,7 +495,7 @@ class MatplotlibCircuitRenderer:
         self._draw_bridge(t_sorted[0], t_sorted[1], x_anchor)
         return x_anchor
 
-    def _draw_controlled_gate(self, gate: Controlled) -> None:
+    def _draw_controlled_gate(self, gate: Controlled, layer: int) -> None:
         """
         Draw a controlled gate (controls + targets).
 
@@ -454,7 +512,7 @@ class MatplotlibCircuitRenderer:
         all_wires = sorted(set(targets + controls))
 
         # Place a column shared by all involved wires; reserve minimal node width
-        x, layer, _ = self._place(all_wires, min_width=self.style.target_r * 2)
+        x = self._place(all_wires, layer, min_width=self.style.target_r * 2)
 
         # Controlled-X family (CNOT / multi-controlled X): target glyph, not a box
         if gate.is_modified_from(X):
@@ -484,7 +542,7 @@ class MatplotlibCircuitRenderer:
         # Ensure control wires also reserve the same width for this layer
         extra_controls = [c for c in controls if c not in targets]
         if extra_controls:
-            self._reserve(width, extra_controls, layer_box, xskip=x_box)
+            self._reserve(width, extra_controls, layer_box)
 
         x_center = x_box + width / 2.0
         for c in controls:
@@ -493,7 +551,7 @@ class MatplotlibCircuitRenderer:
 
     # Measurements --------------------------------------------------------
 
-    def _draw_inline_measure(self, qubits: list[int]) -> None:
+    def _draw_inline_measure(self, qubits: list[int], layer: int) -> None:
         """
         Draw measurement boxes interleaved with gates (same column).
 
@@ -501,12 +559,12 @@ class MatplotlibCircuitRenderer:
             qubits: Wires to measure in this column.
         """
         layer = max(len(self._layer_widths[q]) for q in qubits)
-        x = self._xskip(qubits, layer) + self.style.gate_margin
-        self._reserve(self.style.min_gate_w, qubits, layer, xskip=x)
+        x = self._xpos(layer) + self.style.gate_margin
+        self._reserve(self.style.min_gate_w, qubits, layer)
         for q in qubits:
             self._draw_measure_symbol(q, x)
 
-    def _draw_concurrent_measures(self, qubits: list[int]) -> None:
+    def _draw_concurrent_measures(self, qubits: list[int], layer: int) -> None:
         """
         Draw a final column of measurements (one shared column).
 
@@ -514,8 +572,8 @@ class MatplotlibCircuitRenderer:
             qubits: Wires to measure concurrently.
         """
         layer = max(len(v) for v in self._layer_widths.values())
-        x = self._xskip(range(self._wires), layer) + self.style.gate_margin
-        self._reserve(self.style.min_gate_w, range(self._wires), layer, xskip=x)
+        x = self._xpos(layer) + self.style.gate_margin
+        self._max_layer_width.append(self.style.min_gate_w)
         for q in qubits:
             self._draw_measure_symbol(q, x)
 
@@ -576,14 +634,11 @@ class MatplotlibCircuitRenderer:
         For wires whose last operation is a measurement, the wire stops at the
         measurement edge with no right-hand tail.
         """
-        ext = self.style.end_wire_ext * self.style.layer_sep
+        # how far the drawing for this wire actually goes
+        x_end = sum(self._max_layer_width)
         for q in range(self._wires):
             y = self._ypos(q, n_qubits=self._wires, sep=self.style.wire_sep)
-            # how far the drawing for this wire actually goes
-            x_end = sum(self._layer_widths[q])
             # keep the tail only for wires that KEEP going after their last gate
-            if q not in self._end_measure_qubits:
-                x_end += ext
             self.axes.add_line(
                 plt.Line2D([0, x_end], [y, y], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"])
             )
@@ -612,10 +667,9 @@ class MatplotlibCircuitRenderer:
         fig = self.axes.figure
         fig.set_facecolor(self.style.theme.background)
 
-        longest_wire = max(sum(w) for w in self._layer_widths.values())
-        x_end = self.style.padding + longest_wire + self.style.end_wire_ext * self.style.layer_sep
+        total_length = sum(self._max_layer_width)
+        x_end = self.style.padding + total_length
 
-        # x_end = self.style.padding + self.style.end_wire_ext * self.style.layer_sep + max(map(sum, self._layer_widths.values()))
         y_end = self.style.padding + (self._wires - 1) * self.style.wire_sep
 
         self.axes.set_xlim(
