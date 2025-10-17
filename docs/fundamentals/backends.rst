@@ -24,10 +24,71 @@ Once installed, any primitive functional can be executed by passing it to the ba
     results = CudaBackend().execute(sampling_functional)
     print(results)
 
+Architecture Overview
+---------------------
+
+All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
+across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. Sampling or TimeEvolution)
+to the appropriate simulation routine and returns the functional-specific result object (see the :doc:`Functionals
+<functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
+the underlying parameterized primitive functional.
+
+Backends register handlers for the functionals they support. If a functional is not implemented, ``execute`` raises
+``NotImplementedError`` to surface the mismatch early.
+
+Hardware & Dependencies
+-----------------------
+
+Installing a backend extra pulls in the library stack required for that simulator. GPU backends also expect compatible
+drivers to be present on the system.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 25 25 25
+
+   * - Backend
+     - Extra
+     - Key dependency
+     - Notes
+   * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
+     - ``cuda``
+     - `cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_
+     - Requires NVIDIA hardware with recent drivers.
+   * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
+     - ``qutip``
+     - `QuTiP <https://qutip.org/>`_
+     - CPU based; no special hardware needs.
+
+Functional Support
+------------------
+
+The table below summarizes which primitive functionals each backend can execute. Variational programs work whenever the
+underlying primitive functional is available, because :meth:`~qilisdk.backends.backend.Backend.optimize` orchestrates
+repeated :meth:`~qilisdk.backends.backend.Backend.execute` calls.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 20 20 25
+
+   * - Backend
+     - Sampling
+     - TimeEvolution
+     - VariationalProgram
+   * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
+     - ✓
+     - ✓
+     - ✓
+   * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
+     - ✓
+     - ✓
+     - ✓
+
 CUDA Backend
 ------------
 
-The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cudaq` framework for both digital and analog simulations.
+The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cuda-quantum` framework for both digital and analog simulations.
+When no compatible GPU is detected it automatically falls back to cpu-based targets, so you can prototype on
+commodity hardware before moving to accelerated machines.
 
 **Installation**
 
@@ -45,38 +106,52 @@ The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cudaq` framework for bo
         sampling_method=CudaSamplingMethod.STATE_VECTOR
     )
 
+**Capabilities**
+
+- Digital circuits through :class:`~qilisdk.functionals.sampling.Sampling`.
+- Analog dynamics for :class:`~qilisdk.functionals.time_evolution.TimeEvolution`, powered by ``cudaq.evolve``.
+- Hybrid execution when paired with :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
+
 **Sampling methods**
 
-- **STATE_VECTOR**: Pure state-vector simulation.  
-- **TENSOR_NETWORK**: Tensor-network contraction.  
-- **MATRIX_PRODUCT_STATE**: Matrix-product-state simulation.
+- **STATE_VECTOR**: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
+- **TENSOR_NETWORK**: Tensor-network contraction, suited for shallow yet wide circuits.  
+- **MATRIX_PRODUCT_STATE**: Matrix-product-state simulation for low-entanglement workloads.
 
 **Example**
 
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.digital import Circuit, H, RX
+    from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
     from qilisdk.functionals import Sampling
 
     # Build a simple circuit
-    circuit = Circuit(1)
-    circuit.add(H(0))
+    circuit = Circuit(2)
     circuit.add(RX(0, theta=np.pi / 4))
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
 
     # Create Sampling functional
     sampling = Sampling(circuit=circuit, nshots=500)
 
-    # Execute on GPU with state‑vector method
+    # Execute with the chosen sampling method (GPU if available)
     cuda_backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
-    counts = cuda_backend.execute(sampling)
-    print(counts)
+    result = cuda_backend.execute(sampling)
+    print(result.samples)
+
+**Output**  
+
+::
+    {'11': 237, '00': 263}
+
 
 Qutip Backend
 -------------
 
 The **Qutip** backend uses the :mod:`qutip` library for simulation on CPU, supporting both digital and analog functionals.
+It is the most lightweight option, ideal for local development or environments without NVIDIA GPUs.
 
 **Installation**
 
@@ -92,46 +167,66 @@ The **Qutip** backend uses the :mod:`qutip` library for simulation on CPU, suppo
 
     backend = QutipBackend()
 
-The Qutip backend provides a single simulation method but works for:
+**Capabilities**
 
-- **Sampling** (digital circuits)  
-- **TimeEvolution** (analog Hamiltonian schedules)
+- **Sampling** of digital circuits via QuTiP's state-vector solvers.
+- **TimeEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
+- Compatible with :class:`~qilisdk.functionals.variational_program.VariationalProgram` for fully classical
+  optimization loops.
 
 **Example**
 
 .. code-block:: python
 
-    from qilisdk.digital import Circuit, H
-    from qilisdk.functionals import TimeEvolution
-    from qilisdk.analog import Schedule, X, Z
-    from qilisdk.common import ket, tensor_prod
-    from qilisdk.backends import QutipBackend
     import numpy as np
+    from qilisdk.analog import Schedule, X, Z, Y
+    from qilisdk.common import ket, tensor_prod
+    from qilisdk.backends import QutipBackend, CudaBackend
+    from qilisdk.functionals import TimeEvolution
 
-    # Define Hamiltonians and schedule
-    T, dt = 5.0, 0.1
-    times = np.arange(0, T + dt, dt)
-    Hx = X(0)
-    Hz = Z(0)
-    schedule = Schedule(
-        total_time=T,
-        time_step=dt,
-        hamiltonians={"hx": Hx, "hz": Hz},
-        schedule_map={t: {"hx": 1 - t / T, "hz": t / T} for t in times},
-    )
+    # Define total time and timestep
+    T = 10.0
+    dt = 0.1
+    steps = np.linspace(0, T + dt, int(T / dt))
+    nqubits = 1
 
-    # Prepare initial state
-    initial = tensor_prod([(ket(0) + ket(1)).unit()])
+    # Define Hamiltonians
+    Hx = sum(X(i) for i in range(nqubits))
+    Hz = sum(Z(i) for i in range(nqubits))
 
-    # Create TimeEvolution functional
-    tevo = TimeEvolution(
+    # Build a time‑dependent schedule
+    schedule = Schedule(T, dt)
+
+    # Add hx with a time‐dependent coefficient function
+    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
+
+    # Add hz similarly
+    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+
+    # Prepare an equal superposition initial state
+    initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
+
+    # Create the TimeEvolution functional
+    time_evolution = TimeEvolution(
         schedule=schedule,
-        initial_state=initial,
-        observables=[Z(0), X(0)],
-        nshots=50,
+        initial_state=initial_state,
+        observables=[Z(0), X(0), Y(0)],
+        nshots=100,
         store_intermediate_results=False,
     )
 
-    # Run on Qutip backend
-    results = QutipBackend().execute(tevo)
+    # Execute on Qutip backend and inspect results
+    backend = QutipBackend()
+    results = backend.execute(time_evolution)
     print(results)
+
+**Output**
+
+:: 
+
+    TimeEvolutionResult(
+        final_expected_values=array([-0.99388223,  0.0467696 , -0.10005353]),
+        final_state=QTensor(shape=2x1, nnz=2, format='csr')
+        [[0.05506547-0.00516502j]
+        [0.3364973 -0.94005887j]]
+    )

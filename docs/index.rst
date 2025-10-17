@@ -39,6 +39,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    fundamentals/digital
    fundamentals/common
    fundamentals/functionals
+   fundamentals/cost_functions
    fundamentals/backends
    fundamentals/speqtrum
 
@@ -47,11 +48,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    :caption: Code Examples
    :hidden:
 
-   examples/circuits.ipynb
-   examples/hamiltonians.ipynb
-   examples/time_evolution.ipynb
-   examples/quantum_objects.ipynb
-   examples/models.ipynb
+   examples/code_examples
 
 .. toctree::
    :maxdepth: 4

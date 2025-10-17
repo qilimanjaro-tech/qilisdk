@@ -18,7 +18,7 @@ def test_schedule_constructor_default():
     # With no Hamiltonians, nqubits remains 0.
     assert sched.nqubits == 0
 
-    with pytest.raises(ValueError, match=r"dt must be different from zero."):
+    with pytest.raises(ValueError, match=r"dt must be greater than zero."):
         Schedule(T=8, dt=0)
 
 

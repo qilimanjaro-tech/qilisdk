@@ -13,4 +13,5 @@
 # limitations under the License.
 
 
-class InvalidHamiltonianOperation(Exception): ...
+class InvalidHamiltonianOperation(Exception):
+    """Raised when an operation cannot be applied to the current Hamiltonian."""

@@ -65,12 +65,10 @@ class RabiExperiment(ExperimentFunctional[RabiExperimentResult]):
     This functional defines a standard Rabi oscillation experiment where
     the drive pulse duration is swept to measure the oscillatory response
     of the qubit under continuous driving.
-
-    Attributes:
-        result_type (type): The type of result produced (`RabiExperimentResult`).
     """
 
     result_type: ClassVar[type[RabiExperimentResult]] = RabiExperimentResult
+    """Result type returned by this functional."""
 
     def __init__(self, qubit: int, drive_duration_values: np.ndarray) -> None:
         """Initialize a Rabi experiment functional.
@@ -100,12 +98,10 @@ class T1Experiment(ExperimentFunctional[T1ExperimentResult]):
     This functional defines a standard T1 (energy relaxation) experiment,
     where the delay between excitation and measurement is varied to extract
     the relaxation time constant of the qubit.
-
-    Attributes:
-        result_type (type): The type of result produced (`T1ExperimentResult`).
     """
 
     result_type: ClassVar[type[T1ExperimentResult]] = T1ExperimentResult
+    """Result type returned by this functional."""
 
     def __init__(self, qubit: int, wait_duration_values: np.ndarray) -> None:
         """Initialize a T1 experiment functional.

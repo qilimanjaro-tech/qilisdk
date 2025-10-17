@@ -565,7 +565,7 @@ class Hamiltonian(Parameterizable):
 
         Args:
             tol (float): Hermiticity check tolerance.
-            prune (float): Drop coefficients with |c| < prune to reduce numerical noise.
+            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise.
 
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
@@ -873,6 +873,9 @@ class Hamiltonian(Parameterizable):
         out = copy.copy(other if isinstance(other, Hamiltonian) else Hamiltonian() + other)
         out._sub_inplace(self)
         return out.simplify()
+
+    def __neg__(self) -> Hamiltonian:
+        return -1 * self
 
     def __mul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():

@@ -13,19 +13,25 @@
 # limitations under the License.
 
 
-class QubitOutOfRangeError(Exception): ...
+class QubitOutOfRangeError(Exception):
+    """Raised when a qubit index is outside the defined circuit range."""
 
 
-class GateHasNoMatrixError(Exception): ...
+class GateHasNoMatrixError(Exception):
+    """Raised when a gate lacks an associated matrix representation."""
 
 
-class GateNotParameterizedError(Exception): ...
+class GateNotParameterizedError(Exception):
+    """Raised when attempting to set parameters on a non-parameterized gate."""
 
 
-class ParametersNotEqualError(Exception): ...
+class ParametersNotEqualError(Exception):
+    """Raised when parameterized gates receive mismatched parameter values."""
 
 
-class InvalidParameterNameError(Exception): ...
+class InvalidParameterNameError(Exception):
+    """Raised when an unknown parameter name is supplied to a gate."""
 
 
-class UnsupportedGateError(Exception): ...
+class UnsupportedGateError(Exception):
+    """Raised when a gate is not supported by the target backend."""
