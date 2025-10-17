@@ -175,8 +175,7 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
             backlink = urito(pagename, docname) + "#" + refname + "." + name
             lines[start] = (
                 f'<div class="viewcode-block" id="{name}">\n'
-                f'<a class="viewcode-back" href="{backlink}">{link_text}</a>\n'
-                + lines[start]
+                f'<a class="viewcode-back" href="{backlink}">{link_text}</a>\n' + lines[start]
             )
             lines[min(end, max_index)] += "</div>\n"
 
@@ -191,7 +190,9 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
                         "title": parent,
                     }
                 )
-        parents.append({"link": urito(pagename, posixpath.join(_viewcode.OUTPUT_DIRNAME, "index")), "title": _("Module code")})
+        parents.append(
+            {"link": urito(pagename, posixpath.join(_viewcode.OUTPUT_DIRNAME, "index")), "title": _("Module code")}
+        )
         parents.reverse()
         context = {
             "parents": parents,

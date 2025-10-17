@@ -247,8 +247,8 @@ class Hamiltonian(Parameterizable):
                 .. code-block:: python
 
                     {
-                        (Z(0), Y(1)):  1.0,
-                        (X(1),):       1j,
+                        (Z(0), Y(1)): 1.0,
+                        (X(1),): 1j,
                     }
 
                 Defaults to None, which creates an empty Hamiltonian.

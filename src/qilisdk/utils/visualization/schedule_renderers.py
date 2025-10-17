@@ -38,8 +38,7 @@ class MatplotlibScheduleRenderer:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
         Args:
-            ax: Optional matplotlib Axes to plot on.
-            title: Title for the plot.
+            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.
         """
         style = self.style
         theme = style.theme
