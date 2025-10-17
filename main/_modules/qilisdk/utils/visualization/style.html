@@ -215,7 +215,7 @@
 </nav>
 <h3>Versions</h3>
 <ul>
-  <li><a href="../../../../../release/0.1.5/index.html">release/0.1.5</a></li>
+  <li><a href="../../../../../0.1.5/index.html">0.1.5</a></li>
   <li><a href="style.html">main</a></li>
 </ul>
 
@@ -442,116 +442,124 @@
 <div class="viewcode-block" id="CircuitStyle.control_r">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.control_r">[docs]</a>
 </span><span id="line-96">    <span class="n">control_r</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Radius (inches) of a filled control dot.&quot;</span><span class="p">)</span></div>
-</div>
 
 </span><span id="line-97">
-</span><span id="line-98">
+<div class="viewcode-block" id="CircuitStyle.layout">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.layout">[docs]</a>
+</span><span id="line-98">    <span class="n">layout</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="s2">&quot;compact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-99">        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+</span><span id="line-100">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If &#39;compact&#39; minimizes the layers to highlight circuit depth, if &#39;normal&#39; conserves the order of the circuit&quot;</span><span class="p">,</span>
+</span><span id="line-101">    <span class="p">)</span></div>
+</div>
+
+</span><span id="line-102">
+</span><span id="line-103">
 <div class="viewcode-block" id="ScheduleStyle">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle">[docs]</a>
-</span><span id="line-99"><span class="k">class</span><span class="w"> </span><span class="nc">ScheduleStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
-</span><span id="line-100"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-101"><span class="sd">    Customization options for matplotlib schedule plots, with theme support.</span>
-</span><span id="line-102"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-103">
-</span><span id="line-104">    <span class="c1"># Figure and axes</span>
+</span><span id="line-104"><span class="k">class</span><span class="w"> </span><span class="nc">ScheduleStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
+</span><span id="line-105"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-106"><span class="sd">    Customization options for matplotlib schedule plots, with theme support.</span>
+</span><span id="line-107"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-108">
+</span><span id="line-109">    <span class="c1"># Figure and axes</span>
 <div class="viewcode-block" id="ScheduleStyle.figsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.figsize">[docs]</a>
-</span><span id="line-105">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Figure size in inches (width, height).&quot;</span><span class="p">)</span></div>
+</span><span id="line-110">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Figure size in inches (width, height).&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.grid">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid">[docs]</a>
-</span><span id="line-106">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to show grid lines on the plot.&quot;</span><span class="p">)</span></div>
+</span><span id="line-111">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to show grid lines on the plot.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.grid_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid_style">[docs]</a>
-</span><span id="line-107">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-108">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#e0e0e0&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
-</span><span id="line-109">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Style dictionary for grid lines (linestyle, color, alpha, etc.).&quot;</span><span class="p">,</span>
-</span><span id="line-110">    <span class="p">)</span></div>
+</span><span id="line-112">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-113">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#e0e0e0&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+</span><span id="line-114">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Style dictionary for grid lines (linestyle, color, alpha, etc.).&quot;</span><span class="p">,</span>
+</span><span id="line-115">    <span class="p">)</span></div>
 
-</span><span id="line-111">
-</span><span id="line-112">    <span class="c1"># Title and labels</span>
+</span><span id="line-116">
+</span><span id="line-117">    <span class="c1"># Title and labels</span>
 <div class="viewcode-block" id="ScheduleStyle.title_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.title_fontsize">[docs]</a>
-</span><span id="line-113">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for the plot title.&quot;</span><span class="p">)</span></div>
+</span><span id="line-118">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for the plot title.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.xlabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xlabel">[docs]</a>
-</span><span id="line-114">    <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;time (dt)&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Label for the x-axis.&quot;</span><span class="p">)</span></div>
+</span><span id="line-119">    <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;time (dt)&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Label for the x-axis.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.ylabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ylabel">[docs]</a>
-</span><span id="line-115">    <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;coefficient value&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Label for the y-axis.&quot;</span><span class="p">)</span></div>
+</span><span id="line-120">    <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;coefficient value&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Label for the y-axis.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.label_fontsize">[docs]</a>
-</span><span id="line-116">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for axis labels.&quot;</span><span class="p">)</span></div>
+</span><span id="line-121">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for axis labels.&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-117">
-</span><span id="line-118">    <span class="c1"># Legend</span>
+</span><span id="line-122">
+</span><span id="line-123">    <span class="c1"># Legend</span>
 <div class="viewcode-block" id="ScheduleStyle.legend_loc">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_loc">[docs]</a>
-</span><span id="line-119">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-120">        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Location of the legend (matplotlib string, e.g. &#39;best&#39;, &#39;upper right&#39;).&quot;</span>
-</span><span id="line-121">    <span class="p">)</span></div>
+</span><span id="line-124">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-125">        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Location of the legend (matplotlib string, e.g. &#39;best&#39;, &#39;upper right&#39;).&quot;</span>
+</span><span id="line-126">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.legend_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_fontsize">[docs]</a>
-</span><span id="line-122">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for legend text.&quot;</span><span class="p">)</span></div>
+</span><span id="line-127">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for legend text.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.legend_frame">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_frame">[docs]</a>
-</span><span id="line-123">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to draw a frame around the legend.&quot;</span><span class="p">)</span></div>
+</span><span id="line-128">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to draw a frame around the legend.&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-124">
-</span><span id="line-125">    <span class="c1"># Line style</span>
+</span><span id="line-129">
+</span><span id="line-130">    <span class="c1"># Line style</span>
 <div class="viewcode-block" id="ScheduleStyle.line_styles">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.line_styles">[docs]</a>
-</span><span id="line-126">    <span class="n">line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-127">        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-</span><span id="line-128">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Custom line style dictionary for each Hamiltonian (e.g. {label: {color, linestyle, linewidth}}).&quot;</span><span class="p">,</span>
-</span><span id="line-129">    <span class="p">)</span></div>
+</span><span id="line-131">    <span class="n">line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-132">        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
+</span><span id="line-133">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Custom line style dictionary for each Hamiltonian (e.g. {label: {color, linestyle, linewidth}}).&quot;</span><span class="p">,</span>
+</span><span id="line-134">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.default_line_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.default_line_style">[docs]</a>
-</span><span id="line-130">    <span class="n">default_line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-131">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-</span><span id="line-132">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Default line style for Hamiltonians not in line_styles.&quot;</span><span class="p">,</span>
-</span><span id="line-133">    <span class="p">)</span></div>
+</span><span id="line-135">    <span class="n">default_line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-136">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span id="line-137">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Default line style for Hamiltonians not in line_styles.&quot;</span><span class="p">,</span>
+</span><span id="line-138">    <span class="p">)</span></div>
 
-</span><span id="line-134">
-</span><span id="line-135">    <span class="c1"># Marker style</span>
+</span><span id="line-139">
+</span><span id="line-140">    <span class="c1"># Marker style</span>
 <div class="viewcode-block" id="ScheduleStyle.marker">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker">[docs]</a>
-</span><span id="line-136">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-137">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Matplotlib marker style for data points (e.g. &#39;o&#39;, &#39;s&#39;, None for no marker).&quot;</span>
-</span><span id="line-138">    <span class="p">)</span></div>
+</span><span id="line-141">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-142">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Matplotlib marker style for data points (e.g. &#39;o&#39;, &#39;s&#39;, None for no marker).&quot;</span>
+</span><span id="line-143">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.marker_size">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker_size">[docs]</a>
-</span><span id="line-139">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Size of markers if used.&quot;</span><span class="p">)</span></div>
+</span><span id="line-144">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Size of markers if used.&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-140">
-</span><span id="line-141">    <span class="c1"># Ticks</span>
+</span><span id="line-145">
+</span><span id="line-146">    <span class="c1"># Ticks</span>
 <div class="viewcode-block" id="ScheduleStyle.xtick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xtick_fontsize">[docs]</a>
-</span><span id="line-142">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for x-axis tick labels.&quot;</span><span class="p">)</span></div>
+</span><span id="line-147">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for x-axis tick labels.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.ytick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ytick_fontsize">[docs]</a>
-</span><span id="line-143">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for y-axis tick labels.&quot;</span><span class="p">)</span></div>
+</span><span id="line-148">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size for y-axis tick labels.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.tick_color">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tick_color">[docs]</a>
-</span><span id="line-144">    <span class="n">tick_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-145">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Color for tick labels (None uses theme.on_background).&quot;</span>
-</span><span id="line-146">    <span class="p">)</span></div>
+</span><span id="line-149">    <span class="n">tick_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-150">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Color for tick labels (None uses theme.on_background).&quot;</span>
+</span><span id="line-151">    <span class="p">)</span></div>
 
-</span><span id="line-147">
-</span><span id="line-148">    <span class="c1"># Misc</span>
+</span><span id="line-152">
+</span><span id="line-153">    <span class="c1"># Misc</span>
 <div class="viewcode-block" id="ScheduleStyle.tight_layout">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tight_layout">[docs]</a>
-</span><span id="line-149">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to use matplotlib&#39;s tight_layout for figure spacing.&quot;</span><span class="p">)</span></div>
+</span><span id="line-154">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to use matplotlib&#39;s tight_layout for figure spacing.&quot;</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

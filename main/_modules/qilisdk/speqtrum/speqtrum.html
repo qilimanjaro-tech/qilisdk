@@ -215,7 +215,7 @@
 </nav>
 <h3>Versions</h3>
 <ul>
-  <li><a href="../../../../release/0.1.5/index.html">release/0.1.5</a></li>
+  <li><a href="../../../../0.1.5/index.html">0.1.5</a></li>
   <li><a href="speqtrum.html">main</a></li>
 </ul>
 
@@ -686,24 +686,24 @@
 </span><span id="line-403"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a Variational Program on the selected device.</span>
 </span><span id="line-404">
 </span><span id="line-405"><span class="sd">        Args:</span>
-</span><span id="line-406"><span class="sd">            variational_program: Problem definition containing Hamiltonian and ansatz.</span>
-</span><span id="line-407"><span class="sd">            optimizer: Classical optimizer that updates the variational</span>
-</span><span id="line-408"><span class="sd">                parameters between circuit evaluations.</span>
-</span><span id="line-409"><span class="sd">            nshots: Number of shots per circuit evaluation. Defaults to</span>
-</span><span id="line-410"><span class="sd">                ``1000``.</span>
-</span><span id="line-411"><span class="sd">            store_intermediate_results: Whether to keep intermediate energies</span>
-</span><span id="line-412"><span class="sd">                and parameter vectors for later analysis.</span>
-</span><span id="line-413">
-</span><span id="line-414"><span class="sd">        Returns:</span>
-</span><span id="line-415"><span class="sd">            The numeric identifier of the created job.</span>
-</span><span id="line-416"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-417">        <span class="n">payload</span> <span class="o">=</span> <span class="n">ExecutePayload</span><span class="p">(</span>
-</span><span id="line-418">            <span class="nb">type</span><span class="o">=</span><span class="n">ExecuteType</span><span class="o">.</span><span class="n">VARIATIONAL_PROGRAM</span><span class="p">,</span>
-</span><span id="line-419">            <span class="n">variational_program_payload</span><span class="o">=</span><span class="n">VariationalProgramPayload</span><span class="p">(</span>
-</span><span id="line-420">                <span class="n">variational_program</span><span class="o">=</span><span class="n">variational_program</span><span class="p">,</span>
-</span><span id="line-421">            <span class="p">),</span>
-</span><span id="line-422">        <span class="p">)</span>
-</span><span id="line-423">        <span class="n">json</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;device_code&quot;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span> <span class="s2">&quot;payload&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(),</span> <span class="s2">&quot;job_type&quot;</span><span class="p">:</span> <span class="n">JobType</span><span class="o">.</span><span class="n">VARIATIONAL</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+</span><span id="line-406"><span class="sd">            variational_program (VariationalProgram): Problem definition containing Hamiltonian and ansatz.</span>
+</span><span id="line-407"><span class="sd">            device (str): The SpeQtrum device&#39;s code to execute the variational program upon.</span>
+</span><span id="line-408">
+</span><span id="line-409"><span class="sd">        Returns:</span>
+</span><span id="line-410"><span class="sd">            The numeric identifier of the created job.</span>
+</span><span id="line-411"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-412">        <span class="n">payload</span> <span class="o">=</span> <span class="n">ExecutePayload</span><span class="p">(</span>
+</span><span id="line-413">            <span class="nb">type</span><span class="o">=</span><span class="n">ExecuteType</span><span class="o">.</span><span class="n">VARIATIONAL_PROGRAM</span><span class="p">,</span>
+</span><span id="line-414">            <span class="n">variational_program_payload</span><span class="o">=</span><span class="n">VariationalProgramPayload</span><span class="p">(</span>
+</span><span id="line-415">                <span class="n">variational_program</span><span class="o">=</span><span class="n">variational_program</span><span class="p">,</span>
+</span><span id="line-416">            <span class="p">),</span>
+</span><span id="line-417">        <span class="p">)</span>
+</span><span id="line-418">        <span class="n">json</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-419">            <span class="s2">&quot;device_code&quot;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span>
+</span><span id="line-420">            <span class="s2">&quot;payload&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(),</span>
+</span><span id="line-421">            <span class="s2">&quot;job_type&quot;</span><span class="p">:</span> <span class="n">JobType</span><span class="o">.</span><span class="n">VARIATIONAL</span><span class="p">,</span>
+</span><span id="line-422">            <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="p">{},</span>
+</span><span id="line-423">        <span class="p">}</span>
 </span><span id="line-424">        <span class="k">with</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
 </span><span id="line-425">            <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
 </span><span id="line-426">                <span class="bp">self</span><span class="o">.</span><span class="n">_settings</span><span class="o">.</span><span class="n">speqtrum_api_url</span> <span class="o">+</span> <span class="s2">&quot;/execute&quot;</span><span class="p">,</span>
