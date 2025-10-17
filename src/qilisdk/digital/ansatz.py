@@ -125,7 +125,13 @@ class HardwareEfficientAnsatz(Ansatz):
         return self._two_qubit_gate
 
     def _normalize_connectivity(self, connectivity: Connectivity) -> list[tuple[int, int]]:
-        """Return a validated list of entangling edges derived from ``connectivity``."""
+        """
+        Returns:
+            list[tuple[int, int]]: a validated list of entangling edges derived from ``connectivity``.
+
+        Raises:
+            ValueError: If ``connectivity`` is invalid.
+        """
         if isinstance(connectivity, list):
             edges = connectivity
         else:
@@ -134,7 +140,9 @@ class HardwareEfficientAnsatz(Ansatz):
                 edges = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
             elif kind == "circular":
                 edges = (
-                    [] if self.nqubits < 2 else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]  # noqa: PLR2004
+                    []
+                    if self.nqubits < 2  # noqa: PLR2004
+                    else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
                 )
             elif kind == "linear":
                 edges = [(i, i + 1) for i in range(self.nqubits - 1)]
@@ -146,7 +154,7 @@ class HardwareEfficientAnsatz(Ansatz):
             if not (0 <= a < self.nqubits and 0 <= b < self.nqubits):
                 raise ValueError(f"Edge {(a, b)} out of range for {self.nqubits} qubits.")
             if a == b:
-                    raise ValueError(f"Self-edge {(a, b)} is not allowed.")
+                raise ValueError(f"Self-edge {(a, b)} is not allowed.")
         return edges
 
     def _parameter_blocks(self) -> Iterator[dict[str, float]]:
