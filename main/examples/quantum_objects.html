@@ -89,16 +89,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models and Variables</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -199,13 +203,14 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="code_examples.html">Code Examples</a>
 <div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Quantum Objects</span>
 </nav>
 <div id="content" role="main">
 <section id="Quantum-Objects">
 <h1>Quantum Objects<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Quantum-Objects"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[1]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -216,7 +221,7 @@
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[2]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># 1‑qubit |0&gt; ket</span>
@@ -225,7 +230,7 @@
 </span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
 </span><span id="line-5">
 </span><span id="line-6"><span class="c1"># 1‑qubit &lt;0| bra</span>
-</span><span id="line-7"><span class="n">psi_bra</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-7"><span class="n">psi_bra</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]))</span>
 </span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"Bra:"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"is_bra?"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
 </span><span id="line-9"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
 </span><span id="line-10">
@@ -275,17 +280,17 @@ Scalar: [[0.5]] is_scalar? True
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-ket(0): [[1]
- [0]] is_ket? True
-bra(1): [[0 1]] is_bra? True
-basis_state(2,4): [[0]
- [0]
- [1]
- [0]] shape: (4, 1)
+ket(0): [[1.]
+ [0.]] is_ket? True
+bra(1): [[0. 1.]] is_bra? True
+basis_state(2,4): [[0.]
+ [0.]
+ [1.]
+ [0.]] shape: (4, 1)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[4]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Adjoint of a non-Hermitian operator</span>
@@ -306,7 +311,7 @@ basis_state(2,4): [[0]
 </span><span id="line-16"><span class="nb">print</span><span class="p">(</span><span class="s2">"trace norm(dm) ="</span><span class="p">,</span> <span class="n">dm</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">"tr"</span><span class="p">))</span>
 </span><span id="line-17">
 </span><span id="line-18"><span class="c1"># Partial trace of a Bell state</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
 </span><span id="line-20">
 </span><span id="line-21"><span class="n">bell</span> <span class="o">=</span> <span class="p">(</span><span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)])</span> <span class="o">+</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">)]))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
 </span><span id="line-22"><span class="n">rho_bell</span> <span class="o">=</span> <span class="n">bell</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">()</span>
@@ -333,7 +338,8 @@ exp(X):
 ||ket0|| = 1.0
 trace norm(dm) = 1.0
 rho_bell:
- [[0.5 0.  0.  0.5]
+ QTensor(shape=4x4, nnz=4, format='csr')
+[[0.5 0.  0.  0.5]
  [0.  0.  0.  0. ]
  [0.  0.  0.  0. ]
  [0.5 0.  0.  0.5]]
@@ -343,7 +349,7 @@ rho_A:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[5]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Two‑qubit Hadamard tensor</span>
@@ -371,7 +377,7 @@ H ⊗ H:
  [ 0.5 -0.5  0.5 -0.5]
  [ 0.5  0.5 -0.5 -0.5]
  [ 0.5 -0.5 -0.5  0.5]]
-⟨ZZ⟩ on |00&gt; = 1.0
+⟨ZZ⟩ on |00&gt; = (1+0j)
 </pre></div></div>
 </div>
 </section>

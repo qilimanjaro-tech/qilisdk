@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -211,7 +215,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.functionals.sampling_result.SamplingResult" title="qilisdk.functionals.sampling_result.SamplingResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SamplingResult</span></code></a></p></td>
-<td><p>Class representing the result of a quantum circuit measurement.</p></td>
+<td><p>Store shot counts and derived probabilities for a sampling experiment.</p></td>
 </tr>
 </tbody>
 </table>
@@ -222,101 +226,52 @@
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SamplingResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nshots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.functionals.functional_result.FunctionalResult</span></code></a></p>
-<p>Class representing the result of a quantum circuit measurement.</p>
-<p>DigitalResult encapsulates the outcome of a digital measurement performed on a quantum circuit.
-It includes the total number of measurement shots, the measurement samples and measurement probabilities.</p>
-<p>Initializes a DigitalResult instance.</p>
+<p>Store shot counts and derived probabilities for a sampling experiment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nshots</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The total number of measurement shots performed.</p></li>
-<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">int]</span></code>) – A dictionary mapping bitstring outcomes to their occurrence counts.
-All keys (bitstrings) must have the same length, which determines the number of qubits.</p></li>
+<li><p><strong>nshots</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Total number of circuit evaluations.</p></li>
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">int]</span></code>) – Mapping from bitstring to observed counts.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the samples dictionary is empty or if not all bitstring keys have the same length.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">samples</span></code> is empty or contains bitstrings with different length.</p>
 </dd>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.nshots">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nshots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.nshots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.nshots" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.nshots'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Gets the number of measurement shots.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The total number of measurement shots performed.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Total number of repetitions used to gather samples.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.nqubits">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nqubits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.nqubits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.nqubits" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.nqubits'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Gets the number of qubits involved in the measurement.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The number of qubits measured.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Number of qubits inferred from the sample bitstrings.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.samples">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.samples" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.samples'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Gets the raw measurement samples.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary where keys are bitstrings representing measurement outcomes
-and values are the number of times each outcome was observed.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, int]</p>
-</dd>
-</dl>
+<dd><p>Return a copy of the raw sample counts.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.probabilities">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">probabilities</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.probabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.probabilities" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.probabilities'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Gets the probabilities for each measurement outcome.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary mapping each bitstring outcome to its corresponding probability.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, float]</p>
-</dd>
-</dl>
+<dd><p>Return a copy of the estimated probability distribution.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.get_probability">
 <span class="sig-name descname"><span class="pre">get_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bitstring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.get_probability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.get_probability" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.get_probability'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Computes the probability of a specific measurement outcome.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>bitstring</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The bitstring representing the measurement outcome of interest.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The probability of the specified bitstring occurring.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
+<dd><p>Return the probability associated with <code class="docutils literal notranslate"><span class="pre">bitstring</span></code> (0.0 if unseen).</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.functionals.sampling_result.SamplingResult.get_probabilities">
 <span class="sig-name descname"><span class="pre">get_probabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/sampling_result.html#SamplingResult.get_probabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.sampling_result.SamplingResult.get_probabilities" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.sampling_result.SamplingResult.get_probabilities'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Returns the n most probable bitstrings along with their probabilities.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of most probable bitstrings to return.</p>
+<dd class="field-odd"><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Maximum number of items to return. Defaults to all outcomes.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of tuples (bitstring, probability) sorted in descending order by probability.</p>
+<dd class="field-even"><p>the <code class="docutils literal notranslate"><span class="pre">n</span></code> most probable bitstrings in descending probability order.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[tuple[str, float]]</p>

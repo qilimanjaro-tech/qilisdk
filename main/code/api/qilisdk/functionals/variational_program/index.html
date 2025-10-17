@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -221,7 +225,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<td><p>Bundle a parameterized functional, optimizer, and cost function into a variational loop.</p></td>
 </tr>
 </tbody>
 </table>
@@ -236,17 +240,18 @@
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">VariationalProgram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">functional</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TFunctional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><span class="pre">qilisdk.optimizers.optimizer.Optimizer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><span class="pre">qilisdk.cost_functions.cost_function.CostFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_intermediate_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../functional/index.html#qilisdk.functionals.functional.Functional" title="qilisdk.functionals.functional.Functional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.functionals.functional.Functional</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Generic</span></code>[<a class="reference internal" href="#qilisdk.functionals.variational_program.TFunctional" title="qilisdk.functionals.variational_program.TFunctional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFunctional</span></code></a>]</p>
-<p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-<p>The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
-functional.</p>
+<p>Bundle a parameterized functional, optimizer, and cost function into a variational loop.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">program</span> <span class="o">=</span> <span class="n">VariationalProgram</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">cost_function</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>functional</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Functional</span></code>) – The parameterized Functional to be optimized.</p></li>
-<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – The optimizer to be used in optimizing the Functional’s parameters.</p></li>
-<li><p><strong>cost_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code>) – A CostFunction object that defines how the cost is being computed.</p></li>
-<li><p><strong>store_intermediate_results</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span> <span class="pre">optional</span></code>) – If True, stores a list of intermediate results.</p></li>
+<li><p><strong>functional</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code>) – Parameterized functional to optimize.</p></li>
+<li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimization routine controlling parameter updates.</p></li>
+<li><p><strong>cost_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code>) – Metric used to evaluate functional executions.</p></li>
+<li><p><strong>store_intermediate_results</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span> <span class="pre">optional</span></code>) – Persist intermediate executions if requested by the optimizer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -257,19 +262,23 @@ functional.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.functional">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">functional</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TFunctional</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.functional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.functional" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.functional'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Return the wrapped functional that will be optimised.</p>
+</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.optimizer">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><span class="pre">qilisdk.optimizers.optimizer.Optimizer</span></a></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.optimizer" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.optimizer'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Return the optimizer responsible for parameter updates.</p>
+</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.cost_function">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cost_function</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><span class="pre">qilisdk.cost_functions.cost_function.CostFunction</span></a></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.cost_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.cost_function" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.cost_function'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Return the cost function applied to functional results.</p>
+</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">store_intermediate_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.store_intermediate_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Indicate whether intermediate execution data should be stored.</p>
+</dd></dl>
 </dd></dl>
 </section>
 </section>

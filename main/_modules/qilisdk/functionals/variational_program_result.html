@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -285,85 +289,60 @@
 <div class="viewcode-block" id="VariationalProgramResult">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult">[docs]</a>
 </span><span id="line-27"><span class="k">class</span><span class="w"> </span><span class="nc">VariationalProgramResult</span><span class="p">(</span><span class="n">FunctionalResult</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span>
-</span><span id="line-28"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-29"><span class="sd">    Represents the result of a Parameterized Program calculation.</span>
-</span><span id="line-30"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-31">
-</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer_result</span><span class="p">:</span> <span class="n">OptimizerResult</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">TResult_co</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-33"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-34"><span class="sd">        Args:</span>
-</span><span id="line-35"><span class="sd">            optimizer_result (OptimizerResult): The optimizer&#39;s final results. (depends on the optimizer used)</span>
-</span><span id="line-36"><span class="sd">            result (TResult_co): The results of executing the Functional with the optimal parameters. (depends on the Functional)</span>
-</span><span id="line-37"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-38">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-39">        <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span> <span class="o">=</span> <span class="n">optimizer_result</span>
-</span><span id="line-40">        <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="n">result</span>
-</span><span id="line-41">
-</span><span id="line-42">    <span class="nd">@property</span>
+</span><span id="line-28"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate the optimizer summary and best functional result from a variational run.&quot;&quot;&quot;</span>
+</span><span id="line-29">
+</span><span id="line-30">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer_result</span><span class="p">:</span> <span class="n">OptimizerResult</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">TResult_co</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-31"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-32"><span class="sd">        Args:</span>
+</span><span id="line-33"><span class="sd">            optimizer_result (OptimizerResult): Summary produced by the optimiser.</span>
+</span><span id="line-34"><span class="sd">            result (TResult_co): Functional result evaluated at the final parameters.</span>
+</span><span id="line-35"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-36">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-37">        <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span> <span class="o">=</span> <span class="n">optimizer_result</span>
+</span><span id="line-38">        <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="n">result</span>
+</span><span id="line-39">
+</span><span id="line-40">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgramResult.optimal_cost">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost">[docs]</a>
-</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-44"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-45"><span class="sd">        Get the optimal cost (estimated ground state energy).</span>
-</span><span id="line-46">
-</span><span id="line-47"><span class="sd">        Returns:</span>
-</span><span id="line-48"><span class="sd">            float: The optimal cost.</span>
-</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-50">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">optimal_cost</span></div>
+</span><span id="line-41">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-42"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Best cost reported by the optimiser.&quot;&quot;&quot;</span>
+</span><span id="line-43">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">optimal_cost</span></div>
 
-</span><span id="line-51">
-</span><span id="line-52">    <span class="nd">@property</span>
+</span><span id="line-44">
+</span><span id="line-45">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgramResult.optimal_execution_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results">[docs]</a>
-</span><span id="line-53">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_execution_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TResult_co</span><span class="p">:</span>
-</span><span id="line-54"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The results of executing the Functional with the optimal parameters found by the optimizer.</span>
-</span><span id="line-55">
-</span><span id="line-56"><span class="sd">        Returns:</span>
-</span><span id="line-57"><span class="sd">            TResult_co: The results object corresponding to the Functional.</span>
-</span><span id="line-58"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-59">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result</span></div>
+</span><span id="line-46">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_execution_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TResult_co</span><span class="p">:</span>
+</span><span id="line-47"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the functional result evaluated at the optimal parameters.&quot;&quot;&quot;</span>
+</span><span id="line-48">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result</span></div>
 
-</span><span id="line-60">
-</span><span id="line-61">    <span class="nd">@property</span>
+</span><span id="line-49">
+</span><span id="line-50">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgramResult.optimal_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters">[docs]</a>
-</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-63"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-64"><span class="sd">        Get the optimal ansatz parameters.</span>
-</span><span id="line-65">
-</span><span id="line-66"><span class="sd">        Returns:</span>
-</span><span id="line-67"><span class="sd">            list[float]: The optimal parameters.</span>
-</span><span id="line-68"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-69">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">optimal_parameters</span></div>
+</span><span id="line-51">    <span class="k">def</span><span class="w"> </span><span class="nf">optimal_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-52"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimised parameter values.&quot;&quot;&quot;</span>
+</span><span id="line-53">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">optimal_parameters</span></div>
 
-</span><span id="line-70">
-</span><span id="line-71">    <span class="nd">@property</span>
+</span><span id="line-54">
+</span><span id="line-55">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgramResult.intermediate_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results">[docs]</a>
-</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OptimizerIntermediateResult</span><span class="p">]:</span>
-</span><span id="line-73"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-74"><span class="sd">        Get the intermediate results.</span>
-</span><span id="line-75">
-</span><span id="line-76"><span class="sd">        Returns:</span>
-</span><span id="line-77"><span class="sd">            list[OptimizerResult]: The intermediate results.</span>
-</span><span id="line-78"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-79">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">intermediate_results</span></div>
+</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OptimizerIntermediateResult</span><span class="p">]:</span>
+</span><span id="line-57"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Sequence of intermediate optimiser snapshots, if recorded.&quot;&quot;&quot;</span>
+</span><span id="line-58">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer_result</span><span class="o">.</span><span class="n">intermediate_results</span></div>
 
-</span><span id="line-80">
-</span><span id="line-81">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-82"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-83"><span class="sd">        Return a string representation of the Parameterized Program Results for debugging.</span>
-</span><span id="line-84">
-</span><span id="line-85"><span class="sd">        Returns:</span>
-</span><span id="line-86"><span class="sd">            str: A formatted string detailing the optimal cost and parameters.</span>
-</span><span id="line-87"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-88">        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-</span><span id="line-89">        <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-90">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">(</span><span class="se">\n</span><span class="s2">  Optimal Cost = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_cost</span><span class="si">}</span><span class="s2">,&quot;</span>
-</span><span id="line-91">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Optimal Parameters=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">,&quot;</span>
-</span><span id="line-92">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Intermediate Results=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-</span><span id="line-93">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Optimal results=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_execution_results</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-</span><span id="line-94">        <span class="p">)</span></div>
+</span><span id="line-59">
+</span><span id="line-60">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-61">        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+</span><span id="line-62">        <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-63">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">(</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-64">            <span class="sa">f</span><span class="s2">&quot;  Optimal Cost=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_cost</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-65">            <span class="sa">f</span><span class="s2">&quot;  Optimal Parameters=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-66">            <span class="sa">f</span><span class="s2">&quot;  Intermediate Results=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-67">            <span class="sa">f</span><span class="s2">&quot;  Optimal Results=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_execution_results</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-68">            <span class="s2">&quot;)&quot;</span>
+</span><span id="line-69">        <span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

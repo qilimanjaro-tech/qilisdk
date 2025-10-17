@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -279,62 +283,89 @@
 <div class="viewcode-block" id="Sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling">[docs]</a>
 </span><span id="line-24"><span class="k">class</span><span class="w"> </span><span class="nc">Sampling</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">[</span><span class="n">SamplingResult</span><span class="p">]):</span>
+</span><span id="line-25"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-26"><span class="sd">    Execute a digital circuit and collect bitstring samples.</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="sd">    Example:</span>
+</span><span id="line-29"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="sd">            from qilisdk.digital.circuit import Circuit</span>
+</span><span id="line-32"><span class="sd">            from qilisdk.functionals.sampling import Sampling</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="sd">            circuit = Circuit(nqubits=2)</span>
+</span><span id="line-35"><span class="sd">            circuit.h(0)</span>
+</span><span id="line-36"><span class="sd">            sampler = Sampling(circuit, nshots=1024)</span>
+</span><span id="line-37"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-38">
 <div class="viewcode-block" id="Sampling.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.result_type">[docs]</a>
-</span><span id="line-25">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">SamplingResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">SamplingResult</span></div>
-
-</span><span id="line-26">
-</span><span id="line-27">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-28">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span>
-</span><span id="line-29">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span>
-</span><span id="line-30">
-</span><span id="line-31">    <span class="nd">@property</span>
-<div class="viewcode-block" id="Sampling.nparameters">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.nparameters">[docs]</a>
-</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-33">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nparameters</span></div>
-
-</span><span id="line-34">
-<div class="viewcode-block" id="Sampling.set_parameters">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.set_parameters">[docs]</a>
-</span><span id="line-35">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-36">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
-
-</span><span id="line-37">
-<div class="viewcode-block" id="Sampling.get_parameters">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameters">[docs]</a>
-</span><span id="line-38">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">]:</span>
-</span><span id="line-39">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span></div>
+</span><span id="line-39">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">SamplingResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">SamplingResult</span></div>
 
 </span><span id="line-40">
+</span><span id="line-41">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-42"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-43"><span class="sd">        Args:</span>
+</span><span id="line-44"><span class="sd">            circuit (Circuit): Circuit to execute for sampling.</span>
+</span><span id="line-45"><span class="sd">            nshots (int, optional): Number of repetitions used to estimate probabilities. Defaults to 1000.</span>
+</span><span id="line-46"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-47">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span>
+</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span>
+</span><span id="line-49">
+</span><span id="line-50">    <span class="nd">@property</span>
+<div class="viewcode-block" id="Sampling.nparameters">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.nparameters">[docs]</a>
+</span><span id="line-51">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-52"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of parameters exposed by the underlying circuit.&quot;&quot;&quot;</span>
+</span><span id="line-53">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nparameters</span></div>
+
+</span><span id="line-54">
+<div class="viewcode-block" id="Sampling.set_parameters">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.set_parameters">[docs]</a>
+</span><span id="line-55">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-56"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign a subset of circuit parameters provided by label.&quot;&quot;&quot;</span>
+</span><span id="line-57">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+
+</span><span id="line-58">
+<div class="viewcode-block" id="Sampling.get_parameters">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameters">[docs]</a>
+</span><span id="line-59">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">]:</span>
+</span><span id="line-60"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a mapping of all circuit parameters to their current value.&quot;&quot;&quot;</span>
+</span><span id="line-61">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span></div>
+
+</span><span id="line-62">
 <div class="viewcode-block" id="Sampling.get_parameter_names">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_names">[docs]</a>
-</span><span id="line-41">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-42">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+</span><span id="line-63">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-64"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return circuit parameter labels in deterministic order.&quot;&quot;&quot;</span>
+</span><span id="line-65">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
-</span><span id="line-43">
+</span><span id="line-66">
 <div class="viewcode-block" id="Sampling.get_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_values">[docs]</a>
-</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RealNumber</span><span class="p">]:</span>
-</span><span id="line-45">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RealNumber</span><span class="p">]:</span>
+</span><span id="line-68"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current parameter values following ``get_parameter_names`` order.&quot;&quot;&quot;</span>
+</span><span id="line-69">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
 
-</span><span id="line-46">
+</span><span id="line-70">
 <div class="viewcode-block" id="Sampling.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.set_parameter_values">[docs]</a>
-</span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+</span><span id="line-71">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-72"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update all circuit parameters using the order defined by ``get_parameter_names``.&quot;&quot;&quot;</span>
+</span><span id="line-73">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
 
-</span><span id="line-49">
+</span><span id="line-74">
 <div class="viewcode-block" id="Sampling.get_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_bounds">[docs]</a>
-</span><span id="line-50">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-51">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameter_bounds</span><span class="p">()</span></div>
+</span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return lower and upper bounds registered for each circuit parameter.&quot;&quot;&quot;</span>
+</span><span id="line-77">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameter_bounds</span><span class="p">()</span></div>
 
-</span><span id="line-52">
+</span><span id="line-78">
 <div class="viewcode-block" id="Sampling.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.set_parameter_bounds">[docs]</a>
-</span><span id="line-53">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-54">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
+</span><span id="line-79">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-80"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the admissible range for selected circuit parameters.&quot;&quot;&quot;</span>
+</span><span id="line-81">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

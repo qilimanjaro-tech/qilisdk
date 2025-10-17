@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -270,37 +274,43 @@
 </span><span id="line-15">
 <div class="viewcode-block" id="QubitOutOfRangeError">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.QubitOutOfRangeError">[docs]</a>
-</span><span id="line-16"><span class="k">class</span><span class="w"> </span><span class="nc">QubitOutOfRangeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+</span><span id="line-16"><span class="k">class</span><span class="w"> </span><span class="nc">QubitOutOfRangeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-17"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a qubit index is outside the defined circuit range.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-17">
 </span><span id="line-18">
+</span><span id="line-19">
 <div class="viewcode-block" id="GateHasNoMatrixError">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.GateHasNoMatrixError">[docs]</a>
-</span><span id="line-19"><span class="k">class</span><span class="w"> </span><span class="nc">GateHasNoMatrixError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+</span><span id="line-20"><span class="k">class</span><span class="w"> </span><span class="nc">GateHasNoMatrixError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-21"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a gate lacks an associated matrix representation.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-20">
-</span><span id="line-21">
+</span><span id="line-22">
+</span><span id="line-23">
 <div class="viewcode-block" id="GateNotParameterizedError">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.GateNotParameterizedError">[docs]</a>
-</span><span id="line-22"><span class="k">class</span><span class="w"> </span><span class="nc">GateNotParameterizedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
-
-</span><span id="line-23">
-</span><span id="line-24">
-<div class="viewcode-block" id="ParametersNotEqualError">
-<a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.ParametersNotEqualError">[docs]</a>
-</span><span id="line-25"><span class="k">class</span><span class="w"> </span><span class="nc">ParametersNotEqualError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+</span><span id="line-24"><span class="k">class</span><span class="w"> </span><span class="nc">GateNotParameterizedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-25"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when attempting to set parameters on a non-parameterized gate.&quot;&quot;&quot;</span></div>
 
 </span><span id="line-26">
 </span><span id="line-27">
+<div class="viewcode-block" id="ParametersNotEqualError">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.ParametersNotEqualError">[docs]</a>
+</span><span id="line-28"><span class="k">class</span><span class="w"> </span><span class="nc">ParametersNotEqualError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-29"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when parameterized gates receive mismatched parameter values.&quot;&quot;&quot;</span></div>
+
+</span><span id="line-30">
+</span><span id="line-31">
 <div class="viewcode-block" id="InvalidParameterNameError">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError">[docs]</a>
-</span><span id="line-28"><span class="k">class</span><span class="w"> </span><span class="nc">InvalidParameterNameError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+</span><span id="line-32"><span class="k">class</span><span class="w"> </span><span class="nc">InvalidParameterNameError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-33"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when an unknown parameter name is supplied to a gate.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-29">
-</span><span id="line-30">
+</span><span id="line-34">
+</span><span id="line-35">
 <div class="viewcode-block" id="UnsupportedGateError">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.UnsupportedGateError">[docs]</a>
-</span><span id="line-31"><span class="k">class</span><span class="w"> </span><span class="nc">UnsupportedGateError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+</span><span id="line-36"><span class="k">class</span><span class="w"> </span><span class="nc">UnsupportedGateError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span id="line-37"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a gate is not supported by the target backend.&quot;&quot;&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

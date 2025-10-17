@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -211,7 +215,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Schedule</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<td><p>Builds a set of time-dependent coefficients applied to a collection of Hamiltonians.</p></td>
 </tr>
 </tbody>
 </table>
@@ -220,25 +224,42 @@
 <h2>Module Contents<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-contents" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#module-contents'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonians</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonians</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.common.parameterizable.Parameterizable</span></code></a></p>
-<p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-<p>Represents a time-dependent schedule for Hamiltonian coefficients in an annealing process.</p>
+<p>Builds a set of time-dependent coefficients applied to a collection of Hamiltonians.</p>
 <p>A Schedule defines the evolution of a system by associating time steps with a set
 of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
 corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
 at discrete time steps.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">T</span><span class="p">,</span> <span class="n">dt</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span>
+</span><span id="line-5"><span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">T</span> <span class="o">/</span> <span class="n">dt</span><span class="p">))</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="n">h1</span> <span class="o">=</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-8"><span class="n">h2</span> <span class="o">=</span> <span class="o">-</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-11">    <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+</span><span id="line-12">    <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span>
+</span><span id="line-13">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="n">h1</span><span class="p">,</span> <span class="s2">"problem"</span><span class="p">:</span> <span class="n">h2</span><span class="p">},</span>
+</span><span id="line-14">    <span class="n">schedule</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="s2">"problem"</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">}</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">steps</span><span class="p">)},</span>
+</span><span id="line-15"><span class="p">)</span>
+</span><span id="line-16"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>T</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The total annealing time in units of 1ns.</p></li>
-<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.</p></li>
-<li><p><strong>hamiltonians</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">Hamiltonian],</span> <span class="pre">optional</span></code>) – A dictionary mapping labels to Hamiltonian objects.
-Defaults to an empty dictionary if None.</p></li>
-<li><p><strong>schedule</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[int,</span> <span class="pre">dict[str,</span> <span class="pre">float]],</span> <span class="pre">optional</span></code>) – A dictionary where keys are time step indices (integers)
-and values are dictionaries mapping Hamiltonian labels to their coefficients at that time step.
-Defaults to {0: {}} if None.</p></li>
+<li><p><strong>T</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Total annealing time (in nanoseconds).</p></li>
+<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float,</span> <span class="pre">optional</span></code>) – Discretization step of the time grid. Defaults to 1.</p></li>
+<li><p><strong>hamiltonians</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">Hamiltonian]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">optional</span></code>) – Mapping from labels to Hamiltonian instances that
+define the building blocks of the schedule. Defaults to None, which creates an empty mapping.</p></li>
+<li><p><strong>schedule</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[int,</span> <span class="pre">dict[str,</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Term</span> <span class="pre">|</span> <span class="pre">Parameter]]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">optional</span></code>) – Predefined coefficients for
+specific time steps. Each inner dictionary maps Hamiltonian labels to numerical or symbolic
+coefficients. Defaults to {0: {}} if None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -248,10 +269,10 @@ Defaults to {0: {}} if None.</p></li>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.hamiltonians">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hamiltonians</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.hamiltonians"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.hamiltonians" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.hamiltonians'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the dictionary of Hamiltonians known to this schedule.</p>
+<dd><p>Return the Hamiltonians managed by the schedule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A mapping of Hamiltonian labels to Hamiltonian objects.</p>
+<dd class="field-odd"><p>Mapping of labels to Hamiltonian instances.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict[str, <a class="reference internal" href="../hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian">Hamiltonian</a>]</p>
@@ -261,149 +282,92 @@ Defaults to {0: {}} if None.</p></li>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.schedule">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">schedule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.common.variables.Number</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.schedule" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.schedule'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the full schedule of Hamiltonian coefficients.</p>
-<p>The schedule is returned as a dictionary sorted by time step.</p>
+<dd><p>Return the evaluated schedule of Hamiltonian coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The mapping of time steps to coefficient dictionaries.</p>
+<dd class="field-odd"><p>Mapping from time indices to evaluated coefficients.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[int, dict[str, float]]</p>
+<dd class="field-even"><p>dict[int, dict[str, Number]]</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.T">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.T"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.T" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.T'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the total annealing time.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The total time T.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Total annealing time of the schedule.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.dt">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.dt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.dt" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.dt'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the time step duration.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The duration of each time step.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Duration of a single time step in the annealing grid.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.nqubits">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nqubits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.nqubits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.nqubits" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.nqubits'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the maximum number of qubits among all Hamiltonians in the schedule.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The number of qubits.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Maximum number of qubits affected by Hamiltonians contained in the schedule.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.nparameters">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.nparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.nparameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.nparameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The total count of parameters from all parameterized gates.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Number of symbolic parameters introduced by the Hamiltonians or coefficients.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.get_parameter_values">
 <span class="sig-name descname"><span class="pre">get_parameter_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of parameter values from each parameterized gate.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[float]</p>
-</dd>
-</dl>
+<dd><p>Return the current values associated with the schedule parameters.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.get_parameter_names">
 <span class="sig-name descname"><span class="pre">get_parameter_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_parameter_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_parameter_names" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_parameter_names'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of parameter values from each parameterized gate.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[float]</p>
-</dd>
-</dl>
+<dd><p>Return the ordered list of parameter labels managed by the schedule.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.get_parameters">
 <span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter names and values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary of the parameters with their current values.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, float]</p>
-</dd>
-</dl>
+<dd><p>Return a mapping from parameter labels to their current numerical values.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.set_parameter_values">
 <span class="sig-name descname"><span class="pre">set_parameter_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.set_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.set_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.set_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Set new parameter values for all parameterized gates in the circuit.</p>
+<dd><p>Update the numerical values of all parameters referenced by the schedule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>) – A list containing new parameter values to assign to the parameterized gates.</p>
+<dd class="field-odd"><p><strong>values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>) – New parameter values ordered according to <code class="docutils literal notranslate"><span class="pre">get_parameter_names()</span></code>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the RealNumber of provided values does not match the expected RealNumber of parameters.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If the number of provided values does not match <code class="docutils literal notranslate"><span class="pre">nparameters</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.set_parameters">
 <span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.set_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.set_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Set the parameter values by their label. No need to provide the full list of parameters.</p>
+<dd><p>Update a subset of parameters by label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">RealNumber]</span></code>) – _description_</p>
+<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code>) – Mapping from parameter labels to new values.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – _description_</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.get_parameter_bounds">
 <span class="sig-name descname"><span class="pre">get_parameter_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Returns a dictionary specifying the bounds of each parameter.</p>
+<dd><p>Return the bounds registered for each schedule parameter.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.set_parameter_bounds">
 <span class="sig-name descname"><span class="pre">set_parameter_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ranges</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.set_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.set_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.set_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Updates the ranges for the specified parameters.</p>
+<dd><p>Update the bounds of existing parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ranges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">tuple[RealNumber,</span> <span class="pre">RealNumber]]</span></code>) – A dictionary mapping each parameter to its new range.</p>
+<dd class="field-odd"><p><strong>ranges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">tuple[float,</span> <span class="pre">float]]</span></code>) – Mapping from label to <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> bounds.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – if the provided parameter label is not defined in the list of parameters contained in this object.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -430,15 +394,15 @@ It should accept time (and any additional keyword arguments) and return a float.
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.add_schedule_step">
-<span class="sig-name descname"><span class="pre">add_schedule_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_coefficient_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.add_schedule_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.add_schedule_step" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.add_schedule_step'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">add_schedule_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_coefficient_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.add_schedule_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.add_schedule_step" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.add_schedule_step'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Add or update a schedule step with specified Hamiltonian coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time step index at which the Hamiltonian coefficients are updated.
 The actual time is computed as dt * time_step.</p></li>
-<li><p><strong>hamiltonian_coefficient_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code>) – A dictionary mapping Hamiltonian labels to their
-coefficient values at this time step.
+<li><p><strong>hamiltonian_coefficient_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Term</span> <span class="pre">|</span> <span class="pre">Parameter]</span></code>) – Mapping from Hamiltonian labels to coefficients
+(numeric or symbolic) at this time step.
 If a Hamiltonian is not included in the dictionary, it is assumed its coefficient remains unchanged.</p></li>
 </ul>
 </dd>
@@ -449,14 +413,14 @@ If a Hamiltonian is not included in the dictionary, it is assumed its coefficien
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step">
-<span class="sig-name descname"><span class="pre">update_hamiltonian_coefficient_at_time_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_coefficient</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.update_hamiltonian_coefficient_at_time_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">update_hamiltonian_coefficient_at_time_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_coefficient</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.update_hamiltonian_coefficient_at_time_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Update the coefficient value of a specific Hamiltonian at a given time step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time step (as an integer multiple of dt) at which to update the coefficient.</p></li>
 <li><p><strong>hamiltonian_label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The label of the Hamiltonian to update.</p></li>
-<li><p><strong>new_coefficient</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The new coefficient value.</p></li>
+<li><p><strong>new_coefficient</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Term</span> <span class="pre">|</span> <span class="pre">Parameter</span></code>) – The new coefficient value or symbolic expression.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -473,7 +437,7 @@ coefficient for the given Hamiltonian.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time (in the same units as T) at which to query the coefficient.</p></li>
+<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The time (in the same units as <code class="docutils literal notranslate"><span class="pre">T</span></code>) at which to query the coefficient.</p></li>
 <li><p><strong>hamiltonian_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The label of the Hamiltonian.</p></li>
 </ul>
 </dd>
@@ -481,13 +445,13 @@ coefficient for the given Hamiltonian.</p>
 <dd class="field-even"><p>The coefficient of the Hamiltonian at the specified time, or 0 if not defined.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p>Number</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.schedule.Schedule.get_coefficient_expression">
-<span class="sig-name descname"><span class="pre">get_coefficient_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">qilisdk.common.variables.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_coefficient_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_coefficient_expression" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_coefficient_expression'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">get_coefficient_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">qilisdk.common.variables.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/schedule.html#Schedule.get_coefficient_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.schedule.Schedule.get_coefficient_expression" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.schedule.Schedule.get_coefficient_expression'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
 present in the expression they will be printed in the expression.</p>
 <p>This function searches backwards in time (by multiples of dt) until it finds a defined
@@ -495,15 +459,15 @@ coefficient for the given Hamiltonian.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time (in the same units as T) at which to query the coefficient.</p></li>
+<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The time (in the same units as <code class="docutils literal notranslate"><span class="pre">T</span></code>) at which to query the coefficient.</p></li>
 <li><p><strong>hamiltonian_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The label of the Hamiltonian.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The coefficient of the Hamiltonian at the specified time, or 0 if not defined.</p>
+<dd class="field-even"><p>The coefficient expression of the Hamiltonian at the specified time, or 0 if not defined.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p>Number | <a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term">Term</a></p>
 </dd>
 </dl>
 </dd></dl>

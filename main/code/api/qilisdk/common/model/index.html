@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -217,16 +221,16 @@
 <td><p>An Enumeration of the Objective sense options.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.model.Constraint" title="qilisdk.common.model.Constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint</span></code></a></p></td>
-<td><p>Represents a mathematical constraint within an optimization <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p></td>
+<td><p>Represent a symbolic constraint inside a <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.model.Objective" title="qilisdk.common.model.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p></td>
-<td><p>Represents the objective function to optimize in an optimization <code class="docutils literal notranslate"><span class="pre">Model</span></code> (e.g., minimize <code class="docutils literal notranslate"><span class="pre">3x*y</span> <span class="pre">+</span> <span class="pre">2x</span></code>).</p></td>
+<td><p>Represent the scalar objective function optimized by a <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.model.Model" title="qilisdk.common.model.Model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Model</span></code></a></p></td>
-<td><p>Represents a mathematical optimization model, consisting of an <code class="docutils literal notranslate"><span class="pre">Objective</span></code> function</p></td>
+<td><p>Aggregate an objective and constraints into an optimization problem.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.model.QUBO" title="qilisdk.common.model.QUBO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QUBO</span></code></a></p></td>
-<td><p>Represents a model that is used for Quadratic Unconstrained Binary Optimization.</p></td>
+<td><p>Specialized <code class="docutils literal notranslate"><span class="pre">Model</span></code> constrained to Quadratic Unconstrained Binary Optimization form.</p></td>
 </tr>
 </tbody>
 </table>
@@ -291,15 +295,16 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.common.model.Constraint">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">term</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../variables/index.html#qilisdk.common.variables.ComparisonTerm" title="qilisdk.common.variables.ComparisonTerm"><span class="pre">qilisdk.common.variables.ComparisonTerm</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/model.html#Constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.model.Constraint" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.model.Constraint'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Represents a mathematical constraint within an optimization <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p>
-<p>Unlike the <code class="docutils literal notranslate"><span class="pre">Objective</span></code>, which is unique, a <code class="docutils literal notranslate"><span class="pre">Model</span></code> can contain multiple <code class="docutils literal notranslate"><span class="pre">Constraints</span></code>.</p>
-<p>Each <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> is defined by one or more <code class="docutils literal notranslate"><span class="pre">ComparisonTerm</span></code> objects (e.g., <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">2</span></code>),
-where each term consists of a left-hand side and a right-hand side expression. These expressions
-can be composed of:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">Variable</span></code> objects: The decision variables of the model (e.g., <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>).</p></li>
-<li><p>Other <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects: Enabling the construction of more complex expressions (e.g., <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span></code>).</p></li>
-</ul>
+<dd><p>Represent a symbolic constraint inside a <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">x</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="s2">"limit"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p>Build a constraint defined by a comparison term such as <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span> <span class="pre">&lt;=</span> <span class="pre">2</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -361,18 +366,22 @@ int: The degree of the constraint term.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.common.model.Objective">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">term</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../variables/index.html#qilisdk.common.variables.BaseVariable" title="qilisdk.common.variables.BaseVariable"><span class="pre">qilisdk.common.variables.BaseVariable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sense</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.common.model.ObjectiveSense" title="qilisdk.common.model.ObjectiveSense"><span class="pre">ObjectiveSense</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ObjectiveSense.MINIMIZE</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/model.html#Objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.model.Objective" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.model.Objective'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Represents the objective function to optimize in an optimization <code class="docutils literal notranslate"><span class="pre">Model</span></code> (e.g., minimize <code class="docutils literal notranslate"><span class="pre">3x*y</span> <span class="pre">+</span> <span class="pre">2x</span></code>).
-A <code class="docutils literal notranslate"><span class="pre">Model</span></code> can have only one <code class="docutils literal notranslate"><span class="pre">Objective</span></code>, unlike <code class="docutils literal notranslate"><span class="pre">Constraints</span></code>, which can be multiple.
-The <code class="docutils literal notranslate"><span class="pre">Objective</span></code> is constructed using <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects (e.g., <code class="docutils literal notranslate"><span class="pre">3x*y</span></code>, <code class="docutils literal notranslate"><span class="pre">2x</span></code>). Each <code class="docutils literal notranslate"><span class="pre">Term</span></code> may include:
-- <code class="docutils literal notranslate"><span class="pre">Variable</span></code> objects: The decision variables of the model (e.g., <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>).
-- Other <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects: Allowing for the construction of complex expressions.</p>
+<dd><p>Represent the scalar objective function optimized by a <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">x</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="s2">"profit"</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Build a new objective function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The objective’s label.</p></li>
-<li><p><strong>term</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code>) – The term that defines the objective.</p></li>
-<li><p><strong>sense</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectiveSense,</span> <span class="pre">optional</span></code>) – The objective’s sense of optimization
-(ObjectiveSense.MINIMIZE or ObjectiveSense.MAXIMIZE). Defaults to ObjectiveSense.MINIMIZE.</p></li>
+<li><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Objective label.</p></li>
+<li><p><strong>term</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseVariable</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – Expression to minimize or maximize.</p></li>
+<li><p><strong>sense</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectiveSense,</span> <span class="pre">optional</span></code>) – Optimization sense. Defaults to <code class="docutils literal notranslate"><span class="pre">ObjectiveSense.MINIMIZE</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -417,35 +426,27 @@ ObjectiveSense: the objective optimization sense.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.common.model.Model">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/model.html#Model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.model.Model" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.model.Model'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Represents a mathematical optimization model, consisting of an <code class="docutils literal notranslate"><span class="pre">Objective</span></code> function
-and a set of <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> objects.</p>
-<p>A <code class="docutils literal notranslate"><span class="pre">Model</span></code> includes:
-- A single <code class="docutils literal notranslate"><span class="pre">Objective</span></code> that defines the goal of the optimization (e.g., minimize <code class="docutils literal notranslate"><span class="pre">3x*y</span> <span class="pre">+</span> <span class="pre">2x</span></code>).
-- One or more <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> that specify the limitations or requirements within which the
-<code class="docutils literal notranslate"><span class="pre">Objective</span></code> must be optimized (e.g., <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">2</span></code>).</p>
-<p>Both the <code class="docutils literal notranslate"><span class="pre">Objective</span></code> and <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> are constructed from <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects (e.g., <code class="docutils literal notranslate"><span class="pre">3x*y</span></code>, <code class="docutils literal notranslate"><span class="pre">2x</span></code>).
-Each <code class="docutils literal notranslate"><span class="pre">Term</span></code> may include:
-- <code class="docutils literal notranslate"><span class="pre">Variable</span></code> objects: The decision variables of the model (e.g., <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>).
-- Nested <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects: Enabling the construction of complex mathematical expressions.</p>
-<p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="n">num_items</span> <span class="o">=</span> <span class="mi">4</span>
-</span><span id="line-5"><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-</span><span id="line-6"><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
-</span><span id="line-7"><span class="n">max_weight</span> <span class="o">=</span> <span class="mi">6</span>
-</span><span id="line-8"><span class="n">bin_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"b</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">)]</span>
-</span><span id="line-9"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Knapsack"</span><span class="p">)</span>
-</span><span id="line-10"><span class="n">objective</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">bin_vars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">))</span>
-</span><span id="line-11"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
-</span><span id="line-12"><span class="n">constraint</span> <span class="o">=</span> <span class="n">LEQ</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">bin_vars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">)),</span> <span class="n">max_weight</span><span class="p">)</span>
-</span><span id="line-13"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"maximum weight"</span><span class="p">,</span> <span class="n">constraint</span><span class="p">)</span>
+<dd><p>Aggregate an objective and constraints into an optimization problem.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">,</span> <span class="n">Model</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">num_items</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span id="line-4"><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+</span><span id="line-5"><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+</span><span id="line-6"><span class="n">max_weight</span> <span class="o">=</span> <span class="mi">6</span>
+</span><span id="line-7"><span class="n">bin_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"b</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">)]</span>
+</span><span id="line-8"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Knapsack"</span><span class="p">)</span>
+</span><span id="line-9"><span class="n">objective</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">bin_vars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">))</span>
+</span><span id="line-10"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
+</span><span id="line-11"><span class="n">constraint</span> <span class="o">=</span> <span class="n">LEQ</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">bin_vars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_items</span><span class="p">)),</span> <span class="n">max_weight</span><span class="p">)</span>
+</span><span id="line-12"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"maximum weight"</span><span class="p">,</span> <span class="n">constraint</span><span class="p">)</span>
+</span><span id="line-13">
+</span><span id="line-14"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the model label.</p>
+<dd class="field-odd"><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Model label.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -592,10 +593,19 @@ Automatic constraint and objective linearization will be added in the future.</p
 <dt class="sig sig-object py" id="qilisdk.common.model.QUBO">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QUBO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/model.html#QUBO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.model.QUBO" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.model.QUBO'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.common.model.Model" title="qilisdk.common.model.Model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Model</span></code></a></p>
-<p>Represents a model that is used for Quadratic Unconstrained Binary Optimization.</p>
+<p>Specialized <code class="docutils literal notranslate"><span class="pre">Model</span></code> constrained to Quadratic Unconstrained Binary Optimization form.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x0"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">qubo</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"Example"</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">qubo</span><span class="o">.</span><span class="n">set_objective</span><span class="p">((</span><span class="n">x0</span> <span class="o">+</span> <span class="n">x1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the QUBO model label.</p>
+<dd class="field-odd"><p><strong>label</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – QUBO model label.</p>
 </dd>
 </dl>
 <dl class="py property">

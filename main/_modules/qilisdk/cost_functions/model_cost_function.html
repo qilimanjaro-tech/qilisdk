@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -285,81 +289,124 @@
 <div class="viewcode-block" id="ModelCostFunction">
 <a class="viewcode-back" href="../../../code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction">[docs]</a>
 </span><span id="line-30"><span class="k">class</span><span class="w"> </span><span class="nc">ModelCostFunction</span><span class="p">(</span><span class="n">CostFunction</span><span class="p">):</span>
-</span><span id="line-31">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-32">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-33">        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
-</span><span id="line-34">
-</span><span id="line-35">    <span class="nd">@property</span>
+</span><span id="line-31"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-32"><span class="sd">    Evaluate the cost of functional results with respect to a :class:`~qilisdk.common.model.Model`.</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="sd">    Example:</span>
+</span><span id="line-35"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="sd">            from qilisdk.common import BinaryVariable, Model, LEQ</span>
+</span><span id="line-38"><span class="sd">            from qilisdk.cost_functions import ModelCostFunction</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="sd">            model = Model(&quot;demo&quot;)</span>
+</span><span id="line-41"><span class="sd">            x0, x1 = BinaryVariable(&quot;x0&quot;), BinaryVariable(&quot;x1&quot;)</span>
+</span><span id="line-42"><span class="sd">            model.set_objective(x0 + x1)</span>
+</span><span id="line-43"><span class="sd">            model.add_constraint(&quot;limit&quot;, LEQ(x0 + x1, 1))</span>
+</span><span id="line-44"><span class="sd">            cost_fn = ModelCostFunction(model)</span>
+</span><span id="line-45"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-46">
+</span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-48"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-49"><span class="sd">        Args:</span>
+</span><span id="line-50"><span class="sd">            model (Model): Classical model describing objective and constraints.</span>
+</span><span id="line-51"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-52">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-53">        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+</span><span id="line-54">
+</span><span id="line-55">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ModelCostFunction.model">
 <a class="viewcode-back" href="../../../code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction.model">[docs]</a>
-</span><span id="line-36">    <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-</span><span id="line-37">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span></div>
+</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+</span><span id="line-57"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the underlying optimisation model.&quot;&quot;&quot;</span>
+</span><span id="line-58">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span></div>
 
-</span><span id="line-38">
-</span><span id="line-39">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_time_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-40">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-41">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-42">                <span class="s2">&quot;can&#39;t compute cost using Models from time evolution results when the state is not provided.&quot;</span>
-</span><span id="line-43">            <span class="p">)</span>
-</span><span id="line-44">
-</span><span id="line-45">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">QUBO</span><span class="p">):</span>
-</span><span id="line-46">            <span class="n">ham</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
-</span><span id="line-47">            <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">ham</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()),</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="p">)))</span>
-</span><span id="line-48">            <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-49">                <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-50">            <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-51">
-</span><span id="line-52">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="line-53">
-</span><span id="line-54">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_density_matrix</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">):</span>
-</span><span id="line-55">            <span class="n">rho</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span>
-</span><span id="line-56">            <span class="n">n</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-57">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-</span><span id="line-58">                <span class="n">state</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">0</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
-</span><span id="line-59">                <span class="n">_ket_state</span> <span class="o">=</span> <span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span>
-</span><span id="line-60">                <span class="n">_prob</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">((</span><span class="n">_ket_state</span> <span class="o">@</span> <span class="n">_ket_state</span><span class="o">.</span><span class="n">adjoint</span><span class="p">())</span><span class="o">.</span><span class="n">dense</span> <span class="o">@</span> <span class="n">rho</span><span class="p">)))</span>
-</span><span id="line-61">                <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
-</span><span id="line-62">                <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
-</span><span id="line-63">                <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">_prob</span>
-</span><span id="line-64">            <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-65">                <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-66">            <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-67">
-</span><span id="line-68">        <span class="n">dense_state</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-69">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_ket</span><span class="p">():</span>
-</span><span id="line-70">            <span class="n">dense_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-71">        <span class="k">elif</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_bra</span><span class="p">():</span>
-</span><span id="line-72">            <span class="n">dense_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-73">
-</span><span id="line-74">        <span class="k">if</span> <span class="n">dense_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-75">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The final state is invalid.&quot;</span><span class="p">)</span>
+</span><span id="line-59">
+</span><span id="line-60">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_time_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">TimeEvolutionResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-61"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-62"><span class="sd">        Compute the expectation value of the model objective using a time-evolution result.</span>
+</span><span id="line-63">
+</span><span id="line-64"><span class="sd">        Evaluates the model on each computational basis state with probability extracted from the final state.</span>
+</span><span id="line-65">
+</span><span id="line-66"><span class="sd">        Returns:</span>
+</span><span id="line-67"><span class="sd">            Number: Expectation value of the model objective.</span>
+</span><span id="line-68">
+</span><span id="line-69"><span class="sd">        Raises:</span>
+</span><span id="line-70"><span class="sd">            ValueError: If the final state is not provided in the results.</span>
+</span><span id="line-71"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-72">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-73">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-74">                <span class="s2">&quot;can&#39;t compute cost using Models from time evolution results when the state is not provided.&quot;</span>
+</span><span id="line-75">            <span class="p">)</span>
 </span><span id="line-76">
-</span><span id="line-77">        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span>
-</span><span id="line-78">
-</span><span id="line-79">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dense_state</span><span class="p">):</span>
-</span><span id="line-80">            <span class="n">state</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">0</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
-</span><span id="line-81">            <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
-</span><span id="line-82">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
-</span><span id="line-83">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">prob</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-</span><span id="line-84">
-</span><span id="line-85">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">total_cost</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">))</span>
-</span><span id="line-86">        <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-87">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-88">        <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-89">
-</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-91">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="line-92">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">():</span>
-</span><span id="line-93">            <span class="n">bit_configuration</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">]</span>
-</span><span id="line-94">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bit_configuration</span><span class="p">):</span>
-</span><span id="line-95">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mapping samples to the model&#39;s variables is ambiguous.&quot;</span><span class="p">)</span>
-</span><span id="line-96">            <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">bit_configuration</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
-</span><span id="line-97">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
-</span><span id="line-98">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">prob</span>
+</span><span id="line-77">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">QUBO</span><span class="p">):</span>
+</span><span id="line-78">            <span class="n">ham</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span><span id="line-79">            <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">ham</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()),</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="p">)))</span>
+</span><span id="line-80">            <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-81">                <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-82">            <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-83">
+</span><span id="line-84">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-85">
+</span><span id="line-86">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_density_matrix</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">):</span>
+</span><span id="line-87">            <span class="n">rho</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span>
+</span><span id="line-88">            <span class="n">n</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-89">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+</span><span id="line-90">                <span class="n">state</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">0</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+</span><span id="line-91">                <span class="n">_ket_state</span> <span class="o">=</span> <span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span>
+</span><span id="line-92">                <span class="n">_prob</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">((</span><span class="n">_ket_state</span> <span class="o">@</span> <span class="n">_ket_state</span><span class="o">.</span><span class="n">adjoint</span><span class="p">())</span><span class="o">.</span><span class="n">dense</span> <span class="o">@</span> <span class="n">rho</span><span class="p">)))</span>
+</span><span id="line-93">                <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
+</span><span id="line-94">                <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
+</span><span id="line-95">                <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">_prob</span>
+</span><span id="line-96">            <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-97">                <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-98">            <span class="k">return</span> <span class="n">total_cost</span>
 </span><span id="line-99">
-</span><span id="line-100">        <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-101">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-102">        <span class="k">return</span> <span class="n">total_cost</span></div>
+</span><span id="line-100">        <span class="n">dense_state</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-101">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_ket</span><span class="p">():</span>
+</span><span id="line-102">            <span class="n">dense_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-103">        <span class="k">elif</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_bra</span><span class="p">():</span>
+</span><span id="line-104">            <span class="n">dense_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-105">
+</span><span id="line-106">        <span class="k">if</span> <span class="n">dense_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-107">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The final state is invalid.&quot;</span><span class="p">)</span>
+</span><span id="line-108">
+</span><span id="line-109">        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span>
+</span><span id="line-110">
+</span><span id="line-111">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dense_state</span><span class="p">):</span>
+</span><span id="line-112">            <span class="n">state</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">0</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+</span><span id="line-113">            <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
+</span><span id="line-114">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
+</span><span id="line-115">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">prob</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-116">
+</span><span id="line-117">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">total_cost</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">))</span>
+</span><span id="line-118">        <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-119">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-120">        <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-121">
+</span><span id="line-122">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-123"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-124"><span class="sd">        Compute the model cost by averaging over sampled bitstrings.</span>
+</span><span id="line-125">
+</span><span id="line-126"><span class="sd">        Each sample is mapped onto the model variables and evaluated using ``model.evaluate``.</span>
+</span><span id="line-127">
+</span><span id="line-128"><span class="sd">        Returns:</span>
+</span><span id="line-129"><span class="sd">            Number: Average cost of the model objective over all samples.</span>
+</span><span id="line-130">
+</span><span id="line-131"><span class="sd">        Raises:</span>
+</span><span id="line-132"><span class="sd">            ValueError: If the number of model variables does not match the sample size.</span>
+</span><span id="line-133"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-134">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-135">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">():</span>
+</span><span id="line-136">            <span class="n">bit_configuration</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">]</span>
+</span><span id="line-137">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bit_configuration</span><span class="p">):</span>
+</span><span id="line-138">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mapping samples to the model&#39;s variables is ambiguous.&quot;</span><span class="p">)</span>
+</span><span id="line-139">            <span class="n">variable_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">bit_configuration</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variables</span><span class="p">())}</span>
+</span><span id="line-140">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable_map</span><span class="p">)</span>
+</span><span id="line-141">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">evaluate_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">*</span> <span class="n">prob</span>
+</span><span id="line-142">
+</span><span id="line-143">        <span class="k">if</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-144">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-145">        <span class="k">return</span> <span class="n">total_cost</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -221,7 +225,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a></p></td>
-<td><p>Represents the result of a Parameterized Program calculation.</p></td>
+<td><p>Aggregate the optimizer summary and best functional result from a variational run.</p></td>
 </tr>
 </tbody>
 </table>
@@ -236,66 +240,34 @@
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program_result.VariationalProgramResult">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">VariationalProgramResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../optimizers/optimizer_result/index.html#qilisdk.optimizers.optimizer_result.OptimizerResult" title="qilisdk.optimizers.optimizer_result.OptimizerResult"><span class="pre">qilisdk.optimizers.optimizer_result.OptimizerResult</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TResult_co</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program_result.html#VariationalProgramResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program_result.VariationalProgramResult'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.functionals.functional_result.FunctionalResult</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Generic</span></code>[<a class="reference internal" href="#qilisdk.functionals.variational_program_result.TResult_co" title="qilisdk.functionals.variational_program_result.TResult_co"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TResult_co</span></code></a>]</p>
-<p>Represents the result of a Parameterized Program calculation.</p>
+<p>Aggregate the optimizer summary and best functional result from a variational run.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>optimizer_result</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizerResult</span></code>) – The optimizer’s final results. (depends on the optimizer used)</p></li>
-<li><p><strong>result</strong> (<a class="reference internal" href="#qilisdk.functionals.variational_program_result.TResult_co" title="qilisdk.functionals.variational_program_result.TResult_co"><code class="xref py py-class docutils literal notranslate"><span class="pre">TResult_co</span></code></a>) – The results of executing the Functional with the optimal parameters. (depends on the Functional)</p></li>
+<li><p><strong>optimizer_result</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizerResult</span></code>) – Summary produced by the optimiser.</p></li>
+<li><p><strong>result</strong> (<a class="reference internal" href="#qilisdk.functionals.variational_program_result.TResult_co" title="qilisdk.functionals.variational_program_result.TResult_co"><code class="xref py py-class docutils literal notranslate"><span class="pre">TResult_co</span></code></a>) – Functional result evaluated at the final parameters.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_cost</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program_result.html#VariationalProgramResult.optimal_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the optimal cost (estimated ground state energy).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The optimal cost.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
+<dd><p>Best cost reported by the optimiser.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_execution_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TResult_co</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program_result.html#VariationalProgramResult.optimal_execution_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>The results of executing the Functional with the optimal parameters found by the optimizer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The results object corresponding to the Functional.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>TResult_co</p>
-</dd>
-</dl>
+<dd><p>Return the functional result evaluated at the optimal parameters.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program_result.html#VariationalProgramResult.optimal_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the optimal ansatz parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The optimal parameters.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[float]</p>
-</dd>
-</dl>
+<dd><p>Optimised parameter values.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">intermediate_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../optimizers/optimizer_result/index.html#qilisdk.optimizers.optimizer_result.OptimizerIntermediateResult" title="qilisdk.optimizers.optimizer_result.OptimizerIntermediateResult"><span class="pre">qilisdk.optimizers.optimizer_result.OptimizerIntermediateResult</span></a><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program_result.html#VariationalProgramResult.intermediate_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Get the intermediate results.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The intermediate results.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[<a class="reference internal" href="../../optimizers/optimizer_result/index.html#qilisdk.optimizers.optimizer_result.OptimizerResult" title="qilisdk.optimizers.optimizer_result.OptimizerResult">OptimizerResult</a>]</p>
-</dd>
-</dl>
+<dd><p>Sequence of intermediate optimiser snapshots, if recorded.</p>
 </dd></dl>
 </dd></dl>
 </section>

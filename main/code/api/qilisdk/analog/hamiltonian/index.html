@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -221,22 +225,22 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliOperator</span></code></a></p></td>
-<td><p>A generic Pauli operator that acts on one qubit.</p></td>
+<td><p>A generic abstract Pauli operator that acts on one qubit.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliZ" title="qilisdk.analog.hamiltonian.PauliZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliZ</span></code></a></p></td>
-<td><p>A generic Pauli operator that acts on one qubit.</p></td>
+<td><p>A generic abstract Pauli operator that acts on one qubit.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliX" title="qilisdk.analog.hamiltonian.PauliX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliX</span></code></a></p></td>
-<td><p>A generic Pauli operator that acts on one qubit.</p></td>
+<td><p>A generic abstract Pauli operator that acts on one qubit.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliY" title="qilisdk.analog.hamiltonian.PauliY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliY</span></code></a></p></td>
-<td><p>A generic Pauli operator that acts on one qubit.</p></td>
+<td><p>A generic abstract Pauli operator that acts on one qubit.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliI" title="qilisdk.analog.hamiltonian.PauliI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliI</span></code></a></p></td>
-<td><p>A generic Pauli operator that acts on one qubit.</p></td>
+<td><p>A generic abstract Pauli operator that acts on one qubit.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<td><p>Represent a Hamiltonian expressed as a linear combination of Pauli operators.</p></td>
 </tr>
 </tbody>
 </table>
@@ -286,8 +290,15 @@
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliOperator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliOperator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliOperator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliOperator" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliOperator'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>A generic Pauli operator that acts on one qubit.
-Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
+<p>A generic abstract Pauli operator that acts on one qubit.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">op</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.</p>
+<p>Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliOperator.qubit">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">qubit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliOperator.qubit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliOperator.qubit" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliOperator.qubit'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
@@ -318,52 +329,84 @@ Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliZ">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliZ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliZ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliZ" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliZ'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliOperator</span></code></a></p>
-<p>A generic Pauli operator that acts on one qubit.
-Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
+<p>A generic abstract Pauli operator that acts on one qubit.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">op</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.</p>
+<p>Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliX">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliX" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliX'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliOperator</span></code></a></p>
-<p>A generic Pauli operator that acts on one qubit.
-Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
+<p>A generic abstract Pauli operator that acts on one qubit.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">op</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.</p>
+<p>Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliY">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliY" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliY'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliOperator</span></code></a></p>
-<p>A generic Pauli operator that acts on one qubit.
-Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
+<p>A generic abstract Pauli operator that acts on one qubit.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">op</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.</p>
+<p>Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.PauliI">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qubit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#PauliI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.PauliI" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.PauliI'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PauliOperator</span></code></a></p>
-<p>A generic Pauli operator that acts on one qubit.
-Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.</p>
+<p>A generic abstract Pauli operator that acts on one qubit.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">op</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.</p>
+<p>Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><span class="pre">PauliOperator</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><span class="pre">qilisdk.common.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.common.parameterizable.Parameterizable</span></code></a></p>
-<p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-<p>A class to represent abstract Hamiltonian expressions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>elements</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[tuple[PauliOperator,</span> <span class="pre">...],</span> <span class="pre">complex]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">optional</span></code>) – <p>maps from a tuple of PauliOperator objects
-to a complex coefficient. For example:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">{
-</span><span id="line-2">(Z(0), Y(1)):  1,
-</span><span id="line-3">(X(1),):       1j,
-</span><span id="line-4">}
+<p>Represent a Hamiltonian expressed as a linear combination of Pauli operators.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">H</span> <span class="o">=</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p>Defaults to None.</p>
+<p>Build a Hamiltonian from a mapping of Pauli operator products to coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>elements</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[tuple[PauliOperator,</span> <span class="pre">...],</span> <span class="pre">complex</span> <span class="pre">|</span> <span class="pre">Term</span> <span class="pre">|</span> <span class="pre">Parameter],</span> <span class="pre">optional</span></code>) – <p>Mapping from operator tuples to numerical coefficients or symbolic parameters. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span>
+</span><span id="line-2">    <span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>  <span class="mf">1.0</span><span class="p">,</span>
+</span><span id="line-3">    <span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">),):</span>       <span class="mi">1</span><span class="n">j</span><span class="p">,</span>
+</span><span id="line-4"><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<p>Defaults to None, which creates an empty Hamiltonian.</p>
 </p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the Term provided contains Generic variables and not only Parameters.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If the provided coefficients include generic variables instead of parameters.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -373,110 +416,79 @@ to a complex coefficient. For example:</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.nqubits">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nqubits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.nqubits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.nqubits" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.nqubits'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Number of qubits acting on the hamiltonian.</p>
+<dd><p>Number of qubits on which the Hamiltonian acts.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.elements">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elements</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><span class="pre">PauliOperator</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">complex</span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.elements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.elements" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.elements'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Returns the internal dictionary of elements (read-only).</p>
+<dd><p>Return the stored operator-coefficient mapping with symbolic terms evaluated.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.nparameters">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.nparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.nparameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.nparameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The total count of parameters from all parameterized gates.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
+<dd><p>Return the number of unique symbolic parameters contained in the Hamiltonian.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.parameters">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../../common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><span class="pre">qilisdk.common.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Return a mapping from parameter labels to their corresponding parameter objects.</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values">
 <span class="sig-name descname"><span class="pre">get_parameter_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of parameter values from each parameterized gate.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[float]</p>
-</dd>
-</dl>
+<dd><p>Return the current numeric values of the Hamiltonian parameters.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names">
 <span class="sig-name descname"><span class="pre">get_parameter_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A list of parameter values from each parameterized gate.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[float]</p>
-</dd>
-</dl>
+<dd><p>Return the ordered list of parameter labels defined in the Hamiltonian.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameters">
 <span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Retrieve the parameter names and values from all parameterized gates in the circuit.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary of the parameters with their current values.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, float]</p>
-</dd>
-</dl>
+<dd><p>Return a mapping from parameter labels to their current numerical values.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values">
 <span class="sig-name descname"><span class="pre">set_parameter_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Set new parameter values for all parameterized gates in the circuit.</p>
+<dd><p>Update the numerical values of the Hamiltonian parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>) – A list containing new parameter values to assign to the parameterized gates.</p>
+<dd class="field-odd"><p><strong>values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>) – New values ordered according to <code class="docutils literal notranslate"><span class="pre">get_parameter_names()</span></code>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the RealNumber of provided values does not match the expected RealNumber of parameters.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If the number of provided values does not match <code class="docutils literal notranslate"><span class="pre">nparameters</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameters">
 <span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Set the parameter values by their label. No need to provide the full list of parameters.</p>
+<dd><p>Update a subset of parameters by label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">RealNumber]</span></code>) – _description_</p>
+<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code>) – Mapping from parameter labels to new numerical values.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – _description_</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds">
 <span class="sig-name descname"><span class="pre">get_parameter_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Returns a dictionary specifying the bounds of each parameter.</p>
+<dd><p>Return the lower and upper bounds currently associated with each parameter.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds">
 <span class="sig-name descname"><span class="pre">set_parameter_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ranges</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Updates the ranges for the specified parameters.</p>
+<dd><p>Update parameter bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ranges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">tuple[RealNumber,</span> <span class="pre">RealNumber]]</span></code>) – A dictionary mapping each parameter to its new range.</p>
+<dd class="field-odd"><p><strong>ranges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">tuple[float,</span> <span class="pre">float]]</span></code>) – Mapping from parameter labels to <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> bounds.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – if the provided parameter label is not defined in the list of parameters contained in this object.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -509,7 +521,7 @@ to a complex coefficient. For example:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor">
 <span class="sig-name descname"><span class="pre">to_qtensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_nqubits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="../../common/qtensor/index.html#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">qilisdk.common.qtensor.QTensor</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.to_qtensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the full matrix representation of the Hamiltonian by summing over all terms in the form of a QTensor-</p>
+<dd><p>Return the Hamiltonian as a <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> built from the sparse matrix representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>total_nqubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span> <span class="pre">optional</span></code>) – Specify the total number of qubits that this hamiltonian acts on. Defaults to None.</p>
@@ -528,7 +540,8 @@ to a complex coefficient. For example:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_static_hamiltonian">
 <span class="sig-name descname"><span class="pre">get_static_hamiltonian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">Hamiltonian</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_static_hamiltonian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_static_hamiltonian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_static_hamiltonian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Return a Hamiltonian containing only constant coefficients.</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_qtensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../common/qtensor/index.html#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><span class="pre">qilisdk.common.qtensor.QTensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">Hamiltonian</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.from_qtensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
@@ -538,7 +551,7 @@ returning a qilisdk.analog.Hamiltonian.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Hermiticity check tolerance.</p></li>
-<li><p><strong>prune</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Drop coefficients with <a href="#id1"><span class="problematic" id="id2">|c|</span></a> &lt; prune to reduce numerical noise.</p></li>
+<li><p><strong>prune</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Drop coefficients whose absolute value satisfies <code class="docutils literal notranslate"><span class="pre">abs(c)</span> <span class="pre">&lt;</span> <span class="pre">prune</span></code> to reduce numerical noise.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

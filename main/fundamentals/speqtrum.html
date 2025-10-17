@@ -19,7 +19,7 @@
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
-<link href="../examples/circuits.html" rel="next" title="Circuits"/>
+<link href="../examples/code_examples.html" rel="next" title="Code Examples"/>
 <link href="backends.html" rel="prev" title="Backends"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="backends.html">Backends</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -203,127 +207,192 @@
 <div id="content" role="main">
 <section id="speqtrum">
 <h1>SpeQtrum<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#speqtrum"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>The <a class="reference internal" href="../code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum" title="qilisdk.speqtrum"><code class="xref py py-mod docutils literal notranslate"><span class="pre">speqtrum</span></code></a> module provides a synchronous client for the Qilimanjaro SpeQtrum API via the
-<a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum" title="qilisdk.speqtrum.speqtrum.SpeQtrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpeQtrum</span></code></a> class. It handles authentication, device selection, job management, and submission
-of quantum functionals (Sampling, TimeEvolution) and VQE workflows to remote hardware or simulators.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum" title="qilisdk.speqtrum"><code class="xref py py-mod docutils literal notranslate"><span class="pre">speqtrum</span></code></a> package provides an optional, synchronous client for the Qilimanjaro SpeQtrum cloud.
+Through the <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum" title="qilisdk.speqtrum.speqtrum.SpeQtrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpeQtrum</span></code></a> class you can authenticate, inspect devices and jobs, and submit
+digital, analog, or pulse experiments for remote execution.</p>
+<section id="installation">
+<h2>Installation<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#installation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#installation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>SpeQtrum support is shipped as an optional dependency group. Install it alongside QiliSDK with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install "qilisdk[speqtrum]"</span>
+</span></code></pre></div>
+</div>
+</section>
 <section id="authentication">
 <h2>Authentication<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#authentication" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#authentication'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Before making any API calls, you must authenticate and cache credentials in your OS keyring.</p>
-<p><strong>Login</strong></p>
+<p>The API uses short-lived OAuth tokens that are cached in the system keyring. Call
+<a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.login" title="qilisdk.speqtrum.speqtrum.SpeQtrum.login"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.login</span></code></a> once and the credentials will be reused for subsequent
+sessions.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
 </span><span id="line-2">
-</span><span id="line-3"><span class="c1"># You can provide credentials directly...</span>
-</span><span id="line-4"><span class="n">success</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">apikey</span><span class="o">=</span><span class="s2">"MY_SECRET_KEY"</span><span class="p">)</span>
+</span><span id="line-3"><span class="c1"># Credentials can be provided explicitly…</span>
+</span><span id="line-4"><span class="n">logged_in</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">apikey</span><span class="o">=</span><span class="s2">"MY_SECRET_KEY"</span><span class="p">)</span>
 </span><span id="line-5">
-</span><span id="line-6"><span class="c1"># ...or omit them to read from environment variables:</span>
-</span><span id="line-7"><span class="c1">#   QILISDK_SPEQTRUM_USERNAME and QILISDK_SPEQTRUM_APIKEY</span>
-</span><span id="line-8"><span class="n">success</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
-</span><span id="line-9">
-</span><span id="line-10"><span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
-</span><span id="line-11">    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Authentication failed"</span><span class="p">)</span>
+</span><span id="line-6"><span class="c1"># …or read from the environment (QILISDK_SPEQTRUM_USERNAME / QILISDK_SPEQTRUM_APIKEY)</span>
+</span><span id="line-7"><span class="n">logged_in</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="k">if</span> <span class="ow">not</span> <span class="n">logged_in</span><span class="p">:</span>
+</span><span id="line-10">    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Authentication failed"</span><span class="p">)</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="c1"># Remove cached credentials when they are no longer needed</span>
+</span><span id="line-13"><span class="n">SpeQtrum</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
-<p><strong>Logout</strong></p>
+</section>
+<section id="client-construction">
+<h2>Client Construction<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#client-construction" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#client-construction'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Once credentials are stored, instantiate <code class="xref py py-class docutils literal notranslate"><span class="pre">SpeQtrum</span></code> to start issuing requests. Construction fails with
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> if no cached credentials exist.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
 </span><span id="line-2">
-</span><span id="line-3"><span class="n">SpeQtrum</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span>
-</span><span id="line-4"><span class="c1"># Credentials removed from keyring</span>
+</span><span id="line-3"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
 </section>
-<section id="device-management">
-<h2>Device Management<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#device-management" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#device-management'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Once authenticated, you can list available devices, select one for subsequent jobs, and query the current selection.</p>
-<p><strong>List Devices</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
-</span><span id="line-2"><span class="n">devices</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">()</span>
-</span><span id="line-3"><span class="k">for</span> <span class="n">dev</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
-</span><span id="line-4">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dev</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">dev</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">dev</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<section id="device-catalogue">
+<h2>Device Catalogue<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#device-catalogue" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#device-catalogue'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Devices are represented by <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device" title="qilisdk.speqtrum.speqtrum_models.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></a> models containing the device code, number of
+qubits, hardware type, and status. Use <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices" title="qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.list_devices</span></code></a> to enumerate them. An optional <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate allows client-side
+filtering.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span><span class="p">,</span> <span class="n">DeviceStatus</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
+</span><span id="line-4"><span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">DeviceStatus</span><span class="o">.</span><span class="n">ONLINE</span><span class="p">):</span>
+</span><span id="line-5">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">) – </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits"</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p><strong>Select a Device</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">client</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
-</span><span id="line-2"><span class="nb">print</span><span class="p">(</span><span class="s2">"Selected device:"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">selected_device</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
-<p><strong>Properties</strong></p>
-<ul class="simple">
-<li><p><strong>selected_device</strong> (int | None): ID of the currently selected device, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unset.</p></li>
-</ul>
 </section>
-<section id="job-management">
-<h2>Job Management<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#job-management" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#job-management'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>You can list existing jobs, inspect their details, and wait for completion.</p>
-<p><strong>List Jobs</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">jobs</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">()</span>
-</span><span id="line-2"><span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
-</span><span id="line-3">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<section id="remote-jobs">
+<h2>Remote Jobs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#remote-jobs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#remote-jobs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs" title="qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.list_jobs</span></code></a> returns lightweight <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo" title="qilisdk.speqtrum.speqtrum_models.JobInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobInfo</span></code></a> records. The <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate works the same way as with devices.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.speqtrum_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
+</span><span id="line-5"><span class="n">running</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="k">lambda</span> <span class="n">job</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+</span><span id="line-6"><span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">running</span><span class="p">:</span>
+</span><span id="line-7">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">device_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p><strong>Get Job Details</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">detail</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_job_details</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-</span><span id="line-2"><span class="nb">print</span><span class="p">(</span><span class="s2">"Payload:"</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
-</span><span id="line-3"><span class="nb">print</span><span class="p">(</span><span class="s2">"Result:"</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
-</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="s2">"Logs:"</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">logs</span><span class="p">)</span>
+<p>To inspect complete job metadata (payload, result, logs, decoded errors) call
+<a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details" title="qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.get_job_details</span></code></a>. Binary fields are returned as
+decoded strings or structured <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult" title="qilisdk.speqtrum.speqtrum_models.ExecuteResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecuteResult</span></code></a> objects.</p>
+<p>To obtain the results of a completed job, check the <code class="docutils literal notranslate"><span class="pre">result</span></code> attribute of the returned <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail" title="qilisdk.speqtrum.speqtrum_models.JobDetail"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobDetail</span></code></a>.
+The specific result type depends on the job type.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_job_details</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="c1"># to get the results of the job depending on the type of job</span>
+</span><span id="line-4"><span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="p">:</span>
+</span><span id="line-5">    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">sampling_result</span><span class="p">:</span>
+</span><span id="line-6">        <span class="nb">print</span><span class="p">(</span><span class="s2">"Sampling results:"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">sampling_result</span><span class="p">)</span>
+</span><span id="line-7">    <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">variational_program_result</span><span class="p">:</span>
+</span><span id="line-8">        <span class="nb">print</span><span class="p">(</span><span class="s2">"Variational Program  results:"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">variational_program_result</span><span class="p">)</span>
+</span><span id="line-9">    <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time_evolution_result</span><span class="p">:</span>
+</span><span id="line-10">        <span class="nb">print</span><span class="p">(</span><span class="s2">"Time Evolution results:"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time_evolution_result</span><span class="p">)</span>
+</span><span id="line-11">    <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">rabi_experiment_result</span><span class="p">:</span>
+</span><span id="line-12">        <span class="nb">print</span><span class="p">(</span><span class="s2">"Rabi Experiment results:"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">rabi_experiment_result</span><span class="p">)</span>
+</span><span id="line-13">    <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">t1_experiment_result</span><span class="p">:</span>
+</span><span id="line-14">        <span class="nb">print</span><span class="p">(</span><span class="s2">"T1 Experiment results:"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">t1_experiment_result</span><span class="p">)</span>
+</span><span id="line-15"><span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">logs</span><span class="p">:</span>
+</span><span id="line-16">    <span class="nb">print</span><span class="p">(</span><span class="s2">"Execution logs:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">logs</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p><strong>Wait for Completion</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">final</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">300.0</span><span class="p">)</span>
-</span><span id="line-2"><span class="nb">print</span><span class="p">(</span><span class="s2">"Final status:"</span><span class="p">,</span> <span class="n">final</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
+</section>
+<section id="waiting-for-completion">
+<h2>Waiting for Completion<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#waiting-for-completion" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#waiting-for-completion'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Use <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job" title="qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.wait_for_job</span></code></a> to poll until a job reaches a
+terminal state (<code class="docutils literal notranslate"><span class="pre">completed</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code>, or <code class="docutils literal notranslate"><span class="pre">cancelled</span></code>). The method returns the final <code class="xref py py-class docutils literal notranslate"><span class="pre">JobDetail</span></code> snapshot and
+raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TimeoutError</span></code> if the optional timeout elapses first.</p>
 </section>
 <section id="functional-submission">
 <h2>Functional Submission<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functional-submission" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#functional-submission'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Use <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.submit" title="qilisdk.speqtrum.speqtrum.SpeQtrum.submit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit()</span></code></a> to dispatch a <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> or <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a> functional.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span><span class="p">,</span> <span class="n">TimeEvolution</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">CNOT</span>
-</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+<p>SpeQtrum accepts the same primitive functionals used by local backends. The <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.submit" title="qilisdk.speqtrum.speqtrum.SpeQtrum.submit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.submit</span></code></a> method inspects the functional type and serializes the correct payload. You
+must supply a <code class="docutils literal notranslate"><span class="pre">device</span></code> argument with the device code obtained from <code class="xref py py-meth docutils literal notranslate"><span class="pre">list_devices()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">CNOT</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
 </span><span id="line-4">
-</span><span id="line-5"><span class="c1"># Prepare a Sampling functional</span>
-</span><span id="line-6"><span class="n">circ</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-</span><span id="line-7"><span class="n">circ</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span> <span class="n">circ</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-</span><span id="line-8"><span class="n">sampling</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">circ</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-</span><span id="line-9"><span class="n">job_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
-</span><span id="line-10">
-</span><span id="line-11"><span class="c1"># Or prepare a TimeEvolution functional</span>
-</span><span id="line-12"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
-</span><span id="line-13">    <span class="n">total_time</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-</span><span id="line-14">    <span class="n">time_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="line-15">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"hx"</span><span class="p">:</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s2">"hz"</span><span class="p">:</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)},</span>
-</span><span id="line-16">    <span class="n">schedule_map</span><span class="o">=</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="p">{</span><span class="s2">"hx"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="s2">"hz"</span><span class="p">:</span> <span class="n">t</span><span class="o">/</span><span class="mi">5</span><span class="p">}</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">]}</span>
-</span><span id="line-17"><span class="p">)</span>
-</span><span id="line-18"><span class="n">time_evolution</span> <span class="o">=</span> <span class="n">TimeEvolution</span><span class="p">(</span>
-</span><span id="line-19">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
-</span><span id="line-20">    <span class="n">initial_state</span><span class="o">=...</span><span class="p">,</span>
-</span><span id="line-21">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span>
-</span><span id="line-22">    <span class="n">nshots</span><span class="o">=</span><span class="mi">50</span>
+</span><span id="line-5"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="line-7"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-8"><span class="n">sampling</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
+</span><span id="line-11"><span class="n">device</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span>
+</span><span id="line-12"><span class="n">job_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">sampling</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</span><span id="line-13"><span class="nb">print</span><span class="p">(</span><span class="s2">"Submitted sampling job:"</span><span class="p">,</span> <span class="n">job_id</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Physical QPUs currently do not support analog functionals built on <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>.TimeEvolution;
+for now, analog hardware can run only pulse experiments from <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments" title="qilisdk.speqtrum.experiments"><code class="xref py py-mod docutils literal notranslate"><span class="pre">experiments</span></code></a>.</p>
+</div>
+</section>
+<section id="variational-programs">
+<h2>Variational Programs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#variational-programs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#variational-programs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Hybrid optimization is handled through the same <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a>
+functional used with local backends. Serialize the fully-configured variational program (ansatz, optimizer, cost
+function) and submit it as any other functional.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.cost_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelCostFunction</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">HardwareEfficientAnsatz</span><span class="p">,</span> <span class="n">U2</span>
+</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.variational_program</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgram</span>
+</span><span id="line-7"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.optimizers.scipy_optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SciPyOptimizer</span>
+</span><span id="line-8"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="c1"># Build a small cost model</span>
+</span><span id="line-11"><span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span>
+</span><span id="line-12"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"toy"</span><span class="p">)</span>
+</span><span id="line-13"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">vars</span><span class="p">),</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span><span id="line-14"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"budget"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="nb">vars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nb">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-15">
+</span><span id="line-16"><span class="n">ansatz</span> <span class="o">=</span> <span class="n">HardwareEfficientAnsatz</span><span class="p">(</span>
+</span><span id="line-17">    <span class="n">nqubits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+</span><span id="line-18">    <span class="n">layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="line-19">    <span class="n">one_qubit_gate</span><span class="o">=</span><span class="n">U2</span><span class="p">,</span>
+</span><span id="line-20">    <span class="n">two_qubit_gate</span><span class="o">=</span><span class="n">CNOT</span><span class="p">,</span>
+</span><span id="line-21">    <span class="n">connectivity</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span>
+</span><span id="line-22">    <span class="n">structure</span><span class="o">=</span><span class="s2">"grouped"</span><span class="p">,</span>
 </span><span id="line-23"><span class="p">)</span>
-</span><span id="line-24"><span class="n">job_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-24"><span class="n">functional</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
+</span><span id="line-25"><span class="n">optimizer</span> <span class="o">=</span> <span class="n">SciPyOptimizer</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"Powell"</span><span class="p">)</span>
+</span><span id="line-26"><span class="n">vprog</span> <span class="o">=</span> <span class="n">VariationalProgram</span><span class="p">(</span><span class="n">functional</span><span class="o">=</span><span class="n">functional</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">cost_function</span><span class="o">=</span><span class="n">ModelCostFunction</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
+</span><span id="line-29"><span class="n">device</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span>
+</span><span id="line-30"><span class="n">job_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">vprog</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
-<section id="variational-quantum-eigensolver-vqe">
-<h2>Variational Quantum Eigensolver (VQE)<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#variational-quantum-eigensolver-vqe" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#variational-quantum-eigensolver-vqe'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>For end-to-end VQE workflows, use <code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_vqe()</span></code>:</p>
-<p><strong>Parameters</strong></p>
-<ul class="simple">
-<li><p><strong>vqe</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">VQE</span></code>): VQE functional defining ansatz and Hamiltonian.</p></li>
-<li><p><strong>optimizer</strong> (<a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>): Classical optimizer instance.</p></li>
-<li><p><strong>nshots</strong> (int, optional): Shots per circuit evaluation. Default: 1000.</p></li>
-<li><p><strong>store_intermediate_results</strong> (bool, optional): Record intermediate energies/parameters. Default: False.</p></li>
-</ul>
-<p><strong>Example</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.vqe</span><span class="w"> </span><span class="kn">import</span> <span class="n">VQE</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">COBYLA</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="n">client</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">my_device_id</span><span class="p">)</span>
-</span><span id="line-5"><span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span><span class="n">hamiltonian</span><span class="o">=</span><span class="n">H2</span><span class="p">,</span> <span class="n">ansatz</span><span class="o">=</span><span class="n">my_ansatz</span><span class="p">)</span>
-</span><span id="line-6"><span class="n">optimizer</span> <span class="o">=</span> <span class="n">COBYLA</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-</span><span id="line-7"><span class="n">job_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit_vqe</span><span class="p">(</span><span class="n">vqe</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"VQE job submitted with id"</span><span class="p">,</span> <span class="n">job_id</span><span class="p">)</span>
+<section id="pulse-experiments">
+<h2>Pulse Experiments<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#pulse-experiments" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#pulse-experiments'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>The SpeQtrum client also supports calibration-style experiments defined in <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments" title="qilisdk.speqtrum.experiments"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.speqtrum.experiments</span></code></a>. These
+functional objects mirror the interfaces described in the <a class="reference internal" href="functionals.html"><span class="doc">Functionals</span></a> chapter and return rich result types.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceType</span><span class="p">,</span> <span class="n">SpeQtrum</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">RabiExperiment</span><span class="p">,</span> <span class="n">T1Experiment</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
+</span><span id="line-6"><span class="n">device</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">(</span>
+</span><span id="line-7">    <span class="n">where</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DeviceType</span><span class="o">.</span><span class="n">QPU_ANALOG</span><span class="p">,</span> <span class="n">DeviceType</span><span class="o">.</span><span class="n">QPU_DIGITAL</span><span class="p">)</span>
+</span><span id="line-8"><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="c1"># Rabi experiment: sweep drive durations</span>
+</span><span id="line-11"><span class="n">rabi</span> <span class="o">=</span> <span class="n">RabiExperiment</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">21</span><span class="p">))</span>
+</span><span id="line-12"><span class="n">rabi_job</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">rabi</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</span><span id="line-13"><span class="n">rabi_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">rabi_job</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="c1"># T1 relaxation experiment: sweep wait durations</span>
+</span><span id="line-16"><span class="n">t1</span> <span class="o">=</span> <span class="n">T1Experiment</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">41</span><span class="p">))</span>
+</span><span id="line-17"><span class="n">t1_job</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</span><span id="line-18"><span class="n">t1_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">t1_job</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
+<p>The resulting <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult" title="qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RabiExperimentResult</span></code></a> and
+<a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult" title="qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">T1ExperimentResult</span></code></a> objects can be retrieved through
+<cite>rabi_response.result.rabi_experiment_result</cite> and <cite>t1_response.result.t1_experiment_result</cite> respectively.</p>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -336,8 +405,8 @@ of quantum functionals (Sampling, TimeEvolution) and VQE workflows to remote har
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../examples/circuits.html">
-        Circuits
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../examples/code_examples.html">
+        Code Examples
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -346,11 +415,15 @@ of quantum functionals (Sampling, TimeEvolution) and VQE workflows to remote har
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
+<li><a :data-current="activeSection === '#installation'" class="reference internal" href="#installation">Installation</a></li>
 <li><a :data-current="activeSection === '#authentication'" class="reference internal" href="#authentication">Authentication</a></li>
-<li><a :data-current="activeSection === '#device-management'" class="reference internal" href="#device-management">Device Management</a></li>
-<li><a :data-current="activeSection === '#job-management'" class="reference internal" href="#job-management">Job Management</a></li>
+<li><a :data-current="activeSection === '#client-construction'" class="reference internal" href="#client-construction">Client Construction</a></li>
+<li><a :data-current="activeSection === '#device-catalogue'" class="reference internal" href="#device-catalogue">Device Catalogue</a></li>
+<li><a :data-current="activeSection === '#remote-jobs'" class="reference internal" href="#remote-jobs">Remote Jobs</a></li>
+<li><a :data-current="activeSection === '#waiting-for-completion'" class="reference internal" href="#waiting-for-completion">Waiting for Completion</a></li>
 <li><a :data-current="activeSection === '#functional-submission'" class="reference internal" href="#functional-submission">Functional Submission</a></li>
-<li><a :data-current="activeSection === '#variational-quantum-eigensolver-vqe'" class="reference internal" href="#variational-quantum-eigensolver-vqe">Variational Quantum Eigensolver (VQE)</a></li>
+<li><a :data-current="activeSection === '#variational-programs'" class="reference internal" href="#variational-programs">Variational Programs</a></li>
+<li><a :data-current="activeSection === '#pulse-experiments'" class="reference internal" href="#pulse-experiments">Pulse Experiments</a></li>
 </ul>
 </div>
 </aside>

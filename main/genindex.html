@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -894,12 +898,8 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.dark">dark (in module qilisdk.utils.visualization.themes)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.data">data (ExperimentResult attribute)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.QTensor.data">(QTensor property)</a>
+      <li><a href="code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.QTensor.data">data (QTensor property)</a>
 </li>
-      </ul></li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.default_line_style">default_line_style (ScheduleStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.default_logging_config_path">default_logging_config_path() (in module qilisdk.settings)</a>
@@ -945,8 +945,6 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.DIGITAL">DIGITAL (JobType attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.Dimension">Dimension (class in qilisdk.speqtrum.experiments.experiment_result)</a>
-</li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.dims">dims (ExperimentResult attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/common/variables/index.html#qilisdk.common.variables.Operation.DIV">DIV (Operation attribute)</a>
 </li>
@@ -1985,12 +1983,12 @@
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">(MatplotlibScheduleRenderer method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#id0">plot_title (ExperimentResult attribute)</a>, <a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot_title">[1]</a>
+      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot_title">plot_title (ExperimentResult attribute)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#id1">(RabiExperimentResult attribute)</a>, <a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult.plot_title">[1]</a>
+        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult.plot_title">(RabiExperimentResult attribute)</a>
 </li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#id2">(T1ExperimentResult attribute)</a>, <a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult.plot_title">[1]</a>
+        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult.plot_title">(T1ExperimentResult attribute)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/common/variables/index.html#qilisdk.common.variables.Term.pop">pop() (Term method)</a>
@@ -2434,8 +2432,6 @@
       <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.ExperimentFunctional.qubit">qubit (ExperimentFunctional property)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.qubit">(ExperimentResult attribute)</a>
-</li>
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator.qubit">(PauliOperator property)</a>
 </li>
       </ul></li>
@@ -2491,11 +2487,11 @@
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional.result_type">result_type (Functional attribute)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#id0">(RabiExperiment attribute)</a>, <a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.result_type">[1]</a>
+        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.result_type">(RabiExperiment attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.result_type">(Sampling attribute)</a>
 </li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#id1">(T1Experiment attribute)</a>, <a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.result_type">[1]</a>
+        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.result_type">(T1Experiment attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.result_type">(TimeEvolution attribute)</a>
 </li>

@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -220,14 +224,14 @@
 </span></code></pre></div>
 </div>
 </li>
-<li><p><strong>Quantum-as-a-Service (QaaS)</strong> (cloud submission via <code class="xref py py-class docutils literal notranslate"><span class="pre">QaaS</span></code>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>qaas<span class="o">]</span>
+<li><p><strong>SpeQtrum</strong> (cloud submission via <a class="reference internal" href="../code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum" title="qilisdk.speqtrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">speqtrum</span></code></a>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>speqtrum<span class="o">]</span>
 </span></code></pre></div>
 </div>
 </li>
 </ul>
 <p>You can combine extras:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda,qutip,qaas<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda,qutip,speqtrum<span class="o">]</span>
 </span></code></pre></div>
 </div>
 <section id="quickstart">
@@ -238,7 +242,7 @@
 <p>Build a 2-qubit circuit, sample it, and inspect measurement counts:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">RX</span><span class="p">,</span> <span class="n">CNOT</span>
-</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span><span class="p">,</span> <span class="n">CudaSamplingMethod</span>
 </span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
 </span><span id="line-5">
 </span><span id="line-6"><span class="c1"># 1. Define a simple 2‑qubit circuit</span>
@@ -251,7 +255,7 @@
 </span><span id="line-13"><span class="n">sampling</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 </span><span id="line-14">
 </span><span id="line-15"><span class="c1"># 3. Execute on GPU</span>
-</span><span id="line-16"><span class="n">backend</span> <span class="o">=</span> <span class="n">CudaBackend</span><span class="p">(</span><span class="n">sampling_method</span><span class="o">=</span><span class="n">CudaBackend</span><span class="o">.</span><span class="n">STATE_VECTOR</span><span class="p">)</span>
+</span><span id="line-16"><span class="n">backend</span> <span class="o">=</span> <span class="n">CudaBackend</span><span class="p">(</span><span class="n">sampling_method</span><span class="o">=</span><span class="n">CudaSamplingMethod</span><span class="o">.</span><span class="n">STATE_VECTOR</span><span class="p">)</span>
 </span><span id="line-17"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
 </span><span id="line-18">
 </span><span id="line-19"><span class="nb">print</span><span class="p">(</span><span class="s2">"Counts:"</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">probabilities</span><span class="p">)</span>
@@ -282,10 +286,10 @@
 </span><span id="line-19">    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
 </span><span id="line-20"><span class="p">}</span>
 </span><span id="line-21"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
-</span><span id="line-22">    <span class="n">total_time</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
-</span><span id="line-23">    <span class="n">time_step</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span>
+</span><span id="line-22">    <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+</span><span id="line-23">    <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span>
 </span><span id="line-24">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h1"</span><span class="p">:</span> <span class="n">H1</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">:</span> <span class="n">H2</span><span class="p">},</span>
-</span><span id="line-25">    <span class="n">schedule_map</span><span class="o">=</span><span class="n">sched_map</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">schedule</span><span class="o">=</span><span class="n">sched_map</span><span class="p">,</span>
 </span><span id="line-26"><span class="p">)</span>
 </span><span id="line-27">
 </span><span id="line-28"><span class="c1"># Initial state |+⟩</span>
@@ -311,12 +315,15 @@
 <h2>Next Steps<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#next-steps" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#next-steps'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>Once you’ve confirmed everything works, explore:</p>
 <ul class="simple">
-<li><p><strong>Digital module</strong> (<a class="reference internal" href="../fundamentals/digital.html"><span class="doc">Digital</span></a>) for advanced gate sets, parameter sweeps, and QASM 2.0 serialization.</p></li>
-<li><p><strong>Analog module</strong> (<a class="reference internal" href="../fundamentals/analog.html"><span class="doc">Analog</span></a>) for custom Hamiltonians, functional schedules, and intermediate-state storage.</p></li>
-<li><p><strong>Backends</strong> (<a class="reference internal" href="../fundamentals/backends.html"><span class="doc">Backends</span></a>) to compare CPU (Qutip), GPU (CUDA), or cloud (SpeQtrum) performance.</p></li>
-<li><p><strong>Extras &amp; utilities</strong>: VQE workflows, result handling, optimizer gallery, and serialization tools.</p></li>
+<li><p><strong>Core primitives</strong> (<a class="reference internal" href="../fundamentals/common.html"><span class="doc">Common</span></a>) for state vectors, operators, and shared abstractions.</p></li>
+<li><p><strong>Digital workflows</strong> (<a class="reference internal" href="../fundamentals/digital.html"><span class="doc">Digital</span></a>) covering circuit construction, parameter sweeps, and QASM export.</p></li>
+<li><p><strong>Analog workflows</strong> (<a class="reference internal" href="../fundamentals/analog.html"><span class="doc">Analog</span></a>) for Hamiltonian builders, schedules, and time-evolution utilities.</p></li>
+<li><p><strong>Functionals</strong> (<a class="reference internal" href="../fundamentals/functionals.html"><span class="doc">Functionals</span></a>) to see how experiments connect models with execution backends.</p></li>
+<li><p><strong>Execution targets</strong> (<a class="reference internal" href="../fundamentals/backends.html"><span class="doc">Backends</span></a>) to compare Qutip (CPU) and CUDA (CPU/GPU) runtimes.</p></li>
+<li><p><strong>SpeQtrum cloud</strong> (<a class="reference internal" href="../fundamentals/speqtrum.html"><span class="doc">SpeQtrum</span></a>) for account setup, calibration-aware jobs, and result retrieval.</p></li>
+<li><p><strong>Example gallery</strong> (<a class="reference internal" href="../examples/code_examples.html"><span class="doc">Code Examples</span></a>) for end-to-end notebooks you can adapt to your workflow.</p></li>
 </ul>
-<p>For in-depth reference, see the module pages in this documentation. Happy quantum coding!</p>
+<p>Happy quantum coding!</p>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

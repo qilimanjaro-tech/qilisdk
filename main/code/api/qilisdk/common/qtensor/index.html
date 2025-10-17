@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -221,7 +225,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensor</span></code></a></p></td>
-<td><p>Represents a quantum state or operator using a sparse matrix representation.</p></td>
+<td><p>Lightweight wrapper around sparse matrices representing quantum states or operators.</p></td>
 </tr>
 </tbody>
 </table>
@@ -257,9 +261,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.common.qtensor.QTensor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">scipy.sparse.sparray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">scipy.sparse.spmatrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/common/qtensor.html#QTensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.qtensor.QTensor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.qtensor.QTensor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Represents a quantum state or operator using a sparse matrix representation.</p>
+<dd><p>Lightweight wrapper around sparse matrices representing quantum states or operators.</p>
 <p>The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
-which are converted to sparse matrices) that represent quantum states (kets, bras)
+which are converted to sparse matrices) that represent quantum states (kets, bras, or density matrices)
 or operators. It provides utility methods for common quantum operations such as
 taking the adjoint (dagger), computing tensor products, partial traces, and norms.</p>
 <p>The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
@@ -268,17 +272,22 @@ efficient arithmetic and manipulation. The expected shapes for the data are:
 - (2**N, 1) for ket states,
 - (1, 2**N) for bra states.</p>
 <p>Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
-The input must represent a valid quantum state or operator with appropriate dimensions.
-Notice that 1D arrays of shape (2N,) are considered/transformed to bras with shape (1, 2N).</p>
+The input must represent a valid quantum state or operator with appropriate dimensions.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">ket</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]]))</span>
+</span><span id="line-5"><span class="n">density</span> <span class="o">=</span> <span class="n">ket</span> <span class="o">*</span> <span class="n">ket</span><span class="o">.</span><span class="n">adjoint</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span> <span class="pre">|</span> <span class="pre">sparray</span> <span class="pre">|</span> <span class="pre">spmatrix</span></code>) – A dense NumPy array or a SciPy sparse matrix
-representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
-(1, 2**N) for ket states, (2**N, 1) for bra states, or (1, 1) for scalars.</p>
+<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span> <span class="pre">|</span> <span class="pre">sparray</span> <span class="pre">|</span> <span class="pre">spmatrix</span></code>) – Dense or sparse matrix defining the quantum object. Expected
+shapes are <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">2**N)</span></code> for operators, <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">1)</span></code> for kets, <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2**N)</span></code> for bras, or <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">1)</span></code> for scalars.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input data is not a NumPy array or a SciPy sparse matrix,
-or if the data’s shape does not correspond to a valid quantum state/operator.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">data</span></code> is not 2-D or does not correspond to valid qubit dimensions.</p>
 </dd>
 </dl>
 <dl class="py property">

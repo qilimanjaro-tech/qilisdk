@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -279,98 +283,80 @@
 <div class="viewcode-block" id="Parameterizable.nparameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.nparameters">[docs]</a>
 </span><span id="line-22">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-23"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-24"><span class="sd">        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.</span>
-</span><span id="line-25">
-</span><span id="line-26"><span class="sd">        Returns:</span>
-</span><span id="line-27"><span class="sd">            int: The total count of parameters from all parameterized gates.</span>
-</span><span id="line-28"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-23"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of tunable parameters defined by the object.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-29">
-</span><span id="line-30">    <span class="nd">@abstractmethod</span>
+</span><span id="line-24">
+</span><span id="line-25">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.get_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_values">[docs]</a>
-</span><span id="line-31">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-32"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-33"><span class="sd">        Retrieve the parameter values from all parameterized gates in the circuit.</span>
-</span><span id="line-34">
-</span><span id="line-35"><span class="sd">        Returns:</span>
-</span><span id="line-36"><span class="sd">            list[float]: A list of parameter values from each parameterized gate.</span>
-</span><span id="line-37"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-26">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-27"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current numerical values of the parameters.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-38">
-</span><span id="line-39">    <span class="nd">@abstractmethod</span>
+</span><span id="line-28">
+</span><span id="line-29">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.get_parameter_names">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_names">[docs]</a>
-</span><span id="line-40">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-41"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-42"><span class="sd">        Retrieve the parameter values from all parameterized gates in the circuit.</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">        Returns:</span>
-</span><span id="line-45"><span class="sd">            list[float]: A list of parameter values from each parameterized gate.</span>
-</span><span id="line-46"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-30">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-31"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ordered list of parameter labels.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-47">
-</span><span id="line-48">    <span class="nd">@abstractmethod</span>
+</span><span id="line-32">
+</span><span id="line-33">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.get_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameters">[docs]</a>
-</span><span id="line-49">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-50"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-51"><span class="sd">        Retrieve the parameter names and values from all parameterized gates in the circuit.</span>
-</span><span id="line-52">
-</span><span id="line-53"><span class="sd">        Returns:</span>
-</span><span id="line-54"><span class="sd">            dict[str, float]: A dictionary of the parameters with their current values.</span>
-</span><span id="line-55"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-34">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-35"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a mapping from parameter labels to their current numerical values.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-56">
-</span><span id="line-57">    <span class="nd">@abstractmethod</span>
+</span><span id="line-36">
+</span><span id="line-37">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameter_values">[docs]</a>
-</span><span id="line-58">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-59"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-60"><span class="sd">        Set new parameter values for all parameterized gates in the circuit.</span>
-</span><span id="line-61">
-</span><span id="line-62"><span class="sd">        Args:</span>
-</span><span id="line-63"><span class="sd">            values (list[float]): A list containing new parameter values to assign to the parameterized gates.</span>
-</span><span id="line-64">
-</span><span id="line-65"><span class="sd">        Raises:</span>
-</span><span id="line-66"><span class="sd">            ValueError: If the RealNumber of provided values does not match the expected RealNumber of parameters.</span>
-</span><span id="line-67"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-38">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-39"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-40"><span class="sd">        Update all parameter values at once.</span>
+</span><span id="line-41">
+</span><span id="line-42"><span class="sd">        Args:</span>
+</span><span id="line-43"><span class="sd">            values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.</span>
+</span><span id="line-44">
+</span><span id="line-45"><span class="sd">        Raises:</span>
+</span><span id="line-46"><span class="sd">            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.</span>
+</span><span id="line-47"><span class="sd">        &quot;&quot;&quot;</span></div>
 
-</span><span id="line-68">
-</span><span id="line-69">    <span class="nd">@abstractmethod</span>
+</span><span id="line-48">
+</span><span id="line-49">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.set_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameters">[docs]</a>
-</span><span id="line-70">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-71"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the parameter values by their label. No need to provide the full list of parameters.</span>
-</span><span id="line-72">
-</span><span id="line-73"><span class="sd">        Args:</span>
-</span><span id="line-74"><span class="sd">            parameter_dict (dict[str, float]): a dictionary mapping each parameter label to its value.</span>
-</span><span id="line-75">
-</span><span id="line-76"><span class="sd">        Raises:</span>
-</span><span id="line-77"><span class="sd">            ValueError: if the provided parameter label is not defined in the list of parameters contained in this object.</span>
-</span><span id="line-78"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-50">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-51"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-52"><span class="sd">        Update a subset of parameters by label.</span>
+</span><span id="line-53">
+</span><span id="line-54"><span class="sd">        Args:</span>
+</span><span id="line-55"><span class="sd">            parameters (dict[str, float]): Mapping from parameter labels to updated numeric values.</span>
+</span><span id="line-56">
+</span><span id="line-57"><span class="sd">        Raises:</span>
+</span><span id="line-58"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
+</span><span id="line-59"><span class="sd">        &quot;&quot;&quot;</span></div>
 
-</span><span id="line-79">
-</span><span id="line-80">    <span class="nd">@abstractmethod</span>
+</span><span id="line-60">
+</span><span id="line-61">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.get_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_bounds">[docs]</a>
-</span><span id="line-81">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-82"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dictionary specifying the bounds of each parameter.&quot;&quot;&quot;</span></div>
+</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-63"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``(lower, upper)`` bounds associated with each parameter.&quot;&quot;&quot;</span></div>
 
-</span><span id="line-83">
-</span><span id="line-84">    <span class="nd">@abstractmethod</span>
+</span><span id="line-64">
+</span><span id="line-65">    <span class="nd">@abstractmethod</span>
 <div class="viewcode-block" id="Parameterizable.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameter_bounds">[docs]</a>
-</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Updates the ranges for the specified parameters.</span>
-</span><span id="line-87">
-</span><span id="line-88"><span class="sd">        Args:</span>
-</span><span id="line-89"><span class="sd">            ranges (dict[str, tuple[RealNumber, RealNumber]]): A dictionary mapping each parameter to its new range.</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="sd">        Raises:</span>
-</span><span id="line-92"><span class="sd">            ValueError: if the provided parameter label is not defined in the list of parameters contained in this object.</span>
-</span><span id="line-93"><span class="sd">        &quot;&quot;&quot;</span></div>
+</span><span id="line-66">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-67"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-68"><span class="sd">        Update the allowable ranges for the specified parameters.</span>
+</span><span id="line-69">
+</span><span id="line-70"><span class="sd">        Args:</span>
+</span><span id="line-71"><span class="sd">            ranges (dict[str, tuple[float, float]]): Mapping from parameter label to ``(lower, upper)`` bounds.</span>
+</span><span id="line-72">
+</span><span id="line-73"><span class="sd">        Raises:</span>
+</span><span id="line-74"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
+</span><span id="line-75"><span class="sd">        &quot;&quot;&quot;</span></div>
 </div>
 
 </span></code></pre></div>

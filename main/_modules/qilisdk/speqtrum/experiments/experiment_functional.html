@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -331,81 +335,77 @@
 </span><span id="line-65"><span class="sd">    This functional defines a standard Rabi oscillation experiment where</span>
 </span><span id="line-66"><span class="sd">    the drive pulse duration is swept to measure the oscillatory response</span>
 </span><span id="line-67"><span class="sd">    of the qubit under continuous driving.</span>
-</span><span id="line-68">
-</span><span id="line-69"><span class="sd">    Attributes:</span>
-</span><span id="line-70"><span class="sd">        result_type (type): The type of result produced (`RabiExperimentResult`).</span>
-</span><span id="line-71"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-72">
+</span><span id="line-68"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-69">
 <div class="viewcode-block" id="RabiExperiment.result_type">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.result_type">[docs]</a>
-</span><span id="line-73">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RabiExperimentResult</span></div>
+</span><span id="line-70">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RabiExperimentResult</span></div>
 
-</span><span id="line-74">
-</span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Rabi experiment functional.</span>
-</span><span id="line-77">
-</span><span id="line-78"><span class="sd">        Args:</span>
-</span><span id="line-79"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-80"><span class="sd">            drive_duration_values (np.ndarray): Array of drive pulse durations (in nanoseconds)</span>
-</span><span id="line-81"><span class="sd">                used to sweep the experiment.</span>
-</span><span id="line-82"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-83">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-84">        <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span> <span class="o">=</span> <span class="n">drive_duration_values</span>
-</span><span id="line-85">
-</span><span id="line-86">    <span class="nd">@property</span>
+</span><span id="line-71"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-72">
+</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Rabi experiment functional.</span>
+</span><span id="line-75">
+</span><span id="line-76"><span class="sd">        Args:</span>
+</span><span id="line-77"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-78"><span class="sd">            drive_duration_values (np.ndarray): Array of drive pulse durations (in nanoseconds)</span>
+</span><span id="line-79"><span class="sd">                used to sweep the experiment.</span>
+</span><span id="line-80"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-81">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-82">        <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span> <span class="o">=</span> <span class="n">drive_duration_values</span>
+</span><span id="line-83">
+</span><span id="line-84">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RabiExperiment.drive_duration_values">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.drive_duration_values">[docs]</a>
-</span><span id="line-87">    <span class="k">def</span><span class="w"> </span><span class="nf">drive_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-88"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive pulse duration sweep values.</span>
-</span><span id="line-89">
-</span><span id="line-90"><span class="sd">        Returns:</span>
-</span><span id="line-91"><span class="sd">            np.ndarray: The set of drive durations (in nanoseconds) used in the Rabi experiment.</span>
-</span><span id="line-92"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-93">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span></div>
+</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">drive_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive pulse duration sweep values.</span>
+</span><span id="line-87">
+</span><span id="line-88"><span class="sd">        Returns:</span>
+</span><span id="line-89"><span class="sd">            np.ndarray: The set of drive durations (in nanoseconds) used in the Rabi experiment.</span>
+</span><span id="line-90"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-91">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span></div>
 </div>
 
-</span><span id="line-94">
-</span><span id="line-95">
-</span><span id="line-96"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-92">
+</span><span id="line-93">
+</span><span id="line-94"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T1Experiment">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment">[docs]</a>
-</span><span id="line-97"><span class="k">class</span><span class="w"> </span><span class="nc">T1Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]):</span>
-</span><span id="line-98"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment functional for a single qubit.</span>
-</span><span id="line-99">
-</span><span id="line-100"><span class="sd">    This functional defines a standard T1 (energy relaxation) experiment,</span>
-</span><span id="line-101"><span class="sd">    where the delay between excitation and measurement is varied to extract</span>
-</span><span id="line-102"><span class="sd">    the relaxation time constant of the qubit.</span>
-</span><span id="line-103">
-</span><span id="line-104"><span class="sd">    Attributes:</span>
-</span><span id="line-105"><span class="sd">        result_type (type): The type of result produced (`T1ExperimentResult`).</span>
-</span><span id="line-106"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-107">
+</span><span id="line-95"><span class="k">class</span><span class="w"> </span><span class="nc">T1Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]):</span>
+</span><span id="line-96"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment functional for a single qubit.</span>
+</span><span id="line-97">
+</span><span id="line-98"><span class="sd">    This functional defines a standard T1 (energy relaxation) experiment,</span>
+</span><span id="line-99"><span class="sd">    where the delay between excitation and measurement is varied to extract</span>
+</span><span id="line-100"><span class="sd">    the relaxation time constant of the qubit.</span>
+</span><span id="line-101"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-102">
 <div class="viewcode-block" id="T1Experiment.result_type">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.result_type">[docs]</a>
-</span><span id="line-108">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1ExperimentResult</span></div>
+</span><span id="line-103">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1ExperimentResult</span></div>
 
-</span><span id="line-109">
-</span><span id="line-110">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-111"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 experiment functional.</span>
-</span><span id="line-112">
-</span><span id="line-113"><span class="sd">        Args:</span>
-</span><span id="line-114"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-115"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
-</span><span id="line-116"><span class="sd">                between excitation and measurement.</span>
-</span><span id="line-117"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-118">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-119">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
-</span><span id="line-120">
-</span><span id="line-121">    <span class="nd">@property</span>
+</span><span id="line-104"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-105">
+</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-107"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 experiment functional.</span>
+</span><span id="line-108">
+</span><span id="line-109"><span class="sd">        Args:</span>
+</span><span id="line-110"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-111"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
+</span><span id="line-112"><span class="sd">                between excitation and measurement.</span>
+</span><span id="line-113"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-114">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-115">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
+</span><span id="line-116">
+</span><span id="line-117">    <span class="nd">@property</span>
 <div class="viewcode-block" id="T1Experiment.wait_duration_values">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.wait_duration_values">[docs]</a>
-</span><span id="line-122">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-123"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
-</span><span id="line-124">
-</span><span id="line-125"><span class="sd">        Returns:</span>
-</span><span id="line-126"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.</span>
-</span><span id="line-127"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-128">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
+</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-119"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
+</span><span id="line-120">
+</span><span id="line-121"><span class="sd">        Returns:</span>
+</span><span id="line-122"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.</span>
+</span><span id="line-123"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-124">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
 </div>
 
 </span></code></pre></div>

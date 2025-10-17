@@ -89,16 +89,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Models and Variables</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -199,6 +203,7 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="code_examples.html">Code Examples</a>
 <div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Models and Variables</span>
 </nav>
 <div id="content" role="main">
@@ -207,7 +212,7 @@
 <section id="Variables">
 <h2>Variables<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Variables" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#Variables'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[1]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">Bitwise</span><span class="p">,</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">SpinVariable</span><span class="p">,</span> <span class="n">Variable</span>
@@ -219,7 +224,7 @@
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[2]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">x</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
@@ -227,7 +232,7 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[2]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -236,7 +241,7 @@
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[3]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">x</span><span class="o">.</span><span class="n">evaluate</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
@@ -244,7 +249,7 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[3]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -255,7 +260,7 @@
 <section id="Building-Terms-from-Variables">
 <h3>Building Terms from Variables<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Building-Terms-from-Variables" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#Building-Terms-from-Variables'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[4]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">3</span>
@@ -281,7 +286,7 @@ t4:  (-1.0) + (-3.0) * (x^2)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[5]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t3</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
@@ -289,7 +294,7 @@ t4:  (-1.0) + (-3.0) * (x^2)
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[5]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -298,7 +303,7 @@ t4:  (-1.0) + (-3.0) * (x^2)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[6]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">LT</span>
@@ -308,7 +313,7 @@ t4:  (-1.0) + (-3.0) * (x^2)
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[6]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -323,7 +328,7 @@ t4:  (-1.0) + (-3.0) * (x^2)
 <section id="Building-a-simple-model">
 <h3>Building a simple model<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Building-a-simple-model" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#Building-a-simple-model'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[7]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
@@ -357,7 +362,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[8]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">set_lagrange_multiplier</span><span class="p">(</span><span class="s2">"x_upper_bound_constraint"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -387,7 +392,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[9]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"test_constraint"</span><span class="p">,</span> <span class="n">LT</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -420,7 +425,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[10]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">})</span>
@@ -428,7 +433,7 @@ With Lagrange Multiplier/s:
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[10]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -437,7 +442,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[11]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
@@ -445,7 +450,7 @@ With Lagrange Multiplier/s:
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[11]:
 </span></code></pre></div>
 </div>
 <div class="output_area docutils container">
@@ -457,7 +462,7 @@ With Lagrange Multiplier/s:
 <section id="Building-Knapsack-model">
 <h3>Building Knapsack model<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Building-Knapsack-model" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#Building-Knapsack-model'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[12]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -500,19 +505,19 @@ With Lagrange Multiplier/s:
 Knapsack Instance:
 ----------
 
-Values =  [9, 7, 1]
-Weights =  [7, 9, 7]
-Maximum allowed weight =  13
+Values =  [7, 6, 4]
+Weights =  [1, 3, 2]
+Maximum allowed weight =  3
 ----------
 Knapsack Model:
 ----------
 Model name: knapsack
 objective (obj):
          maximize :
-         (9) * b_0 + (7) * b_1 + b_2
+         (7) * b_0 + (6) * b_1 + (4) * b_2
 
 subject to the constraint/s:
-         maximum_weight: (7) * b_0 + (9) * b_1 + (7) * b_2 &lt;= (13.0)
+         maximum_weight: b_0 + (3) * b_1 + (2) * b_2 &lt;= (3.0)
 
 With Lagrange Multiplier/s:
          maximum_weight : 100
@@ -524,7 +529,7 @@ With Lagrange Multiplier/s:
 <section id="QUBO">
 <h2>QUBO<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#QUBO" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#QUBO'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[13]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
@@ -559,7 +564,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[14]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
@@ -571,21 +576,21 @@ With Lagrange Multiplier/s:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-obj: (2) * b + (13.0) + (40.0) * (b * qubo_constraint_slack(0)) + (-10.0) * qubo_constraint_slack(0)
+obj: (2) * b_0 + (13.0) + (40.0) * (b_0 * qubo_constraint_slack(0)) + (-10.0) * qubo_constraint_slack(0)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[15]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"example_qubo_model"</span><span class="p">)</span>
-</span><span id="line-4"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
 </span><span id="line-5">
 </span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span>
 </span><span id="line-7">    <span class="s2">"qubo_constraint"</span><span class="p">,</span>
-</span><span id="line-8">    <span class="n">LT</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+</span><span id="line-8">    <span class="n">LT</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
 </span><span id="line-9">    <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 </span><span id="line-10">    <span class="n">penalization</span><span class="o">=</span><span class="s2">"unbalanced"</span><span class="p">,</span>
 </span><span id="line-11">    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
@@ -604,10 +609,10 @@ obj: (2) * b + (13.0) + (40.0) * (b * qubo_constraint_slack(0)) + (-10.0) * qubo
 Model name: example_qubo_model
 objective (obj):
          minimize :
-         (2) * b + (3)
+         (2) * b_0 + (3)
 
 subject to the constraint/s:
-         qubo_constraint: (2.0) * b == (-1.0)
+         qubo_constraint: (2.0) * b_0 == (-1.0)
 
 With Lagrange Multiplier/s:
          qubo_constraint : 1
@@ -615,7 +620,7 @@ With Lagrange Multiplier/s:
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[16]:
 </span></code></pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span>
@@ -623,11 +628,12 @@ With Lagrange Multiplier/s:
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[16]:
+</span></code></pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-obj: (4.0) * b + (4.0)
+obj: (4.0) * b_0 + (4.0)
 </pre></div></div>
 </div>
 </section>

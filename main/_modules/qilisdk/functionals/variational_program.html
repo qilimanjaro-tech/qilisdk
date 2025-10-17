@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -289,58 +293,69 @@
 <div class="viewcode-block" id="VariationalProgram">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram">[docs]</a>
 </span><span id="line-31"><span class="k">class</span><span class="w"> </span><span class="nc">VariationalProgram</span><span class="p">(</span><span class="n">Functional</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TFunctional</span><span class="p">]):</span>
+</span><span id="line-32"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-33"><span class="sd">    Bundle a parameterized functional, optimizer, and cost function into a variational loop.</span>
+</span><span id="line-34">
+</span><span id="line-35"><span class="sd">    Example:</span>
+</span><span id="line-36"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-37">
+</span><span id="line-38"><span class="sd">            program = VariationalProgram(functional, optimizer, cost_function)</span>
+</span><span id="line-39"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-40">
 <div class="viewcode-block" id="VariationalProgram.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.result_type">[docs]</a>
-</span><span id="line-32">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">VariationalProgramResult</span></div>
+</span><span id="line-41">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">VariationalProgramResult</span></div>
 
-</span><span id="line-33">
-</span><span id="line-34">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-35">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-36">        <span class="n">functional</span><span class="p">:</span> <span class="n">TFunctional</span><span class="p">,</span>
-</span><span id="line-37">        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
-</span><span id="line-38">        <span class="n">cost_function</span><span class="p">:</span> <span class="n">CostFunction</span><span class="p">,</span>
-</span><span id="line-39">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-40">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-41"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized</span>
-</span><span id="line-42"><span class="sd">        functional.</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">        Args:</span>
-</span><span id="line-45"><span class="sd">            functional (Functional): The parameterized Functional to be optimized.</span>
-</span><span id="line-46"><span class="sd">            optimizer (Optimizer): The optimizer to be used in optimizing the Functional&#39;s parameters.</span>
-</span><span id="line-47"><span class="sd">            cost_function (CostFunction): A CostFunction object that defines how the cost is being computed.</span>
-</span><span id="line-48"><span class="sd">            store_intermediate_results (bool, optional): If True, stores a list of intermediate results.</span>
-</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-50">        <span class="bp">self</span><span class="o">.</span><span class="n">_functional</span> <span class="o">=</span> <span class="n">functional</span>
-</span><span id="line-51">        <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
-</span><span id="line-52">        <span class="bp">self</span><span class="o">.</span><span class="n">_cost_function</span> <span class="o">=</span> <span class="n">cost_function</span>
-</span><span id="line-53">        <span class="bp">self</span><span class="o">.</span><span class="n">_store_intermediate_results</span> <span class="o">=</span> <span class="n">store_intermediate_results</span>
-</span><span id="line-54">
-</span><span id="line-55">    <span class="nd">@property</span>
+</span><span id="line-42">
+</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-44">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-45">        <span class="n">functional</span><span class="p">:</span> <span class="n">TFunctional</span><span class="p">,</span>
+</span><span id="line-46">        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+</span><span id="line-47">        <span class="n">cost_function</span><span class="p">:</span> <span class="n">CostFunction</span><span class="p">,</span>
+</span><span id="line-48">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-49">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-50"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-51"><span class="sd">        Args:</span>
+</span><span id="line-52"><span class="sd">            functional (PrimitiveFunctional): Parameterized functional to optimize.</span>
+</span><span id="line-53"><span class="sd">            optimizer (Optimizer): Optimization routine controlling parameter updates.</span>
+</span><span id="line-54"><span class="sd">            cost_function (CostFunction): Metric used to evaluate functional executions.</span>
+</span><span id="line-55"><span class="sd">            store_intermediate_results (bool, optional): Persist intermediate executions if requested by the optimizer.</span>
+</span><span id="line-56"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-57">        <span class="bp">self</span><span class="o">.</span><span class="n">_functional</span> <span class="o">=</span> <span class="n">functional</span>
+</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
+</span><span id="line-59">        <span class="bp">self</span><span class="o">.</span><span class="n">_cost_function</span> <span class="o">=</span> <span class="n">cost_function</span>
+</span><span id="line-60">        <span class="bp">self</span><span class="o">.</span><span class="n">_store_intermediate_results</span> <span class="o">=</span> <span class="n">store_intermediate_results</span>
+</span><span id="line-61">
+</span><span id="line-62">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgram.functional">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.functional">[docs]</a>
-</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">functional</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFunctional</span><span class="p">:</span>
-</span><span id="line-57">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_functional</span></div>
-
-</span><span id="line-58">
-</span><span id="line-59">    <span class="nd">@property</span>
-<div class="viewcode-block" id="VariationalProgram.optimizer">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.optimizer">[docs]</a>
-</span><span id="line-60">    <span class="k">def</span><span class="w"> </span><span class="nf">optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optimizer</span><span class="p">:</span>
-</span><span id="line-61">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span></div>
-
-</span><span id="line-62">
-</span><span id="line-63">    <span class="nd">@property</span>
-<div class="viewcode-block" id="VariationalProgram.cost_function">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.cost_function">[docs]</a>
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="nf">cost_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CostFunction</span><span class="p">:</span>
-</span><span id="line-65">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_function</span></div>
+</span><span id="line-63">    <span class="k">def</span><span class="w"> </span><span class="nf">functional</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFunctional</span><span class="p">:</span>
+</span><span id="line-64"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the wrapped functional that will be optimised.&quot;&quot;&quot;</span>
+</span><span id="line-65">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_functional</span></div>
 
 </span><span id="line-66">
 </span><span id="line-67">    <span class="nd">@property</span>
+<div class="viewcode-block" id="VariationalProgram.optimizer">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.optimizer">[docs]</a>
+</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="nf">optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optimizer</span><span class="p">:</span>
+</span><span id="line-69"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the optimizer responsible for parameter updates.&quot;&quot;&quot;</span>
+</span><span id="line-70">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span></div>
+
+</span><span id="line-71">
+</span><span id="line-72">    <span class="nd">@property</span>
+<div class="viewcode-block" id="VariationalProgram.cost_function">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.cost_function">[docs]</a>
+</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="nf">cost_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CostFunction</span><span class="p">:</span>
+</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the cost function applied to functional results.&quot;&quot;&quot;</span>
+</span><span id="line-75">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_function</span></div>
+
+</span><span id="line-76">
+</span><span id="line-77">    <span class="nd">@property</span>
 <div class="viewcode-block" id="VariationalProgram.store_intermediate_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results">[docs]</a>
-</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="nf">store_intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-69">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_intermediate_results</span></div>
+</span><span id="line-78">    <span class="k">def</span><span class="w"> </span><span class="nf">store_intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-79"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicate whether intermediate execution data should be stored.&quot;&quot;&quot;</span>
+</span><span id="line-80">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_intermediate_results</span></div>
 </div>
 
 </span></code></pre></div>

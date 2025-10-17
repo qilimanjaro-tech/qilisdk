@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="digital.html">Digital</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -203,17 +207,44 @@
 <div id="content" role="main">
 <section id="common">
 <h1>Common<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#common"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>The <a class="reference internal" href="../code/api/qilisdk/common/index.html#module-qilisdk.common" title="qilisdk.common"><code class="xref py py-mod docutils literal notranslate"><span class="pre">common</span></code></a> module in the Qili SDK provides a collection of utilities useful for building quantum algorithms and performing simulations. It consists of the following primary components:</p>
-<ul>
-<li><p><a class="reference internal" href="../code/api/qilisdk/common/model/index.html#module-qilisdk.common.model" title="qilisdk.common.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">model</span></code></a>: A toolkit to construct and mathematically represent optimization models.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Depends on <a class="reference internal" href="../code/api/qilisdk/common/variables/index.html#module-qilisdk.common.variables" title="qilisdk.common.variables"><code class="xref py py-mod docutils literal notranslate"><span class="pre">variables</span></code></a>, which provides the fundamental building blocks of models.</p></li>
+<p>The <a class="reference internal" href="../code/api/qilisdk/common/index.html#module-qilisdk.common" title="qilisdk.common"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.common</span></code></a> layer underpins both the digital and analog stacks. It
+provides symbolic variables, optimization models, sparse quantum tensors, and
+the <code class="docutils literal notranslate"><span class="pre">Parameterizable</span></code> mixin used throughout the SDK.</p>
+<p>Highlights:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../code/api/qilisdk/common/variables/index.html#module-qilisdk.common.variables" title="qilisdk.common.variables"><code class="xref py py-mod docutils literal notranslate"><span class="pre">variables</span></code></a> supplies binary, spin, continuous, and
+parameter variables plus algebraic helpers (<a class="reference internal" href="../code/api/qilisdk/common/variables/index.html#qilisdk.common.variables.Term" title="qilisdk.common.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>,
+comparison factories, encodings).</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/common/model/index.html#module-qilisdk.common.model" title="qilisdk.common.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">model</span></code></a> builds constrained optimization programs and
+offers tools to automatically convert the model to <a class="reference internal" href="../code/api/qilisdk/common/model/index.html#qilisdk.common.model.QUBO" title="qilisdk.common.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a> format if the constraints are linear.</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#module-qilisdk.common.qtensor" title="qilisdk.common.qtensor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qtensor</span></code></a> manages sparse quantum objects and utilities
+such as <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.tensor_prod" title="qilisdk.common.qtensor.tensor_prod"><code class="xref py py-func docutils literal notranslate"><span class="pre">tensor_prod()</span></code></a> and <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.expect_val" title="qilisdk.common.qtensor.expect_val"><code class="xref py py-func docutils literal notranslate"><span class="pre">expect_val()</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> standardizes how
+objects expose symbolic parameters (shared by circuits, schedules, etc.).</p></li>
 </ul>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">quantum_objects</span></code>: A toolkit to construct and manage quantum state vector, density matrices, and quantum operators.</p></li>
-</ul>
+<section id="quick-start">
+<h2>Quick Start<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>This minimal example introduces a binary optimization model, converts it to a
+QUBO penalty form, and exports the corresponding Hamiltonian:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x0"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"toy"</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x0</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x0</span> <span class="o">*</span> <span class="n">x1</span><span class="p">,</span>
+</span><span id="line-8">                    <span class="n">label</span><span class="o">=</span><span class="s2">"energy"</span><span class="p">,</span>
+</span><span id="line-9">                    <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-10"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"budget"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">x0</span> <span class="o">+</span> <span class="n">x1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="n">qubo</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_qubo</span><span class="p">()</span>
+</span><span id="line-13"><span class="nb">print</span><span class="p">(</span><span class="n">qubo</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="n">ham</span> <span class="o">=</span> <span class="n">qubo</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span><span id="line-16"><span class="nb">print</span><span class="p">(</span><span class="n">ham</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
 <section id="models">
 <h2>Models<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#models" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#models'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>The core components for model construction are defined in the <a class="reference internal" href="../code/api/qilisdk/common/variables/index.html#module-qilisdk.common.variables" title="qilisdk.common.variables"><code class="xref py py-mod docutils literal notranslate"><span class="pre">variables</span></code></a> module.</p>
@@ -261,14 +292,15 @@
 </span></code></pre></div>
 </div>
 <p>Continuous variables support indexing, where each index refers to a component of the binary-encoded form of the variable. For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">x</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">to_binary</span><span class="p">())</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.4</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.30000000000000004</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p>Each binary variable configuration generates a float within the bounds, based on the defined precision. For instance:</p>
+<p>To index the first binary variable from the binary representation of x you can write: <code class="docutils literal notranslate"><span class="pre">x[0]</span></code>.
+Each binary variable configuration generates a float within the bounds, based on the defined precision. For instance:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">x</span><span class="o">.</span><span class="n">evaluate</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </span></code></pre></div>
 </div>
@@ -291,10 +323,10 @@
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t1</span><span class="p">:</span>  <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</span><span id="line-2"><span class="n">t2</span><span class="p">:</span>  <span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-</span><span id="line-3"><span class="n">t3</span><span class="p">:</span>  <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-4"><span class="n">t4</span><span class="p">:</span>  <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t1</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</span><span id="line-2"><span class="n">t2</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="line-3"><span class="n">t3</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">t4</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>Terms can be evaluated by providing values for the involved variables:</p>
@@ -312,6 +344,41 @@
 <p class="admonition-title">Warning</p>
 <p>To evaluate a term, all participating variables must be assigned valid values within their respective domains and bounds.</p>
 </div>
+</section>
+<section id="parameters-and-parameterizable-objects">
+<h3>Parameters and Parameterizable Objects<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#parameters-and-parameterizable-objects" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#parameters-and-parameterizable-objects'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<p>Many components in QiliSDK expose symbolic parameters that can be optimized or
+re-bound at runtime. The <a class="reference internal" href="../code/api/qilisdk/common/variables/index.html#qilisdk.common.variables.Parameter" title="qilisdk.common.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> class
+represents a scalar symbol with optional bounds, and
+<a class="reference internal" href="../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> provides a uniform API
+(<code class="docutils literal notranslate"><span class="pre">get_parameter_names</span></code>, <code class="docutils literal notranslate"><span class="pre">set_parameter_values</span></code>…) implemented by circuits,
+schedules, models, and more.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">theta</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">"theta"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>     <span class="c1"># 0.5</span>
+</span><span id="line-5"><span class="n">theta</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="mf">0.75</span><span class="p">)</span>
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>    <span class="c1"># (0.0, 1.0)</span>
+</span></code></pre></div>
+</div>
+<p>Parameters behave like symbolic variables in algebraic expressions, so you can
+combine them with other variables and evaluate terms without having to pass the
+parameter explicitly—its stored <code class="docutils literal notranslate"><span class="pre">value</span></code> is used automatically.</p>
+<p>Objects that inherit from <a class="reference internal" href="../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a>
+collect all the <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> instances they encounter. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">RX</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">))</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">())</span>   <span class="c1"># ['RX(0)_theta_0']</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">())</span>  <span class="c1"># [0.75]</span>
+</span><span id="line-8"><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="s2">"RX(0)_theta_0"</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>
+</span></code></pre></div>
+</div>
+<p>Whenever you interact with one of these parameterizable objects, the helper
+methods let you list, bound, or update the symbolic degrees of freedom in a
+consistent way.</p>
 </section>
 <section id="comparison-terms">
 <h3>Comparison Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#comparison-terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#comparison-terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
@@ -470,7 +537,61 @@
 </section>
 <section id="qubo-models">
 <h3>QUBO Models<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qubo-models" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qubo-models'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>The <a class="reference internal" href="../code/api/qilisdk/common/model/index.html#qilisdk.common.model.QUBO" title="qilisdk.common.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a> subclass specializes in <strong>Quadratic Unconstrained Binary Optimization</strong> models, where every decision variable is binary and the objective function is at most quadratic.  Unlike general models, “hard” constraints are not maintained separately but are encoded directly into the objective as penalty terms.  The strength of each penalty is controlled by its associated Lagrange multiplier.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/common/model/index.html#qilisdk.common.model.QUBO" title="qilisdk.common.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a> subclass specializes in <strong>Quadratic Unconstrained Binary Optimization</strong> models,
+where every decision variable is binary and the objective function is at most quadratic.
+Unlike general models, “hard” constraints are not maintained separately but are encoded directly into the objective as penalty terms.
+The strength of each penalty is controlled by its associated Lagrange multiplier.</p>
+<p>The binary quadratic cost function that defines a QUBO
+problem is written as</p>
+<div class="math notranslate nohighlight">
+\[f(x) = \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} q_{ij} x_i x_j,\]</div>
+<p>with decision variables <span class="math notranslate nohighlight">\(x_i \in \{0, 1\}\)</span> and symmetric coefficients <span class="math notranslate nohighlight">\(q_{ij} = q_{ji} \in \mathbb{R}\)</span>.
+Separating the diagonal terms highlights the effective linear
+weights:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = \sum_{i=1}^{n-1} \sum_{j&gt;i} q_{ij} x_i x_j + \sum_{i=1}^{n} q_{ii} x_i.\]</div>
+<section id="adding-constraints-as-penalties">
+<h4>Adding Constraints as Penalties<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#adding-constraints-as-penalties"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h4>
+<p>Since QUBO is unconstrained, every constraint is converted into the objective via a <strong>penalty term</strong>.
+Linear equality constraints can be described as,</p>
+<div class="math notranslate nohighlight">
+\[\sum_{i=1}^{n} c_i x_i = C, \quad c_i \in \mathbb{Z},\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_i\)</span> are integer coefficients and <span class="math notranslate nohighlight">\(C\)</span> is an integer constant.</p>
+<p>Embedded as penalties, these constraints give the penalized objective</p>
+<div class="math notranslate nohighlight">
+\[\min_{x,\,s} \left(
+    \sum_{i=1}^{n-1} \sum_{j&gt;i} c_{ij} x_i x_j
+    + \sum_{i=1}^{n} h_i x_i
+    + \lambda_0 \left( \sum_{i=1}^{n} q_i x_i - C \right)^{2}
+\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\lambda_0 &gt; 0\)</span> is a penalty strength parameter.</p>
+<p>Ineqaulity constraints can be defined as:</p>
+<div class="math notranslate nohighlight">
+\[\sum_{i=1}^{n} \ell_i x_i \leq B, \quad \ell_i \in \mathbb{Z}.\]</div>
+<p>To translate these into penalties, two strategies are supported:</p>
+<ul>
+<li><dl>
+<dt><strong>Slack penalization</strong> (default):</dt><dd><p>Introduce additional binary slack variables to turn inequalities into equalities, then square the residual.
+Therefore, the penalty term becomes:</p>
+<div class="math notranslate nohighlight">
+\[\lambda_1 \left( B - \sum_{i=1}^{n} \ell_i x_i - \sum_{k=0}^{N-1} 2^{k} s_k \right)^{2}\]</div>
+<p>where <span class="math notranslate nohighlight">\(s_k\)</span> are slack binary variables introduced to encode the inequality constraint (with the
+number of bits <span class="math notranslate nohighlight">\(N\)</span> chosen so that their binary expansion spans the admissible slack range) and
+<span class="math notranslate nohighlight">\(\lambda_{1}\)</span> control the penalty strength.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>Unbalanced penalization</strong>:</dt><dd><p>Directly penalize violation without slack variables using two weights (a, b) to scale positive and negative deviations differently <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
+we define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n} \ell_i x_i\)</span> as the signed residual of the constraint, and the penalty term becomes:</p>
+<div class="math notranslate nohighlight">
+\[- a h(x) + b h(x)^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> are parameters that control the penalty strength for violations above and below the bound, respectively.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
 <section id="why-qubo">
 <h4>Why QUBO?<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#why-qubo"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h4>
 <ul class="simple">
@@ -485,7 +606,7 @@
 <li><p><strong>Model creation</strong></p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
-</span><span id="line-2"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"portfolio_selection"</span><span class="p">)</span>
+</span><span id="line-2"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"qubo_example"</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -497,22 +618,6 @@
 </span><span id="line-4">                    <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-</section>
-<section id="adding-constraints-as-penalties">
-<h4>Adding Constraints as Penalties<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#adding-constraints-as-penalties"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h4>
-<p>Since QUBO is unconstrained, every constraint is converted into the objective via a <strong>penalty term</strong>:</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt><strong>Slack penalization</strong> (default):</dt><dd><p>Introduce additional binary slack variables to turn inequalities into equalities, then square the residual.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><strong>Unbalanced penalization</strong>:</dt><dd><p>Directly penalize violation without slack variables using two weights (a, b) to scale positive and negative deviations differently <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
-</dd>
-</dl>
-</li>
-</ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <ul class="simple">
@@ -523,51 +628,48 @@
 <section id="example-slack-penalization">
 <h5>Example: Slack Penalization<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-slack-penalization"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h5>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LT</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
 </span><span id="line-3">
-</span><span id="line-4"><span class="n">b</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">b</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b2"</span><span class="p">)</span>
 </span><span id="line-5"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"slack_example"</span><span class="p">)</span>
-</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="line-7">                    <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span>
-</span><span id="line-8">                    <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
-</span><span id="line-9">
-</span><span id="line-10"><span class="c1"># Enforce b &lt;= 0.5 via slack, squared penalty in objective</span>
-</span><span id="line-11"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span>
-</span><span id="line-12">                    <span class="n">LT</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
-</span><span id="line-13">                    <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="line-14">                    <span class="n">penalization</span><span class="o">=</span><span class="s2">"slack"</span><span class="p">,</span>
-</span><span id="line-15">                    <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-16">
-</span><span id="line-17"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">b2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Enforce b &lt;= 0.5 via slack, squared penalty in objective</span>
+</span><span id="line-9"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">penalization</span><span class="o">=</span><span class="s2">"slack"</span><span class="p">,</span> <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">slack_c1</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">8.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">11.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="mf">20.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
 <section id="example-unbalanced-penalization">
 <h5>Example: Unbalanced Penalization<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-unbalanced-penalization"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h5>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"unbalanced_example"</span><span class="p">)</span>
-</span><span id="line-2"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="line-3">                    <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span>
-</span><span id="line-4">                    <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
-</span><span id="line-5">
-</span><span id="line-6"><span class="c1"># Penalize only violations above 0.5 more heavily than below</span>
-</span><span id="line-7"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span>
-</span><span id="line-8">                    <span class="n">LT</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
-</span><span id="line-9">                    <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-</span><span id="line-10">                    <span class="n">penalization</span><span class="o">=</span><span class="s2">"unbalanced"</span><span class="p">,</span>
-</span><span id="line-11">                    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
-</span><span id="line-12">                    <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-13">
-</span><span id="line-14"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">b</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b2"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"unbalanced_penalization_example"</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">b2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Enforce b &lt;= 0.5 via slack, squared penalty in objective</span>
+</span><span id="line-9"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">penalization</span><span class="o">=</span><span class="s2">"unbalanced"</span><span class="p">,</span> <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">4.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a href="#id1" role="doc-backlink">1</a><span class="fn-bracket">]</span></span>
+<p>Montañez-Barrera, Jhon Alejandro, et al. “Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms.” Quantum Science and Technology 9.2 (2024): 025022.</p>
+</aside>
+</aside>
 </section>
 </section>
 <section id="interoperability">
@@ -587,12 +689,6 @@
 </span><span id="line-2"><span class="n">h</span> <span class="o">=</span> <span class="n">qubo_model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
-<aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id2" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span><a href="#id1" role="doc-backlink">1</a><span class="fn-bracket">]</span></span>
-<p>Montañez-Barrera, Jhon Alejandro, et al. “Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms.” Quantum Science and Technology 9.2 (2024): 025022.</p>
-</aside>
-</aside>
 </dd>
 </dl>
 </li>
@@ -602,17 +698,19 @@
 </section>
 <section id="quantum-objects">
 <h2>Quantum Objects<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quantum-objects" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quantum-objects'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">quantum_objects</span></code> module defines the <code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code> class and related helpers for representing and manipulating quantum states and operators in sparse form.</p>
-<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code> wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#module-qilisdk.common.qtensor" title="qilisdk.common.qtensor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qtensor</span></code></a> module defines the <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>
+class and related helpers for representing and manipulating quantum states and
+operators in sparse form.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:</p>
 <ul class="simple">
 <li><p><strong>Kets</strong> (column vectors of shape <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">1)</span></code>)</p></li>
-<li><p><strong>Bras</strong> (row vectors of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2**N)</span></code> or <code class="docutils literal notranslate"><span class="pre">(2**N,)</span></code>)</p></li>
+<li><p><strong>Bras</strong> (row vectors of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2**N)</span></code>)</p></li>
 <li><p><strong>Operators / Density Matrices</strong> (square matrices of shape <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">2**N)</span></code>)</p></li>
 <li><p><strong>Scalars</strong> (<code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">1)</span></code> matrices)</p></li>
 </ul>
 <p>Examples of creating various quantum objects:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
 </span><span id="line-3">
 </span><span id="line-4"><span class="c1"># 1‑qubit |0&gt; ket</span>
 </span><span id="line-5"><span class="n">psi_ket</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
@@ -620,7 +718,7 @@
 </span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
 </span><span id="line-8">
 </span><span id="line-9"><span class="c1"># 1‑qubit &lt;0| bra</span>
-</span><span id="line-10"><span class="n">psi_bra</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-10"><span class="n">psi_bra</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]))</span>
 </span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="s2">"Bra:"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"is_bra?"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
 </span><span id="line-12"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
 </span><span id="line-13">
@@ -649,24 +747,30 @@
 </div>
 <section id="helper-constructors">
 <h3>Helper constructors<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#helper-constructors" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#helper-constructors'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">bra</span><span class="p">,</span> <span class="n">basis_state</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">bra</span><span class="p">,</span> <span class="n">basis_state</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="c1"># Single‑qubit</span>
-</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="s2">"ket(0):"</span><span class="p">,</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"is_ket?"</span><span class="p">,</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_ket</span><span class="p">())</span>
-</span><span id="line-5"><span class="nb">print</span><span class="p">(</span><span class="s2">"bra(1):"</span><span class="p">,</span> <span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"is_bra?"</span><span class="p">,</span> <span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
+</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="s2">"ket(0):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">is_ket?"</span><span class="p">,</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_ket</span><span class="p">())</span>
+</span><span id="line-5"><span class="nb">print</span><span class="p">(</span><span class="s2">"bra(1):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">is_bra?"</span><span class="p">,</span> <span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
 </span><span id="line-6">
 </span><span id="line-7"><span class="c1"># Fock basis in N=4 Hilbert space</span>
-</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"basis_state(2,4):"</span><span class="p">,</span> <span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"shape:"</span><span class="p">,</span> <span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"basis_state(2,4):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">dense</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">shape:"</span><span class="p">,</span> <span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">ket(0): [[1]
-</span><span id="line-2">[0]] is_ket? True
-</span><span id="line-3">bra(1): [[0 1]] is_bra? True
-</span><span id="line-4">basis_state(2,4): [[0]
-</span><span id="line-5">[0]
-</span><span id="line-6">[1]
-</span><span id="line-7">[0]] shape: (4, 1)
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">ket(0):
+</span><span id="line-2">[[1.]
+</span><span id="line-3">[0.]]
+</span><span id="line-4">is_ket? True
+</span><span id="line-5">bra(1):
+</span><span id="line-6">[[0. 1.]]
+</span><span id="line-7">is_bra? True
+</span><span id="line-8">basis_state(2,4):
+</span><span id="line-9">[[0.]
+</span><span id="line-10">[0.]
+</span><span id="line-11">[1.]
+</span><span id="line-12">[0.]]
+</span><span id="line-13">shape: (4, 1)
 </span></code></pre></div>
 </div>
 </section>
@@ -687,7 +791,7 @@
 </ul>
 <p>Examples:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
 </span><span id="line-3">
 </span><span id="line-4"><span class="c1"># Adjoint of a non-Hermitian operator</span>
 </span><span id="line-5"><span class="n">A</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]))</span>
@@ -707,7 +811,7 @@
 </span><span id="line-19"><span class="nb">print</span><span class="p">(</span><span class="s2">"trace norm(dm) ="</span><span class="p">,</span> <span class="n">dm</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">'tr'</span><span class="p">))</span>
 </span><span id="line-20">
 </span><span id="line-21"><span class="c1"># Partial trace of a Bell state</span>
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
 </span><span id="line-23"><span class="n">bell</span> <span class="o">=</span> <span class="p">(</span><span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)])</span> <span class="o">+</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">)]))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
 </span><span id="line-24"><span class="n">rho_bell</span> <span class="o">=</span> <span class="n">bell</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">()</span>
 </span><span id="line-25"><span class="nb">print</span><span class="p">(</span><span class="s2">"rho_bell:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">rho_bell</span><span class="p">)</span>
@@ -728,23 +832,24 @@
 </span><span id="line-10">||ket0|| = 1.0
 </span><span id="line-11">trace norm(dm) = 1.0
 </span><span id="line-12">rho_bell:
-</span><span id="line-13">[[0.5 0.  0.  0.5]
-</span><span id="line-14">[0.  0.  0.  0. ]
+</span><span id="line-13">QTensor(shape=4x4, nnz=4, format='csr')
+</span><span id="line-14">[[0.5 0.  0.  0.5]
 </span><span id="line-15">[0.  0.  0.  0. ]
-</span><span id="line-16">[0.5 0.  0.  0.5]]
-</span><span id="line-17">rho_A:
-</span><span id="line-18">[[0.5 0. ]
-</span><span id="line-19">[0.  0.5]]
+</span><span id="line-16">[0.  0.  0.  0. ]
+</span><span id="line-17">[0.5 0.  0.  0.5]]
+</span><span id="line-18">rho_A:
+</span><span id="line-19">[[0.5 0. ]
+</span><span id="line-20">[0.  0.5]]
 </span></code></pre></div>
 </div>
 </section>
 <section id="extra-utilities">
 <h3>Extra Utilities<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#extra-utilities" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#extra-utilities'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <ul class="simple">
-<li><p><strong>Tensor product</strong> with <code class="xref py py-func docutils literal notranslate"><span class="pre">tensor_prod()</span></code></p></li>
-<li><p><strong>Expectation value</strong> with <code class="xref py py-func docutils literal notranslate"><span class="pre">expect_val()</span></code></p></li>
+<li><p><strong>Tensor product</strong> with <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.tensor_prod" title="qilisdk.common.qtensor.tensor_prod"><code class="xref py py-func docutils literal notranslate"><span class="pre">tensor_prod()</span></code></a></p></li>
+<li><p><strong>Expectation value</strong> with <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.expect_val" title="qilisdk.common.qtensor.expect_val"><code class="xref py py-func docutils literal notranslate"><span class="pre">expect_val()</span></code></a></p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.quantum_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">tensor_prod</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span><span class="p">,</span> <span class="n">QTensor</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
 </span><span id="line-2"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-3">
 </span><span id="line-4"><span class="c1"># Two‑qubit Hadamard tensor</span>
@@ -793,16 +898,18 @@
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
+<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Quick Start</a></li>
 <li><a :data-current="activeSection === '#models'" class="reference internal" href="#models">Models</a><ul>
 <li><a :data-current="activeSection === '#variables'" class="reference internal" href="#variables">Variables</a></li>
 <li><a :data-current="activeSection === '#terms'" class="reference internal" href="#terms">Terms</a></li>
+<li><a :data-current="activeSection === '#parameters-and-parameterizable-objects'" class="reference internal" href="#parameters-and-parameterizable-objects">Parameters and Parameterizable Objects</a></li>
 <li><a :data-current="activeSection === '#comparison-terms'" class="reference internal" href="#comparison-terms">Comparison Terms</a></li>
 <li><a :data-current="activeSection === '#objectives-and-constraints'" class="reference internal" href="#objectives-and-constraints">Objectives and Constraints</a></li>
 <li><a :data-current="activeSection === '#evaluating-a-model'" class="reference internal" href="#evaluating-a-model">Evaluating a Model</a></li>
 <li><a :data-current="activeSection === '#qubo-models'" class="reference internal" href="#qubo-models">QUBO Models</a><ul>
+<li><a :data-current="activeSection === '#adding-constraints-as-penalties'" class="reference internal" href="#adding-constraints-as-penalties">Adding Constraints as Penalties</a></li>
 <li><a :data-current="activeSection === '#why-qubo'" class="reference internal" href="#why-qubo">Why QUBO?</a></li>
-<li><a :data-current="activeSection === '#defining-a-qubo'" class="reference internal" href="#defining-a-qubo">Defining a QUBO</a></li>
-<li><a :data-current="activeSection === '#adding-constraints-as-penalties'" class="reference internal" href="#adding-constraints-as-penalties">Adding Constraints as Penalties</a><ul>
+<li><a :data-current="activeSection === '#defining-a-qubo'" class="reference internal" href="#defining-a-qubo">Defining a QUBO</a><ul>
 <li><a :data-current="activeSection === '#example-slack-penalization'" class="reference internal" href="#example-slack-penalization">Example: Slack Penalization</a></li>
 <li><a :data-current="activeSection === '#example-unbalanced-penalization'" class="reference internal" href="#example-unbalanced-penalization">Example: Unbalanced Penalization</a></li>
 </ul>
@@ -837,5 +944,7 @@
 <script defer="defer" src="../_static/theme.js?v=073f68d9"></script>
 <script src="../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </body>
 </html>

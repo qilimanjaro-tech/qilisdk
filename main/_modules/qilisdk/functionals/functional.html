@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -283,16 +287,26 @@
 <div class="viewcode-block" id="Functional">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional">[docs]</a>
 </span><span id="line-25"><span class="k">class</span><span class="w"> </span><span class="nc">Functional</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-26"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-27"><span class="sd">    Abstract interface for executable routines that return a :class:`FunctionalResult`.</span>
+</span><span id="line-28">
+</span><span id="line-29"><span class="sd">    Subclasses detail the concrete `result_type` they generate.</span>
+</span><span id="line-30"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-31">
 <div class="viewcode-block" id="Functional.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional.result_type">[docs]</a>
-</span><span id="line-26">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span></div>
-</div>
+</span><span id="line-32">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span></div>
 
-</span><span id="line-27">
-</span><span id="line-28">
+</span><span id="line-33"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass returned.&quot;&quot;&quot;</span></div>
+
+</span><span id="line-34">
+</span><span id="line-35">
 <div class="viewcode-block" id="PrimitiveFunctional">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional">[docs]</a>
-</span><span id="line-29"><span class="k">class</span><span class="w"> </span><span class="nc">PrimitiveFunctional</span><span class="p">(</span><span class="n">Parameterizable</span><span class="p">,</span> <span class="n">Functional</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span> <span class="o">...</span></div>
+</span><span id="line-36"><span class="k">class</span><span class="w"> </span><span class="nc">PrimitiveFunctional</span><span class="p">(</span><span class="n">Parameterizable</span><span class="p">,</span> <span class="n">Functional</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span>
+</span><span id="line-37"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-38"><span class="sd">    Base class for functionals backed by a :class:`~qilisdk.common.parameterizable.Parameterizable` object.</span>
+</span><span id="line-39"><span class="sd">    &quot;&quot;&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

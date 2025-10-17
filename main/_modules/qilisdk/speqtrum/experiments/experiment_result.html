@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -313,221 +317,209 @@
 </span><span id="line-53">
 </span><span id="line-54"><span class="sd">    This class defines common utilities for handling experimental data,</span>
 </span><span id="line-55"><span class="sd">    including computation of S21 parameters and automatic 1D or 2D plotting.</span>
-</span><span id="line-56"><span class="sd">    It can be subclassed to represent specific experiments (e.g. Rabi, T1).</span>
-</span><span id="line-57">
-</span><span id="line-58"><span class="sd">    Attributes:</span>
-</span><span id="line-59"><span class="sd">        plot_title (str): Default title for plots, defined by subclasses.</span>
-</span><span id="line-60"><span class="sd">        qubit (int): The qubit index associated with the experiment.</span>
-</span><span id="line-61"><span class="sd">        data (np.ndarray): Raw experiment data, with the last axis containing</span>
-</span><span id="line-62"><span class="sd">            the real and imaginary parts of the S21 parameter.</span>
-</span><span id="line-63"><span class="sd">        dims (list[Dimension]): Sweep dimensions describing the experiment.</span>
-</span><span id="line-64"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-65">
+</span><span id="line-56"><span class="sd">    Subclasses provide specific sweep parameters and plot titles.</span>
+</span><span id="line-57"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-58">
 <div class="viewcode-block" id="ExperimentResult.plot_title">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot_title">[docs]</a>
-</span><span id="line-66">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+</span><span id="line-59">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
 
-</span><span id="line-67">
-</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-69"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an experiment result.</span>
-</span><span id="line-70">
-</span><span id="line-71"><span class="sd">        Args:</span>
-</span><span id="line-72"><span class="sd">            qubit (int): The qubit index on which the experiment was performed.</span>
-</span><span id="line-73"><span class="sd">            data (np.ndarray): Raw experimental data array.</span>
-</span><span id="line-74"><span class="sd">            dims (list[Dimension]): Sweep dimensions of the experiment.</span>
-</span><span id="line-75"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-76">        <span class="bp">self</span><span class="o">.</span><span class="n">qubit</span> <span class="o">=</span> <span class="n">qubit</span>
-</span><span id="line-77">        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
-</span><span id="line-78">        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="n">dims</span>
-</span><span id="line-79">
-</span><span id="line-80">    <span class="nd">@property</span>
+</span><span id="line-60"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default plot title; subclasses provide the concrete label.&quot;&quot;&quot;</span>
+</span><span id="line-61">
+</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-63"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an experiment result.</span>
+</span><span id="line-64">
+</span><span id="line-65"><span class="sd">        Args:</span>
+</span><span id="line-66"><span class="sd">            qubit (int): The qubit index on which the experiment was performed.</span>
+</span><span id="line-67"><span class="sd">            data (np.ndarray): Raw experimental data array.</span>
+</span><span id="line-68"><span class="sd">            dims (list[Dimension]): Sweep dimensions of the experiment.</span>
+</span><span id="line-69"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-70">        <span class="bp">self</span><span class="o">.</span><span class="n">qubit</span> <span class="o">=</span> <span class="n">qubit</span>
+</span><span id="line-71">        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+</span><span id="line-72">        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="n">dims</span>
+</span><span id="line-73">
+</span><span id="line-74">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21">[docs]</a>
-</span><span id="line-81">    <span class="k">def</span><span class="w"> </span><span class="nf">s21</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-82"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Complex S21 transmission parameter.</span>
-</span><span id="line-83">
-</span><span id="line-84"><span class="sd">        Returns:</span>
-</span><span id="line-85"><span class="sd">            np.ndarray: The complex-valued S21 response computed as ``Re + i·Im``.</span>
-</span><span id="line-86"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-87">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
+</span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="nf">s21</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Complex S21 transmission parameter.</span>
+</span><span id="line-77">
+</span><span id="line-78"><span class="sd">        Returns:</span>
+</span><span id="line-79"><span class="sd">            np.ndarray: The complex-valued S21 response computed as ``Re + i * Im``.</span>
+</span><span id="line-80"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-81">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
 
-</span><span id="line-88">
-</span><span id="line-89">    <span class="nd">@property</span>
+</span><span id="line-82">
+</span><span id="line-83">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21_modulus">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_modulus">[docs]</a>
-</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_modulus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-91"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of the S21 parameter.</span>
-</span><span id="line-92">
-</span><span id="line-93"><span class="sd">        Returns:</span>
-</span><span id="line-94"><span class="sd">            np.ndarray: The absolute value of the S21 parameter.</span>
-</span><span id="line-95"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-96">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">)</span></div>
+</span><span id="line-84">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_modulus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-85"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of the S21 parameter.</span>
+</span><span id="line-86">
+</span><span id="line-87"><span class="sd">        Returns:</span>
+</span><span id="line-88"><span class="sd">            np.ndarray: The absolute value of the S21 parameter.</span>
+</span><span id="line-89"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-90">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">)</span></div>
 
-</span><span id="line-97">
-</span><span id="line-98">    <span class="nd">@property</span>
+</span><span id="line-91">
+</span><span id="line-92">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21_db">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_db">[docs]</a>
-</span><span id="line-99">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-100"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of S21 in decibels (dB).</span>
-</span><span id="line-101">
-</span><span id="line-102"><span class="sd">        Returns:</span>
-</span><span id="line-103"><span class="sd">            np.ndarray: 20·log10(|S21|) expressed in dB.</span>
-</span><span id="line-104"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-105">        <span class="k">return</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">)</span></div>
+</span><span id="line-93">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-94"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of S21 in decibels (dB).</span>
+</span><span id="line-95">
+</span><span id="line-96"><span class="sd">        Returns:</span>
+</span><span id="line-97"><span class="sd">            np.ndarray: ``20 * log10(abs(S21))`` expressed in dB.</span>
+</span><span id="line-98"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-99">        <span class="k">return</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">)</span></div>
 
-</span><span id="line-106">
+</span><span id="line-100">
 <div class="viewcode-block" id="ExperimentResult.plot">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot">[docs]</a>
-</span><span id="line-107">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-108"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot the S21 parameter from experiment results.</span>
-</span><span id="line-109">
-</span><span id="line-110"><span class="sd">        Automatically detects whether the dataset is 1D or 2D and creates</span>
-</span><span id="line-111"><span class="sd">        the appropriate figure. Optionally saves the figure to disk.</span>
-</span><span id="line-112">
-</span><span id="line-113"><span class="sd">        Args:</span>
-</span><span id="line-114"><span class="sd">            save_to (str | None): Optional path or directory to save the</span>
-</span><span id="line-115"><span class="sd">                generated plot. If a directory is provided, the filename is</span>
-</span><span id="line-116"><span class="sd">                automatically generated as ``{plot_title}_qubit{qubit}.png``.</span>
-</span><span id="line-117">
-</span><span id="line-118"><span class="sd">        Raises:</span>
-</span><span id="line-119"><span class="sd">            NotImplementedError: If the experiment data has more than 2 dimensions.</span>
-</span><span id="line-120"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-121">
-</span><span id="line-122">        <span class="k">def</span><span class="w"> </span><span class="nf">save_figure</span><span class="p">(</span><span class="n">figure</span><span class="p">:</span> <span class="n">Figure</span><span class="p">,</span> <span class="n">save_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-123">            <span class="n">save_to</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
-</span><span id="line-124">
-</span><span id="line-125">            <span class="c1"># If a directory was given, append the default filename</span>
-</span><span id="line-126">            <span class="k">if</span> <span class="n">save_to</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-</span><span id="line-127">                <span class="n">save_to</span> <span class="o">/=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2">_qubit</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">.png&quot;</span>
-</span><span id="line-128">
-</span><span id="line-129">            <span class="n">save_to</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-130">            <span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
-</span><span id="line-131">
-</span><span id="line-132">        <span class="k">def</span><span class="w"> </span><span class="nf">plot_1d</span><span class="p">(</span><span class="n">s21</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-133"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Plot 1d&quot;&quot;&quot;</span>
-</span><span id="line-134">            <span class="n">x_labels</span><span class="p">,</span> <span class="n">x_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+</span><span id="line-101">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-102"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot the S21 parameter from experiment results.</span>
+</span><span id="line-103">
+</span><span id="line-104"><span class="sd">        Automatically detects whether the dataset is 1D or 2D and creates</span>
+</span><span id="line-105"><span class="sd">        the appropriate figure. Optionally saves the figure to disk.</span>
+</span><span id="line-106">
+</span><span id="line-107"><span class="sd">        Args:</span>
+</span><span id="line-108"><span class="sd">            save_to (str | None): Optional path or directory to save the</span>
+</span><span id="line-109"><span class="sd">                generated plot. If a directory is provided, the filename is</span>
+</span><span id="line-110"><span class="sd">                automatically generated as ``{plot_title}_qubit{qubit}.png``.</span>
+</span><span id="line-111">
+</span><span id="line-112"><span class="sd">        Raises:</span>
+</span><span id="line-113"><span class="sd">            NotImplementedError: If the experiment data has more than 2 dimensions.</span>
+</span><span id="line-114"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-115">
+</span><span id="line-116">        <span class="k">def</span><span class="w"> </span><span class="nf">save_figure</span><span class="p">(</span><span class="n">figure</span><span class="p">:</span> <span class="n">Figure</span><span class="p">,</span> <span class="n">save_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-117">            <span class="n">save_to</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
+</span><span id="line-118">
+</span><span id="line-119">            <span class="c1"># If a directory was given, append the default filename</span>
+</span><span id="line-120">            <span class="k">if</span> <span class="n">save_to</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+</span><span id="line-121">                <span class="n">save_to</span> <span class="o">/=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2">_qubit</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">.png&quot;</span>
+</span><span id="line-122">
+</span><span id="line-123">            <span class="n">save_to</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-124">            <span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
+</span><span id="line-125">
+</span><span id="line-126">        <span class="k">def</span><span class="w"> </span><span class="nf">plot_1d</span><span class="p">(</span><span class="n">s21</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-127"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Plot 1d&quot;&quot;&quot;</span>
+</span><span id="line-128">            <span class="n">x_labels</span><span class="p">,</span> <span class="n">x_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+</span><span id="line-129">
+</span><span id="line-130">            <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span id="line-131">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2"> - Qubit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-132">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-133">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$|S_</span><span class="si">{21}</span><span class="s2">|$&quot;</span><span class="p">)</span>
+</span><span id="line-134">            <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s21</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
 </span><span id="line-135">
-</span><span id="line-136">            <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-</span><span id="line-137">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2"> - Qubit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-138">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</span><span id="line-139">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$|S_</span><span class="si">{21}</span><span class="s2">|$&quot;</span><span class="p">)</span>
-</span><span id="line-140">            <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s21</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
-</span><span id="line-141">
-</span><span id="line-142">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-143">                <span class="c1"># Create secondary x-axis</span>
-</span><span id="line-144">                <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
-</span><span id="line-145">
-</span><span id="line-146">                <span class="c1"># Set labels</span>
-</span><span id="line-147">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-148">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-149">
-</span><span id="line-150">                <span class="c1"># Set tick locations</span>
-</span><span id="line-151">                <span class="n">ax2_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-</span><span id="line-152">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax2_ticks</span><span class="p">)</span>
+</span><span id="line-136">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-137">                <span class="c1"># Create secondary x-axis</span>
+</span><span id="line-138">                <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
+</span><span id="line-139">
+</span><span id="line-140">                <span class="c1"># Set labels</span>
+</span><span id="line-141">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-142">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-143">
+</span><span id="line-144">                <span class="c1"># Set tick locations</span>
+</span><span id="line-145">                <span class="n">ax2_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</span><span id="line-146">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax2_ticks</span><span class="p">)</span>
+</span><span id="line-147">
+</span><span id="line-148">                <span class="c1"># Force scientific notation</span>
+</span><span id="line-149">                <span class="n">ax2</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-150">
+</span><span id="line-151">            <span class="k">if</span> <span class="n">save_to</span><span class="p">:</span>
+</span><span id="line-152">                <span class="n">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">save_to</span><span class="p">)</span>
 </span><span id="line-153">
-</span><span id="line-154">                <span class="c1"># Force scientific notation</span>
-</span><span id="line-155">                <span class="n">ax2</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-</span><span id="line-156">
-</span><span id="line-157">            <span class="k">if</span> <span class="n">save_to</span><span class="p">:</span>
-</span><span id="line-158">                <span class="n">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">save_to</span><span class="p">)</span>
-</span><span id="line-159">
-</span><span id="line-160">            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span id="line-154">            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span id="line-155">
+</span><span id="line-156">        <span class="c1"># pylint: disable=too-many-locals</span>
+</span><span id="line-157">        <span class="k">def</span><span class="w"> </span><span class="nf">plot_2d</span><span class="p">(</span><span class="n">s21</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-158"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Plot 2d&quot;&quot;&quot;</span>
+</span><span id="line-159">            <span class="n">x_labels</span><span class="p">,</span> <span class="n">x_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+</span><span id="line-160">            <span class="n">y_labels</span><span class="p">,</span> <span class="n">y_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 </span><span id="line-161">
-</span><span id="line-162">        <span class="c1"># pylint: disable=too-many-locals</span>
-</span><span id="line-163">        <span class="k">def</span><span class="w"> </span><span class="nf">plot_2d</span><span class="p">(</span><span class="n">s21</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Dimension</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-164"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Plot 2d&quot;&quot;&quot;</span>
-</span><span id="line-165">            <span class="n">x_labels</span><span class="p">,</span> <span class="n">x_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-</span><span id="line-166">            <span class="n">y_labels</span><span class="p">,</span> <span class="n">y_values</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-</span><span id="line-167">
-</span><span id="line-168">            <span class="c1"># Create x and y edge arrays by extrapolating the edges</span>
-</span><span id="line-169">            <span class="n">x_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-</span><span id="line-170">            <span class="n">y_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-</span><span id="line-171">
-</span><span id="line-172">            <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-</span><span id="line-173">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2"> - Qubit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-174">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</span><span id="line-175">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-162">            <span class="c1"># Create x and y edge arrays by extrapolating the edges</span>
+</span><span id="line-163">            <span class="n">x_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="line-164">            <span class="n">y_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="line-165">
+</span><span id="line-166">            <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span id="line-167">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_title</span><span class="si">}</span><span class="s2"> - Qubit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-168">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-169">            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-170">
+</span><span id="line-171">            <span class="c1"># Force scientific notation</span>
+</span><span id="line-172">            <span class="n">ax1</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-173">
+</span><span id="line-174">            <span class="n">mesh</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">x_edges</span><span class="p">,</span> <span class="n">y_edges</span><span class="p">,</span> <span class="n">s21</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+</span><span id="line-175">            <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
 </span><span id="line-176">
-</span><span id="line-177">            <span class="c1"># Force scientific notation</span>
-</span><span id="line-178">            <span class="n">ax1</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-</span><span id="line-179">
-</span><span id="line-180">            <span class="n">mesh</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">x_edges</span><span class="p">,</span> <span class="n">y_edges</span><span class="p">,</span> <span class="n">s21</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
-</span><span id="line-181">            <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
-</span><span id="line-182">
-</span><span id="line-183">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-184">                <span class="c1"># Create secondary x-axis</span>
-</span><span id="line-185">                <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
-</span><span id="line-186">
-</span><span id="line-187">                <span class="c1"># Set labels</span>
-</span><span id="line-188">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-189">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-190">
-</span><span id="line-191">                <span class="c1"># Set tick locations</span>
-</span><span id="line-192">                <span class="n">ax2_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-</span><span id="line-193">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax2_ticks</span><span class="p">)</span>
-</span><span id="line-194">
-</span><span id="line-195">                <span class="c1"># Force scientific notation</span>
-</span><span id="line-196">                <span class="n">ax2</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-</span><span id="line-197">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-198">                <span class="n">ax3</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
-</span><span id="line-199">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-200">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-201">
-</span><span id="line-202">                <span class="c1"># Set tick locations</span>
-</span><span id="line-203">                <span class="n">ax3_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-</span><span id="line-204">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax3_ticks</span><span class="p">)</span>
+</span><span id="line-177">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-178">                <span class="c1"># Create secondary x-axis</span>
+</span><span id="line-179">                <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
+</span><span id="line-180">
+</span><span id="line-181">                <span class="c1"># Set labels</span>
+</span><span id="line-182">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-183">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-184">
+</span><span id="line-185">                <span class="c1"># Set tick locations</span>
+</span><span id="line-186">                <span class="n">ax2_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</span><span id="line-187">                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax2_ticks</span><span class="p">)</span>
+</span><span id="line-188">
+</span><span id="line-189">                <span class="c1"># Force scientific notation</span>
+</span><span id="line-190">                <span class="n">ax2</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-191">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-192">                <span class="n">ax3</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+</span><span id="line-193">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-194">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-195">
+</span><span id="line-196">                <span class="c1"># Set tick locations</span>
+</span><span id="line-197">                <span class="n">ax3_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">num</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</span><span id="line-198">                <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ax3_ticks</span><span class="p">)</span>
+</span><span id="line-199">
+</span><span id="line-200">                <span class="c1"># Force scientific notation</span>
+</span><span id="line-201">                <span class="n">ax3</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-202">
+</span><span id="line-203">            <span class="k">if</span> <span class="n">save_to</span><span class="p">:</span>
+</span><span id="line-204">                <span class="n">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">save_to</span><span class="p">)</span>
 </span><span id="line-205">
-</span><span id="line-206">                <span class="c1"># Force scientific notation</span>
-</span><span id="line-207">                <span class="n">ax3</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;sci&quot;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-206">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</span><span id="line-207">            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span><span id="line-208">
-</span><span id="line-209">            <span class="k">if</span> <span class="n">save_to</span><span class="p">:</span>
-</span><span id="line-210">                <span class="n">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">save_to</span><span class="p">)</span>
-</span><span id="line-211">
-</span><span id="line-212">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-</span><span id="line-213">            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</span><span id="line-214">
-</span><span id="line-215">        <span class="n">n_dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-</span><span id="line-216">        <span class="k">if</span> <span class="n">n_dimensions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-217">            <span class="n">plot_1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
-</span><span id="line-218">        <span class="k">elif</span> <span class="n">n_dimensions</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
-</span><span id="line-219">            <span class="n">plot_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
-</span><span id="line-220">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-221">            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;3D and higher dimension plots are not supported yet.&quot;</span><span class="p">)</span></div>
+</span><span id="line-209">        <span class="n">n_dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="line-210">        <span class="k">if</span> <span class="n">n_dimensions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-211">            <span class="n">plot_1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+</span><span id="line-212">        <span class="k">elif</span> <span class="n">n_dimensions</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+</span><span id="line-213">            <span class="n">plot_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21_modulus</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+</span><span id="line-214">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-215">            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;3D and higher dimension plots are not supported yet.&quot;</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-222">
-</span><span id="line-223">
-</span><span id="line-224"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-216">
+</span><span id="line-217">
+</span><span id="line-218"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RabiExperimentResult">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult">[docs]</a>
-</span><span id="line-225"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
-</span><span id="line-226"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for Rabi experiments.</span>
-</span><span id="line-227">
-</span><span id="line-228"><span class="sd">    Attributes:</span>
-</span><span id="line-229"><span class="sd">        plot_title (str): Default title for the Rabi experiment plot.</span>
-</span><span id="line-230"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-231">
+</span><span id="line-219"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
+</span><span id="line-220"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for Rabi experiments.&quot;&quot;&quot;</span>
+</span><span id="line-221">
 <div class="viewcode-block" id="RabiExperimentResult.plot_title">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult.plot_title">[docs]</a>
-</span><span id="line-232">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Rabi&quot;</span></div>
-</div>
+</span><span id="line-222">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Rabi&quot;</span></div>
 
-</span><span id="line-233">
-</span><span id="line-234">
-</span><span id="line-235"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-223"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for Rabi experiment plots.&quot;&quot;&quot;</span></div>
+
+</span><span id="line-224">
+</span><span id="line-225">
+</span><span id="line-226"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T1ExperimentResult">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult">[docs]</a>
-</span><span id="line-236"><span class="k">class</span><span class="w"> </span><span class="nc">T1ExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
-</span><span id="line-237"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for T1 relaxation experiments.</span>
-</span><span id="line-238">
-</span><span id="line-239"><span class="sd">    Attributes:</span>
-</span><span id="line-240"><span class="sd">        plot_title (str): Default title for the T1 experiment plot.</span>
-</span><span id="line-241"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-242">
+</span><span id="line-227"><span class="k">class</span><span class="w"> </span><span class="nc">T1ExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
+</span><span id="line-228"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for T1 relaxation experiments.&quot;&quot;&quot;</span>
+</span><span id="line-229">
 <div class="viewcode-block" id="T1ExperimentResult.plot_title">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult.plot_title">[docs]</a>
-</span><span id="line-243">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;T1&quot;</span></div>
-</div>
+</span><span id="line-230">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;T1&quot;</span></div>
+
+</span><span id="line-231"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for T1 experiment plots.&quot;&quot;&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

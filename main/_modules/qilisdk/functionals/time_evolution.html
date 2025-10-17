@@ -119,16 +119,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -281,83 +285,104 @@
 <div class="viewcode-block" id="TimeEvolution">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution">[docs]</a>
 </span><span id="line-26"><span class="k">class</span><span class="w"> </span><span class="nc">TimeEvolution</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">[</span><span class="n">TimeEvolutionResult</span><span class="p">]):</span>
+</span><span id="line-27"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-28"><span class="sd">    Simulate the dynamics induced by a time-dependent Hamiltonian schedule.</span>
+</span><span id="line-29">
+</span><span id="line-30"><span class="sd">    Example:</span>
+</span><span id="line-31"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-32">
+</span><span id="line-33"><span class="sd">            from qilisdk.analog import Schedule, Hamiltonian, Z</span>
+</span><span id="line-34"><span class="sd">            from qilisdk.common import ket</span>
+</span><span id="line-35"><span class="sd">            from qilisdk.functionals.time_evolution import TimeEvolution</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="sd">            h0 = Z(0)</span>
+</span><span id="line-38"><span class="sd">            schedule = Schedule(T=10.0, hamiltonians={&quot;h0&quot;: h0})</span>
+</span><span id="line-39"><span class="sd">            functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))</span>
+</span><span id="line-40"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-41">
 <div class="viewcode-block" id="TimeEvolution.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.result_type">[docs]</a>
-</span><span id="line-27">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TimeEvolutionResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TimeEvolutionResult</span></div>
+</span><span id="line-42">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TimeEvolutionResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TimeEvolutionResult</span></div>
 
-</span><span id="line-28">
-</span><span id="line-29">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-30">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-31">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
-</span><span id="line-32">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">],</span>
-</span><span id="line-33">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
-</span><span id="line-34">        <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-</span><span id="line-35">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-36">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-37"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-38"><span class="sd">        Initialize the TimeEvolution simulation.</span>
-</span><span id="line-39">
-</span><span id="line-40"><span class="sd">        Args:</span>
-</span><span id="line-41"><span class="sd">            backend (AnalogBackend): The backend to use for simulating the dynamics.</span>
-</span><span id="line-42"><span class="sd">            schedule (Schedule): The evolution schedule defining the time-dependent Hamiltonian.</span>
-</span><span id="line-43"><span class="sd">            observables (list[PauliOperator | Hamiltonian]): A list of observables to measure at the end of the evolution.</span>
-</span><span id="line-44"><span class="sd">            initial_state (QTensor): The initial quantum state from which the simulation starts.</span>
-</span><span id="line-45"><span class="sd">            n_shots (int, optional): The number of simulation repetitions (shots). Defaults to 1000.</span>
-</span><span id="line-46"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-47">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state</span>
-</span><span id="line-49">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
-</span><span id="line-50">        <span class="bp">self</span><span class="o">.</span><span class="n">observables</span> <span class="o">=</span> <span class="n">observables</span>
-</span><span id="line-51">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span>
-</span><span id="line-52">        <span class="bp">self</span><span class="o">.</span><span class="n">store_intermediate_results</span> <span class="o">=</span> <span class="n">store_intermediate_results</span>
-</span><span id="line-53">
-</span><span id="line-54">    <span class="nd">@property</span>
+</span><span id="line-43">
+</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-45">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-46">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
+</span><span id="line-47">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">],</span>
+</span><span id="line-48">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-49">        <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="line-50">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-51">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-52"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-53"><span class="sd">        Args:</span>
+</span><span id="line-54"><span class="sd">            schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.</span>
+</span><span id="line-55"><span class="sd">            observables (list[PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.</span>
+</span><span id="line-56"><span class="sd">            initial_state (QTensor): Quantum state used as the simulation starting point.</span>
+</span><span id="line-57"><span class="sd">            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.</span>
+</span><span id="line-58"><span class="sd">            store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.</span>
+</span><span id="line-59"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-60">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-61">        <span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state</span>
+</span><span id="line-62">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
+</span><span id="line-63">        <span class="bp">self</span><span class="o">.</span><span class="n">observables</span> <span class="o">=</span> <span class="n">observables</span>
+</span><span id="line-64">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span>
+</span><span id="line-65">        <span class="bp">self</span><span class="o">.</span><span class="n">store_intermediate_results</span> <span class="o">=</span> <span class="n">store_intermediate_results</span>
+</span><span id="line-66">
+</span><span id="line-67">    <span class="nd">@property</span>
 <div class="viewcode-block" id="TimeEvolution.nparameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.nparameters">[docs]</a>
-</span><span id="line-55">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-56">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">nparameters</span></div>
+</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-69"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of schedule parameters.&quot;&quot;&quot;</span>
+</span><span id="line-70">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">nparameters</span></div>
 
-</span><span id="line-57">
+</span><span id="line-71">
 <div class="viewcode-block" id="TimeEvolution.get_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameters">[docs]</a>
-</span><span id="line-58">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">]:</span>
-</span><span id="line-59">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span></div>
-
-</span><span id="line-60">
-<div class="viewcode-block" id="TimeEvolution.set_parameters">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameters">[docs]</a>
-</span><span id="line-61">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-62">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
-
-</span><span id="line-63">
-<div class="viewcode-block" id="TimeEvolution.get_parameter_names">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_names">[docs]</a>
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-65">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span></div>
-
-</span><span id="line-66">
-<div class="viewcode-block" id="TimeEvolution.get_parameter_values">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_values">[docs]</a>
-</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RealNumber</span><span class="p">]:</span>
-</span><span id="line-68">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">()</span></div>
-
-</span><span id="line-69">
-<div class="viewcode-block" id="TimeEvolution.set_parameter_values">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameter_values">[docs]</a>
-</span><span id="line-70">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-71">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
-
-</span><span id="line-72">
-<div class="viewcode-block" id="TimeEvolution.get_parameter_bounds">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_bounds">[docs]</a>
-</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-74">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_bounds</span><span class="p">()</span></div>
+</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">]:</span>
+</span><span id="line-73"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the schedule parameters and their current value.&quot;&quot;&quot;</span>
+</span><span id="line-74">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span></div>
 
 </span><span id="line-75">
+<div class="viewcode-block" id="TimeEvolution.set_parameters">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameters">[docs]</a>
+</span><span id="line-76">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-77"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update a subset of schedule parameters.&quot;&quot;&quot;</span>
+</span><span id="line-78">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+
+</span><span id="line-79">
+<div class="viewcode-block" id="TimeEvolution.get_parameter_names">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_names">[docs]</a>
+</span><span id="line-80">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-81"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return order-stable parameter labels from the schedule.&quot;&quot;&quot;</span>
+</span><span id="line-82">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span></div>
+
+</span><span id="line-83">
+<div class="viewcode-block" id="TimeEvolution.get_parameter_values">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_values">[docs]</a>
+</span><span id="line-84">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RealNumber</span><span class="p">]:</span>
+</span><span id="line-85"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return parameter values in the order provided by ``get_parameter_names``.&quot;&quot;&quot;</span>
+</span><span id="line-86">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">()</span></div>
+
+</span><span id="line-87">
+<div class="viewcode-block" id="TimeEvolution.set_parameter_values">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameter_values">[docs]</a>
+</span><span id="line-88">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-89"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign all schedule parameters according to ``get_parameter_names`` order.&quot;&quot;&quot;</span>
+</span><span id="line-90">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+
+</span><span id="line-91">
+<div class="viewcode-block" id="TimeEvolution.get_parameter_bounds">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_bounds">[docs]</a>
+</span><span id="line-92">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-93"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return current bounds for schedule parameters.&quot;&quot;&quot;</span>
+</span><span id="line-94">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_bounds</span><span class="p">()</span></div>
+
+</span><span id="line-95">
 <div class="viewcode-block" id="TimeEvolution.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameter_bounds">[docs]</a>
-</span><span id="line-76">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-77">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
+</span><span id="line-96">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-97"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update bounds for selected schedule parameters.&quot;&quot;&quot;</span>
+</span><span id="line-98">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

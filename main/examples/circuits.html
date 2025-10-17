@@ -21,7 +21,7 @@
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
 <link href="hamiltonians.html" rel="next" title="Hamiltonians"/>
-<link href="../fundamentals/speqtrum.html" rel="prev" title="SpeQtrum"/>
+<link href="code_examples.html" rel="prev" title="Code Examples"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -89,16 +89,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models and Variables</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -199,6 +203,7 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="code_examples.html">Code Examples</a>
 <div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Circuits</span>
 </nav>
 <div id="content" role="main">
@@ -246,9 +251,9 @@ Initial parameters: [3.141592653589793]
 Simulation Results:
 SamplingResult(
   nshots=1000,
-  samples={'00': 491, '11': 509}
+  samples={'00': 489, '11': 511}
 )
-Probabilities: {'00': 0.491, '11': 0.509}
+Probabilities: {'11': 0.511, '00': 0.489}
 </pre></div></div>
 </div>
 <section id="OpenQASM-2.0-Interoperability">
@@ -303,11 +308,11 @@ measure q -&gt; c;
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../fundamentals/speqtrum.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="code_examples.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        SpeQtrum
+        Code Examples
       </a>
 </div>
 <div class="ml-auto">

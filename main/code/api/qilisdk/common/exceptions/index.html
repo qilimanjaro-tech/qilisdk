@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/common.html">Common</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -211,16 +215,16 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.exceptions.OutOfBoundsException" title="qilisdk.common.exceptions.OutOfBoundsException"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OutOfBoundsException</span></code></a></p></td>
-<td><p>Common base class for all non-exit exceptions.</p></td>
+<td><p>Raised when a variable value falls outside its configured bounds.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.exceptions.NotSupportedOperation" title="qilisdk.common.exceptions.NotSupportedOperation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotSupportedOperation</span></code></a></p></td>
-<td><p>Common base class for all non-exit exceptions.</p></td>
+<td><p>Raised when a requested operation is not supported by the backend.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.common.exceptions.InvalidBoundsError" title="qilisdk.common.exceptions.InvalidBoundsError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InvalidBoundsError</span></code></a></p></td>
-<td><p>Common base class for all non-exit exceptions.</p></td>
+<td><p>Raised when lower/upper bounds are inconsistent or invalid.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.common.exceptions.EvaluationError" title="qilisdk.common.exceptions.EvaluationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EvaluationError</span></code></a></p></td>
-<td><p>Common base class for all non-exit exceptions.</p></td>
+<td><p>Raised when a symbolic expression cannot be evaluated.</p></td>
 </tr>
 </tbody>
 </table>
@@ -231,28 +235,28 @@
 <dt class="sig sig-object py" id="qilisdk.common.exceptions.OutOfBoundsException">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OutOfBoundsException</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/exceptions.html#OutOfBoundsException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.exceptions.OutOfBoundsException" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.exceptions.OutOfBoundsException'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">Exception</span></code></p>
-<p>Common base class for all non-exit exceptions.</p>
+<p>Raised when a variable value falls outside its configured bounds.</p>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="qilisdk.common.exceptions.NotSupportedOperation">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NotSupportedOperation</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/exceptions.html#NotSupportedOperation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.exceptions.NotSupportedOperation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.exceptions.NotSupportedOperation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">Exception</span></code></p>
-<p>Common base class for all non-exit exceptions.</p>
+<p>Raised when a requested operation is not supported by the backend.</p>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="qilisdk.common.exceptions.InvalidBoundsError">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">InvalidBoundsError</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/exceptions.html#InvalidBoundsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.exceptions.InvalidBoundsError" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.exceptions.InvalidBoundsError'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">Exception</span></code></p>
-<p>Common base class for all non-exit exceptions.</p>
+<p>Raised when lower/upper bounds are inconsistent or invalid.</p>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="qilisdk.common.exceptions.EvaluationError">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EvaluationError</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/common/exceptions.html#EvaluationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.common.exceptions.EvaluationError" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.common.exceptions.EvaluationError'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">Exception</span></code></p>
-<p>Common base class for all non-exit exceptions.</p>
+<p>Raised when a symbolic expression cannot be evaluated.</p>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 </section>

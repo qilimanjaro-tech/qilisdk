@@ -19,7 +19,7 @@
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
-<link href="backends.html" rel="next" title="Backends"/>
+<link href="cost_functions.html" rel="next" title="Cost Functions"/>
 <link href="common.html" rel="prev" title="Common"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -88,16 +88,20 @@
 <li class="toctree-l1"><a class="reference internal" href="digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="common.html">Common</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/models.html">Models and Variables</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -213,39 +217,110 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> — Builds parameterized program to be optimized in a hybrid quantum-classical environment.</p></li>
 </ul>
+<section id="architecture-overview">
+<h2>Architecture Overview<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#architecture-overview" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#architecture-overview'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Every functional conforms to the abstract <a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional" title="qilisdk.functionals.functional.Functional"><code class="xref py py-class docutils literal notranslate"><span class="pre">Functional</span></code></a> interface. Primitive
+functionals such as <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> and
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a> also inherit from
+<a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>, which mixes in the
+<a class="reference internal" href="../code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable" title="qilisdk.common.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> contract. This lets backends query and update symbolic
+parameters consistently before execution.</p>
+<p>Each functional advertises a matching <code class="xref py py-attr docutils literal notranslate"><span class="pre">result_type</span></code> pointing to a concrete
+<a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalResult</span></code></a> subclass. When you call
+<a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>, the backend inspects this attribute to decide which result object to
+construct and return. Variational workflows reuse this mechanism: <code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize()</span></code>
+drives a <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> by repeatedly updating the nested
+functional’s parameters and finally wrapping the optimizer report inside a
+<a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a>.</p>
+</section>
+<section id="result-objects">
+<h2>Result Objects<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#result-objects" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#result-objects'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult" title="qilisdk.functionals.sampling_result.SamplingResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code></a></dt><dd><p>stores shot counts, probabilities and convenience helpers such as
+<a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult.get_probabilities" title="qilisdk.functionals.sampling_result.SamplingResult.get_probabilities"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_probabilities()</span></code></a>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a></dt><dd><p>contains expectation values, the terminal <a class="reference internal" href="../code/api/qilisdk/common/qtensor/index.html#qilisdk.common.qtensor.QTensor" title="qilisdk.common.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> state, and (optionally) the list
+of intermediate states when <code class="docutils literal notranslate"><span class="pre">store_intermediate_results=True</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a></dt><dd><p>bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
+obtained at convergence.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>These objects make post-processing workflows ergonomic. For example, <code class="docutils literal notranslate"><span class="pre">SamplingResult</span></code> can surface the most likely
+bitstrings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-5"><span class="n">sampling_result</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">1_000</span><span class="p">))</span>
+</span><span id="line-6"><span class="n">top</span> <span class="o">=</span> <span class="n">sampling_result</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"Most likely outcomes:"</span><span class="p">,</span> <span class="n">top</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
 <section id="sampling">
 <h2>Sampling<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#sampling" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#sampling'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes. Because it subclasses
+<a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>, any symbolic parameters exposed by the underlying
+<a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a> can be queried or updated through helper methods such as
+<a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_names" title="qilisdk.functionals.sampling.Sampling.get_parameter_names"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_names()</span></code></a>.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><strong>circuit</strong> (<a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a>): Circuit to be sampled.</p></li>
 <li><p><strong>nshots</strong> (int): Number of times to execute the circuit and collect measurement results.</p></li>
 </ul>
+<p><strong>Returns</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult" title="qilisdk.functionals.sampling_result.SamplingResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code></a>: Access shot counts via <code class="xref py py-attr docutils literal notranslate"><span class="pre">samples</span></code>, or probabilities
+through <code class="xref py py-attr docutils literal notranslate"><span class="pre">probabilities</span></code>. Convenience helpers like
+<a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult.get_probability" title="qilisdk.functionals.sampling_result.SamplingResult.get_probability"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_probability()</span></code></a> ease downstream analyses.</p></li>
+</ul>
 <p><strong>Usage Example</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">RX</span><span class="p">,</span> <span class="n">CNOT</span>
-</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span>
-</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
-</span><span id="line-5">
-</span><span id="line-6"><span class="c1"># Create a 2‑qubit circuit</span>
-</span><span id="line-7"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-</span><span id="line-8"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-</span><span id="line-9"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
-</span><span id="line-10"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-</span><span id="line-11">
-</span><span id="line-12"><span class="c1"># Initialize the Sampling functional with 100 shots</span>
-</span><span id="line-13"><span class="n">sampling</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-</span><span id="line-14">
-</span><span id="line-15"><span class="c1"># Run on Qutip backend and retrieve counts</span>
-</span><span id="line-16"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
-</span><span id="line-17"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
-</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="c1"># Create a 2‑qubit circuit</span>
+</span><span id="line-6"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="line-8"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+</span><span id="line-9"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="c1"># Initialize the Sampling functional with 100 shots</span>
+</span><span id="line-12"><span class="n">sampling</span> <span class="o">=</span> <span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>This functional can be executed on any backend that supports digital circuits. For we can execute it on the CUDA backend:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="c1"># Run on Qutip backend and retrieve counts</span>
+</span><span id="line-4"><span class="n">backend</span> <span class="o">=</span> <span class="n">CudaBackend</span><span class="p">()</span>
+</span><span id="line-5"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sampling</span><span class="p">)</span>
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">SamplingResult</span><span class="p">(</span>
+</span><span id="line-2">    <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="line-3">    <span class="n">samples</span><span class="o">=</span><span class="p">{</span><span class="s1">'00'</span><span class="p">:</span> <span class="mi">53</span><span class="p">,</span> <span class="s1">'11'</span><span class="p">:</span> <span class="mi">47</span><span class="p">}</span>
+</span><span id="line-4"><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
 <section id="time-evolution">
 <h2>Time Evolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#time-evolution" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#time-evolution'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a> functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time‑dependent schedule.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a> functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time‑dependent schedule. Its parameter interface mirrors that of
+<a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a>, making it straightforward to sweep control waveforms or pulse amplitudes from
+classical optimizers.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><strong>schedule</strong> (<a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a>): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.</p></li>
@@ -253,6 +328,14 @@
 <li><p><strong>observables</strong> (List[<a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a> or <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliOperator</span></code></a>]): Operators to measure after evolution.</p></li>
 <li><p><strong>nshots</strong> (int, optional): Number of repetitions for each observable measurement. Default is 1.</p></li>
 <li><p><strong>store_intermediate_results</strong> (bool, optional): If True, records the state at each time step. Default is False.</p></li>
+</ul>
+<p><strong>Returns</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a>: Inspect
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_expected_values" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_expected_values"><code class="xref py py-attr docutils literal notranslate"><span class="pre">final_expected_values</span></code></a> for measured observables,
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_state" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_state"><code class="xref py py-attr docutils literal notranslate"><span class="pre">final_state</span></code></a> for the closing state, and
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.intermediate_states" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult.intermediate_states"><code class="xref py py-attr docutils literal notranslate"><span class="pre">intermediate_states</span></code></a> when
+<code class="docutils literal notranslate"><span class="pre">store_intermediate_results</span></code> is enabled.</p></li>
 </ul>
 <p><strong>Usage Example</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -291,95 +374,150 @@
 </span><span id="line-34">    <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
 </span><span id="line-35">    <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 </span><span id="line-36"><span class="p">)</span>
-</span><span id="line-37">
-</span><span id="line-38"><span class="c1"># Execute on Qutip backend and inspect results</span>
-</span><span id="line-39"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
-</span><span id="line-40"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
-</span><span id="line-41"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>we can execute it on the Qutip backend:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Execute on Qutip backend and inspect results</span>
+</span><span id="line-2"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-3"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">TimeEvolutionResult</span><span class="p">(</span>
+</span><span id="line-2">    <span class="n">final_expected_values</span><span class="o">=</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.99388223</span><span class="p">,</span>  <span class="mf">0.0467696</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.10005353</span><span class="p">]),</span>
+</span><span id="line-3">    <span class="n">final_state</span><span class="o">=</span><span class="n">QTensor</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="mi">2</span><span class="n">x1</span><span class="p">,</span> <span class="n">nnz</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">'csr'</span><span class="p">)</span>
+</span><span id="line-4">    <span class="p">[[</span><span class="mf">0.05506547</span><span class="o">-</span><span class="mf">0.00516502</span><span class="n">j</span><span class="p">]</span>
+</span><span id="line-5">    <span class="p">[</span><span class="mf">0.3364973</span> <span class="o">-</span><span class="mf">0.94005887</span><span class="n">j</span><span class="p">]]</span>
+</span><span id="line-6"><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
 <section id="variational-programs">
 <h2>Variational Programs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#variational-programs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#variational-programs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> functional which defines the components for a variational quantum algorithm. It takes in a
-parameterized Functional, an optimizer, and a model defining the cost function. Then using the
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize()</span></code> of a backend, you can try to find the optimal parameters for the functional.</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> functional gathers the pieces required for a
+variational quantum algorithm. It accepts a parameterized primitive functional, an optimizer, and a cost function. When
+you call <code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize()</span></code>, the backend reuses the existing
+<a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> workflow: it evaluates the functional repeatedly with updated
+parameters, feeds the resulting <a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalResult</span></code></a> into the supplied
+cost function, and finally returns a <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a>.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
-<li><p><strong>functional</strong> (<a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>): A parameterized Functional to be optimized.</p></li>
-<li><p><strong>optimizer</strong> (<a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>): A QiliSDK optimizer, to be used in optimizing the Functional’s parameters.</p></li>
-<li><p><strong>cost_model</strong> (<a class="reference internal" href="../code/api/qilisdk/common/model/index.html#qilisdk.common.model.Model" title="qilisdk.common.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>): A Model object to evaluate the cost of a given set of parameters. This model is the cost function used by the optimizer.</p></li>
+<li><p><strong>functional</strong> (<a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>): Parameterized primitive to optimize
+(for instance <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> or
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>).</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>): Classical optimizer that proposes new parameter
+values and optionally stores intermediate iterates.</p></li>
+<li><p><strong>cost_model</strong> (<a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code></a>): Object that maps the functional results
+to a scalar cost; frequently constructed from a <a class="reference internal" href="../code/api/qilisdk/common/model/index.html#qilisdk.common.model.Model" title="qilisdk.common.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>.</p></li>
+<li><p><strong>store_intermediate_results</strong> (bool, optional): When True, the optimizer keeps the intermediate steps, which are
+exposed through <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results" title="qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">intermediate_results</span></code></a>.</p></li>
 </ul>
-<p><strong>Usage Example</strong></p>
+<p><strong>Returns</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a>: Retrieve
+<a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost" title="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost"><code class="xref py py-attr docutils literal notranslate"><span class="pre">optimal_cost</span></code></a>,
+<a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters" title="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters"><code class="xref py py-attr docutils literal notranslate"><span class="pre">optimal_parameters</span></code></a>,
+and the final functional output packaged in
+<a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results" title="qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">optimal_execution_results</span></code></a>.</p></li>
+</ul>
+<p><strong>Usage Example (Using QuTiP Backend)</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span>
 </span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
 </span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.common.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">LEQ</span><span class="p">,</span> <span class="n">BinaryVariable</span>
-</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">U2</span><span class="p">,</span> <span class="n">HardwareEfficientAnsatz</span>
-</span><span id="line-7"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
-</span><span id="line-8"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.variational_program</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgram</span>
-</span><span id="line-9"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.optimizers.scipy_optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SciPyOptimizer</span>
-</span><span id="line-10">
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.cost_functions.model_cost_function</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelCostFunction</span>
+</span><span id="line-7"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">U3</span><span class="p">,</span> <span class="n">HardwareEfficientAnsatz</span>
+</span><span id="line-8"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampling</span>
+</span><span id="line-9"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.variational_program</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgram</span>
+</span><span id="line-10"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.optimizers.scipy_optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SciPyOptimizer</span>
 </span><span id="line-11">
-</span><span id="line-12"><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
-</span><span id="line-13"><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-</span><span id="line-14"><span class="n">max_weight</span> <span class="o">=</span> <span class="mi">4</span>
-</span><span id="line-15"><span class="n">binary_var</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"b</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))]</span>
-</span><span id="line-16">
-</span><span id="line-17"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Knapsack"</span><span class="p">)</span>
-</span><span id="line-18">
-</span><span id="line-19"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">binary_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))),</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
-</span><span id="line-20">
-</span><span id="line-21"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"max_weights"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">binary_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">))),</span> <span class="n">max_weight</span><span class="p">))</span>
-</span><span id="line-22">
+</span><span id="line-12">
+</span><span id="line-13"><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+</span><span id="line-14"><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+</span><span id="line-15"><span class="n">max_weight</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span id="line-16"><span class="n">binary_var</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"b</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))]</span>
+</span><span id="line-17">
+</span><span id="line-18"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Knapsack"</span><span class="p">)</span>
+</span><span id="line-19">
+</span><span id="line-20"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">binary_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))),</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span><span id="line-21">
+</span><span id="line-22"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"max_weights"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">binary_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">))),</span> <span class="n">max_weight</span><span class="p">))</span>
 </span><span id="line-23">
-</span><span id="line-24"><span class="n">n_qubits</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span id="line-24">
 </span><span id="line-25"><span class="n">ansatz</span> <span class="o">=</span> <span class="n">HardwareEfficientAnsatz</span><span class="p">(</span>
-</span><span id="line-26">    <span class="n">n_qubits</span><span class="o">=</span><span class="n">n_qubits</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="s2">"Linear"</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="s2">"grouped"</span><span class="p">,</span> <span class="n">one_qubit_gate</span><span class="o">=</span><span class="n">U2</span><span class="p">,</span> <span class="n">two_qubit_gate</span><span class="o">=</span><span class="n">CNOT</span>
+</span><span id="line-26">    <span class="n">nqubits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="s2">"Circular"</span><span class="p">,</span> <span class="n">one_qubit_gate</span><span class="o">=</span><span class="n">U3</span><span class="p">,</span> <span class="n">two_qubit_gate</span><span class="o">=</span><span class="n">CNOT</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="s2">"Interposed"</span>
 </span><span id="line-27"><span class="p">)</span>
-</span><span id="line-28"><span class="n">circuit</span> <span class="o">=</span> <span class="n">ansatz</span><span class="o">.</span><span class="n">get_circuit</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ansatz</span><span class="o">.</span><span class="n">nparameters</span><span class="p">)])</span>
-</span><span id="line-29">
-</span><span id="line-30"><span class="n">optimizer</span> <span class="o">=</span> <span class="n">SciPyOptimizer</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"Powell"</span><span class="p">)</span>
-</span><span id="line-31">
-</span><span id="line-32"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
-</span><span id="line-33"><span class="n">result</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">VariationalProgram</span><span class="p">(</span><span class="n">functional</span><span class="o">=</span><span class="n">Sampling</span><span class="p">(</span><span class="n">circuit</span><span class="p">),</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">cost_model</span><span class="o">=</span><span class="n">model</span><span class="p">))</span>
-</span><span id="line-34">
-</span><span id="line-35"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</span><span id="line-28">
+</span><span id="line-29"><span class="n">optimizer</span> <span class="o">=</span> <span class="n">SciPyOptimizer</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"Powell"</span><span class="p">)</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-32"><span class="n">result</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">VariationalProgram</span><span class="p">(</span><span class="n">functional</span><span class="o">=</span><span class="n">Sampling</span><span class="p">(</span><span class="n">ansatz</span><span class="p">),</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">cost_function</span><span class="o">=</span><span class="n">ModelCostFunction</span><span class="p">(</span><span class="n">model</span><span class="p">)))</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">ParameterizedProgramResults</span><span class="p">(</span>
-</span><span id="line-2"><span class="n">Optimal</span> <span class="n">Cost</span> <span class="o">=</span> <span class="o">-</span><span class="mf">8.888</span><span class="p">,</span>
-</span><span id="line-3"><span class="n">Optimal</span> <span class="n">Parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">1.278949303184732</span><span class="p">,</span>
-</span><span id="line-4"><span class="mf">3.292560971153471</span><span class="p">,</span>
-</span><span id="line-5"><span class="mf">0.40699926001530307</span><span class="p">,</span>
-</span><span id="line-6"><span class="o">-</span><span class="mf">0.017115910525090056</span><span class="p">,</span>
-</span><span id="line-7"><span class="mf">1.8692450641078109</span><span class="p">,</span>
-</span><span id="line-8"><span class="mf">4.309091104779081</span><span class="p">,</span>
-</span><span id="line-9"><span class="mf">1.2074169689932666</span><span class="p">,</span>
-</span><span id="line-10"><span class="mf">1.4646918684520598</span><span class="p">,</span>
-</span><span id="line-11"><span class="mf">3.933732474878453</span><span class="p">,</span>
-</span><span id="line-12"><span class="mf">2.7505186784884854</span><span class="p">,</span>
-</span><span id="line-13"><span class="mf">0.31519530209404434</span><span class="p">,</span>
-</span><span id="line-14"><span class="mf">1.5676334459989747</span><span class="p">,</span>
-</span><span id="line-15"><span class="o">-</span><span class="mf">0.11583781713519889</span><span class="p">,</span>
-</span><span id="line-16"><span class="mf">2.3767875857247778</span><span class="p">,</span>
-</span><span id="line-17"><span class="mf">0.46270242112310445</span><span class="p">,</span>
-</span><span id="line-18"><span class="mf">3.2901742389124866</span><span class="p">,</span>
-</span><span id="line-19"><span class="mf">2.852111307997826</span><span class="p">,</span>
-</span><span id="line-20"><span class="mf">2.809347306543785</span><span class="p">,</span>
-</span><span id="line-21"><span class="mf">4.460605406445712</span><span class="p">,</span>
-</span><span id="line-22"><span class="mf">0.05677964182801364</span><span class="p">,</span>
-</span><span id="line-23"><span class="mf">4.126369235231041</span><span class="p">,</span>
-</span><span id="line-24"><span class="mf">3.101452974992417</span><span class="p">,</span>
-</span><span id="line-25"><span class="mf">5.639854652770387</span><span class="p">,</span>
-</span><span id="line-26"><span class="mf">3.503170455662135</span><span class="p">],</span>
-</span><span id="line-27"><span class="n">Intermediate</span> <span class="n">Results</span><span class="o">=</span><span class="p">[])</span>
-</span><span id="line-28"><span class="n">Optimal</span> <span class="n">results</span><span class="o">=</span><span class="n">SamplingResult</span><span class="p">(</span>
-</span><span id="line-29"><span class="n">nshots</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="line-30"><span class="n">samples</span><span class="o">=</span><span class="p">{</span><span class="s1">'001'</span><span class="p">:</span> <span class="mi">56</span><span class="p">,</span> <span class="s1">'010'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'101'</span><span class="p">:</span> <span class="mi">941</span><span class="p">,</span> <span class="s1">'110'</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-</span><span id="line-31"><span class="p">))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">VariationalProgramResult</span><span class="p">(</span>
+</span><span id="line-2">    <span class="n">Optimal</span> <span class="n">Cost</span> <span class="o">=</span> <span class="o">-</span><span class="mf">6.9990000000000006</span><span class="p">,</span>
+</span><span id="line-3">    <span class="n">Optimal</span> <span class="n">Parameters</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">5.967478124043245e+29</span><span class="p">,</span>
+</span><span id="line-4">    <span class="o">-</span><span class="mf">2.195285764804736e+29</span><span class="p">,</span>
+</span><span id="line-5">    <span class="mf">2.786404500042059e+29</span><span class="p">,</span>
+</span><span id="line-6">    <span class="mf">7.058510522162697e+29</span><span class="p">,</span>
+</span><span id="line-7">    <span class="mf">2.723590483069596e+29</span><span class="p">,</span>
+</span><span id="line-8">    <span class="mf">1.3020689810431641e+29</span><span class="p">,</span>
+</span><span id="line-9">    <span class="mf">2.322337737413796e+29</span><span class="p">,</span>
+</span><span id="line-10">    <span class="o">-</span><span class="mf">2.4708791392079937e+29</span><span class="p">,</span>
+</span><span id="line-11">    <span class="o">-</span><span class="mf">2.9921111116213366e+29</span><span class="p">,</span>
+</span><span id="line-12">    <span class="o">-</span><span class="mf">4.422367918326788e+29</span><span class="p">,</span>
+</span><span id="line-13">    <span class="o">-</span><span class="mf">2.2221469613956625e+29</span><span class="p">,</span>
+</span><span id="line-14">    <span class="o">-</span><span class="mf">2.1656637161893554e+29</span><span class="p">,</span>
+</span><span id="line-15">    <span class="o">-</span><span class="mf">7.161057019144762e+28</span><span class="p">,</span>
+</span><span id="line-16">    <span class="mf">1.8287982773997508e+29</span><span class="p">,</span>
+</span><span id="line-17">    <span class="o">-</span><span class="mf">5.8803987767435576e+29</span><span class="p">,</span>
+</span><span id="line-18">    <span class="mf">6.184752232912928e+29</span><span class="p">,</span>
+</span><span id="line-19">    <span class="o">-</span><span class="mf">3.8100684690039315e+27</span><span class="p">,</span>
+</span><span id="line-20">    <span class="mf">2.258471865930891e+29</span><span class="p">,</span>
+</span><span id="line-21">    <span class="o">-</span><span class="mf">2.8333713288649098e+29</span><span class="p">,</span>
+</span><span id="line-22">    <span class="o">-</span><span class="mf">7.432416000178698e+29</span><span class="p">,</span>
+</span><span id="line-23">    <span class="o">-</span><span class="mf">2.6217720759389174e+29</span><span class="p">,</span>
+</span><span id="line-24">    <span class="o">-</span><span class="mf">4.081054373720909e+29</span><span class="p">,</span>
+</span><span id="line-25">    <span class="o">-</span><span class="mf">2.504065530787786e+29</span><span class="p">,</span>
+</span><span id="line-26">    <span class="mf">2.347699364445592e+29</span><span class="p">,</span>
+</span><span id="line-27">    <span class="o">-</span><span class="mf">5.91304449036894e+29</span><span class="p">,</span>
+</span><span id="line-28">    <span class="o">-</span><span class="mf">2.3222922004879052e+29</span><span class="p">,</span>
+</span><span id="line-29">    <span class="mf">1.7101847376093354e+29</span><span class="p">,</span>
+</span><span id="line-30">    <span class="mf">2.2630872188582105e+29</span><span class="p">,</span>
+</span><span id="line-31">    <span class="mf">5.819576566857851e+29</span><span class="p">,</span>
+</span><span id="line-32">    <span class="o">-</span><span class="mf">6.656314000883147e+29</span><span class="p">,</span>
+</span><span id="line-33">    <span class="mf">5.305199782465454e+29</span><span class="p">,</span>
+</span><span id="line-34">    <span class="o">-</span><span class="mf">2.360680145241282e+29</span><span class="p">,</span>
+</span><span id="line-35">    <span class="o">-</span><span class="mf">5.953809337209532e+29</span><span class="p">,</span>
+</span><span id="line-36">    <span class="mf">2.3303904290091433e+29</span><span class="p">,</span>
+</span><span id="line-37">    <span class="o">-</span><span class="mf">5.278640450004206e+29</span><span class="p">,</span>
+</span><span id="line-38">    <span class="o">-</span><span class="mf">5.278640450004205e+29</span><span class="p">,</span>
+</span><span id="line-39">    <span class="mf">5.291325944436631e+29</span><span class="p">,</span>
+</span><span id="line-40">    <span class="o">-</span><span class="mf">4.192175488922518e+29</span><span class="p">,</span>
+</span><span id="line-41">    <span class="o">-</span><span class="mf">2.824792074552054e+29</span><span class="p">,</span>
+</span><span id="line-42">    <span class="mf">4.3280821346328155e+29</span><span class="p">,</span>
+</span><span id="line-43">    <span class="mf">2.3585405087906886e+29</span><span class="p">,</span>
+</span><span id="line-44">    <span class="o">-</span><span class="mf">3.6102144368881146e+29</span><span class="p">,</span>
+</span><span id="line-45">    <span class="mf">2.3606766206075072e+29</span><span class="p">,</span>
+</span><span id="line-46">    <span class="mf">7.523751475667946e+29</span><span class="p">,</span>
+</span><span id="line-47">    <span class="o">-</span><span class="mf">5.278307260543703e+29</span><span class="p">],</span>
+</span><span id="line-48">    <span class="n">Intermediate</span> <span class="n">Results</span><span class="o">=</span><span class="p">[])</span>
+</span><span id="line-49">    <span class="n">Optimal</span> <span class="n">results</span><span class="o">=</span><span class="n">SamplingResult</span><span class="p">(</span>
+</span><span id="line-50">    <span class="n">nshots</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+</span><span id="line-51">    <span class="n">samples</span><span class="o">=</span><span class="p">{</span><span class="s1">'000'</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+</span><span id="line-52">    <span class="s1">'001'</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+</span><span id="line-53">    <span class="s1">'010'</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+</span><span id="line-54">    <span class="s1">'011'</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+</span><span id="line-55">    <span class="s1">'100'</span><span class="p">:</span> <span class="mi">36</span><span class="p">,</span>
+</span><span id="line-56">    <span class="s1">'101'</span><span class="p">:</span> <span class="mi">848</span><span class="p">,</span>
+</span><span id="line-57">    <span class="s1">'110'</span><span class="p">:</span> <span class="mi">26</span><span class="p">,</span>
+</span><span id="line-58">    <span class="s1">'111'</span><span class="p">:</span> <span class="mi">16</span><span class="p">}</span>
+</span><span id="line-59"><span class="p">))</span>
 </span></code></pre></div>
 </div>
 </section>
@@ -394,8 +532,8 @@ parameterized Functional, an optimizer, and a model defining the cost function. 
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="backends.html">
-        Backends
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="cost_functions.html">
+        Cost Functions
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -404,6 +542,8 @@ parameterized Functional, an optimizer, and a model defining the cost function. 
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
+<li><a :data-current="activeSection === '#architecture-overview'" class="reference internal" href="#architecture-overview">Architecture Overview</a></li>
+<li><a :data-current="activeSection === '#result-objects'" class="reference internal" href="#result-objects">Result Objects</a></li>
 <li><a :data-current="activeSection === '#sampling'" class="reference internal" href="#sampling">Sampling</a></li>
 <li><a :data-current="activeSection === '#time-evolution'" class="reference internal" href="#time-evolution">Time Evolution</a></li>
 <li><a :data-current="activeSection === '#variational-programs'" class="reference internal" href="#variational-programs">Variational Programs</a></li>
