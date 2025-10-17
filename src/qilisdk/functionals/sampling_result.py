@@ -21,24 +21,16 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class SamplingResult(FunctionalResult):
-    """
-    Class representing the result of a quantum circuit measurement.
-
-    DigitalResult encapsulates the outcome of a digital measurement performed on a quantum circuit.
-    It includes the total number of measurement shots, the measurement samples and measurement probabilities.
-    """
+    """Store shot counts and derived probabilities for a sampling experiment."""
 
     def __init__(self, nshots: int, samples: dict[str, int]) -> None:
         """
-        Initializes a DigitalResult instance.
-
         Args:
-            nshots (int): The total number of measurement shots performed.
-            samples (dict[str, int]): A dictionary mapping bitstring outcomes to their occurrence counts.
-                All keys (bitstrings) must have the same length, which determines the number of qubits.
+            nshots (int): Total number of circuit evaluations.
+            samples (dict[str, int]): Mapping from bitstring to observed counts.
 
         Raises:
-            ValueError: If the samples dictionary is empty or if not all bitstring keys have the same length.
+            ValueError: If ``samples`` is empty or contains bitstrings with different length.
         """
         self._nshots = nshots
         self._samples = samples
@@ -61,80 +53,40 @@ class SamplingResult(FunctionalResult):
 
     @property
     def nshots(self) -> int:
-        """
-        Gets the number of measurement shots.
-
-        Returns:
-            int: The total number of measurement shots performed.
-        """
+        """Total number of repetitions used to gather samples."""
         return self._nshots
 
     @property
     def nqubits(self) -> int:
-        """
-        Gets the number of qubits involved in the measurement.
-
-        Returns:
-            int: The number of qubits measured.
-        """
+        """Number of qubits inferred from the sample bitstrings."""
         return self._nqubits
 
     @property
     def samples(self) -> dict[str, int]:
-        """
-        Gets the raw measurement samples.
-
-        Returns:
-            dict[str, int]: A dictionary where keys are bitstrings representing measurement outcomes
-            and values are the number of times each outcome was observed.
-        """
+        """Return a copy of the raw sample counts."""
         return dict(self._samples)
 
     @property
     def probabilities(self) -> dict[str, float]:
-        """
-        Gets the probabilities for each measurement outcome.
-
-        Returns:
-            dict[str, float]: A dictionary mapping each bitstring outcome to its corresponding probability.
-        """
+        """Return a copy of the estimated probability distribution."""
         return dict(self._probabilities)
 
     def get_probability(self, bitstring: str) -> float:
-        """
-        Computes the probability of a specific measurement outcome.
-
-        Args:
-            bitstring (str): The bitstring representing the measurement outcome of interest.
-
-        Returns:
-            float: The probability of the specified bitstring occurring.
-        """
+        """Return the probability associated with ``bitstring`` (0.0 if unseen)."""
         return self._probabilities.get(bitstring, 0.0)
 
     def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
         """
-        Returns the n most probable bitstrings along with their probabilities.
-
-        Parameters:
-            n (int): The number of most probable bitstrings to return.
+        Args:
+            n (int | None): Maximum number of items to return. Defaults to all outcomes.
 
         Returns:
-            list[tuple[str, float]]: A list of tuples (bitstring, probability) sorted in descending order by probability.
+            list[tuple[str, float]]: the ``n`` most probable bitstrings in descending probability order.
         """
         if n is None:
             n = len(self._probabilities)
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
     def __repr__(self) -> str:
-        """
-        Returns a string representation of the DigitalResult instance for debugging purposes.
-
-        The representation includes the class name, the number of measurement shots, and a formatted
-        display of the measurement samples.
-
-        Returns:
-            str: A string representation of the DigitalResult instance for debugging.
-        """
         class_name = self.__class__.__name__
         return f"{class_name}(\n  nshots={self.nshots},\n  samples={pformat(self.samples)}\n)"

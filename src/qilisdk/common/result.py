@@ -14,4 +14,5 @@
 from abc import ABC
 
 
-class Result(ABC): ...
+class Result(ABC):
+    """Marker base class for results produced by QiliSDK workflows."""

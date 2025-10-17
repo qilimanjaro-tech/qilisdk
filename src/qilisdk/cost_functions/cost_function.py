@@ -27,6 +27,10 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class CostFunction(ABC):
+    """
+    Base class that maps functional results into scalar costs.
+    """
+
     def __init__(self) -> None:
         self._handlers: dict[type[FunctionalResult], Callable[[FunctionalResult], Number]] = {
             SamplingResult: lambda f: self._compute_cost_sampling(cast("SamplingResult", f)),
@@ -43,13 +47,17 @@ class CostFunction(ABC):
     def compute_cost(self, results: FunctionalResult) -> Number: ...
 
     def compute_cost(self, results: TResult) -> Number:
-        """Compute the cost of a results object
+        """
+        Dispatch to the appropriate cost implementation based on the result type.
 
         Args:
-            results (TResult_co): The Results object of a Functional
+            results (FunctionalResult): Output of a functional execution.
 
         Returns:
-            float: the cost of the functional's results.
+            Number: Scalar cost extracted from the results.
+
+        Raises:
+            NotImplementedError: If the concrete cost function does not support the given result type.
         """
         try:
             handler = self._handlers[type(results)]
@@ -61,7 +69,9 @@ class CostFunction(ABC):
         return handler(results)
 
     def _compute_cost_sampling(self, results: SamplingResult) -> Number:
+        """Compute the cost associated with a :class:`SamplingResult`."""
         raise NotImplementedError
 
     def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
+        """Compute the cost associated with a :class:`TimeEvolutionResult`."""
         raise NotImplementedError

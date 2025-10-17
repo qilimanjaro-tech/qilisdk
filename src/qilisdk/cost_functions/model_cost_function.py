@@ -28,15 +28,47 @@ if TYPE_CHECKING:
 
 
 class ModelCostFunction(CostFunction):
+    """
+    Evaluate the cost of functional results with respect to a :class:`~qilisdk.common.model.Model`.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common import BinaryVariable, Model, LEQ
+            from qilisdk.cost_functions import ModelCostFunction
+
+            model = Model("demo")
+            x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
+            model.set_objective(x0 + x1)
+            model.add_constraint("limit", LEQ(x0 + x1, 1))
+            cost_fn = ModelCostFunction(model)
+    """
+
     def __init__(self, model: Model) -> None:
+        """
+        Args:
+            model (Model): Classical model describing objective and constraints.
+        """
         super().__init__()
         self._model = model
 
     @property
     def model(self) -> Model:
+        """Return the underlying optimisation model."""
         return self._model
 
     def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
+        """
+        Compute the expectation value of the model objective using a time-evolution result.
+
+        Evaluates the model on each computational basis state with probability extracted from the final state.
+
+        Returns:
+            Number: Expectation value of the model objective.
+
+        Raises:
+            ValueError: If the final state is not provided in the results.
+        """
         if results.final_state is None:
             raise ValueError(
                 "can't compute cost using Models from time evolution results when the state is not provided."
@@ -88,6 +120,17 @@ class ModelCostFunction(CostFunction):
         return total_cost
 
     def _compute_cost_sampling(self, results: SamplingResult) -> Number:
+        """
+        Compute the model cost by averaging over sampled bitstrings.
+
+        Each sample is mapped onto the model variables and evaluated using ``model.evaluate``.
+
+        Returns:
+            Number: Average cost of the model objective over all samples.
+
+        Raises:
+            ValueError: If the number of model variables does not match the sample size.
+        """
         total_cost = complex(0.0)
         for sample, prob in results.get_probabilities():
             bit_configuration = [int(i) for i in sample]

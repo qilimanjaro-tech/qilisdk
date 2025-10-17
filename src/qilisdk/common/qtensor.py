@@ -44,32 +44,42 @@ def _prod(xs: Iterable[int]) -> int:
 
 @yaml.register_class
 class QTensor:
+    """
+    Lightweight wrapper around sparse matrices representing quantum states or operators.
+
+    The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
+    which are converted to sparse matrices) that represent quantum states (kets, bras, or density matrices)
+    or operators. It provides utility methods for common quantum operations such as
+    taking the adjoint (dagger), computing tensor products, partial traces, and norms.
+
+    The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
+    efficient arithmetic and manipulation. The expected shapes for the data are:
+    - (2**N, 2**N) for operators or density matrices (or scalars),
+    - (2**N, 1) for ket states,
+    - (1, 2**N) for bra states.
+
+    Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
+    The input must represent a valid quantum state or operator with appropriate dimensions.
+
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from qilisdk.common import QTensor
+
+            ket = QTensor(np.array([[1.0], [0.0]]))
+            density = ket * ket.adjoint()
+    """
+
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
-        """Represents a quantum state or operator using a sparse matrix representation.
-
-        The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
-        which are converted to sparse matrices) that represent quantum states (kets, bras)
-        or operators. It provides utility methods for common quantum operations such as
-        taking the adjoint (dagger), computing tensor products, partial traces, and norms.
-
-        The internal data is stored as a SciPy CSR (Compressed Sparse Row) matrix for
-        efficient arithmetic and manipulation. The expected shapes for the data are:
-        - (2**N, 2**N) for operators or density matrices (or scalars),
-        - (2**N, 1) for ket states,
-        - (1, 2**N) for bra states.
-
-        Converts a NumPy array to a CSR matrix if needed and validates the shape of the input.
-        The input must represent a valid quantum state or operator with appropriate dimensions.
-        Notice that 1D arrays of shape (2N,) are considered/transformed to bras with shape (1, 2N).
-
+        """
         Args:
-            data (np.ndarray | sparray | spmatrix): A dense NumPy array or a SciPy sparse matrix
-                representing a quantum state or operator. Should be of shape: (2**N, 2**N) for operators
-                (1, 2**N) for ket states, (2**N, 1) for bra states, or (1, 1) for scalars.
+            data (np.ndarray | sparray | spmatrix): Dense or sparse matrix defining the quantum object. Expected
+                shapes are ``(2**N, 2**N)`` for operators, ``(2**N, 1)`` for kets, ``(1, 2**N)`` for bras, or ``(1, 1)`` for scalars.
 
         Raises:
-            ValueError: If the input data is not a NumPy array or a SciPy sparse matrix,
-                or if the data's shape does not correspond to a valid quantum state/operator.
+            ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
         """
         if isinstance(data, np.ndarray):
             if data.ndim != 2:  # noqa: PLR2004

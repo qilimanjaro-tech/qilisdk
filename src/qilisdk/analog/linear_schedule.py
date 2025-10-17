@@ -21,9 +21,36 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class LinearSchedule(Schedule):
-    """A Schedule that linearly interpolates between defined time steps."""
+    """
+    Schedule implementation that linearly interpolates coefficients between defined time steps.
 
-    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+    Example:
+        .. code-block:: python
+
+            from qilisdk.analog.hamiltonian import Hamiltonian, Z
+            from qilisdk.analog.linear_schedule import LinearSchedule
+
+            h = 2 * Z(0)
+            schedule = LinearSchedule(T=4.0, dt=1.0, hamiltonians={"hz": h})
+            schedule.add_schedule_step(0, {"hz": 0.0})
+            schedule.add_schedule_step(4, {"hz": 1.0})
+            assert schedule.get_coefficient(2.0, "hz") == 0.5
+    """
+
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term | Parameter:
+        """
+        Return the symbolic coefficient for a Hamiltonian at an arbitrary time step.
+
+        Args:
+            time_step (float): The time at which to evaluate the coefficient.
+            hamiltonian_key (str): Label of the Hamiltonian inside the schedule.
+
+        Returns:
+            Number | Term: The (possibly symbolic) coefficient associated with ``hamiltonian_key``.
+
+        Raises:
+            ValueError: If something unexpected happens during coefficient retrieval.
+        """
         t = time_step / self.dt
         t_idx = int(t)
 
@@ -61,10 +88,29 @@ class LinearSchedule(Schedule):
         return (1 - alpha) * prev_expr + alpha * next_expr
 
     def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
+        """
+        Return the numeric coefficient for a Hamiltonian at ``time_step``.
+
+        Args:
+            time_step (float): Time at which to evaluate the coefficient.
+            hamiltonian_key (str): Label of the Hamiltonian.
+
+        Returns:
+            Number: Evaluated coefficient value.
+        """
         val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
     def __getitem__(self, time_step: int) -> Hamiltonian:
+        """
+        Retrieve the interpolated Hamiltonian at the specified discrete time step.
+
+        Args:
+            time_step (int): Discrete index to evaluate (converted internally to ``time_step * dt``).
+
+        Returns:
+            Hamiltonian: Hamiltonian with coefficients interpolated at the requested time step.
+        """
         ham = Hamiltonian()
         for ham_label in self._hamiltonians:
             coeff = self.get_coefficient(time_step * self.dt, ham_label)

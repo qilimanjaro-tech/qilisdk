@@ -14,4 +14,5 @@
 from abc import ABC
 
 
-class Algorithm(ABC): ...
+class Algorithm(ABC):
+    """Abstract base class for SDK algorithms."""
