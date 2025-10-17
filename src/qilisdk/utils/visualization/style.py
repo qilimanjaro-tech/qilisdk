@@ -95,7 +95,7 @@ class CircuitStyle(Style):
     target_r: float = Field(default=0.12, description="Radius (inches) of ⊕ target circle and SWAP half-width.")
     control_r: float = Field(default=0.05, description="Radius (inches) of a filled control dot.")
 
-    layout: Literal["normal", "compact"] = Field(default="compact", description="If 'compact' minimizes the layers to highlight circuit depth, if 'normal' conserves the order of the circuit")
+    layout: Literal["normal", "compact"] = Field(default="normal", description="If 'compact' minimizes the layers to highlight circuit depth, if 'normal' conserves the order of the circuit")
 
 
 class ScheduleStyle(Style):
