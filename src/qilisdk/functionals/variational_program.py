@@ -29,6 +29,15 @@ TFunctional = TypeVar("TFunctional", bound=PrimitiveFunctional[FunctionalResult]
 
 @yaml.register_class
 class VariationalProgram(Functional, Generic[TFunctional]):
+    """
+    Bundle a parameterized functional, optimizer, and cost function into a variational loop.
+
+    Example:
+        .. code-block:: python
+
+            program = VariationalProgram(functional, optimizer, cost_function)
+    """
+
     result_type: ClassVar[type[FunctionalResult]] = VariationalProgramResult
 
     def __init__(
@@ -38,14 +47,12 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         cost_function: CostFunction,
         store_intermediate_results: bool = False,
     ) -> None:
-        """The Parameterized Program is a data class that gathers the necessary parameters to optimize a parameterized
-        functional.
-
+        """
         Args:
-            functional (Functional): The parameterized Functional to be optimized.
-            optimizer (Optimizer): The optimizer to be used in optimizing the Functional's parameters.
-            cost_function (CostFunction): A CostFunction object that defines how the cost is being computed.
-            store_intermediate_results (bool, optional): If True, stores a list of intermediate results.
+            functional (PrimitiveFunctional): Parameterized functional to optimize.
+            optimizer (Optimizer): Optimization routine controlling parameter updates.
+            cost_function (CostFunction): Metric used to evaluate functional executions.
+            store_intermediate_results (bool, optional): Persist intermediate executions if requested by the optimizer.
         """
         self._functional = functional
         self._optimizer = optimizer
@@ -54,16 +61,20 @@ class VariationalProgram(Functional, Generic[TFunctional]):
 
     @property
     def functional(self) -> TFunctional:
+        """Return the wrapped functional that will be optimised."""
         return self._functional
 
     @property
     def optimizer(self) -> Optimizer:
+        """Return the optimizer responsible for parameter updates."""
         return self._optimizer
 
     @property
     def cost_function(self) -> CostFunction:
+        """Return the cost function applied to functional results."""
         return self._cost_function
 
     @property
     def store_intermediate_results(self) -> bool:
+        """Indicate whether intermediate execution data should be stored."""
         return self._store_intermediate_results

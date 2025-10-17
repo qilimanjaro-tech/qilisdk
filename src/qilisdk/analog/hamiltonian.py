@@ -88,8 +88,18 @@ def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
 ###############################################################################
 class PauliOperator(ABC):
     """
-    A generic Pauli operator that acts on one qubit.
-    Flyweight usage: do NOT instantiate directly—use X(q), Y(q), etc.
+    A generic abstract Pauli operator that acts on one qubit.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.analog import PauliX
+
+            op = PauliX(0)
+
+    Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.
+
+    Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.
     """
 
     _NAME: ClassVar[str]
@@ -200,6 +210,17 @@ class PauliI(PauliOperator):
 
 @yaml.register_class
 class Hamiltonian(Parameterizable):
+    """
+    Represent a Hamiltonian expressed as a linear combination of Pauli operators.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.analog.hamiltonian import Hamiltonian, X, Z
+
+            H = X(0) * X(1) + Z(1)
+    """
+
     _EPS: float = 1e-14
     _PAULI_PRODUCT_TABLE: ClassVar[dict[tuple[str, str], tuple[complex, Callable[..., PauliOperator]]]] = {
         ("X", "X"): (1, PauliI),
@@ -216,23 +237,24 @@ class Hamiltonian(Parameterizable):
     ZERO: int = 0
 
     def __init__(self, elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] | None = None) -> None:
-        """A class to represent abstract Hamiltonian expressions.
+        """
+        Build a Hamiltonian from a mapping of Pauli operator products to coefficients.
 
         Args:
-            elements (dict[tuple[PauliOperator, ...], complex] | None, optional): maps from a tuple of PauliOperator objects
-                        to a complex coefficient. For example:
+            elements (dict[tuple[PauliOperator, ...], complex | Term | Parameter], optional):
+                Mapping from operator tuples to numerical coefficients or symbolic parameters. For example:
 
-                        .. code-block:: text
+                .. code-block:: python
 
-                            {
-                            (Z(0), Y(1)):  1,
-                            (X(1),):       1j,
-                            }
+                    {
+                        (Z(0), Y(1)):  1.0,
+                        (X(1),):       1j,
+                    }
 
-                        Defaults to None.
+                Defaults to None, which creates an empty Hamiltonian.
 
         Raises:
-            ValueError: If the Term provided contains Generic variables and not only Parameters.
+            ValueError: If the provided coefficients include generic variables instead of parameters.
         """
         self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
         self._parameters: dict[str, Parameter] = {}
@@ -259,14 +281,14 @@ class Hamiltonian(Parameterizable):
 
     @property
     def nqubits(self) -> int:
-        """Number of qubits acting on the hamiltonian."""
+        """Number of qubits on which the Hamiltonian acts."""
         qubits = {op.qubit for key in self._elements for op in key}
 
         return max(qubits) + 1 if qubits else 0
 
     @property
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
-        """Returns the internal dictionary of elements (read-only)."""
+        """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
         return {
             k: (v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate()))
             for k, v in self._elements.items()
@@ -274,54 +296,35 @@ class Hamiltonian(Parameterizable):
 
     @property
     def nparameters(self) -> int:
-        """
-        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
-
-        Returns:
-            int: The total count of parameters from all parameterized gates.
-        """
+        """Return the number of unique symbolic parameters contained in the Hamiltonian."""
         return len(self._parameters)
 
     @property
     def parameters(self) -> dict[str, Parameter]:
+        """Return a mapping from parameter labels to their corresponding parameter objects."""
         return self._parameters
 
     def get_parameter_values(self) -> list[float]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the current numeric values of the Hamiltonian parameters."""
         return [param.value for param in self._parameters.values()]
 
     def get_parameter_names(self) -> list[str]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the ordered list of parameter labels defined in the Hamiltonian."""
         return list(self._parameters.keys())
 
     def get_parameters(self) -> dict[str, float]:
-        """
-        Retrieve the parameter names and values from all parameterized gates in the circuit.
-
-        Returns:
-            dict[str, float]: A dictionary of the parameters with their current values.
-        """
+        """Return a mapping from parameter labels to their current numerical values."""
         return {label: param.value for label, param in self._parameters.items()}
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
-        Set new parameter values for all parameterized gates in the circuit.
+        Update the numerical values of the Hamiltonian parameters.
 
         Args:
-            values (list[float]): A list containing new parameter values to assign to the parameterized gates.
+            values (list[float]): New values ordered according to ``get_parameter_names()``.
 
         Raises:
-            ValueError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
+            ValueError: If the number of provided values does not match ``nparameters``.
         """
         if len(values) != self.nparameters:
             raise ValueError(f"Provided {len(values)} but Hamiltonian has {self.nparameters} parameters.")
@@ -329,13 +332,14 @@ class Hamiltonian(Parameterizable):
             parameter.set_value(values[i])
 
     def set_parameters(self, parameter_dict: dict[str, float]) -> None:
-        """Set the parameter values by their label. No need to provide the full list of parameters.
+        """
+        Update a subset of parameters by label.
 
         Args:
-            parameter_dict (dict[str, RealNumber]): _description_
+            parameter_dict (dict[str, float]): Mapping from parameter labels to new numerical values.
 
         Raises:
-            ValueError: _description_
+            ValueError: If an unknown parameter label is provided.
         """
         for label, param in parameter_dict.items():
             if label not in self._parameters:
@@ -343,9 +347,19 @@ class Hamiltonian(Parameterizable):
             self._parameters[label].set_value(param)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the lower and upper bounds currently associated with each parameter."""
         return {k: v.bounds for k, v in self._parameters.items()}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update parameter bounds.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Mapping from parameter labels to ``(lower, upper)`` bounds.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
         for label, bound in ranges.items():
             if label not in self._parameters:
                 raise ValueError(
@@ -417,7 +431,7 @@ class Hamiltonian(Parameterizable):
         return result
 
     def to_qtensor(self, total_nqubits: int | None = None) -> QTensor:
-        """Return the full matrix representation of the Hamiltonian by summing over all terms in the form of a QTensor-
+        """Return the Hamiltonian as a ``QTensor`` built from the sparse matrix representation.
 
         Args:
             total_nqubits (int, optional): Specify the total number of qubits that this hamiltonian acts on. Defaults to None.
@@ -445,6 +459,7 @@ class Hamiltonian(Parameterizable):
         return QTensor(result)
 
     def get_static_hamiltonian(self) -> Hamiltonian:
+        """Return a Hamiltonian containing only constant coefficients."""
         out = Hamiltonian()
         for pauli, value in self.elements.items():
             aux: Hamiltonian | PauliOperator = pauli[0]

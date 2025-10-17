@@ -23,13 +23,7 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class TimeEvolutionResult(FunctionalResult):
-    """
-    Encapsulates the outcome of a Time Evolution.
-
-    This result class stores key outputs from the simulation, including the
-    final expected measurement values, the complete time-evolution of expectation
-    values (if available), the final quantum state, and any intermediate quantum states.
-    """
+    """Container for expectation values and states produced by a time-evolution simulation."""
 
     def __init__(
         self,
@@ -39,17 +33,11 @@ class TimeEvolutionResult(FunctionalResult):
         intermediate_states: list[QTensor] | None = None,
     ) -> None:
         """
-        Initialize an AnalogResult instance with simulation outputs.
-
         Args:
-            final_expected_values (np.ndarray | None, optional): An array of the final expectation
-                values measured at the end of the simulation. Defaults to an empty array if None.
-            expected_values (np.ndarray | None, optional): An array containing the evolution of
-                expectation values during the simulation. Defaults to an empty array if None.
-            final_state (QTensor | None, optional): The final quantum state as a QTensor.
-                Defaults to None.
-            intermediate_states (list[QTensor] | None, optional): A list of QTensors representing
-                the intermediate states during the simulation. Defaults to None.
+            final_expected_values (np.ndarray | None, optional): Expectation values evaluated at the end of the evolution.
+            expected_values (np.ndarray | None, optional): Time series of expectation values, if recorded.
+            final_state (QTensor | None, optional): Final quantum state associated with the evolution.
+            intermediate_states (list[QTensor] | None, optional): Intermediate states captured during the evolution.
         """
         super().__init__()
         self._final_expected_values = final_expected_values if final_expected_values is not None else np.array([])
@@ -59,42 +47,22 @@ class TimeEvolutionResult(FunctionalResult):
 
     @property
     def final_expected_values(self) -> np.ndarray:
-        """
-        Get the final expectation values measured at the end of the simulation.
-
-        Returns:
-            np.ndarray: An array of the final expected values.
-        """
+        """Final expectation values measured at the end of the evolution."""
         return self._final_expected_values
 
     @property
     def expected_values(self) -> np.ndarray:
-        """
-        Get the evolution of expectation values recorded during the simulation.
-
-        Returns:
-            np.ndarray: An array of expectation values over the course of the simulation.
-        """
+        """Expectation values tracked over the course of the evolution."""
         return self._expected_values
 
     @property
     def final_state(self) -> QTensor | None:
-        """
-        Get the final quantum state produced by the simulation.
-
-        Returns:
-            QTensor | None: The final quantum state, or None if not available.
-        """
+        """Final quantum state if provided by the backend."""
         return self._final_state
 
     @property
     def intermediate_states(self) -> list[QTensor]:
-        """
-        Get the list of intermediate quantum states recorded during the simulation.
-
-        Returns:
-            list[QTensor]: A list of intermediate quantum states.
-        """
+        """List of intermediate quantum states captured during the simulation."""
         return self._intermediate_states
 
     def __repr__(self) -> str:

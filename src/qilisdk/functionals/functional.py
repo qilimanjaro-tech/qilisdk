@@ -23,11 +23,17 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 class Functional(ABC):
-    """Abstract interface for functionals that produce experiment results."""
+    """
+    Abstract interface for executable routines that return a :class:`FunctionalResult`.
+
+    Subclasses detail the concrete `result_type` they generate.
+    """
 
     result_type: ClassVar[type[FunctionalResult]]
     """Concrete :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass returned."""
 
 
 class PrimitiveFunctional(Parameterizable, Functional, ABC, Generic[TResult_co]):
-    """Base class for functionals backed by a :class:`Parameterizable` primitive."""
+    """
+    Base class for functionals backed by a :class:`~qilisdk.common.parameterizable.Parameterizable` object.
+    """

@@ -721,10 +721,8 @@ class DomainWall(Encoding):
 
 
 class BaseVariable(ABC):
-    """Represents an abstract structure of any variable that can be included in the optimization ``Model``
-    (It's the ``Model``'s minimum mathematical expression).
-
-    ``Variable``'s are used to construct ``Term`` objects that can then be used to build ``Model`` objects.
+    """
+    Abstract base class for symbolic decision variables.
     """
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -974,7 +972,16 @@ class BaseVariable(ABC):
 
 @yaml.register_class
 class BinaryVariable(BaseVariable):
-    """Represents Binary Variable structure."""
+    """
+    Binary decision variable restricted to the set ``{0, 1}``.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.variables import BinaryVariable
+
+            x = BinaryVariable("x")
+    """
 
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.BINARY)
@@ -1034,8 +1041,17 @@ class SpinVariable(BaseVariable):
 
 @yaml.register_class
 class Variable(BaseVariable):
-    """Represents General Variable structure (Continuous, binary, or Spin).
-    Note: For Binary or Spin variables it's recommended to use the BinaryVar and SpinVar objects."""
+    """
+    Generic (possibly continuous) optimization variable with configurable encoding.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.variables import Domain, Variable
+
+            price = Variable("price", domain=Domain.REAL, bounds=(0, 10))
+            binary_term = price.to_binary()
+    """
 
     def __init__(
         self,
@@ -1160,7 +1176,17 @@ class Variable(BaseVariable):
 
 @yaml.register_class
 class Parameter(BaseVariable):
-    """ """
+    """
+    Symbolic scalar used to parametrize expressions while remaining differentiable.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.common.variables import Parameter
+
+            theta = Parameter("theta", value=0.5)
+            theta.set_value(0.75)
+    """
 
     def __init__(
         self,
