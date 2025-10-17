@@ -1,3 +1,583 @@
+# qilisdk 0.1.5 (2025-10-17)
+
+## Features
+
+- This PR adds foundational support for Variables, Terms, Constraints, Models, and QUBO processing, along with corresponding unit tests and exception definitions.
+
+  - Variables: 
+    
+      - in the variables module we provide classes and functions to define Spin, Binary, and Generic Variables. 
+      ```python
+      b = BinaryVariable("b")
+      s = SpinVariable("s")
+      v = Variable("v", domain=Domain.REAL, bounds=(-2, 2), encoding=BitWise, precision=1e-3)
+      ```
+      - We define three different ways to encode continuous variables into binary encoding:
+          - **Bitwise**: encodes the continuous variable's domain into a bit wise binary string. 
+              ```python
+              v = Variable("v", domain=Domain.POSITIVE_INTEGER, bounds=(0, 7), encoding=Bitwise)
+              v.to_binary()
+
+              >>> v(0) + (2) * v(1) + (4) * v(2) 
+              ```
+          - **OneHot**: encodes the continuous variable's domain using one-hot encoding.
+              ```python
+              v = Variable("v", domain=Domain.POSITIVE_INTEGER, bounds=(0, 7), encoding=OneHot)
+              v.to_binary()
+
+              >>> v(1) + (2) * v(2) + (3) * v(3) + (4) * v(4) + (5) * v(5) + (6) * v(6) + (7) * v(7) 
+              ```
+              Note: `v(0)` doesn't appear in the expression because it has the coefficient `0`.
+          - **DomainWall**: encodes the continuous variable's domain using domain wall encoding.
+              ```python
+              v = Variable("v", domain=Domain.POSITIVE_INTEGER, bounds=(0, 7), encoding=DomainWall)
+              v.to_binary()
+
+              >>> v(0) + v(1) + v(2) + v(3) + v(4) + v(5) + v(6)
+              ```
+      - using these variables we added the ability to construct:
+          - Mathematical expressions:
+           ```python
+              x = Variable("x", domain=Domain.POSITIVE_INTEGER, bounds=(0, 7), encoding=Bitwise)
+              y = Variable("y", domain=Domain.POSITIVE_INTEGER, bounds=(2, 10), encoding=Bitwise)
+              term = 3 * x + 4 * y + x ** 2 + 5 * x * y
+              print(term)
+
+              >>> (3) * x + (4) * y + (x^2) + (5) * (x * y) 
+          ```
+          - Comparison terms: 
+          ```python
+              x = Variable("x", domain=Domain.POSITIVE_INTEGER, bounds=(0, 7), encoding=Bitwise)
+              y = Variable("y", domain=Domain.POSITIVE_INTEGER, bounds=(2, 10), encoding=Bitwise)
+
+              term1 = 3 * x + 4 * y 
+              term2 = x**2 + 3
+              comparison = EQ(term1, term2)
+              print(comparison)
+
+              >>> (3) * x + (4) * y + (-1.0) * (x^2)  == (3.0)             
+          ```
+          comparison terms can be: 
+          | Comparison Term              | Code Representation     | Short-form Representation     |
+          | :--------------------------- | :---------------------: | ----------------------------: |
+          | Equal to                     |  ``Equal``              | ``EQ``                        |
+          | Not Equal to                 |  ``NotEqual``           | ``NEQ``                       |
+          | Greater than                 |  ``GreaterThan``        | ``GT``                        |
+          | Greater than or equal to     |  ``GreaterThanOrEqual`` | ``GEQ``                       |
+          | Less than                    |  ``LessThan``           | ``LT``                        |
+          | Less than or equal to        |  ``LessThanOrEqual``    | ``LEQ``                       |
+
+          Note: both the short-form and long-form representations are valid to use in the code. 
+
+  - Models: 
+      - This module provides tools to construct mathematical models and QUBO models. 
+    
+      Example of Constructing a model: 
+      ```python
+      from qilisdk.common.variables import BinaryVariable, LEQ
+      from qilisdk.common.model import Model
+
+      num_items = 4
+      values = [1, 3, 5, 2]
+      weights = [3, 2, 4, 5]
+      max_weight = 6
+      bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
+
+      model = Model("Knapsack")
+
+      objective = sum(values[i] * bin_vars[i] for i in range(num_items))
+      model.set_objective(objective)
+
+      constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
+      model.add_constraint("maximum weight", constraint)
+
+      print(model)
+
+      >>> Model name: Knapsack 
+      >>> objective (obj): 
+      >>>     minimize : 
+      >>>     b0 + (3) * b1 + (5) * b2 + (2) * b3  
+      >>> 
+      >>> subject to the constraint/s: 
+      >>>     maximum weight: (3) * b0 + (2) * b1 + (4) * b2 + (5) * b3  <= (6.0)  
+      ```
+
+      - QUBO (Quadratic Unconstrained Binary Optimization) models can be constructed from models directly:
+      ```python
+      qubo_model = model.to_qubo()
+      print(qubo_model)
+
+      Model name: QUBO_Knapsack 
+      >>> objective (obj): 
+      >>> 	 minimize : 
+      >>> 	 b0 + (3) * b1 + (5) * b2 + (2) * b3  
+
+      >>> subject to the constraint/s: 
+      >>> 	 maximum weight: (-27.0) * b0 + (12.0) * (b0 * b1) + (24.0) * (b0 * b2) + (30.0) * (b0 * b3) + (6.0) * (b0 * maximum weight_slack(0)) + (12.0) * (b0 * maximum weight_slack(1)) + (18.0) * (b0 * maximum weight_slack(2)) + (-20.0) * b1 + (16.0) * (b1 * b2) + (20.0) * (b1 * b3) + (4.0) * (b1 * maximum weight_slack(0)) + (8.0) * (b1 * maximum weight_slack(1)) + (12.0) * (b1 * maximum weight_slack(2)) + (-32.0) * b2 + (40.0) * (b2 * b3) + (8.0) * (b2 * maximum weight_slack(0)) + (16.0) * (b2 * maximum weight_slack(1)) + (24.0) * (b2 * maximum weight_slack(2)) + (-35.0) * b3 + (10.0) * (b3 * maximum weight_slack(0)) + (20.0) * (b3 * maximum weight_slack(1)) + (30.0) * (b3 * maximum weight_slack(2)) + (-11.0) * maximum weight_slack(0) + (-20.0) * maximum weight_slack(1) + (-27.0) * maximum weight_slack(2) + (4.0) * (maximum weight_slack(0) * maximum weight_slack(1)) + (6.0) * (maximum weight_slack(0) * maximum weight_slack(2)) + (12.0) * (maximum weight_slack(1) * maximum weight_slack(2))  == (-36.0)  
+      >>> 
+      >>> With Lagrange Multiplier/s: 
+      >>> 	 maximum weight : 100 
+      ```
+
+      Note: QUBO models can be directly translated into Ising Hamiltonians: 
+      ```python
+      qubo_model.to_hamiltonian()
+      >>> 3305.5 - 1200.5 Z(0) - 801.5 Z(1) - 1602.5 Z(2) - 2001 Z(3) + 300 Z(0) Z(1) + 600 Z(0) Z(2) + 750 Z(0) Z(3) - 400 Z(4) + 150 Z(0) Z(4) - 800 Z(5) + 300 Z(0) Z(5) - 1200 Z(6) + 450 Z(0) Z(6) + 400 Z(1) Z(2) + 500 Z(1) Z(3) + 100 Z(1) Z(4) + 200 Z(1) Z(5) + 300 Z(1) Z(6) + 1000 Z(2) Z(3) + 200 Z(2) Z(4) + 400 Z(2) Z(5) + 600 Z(2) Z(6) + 250 Z(3) Z(4) + 500 Z(3) Z(5) + 750 Z(3) Z(6) + 100 Z(4) Z(5) + 150 Z(4) Z(6) + 300 Z(5) Z(6)
+      ```
+
+  ([PR #18](https://github.com/qilimanjaro-tech/qilisdk/pulls/18))
+- Replacing the callable cost function with the abstract model. The Abstract Model allows the user to write an objective function that is subjected to a set of constraints. Then this is used to evaluate the cost of a given sample. 
+
+
+  Example: 
+  ```python
+  from qilisdk.common import SciPyOptimizer
+  from qilisdk.common.model import QUBO, Model
+  from qilisdk.common.variables import LEQ, BinaryVariable
+  from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+  from qilisdk.digital.digital_result import DigitalResult
+  from qilisdk.digital.vqe import VQE
+  from qilisdk.extras import CudaBackend
+
+
+  ## Define the model
+
+  model = Model("Knapsack")
+
+  values = [2, 3, 7]
+  weights = [1, 3, 3]
+  max_weight = 4
+  b = [BinaryVariable(f"b{i}") for i in range(len(values))]
+
+  obj = sum(b[i] * values[i] for i in range(len(values)))
+  model.set_objective(obj, "obj")
+
+  con = LEQ(sum(b[i] * weights[i] for i in range(len(weights))), max_weight)
+
+  model.add_constraint("max_weight", con)
+
+  ## Define the Ansatz: 
+  n_qubits = 3
+  ansatz = HardwareEfficientAnsatz(
+      n_qubits=n_qubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate="U2", two_qubit_gate="CNOT"
+  )
+
+  ## Build the VQE object
+  vqe = VQE(
+      ansatz=ansatz,
+      initial_params=[0 for _ in range(ansatz.nparameters)],
+      model=model,
+  )
+
+  ## Define the Backend and the Optimizer
+  backend = CudaBackend()
+  optimizer = SciPyOptimizer(method="Powell")
+
+  ## Execute the VQE to find the optimal parameters
+  result = vqe.execute(backend, optimizer, nshots=1000)
+
+  ## Sample the circuit using the optimal parameters
+  circuit = ansatz.get_circuit(result.optimal_parameters)
+  results = backend.execute(circuit)
+
+  ## Print the probabilities
+  print(results.get_probabilities())
+  ``` ([PR #42](https://github.com/qilimanjaro-tech/qilisdk/pulls/42))
+- The `VQEResult` object now reports, alongside the optimal cost, optimal parameters, and any intermediate data, the full statistics obtained by executing the ansatz with the optimal parameters on the backend. Two new fields are returned:
+
+  * **`optimal_probabilities`** – the normalized probability of measuring each computational-basis bit-string when the circuit is executed with the optimizer’s best parameters (e.g., `'101': 0.248`, `'110': 0.243`, …).
+  * **`optimal_samples`** – the corresponding raw counts collected from the shot-based execution that produced the probability distribution (e.g., `'101': 248`, `'110': 243`, …).
+
+  ```
+  VQEResult(
+    Optimal Cost = -5.701,
+    Optimal Parameters=[
+   2.4765672929916778,
+   1.3670931144817295,
+   1.8739044290336593,
+   1.9418187198696006,
+   1.9415620118578056,
+   1.3477569502527096,
+   1.4586266908332153,
+   2.399963229728653,
+   1.0369721676199404,
+   1.243262268356951,
+   0.4583521910031868,
+   0.8000040258451777,
+   1.964761900107407,
+   0.12234702880731152,
+   0.7672651631073605,
+   2.1237307626244775,
+   0.9610328434183917,
+   1.1962549279434016],
+    Intermediate Results=[]
+    Optimal Probabilities={
+   '000': 0.007,
+   '001': 0.234,
+   '010': 0.237,
+   '011': 0.001,
+   '100': 0.026,
+   '101': 0.248,
+   '110': 0.243,
+   '111': 0.004})
+   Optimal Samples={
+   '000': 7,
+   '001': 234,
+   '010': 237,
+   '011': 1,
+   '100': 26,
+   '101': 248,
+   '110': 243,
+   '111': 4})
+  ```
+
+  ([PR #43](https://github.com/qilimanjaro-tech/qilisdk/pulls/43))
+- Introduced various improvements in serialization and deserialization of objects to YAML. Changed QaaSBackend's models and methods to comply with new QaaS API. ([PR #47](https://github.com/qilimanjaro-tech/qilisdk/pulls/47))
+- You can now pass a custom callable to both `list_devices` and `list_jobs`, enabling flexible client‑side filtering without touching the server API. Two new convenience helpers extend the job‑handling workflow: `get_job_details` fetches a complete record (payload, results, logs, and error information) for a given job ID, while `wait_for_job` blocks the caller until that job reaches a terminal state—`COMPLETED`, `ERROR`, or `CANCELLED`. In addition, the execution helpers (`execute`, `evolve`, `run_vqe`, and `run_time_evolution`) have been streamlined to return only the integer job identifier, making immediate responses lighter and encouraging explicit follow‑up calls when you actually need detailed data. ([PR #48](https://github.com/qilimanjaro-tech/qilisdk/pulls/48))
+- Adding a Qutip simulation backend for both analog and digital simulations. 
+
+  Qutip backends can be created by simply running:
+
+  ```python
+  from qilisdk.extras.qutip import QutipBackend
+
+  backend = QutipBackend()
+  ``` ([PR #49](https://github.com/qilimanjaro-tech/qilisdk/pulls/49))
+- Introducing **Functionals**, a unified abstraction for quantum work units. The library now includes two functional families: **`Sampling`**, which executes gate‑based circuits and returns shot counts, and **`TimeEvolution`**, which drives Hamiltonian schedules and yields evolved states or expectation values. All back‑ends have been consolidated into the `qilisdk.backends` module and are now Functional‑aware—each advertises the families it supports and executes them via `backend.execute(functional)`. Meanwhile, **QaaS** has been refactored into a standalone API client located in the `qilisdk.qaas` module, providing endpoints for submitting Functionals to remote devices, monitoring job status, and listing available jobs and hardware. ([PR #50](https://github.com/qilimanjaro-tech/qilisdk/pulls/50))
+- The QiliSDK settings system has been refactored to use Pydantic v2 and the `pydantic-settings` package, enabling centralized, validated configuration through environment variables. Each setting is defined in a structured `QiliSDKSettings` class, automatically loaded via a singleton `get_settings()` accessor. Environment variables follow a consistent `QILISDK_` prefix, and fields are now cleanly documented and type-safe. This change simplifies configuration management, eliminates scattered `os.environ` usage, and improves testability and documentation integration with AutoAPI. ([PR #55](https://github.com/qilimanjaro-tech/qilisdk/pulls/55))
+- The entire project now funnels its diagnostics through a single Loguru pipeline. On import, `qilisdk.__init__` invokes `_logging.configure_logging()`, which reads `logging_config.yaml` (or any file you point to) and installs sinks, colour schemes, and per-library filters before attaching an intercept handler that routes **all** standard-library loggers to Loguru. Back-end drivers and the synchronous QaaS client have been instrumented with rich, level-appropriate messages—`DEBUG` traces payloads and HTTP timings, `INFO` announces lifecycle events, `SUCCESS` confirms completed actions, while `WARNING` and `ERROR` expose anomalies and failures. Configuration is now entirely declarative and lives in one place, `_logging.py`; downstream projects that merely `import qilisdk` inherit the same configuration.  A new environment variable, **`QILISDK_LOGGING_CONFIG_PATH`**, has been added to `QiliSDKSettings`, letting users override the default YAML location without code changes. ([PR #58](https://github.com/qilimanjaro-tech/qilisdk/pulls/58))
+- Updating the structure of how variational algorithms are executed. We added a new `VariationalProgram` class that takes in a parameterized Functional, an Optimizer, and a model representing the cost function, then uses these elements to optimize the parameters of the functional. 
+
+  Moreover, due to these changes the VQE class was removed and now all variational programs will be constructed and executed using VariationalProgram. Here is an example of optimizing a VQE to solve the knapsack problem: 
+
+
+  ```python
+  import numpy as np
+
+  from qilisdk.backends import QutipBackend
+  from qilisdk.common import BinaryVariable, LessThanOrEqual, Model, ObjectiveSense
+  from qilisdk.digital import CNOT, U2, HardwareEfficientAnsatz
+  from qilisdk.functionals import Sampling, VariationalProgram
+  from qilisdk.optimizers import SciPyOptimizer
+
+  values = [2, 3, 7]
+  weights = [1, 3, 3]
+  max_weight = 4
+  binary_var = [BinaryVariable(f"b{i}") for i in range(len(values))]
+
+  model = Model("Knapsack")
+
+  model.set_objective(sum(binary_var[i] * values[i] for i in range(len(values))), sense=ObjectiveSense.MAXIMIZE)
+
+  model.add_constraint("max_weights", LessThanOrEqual(sum(binary_var[i] * weights[i] for i in range(len(weights))), max_weight))
+
+
+  n_qubits = 3
+  ansatz = HardwareEfficientAnsatz(
+      n_qubits=n_qubits, layers=3, connectivity="Linear", structure="grouped", one_qubit_gate=U2, two_qubit_gate=CNOT
+  )
+  circuit = ansatz.get_circuit([np.random.uniform(0, np.pi) for _ in range(ansatz.nparameters)])
+
+  optimizer = SciPyOptimizer(method="Powell")
+
+  backend = QutipBackend()
+  result = backend.execute(VariationalProgram(functional=Sampling(circuit), optimizer=optimizer, cost_model=model))
+
+  print(result)
+  ```
+  ([PR #62](https://github.com/qilimanjaro-tech/qilisdk/pulls/62))
+- Added a high-level `Circuit.draw(style: CircuitStyle = CircuitStyle(), filepath: str | None = None)` that renders the circuit via `MatplotlibCircuitRenderer.plot()` and optionally saves it (format inferred from the file extension). Crucially, passing the `style` parameter **bypasses all library defaults** for visuals—theme, colors, fonts (including the default PlusJakartaSans), DPI, spacing, and math/label formatting — without mutating global Matplotlib `rcParams`. This makes figures reproducible and sandboxed: the style you pass is the style you get, regardless of notebook or app settings. For example, `circuit.draw(style=CircuitStyle(theme=dark, fontsize=12, fontfname=None, fontfamily="DejaVu Sans"), filepath="circuit.svg")` forces a dark theme and DejaVu Sans font locally to this call. If `style` is omitted, the library’s default style is used. ([PR #63](https://github.com/qilimanjaro-tech/qilisdk/pulls/63))
+- You can now parameterize both ``Hamiltonian`` and ``Schedule`` objects using Parameter objects. This makes it easier to define flexible, variational quantum programs.
+
+  **Parameterized Hamiltonians**
+
+  You can insert symbolic parameters directly into Hamiltonian definitions, then set or update them later:
+
+  ```python
+  from qilisdk.common import Parameter
+  from qilisdk.analog import Z, Y, X
+
+  p = [Parameter(f"p({i})", 2) for i in range(2)]
+
+  t = 2 * p[0]
+
+  H = 2 * Z(1) + t * Y(0) 
+  H2 = 3 * X(0) + p[1] * Y(0)
+
+  H3 = H + H2
+
+  print(H3) 
+  # Output: 2 Z(1) + 6 Y(0) + 3 X(0)
+
+  H3.set_parameters({"p(0)": 3})
+
+  print(H3) 
+  # Output: 2 Z(1) + 8 Y(0) + 3 X(0)
+
+  # get hamiltonian parameters
+  H3.get_parameters()
+  ```
+
+  **Parameterized Schedules**
+  You can also define schedules whose weights are parameterized functions of time.
+
+  ```python
+  import numpy as np
+  from qilisdk.analog import Schedule
+  from qilisdk.analog.hamiltonian import X, Z
+  from qilisdk.common import Parameter
+
+  val = [0.3 , 0.7]
+  p = [Parameter(f"p({i})", val[i]) for i in range(2)]
+
+  dt = 0.1
+  T = 10
+  steps = np.linspace(0, T, int(T / dt))
+
+  # Define two Hamiltonians
+  h1 = X(0) + X(1) + X(2)
+  h2 = Z(0) - 1 * Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
+
+  schedule = Schedule(
+      T=T,
+      dt=dt
+  )
+
+
+  def parameterized_schedule(t) -> float:
+      if steps[t] < 2:
+          return p[0] / 2 * (steps[t])
+      if steps[t] < 4:
+          return p[0]
+      if steps[t] < 6:
+          return p[0] + (p[1] - p[0]) / 2 * (steps[t] - 4)
+      if steps[t] < 8:
+          return p[1]
+      return p[1] + (1 - p[1]) / 2 * (steps[t] - 8)
+
+
+  schedule.add_hamiltonian("h1", h1, lambda t: (1 - steps[t] / T))
+  schedule.add_hamiltonian("h2", h2, parameterized_schedule)
+
+  # set parameters
+  schedule.set_parameters({
+      "p(0)" : 0.2,
+      "p(1)" : 0.5
+  })
+
+  # get parameters
+  print(schedule.get_parameters())
+  ```
+
+  **Mixing Hamiltonians and Schedules**
+
+  You can freely combine parameterized ``Hamiltonians`` and parameterized ``Schedules``, making them ideal building blocks for Variational Programs.
+
+
+
+  ```python
+  import numpy as np
+  from qilisdk.analog import Schedule
+  from qilisdk.analog.hamiltonian import X, Z
+  from qilisdk.common import Parameter
+
+  val = [0.3 , 0.7]
+  p = [Parameter(f"p({i})", val[i]) for i in range(2)]
+  h_p = [Parameter(f"h_p({i})", 0.5 * np.pi) for i in range(3)]
+
+  dt = 0.1
+  T = 10
+  steps = np.linspace(0, T, int(T / dt))
+
+  # Define two Hamiltonians
+  h1 = X(0) + X(1) + X(2)
+  h2 = sum(h_p[i] * Z(i) for i in range(3)) + 3 * Z(0) * Z(1) # parameterized hamiltonian
+
+  schedule = Schedule(
+      T=T,
+      dt=dt
+  )
+
+
+  def parameterized_schedule(t) -> float:
+      if steps[t] < 2:
+          return p[0] / 2 * (steps[t])
+      if steps[t] < 4:
+          return p[0]
+      if steps[t] < 6:
+          return p[0] + (p[1] - p[0]) / 2 * (steps[t] - 4)
+      if steps[t] < 8:
+          return p[1]
+      return p[1] + (1 - p[1]) / 2 * (steps[t] - 8)
+
+
+  schedule.add_hamiltonian("h1", h1, lambda t: (1 - steps[t] / T))
+  schedule.add_hamiltonian("h2", h2, parameterized_schedule)
+
+  # set parameters
+  schedule.set_parameters({
+      "p(0)" : 0.2,
+      "p(1)" : 0.5
+  })
+
+  # get parameters
+  print(schedule.get_parameters())
+  ```
+  **Cost Function Restructuring**
+
+  We’ve refactored cost function handling into a dedicated cost function module.
+  - Introduced a new ``ModelCostFunction`` class that allows you to create cost functions directly from abstract models.
+
+  ```python
+
+  from qilisdk.common import BinaryVariable, LEQ, Model, ObjectiveSense
+  from qilisdk.cost_functions import ModelCostFunction
+
+  values = [2, 3, 7]
+  weights = [1, 3, 3]
+  max_weight = 4
+  binary_var = [BinaryVariable(f"b{i}") for i in range(len(values))]
+
+  model = Model("Knapsack")
+
+  model.set_objective(sum(binary_var[i] * values[i] for i in range(len(values))), sense=ObjectiveSense.MAXIMIZE)
+
+  model.add_constraint("max_weights", LEQ(sum(binary_var[i] * weights[i] for i in range(len(weights))), max_weight))
+
+  model_cost_function = ModelCostFunction(model)
+
+  ```
+
+  ([PR #64](https://github.com/qilimanjaro-tech/qilisdk/pulls/64))
+- Ansatz now **inherits** from Circuit.
+
+  We refactored the hierarchy so that `Ansatz` is an abstract subclass of `Circuit` rather than a separate builder/factory. Concrete templates like `HardwareEfficientAnsatz` are therefore circuits themselves. This simplifies downstream code: anything that accepted a `Circuit` now accepts an ansatz instance directly, without an extra “build” or “get\_circuit” step. As part of this change, the circuit is constructed during initialization, configurable attributes were made private with read-only properties (`layers`, `connectivity`, `structure`, `one_qubit_gate`, `two_qubit_gate`), and parameter handling became deterministic: all single-qubit parameters default to `0.0`; The `structure` flag is now meaningful at build time: `grouped` schedules `U(all) → E(all)` per layer, while `interposed` applies `U(q) → E(all)` for each qubit within a layer. Measurement gates are no longer appended automatically; add them explicitly if needed. The `nparameters` computation remains available via the parent `Circuit`.
+
+  **Example**
+
+  ```python
+  from qilisdk.digital import HardwareEfficientAnsatz, U3, CNOT
+
+  ansatz = HardwareEfficientAnsatz(
+      nqubits=4,
+      layers=2,
+      connectivity="linear",        # or "circular" / "full"   
+      structure="grouped",          # or "interposed"
+      one_qubit_gate=U3,            # or U1 / U2
+      two_qubit_gate=CNOT,          # or CZ
+  )
+  ansatz.draw()                     # ansatz is a Circuit
+
+  # add measurements explicitly if your workflow requires them
+  ```
+  ([PR #66](https://github.com/qilimanjaro-tech/qilisdk/pulls/66))
+- Adding Observable cost function that now could be used with VariationalPrograms. 
+
+  You can construct an Observable cost function by using ``Hamiltonian``, ``PauliOperators``, or ``QuantumObjects``.
+
+  The cost is the expected value of the observable given the final state after the simulation. 
+
+
+  ```python
+  from qilisdk.analog import Z, PauliZ
+  from qilisdk.common import QuantumObject
+  from qilisdk.cost_functions import ObservableCostFunction
+  import numpy as np
+
+
+  h = Z(0) + 2 * Z(1)
+  cost_function = ObservableCostFunction(h)
+
+  ## or
+
+  cost_function = ObservableCostFunction(PauliZ(0))
+
+  ## or
+
+  cost_function = ObservableCostFunction(QuantumObject(np.array([[1, 0], [0, -1]])))
+  ```
+
+  Usage: 
+  ```python
+  from qilisdk.analog import Z
+  from qilisdk.common import ket, tensor_prod
+  from qilisdk.cost_functions import ObservableCostFunction
+  from qilisdk.functionals import TimeEvolutionResult
+
+  n = 2
+
+  H = sum(Z(i) for i in range(n))
+
+  ocf = ObservableCostFunction(H)
+
+  te_results = TimeEvolutionResult(
+      final_expected_values=np.array([[-0.9, 0]]),
+      expected_values=None,
+      final_state=tensor_prod([ket(1), ket(1)]),
+      intermediate_states=None,
+  )
+  cost = ocf.compute_cost(te_results)
+  # Output: -2
+  ```
+  ([PR #68](https://github.com/qilimanjaro-tech/qilisdk/pulls/68))
+- The core type has been renamed from `QuantumObject` to `QTensor` to better reflect its role as a quantum tensor and to clarify semantics across states and operators. Internally, the storage switches to CSR (`csr_matrix`) and the hot paths were rewritten to be sparse‑first: `ptrace` no longer densifies and instead (i) remaps COO indices for operators, and (ii) forms the reduced state via `M @ M†` directly for pure states, avoiding construction of full $N\times N$ density matrices. State constructors are faster and leaner: `ket`/`bra` compute the basis index in one pass rather than chaining Kronecker products. Expectation values avoid densification (`trace(Oρ)` via element‑wise multiply–sum), density‑matrix validation uses sparse eigenvalue checks (`eigsh`) with a small‑dimensional dense fallback, and `nqubits` is cached. Together these changes substantially reduce memory and improve runtime for large sparse workloads—most notably for partial traces, state preparation, and expectation values—while keeping the public surface largely intact (helpers `basis_state`, `ket`, `bra`, `tensor_prod`, `expect_val` now operate on `QTensor`). Minor behavior notes: `.data` is CSR; stricter power‑of‑two shape validation; `norm('tr')` returns `1.0` for valid density matrices and scalar norms return `|z|`; `expm` converts to CSC internally; `tensor_prod` rejects empty inputs; and `ket()` requires at least one qubit. Update code by replacing references to `QuantumObject` with `QTensor`. ([PR #69](https://github.com/qilimanjaro-tech/qilisdk/pulls/69))
+- Add your info here ([PR #71](https://github.com/qilimanjaro-tech/qilisdk/pulls/71))
+- Implemented Identity gate for circuits and added support in CudaBackend and QutipBackend. ([PR #75](https://github.com/qilimanjaro-tech/qilisdk/pulls/75))
+- Introduced the `ExperimentFunctional` and `ExperimentResult` classes, establishing a unified framework for defining and analyzing quantum characterization experiments in SpeQtrum.
+
+  This update integrates two foundational single-qubit experiments — Rabi and T1.
+
+  Example of execution:
+
+  ```python
+  import numpy as np
+  from qilisdk.speqtrum import SpeQtrum
+  from qilisdk.speqtrum.experiments import RabiExperiment
+
+  # Authenticate with the SpeQtrum Quantum-as-a-Service (QaaS) platform
+  SpeQtrum.login(apikey="...", username="...")
+
+  # Create a SpeQtrum client instance for job submission
+  client = SpeQtrum()
+
+  # Define and submit a Rabi experiment on qubit 0,
+  # sweeping the drive duration across a range of values
+  job_id = client.submit(
+      RabiExperiment(qubit=0, drive_duration_values=np.arange(...)),
+      device_id=...,
+  )
+
+  # Wait for the remote job to complete and retrieve job details
+  job_details = client.wait_for_job(job_id)
+
+  # Access the processed RabiExperimentResult object
+  results = job_details.result.rabi_experiment_result
+
+  # Plot the experimental S21 response (amplitude vs. drive duration)
+  results.plot()
+  ``` ([PR #76](https://github.com/qilimanjaro-tech/qilisdk/pulls/76))
+- Implemented schedule plotting with theme options consistent with those available for circuits, along with new schedule style classes to improve customization. A new `LinearSchedule` has been added, implementing linear interpolation between user-defined coefficients across the schedule. In addition, both `Schedule` and `LinearSchedule` now enforce that the total duration `T` must be divisible by the time step `dt`. ([PR #77](https://github.com/qilimanjaro-tech/qilisdk/pulls/77))
+
+## Bugfixes
+
+- The `parse` method has been made far more forgiving of extra or missing spaces around coefficients and operators. Internally, all whitespace inside any parentheses—whether around a complex coefficient like `(2.5 + 3j)` or an operator index like `Y( 0 )`—is now stripped out, and runs of spaces elsewhere are collapsed to single spaces. A post‐processing regex also ensures there’s always exactly one space between a closing parenthesis and the next Pauli operator token. As a result, variants such as `(2.5 + 3j)Y(0)`, `(2.5+3j)   Y(0)`, and `(2.5 + 3j) Y(0)` will all parse correctly without altering any downstream logic. ([PR #45](https://github.com/qilimanjaro-tech/qilisdk/pulls/45))
+- Qutip backend dimension mismatch bug fix. This happened when executing time evolution with more than one qubit as the dimensions of the state and the observables did not match. for instance, for three qubits, the state had the dimension [1, 8] while the observables had [[2, 2, 2],[2, ,2, 2]]. the bug was solved by explicitly specifying the dimensions of all the Qobj objects when constructed. ([PR #53](https://github.com/qilimanjaro-tech/qilisdk/pulls/53))
+- Fixed an ndarray shape inconsistency when creating TimeEvolutionResult. ([PR #73](https://github.com/qilimanjaro-tech/qilisdk/pulls/73))
+- Fixed an issue where an exception was thrown if you tried to logout twice. ([PR #74](https://github.com/qilimanjaro-tech/qilisdk/pulls/74))
+- We moved the dt and T in the `Schedule` class back to being floats instead of integers. Added helpful methods to the hamiltonian class (`commutator`, `anitcommutator`, `vector_norm`, `frobenius_norm`, `trace`) ([PR #78](https://github.com/qilimanjaro-tech/qilisdk/pulls/78))
+
+## Improved Documentation
+
+- Added initial Sphinx‐based documentation for QiliSDK, complete with a fully-configured `conf.py` that injects our source path, enables key extensions (Napoleon for Google-style docstrings, Graphviz, Viewcode, AutoAPI for live API reference, nbsphinx, sphinx\_design, and markdown includes), and applies the Sphinx Awesome Theme with custom light/dark logos, favicon, and CSS overrides.  The build now generates a polished HTML site (deployed at [https://qilimanjaro-tech.github.io/qilisdk/](https://qilimanjaro-tech.github.io/qilisdk/)) featuring module overviews, "Getting Started" guides, and deep dives into digital, analog, backend, and QaaS components, laying the groundwork for ongoing documentation enhancements. ([PR #51](https://github.com/qilimanjaro-tech/qilisdk/pulls/51))
+- Removed duplicate toctree from documentation's index page. ([PR #56](https://github.com/qilimanjaro-tech/qilisdk/pulls/56))
+- Updated the site's visual identity to match Qilimanjaro's brand guidelines. This release introduces the official light and dark logos, replaces the default theme palette with our red-purple-blue HSL brand colors, and adds a bespoke horizontal gradient used for headings. ([PR #57](https://github.com/qilimanjaro-tech/qilisdk/pulls/57))
+- Added support for multi-version documentation using `sphinx-multiversion`. ([PR #72](https://github.com/qilimanjaro-tech/qilisdk/pulls/72))
+
+## Misc
+
+- [PR #44](https://github.com/qilimanjaro-tech/qilisdk/pulls/44), [PR #46](https://github.com/qilimanjaro-tech/qilisdk/pulls/46), [PR #48](https://github.com/qilimanjaro-tech/qilisdk/pulls/48), [PR #59](https://github.com/qilimanjaro-tech/qilisdk/pulls/59), [PR #61](https://github.com/qilimanjaro-tech/qilisdk/pulls/61), [PR #65](https://github.com/qilimanjaro-tech/qilisdk/pulls/65), [PR #81](https://github.com/qilimanjaro-tech/qilisdk/pulls/81), [PR #83](https://github.com/qilimanjaro-tech/qilisdk/pulls/83)
+
+
 # Qilisdk 0.1.4 (2025-06-18)
 
 ### Bugfixes
