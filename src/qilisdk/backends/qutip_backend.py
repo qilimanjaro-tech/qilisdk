@@ -111,8 +111,7 @@ class QutipBackend(Backend):
         as a QutipDigitalResult.
 
         Args:
-            circuit (Circuit): The quantum circuit to be executed.
-            nshots (int, optional): The number of measurement shots to perform. Defaults to 1000.
+            functional (Sampling): The Sampling function to execute.
 
         Returns:
             DigitalResult: A result object containing the measurement samples and computed probabilities.
@@ -165,13 +164,10 @@ class QutipBackend(Backend):
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
-            schedule (Schedule): The evolution schedule of the system.
-            initial_state (QTensor): the initial state of the evolution.
-            observables (list[PauliOperator  |  Hamiltonian]): the list of observables to be measured at the end of the evolution.
-            store_intermediate_results (bool): A flag to store the intermediate results along the evolution.
+            functional (TimeEvolution): The TimeEvolution functional to execute.
 
         Returns:
-            AnalogResult: The results of the evolution.
+            TimeEvolutionResult: The results of the evolution.
 
         Raises:
             ValueError: if the initial state provided is invalid.
@@ -336,12 +332,6 @@ class QutipBackend(Backend):
         This method processes a controlled gate by creating a temporary kernel for the basic gate,
         applying its handler, and then integrating it into the main kernel as a controlled operation.
 
-        Args:
-            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
-            gate (Controlled): The controlled gate to be handled.
-            control_qubit (cudaq.QuakeValue): The control qubit for the gate.
-            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
-
         Raises:
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
@@ -366,11 +356,6 @@ class QutipBackend(Backend):
 
         This method creates a temporary kernel for the basic gate wrapped by the adjoint,
         applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
-
-        Args:
-            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
-            gate (Adjoint): The adjoint gate to be handled.
-            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
         """
 
         def qutip_adjoined_gate() -> Qobj:
@@ -388,12 +373,6 @@ class QutipBackend(Backend):
 
         Depending on whether the measurement targets all qubits or a subset,
         this method applies measurement operations accordingly.
-
-        Args:
-            kernel (cudaq.Kernel): The CUDA kernel being constructed.
-            gate (M): The measurement gate.
-            circuit (Circuit): The circuit containing the measurement gate.
-            qubits (cudaq.QuakeValue): The allocated qubits for the circuit.
         """
         for i in gate.target_qubits:
             qutip_circuit.add_measurement(f"M{i}", targets=[i], classical_store=i)

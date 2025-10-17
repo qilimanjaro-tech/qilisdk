@@ -839,8 +839,9 @@ class BaseVariable(ABC):
 
     @abstractmethod
     def num_binary_equivalent(self) -> int:
-        """Returns:
-        int: the number of binary variables that are needed to represent this variable in the given encoding.
+        """
+        Returns:
+            int: the number of binary variables that are needed to represent this variable in the given encoding.
         """
 
     @abstractmethod
@@ -862,8 +863,8 @@ class BaseVariable(ABC):
         if the variable label is in the dictionary
 
         Args:
-            var_dict (dict): A dictionary that holds the labels of the variables to be
-                            changed alongside the new values they should take
+            domain (Domain): The updated domain of the variable.
+            bounds (tuple[float | None, float | None]): The updated bounds of the variable. Defaults to (None, None)
         """
 
         self._domain = domain

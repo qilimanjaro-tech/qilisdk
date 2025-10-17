@@ -109,8 +109,19 @@ class MatplotlibCircuitRenderer:
                     continue
 
                 # Targets-only (single or multi-qubit) box
-                self._draw_targets_gate(label=self._gate_label(gate), targets=list(gate.target_qubits or []), layer=layer)
-            maxi = max([0.0, *(self._layer_widths[wire][layer] for wire in range(self._wires) if len(self._layer_widths[wire]) - 1 >= layer)])
+                self._draw_targets_gate(
+                    label=self._gate_label(gate), targets=list(gate.target_qubits or []), layer=layer
+                )
+            maxi = max(
+                [
+                    0.0,
+                    *(
+                        self._layer_widths[wire][layer]
+                        for wire in range(self._wires)
+                        if len(self._layer_widths[wire]) - 1 >= layer
+                    ),
+                ]
+            )
             self._max_layer_width.append(maxi)
 
         # ------------------------------------------------------------------
@@ -186,21 +197,25 @@ class MatplotlibCircuitRenderer:
                         con_qubits = qubits
                     elif self.style.layout == "normal":
                         con_qubits = tuple(range(min(qubits), max(qubits) + 1))
-                    if all(key in waiting_list for key in con_qubits) and all(waiting_list[qr] == gate for qr in con_qubits):
-                            self._layer_gate_mapping[layer][q] = gate
-                            for c_qubit in con_qubits:
-                                gate_maping[c_qubit].pop(0)
-                                del waiting_list[c_qubit]
+                    if all(key in waiting_list for key in con_qubits) and all(
+                        waiting_list[qr] == gate for qr in con_qubits
+                    ):
+                        self._layer_gate_mapping[layer][q] = gate
+                        for c_qubit in con_qubits:
+                            gate_maping[c_qubit].pop(0)
+                            del waiting_list[c_qubit]
 
-                            if self.style.layout == "compact":
-                                for m_qubit in range(min(qubits), q):
-                                    if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
-                                        ignore_q.append(m_qubit)
-                                        if layer + 1 not in self._layer_gate_mapping:
-                                            self._layer_gate_mapping[layer + 1] = {}
-                                        self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][m_qubit]
-                                        del self._layer_gate_mapping[layer][m_qubit]
-                            ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
+                        if self.style.layout == "compact":
+                            for m_qubit in range(min(qubits), q):
+                                if m_qubit not in qubits and m_qubit in self._layer_gate_mapping[layer]:
+                                    ignore_q.append(m_qubit)
+                                    if layer + 1 not in self._layer_gate_mapping:
+                                        self._layer_gate_mapping[layer + 1] = {}
+                                    self._layer_gate_mapping[layer + 1][m_qubit] = self._layer_gate_mapping[layer][
+                                        m_qubit
+                                    ]
+                                    del self._layer_gate_mapping[layer][m_qubit]
+                        ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
                 if len(gate_maping[q]) == 0 and not completed[q]:
                     completed[q] = True
                     self.last_idx[q] = layer
@@ -213,13 +228,12 @@ class MatplotlibCircuitRenderer:
         With align_layer=True, this ignores *wires* and aligns across all wires.
 
         Args:
-            wires: Wires considered (ignored when `align_layer` is True).
             layer: Column index (0 = the initial label pad entry).
 
         Returns:
             The x-coordinate (inches) of the left edge of this column.
         """
-        return sum(self._max_layer_width[:layer + 1])
+        return sum(self._max_layer_width[: layer + 1])
 
     def _reserve(self, width: float, wires: Iterable[int], layer: int) -> None:
         """
@@ -229,8 +243,6 @@ class MatplotlibCircuitRenderer:
             width: Box width (inches), *excluding* left/right gate margins.
             wires: Wires to update.
             layer: Column index to reserve.
-            xskip: If a wire does not yet have this column, use this absolute
-                left x to compute and append the left gap before the width.
         """
         full_width = width + self.style.gate_margin * 2
         for w in wires:
@@ -271,8 +283,6 @@ class MatplotlibCircuitRenderer:
 
         Args:
             text: Text to measure (mathtext is supported).
-            fontweight: Matplotlib font weight.
-            fontstyle: Matplotlib font style.
 
         Returns:
             The rendered width in inches.
@@ -762,7 +772,7 @@ class MatplotlibCircuitRenderer:
         Create a new figure and axes with the given DPI.
 
         Args:
-            style: Optional style configuration (for DPI).
+            dpi (int): The DPI of the figure
 
         Returns:
             A newly created Matplotlib Axes.

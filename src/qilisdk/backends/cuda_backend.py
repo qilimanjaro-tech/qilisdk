@@ -68,7 +68,7 @@ class CudaBackend(Backend):
         Initialize the CudaBackend.
 
         Args:
-            sampling_simulation_method (CudaSamplingMethod, optional): The simulation method to use for sampling circuits.
+            sampling_method (CudaSamplingMethod, optional): The simulation method to use for sampling circuits.
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """

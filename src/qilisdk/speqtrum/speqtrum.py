@@ -403,13 +403,8 @@ class SpeQtrum:
         """Run a Variational Program on the selected device.
 
         Args:
-            variational_program: Problem definition containing Hamiltonian and ansatz.
-            optimizer: Classical optimizer that updates the variational
-                parameters between circuit evaluations.
-            nshots: Number of shots per circuit evaluation. Defaults to
-                ``1000``.
-            store_intermediate_results: Whether to keep intermediate energies
-                and parameter vectors for later analysis.
+            variational_program (VariationalProgram): Problem definition containing Hamiltonian and ansatz.
+            device (str): The SpeQtrum device's code to execute the variational program upon.
 
         Returns:
             The numeric identifier of the created job.
@@ -420,7 +415,12 @@ class SpeQtrum:
                 variational_program=variational_program,
             ),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.VARIATIONAL, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.VARIATIONAL,
+            "meta": {},
+        }
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
