@@ -27,10 +27,10 @@ dependencies = [
     "numpy>=1.26.4",
     "ruamel-yaml>=0.18.15",
     "scipy>=1.15.3",
-    "pydantic>=2.10.6",
-    "pydantic-settings>=2.8.0",
+    "pydantic>=2.12.2",
+    "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
-    "matplotlib>=3.10.5",
+    "matplotlib>=3.10.7",
 ]
 
 [project.optional-dependencies]
@@ -43,22 +43,22 @@ speqtrum = [
     "keyrings-alt>=5.0.2",
 ]
 qutip = [
-    "qutip>=5.2.0",
+    "qutip>=5.2.1",
     "qutip-qip>=0.4.1",
 ]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.138.2",
-    "ipykernel>=6.30.1",
-    "mypy>=1.17.1",
+    "hypothesis>=6.142.1",
+    "ipykernel>=7.0.1",
+    "mypy>=1.18.2",
     "pre-commit>=4.3.0",
-    "pytest>=8.3.4",
-    "pytest-sugar>=1.1.0",
-    "ruff>=0.12.9",
-    "towncrier>=24.8.0",
+    "pytest>=8.4.2",
+    "pytest-sugar>=1.1.1",
+    "ruff>=0.14.1",
+    "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
-    "pytest-cov>=6.2.1",
+    "pytest-cov>=7.0.0",
 ]
 docs = [
     "nbsphinx>=0.9.7",
