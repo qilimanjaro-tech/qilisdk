@@ -152,7 +152,7 @@ class MatplotlibCircuitRenderer:
                 if self.style.layout == "compact":
                     con_qubits = qubits
                 elif self.style.layout == "normal":
-                    con_qubits = range(min(qubits), max(qubits) + 1)
+                    con_qubits = tuple(range(min(qubits), max(qubits) + 1))
                 for qubit in con_qubits:
                     gate_maping[qubit].append(gate)
 
@@ -185,7 +185,7 @@ class MatplotlibCircuitRenderer:
                     if self.style.layout == "compact":
                         con_qubits = qubits
                     elif self.style.layout == "normal":
-                        con_qubits = range(min(qubits), max(qubits) + 1)
+                        con_qubits = tuple(range(min(qubits), max(qubits) + 1))
                     if all(key in waiting_list for key in con_qubits) and all(waiting_list[qr] == gate for qr in con_qubits):
                             self._layer_gate_mapping[layer][q] = gate
                             for c_qubit in con_qubits:
