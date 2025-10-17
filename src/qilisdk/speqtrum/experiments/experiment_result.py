@@ -53,17 +53,11 @@ class ExperimentResult(FunctionalResult):
 
     This class defines common utilities for handling experimental data,
     including computation of S21 parameters and automatic 1D or 2D plotting.
-    It can be subclassed to represent specific experiments (e.g. Rabi, T1).
-
-    Attributes:
-        plot_title (str): Default title for plots, defined by subclasses.
-        qubit (int): The qubit index associated with the experiment.
-        data (np.ndarray): Raw experiment data, with the last axis containing
-            the real and imaginary parts of the S21 parameter.
-        dims (list[Dimension]): Sweep dimensions describing the experiment.
+    Subclasses provide specific sweep parameters and plot titles.
     """
 
     plot_title: ClassVar[str]
+    """Default plot title; subclasses provide the concrete label."""
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
@@ -82,7 +76,7 @@ class ExperimentResult(FunctionalResult):
         """Complex S21 transmission parameter.
 
         Returns:
-            np.ndarray: The complex-valued S21 response computed as ``Re + i·Im``.
+            np.ndarray: The complex-valued S21 response computed as ``Re + i * Im``.
         """
         return self.data[..., 0] + 1j * self.data[..., 1]
 
@@ -100,7 +94,7 @@ class ExperimentResult(FunctionalResult):
         """Magnitude of S21 in decibels (dB).
 
         Returns:
-            np.ndarray: 20·log10(|S21|) expressed in dB.
+            np.ndarray: ``20 * log10(abs(S21))`` expressed in dB.
         """
         return 20 * np.log10(self.s21_modulus)
 
@@ -223,21 +217,15 @@ class ExperimentResult(FunctionalResult):
 
 @yaml.register_class
 class RabiExperimentResult(ExperimentResult):
-    """Result container for Rabi experiments.
-
-    Attributes:
-        plot_title (str): Default title for the Rabi experiment plot.
-    """
+    """Result container for Rabi experiments."""
 
     plot_title: ClassVar[str] = "Rabi"
+    """Default title for Rabi experiment plots."""
 
 
 @yaml.register_class
 class T1ExperimentResult(ExperimentResult):
-    """Result container for T1 relaxation experiments.
-
-    Attributes:
-        plot_title (str): Default title for the T1 experiment plot.
-    """
+    """Result container for T1 relaxation experiments."""
 
     plot_title: ClassVar[str] = "T1"
+    """Default title for T1 experiment plots."""

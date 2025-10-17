@@ -26,37 +26,59 @@ from qilisdk.yaml import yaml
 
 @yaml.register_class
 class Schedule(Parameterizable):
+    """
+    Builds a set of time-dependent coefficients applied to a collection of Hamiltonians.
+
+    A Schedule defines the evolution of a system by associating time steps with a set
+    of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
+    corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
+    at discrete time steps.
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from qilisdk.analog import Schedule, X, Z
+
+            T, dt = 10, 1
+            steps = np.linspace(0, T, int(T / dt))
+
+            h1 = X(0) + X(1) + X(2)
+            h2 = -Z(0) - Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
+
+            schedule = Schedule(
+                T=T,
+                dt=dt,
+                hamiltonians={"driver": h1, "problem": h2},
+                schedule={i: {"driver": 1 - t / T, "problem": t / T} for i, t in enumerate(steps)},
+            )
+            schedule.draw()
+    """
+
     def __init__(
         self,
         T: float,
         dt: float = 1,
         hamiltonians: dict[str, Hamiltonian] | None = None,
-        schedule: dict[int, dict[str, float | Term]] | None = None,
+        schedule: dict[int, dict[str, float | Term | Parameter]] | None = None,
     ) -> None:
         """
-        Represents a time-dependent schedule for Hamiltonian coefficients in an annealing process.
-
-        A Schedule defines the evolution of a system by associating time steps with a set
-        of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
-        corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
-        at discrete time steps.
-
         Args:
-            T (float): The total annealing time in units of 1ns.
-            dt (float): The time step for the annealing process it is defined as multiples of 1ns. Defaults to 1.
-            hamiltonians (dict[str, Hamiltonian], optional): A dictionary mapping labels to Hamiltonian objects.
-                Defaults to an empty dictionary if None.
-            schedule (dict[int, dict[str, float]], optional): A dictionary where keys are time step indices (integers)
-                and values are dictionaries mapping Hamiltonian labels to their coefficients at that time step.
-                Defaults to {0: {}} if None.
+            T (float): Total annealing time (in nanoseconds).
+            dt (float, optional): Discretization step of the time grid. Defaults to 1.
+            hamiltonians (dict[str, Hamiltonian] | None, optional): Mapping from labels to Hamiltonian instances that
+                define the building blocks of the schedule. Defaults to None, which creates an empty mapping.
+            schedule (dict[int, dict[str, float | Term | Parameter]] | None, optional): Predefined coefficients for
+                specific time steps. Each inner dictionary maps Hamiltonian labels to numerical or symbolic
+                coefficients. Defaults to {0: {}} if None.
 
         Raises:
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
-        if dt == 0:
-            raise ValueError("dt must be different from zero.")
+        if dt <= 0:
+            raise ValueError("dt must be greater than zero.")
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
-        self._schedule: dict[int, dict[str, float | Term]] = schedule if schedule is not None else {0: {}}
+        self._schedule: dict[int, dict[str, float | Term | Parameter]] = schedule if schedule is not None else {0: {}}
         self._parameters: dict[str, Parameter] = {}
         self._T = T
         self._dt = dt
@@ -98,22 +120,20 @@ class Schedule(Parameterizable):
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
         """
-        Get the dictionary of Hamiltonians known to this schedule.
+        Return the Hamiltonians managed by the schedule.
 
         Returns:
-            dict[str, Hamiltonian]: A mapping of Hamiltonian labels to Hamiltonian objects.
+            dict[str, Hamiltonian]: Mapping of labels to Hamiltonian instances.
         """
         return self._hamiltonians
 
     @property
     def schedule(self) -> dict[int, dict[str, Number]]:
         """
-        Get the full schedule of Hamiltonian coefficients.
-
-        The schedule is returned as a dictionary sorted by time step.
+        Return the evaluated schedule of Hamiltonian coefficients.
 
         Returns:
-            dict[int, dict[str, float]]: The mapping of time steps to coefficient dictionaries.
+            dict[int, dict[str, Number]]: Mapping from time indices to evaluated coefficients.
         """
         out_dict = {}
         for k, v in self._schedule.items():
@@ -129,80 +149,45 @@ class Schedule(Parameterizable):
 
     @property
     def T(self) -> float:
-        """
-        Get the total annealing time.
-
-        Returns:
-            int: The total time T.
-        """
+        """Total annealing time of the schedule."""
         return self._T
 
     @property
     def dt(self) -> float:
-        """
-        Get the time step duration.
-
-        Returns:
-            int: The duration of each time step.
-        """
+        """Duration of a single time step in the annealing grid."""
         return self._dt
 
     @property
     def nqubits(self) -> int:
-        """
-        Get the maximum number of qubits among all Hamiltonians in the schedule.
-
-        Returns:
-            int: The number of qubits.
-        """
+        """Maximum number of qubits affected by Hamiltonians contained in the schedule."""
         return self._nqubits
 
     @property
     def nparameters(self) -> int:
-        """
-        Retrieve the total RealNumber of parameters required by all parameterized gates in the circuit.
-
-        Returns:
-            int: The total count of parameters from all parameterized gates.
-        """
+        """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
         return len(self._parameters)
 
     def get_parameter_values(self) -> list[float]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the current values associated with the schedule parameters."""
         return [param.value for param in self._parameters.values()]
 
     def get_parameter_names(self) -> list[str]:
-        """
-        Retrieve the parameter values from all parameterized gates in the circuit.
-
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
+        """Return the ordered list of parameter labels managed by the schedule."""
         return list(self._parameters.keys())
 
     def get_parameters(self) -> dict[str, float]:
-        """
-        Retrieve the parameter names and values from all parameterized gates in the circuit.
-
-        Returns:
-            dict[str, float]: A dictionary of the parameters with their current values.
-        """
+        """Return a mapping from parameter labels to their current numerical values."""
         return {label: param.value for label, param in self._parameters.items()}
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
-        Set new parameter values for all parameterized gates in the circuit.
+        Update the numerical values of all parameters referenced by the schedule.
 
         Args:
-            values (list[float]): A list containing new parameter values to assign to the parameterized gates.
+            values (list[float]): New parameter values ordered according to ``get_parameter_names()``.
 
         Raises:
-            ValueError: If the RealNumber of provided values does not match the expected RealNumber of parameters.
+            ValueError: If the number of provided values does not match ``nparameters``.
         """
         if len(values) != self.nparameters:
             raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
@@ -210,13 +195,14 @@ class Schedule(Parameterizable):
             parameter.set_value(values[i])
 
     def set_parameters(self, parameter_dict: dict[str, int | float]) -> None:
-        """Set the parameter values by their label. No need to provide the full list of parameters.
+        """
+        Update a subset of parameters by label.
 
         Args:
-            parameter_dict (dict[str, RealNumber]): _description_
+            parameter_dict (dict[str, float]): Mapping from parameter labels to new values.
 
         Raises:
-            ValueError: _description_
+            ValueError: If an unknown parameter label is provided.
         """
         for label, param in parameter_dict.items():
             if label not in self._parameters:
@@ -224,9 +210,19 @@ class Schedule(Parameterizable):
             self._parameters[label].set_value(param)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the bounds registered for each schedule parameter."""
         return {k: v.bounds for k, v in self._parameters.items()}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update the bounds of existing parameters.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Mapping from label to ``(lower, upper)`` bounds.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
         for label, bound in ranges.items():
             if label not in self._parameters:
                 raise ValueError(
@@ -253,19 +249,15 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: if the parameterized schedule contains generic variables instead of only Parameters.
         """
-        if label not in self._hamiltonians:
-            self._hamiltonians[label] = hamiltonian
-            self._schedule[0][label] = 0
-            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
-            for l, param in hamiltonian.parameters.items():
-                self._parameters[param.label] = param
-        else:
+        if label in self._hamiltonians:
             logger.warning(
-                (
-                    f"label {label} is already assigned to a hamiltonian, "
-                    + "ignoring new hamiltonian and updating schedule of existing hamiltonian."
-                )
+                (f"label {label} is already assigned to a hamiltonian, " + "updating schedule of existing hamiltonian.")
             )
+        self._hamiltonians[label] = hamiltonian
+        self._schedule[0][label] = 0
+        self._nqubits = max(self._nqubits, hamiltonian.nqubits)
+        for l, param in hamiltonian.parameters.items():
+            self._parameters[param.label] = param
 
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
@@ -285,15 +277,17 @@ class Schedule(Parameterizable):
                     self._parameters[time_step.label] = time_step
                 self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
 
-    def add_schedule_step(self, time_step: int, hamiltonian_coefficient_list: dict[str, float | Term]) -> None:
+    def add_schedule_step(
+        self, time_step: int, hamiltonian_coefficient_list: dict[str, float | Term | Parameter]
+    ) -> None:
         """
         Add or update a schedule step with specified Hamiltonian coefficients.
 
         Args:
             time_step (int): The time step index at which the Hamiltonian coefficients are updated.
                 The actual time is computed as dt * time_step.
-            hamiltonian_coefficient_list (dict[str, float]): A dictionary mapping Hamiltonian labels to their
-                coefficient values at this time step.
+            hamiltonian_coefficient_list (dict[str, float | Term | Parameter]): Mapping from Hamiltonian labels to coefficients
+                (numeric or symbolic) at this time step.
                 If a Hamiltonian is not included in the dictionary, it is assumed its coefficient remains unchanged.
 
         Raises:
@@ -322,7 +316,7 @@ class Schedule(Parameterizable):
         self._schedule[time_step] = hamiltonian_coefficient_list
 
     def update_hamiltonian_coefficient_at_time_step(
-        self, time_step: int, hamiltonian_label: str, new_coefficient: float
+        self, time_step: int, hamiltonian_label: str, new_coefficient: float | Term | Parameter
     ) -> None:
         """
         Update the coefficient value of a specific Hamiltonian at a given time step.
@@ -330,7 +324,7 @@ class Schedule(Parameterizable):
         Args:
             time_step (int): The time step (as an integer multiple of dt) at which to update the coefficient.
             hamiltonian_label (str): The label of the Hamiltonian to update.
-            new_coefficient (float): The new coefficient value.
+            new_coefficient (float | Term | Parameter): The new coefficient value or symbolic expression.
 
         Raises:
             ValueError: If the specified time step exceeds the total annealing time.
@@ -364,10 +358,10 @@ class Schedule(Parameterizable):
         using the latest defined coefficients at or before the given time step.
 
         Args:
-            time_step (int): The time step index for which to retrieve the Hamiltonian.
+            time_step (int): Time step index for which to retrieve the Hamiltonian (``time_step * dt`` in units).
 
         Returns:
-            Hamiltonian: The effective Hamiltonian at the specified time step.
+            Hamiltonian: The effective Hamiltonian at the specified time step with coefficients evaluated to numbers.
         """
         ham = Hamiltonian()
         read_labels = []
@@ -381,7 +375,7 @@ class Schedule(Parameterizable):
                         coeff = (
                             aux.evaluate({})
                             if isinstance(aux, Term)
-                            else (aux.evaluate if isinstance(aux, Parameter) else aux)
+                            else (aux.evaluate() if isinstance(aux, Parameter) else aux)
                         )
                         ham += coeff * self._hamiltonians[ham_label]
                         read_labels.append(ham_label)
@@ -390,7 +384,9 @@ class Schedule(Parameterizable):
             for ham_label in self._schedule[time_step]:
                 aux = self._schedule[time_step][ham_label]
                 coeff = (
-                    aux.evaluate({}) if isinstance(aux, Term) else (aux.evaluate if isinstance(aux, Parameter) else aux)
+                    aux.evaluate({})
+                    if isinstance(aux, Term)
+                    else (aux.evaluate() if isinstance(aux, Parameter) else aux)
                 )
                 ham += coeff * self._hamiltonians[ham_label]
                 read_labels.append(ham_label)
@@ -406,7 +402,7 @@ class Schedule(Parameterizable):
                         coeff = (
                             aux.evaluate({})
                             if isinstance(aux, Term)
-                            else (aux.evaluate if isinstance(aux, Parameter) else aux)
+                            else (aux.evaluate() if isinstance(aux, Parameter) else aux)
                         )
                         ham += coeff * self._hamiltonians[label]
                         break
@@ -420,16 +416,16 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (int): The time (in the same units as T) at which to query the coefficient.
+            time_step (float): The time (in the same units as ``T``) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
-            float: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
+            Number: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
         """
         val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
-    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term:
+    def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term | Parameter:
         """
         Retrieve the expression of a specified Hamiltonian at a given time. If any parameters are
         present in the expression they will be printed in the expression.
@@ -438,11 +434,11 @@ class Schedule(Parameterizable):
         coefficient for the given Hamiltonian.
 
         Args:
-            time_step (int): The time (in the same units as T) at which to query the coefficient.
+            time_step (float): The time (in the same units as ``T``) at which to query the coefficient.
             hamiltonian_key (str): The label of the Hamiltonian.
 
         Returns:
-            float: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
+            Number | Term: The coefficient expression of the Hamiltonian at the specified time, or 0 if not defined.
         """
         time_idx = int(time_step / self.dt)
         while time_idx >= 0:

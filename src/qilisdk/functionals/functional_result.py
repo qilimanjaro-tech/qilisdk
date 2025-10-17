@@ -14,4 +14,5 @@
 from qilisdk.common.result import Result
 
 
-class FunctionalResult(Result): ...
+class FunctionalResult(Result):
+    """Base class for artifacts produced by executing a :class:`Functional`."""

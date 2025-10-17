@@ -25,15 +25,13 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 @yaml.register_class
 class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
-    """
-    Represents the result of a Parameterized Program calculation.
-    """
+    """Aggregate the optimizer summary and best functional result from a variational run."""
 
     def __init__(self, optimizer_result: OptimizerResult, result: TResult_co) -> None:
         """
         Args:
-            optimizer_result (OptimizerResult): The optimizer's final results. (depends on the optimizer used)
-            result (TResult_co): The results of executing the Functional with the optimal parameters. (depends on the Functional)
+            optimizer_result (OptimizerResult): Summary produced by the optimiser.
+            result (TResult_co): Functional result evaluated at the final parameters.
         """
         super().__init__()
         self._optimizer_result = optimizer_result
@@ -41,54 +39,31 @@ class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
 
     @property
     def optimal_cost(self) -> float:
-        """
-        Get the optimal cost (estimated ground state energy).
-
-        Returns:
-            float: The optimal cost.
-        """
+        """Best cost reported by the optimiser."""
         return self._optimizer_result.optimal_cost
 
     @property
     def optimal_execution_results(self) -> TResult_co:
-        """The results of executing the Functional with the optimal parameters found by the optimizer.
-
-        Returns:
-            TResult_co: The results object corresponding to the Functional.
-        """
+        """Return the functional result evaluated at the optimal parameters."""
         return self._result
 
     @property
     def optimal_parameters(self) -> list[float]:
-        """
-        Get the optimal ansatz parameters.
-
-        Returns:
-            list[float]: The optimal parameters.
-        """
+        """Optimised parameter values."""
         return self._optimizer_result.optimal_parameters
 
     @property
     def intermediate_results(self) -> list[OptimizerIntermediateResult]:
-        """
-        Get the intermediate results.
-
-        Returns:
-            list[OptimizerResult]: The intermediate results.
-        """
+        """Sequence of intermediate optimiser snapshots, if recorded."""
         return self._optimizer_result.intermediate_results
 
     def __repr__(self) -> str:
-        """
-        Return a string representation of the Parameterized Program Results for debugging.
-
-        Returns:
-            str: A formatted string detailing the optimal cost and parameters.
-        """
         class_name = self.__class__.__name__
         return (
-            f"{class_name}(\n  Optimal Cost = {self.optimal_cost},"
-            + f"\n  Optimal Parameters={pformat(self.optimal_parameters)},"
-            + f"\n  Intermediate Results={pformat(self.intermediate_results)})"
-            + f"\n  Optimal results={pformat(self.optimal_execution_results)})"
+            f"{class_name}(\n"
+            f"  Optimal Cost={self.optimal_cost},\n"
+            f"  Optimal Parameters={pformat(self.optimal_parameters)},\n"
+            f"  Intermediate Results={pformat(self.intermediate_results)},\n"
+            f"  Optimal Results={pformat(self.optimal_execution_results)}\n"
+            ")"
         )

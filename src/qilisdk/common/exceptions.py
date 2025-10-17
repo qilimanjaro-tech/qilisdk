@@ -13,13 +13,17 @@
 # limitations under the License.
 
 
-class OutOfBoundsException(Exception): ...
+class OutOfBoundsException(Exception):
+    """Raised when a variable value falls outside its configured bounds."""
 
 
-class NotSupportedOperation(Exception): ...
+class NotSupportedOperation(Exception):
+    """Raised when a requested operation is not supported by the backend."""
 
 
-class InvalidBoundsError(Exception): ...
+class InvalidBoundsError(Exception):
+    """Raised when lower/upper bounds are inconsistent or invalid."""
 
 
-class EvaluationError(Exception): ...
+class EvaluationError(Exception):
+    """Raised when a symbolic expression cannot be evaluated."""
