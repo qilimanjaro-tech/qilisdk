@@ -95,7 +95,7 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id: 99, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id, job_name: 99, raising=True)
 
     q = speqtrum.SpeQtrum()
     assert q.submit(FakeSampling(), device="some_device") == 99
