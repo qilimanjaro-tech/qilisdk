@@ -316,6 +316,7 @@ class SpeQtrum:
                 ``Sampling`` or ``TimeEvolution``) that defines the quantum
                 workload to be executed.
             device: Device code returned by :py:meth:`list_devices`.
+            job_name: The name of the job, this can help you identify different jobs easier. Default: "MyJob".
 
         Returns:
             int: The numeric identifier of the created job on SpeQtrum.
@@ -434,15 +435,6 @@ class SpeQtrum:
     def _submit_variational_program(
         self, variational_program: VariationalProgram, device: str, job_name: str = "MyJob"
     ) -> int:
-        """Run a Variational Program on the selected device.
-
-        Args:
-            variational_program (VariationalProgram): Problem definition containing Hamiltonian and ansatz.
-            device (str): The SpeQtrum device's code to execute the variational program upon.
-
-        Returns:
-            The numeric identifier of the created job.
-        """
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(
