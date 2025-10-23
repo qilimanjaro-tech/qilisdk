@@ -82,9 +82,6 @@ class SpeQtrum:
         self._handlers: dict[type[Functional], Callable[[Functional, str], JobHandle[Any]]] = {
             Sampling: lambda f, device: self._submit_sampling(cast("Sampling", f), device),
             TimeEvolution: lambda f, device: self._submit_time_evolution(cast("TimeEvolution", f), device),
-            VariationalProgram: lambda f, device: self._submit_variational_program(
-                cast("VariationalProgram", f), device
-            ),
             RabiExperiment: lambda f, device: self._submit_rabi_program(cast("RabiExperiment", f), device),
             T1Experiment: lambda f, device: self._submit_t1_program(cast("T1Experiment", f), device),
         }
@@ -347,6 +344,16 @@ class SpeQtrum:
     def submit(self, functional: TimeEvolution, device: str) -> JobHandle[TimeEvolutionResult]: ...
 
     @overload
+    def submit(self, functional: VariationalProgram[Sampling], device: str) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+
+    @overload
+    def submit(
+        self,
+        functional: VariationalProgram[TimeEvolution],
+        device: str,
+    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+
+    @overload
     def submit(
         self,
         functional: VariationalProgram[PrimitiveFunctional[ResultT]],
@@ -390,6 +397,19 @@ class SpeQtrum:
             NotImplementedError: If *functional* is not of a supported type.
         """
         try:
+            if isinstance(functional, VariationalProgram):
+                inner = functional.functional
+                if isinstance(inner, Sampling):
+                    return self._submit_variational_program(cast("VariationalProgram[Sampling]", functional), device)
+                if isinstance(inner, TimeEvolution):
+                    return self._submit_variational_program(
+                        cast("VariationalProgram[TimeEvolution]", functional), device
+                    )
+
+                # Fallback to untyped handle for custom primitives.
+                job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device)
+                return cast(JobHandle[FunctionalResult], job_handle)
+
             handler = self._handlers[type(functional)]
         except KeyError as exc:
             logger.error("Unsupported functional type: {}", type(functional).__qualname__)
@@ -473,9 +493,24 @@ class SpeQtrum:
         logger.info("Time evolution job submitted: {}", job.id)
         return JobHandle.time_evolution(job.id)
 
+    @overload
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[PrimitiveFunctional[ResultT]], device: str
-    ) -> JobHandle[VariationalProgramResult[ResultT]]:
+        self, variational_program: VariationalProgram[Sampling], device: str
+    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+
+    @overload
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[TimeEvolution], device: str
+    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+
+    @overload
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[Any], device: str
+    ) -> JobHandle[VariationalProgramResult]: ...
+
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[Any], device: str
+    ) -> JobHandle[VariationalProgramResult]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
@@ -491,5 +526,9 @@ class SpeQtrum:
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
-        result_type = cast("type[ResultT]", variational_program.functional.result_type)
-        return JobHandle.variational_program(job.id, result_type=result_type)
+        inner = variational_program.functional
+        if isinstance(inner, Sampling):
+            return JobHandle.variational_program(job.id, result_type=SamplingResult)
+        if isinstance(inner, TimeEvolution):
+            return JobHandle.variational_program(job.id, result_type=TimeEvolutionResult)
+        return JobHandle.variational_program(job.id)
