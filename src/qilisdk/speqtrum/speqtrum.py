@@ -210,20 +210,27 @@ class SpeQtrum:
         logger.success("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
 
-    def get_job_details(self, id: int) -> JobDetail:
-        """Fetch the complete record of *id*.
+    @overload
+    def get_job(self, job: JobHandle[ResultT]) -> TypedJobDetail[ResultT]: ...
+
+    @overload
+    def get_job(self, job: int) -> JobDetail: ...
+
+    def get_job(self, job: int | JobHandle[Any]) -> JobDetail | TypedJobDetail[Any]:
+        """Fetch the complete record of *job*.
 
         Args:
-            id: Identifier of the job.
+            job: Either the integer identifier or a previously returned `JobHandle`.
 
         Returns:
-            A :class:`~qilisdk.models.JobDetail` instance containing payload,
-            result, logs and error information.
+            A :class:`~qilisdk.models.JobDetail` snapshot. When a handle is supplied the
+            result is wrapped in :class:`~qilisdk.models.TypedJobDetail` to expose typed accessors.
         """
-        logger.debug("Retrieving job {} details", id)
+        job_id = job.id if isinstance(job, JobHandle) else job
+        logger.debug("Retrieving job {} details", job_id)
         with httpx.Client() as client:
             response = client.get(
-                f"{self._settings.speqtrum_api_url}/jobs/{id}",
+                f"{self._settings.speqtrum_api_url}/jobs/{job_id}",
                 headers=self._get_authorized_headers(),
                 params={
                     "payload": True,
@@ -257,7 +264,9 @@ class SpeQtrum:
             data["logs"] = decoded_logs.decode("utf-8")
 
         job_detail = TypeAdapter(JobDetail).validate_python(data)
-        logger.debug("Job {} details retrieved (status {})", id, job_detail.status.value)
+        logger.debug("Job {} details retrieved (status {})", job_id, job_detail.status.value)
+        if isinstance(job, JobHandle):
+            return job.bind(job_detail)
         return job_detail
 
     @overload
@@ -309,7 +318,7 @@ class SpeQtrum:
 
         # poll until we hit a terminal state or timeout
         while True:
-            current = self.get_job_details(job_id)
+            current = self.get_job(job_id)
 
             if current.status in terminal_states:
                 logger.success("Job {} reached terminal state {}", job_id, current.status.value)
@@ -346,7 +355,7 @@ class SpeQtrum:
     @overload
     def submit(self, functional: T1Experiment, device: str) -> JobHandle[T1ExperimentResult]: ...
 
-    def submit(self, functional: PrimitiveFunctional | ExperimentFunctional, device: str) -> JobHandle[FunctionalResult]:
+    def submit(self, functional: Functional, device: str) -> JobHandle[FunctionalResult]:
         """
         Submit a quantum functional for execution on the selected device.
 

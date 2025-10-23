@@ -151,11 +151,11 @@ def test_wait_for_job_completes(monkeypatch):
 
     calls = {"n": 0}
 
-    def fake_get_job_details(self, _id):
+    def fake_get_job(self, _id):
         calls["n"] += 1
         return FakeJob(DummyStatus.RUNNING if calls["n"] == 1 else DummyStatus.COMPLETED)
 
-    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job_details", fake_get_job_details, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", fake_get_job, raising=True)
     monkeypatch.setattr(speqtrum.time, "sleep", lambda *_: None)  # skip real sleeping
 
     # run - should finish on 2nd iteration
@@ -185,7 +185,7 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
         result=ExecuteResult(type=speqtrum.ExecuteType.SAMPLING, sampling_result=sampling_result),
     )
 
-    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job_details", lambda self, _: detail, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
 
     typed_detail = q.wait_for_job(handle, poll_interval=0.0)
     assert isinstance(typed_detail, speqtrum.TypedJobDetail)
@@ -212,7 +212,7 @@ def test_wait_for_job_times_out(monkeypatch):
     # always RUNNING → never terminal
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
-        "get_job_details",
+        "get_job",
         lambda *_: types.SimpleNamespace(status=DummyStatus.RUNNING),
         raising=True,
     )

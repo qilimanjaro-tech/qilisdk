@@ -82,7 +82,7 @@ Remote Jobs
         print(f"{job.id}: {job.status.value} on {job.device_id}")
 
 To inspect complete job metadata (payload, result, logs, decoded errors) call
-:meth:`SpeQtrum.get_job_details <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details>`. Binary fields are returned as
+:meth:`SpeQtrum.get_job <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job>`. Binary fields are returned as
 decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
 
 When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the returned object is a
@@ -94,7 +94,7 @@ When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the ret
     final_job = client.wait_for_job(job_handle)
     sampling_result = final_job.get_results()  # -> SamplingResult
 
-You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details` with a bare integer identifier. In that
+You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job` with a bare integer identifier. In that
 case a regular :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>` object is returned and you can inspect the
 individual ``*.result`` fields manually when needed.
 
