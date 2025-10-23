@@ -347,7 +347,11 @@ class SpeQtrum:
     def submit(self, functional: TimeEvolution, device: str) -> JobHandle[TimeEvolutionResult]: ...
 
     @overload
-    def submit(self, functional: VariationalProgram, device: str) -> JobHandle[VariationalProgramResult]: ...
+    def submit(
+        self,
+        functional: VariationalProgram[PrimitiveFunctional[ResultT]],
+        device: str,
+    ) -> JobHandle[VariationalProgramResult[ResultT]]: ...
 
     @overload
     def submit(self, functional: RabiExperiment, device: str) -> JobHandle[RabiExperimentResult]: ...
@@ -470,8 +474,8 @@ class SpeQtrum:
         return JobHandle.time_evolution(job.id)
 
     def _submit_variational_program(
-        self, variational_program: VariationalProgram, device: str
-    ) -> JobHandle[VariationalProgramResult]:
+        self, variational_program: VariationalProgram[PrimitiveFunctional[ResultT]], device: str
+    ) -> JobHandle[VariationalProgramResult[ResultT]]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
@@ -487,4 +491,5 @@ class SpeQtrum:
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
-        return JobHandle.variational_program(job.id)
+        result_type = cast("type[ResultT]", variational_program.functional.result_type)
+        return JobHandle.variational_program(job.id, result_type=result_type)
