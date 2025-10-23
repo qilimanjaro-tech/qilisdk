@@ -35,7 +35,6 @@ from qilisdk.functionals import (
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
 from qilisdk.speqtrum.experiments import (
-    ExperimentFunctional,
     RabiExperiment,
     RabiExperimentResult,
     T1Experiment,
@@ -47,18 +46,18 @@ from .speqtrum_models import (
     Device,
     ExecutePayload,
     ExecuteType,
-    JobHandle,
     JobDetail,
+    JobHandle,
     JobId,
     JobInfo,
     JobStatus,
     JobType,
-    TypedJobDetail,
     RabiExperimentPayload,
     SamplingPayload,
     T1ExperimentPayload,
     TimeEvolutionPayload,
     Token,
+    TypedJobDetail,
     VariationalProgramPayload,
 )
 
@@ -344,7 +343,9 @@ class SpeQtrum:
     def submit(self, functional: TimeEvolution, device: str) -> JobHandle[TimeEvolutionResult]: ...
 
     @overload
-    def submit(self, functional: VariationalProgram[Sampling], device: str) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+    def submit(
+        self, functional: VariationalProgram[Sampling], device: str
+    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
 
     @overload
     def submit(
@@ -408,7 +409,7 @@ class SpeQtrum:
 
                 # Fallback to untyped handle for custom primitives.
                 job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device)
-                return cast(JobHandle[FunctionalResult], job_handle)
+                return cast("JobHandle[FunctionalResult]", job_handle)
 
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -515,7 +516,12 @@ class SpeQtrum:
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.VARIATIONAL, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.VARIATIONAL,
+            "meta": {},
+        }
         logger.debug("Executing variational program on device {}", device)
         with httpx.Client() as client:
             response = client.post(

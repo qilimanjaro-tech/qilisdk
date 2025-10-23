@@ -234,6 +234,7 @@ VariationalInnerResultT = TypeVar("VariationalInnerResultT", bound=FunctionalRes
 
 ResultExtractor = Callable[[ExecuteResult], ResultT_co]
 
+
 # these helpers live outside the models so they can be referenced by default values
 def _require_sampling_result(result: ExecuteResult) -> SamplingResult:
     if result.sampling_result is None:
@@ -281,6 +282,7 @@ def _require_variational_program_result_typed(
 
     return _extractor
 
+
 class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
     """Strongly typed reference to a submitted SpeQtrum job."""
 
@@ -290,11 +292,11 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
 
     @classmethod
     def sampling(cls, job_id: int) -> "JobHandle[SamplingResult]":
-        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)
+        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)  # type: ignore[return-value, arg-type]
 
     @classmethod
     def time_evolution(cls, job_id: int) -> "JobHandle[TimeEvolutionResult]":
-        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)
+        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)  # type: ignore[return-value, arg-type]
 
     @overload
     @classmethod
@@ -310,24 +312,47 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
     def variational_program(
         cls, job_id: int, *, result_type: type[VariationalInnerResultT] | None = None
     ) -> "JobHandle[Any]":
+        """Create a variational-program handle for an existing job identifier.
+
+        Args:
+            job_id: Numeric identifier returned by the SpeQtrum service.
+            result_type: Optional functional result type expected within the
+                variational program payload. When provided the returned handle
+                enforces that the optimiser output matches this type.
+
+        Returns:
+            JobHandle: A handle whose ``get_results`` invocation yields a
+            ``VariationalProgramResult`` preserving the requested inner result
+            type when supplied.
+        """
         if result_type is None:
-            handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=_require_variational_program_result)
+            handle = cls(
+                id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=_require_variational_program_result  # type: ignore[arg-type]
+            )
             return cast("JobHandle[VariationalProgramResult]", handle)
 
         extractor = _require_variational_program_result_typed(result_type)
-        handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)
+        handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)  # type: ignore[arg-type]
         return cast("JobHandle[VariationalProgramResult[VariationalInnerResultT]]", handle)
 
     @classmethod
     def rabi_experiment(cls, job_id: int) -> "JobHandle[RabiExperimentResult]":
-        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)
+        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)  # type: ignore[return-value, arg-type]
 
     @classmethod
     def t1_experiment(cls, job_id: int) -> "JobHandle[T1ExperimentResult]":
-        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)
+        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)  # type: ignore[return-value, arg-type]
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[ResultT_co]":
-        """Attach this handle's typing information to a concrete `JobDetail`."""
+        """Attach this handle's typing information to a concrete job detail.
+
+        Args:
+            detail: Un-typed job detail payload returned by the SpeQtrum API.
+
+        Returns:
+            TypedJobDetail: Wrapper exposing ``get_results`` with the typing
+            captured when the handle was created.
+        """
         return TypedJobDetail.model_validate(
             {
                 **detail.model_dump(),
@@ -418,16 +443,23 @@ class TypedJobDetail(JobDetail, Generic[ResultT_co]):
     extractor: ResultExtractor[ResultT_co] = Field(repr=False, exclude=True)
 
     def get_results(self) -> ResultT_co:
-        """
-        Return the strongly typed execution result.
+        """Return the strongly typed execution result.
+
+        Returns:
+            ResultT_co: Result payload associated with the completed job,
+            respecting the type information carried by the originating
+            ``JobHandle``.
 
         Raises:
-            RuntimeError: If SpeQtrum has not populated the result payload or the type disagrees with the handle.
+            RuntimeError: If SpeQtrum has not populated the result payload or
+                the execute type disagrees with the handle.
         """
         if self.result is None:
             raise RuntimeError("The job completed without a result payload; inspect `error` or `logs` for details.")
 
         if self.result.type != self.expected_type:
-            raise RuntimeError(f"Expected a result of type '{self.expected_type.value}' but received '{self.result.type.value}'.")
+            raise RuntimeError(
+                f"Expected a result of type '{self.expected_type.value}' but received '{self.result.type.value}'."
+            )
 
         return self.extractor(self.result)
