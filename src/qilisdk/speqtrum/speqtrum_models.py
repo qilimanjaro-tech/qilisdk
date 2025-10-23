@@ -327,7 +327,9 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
         """
         if result_type is None:
             handle = cls(
-                id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=_require_variational_program_result  # type: ignore[arg-type]
+                id=job_id,
+                execute_type=ExecuteType.VARIATIONAL_PROGRAM,
+                extractor=_require_variational_program_result,  # type: ignore[arg-type]
             )
             return cast("JobHandle[VariationalProgramResult]", handle)
 
