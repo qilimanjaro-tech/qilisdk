@@ -104,7 +104,7 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
         "_submit_sampling",
-        lambda self, f, device_id: speqtrum.JobHandle.sampling(99),
+        lambda self, f, device_id, job_name=None: speqtrum.JobHandle.sampling(99),
         raising=True,
     )
 

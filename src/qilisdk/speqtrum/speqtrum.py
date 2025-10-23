@@ -78,11 +78,11 @@ class SpeQtrum:
             logger.error("No QaaS credentials found. Call `.login()` or set env vars before instantiation.")
             raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
-        self._handlers: dict[type[Functional], Callable[[Functional, str], JobHandle[Any]]] = {
-            Sampling: lambda f, device: self._submit_sampling(cast("Sampling", f), device),
-            TimeEvolution: lambda f, device: self._submit_time_evolution(cast("TimeEvolution", f), device),
-            RabiExperiment: lambda f, device: self._submit_rabi_program(cast("RabiExperiment", f), device),
-            T1Experiment: lambda f, device: self._submit_t1_program(cast("T1Experiment", f), device),
+        self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
+            Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
+            TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(cast("TimeEvolution", f), device, job_name),
+            RabiExperiment: lambda f, device, job_name: self._submit_rabi_program(cast("RabiExperiment", f), device, job_name),
+            T1Experiment: lambda f, device, job_name: self._submit_t1_program(cast("T1Experiment", f), device, job_name),
         }
         self._settings = get_settings()
         logger.success("QaaS client initialised for user '{}'", self._username)
@@ -337,14 +337,14 @@ class SpeQtrum:
             time.sleep(poll_interval)
 
     @overload
-    def submit(self, functional: Sampling, device: str) -> JobHandle[SamplingResult]: ...
+    def submit(self, functional: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]: ...
 
     @overload
-    def submit(self, functional: TimeEvolution, device: str) -> JobHandle[TimeEvolutionResult]: ...
+    def submit(self, functional: TimeEvolution, device: str, job_name: str | None = None) -> JobHandle[TimeEvolutionResult]: ...
 
     @overload
     def submit(
-        self, functional: VariationalProgram[Sampling], device: str
+        self, functional: VariationalProgram[Sampling], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
 
     @overload
@@ -352,6 +352,7 @@ class SpeQtrum:
         self,
         functional: VariationalProgram[TimeEvolution],
         device: str,
+        job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
 
     @overload
@@ -359,15 +360,16 @@ class SpeQtrum:
         self,
         functional: VariationalProgram[PrimitiveFunctional[ResultT]],
         device: str,
+        job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[ResultT]]: ...
 
     @overload
-    def submit(self, functional: RabiExperiment, device: str) -> JobHandle[RabiExperimentResult]: ...
+    def submit(self, functional: RabiExperiment, device: str, job_name: str | None = None) -> JobHandle[RabiExperimentResult]: ...
 
     @overload
-    def submit(self, functional: T1Experiment, device: str) -> JobHandle[T1ExperimentResult]: ...
+    def submit(self, functional: T1Experiment, device: str, job_name: str | None = None) -> JobHandle[T1ExperimentResult]: ...
 
-    def submit(self, functional: Functional, device: str) -> JobHandle[FunctionalResult]:
+    def submit(self, functional: Functional, device: str, job_name: str | None = None) -> JobHandle[FunctionalResult]:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -390,6 +392,7 @@ class SpeQtrum:
                 ``Sampling`` or ``TimeEvolution``) that defines the quantum
                 workload to be executed.
             device: Device code returned by :py:meth:`list_devices`.
+            job_name (optional): The name of the job, this can help you identify different jobs easier. Default: None.
 
         Returns:
             JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
@@ -419,16 +422,23 @@ class SpeQtrum:
             ) from exc
 
         logger.info("Submitting {}", type(functional).__qualname__)
-        job_handle = handler(functional, device)
+        job_handle = handler(functional, device, job_name)
         logger.success("Submission complete - job {}", job_handle.id)
         return job_handle
 
-    def _submit_sampling(self, sampling: Sampling, device: str) -> JobHandle[SamplingResult]:
+    def _submit_sampling(self, sampling: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]:
         payload = ExecutePayload(
             type=ExecuteType.SAMPLING,
             sampling_payload=SamplingPayload(sampling=sampling),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.DIGITAL, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.DIGITAL,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
         logger.debug("Executing Sampling on device {}", device)
         with httpx.Client() as client:
             response = client.post(
@@ -440,12 +450,19 @@ class SpeQtrum:
             job = JobId(**response.json())
         return JobHandle.sampling(job.id)
 
-    def _submit_rabi_program(self, rabi_experiment: RabiExperiment, device: str) -> JobHandle[RabiExperimentResult]:
+    def _submit_rabi_program(self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None) -> JobHandle[RabiExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.PULSE, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.PULSE,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
         logger.debug("Executing Rabi experiment on device {}", device)
         with httpx.Client() as client:
             response = client.post(
@@ -458,12 +475,19 @@ class SpeQtrum:
         logger.info("Rabi experiment job submitted: {}", job.id)
         return JobHandle.rabi_experiment(job.id)
 
-    def _submit_t1_program(self, t1_experiment: T1Experiment, device: str) -> JobHandle[T1ExperimentResult]:
+    def _submit_t1_program(self, t1_experiment: T1Experiment, device: str, job_name: str | None = None) -> JobHandle[T1ExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.PULSE, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.PULSE,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
         logger.debug("Executing T1 experiment on device {}", device)
         with httpx.Client() as client:
             response = client.post(
@@ -476,12 +500,19 @@ class SpeQtrum:
         logger.info("T1 experiment job submitted: {}", job.id)
         return JobHandle.t1_experiment(job.id)
 
-    def _submit_time_evolution(self, time_evolution: TimeEvolution, device: str) -> JobHandle[TimeEvolutionResult]:
+    def _submit_time_evolution(self, time_evolution: TimeEvolution, device: str, job_name: str | None = None) -> JobHandle[TimeEvolutionResult]:
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
         )
-        json = {"device_code": device, "payload": payload.model_dump_json(), "job_type": JobType.ANALOG, "meta": {}}
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.ANALOG,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
         logger.debug("Executing time evolution on device {}", device)
         with httpx.Client() as client:
             response = client.post(
@@ -496,21 +527,21 @@ class SpeQtrum:
 
     @overload
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[Sampling], device: str
+        self, variational_program: VariationalProgram[Sampling], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
 
     @overload
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[TimeEvolution], device: str
+        self, variational_program: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
 
     @overload
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str
+        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult]: ...
 
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str
+        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
@@ -522,6 +553,8 @@ class SpeQtrum:
             "job_type": JobType.VARIATIONAL,
             "meta": {},
         }
+        if job_name:
+            json["name"] = job_name
         logger.debug("Executing variational program on device {}", device)
         with httpx.Client() as client:
             response = client.post(
