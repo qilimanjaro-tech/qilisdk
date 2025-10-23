@@ -85,34 +85,28 @@ To inspect complete job metadata (payload, result, logs, decoded errors) call
 :meth:`SpeQtrum.get_job_details <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details>`. Binary fields are returned as
 decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
 
-To obtain the results of a completed job, check the ``result`` attribute of the returned :class:`~qilisdk.speqtrum.speqtrum_models.JobDetail`. 
-The specific result type depends on the job type.
+When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the returned object is a
+:class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a strongly typed :meth:`get_results` helper.
 
 .. code-block:: python
 
-    response = client.get_job_details(job_id)
+    job_handle = client.submit(sampling, device=device)
+    final_job = client.wait_for_job(job_handle)
+    sampling_result = final_job.get_results()  # -> SamplingResult
 
-    # to get the results of the job depending on the type of job
-    if response.result:
-        if response.result.sampling_result:
-            print("Sampling results:", response.result.sampling_result)
-        elif response.result.variational_program_result:
-            print("Variational Program  results:", response.result.variational_program_result)
-        elif response.result.time_evolution_result:
-            print("Time Evolution results:", response.result.time_evolution_result)
-        elif response.result.rabi_experiment_result:
-            print("Rabi Experiment results:", response.result.rabi_experiment_result)
-        elif response.result.t1_experiment_result:
-            print("T1 Experiment results:", response.result.t1_experiment_result)
-    if response.logs:
-        print("Execution logs:\n", response.logs)
+You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details` with a bare integer identifier. In that
+case a regular :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>` object is returned and you can inspect the
+individual ``*.result`` fields manually when needed.
 
 Waiting for Completion
 ----------------------
 
 Use :meth:`SpeQtrum.wait_for_job <qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job>` to poll until a job reaches a
-terminal state (``completed``, ``error``, or ``cancelled``). The method returns the final :class:`JobDetail` snapshot and
-raises :class:`TimeoutError` if the optional timeout elapses first.
+terminal state (``completed``, ``error``, or ``cancelled``). Passing a :class:`JobHandle
+<qilisdk.speqtrum.speqtrum_models.JobHandle>` yields a :class:`TypedJobDetail
+<qilisdk.speqtrum.speqtrum_models.TypedJobDetail>` with typed result access, while raw integer identifiers continue to
+return plain :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>`. The helper raises :class:`TimeoutError` if
+the optional timeout elapses first.
 
 Functional Submission
 ---------------------
@@ -134,8 +128,12 @@ must supply a ``device`` argument with the device code obtained from :meth:`list
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_id = client.submit(sampling, device=device)
-    print("Submitted sampling job:", job_id)
+    job_handle = client.submit(sampling, device=device)
+    print("Submitted sampling job:", job_handle.id)
+
+    final_job = client.wait_for_job(job_handle, timeout=600)
+    sampling_result = final_job.get_results()
+    print("Most frequent outcome:", sampling_result.get_probabilities(1))
 
 .. Warning::
 
@@ -181,7 +179,7 @@ function) and submit it as any other functional.
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_id = client.submit(vprog, device=device)
+    job_handle = client.submit(vprog, device=device)
 
 Pulse Experiments
 -----------------
@@ -202,14 +200,15 @@ functional objects mirror the interfaces described in the :doc:`functionals` cha
 
     # Rabi experiment: sweep drive durations
     rabi = RabiExperiment(qubit=0, drive_duration_values=np.linspace(0, 200, 21))
-    rabi_job = client.submit(rabi, device=device)
-    rabi_response = client.wait_for_job(rabi_job, timeout=600)
+    rabi_handle = client.submit(rabi, device=device)
+    rabi_response = client.wait_for_job(rabi_handle, timeout=600)
+    rabi_result = rabi_response.get_results()
 
     # T1 relaxation experiment: sweep wait durations
     t1 = T1Experiment(qubit=0, wait_duration_values=np.linspace(0, 400, 41))
-    t1_job = client.submit(t1, device=device)
-    t1_response = client.wait_for_job(t1_job, timeout=600)
+    t1_handle = client.submit(t1, device=device)
+    t1_response = client.wait_for_job(t1_handle, timeout=600)
+    t1_result = t1_response.get_results()
 
 The resulting :class:`~qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult` and
-:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` objects can be retrieved through 
-`rabi_response.result.rabi_experiment_result` and `t1_response.result.t1_experiment_result` respectively.
+:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` objects can then be used directly.

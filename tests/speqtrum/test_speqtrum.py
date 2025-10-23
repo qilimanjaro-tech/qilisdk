@@ -8,12 +8,15 @@ pytest discovery.
 from __future__ import annotations
 
 import types
+from datetime import datetime, timezone
 from enum import Enum
 from types import SimpleNamespace
 
 import pytest
 
 import qilisdk.speqtrum.speqtrum as speqtrum
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.speqtrum.speqtrum_models import ExecuteResult
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -95,10 +98,16 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id: 99, raising=True)
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_submit_sampling",
+        lambda self, f, device_id: speqtrum.JobHandle.sampling(99),
+        raising=True,
+    )
 
     q = speqtrum.SpeQtrum()
-    assert q.submit(FakeSampling(), device="some_device") == 99
+    handle = q.submit(FakeSampling(), device="some_device")
+    assert handle.id == 99
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
@@ -153,6 +162,38 @@ def test_wait_for_job_completes(monkeypatch):
     result = q.wait_for_job(123, poll_interval=0.0, timeout=5)
     assert result.status is DummyStatus.COMPLETED
     assert calls["n"] >= 2
+
+
+def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
+    """Passing a `JobHandle` should return a `TypedJobDetail` with typed result access."""
+
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
+
+    handle = speqtrum.JobHandle.sampling(7)
+    sampling_result = SamplingResult(nshots=2, samples={"00": 2})
+    detail = speqtrum.JobDetail(
+        id=7,
+        name="job",
+        description="desc",
+        device_id=1,
+        status=speqtrum.JobStatus.COMPLETED,
+        created_at=datetime.now(timezone.utc),
+        updated_at=None,
+        completed_at=datetime.now(timezone.utc),
+        payload=None,
+        result=ExecuteResult(type=speqtrum.ExecuteType.SAMPLING, sampling_result=sampling_result),
+    )
+
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job_details", lambda self, _: detail, raising=True)
+
+    typed_detail = q.wait_for_job(handle, poll_interval=0.0)
+    assert isinstance(typed_detail, speqtrum.TypedJobDetail)
+    assert typed_detail.id == 7
+    typed_result = typed_detail.get_results()
+    assert isinstance(typed_result, SamplingResult)
+    assert typed_result.samples == sampling_result.samples
+    assert typed_result.nshots == sampling_result.nshots
 
 
 def test_wait_for_job_times_out(monkeypatch):
