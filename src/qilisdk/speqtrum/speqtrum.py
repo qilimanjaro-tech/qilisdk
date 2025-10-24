@@ -80,9 +80,15 @@ class SpeQtrum:
         self._username, self._token = credentials
         self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
             Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
-            TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(cast("TimeEvolution", f), device, job_name),
-            RabiExperiment: lambda f, device, job_name: self._submit_rabi_program(cast("RabiExperiment", f), device, job_name),
-            T1Experiment: lambda f, device, job_name: self._submit_t1_program(cast("T1Experiment", f), device, job_name),
+            TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(
+                cast("TimeEvolution", f), device, job_name
+            ),
+            RabiExperiment: lambda f, device, job_name: self._submit_rabi_program(
+                cast("RabiExperiment", f), device, job_name
+            ),
+            T1Experiment: lambda f, device, job_name: self._submit_t1_program(
+                cast("T1Experiment", f), device, job_name
+            ),
         }
         self._settings = get_settings()
         logger.success("QaaS client initialised for user '{}'", self._username)
@@ -340,7 +346,9 @@ class SpeQtrum:
     def submit(self, functional: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]: ...
 
     @overload
-    def submit(self, functional: TimeEvolution, device: str, job_name: str | None = None) -> JobHandle[TimeEvolutionResult]: ...
+    def submit(
+        self, functional: TimeEvolution, device: str, job_name: str | None = None
+    ) -> JobHandle[TimeEvolutionResult]: ...
 
     @overload
     def submit(
@@ -349,25 +357,23 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self,
-        functional: VariationalProgram[TimeEvolution],
-        device: str,
-        job_name: str | None = None
+        self, functional: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
 
     @overload
     def submit(
-        self,
-        functional: VariationalProgram[PrimitiveFunctional[ResultT]],
-        device: str,
-        job_name: str | None = None
+        self, functional: VariationalProgram[PrimitiveFunctional[ResultT]], device: str, job_name: str | None = None
     ) -> JobHandle[VariationalProgramResult[ResultT]]: ...
 
     @overload
-    def submit(self, functional: RabiExperiment, device: str, job_name: str | None = None) -> JobHandle[RabiExperimentResult]: ...
+    def submit(
+        self, functional: RabiExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[RabiExperimentResult]: ...
 
     @overload
-    def submit(self, functional: T1Experiment, device: str, job_name: str | None = None) -> JobHandle[T1ExperimentResult]: ...
+    def submit(
+        self, functional: T1Experiment, device: str, job_name: str | None = None
+    ) -> JobHandle[T1ExperimentResult]: ...
 
     def submit(self, functional: Functional, device: str, job_name: str | None = None) -> JobHandle[FunctionalResult]:
         """
@@ -426,7 +432,9 @@ class SpeQtrum:
         logger.success("Submission complete - job {}", job_handle.id)
         return job_handle
 
-    def _submit_sampling(self, sampling: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]:
+    def _submit_sampling(
+        self, sampling: Sampling, device: str, job_name: str | None = None
+    ) -> JobHandle[SamplingResult]:
         payload = ExecutePayload(
             type=ExecuteType.SAMPLING,
             sampling_payload=SamplingPayload(sampling=sampling),
@@ -450,7 +458,9 @@ class SpeQtrum:
             job = JobId(**response.json())
         return JobHandle.sampling(job.id)
 
-    def _submit_rabi_program(self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None) -> JobHandle[RabiExperimentResult]:
+    def _submit_rabi_program(
+        self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[RabiExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
@@ -475,7 +485,9 @@ class SpeQtrum:
         logger.info("Rabi experiment job submitted: {}", job.id)
         return JobHandle.rabi_experiment(job.id)
 
-    def _submit_t1_program(self, t1_experiment: T1Experiment, device: str, job_name: str | None = None) -> JobHandle[T1ExperimentResult]:
+    def _submit_t1_program(
+        self, t1_experiment: T1Experiment, device: str, job_name: str | None = None
+    ) -> JobHandle[T1ExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
@@ -500,7 +512,9 @@ class SpeQtrum:
         logger.info("T1 experiment job submitted: {}", job.id)
         return JobHandle.t1_experiment(job.id)
 
-    def _submit_time_evolution(self, time_evolution: TimeEvolution, device: str, job_name: str | None = None) -> JobHandle[TimeEvolutionResult]:
+    def _submit_time_evolution(
+        self, time_evolution: TimeEvolution, device: str, job_name: str | None = None
+    ) -> JobHandle[TimeEvolutionResult]:
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
