@@ -170,8 +170,8 @@ client = SpeQtrum()
 # # Execute a pre-built circuit (see Digital Quantum Circuits section)
 job_id = client.submit(Sampling(circuit, 1000), device="cuda_state_vector")
 print("job id:", job_id)
-print("job status:", client.get_job_details(job_id).status)
-print("job result:", client.get_job_details(job_id).result)
+print("job status:", client.get_job(job_id).status)
+print("job result:", client.get_job(job_id).result)
 ```
 
 ### Sample a quantum Circuit Using a CUDA-Accelerated Simulator

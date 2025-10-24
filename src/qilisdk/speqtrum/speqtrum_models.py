@@ -14,6 +14,7 @@
 # ruff: noqa: ANN001, ANN202, PLR6301
 from email.utils import parsedate_to_datetime
 from enum import Enum
+from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
@@ -25,6 +26,7 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.speqtrum.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
 
@@ -226,6 +228,142 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
 
+ResultT_co = TypeVar("ResultT_co", bound=FunctionalResult, covariant=True)
+VariationalInnerResultT = TypeVar("VariationalInnerResultT", bound=FunctionalResult)
+
+
+ResultExtractor = Callable[[ExecuteResult], ResultT_co]
+
+
+# these helpers live outside the models so they can be referenced by default values
+def _require_sampling_result(result: ExecuteResult) -> SamplingResult:
+    if result.sampling_result is None:
+        raise RuntimeError("SpeQtrum did not return a sampling_result for a sampling execution.")
+    return result.sampling_result
+
+
+def _require_time_evolution_result(result: ExecuteResult) -> TimeEvolutionResult:
+    if result.time_evolution_result is None:
+        raise RuntimeError("SpeQtrum did not return a time_evolution_result for a time evolution execution.")
+    return result.time_evolution_result
+
+
+def _require_variational_program_result(result: ExecuteResult) -> VariationalProgramResult:
+    if result.variational_program_result is None:
+        raise RuntimeError("SpeQtrum did not return a variational_program_result for a variational program execution.")
+    return result.variational_program_result
+
+
+def _require_rabi_experiment_result(result: ExecuteResult) -> RabiExperimentResult:
+    if result.rabi_experiment_result is None:
+        raise RuntimeError("SpeQtrum did not return a rabi_experiment_result for a Rabi experiment execution.")
+    return result.rabi_experiment_result
+
+
+def _require_t1_experiment_result(result: ExecuteResult) -> T1ExperimentResult:
+    if result.t1_experiment_result is None:
+        raise RuntimeError("SpeQtrum did not return a t1_experiment_result for a T1 experiment execution.")
+    return result.t1_experiment_result
+
+
+def _require_variational_program_result_typed(
+    inner_result_type: type[VariationalInnerResultT],
+) -> ResultExtractor[VariationalProgramResult[VariationalInnerResultT]]:
+    def _extractor(result: ExecuteResult) -> VariationalProgramResult[VariationalInnerResultT]:
+        variational_result = _require_variational_program_result(result)
+        optimal_results = variational_result.optimal_execution_results
+        if not isinstance(optimal_results, inner_result_type):
+            raise RuntimeError(
+                "SpeQtrum returned a variational program result whose optimal execution result "
+                f"({type(optimal_results).__qualname__}) does not match the expected "
+                f"{inner_result_type.__qualname__}."
+            )
+        return cast("VariationalProgramResult[VariationalInnerResultT]", variational_result)
+
+    return _extractor
+
+
+class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
+    """Strongly typed reference to a submitted SpeQtrum job."""
+
+    id: int
+    execute_type: ExecuteType
+    extractor: ResultExtractor[ResultT_co] = Field(repr=False, exclude=True)
+
+    @classmethod
+    def sampling(cls, job_id: int) -> "JobHandle[SamplingResult]":
+        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)  # type: ignore[return-value, arg-type]
+
+    @classmethod
+    def time_evolution(cls, job_id: int) -> "JobHandle[TimeEvolutionResult]":
+        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)  # type: ignore[return-value, arg-type]
+
+    @overload
+    @classmethod
+    def variational_program(cls, job_id: int) -> "JobHandle[VariationalProgramResult]": ...
+
+    @overload
+    @classmethod
+    def variational_program(
+        cls, job_id: int, *, result_type: type[VariationalInnerResultT]
+    ) -> "JobHandle[VariationalProgramResult[VariationalInnerResultT]]": ...
+
+    @classmethod
+    def variational_program(
+        cls, job_id: int, *, result_type: type[VariationalInnerResultT] | None = None
+    ) -> "JobHandle[Any]":
+        """Create a variational-program handle for an existing job identifier.
+
+        Args:
+            job_id: Numeric identifier returned by the SpeQtrum service.
+            result_type: Optional functional result type expected within the
+                variational program payload. When provided the returned handle
+                enforces that the optimiser output matches this type.
+
+        Returns:
+            JobHandle: A handle whose ``get_results`` invocation yields a
+            ``VariationalProgramResult`` preserving the requested inner result
+            type when supplied.
+        """
+        if result_type is None:
+            handle = cls(
+                id=job_id,
+                execute_type=ExecuteType.VARIATIONAL_PROGRAM,
+                extractor=_require_variational_program_result,  # type: ignore[arg-type]
+            )
+            return cast("JobHandle[VariationalProgramResult]", handle)
+
+        extractor = _require_variational_program_result_typed(result_type)
+        handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)  # type: ignore[arg-type]
+        return cast("JobHandle[VariationalProgramResult[VariationalInnerResultT]]", handle)
+
+    @classmethod
+    def rabi_experiment(cls, job_id: int) -> "JobHandle[RabiExperimentResult]":
+        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)  # type: ignore[return-value, arg-type]
+
+    @classmethod
+    def t1_experiment(cls, job_id: int) -> "JobHandle[T1ExperimentResult]":
+        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)  # type: ignore[return-value, arg-type]
+
+    def bind(self, detail: "JobDetail") -> "TypedJobDetail[ResultT_co]":
+        """Attach this handle's typing information to a concrete job detail.
+
+        Args:
+            detail: Un-typed job detail payload returned by the SpeQtrum API.
+
+        Returns:
+            TypedJobDetail: Wrapper exposing ``get_results`` with the typing
+            captured when the handle was created.
+        """
+        return TypedJobDetail.model_validate(
+            {
+                **detail.model_dump(),
+                "expected_type": self.execute_type,
+                "extractor": self.extractor,
+            }
+        )
+
+
 class JobStatus(str, Enum):
     "Job has not been submitted to the Lab api"
 
@@ -298,3 +436,32 @@ class JobDetail(JobInfo):
     logs: str | None = None
     error: str | None = None
     error_logs: str | None = None
+
+
+class TypedJobDetail(JobDetail, Generic[ResultT_co]):
+    """`JobDetail` subclass that exposes a strongly typed `get_results` method."""
+
+    expected_type: ExecuteType = Field(repr=False)
+    extractor: ResultExtractor[ResultT_co] = Field(repr=False, exclude=True)
+
+    def get_results(self) -> ResultT_co:
+        """Return the strongly typed execution result.
+
+        Returns:
+            ResultT_co: Result payload associated with the completed job,
+            respecting the type information carried by the originating
+            ``JobHandle``.
+
+        Raises:
+            RuntimeError: If SpeQtrum has not populated the result payload or
+                the execute type disagrees with the handle.
+        """
+        if self.result is None:
+            raise RuntimeError("The job completed without a result payload; inspect `error` or `logs` for details.")
+
+        if self.result.type != self.expected_type:
+            raise RuntimeError(
+                f"Expected a result of type '{self.expected_type.value}' but received '{self.result.type.value}'."
+            )
+
+        return self.extractor(self.result)

@@ -18,15 +18,28 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 import httpx
 from loguru import logger
 from pydantic import TypeAdapter
 
-from qilisdk.functionals import Sampling, TimeEvolution, VariationalProgram
+from qilisdk.functionals import (
+    Sampling,
+    SamplingResult,
+    TimeEvolution,
+    TimeEvolutionResult,
+    VariationalProgram,
+    VariationalProgramResult,
+)
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
-from qilisdk.speqtrum.experiments import ExperimentFunctional, RabiExperiment, T1Experiment
+from qilisdk.speqtrum.experiments import (
+    RabiExperiment,
+    RabiExperimentResult,
+    T1Experiment,
+    T1ExperimentResult,
+)
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .speqtrum_models import (
@@ -34,6 +47,7 @@ from .speqtrum_models import (
     ExecutePayload,
     ExecuteType,
     JobDetail,
+    JobHandle,
     JobId,
     JobInfo,
     JobStatus,
@@ -43,11 +57,15 @@ from .speqtrum_models import (
     T1ExperimentPayload,
     TimeEvolutionPayload,
     Token,
+    TypedJobDetail,
     VariationalProgramPayload,
 )
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+
+
+ResultT = TypeVar("ResultT", bound=FunctionalResult)
 
 
 class SpeQtrum:
@@ -60,13 +78,10 @@ class SpeQtrum:
             logger.error("No QaaS credentials found. Call `.login()` or set env vars before instantiation.")
             raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
-        self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], int]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
             Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
             TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(
                 cast("TimeEvolution", f), device, job_name
-            ),
-            VariationalProgram: lambda f, device, job_name: self._submit_variational_program(
-                cast("VariationalProgram", f), device, job_name
             ),
             RabiExperiment: lambda f, device, job_name: self._submit_rabi_program(
                 cast("RabiExperiment", f), device, job_name
@@ -197,20 +212,27 @@ class SpeQtrum:
         logger.success("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
 
-    def get_job_details(self, id: int) -> JobDetail:
-        """Fetch the complete record of *id*.
+    @overload
+    def get_job(self, job: JobHandle[ResultT]) -> TypedJobDetail[ResultT]: ...
+
+    @overload
+    def get_job(self, job: int) -> JobDetail: ...
+
+    def get_job(self, job: int | JobHandle[Any]) -> JobDetail | TypedJobDetail[Any]:
+        """Fetch the complete record of *job*.
 
         Args:
-            id: Identifier of the job.
+            job: Either the integer identifier or a previously returned `JobHandle`.
 
         Returns:
-            A :class:`~qilisdk.models.JobDetail` instance containing payload,
-            result, logs and error information.
+            A :class:`~qilisdk.models.JobDetail` snapshot. When a handle is supplied the
+            result is wrapped in :class:`~qilisdk.models.TypedJobDetail` to expose typed accessors.
         """
-        logger.debug("Retrieving job {} details", id)
+        job_id = job.id if isinstance(job, JobHandle) else job
+        logger.debug("Retrieving job {} details", job_id)
         with httpx.Client() as client:
             response = client.get(
-                f"{self._settings.speqtrum_api_url}/jobs/{id}",
+                f"{self._settings.speqtrum_api_url}/jobs/{job_id}",
                 headers=self._get_authorized_headers(),
                 params={
                     "payload": True,
@@ -244,30 +266,51 @@ class SpeQtrum:
             data["logs"] = decoded_logs.decode("utf-8")
 
         job_detail = TypeAdapter(JobDetail).validate_python(data)
-        logger.debug("Job {} details retrieved (status {})", id, job_detail.status.value)
+        logger.debug("Job {} details retrieved (status {})", job_id, job_detail.status.value)
+        if isinstance(job, JobHandle):
+            return job.bind(job_detail)
         return job_detail
 
+    @overload
     def wait_for_job(
         self,
-        id: int,
+        job: JobHandle[ResultT],
         *,
         poll_interval: float = 5.0,
         timeout: float | None = None,
-    ) -> JobDetail:
-        """Block until *id* reaches a terminal state.
+    ) -> TypedJobDetail[ResultT]: ...
+
+    @overload
+    def wait_for_job(
+        self,
+        job: int,
+        *,
+        poll_interval: float = 5.0,
+        timeout: float | None = None,
+    ) -> JobDetail: ...
+
+    def wait_for_job(
+        self,
+        job: int | JobHandle[Any],
+        *,
+        poll_interval: float = 5.0,
+        timeout: float | None = None,
+    ) -> JobDetail | TypedJobDetail[Any]:
+        """Block until the job referenced by *job* reaches a terminal state.
 
         Args:
-            id: Job identifier.
+            job: Either the integer job identifier or a previously returned `JobHandle`.
             poll_interval: Seconds between successive polls. Defaults to ``5``.
             timeout: Maximum wait time in seconds. ``None`` waits indefinitely.
 
         Returns:
-            Final :class:`~qilisdk.models.JobDetail` snapshot.
+            Final :class:`~qilisdk.models.JobDetail` snapshot, optionally wrapped with type-safe accessors.
 
         Raises:
             TimeoutError: If *timeout* elapses before the job finishes.
         """
-        logger.info("Waiting for job {} (poll={}s, timeout={}s)…", id, poll_interval, timeout)
+        job_id = job.id if isinstance(job, JobHandle) else job
+        logger.info("Waiting for job {} (poll={}s, timeout={}s)…", job_id, poll_interval, timeout)
         start_t = time.monotonic()
         terminal_states = {
             JobStatus.COMPLETED,
@@ -277,26 +320,62 @@ class SpeQtrum:
 
         # poll until we hit a terminal state or timeout
         while True:
-            current = self.get_job_details(id)
+            current = self.get_job(job_id)
 
             if current.status in terminal_states:
-                logger.success("Job {} reached terminal state {}", id, current.status.value)
+                logger.success("Job {} reached terminal state {}", job_id, current.status.value)
+                if isinstance(job, JobHandle):
+                    return job.bind(current)
                 return current
 
             if timeout is not None and (time.monotonic() - start_t) >= timeout:
                 logger.error(
-                    "Timeout while waiting for job {} after {}s (last status {})", id, timeout, current.status.value
+                    "Timeout while waiting for job {} after {}s (last status {})",
+                    job_id,
+                    timeout,
+                    current.status.value,
                 )
                 raise TimeoutError(
-                    f"Timed out after {timeout}s while waiting for job {id} (last status {current.status.value!r})"
+                    f"Timed out after {timeout}s while waiting for job {job_id} (last status {current.status.value!r})"
                 )
 
-            logger.debug("Job {} still {}, sleeping {}s", id, current.status.value, poll_interval)
+            logger.debug("Job {} still {}, sleeping {}s", job_id, current.status.value, poll_interval)
             time.sleep(poll_interval)
 
+    @overload
+    def submit(self, functional: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]: ...
+
+    @overload
     def submit(
-        self, functional: PrimitiveFunctional | ExperimentFunctional, device: str, job_name: str | None = None
-    ) -> int:
+        self, functional: TimeEvolution, device: str, job_name: str | None = None
+    ) -> JobHandle[TimeEvolutionResult]: ...
+
+    @overload
+    def submit(
+        self, functional: VariationalProgram[Sampling], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+
+    @overload
+    def submit(
+        self, functional: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+
+    @overload
+    def submit(
+        self, functional: VariationalProgram[PrimitiveFunctional[ResultT]], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[ResultT]]: ...
+
+    @overload
+    def submit(
+        self, functional: RabiExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[RabiExperimentResult]: ...
+
+    @overload
+    def submit(
+        self, functional: T1Experiment, device: str, job_name: str | None = None
+    ) -> JobHandle[T1ExperimentResult]: ...
+
+    def submit(self, functional: Functional, device: str, job_name: str | None = None) -> JobHandle[FunctionalResult]:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -307,6 +386,9 @@ class SpeQtrum:
 
         * :class:`~qilisdk.functionals.sampling.Sampling`
         * :class:`~qilisdk.functionals.time_evolution.TimeEvolution`
+        * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment`
+        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.T1Experiment`
 
         A backend device must be selected beforehand with
         :py:meth:`set_device`.
@@ -319,12 +401,25 @@ class SpeQtrum:
             job_name (optional): The name of the job, this can help you identify different jobs easier. Default: None.
 
         Returns:
-            int: The numeric identifier of the created job on SpeQtrum.
+            JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
 
         Raises:
             NotImplementedError: If *functional* is not of a supported type.
         """
         try:
+            if isinstance(functional, VariationalProgram):
+                inner = functional.functional
+                if isinstance(inner, Sampling):
+                    return self._submit_variational_program(cast("VariationalProgram[Sampling]", functional), device)
+                if isinstance(inner, TimeEvolution):
+                    return self._submit_variational_program(
+                        cast("VariationalProgram[TimeEvolution]", functional), device
+                    )
+
+                # Fallback to untyped handle for custom primitives.
+                job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device)
+                return cast("JobHandle[FunctionalResult]", job_handle)
+
             handler = self._handlers[type(functional)]
         except KeyError as exc:
             logger.error("Unsupported functional type: {}", type(functional).__qualname__)
@@ -333,11 +428,13 @@ class SpeQtrum:
             ) from exc
 
         logger.info("Submitting {}", type(functional).__qualname__)
-        job_id = handler(functional, device, job_name)
-        logger.success("Submission complete - job {}", job_id)
-        return job_id
+        job_handle = handler(functional, device, job_name)
+        logger.success("Submission complete - job {}", job_handle.id)
+        return job_handle
 
-    def _submit_sampling(self, sampling: Sampling, device: str, job_name: str | None = None) -> int:
+    def _submit_sampling(
+        self, sampling: Sampling, device: str, job_name: str | None = None
+    ) -> JobHandle[SamplingResult]:
         payload = ExecutePayload(
             type=ExecuteType.SAMPLING,
             sampling_payload=SamplingPayload(sampling=sampling),
@@ -359,9 +456,11 @@ class SpeQtrum:
             )
             response.raise_for_status()
             job = JobId(**response.json())
-        return job.id
+        return JobHandle.sampling(job.id)
 
-    def _submit_rabi_program(self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None) -> int:
+    def _submit_rabi_program(
+        self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[RabiExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
@@ -384,9 +483,11 @@ class SpeQtrum:
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Rabi experiment job submitted: {}", job.id)
-        return job.id
+        return JobHandle.rabi_experiment(job.id)
 
-    def _submit_t1_program(self, t1_experiment: T1Experiment, device: str, job_name: str | None = None) -> int:
+    def _submit_t1_program(
+        self, t1_experiment: T1Experiment, device: str, job_name: str | None = None
+    ) -> JobHandle[T1ExperimentResult]:
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
@@ -409,9 +510,11 @@ class SpeQtrum:
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
-        return job.id
+        return JobHandle.t1_experiment(job.id)
 
-    def _submit_time_evolution(self, time_evolution: TimeEvolution, device: str, job_name: str | None = None) -> int:
+    def _submit_time_evolution(
+        self, time_evolution: TimeEvolution, device: str, job_name: str | None = None
+    ) -> JobHandle[TimeEvolutionResult]:
         payload = ExecutePayload(
             type=ExecuteType.TIME_EVOLUTION,
             time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
@@ -434,16 +537,29 @@ class SpeQtrum:
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Time evolution job submitted: {}", job.id)
-        return job.id
+        return JobHandle.time_evolution(job.id)
+
+    @overload
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[Sampling], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+
+    @overload
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+
+    @overload
+    def _submit_variational_program(
+        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult]: ...
 
     def _submit_variational_program(
-        self, variational_program: VariationalProgram, device: str, job_name: str | None = None
-    ) -> int:
+        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
-            variational_program_payload=VariationalProgramPayload(
-                variational_program=variational_program,
-            ),
+            variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
         )
         json = {
             "device_code": device,
@@ -453,6 +569,7 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
+        logger.debug("Executing variational program on device {}", device)
         with httpx.Client() as client:
             response = client.post(
                 self._settings.speqtrum_api_url + "/execute",
@@ -461,4 +578,10 @@ class SpeQtrum:
             )
             response.raise_for_status()
             job = JobId(**response.json())
-            return job.id
+        logger.info("Variational program job submitted: {}", job.id)
+        inner = variational_program.functional
+        if isinstance(inner, Sampling):
+            return JobHandle.variational_program(job.id, result_type=SamplingResult)
+        if isinstance(inner, TimeEvolution):
+            return JobHandle.variational_program(job.id, result_type=TimeEvolutionResult)
+        return JobHandle.variational_program(job.id)
