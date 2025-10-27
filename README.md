@@ -13,15 +13,15 @@
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
     - [Base Installation](#base-installation)
-    - [Optional Extras](#optional-extras)
+    - [Optional Dependencies: speqtrum, cuda, qutip](#optional-dependencies-speqtrum-cuda-qutip)
   - [Usage](#usage)
     - [Digital Quantum Circuits](#digital-quantum-circuits)
-    - [Hamiltonian and Analog Operations](#hamiltonian-and-analog-operations)
+    - [Hamiltonians](#hamiltonians)
     - [Optimizers](#optimizers)
-    - [Quantum-as-a-Service (QaaS)](#quantum-as-a-service-qaas)
-    - [CUDA-Accelerated Simulation](#cuda-accelerated-simulation)
-    - [Time Evolution](#time-evolution)
-    - [Variational Quantum Eigensolver (VQE)](#variational-quantum-eigensolver-vqe)
+    - [Qilimanjaro SpeQtrum](#qilimanjaro-speqtrum)
+    - [Sample a quantum Circuit Using a CUDA-Accelerated Simulator](#sample-a-quantum-circuit-using-a-cuda-accelerated-simulator)
+    - [Time Evolution using Qutip](#time-evolution-using-qutip)
+    - [Variational Programs](#variational-programs)
     - [Open QASM Serialization](#open-qasm-serialization)
     - [YAML Serialization](#yaml-serialization)
   - [Development](#development)
@@ -49,7 +49,7 @@ Install the core QiliSDK package using pip:
 pip install qilisdk
 ```
 
-### Optional Dependencies
+### Optional Dependencies: speqtrum, cuda, qutip
 
 QiliSDK supports optional modules for additional functionality:
 
@@ -152,7 +152,7 @@ print("Optimal cost:", result.optimal_cost)
 print("Optimal Parameters:", result.optimal_parameters)
 ```
 
-### SpeQtrum
+### Qilimanjaro SpeQtrum
 
 QiliSDK includes a client for interacting with Qilimanjaro's SpeQtrum platform. This module supports secure login and a unified interface for both digital circuits and analog evolutions:
 
