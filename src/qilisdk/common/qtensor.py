@@ -185,7 +185,7 @@ class QTensor:
         # diagonal() returns dense 1D array; summing it is cheap
         return complex(self._data.diagonal().sum())
 
-    def ptrace(self, keep: list[int], dims: list[int] | None = None) -> QTensor:
+    def k(self, keep: list[int], dims: list[int] | None = None) -> QTensor:
         """
         Compute the partial trace over subsystems not in 'keep'.
 

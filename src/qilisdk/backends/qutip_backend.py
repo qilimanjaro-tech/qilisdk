@@ -24,7 +24,6 @@ from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
-from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend import Backend
 from qilisdk.common.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
@@ -34,7 +33,6 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
 
