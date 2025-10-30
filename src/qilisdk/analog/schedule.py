@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+import numpy as np
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
@@ -110,7 +111,7 @@ class Schedule(Parameterizable):
                                 f"The schedule can only contain Parameters, but a generic variable was provided ({time_step})"
                             )
                         self._parameters[v.label] = v
-                if isinstance(coeff, BaseVariable):
+                elif isinstance(coeff, BaseVariable):
                     if not isinstance(coeff, Parameter):
                         raise ValueError(
                             f"The schedule can only contain Parameters, but a generic variable was provided ({time_step})"
@@ -256,12 +257,12 @@ class Schedule(Parameterizable):
         self._hamiltonians[label] = hamiltonian
         self._schedule[0][label] = 0
         self._nqubits = max(self._nqubits, hamiltonian.nqubits)
-        for l, param in hamiltonian.parameters.items():
+        for _, param in hamiltonian.parameters.items():
             self._parameters[param.label] = param
 
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
-                time_step = schedule(t, **kwargs)
+                time_step = schedule(float(t), **kwargs)
                 if isinstance(time_step, Term):
                     for v in time_step.variables():
                         if not isinstance(v, Parameter):
@@ -422,7 +423,7 @@ class Schedule(Parameterizable):
         Returns:
             Number: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
         """
-        val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
+        val = self.get_coefficient_expression(time_step=float(time_step), hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
     def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term | Parameter:
@@ -502,3 +503,5 @@ class Schedule(Parameterizable):
         renderer.plot()
         if filepath:
             renderer.save(filepath)
+        else:
+            renderer.show()
