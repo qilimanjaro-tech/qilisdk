@@ -15,8 +15,8 @@ from typing import ClassVar
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.qtensor import QTensor
-from qilisdk.common.variables import RealNumber
+from qilisdk.core.qtensor import QTensor
+from qilisdk.core.variables import RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -31,7 +31,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         .. code-block:: python
 
             from qilisdk.analog import Schedule, Hamiltonian, Z
-            from qilisdk.common import ket
+            from qilisdk.core import ket
             from qilisdk.functionals.time_evolution import TimeEvolution
 
             h0 = Z(0)

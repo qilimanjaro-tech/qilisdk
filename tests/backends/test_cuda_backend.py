@@ -5,8 +5,8 @@ import pytest
 
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
-from qilisdk.common.model import Model
-from qilisdk.common.variables import BinaryVariable
+from qilisdk.core.model import Model
+from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit

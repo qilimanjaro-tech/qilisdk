@@ -180,7 +180,7 @@ It is the most lightweight option, ideal for local development or environments w
 
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
-    from qilisdk.common import ket, tensor_prod
+    from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 

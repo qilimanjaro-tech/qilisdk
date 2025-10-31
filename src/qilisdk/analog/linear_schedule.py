@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.variables import Number, Parameter, Term
+from qilisdk.core.variables import Number, Parameter, Term
 from qilisdk.yaml import yaml
 
 

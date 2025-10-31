@@ -14,8 +14,8 @@
 
 import numpy as np
 
-from qilisdk.common.parameterizable import Parameterizable
-from qilisdk.common.variables import Parameter, RealNumber
+from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.variables import Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 

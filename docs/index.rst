@@ -37,7 +37,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 
    fundamentals/analog
    fundamentals/digital
-   fundamentals/common
+   fundamentals/core
    fundamentals/functionals
    fundamentals/cost_functions
    fundamentals/backends

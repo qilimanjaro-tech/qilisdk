@@ -36,7 +36,7 @@ ObservableCostFunction
 The :class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction` evaluates the expectation value of
 an observable against either a final state (from time evolution) or the probability distribution of sampled bitstrings.
 It accepts three interchangeable representations for the observable: a
-:class:`~qilisdk.common.qtensor.QTensor`, a symbolic
+:class:`~qilisdk.core.qtensor.QTensor`, a symbolic
 :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a single
 :class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all inputs are converted to ``QTensor`` so the same
 numeric pipeline can be reused for both analog and digital results.
@@ -48,7 +48,7 @@ Example: expectation value from time evolution
 
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.backends import QutipBackend
-    from qilisdk.common import ket
+    from qilisdk.core import ket
     from qilisdk.cost_functions import ObservableCostFunction
     from qilisdk.functionals import TimeEvolution
 
@@ -84,13 +84,13 @@ ModelCostFunction
 -----------------
 
 The :class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` bridges classical optimization models with
-quantum result objects. It accepts any :class:`~qilisdk.common.model.Model` (including convenience subclasses such as
-:class:`~qilisdk.common.model.QUBO`) and evaluates it against measured bitstrings or the amplitudes of a final quantum
+quantum result objects. It accepts any :class:`~qilisdk.core.model.Model` (including convenience subclasses such as
+:class:`~qilisdk.core.model.QUBO`) and evaluates it against measured bitstrings or the amplitudes of a final quantum
 state.
 
-When the provided model is a :class:`~qilisdk.common.model.QUBO`, the cost function automatically converts it into a
+When the provided model is a :class:`~qilisdk.core.model.QUBO`, the cost function automatically converts it into a
 Hamiltonian and computes the expectation value. Otherwise, it maps each sample to the model's variables, feeds them
-through :meth:`~qilisdk.common.model.Model.evaluate`, and aggregates the resulting objective and constraint values.
+through :meth:`~qilisdk.core.model.Model.evaluate`, and aggregates the resulting objective and constraint values.
 
 Example: scoring samples from a variational circuit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -98,8 +98,8 @@ Example: scoring samples from a variational circuit
 .. code-block:: python
 
     from qilisdk.backends import CudaBackend
-    from qilisdk.common.model import Model
-    from qilisdk.common.variables import BinaryVariable, LEQ
+    from qilisdk.core.model import Model
+    from qilisdk.core.variables import BinaryVariable, LEQ
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import Circuit, RX, RZ, CNOT, M
     from qilisdk.functionals import Sampling

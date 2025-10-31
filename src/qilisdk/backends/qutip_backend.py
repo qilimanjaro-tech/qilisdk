@@ -25,7 +25,7 @@ from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.common.qtensor import QTensor, tensor_prod
+from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled

@@ -201,7 +201,7 @@ For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you
 ```python
 import numpy as np
 from qilisdk.analog import Schedule, X, Z, Y
-from qilisdk.common import ket, tensor_prod
+from qilisdk.core import ket, tensor_prod
 from qilisdk.backends import QutipBackend
 from qilisdk.functionals import TimeEvolution
 
@@ -254,8 +254,8 @@ Here you find an example of building a Variational Quantum Eigensolver (VQE). To
 ```python
 from qilisdk.digital.gates import U2, CNOT
 from qilisdk.optimizers import SciPyOptimizer
-from qilisdk.common.model import Model
-from qilisdk.common.variables import LEQ, BinaryVariable
+from qilisdk.core.model import Model
+from qilisdk.core.variables import LEQ, BinaryVariable
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.functionals import VariationalProgram, Sampling
 from qilisdk.backends import CudaBackend

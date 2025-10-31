@@ -21,7 +21,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
+    from qilisdk.core.variables import Number
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
 

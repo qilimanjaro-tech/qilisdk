@@ -20,8 +20,8 @@ import numpy as np
 from scipy.linalg import expm
 from typing_extensions import Self
 
-from qilisdk.common.parameterizable import Parameterizable
-from qilisdk.common.variables import Parameter
+from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.variables import Parameter
 from qilisdk.yaml import yaml
 
 from .exceptions import (

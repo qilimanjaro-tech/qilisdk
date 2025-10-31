@@ -14,8 +14,8 @@
 
 import pytest
 
-from qilisdk.common.model import Model, ObjectiveSense
-from qilisdk.common.variables import EQ, BinaryVariable
+from qilisdk.core.model import Model, ObjectiveSense
+from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
 

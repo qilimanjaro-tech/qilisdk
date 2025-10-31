@@ -18,8 +18,8 @@ from typing import Callable
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.common.parameterizable import Parameterizable
-from qilisdk.common.variables import BaseVariable, Number, Parameter, Term
+from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.variables import BaseVariable, Number, Parameter, Term
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 

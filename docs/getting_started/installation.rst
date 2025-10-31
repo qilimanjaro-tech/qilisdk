@@ -76,7 +76,7 @@ Define two Hamiltonians, build a linear interpolation schedule, and run on Qutip
 
     import numpy as np
     from qilisdk.analog import Schedule, X, Z
-    from qilisdk.common import ket, tensor_prod
+    from qilisdk.core import ket, tensor_prod
     from qilisdk.functionals import TimeEvolution
     from qilisdk.backends import QutipBackend
 
@@ -122,7 +122,7 @@ Next Steps
 
 Once you've confirmed everything works, explore:
 
-- **Core primitives** (:doc:`/fundamentals/common`) for state vectors, operators, and shared abstractions.
+- **Core primitives** (:doc:`/fundamentals/core`) for state vectors, operators, and shared abstractions.
 - **Digital workflows** (:doc:`/fundamentals/digital`) covering circuit construction, parameter sweeps, and QASM export.
 - **Analog workflows** (:doc:`/fundamentals/analog`) for Hamiltonian builders, schedules, and time-evolution utilities.
 - **Functionals** (:doc:`/fundamentals/functionals`) to see how experiments connect models with execution backends.

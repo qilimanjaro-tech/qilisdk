@@ -14,10 +14,10 @@
 import numpy as np
 import pytest
 
-from qilisdk.common import Model
-from qilisdk.common.model import ObjectiveSense
-from qilisdk.common.qtensor import QTensor, bra, ket, tensor_prod
-from qilisdk.common.variables import EQ, BinaryVariable
+from qilisdk.core import Model
+from qilisdk.core.model import ObjectiveSense
+from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
+from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult

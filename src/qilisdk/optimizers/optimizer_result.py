@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from qilisdk.common.result import Result
+from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
 
 

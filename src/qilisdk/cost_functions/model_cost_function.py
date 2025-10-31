@@ -17,24 +17,24 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from qilisdk.common.model import QUBO, Model
-from qilisdk.common.qtensor import QTensor, expect_val, ket
+from qilisdk.core.model import QUBO, Model
+from qilisdk.core.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
+    from qilisdk.core.variables import Number
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
 class ModelCostFunction(CostFunction):
     """
-    Evaluate the cost of functional results with respect to a :class:`~qilisdk.common.model.Model`.
+    Evaluate the cost of functional results with respect to a :class:`~qilisdk.core.model.Model`.
 
     Example:
         .. code-block:: python
 
-            from qilisdk.common import BinaryVariable, Model, LEQ
+            from qilisdk.core import BinaryVariable, Model, LEQ
             from qilisdk.cost_functions import ModelCostFunction
 
             model = Model("demo")

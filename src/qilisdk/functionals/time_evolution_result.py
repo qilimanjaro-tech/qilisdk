@@ -15,8 +15,8 @@ from pprint import pformat
 
 import numpy as np
 
-from qilisdk.common.model import Model
-from qilisdk.common.qtensor import QTensor
+from qilisdk.core.model import Model
+from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 

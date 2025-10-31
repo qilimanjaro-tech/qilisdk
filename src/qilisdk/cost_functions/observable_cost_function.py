@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.common.qtensor import QTensor, expect_val, ket, tensor_prod
+from qilisdk.core.qtensor import QTensor, expect_val, ket, tensor_prod
 from qilisdk.cost_functions.cost_function import CostFunction
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
+    from qilisdk.core.variables import Number
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 

@@ -18,8 +18,8 @@ from copy import copy
 import numpy as np
 import pytest
 
-from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
-from qilisdk.common.variables import (
+from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
+from qilisdk.core.variables import (
     EQ,
     GEQ,
     GT,

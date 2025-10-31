@@ -18,8 +18,8 @@ import copy
 import pytest
 
 from qilisdk.analog.hamiltonian import Z
-from qilisdk.common.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
-from qilisdk.common.variables import (
+from qilisdk.core.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
+from qilisdk.core.variables import (
     EQ,
     GT,
     LEQ,
