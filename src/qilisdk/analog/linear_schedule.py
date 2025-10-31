@@ -100,7 +100,8 @@ class LinearSchedule(Schedule):
         Returns:
             Number: Evaluated coefficient value.
         """
-        val = self.get_coefficient_expression(time_step=float(time_step), hamiltonian_key=hamiltonian_key)
+        time_step = float(time_step)
+        val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
     def __getitem__(self, time_step: int) -> Hamiltonian:

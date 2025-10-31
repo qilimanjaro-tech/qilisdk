@@ -422,7 +422,8 @@ class Schedule(Parameterizable):
         Returns:
             Number: The coefficient of the Hamiltonian at the specified time, or 0 if not defined.
         """
-        val = self.get_coefficient_expression(time_step=float(time_step), hamiltonian_key=hamiltonian_key)
+        time_step = float(time_step)
+        val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 
     def get_coefficient_expression(self, time_step: float, hamiltonian_key: str) -> Number | Term | Parameter:
