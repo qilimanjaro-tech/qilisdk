@@ -1,4 +1,4 @@
-Common
+Core
 ======
 
 The :mod:`qilisdk.core` layer underpins both the digital and analog stacks. It
