@@ -25,6 +25,8 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
             Symbol(path="qilisdk.speqtrum.speqtrum", name="SpeQtrum"),
             Symbol(path="qilisdk.speqtrum.speqtrum_models", name="DeviceStatus"),
             Symbol(path="qilisdk.speqtrum.speqtrum_models", name="DeviceType"),
+            Symbol(path="qilisdk.speqtrum.speqtrum_models", name="JobHandle"),
+            Symbol(path="qilisdk.speqtrum.speqtrum_models", name="TypedJobDetail"),
         ],
     ),
 ]
