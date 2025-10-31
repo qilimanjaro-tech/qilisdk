@@ -1,3 +1,50 @@
+# qilisdk 0.1.6 (2025-10-31)
+
+## Features
+
+- Added ``job_name`` to speqtrum's ``submit`` method to allow the user to give a custom name to their job. ([PR #86](https://github.com/qilimanjaro-tech/qilisdk/pulls/86))
+- SpeQtrum jobs now retain their concrete result types from submission through retrieval, so every handle produced by `submit` returns the right `FunctionalResult` whether you are sampling, evolving in time, or orchestrating a variational loop. Waiting for a fresh job still takes a single call, but the typed detail that comes back no longer needs manual casting:
+
+  ```python
+  job_handle = speqtrum.submit(Sampling(circuit), device="cuda_state_vector")
+  job = speqtrum.wait_for_job(job_handle)
+  results = job.get_results()  # Your IDE will now know this is a SamplingResult
+  ```
+
+  The same strong typing applies when inspecting historical runs. Recreate a handle with the appropriate class method, pass it to `get_job`, and the returned `TypedJobDetail` exposes the precise payload you expect:
+
+  ```python
+  job_handle = JobHandle.sampling(1200853)
+  job = speqtrum.get_job(job_handle)
+  results = job.get_results()  # Your IDE will now know this is a SamplingResult
+  ```
+
+  Variational programs are the only scenario that needs an extra hint: because they wrap another functional, recreate the handle with the inner functional’s result type so the execution results can be validated against your expectations:
+
+  ```python
+  job_handle = JobHandle.variational_program(1200853, result_type=SamplingResult)
+  job = speqtrum.get_job(job_handle)
+  results = job.get_results()  # Your IDE will now know this is a VariationalProgramResult
+  optimal = results.optimal_execution_results  # Your IDE will now know this is a SamplingResult
+  ```
+
+  Passing a bare integer job identifier to `wait_for_job` or `get_job` remains valid for quick checks and backwards-compatibility, but doing so skips the handle metadata and yields an untyped `JobDetail`, so you will need to inspect or cast the result manually. ([PR #87](https://github.com/qilimanjaro-tech/qilisdk/pulls/87))
+
+## Bugfixes
+
+- Fixed the `HardwareEfficientAnsatz` so the first layer of single-qubit gates is not duplicated, restoring the expected gate and parameter counts. ([PR #90](https://github.com/qilimanjaro-tech/qilisdk/pulls/90))
+- Fixed the scheduler so numpy floats are accepted without errors. Fixed the QuTiP backend by aligning the schedule-to-backend mapping structure. ([PR #91](https://github.com/qilimanjaro-tech/qilisdk/pulls/91))
+
+## Improved Documentation
+
+- Updating the documentation and README to correspond to the latest version of QiliSDK. ([PR #80](https://github.com/qilimanjaro-tech/qilisdk/pulls/80))
+- Added extra doc-strings, and fixed outdated doc-strings. ([PR #84](https://github.com/qilimanjaro-tech/qilisdk/pulls/84))
+
+## Misc
+
+- [PR #88](https://github.com/qilimanjaro-tech/qilisdk/pulls/88), [PR #92](https://github.com/qilimanjaro-tech/qilisdk/pulls/92)
+
+
 # qilisdk 0.1.5 (2025-10-17)
 
 ## Features
