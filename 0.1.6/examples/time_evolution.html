@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+
+<html :class="{'dark': darkMode === 'dark' || (darkMode === 'system' &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches)}" class="scroll-smooth" data-content_root="../" lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }" x-init="$watch('darkMode', val =&gt; localStorage.setItem('darkMode', val))">
+<head>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Time Evolution | QiliSDK</title>
+<meta content="Time Evolution | QiliSDK" property="og:title"/>
+<meta content="Time Evolution | QiliSDK" name="twitter:title"/>
+<link href="../_static/pygments.css?v=6aa05603" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
+<link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css?v=2aa19091" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=a05de1eb" rel="stylesheet" type="text/css"/>
+<link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
+<link href="../_static/q_trans.png" rel="icon"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="quantum_objects.html" rel="next" title="Quantum Objects"/>
+<link href="hamiltonians.html" rel="prev" title="Hamiltonians"/>
+<script>
+    <!-- Prevent Flash of wrong theme -->
+      const userPreference = localStorage.getItem('darkMode');
+      let mode;
+      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        mode = 'dark';
+        document.documentElement.classList.add('dark');
+      } else {
+        mode = 'light';
+      }
+      if (!userPreference) {localStorage.setItem('darkMode', mode)}
+    </script>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../_static/q_trans.png" width="24"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center space-x-1">
+<button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'" aria-label="Color theme switcher" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="!justify-start text-sm md:!hidden bg-background" href="../index.html">
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../_static/q_trans.png" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/analog.html">Analog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/digital.html">Digital</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/core.html">Core</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/cost_functions.html">Cost Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fundamentals/speqtrum.html">SpeQtrum</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models and Variables</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/index.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/cost_functions/index.html">qilisdk.cost_functions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html">qilisdk.cost_functions.cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/cost_functions/model_cost_function/index.html">qilisdk.cost_functions.model_cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/cost_functions/observable_cost_function/index.html">qilisdk.cost_functions.observable_cost_function</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<h3>Versions</h3>
+<ul>
+<li><a href="../../0.1.5/index.html">0.1.5</a></li>
+<li><a href="time_evolution.html">0.1.6</a></li>
+<li><a href="../../main/index.html">main</a></li>
+</ul>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">QiliSDK</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="code_examples.html">Code Examples</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Time Evolution</span>
+</nav>
+<div id="content" role="main">
+<section id="Time-Evolution">
+<h1>Time Evolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#Time-Evolution"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">[1]:
+</span></code></pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span>
+</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolution</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">T</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Total evolution time</span>
+</span><span id="line-9"><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># Time-step</span>
+</span><span id="line-10"><span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">T</span> <span class="o">/</span> <span class="n">dt</span><span class="p">))</span>
+</span><span id="line-11"><span class="n">nqubits</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span id="line-12">
+</span><span id="line-13"><span class="c1"># Define two Hamiltonians for the simulation</span>
+</span><span id="line-14"><span class="n">H1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span>
+</span><span id="line-15"><span class="n">H2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span>
+</span><span id="line-16">
+</span><span id="line-17"><span class="c1"># Create a schedule for the time evolution</span>
+</span><span id="line-18"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-19">    <span class="n">T</span><span class="p">,</span>
+</span><span id="line-20">    <span class="n">dt</span><span class="p">,</span>
+</span><span id="line-21">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h1"</span><span class="p">:</span> <span class="n">H1</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">:</span> <span class="n">H2</span><span class="p">},</span>
+</span><span id="line-22">    <span class="n">schedule</span><span class="o">=</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="p">{</span><span class="s2">"h1"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">:</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">}</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">steps</span><span class="p">))},</span>
+</span><span id="line-23"><span class="p">)</span>
+</span><span id="line-24">
+</span><span id="line-25"><span class="c1"># Prepare an initial state (equal superposition)</span>
+</span><span id="line-26"><span class="n">state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([(</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)])</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="c1"># Perform time evolution on the CUDA backend with observables to monitor</span>
+</span><span id="line-29"><span class="n">time_evolution</span> <span class="o">=</span> <span class="n">TimeEvolution</span><span class="p">(</span>
+</span><span id="line-30">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span> <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span> <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-31"><span class="p">)</span>
+</span><span id="line-32">
+</span><span id="line-33"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-34"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-35"><span class="nb">print</span><span class="p">(</span><span class="s2">"Time Evolution Results:"</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Time Evolution Results: TimeEvolutionResult(
+  final_expected_values=array([ 0.99426889, -0.03403984,  0.10134429]),
+  expected_values=array([[ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+       [ 6.31847574e-09,  1.00000000e+00,  1.22854620e-05],
+       [ 2.05610973e-04,  9.99997828e-01,  2.07392438e-03],
+       [ 1.01183010e-03,  9.99980848e-01,  6.10576876e-03],
+       [ 2.77816943e-03,  9.99924730e-01,  1.19505316e-02],
+       [ 5.81553140e-03,  9.99794905e-01,  1.93991410e-02],
+       [ 1.03795510e-02,  9.99548169e-01,  2.82085466e-02],
+       [ 1.66675105e-02,  9.99136560e-01,  3.80569196e-02],
+       [ 2.48063566e-02,  9.98508954e-01,  4.86262688e-02],
+       [ 3.48574234e-02,  9.97613969e-01,  5.95930331e-02],
+       [ 4.68193048e-02,  9.96402464e-01,  7.06405214e-02],
+       [ 6.06328224e-02,  9.94830382e-01,  8.14626994e-02],
+       [ 7.61866869e-02,  9.92861062e-01,  9.17741808e-02],
+       [ 9.33252160e-02,  9.90468542e-01,  1.01303860e-01],
+       [ 1.11848622e-01,  9.87632295e-01,  1.09874182e-01],
+       [ 1.31541195e-01,  9.84349567e-01,  1.17272521e-01],
+       [ 1.52155212e-01,  9.80621994e-01,  1.23407032e-01],
+       [ 1.73441992e-01,  9.76465262e-01,  1.28193085e-01],
+       [ 1.95152833e-01,  9.71908391e-01,  1.31565387e-01],
+       [ 2.17033876e-01,  9.66981436e-01,  1.33578442e-01],
+       [ 2.38858980e-01,  9.61729905e-01,  1.34245960e-01],
+       [ 2.60412177e-01,  9.56201580e-01,  1.33656409e-01],
+       [ 2.81502028e-01,  9.50447522e-01,  1.31932244e-01],
+       [ 3.01967489e-01,  9.44522699e-01,  1.29199484e-01],
+       [ 3.21673446e-01,  9.38479230e-01,  1.25630128e-01],
+       [ 3.40517645e-01,  9.32365168e-01,  1.21420458e-01],
+       [ 3.58436014e-01,  9.26228853e-01,  1.16720764e-01],
+       [ 3.75387161e-01,  9.20107451e-01,  1.11744166e-01],
+       [ 3.91364577e-01,  9.14030906e-01,  1.06683037e-01],
+       [ 4.06391003e-01,  9.08021220e-01,  1.01704558e-01],
+       [ 4.20511453e-01,  9.02088711e-01,  9.69849288e-02],
+       [ 4.33792928e-01,  8.96229721e-01,  9.27145189e-02],
+       [ 4.46327040e-01,  8.90431204e-01,  8.90193470e-02],
+       [ 4.58217195e-01,  8.84666552e-01,  8.60354216e-02],
+       [ 4.69579941e-01,  8.78897469e-01,  8.38684493e-02],
+       [ 4.80539870e-01,  8.73076326e-01,  8.25782158e-02],
+       [ 4.91221471e-01,  8.67140712e-01,  8.22706003e-02],
+       [ 5.01756810e-01,  8.61022397e-01,  8.29489954e-02],
+       [ 5.12270112e-01,  8.54644367e-01,  8.46306052e-02],
+       [ 5.22880120e-01,  8.47922837e-01,  8.73111804e-02],
+       [ 5.33697686e-01,  8.40770245e-01,  9.09514970e-02],
+       [ 5.44821619e-01,  8.33097055e-01,  9.54918918e-02],
+       [ 5.56336007e-01,  8.24809995e-01,  1.00889638e-01],
+       [ 5.68314906e-01,  8.15821680e-01,  1.07019410e-01],
+       [ 5.80811657e-01,  8.06048453e-01,  1.13770431e-01],
+       [ 5.93862278e-01,  7.95413035e-01,  1.21019414e-01],
+       [ 6.07483285e-01,  7.83840278e-01,  1.28679748e-01],
+       [ 6.21683464e-01,  7.71277099e-01,  1.36533171e-01],
+       [ 6.36441228e-01,  7.57673632e-01,  1.44475710e-01],
+       [ 6.51725660e-01,  7.42997155e-01,  1.52344648e-01],
+       [ 6.67488046e-01,  7.27228508e-01,  1.59995019e-01],
+       [ 6.83667424e-01,  7.10367145e-01,  1.67264379e-01],
+       [ 7.00189077e-01,  6.92431148e-01,  1.73995291e-01],
+       [ 7.16967384e-01,  6.73460516e-01,  1.80024173e-01],
+       [ 7.33903949e-01,  6.53511628e-01,  1.85222960e-01],
+       [ 7.50893962e-01,  6.32659346e-01,  1.89474033e-01],
+       [ 7.67829254e-01,  6.10998851e-01,  1.92661984e-01],
+       [ 7.84597486e-01,  5.88641479e-01,  1.94699753e-01],
+       [ 8.01088265e-01,  5.65718429e-01,  1.95500001e-01],
+       [ 8.17192287e-01,  5.42377739e-01,  1.94995267e-01],
+       [ 8.32797771e-01,  5.18769136e-01,  1.93200557e-01],
+       [ 8.47811669e-01,  4.95066437e-01,  1.90064715e-01],
+       [ 8.62141691e-01,  4.71446548e-01,  1.85606726e-01],
+       [ 8.75705527e-01,  4.48089429e-01,  1.79876884e-01],
+       [ 8.88436201e-01,  4.25181008e-01,  1.72922604e-01],
+       [ 9.00276795e-01,  4.02902715e-01,  1.64836571e-01],
+       [ 9.11183872e-01,  3.81426508e-01,  1.55749060e-01],
+       [ 9.21132117e-01,  3.60917002e-01,  1.45789370e-01],
+       [ 9.30110561e-01,  3.41524314e-01,  1.35112872e-01],
+       [ 9.38121586e-01,  3.23374564e-01,  1.23922481e-01],
+       [ 9.45186888e-01,  3.06576886e-01,  1.12393770e-01],
+       [ 9.51339144e-01,  2.91209087e-01,  1.00752675e-01],
+       [ 9.56625973e-01,  2.77318690e-01,  8.92249498e-02],
+       [ 9.61107396e-01,  2.64919695e-01,  7.80392792e-02],
+       [ 9.64853896e-01,  2.53990860e-01,  6.74210818e-02],
+       [ 9.67944072e-01,  2.44473344e-01,  5.75939079e-02],
+       [ 9.70462651e-01,  2.36270274e-01,  4.87708884e-02],
+       [ 9.72498150e-01,  2.29247312e-01,  4.11463037e-02],
+       [ 9.74140184e-01,  2.23232650e-01,  3.49010830e-02],
+       [ 9.75477305e-01,  2.18023575e-01,  3.01620375e-02],
+       [ 9.76593347e-01,  2.13387865e-01,  2.70380148e-02],
+       [ 9.77565832e-01,  2.09069039e-01,  2.55964926e-02],
+       [ 9.78463686e-01,  2.04792511e-01,  2.58619792e-02],
+       [ 9.79345290e-01,  2.00274578e-01,  2.78010190e-02],
+       [ 9.80256736e-01,  1.95231681e-01,  3.13260549e-02],
+       [ 9.81230766e-01,  1.89386401e-01,  3.63176959e-02],
+       [ 9.82286739e-01,  1.82480153e-01,  4.25882187e-02],
+       [ 9.83430286e-01,  1.74283573e-01,  4.99009835e-02],
+       [ 9.84653870e-01,  1.64605285e-01,  5.79815222e-02],
+       [ 9.85938367e-01,  1.53302864e-01,  6.65114175e-02],
+       [ 9.87254568e-01,  1.40290642e-01,  7.51462213e-02],
+       [ 9.88565962e-01,  1.25548491e-01,  8.35159603e-02],
+       [ 9.89830226e-01,  1.09123170e-01,  9.12592835e-02],
+       [ 9.91004524e-01,  9.11373934e-02,  9.80000441e-02],
+       [ 9.92046536e-01,  7.17864370e-02,  1.03394282e-01],
+       [ 9.92918579e-01,  5.13367393e-02,  1.07131857e-01],
+       [ 9.93590639e-01,  3.01204767e-02,  1.08951363e-01],
+       [ 9.94042501e-01,  8.52545764e-03,  1.08659208e-01],
+       [ 9.94266707e-01, -1.30151312e-02,  1.06133513e-01],
+       [ 9.94268889e-01, -3.40398408e-02,  1.01344292e-01]])
+  final_state=QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.3178677 -9.46622717e-01j]
+ [ 0.05353088+4.41741858e-06j]]
+  intermediate_states=[QTensor(shape=2x1, nnz=2, format='csr')
+[[0.70710678+0.j]
+ [0.70710678+0.j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.70350254-0.07130341j]
+ [0.70350341-0.07129477j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.69279881-0.14188945j]
+ [0.69294909-0.14042346j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.67524315-0.21107487j]
+ [0.67583516-0.20673876j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.6511407 -0.27821731j]
+ [0.65260349-0.26966572j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.62084742-0.3427189j ]
+ [0.62374116-0.32869317j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.5847634 -0.40403162j]
+ [0.58977473-0.38337448j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.54332753-0.46165891j]
+ [0.55123992-0.43335989j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.49700823-0.51515628j]
+ [0.50869835-0.47835428j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.44629882-0.56413303j]
+ [0.462723  -0.51813001j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.39171074-0.60825352j]
+ [0.41389081-0.55252579j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.33376905-0.64723615j]
+ [0.36277323-0.58144576j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.27300585-0.68085325j]
+ [0.30992916-0.60485583j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.20995648-0.70892939j]
+ [0.25589145-0.62278163j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.14515131-0.73133809j]
+ [0.20120662-0.63528858j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.07911801-0.74800464j]
+ [0.14634922-0.64250394j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.0123703 -0.75889695j]
+ [0.09181385-0.64458716j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.05458957-0.76402943j]
+ [ 0.03804063-0.64174131j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.12127506-0.76345843j]
+ [-0.01457851-0.63420111j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.18722265-0.75727447j]
+ [-0.06563933-0.62223351j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.2519859-0.74560888j]
+ [-0.1148213-0.60612423j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.31514355-0.72862242j]
+ [-0.16181667-0.58618195j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.37629903-0.70650552j]
+ [-0.20635287-0.56273216j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.43508016-0.679477j  ]
+ [-0.24820513-0.53610677j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.49114262-0.64777747j]
+ [-0.28717137-0.50665163j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.54416984-0.61166821j]
+ [-0.32308114-0.47472071j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.59386979-0.57143388j]
+ [-0.35582179-0.44065048j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.63998061-0.52736932j]
+ [-0.38528823-0.4047955j ]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.68226722-0.47978509j]
+ [-0.4114151 -0.36749875j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.72052074-0.42900508j]
+ [-0.43417254-0.32908769j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.75455981-0.37536011j]
+ [-0.45355186-0.28988788j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.78423034-0.31918528j]
+ [-0.46956392-0.25022642j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.80940288-0.26082656j]
+ [-0.48225536-0.21039545j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.82997363-0.20062995j]
+ [-0.4916885 -0.17068633j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.84586309-0.1389446j ]
+ [-0.49794764-0.13137038j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.85701525-0.07612353j]
+ [-0.50113719-0.09269081j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.86339692-0.01250979j]
+ [-0.5013725 -0.05490796j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.86499799+0.05154495j]
+ [-0.49878798-0.01822489j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.86182902+0.11569697j]
+ [-0.49352878+0.01715477j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.85392125+0.17960668j]
+ [-0.4857513 +0.05104521j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.84132642+0.24293763j]
+ [-0.47562031+0.08328553j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.82411569+0.30535903j]
+ [-0.46330765+0.11373309j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.80237656+0.36655131j]
+ [-0.44899651+0.14224673j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.77621934+0.4261936j ]
+ [-0.43286431+0.16873361j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.74576968+0.48397666j]
+ [-0.41509609+0.19310466j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.7111703 +0.5395998j ]
+ [-0.39587873+0.21528793j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.67257509+0.59277685j]
+ [-0.37541281+0.23520965j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.63016887+0.64321764j]
+ [-0.35386398+0.25286074j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.58413714+0.69065506j]
+ [-0.33143151+0.26820242j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.53468823+0.73482741j]
+ [-0.30829506+0.2812318j ]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.48204309+0.77548597j]
+ [-0.28463734+0.29195472j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.42644031+0.81239299j]
+ [-0.26062962+0.30039722j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.36813312+0.84532393j]
+ [-0.23643795+0.30659836j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.30739217+0.87406736j]
+ [-0.21221704+0.31061268j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.24449697+0.89842819j]
+ [-0.18812527+0.31250106j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.17974114+0.91822661j]
+ [-0.16431321+0.31233666j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.11343428+0.93329914j]
+ [-0.14091829+0.31020543j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.04589644+0.94350001j]
+ [-0.11807468+0.30620194j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[ 0.02253541+0.94870242j]
+ [-0.09589904+0.30043176j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[ 0.09151191+0.94880014j]
+ [-0.07449818+0.29300832j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[ 0.16068672+0.94370475j]
+ [-0.05399667+0.28405189j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[ 0.2296813 +0.93335542j]
+ [-0.03446803+0.27368982j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[ 0.29811835+0.91771253j]
+ [-0.01599596+0.26205588j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.36561278+0.89676087j]
+ [0.00134385+0.24928985j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.4317653 +0.87051527j]
+ [0.01749947+0.23553273j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.49617499+0.83901655j]
+ [0.0324214 +0.22093088j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.55843911+0.80233266j]
+ [0.04606617+0.20563553j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.61814593+0.76056667j]
+ [0.05841183+0.18979463j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.67488372+0.7138538j ]
+ [0.06944595+0.17355685j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.72824793+0.66235621j]
+ [0.07915707+0.15707758j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.77782747+0.606282j  ]
+ [0.08756053+0.14049807j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.82322562+0.5458655j ]
+ [0.09467005+0.12396778j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.8640522 +0.48138008j]
+ [0.10051319+0.10762952j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.89992869+0.41313685j]
+ [0.10512832+0.09162062j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.93049138+0.34148609j]
+ [0.10856428+0.07607135j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.95539632+0.26681436j]
+ [0.11087818+0.06110641j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.97432212+0.18954614j]
+ [0.1121356 +0.04684315j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.98697394+0.11014318j]
+ [0.11241031+0.03338931j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.99308775+0.02909991j]
+ [0.11178233+0.0208475j ]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.99243378-0.05304567j]
+ [0.11033988+0.00929832j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.98482216-0.13572765j]
+ [0.10817546-0.00118132j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.9701063 -0.21834992j]
+ [0.10538622-0.01052753j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.94818699-0.30028865j]
+ [0.10207296-0.01868868j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.91901796-0.3808919j ]
+ [0.09833813-0.02563137j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.88261033-0.45948599j]
+ [0.09428443-0.03133812j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.8390322 -0.53538804j]
+ [0.09001745-0.0357977j ]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.78841844-0.60789779j]
+ [0.08563847-0.03902157j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.73097193-0.67630997j]
+ [0.08124557-0.04103673j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.666964  -0.73992294j]
+ [0.07693415-0.04188319j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.59674104-0.79804092j]
+ [0.07279226-0.04161855j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.52072328-0.84998503j]
+ [0.06890198-0.04031419j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.43940898-0.89509928j]
+ [0.06533462-0.03805793j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.35336646-0.93276324j]
+ [0.06215795-0.03494676j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.26324755-0.9623944j ]
+ [0.05942045-0.03109578j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.16977402-0.98346329j]
+ [0.0571633 -0.02662873j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[0.07373996-0.99550073j]
+ [0.05541391-0.02167969j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.02399246-0.99810805j]
+ [ 0.05418493-0.01639128j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.12250024-0.99096667j]
+ [ 0.05347593-0.01091212j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.22080152-0.97384806j]
+ [ 0.05326854-0.00539531j]],
+ QTensor(shape=2x1, nnz=2, format='csr')
+[[-0.3178677 -9.46622717e-01j]
+ [ 0.05353088+4.41741858e-06j]]]
+)
+</pre></div></div>
+</div>
+</section>
+</div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
+<div class="mr-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="hamiltonians.html">
+<svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+        Hamiltonians
+      </a>
+</div>
+<div class="ml-auto">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="quantum_objects.html">
+        Quantum Objects
+        <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</a>
+</div>
+</div></div>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech </p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=7f41d439"></script>
+<script src="../_static/doctools.js?v=9bcbadda"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script defer="defer" src="../_static/theme.js?v=073f68d9"></script>
+<script src="../_static/design-tabs.js?v=f930bc37"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
