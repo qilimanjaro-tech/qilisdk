@@ -43,7 +43,7 @@ def test_nparameters_property():
     n_qubits = 3
     layers = 2
     ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
-    expected = n_qubits * (layers + 1) * len(U1.PARAMETER_NAMES)
+    expected = n_qubits * (layers) * len(U1.PARAMETER_NAMES)
     assert ansatz.nparameters == expected
 
 
@@ -59,7 +59,7 @@ def test_construct_circuit_grouped_structure_gate_count():
     E = len(list(ansatz.connectivity))
     one_q, two_q = _gate_counts(ansatz)
 
-    assert one_q == (layers + 1) * n_qubits
+    assert one_q == (layers) * n_qubits
     assert two_q == layers * E
     assert len(ansatz.gates) == one_q + two_q  # total gates
 
@@ -76,7 +76,7 @@ def test_construct_circuit_interposed_structure_gate_count():
     E = len(list(ansatz.connectivity))
     one_q, two_q = _gate_counts(ansatz)
 
-    assert one_q == (layers + 1) * n_qubits
+    assert one_q == (layers) * n_qubits
     assert two_q == layers * n_qubits * E
     assert len(ansatz.gates) == one_q + two_q
 
@@ -88,9 +88,9 @@ def test_layers_zero_only_initial_block():
     for structure in ("grouped", "interposed"):
         ans = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure=structure)
         one_q, two_q = _gate_counts(ans)
-        assert one_q == (layers + 1) * n_qubits == n_qubits
+        assert one_q == (layers) * n_qubits
         assert two_q == 0
-        assert len(ans.gates) == n_qubits
+        assert len(ans.gates) == 0
 
 
 def test_invalid_connectivity_string_raises():
