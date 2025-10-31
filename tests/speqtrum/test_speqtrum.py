@@ -8,12 +8,18 @@ pytest discovery.
 from __future__ import annotations
 
 import types
+from datetime import datetime, timezone
 from enum import Enum
 from types import SimpleNamespace
 
 import pytest
 
 import qilisdk.speqtrum.speqtrum as speqtrum
+from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.speqtrum.speqtrum_models import ExecuteResult
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -95,10 +101,16 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
 
     # Replace the real network-hitting method with something predictable.
-    monkeypatch.setattr(speqtrum.SpeQtrum, "_submit_sampling", lambda self, f, device_id: 99, raising=True)
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_submit_sampling",
+        lambda self, f, device_id, job_name=None: speqtrum.JobHandle.sampling(99),
+        raising=True,
+    )
 
     q = speqtrum.SpeQtrum()
-    assert q.submit(FakeSampling(), device="some_device") == 99
+    handle = q.submit(FakeSampling(), device="some_device")
+    assert handle.id == 99
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
@@ -142,17 +154,118 @@ def test_wait_for_job_completes(monkeypatch):
 
     calls = {"n": 0}
 
-    def fake_get_job_details(self, _id):
+    def fake_get_job(self, _id):
         calls["n"] += 1
         return FakeJob(DummyStatus.RUNNING if calls["n"] == 1 else DummyStatus.COMPLETED)
 
-    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job_details", fake_get_job_details, raising=True)
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", fake_get_job, raising=True)
     monkeypatch.setattr(speqtrum.time, "sleep", lambda *_: None)  # skip real sleeping
 
     # run - should finish on 2nd iteration
     result = q.wait_for_job(123, poll_interval=0.0, timeout=5)
     assert result.status is DummyStatus.COMPLETED
     assert calls["n"] >= 2
+
+
+def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
+    """Passing a `JobHandle` should return a `TypedJobDetail` with typed result access."""
+
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
+
+    handle = speqtrum.JobHandle.sampling(7)
+    sampling_result = SamplingResult(nshots=2, samples={"00": 2})
+    detail = speqtrum.JobDetail(
+        id=7,
+        name="job",
+        description="desc",
+        device_id=1,
+        status=speqtrum.JobStatus.COMPLETED,
+        created_at=datetime.now(timezone.utc),
+        updated_at=None,
+        completed_at=datetime.now(timezone.utc),
+        payload=None,
+        result=ExecuteResult(type=speqtrum.ExecuteType.SAMPLING, sampling_result=sampling_result),
+    )
+
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
+
+    typed_detail = q.wait_for_job(handle, poll_interval=0.0)
+    assert isinstance(typed_detail, speqtrum.TypedJobDetail)
+    assert typed_detail.id == 7
+    typed_result = typed_detail.get_results()
+    assert isinstance(typed_result, SamplingResult)
+    assert typed_result.samples == sampling_result.samples
+    assert typed_result.nshots == sampling_result.nshots
+
+
+def test_variational_program_handle_preserves_inner_result(monkeypatch):
+    """A variational program handle should surface the inner functional result type."""
+
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
+
+    handle = speqtrum.JobHandle.variational_program(21, result_type=SamplingResult)
+    sampling_result = SamplingResult(nshots=3, samples={"01": 1, "10": 2})
+    optimizer_result = OptimizerResult(optimal_cost=0.5, optimal_parameters=[0.1, 0.2, 0.3])
+    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=sampling_result)
+    detail = speqtrum.JobDetail(
+        id=21,
+        name="vp",
+        description="variational",
+        device_id=2,
+        status=speqtrum.JobStatus.COMPLETED,
+        created_at=datetime.now(timezone.utc),
+        updated_at=None,
+        completed_at=datetime.now(timezone.utc),
+        payload=None,
+        result=ExecuteResult(
+            type=speqtrum.ExecuteType.VARIATIONAL_PROGRAM,
+            variational_program_result=variational_result,
+        ),
+    )
+
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
+
+    typed_detail = q.wait_for_job(handle, poll_interval=0.0)
+    assert isinstance(typed_detail, speqtrum.TypedJobDetail)
+    typed_result = typed_detail.get_results()
+    assert isinstance(typed_result, VariationalProgramResult)
+    optimal_results = typed_result.optimal_execution_results
+    assert isinstance(optimal_results, SamplingResult)
+
+
+def test_variational_program_handle_with_wrong_type_raises(monkeypatch):
+    """Providing an incorrect inner result type should raise at extraction time."""
+
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
+
+    handle = speqtrum.JobHandle.variational_program(22, result_type=TimeEvolutionResult)
+    sampling_result = SamplingResult(nshots=1, samples={"00": 1})
+    optimizer_result = OptimizerResult(optimal_cost=0.2, optimal_parameters=[0.0])
+    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=sampling_result)
+    detail = speqtrum.JobDetail(
+        id=22,
+        name="vp",
+        description="variational",
+        device_id=2,
+        status=speqtrum.JobStatus.COMPLETED,
+        created_at=datetime.now(timezone.utc),
+        updated_at=None,
+        completed_at=datetime.now(timezone.utc),
+        payload=None,
+        result=ExecuteResult(
+            type=speqtrum.ExecuteType.VARIATIONAL_PROGRAM,
+            variational_program_result=variational_result,
+        ),
+    )
+
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
+
+    typed_detail = q.wait_for_job(handle, poll_interval=0.0)
+    with pytest.raises(RuntimeError):
+        typed_detail.get_results()
 
 
 def test_wait_for_job_times_out(monkeypatch):
@@ -171,7 +284,7 @@ def test_wait_for_job_times_out(monkeypatch):
     # always RUNNING → never terminal
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
-        "get_job_details",
+        "get_job",
         lambda *_: types.SimpleNamespace(status=DummyStatus.RUNNING),
         raising=True,
     )
