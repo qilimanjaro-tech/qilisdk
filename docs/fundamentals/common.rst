@@ -1,20 +1,20 @@
 Common
 ======
 
-The :mod:`qilisdk.common` layer underpins both the digital and analog stacks. It
+The :mod:`qilisdk.core` layer underpins both the digital and analog stacks. It
 provides symbolic variables, optimization models, sparse quantum tensors, and
 the ``Parameterizable`` mixin used throughout the SDK.
 
 Highlights:
 
-- :mod:`~qilisdk.common.variables` supplies binary, spin, continuous, and
-  parameter variables plus algebraic helpers (:class:`~qilisdk.common.variables.Term`,
+- :mod:`~qilisdk.core.variables` supplies binary, spin, continuous, and
+  parameter variables plus algebraic helpers (:class:`~qilisdk.core.variables.Term`,
   comparison factories, encodings).
-- :mod:`~qilisdk.common.model` builds constrained optimization programs and
-  offers tools to automatically convert the model to :class:`~qilisdk.common.model.QUBO` format if the constraints are linear.
-- :mod:`~qilisdk.common.qtensor` manages sparse quantum objects and utilities
-  such as :func:`~qilisdk.common.qtensor.tensor_prod` and :func:`~qilisdk.common.qtensor.expect_val`.
-- :mod:`~qilisdk.common.parameterizable.Parameterizable` standardizes how
+- :mod:`~qilisdk.core.model` builds constrained optimization programs and
+  offers tools to automatically convert the model to :class:`~qilisdk.core.model.QUBO` format if the constraints are linear.
+- :mod:`~qilisdk.core.qtensor` manages sparse quantum objects and utilities
+  such as :func:`~qilisdk.core.qtensor.tensor_prod` and :func:`~qilisdk.core.qtensor.expect_val`.
+- :mod:`~qilisdk.core.parameterizable.Parameterizable` standardizes how
   objects expose symbolic parameters (shared by circuits, schedules, etc.).
 
 Quick Start
@@ -25,8 +25,8 @@ QUBO penalty form, and exports the corresponding Hamiltonian:
 
 .. code-block:: python
 
-    from qilisdk.common import BinaryVariable, LEQ, Model, ObjectiveSense
-    from qilisdk.common.model import QUBO
+    from qilisdk.core import BinaryVariable, LEQ, Model, ObjectiveSense
+    from qilisdk.core.model import QUBO
 
     x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
 
@@ -46,18 +46,18 @@ QUBO penalty form, and exports the corresponding Hamiltonian:
 Models
 ------
 
-The core components for model construction are defined in the :mod:`~qilisdk.common.variables` module.
+The core components for model construction are defined in the :mod:`~qilisdk.core.variables` module.
 
 Variables
 ^^^^^^^^^
 
 This module offers tools to define different types of variables:
 
-- **Binary Variables** (:class:`~qilisdk.common.variables.BinaryVariable`)
-- **Spin Variables** (:class:`~qilisdk.common.variables.SpinVariable`)
-- **Continuous Variables** (:class:`~qilisdk.common.variables.Variable`) — with the following customizable parameters:
+- **Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)
+- **Spin Variables** (:class:`~qilisdk.core.variables.SpinVariable`)
+- **Continuous Variables** (:class:`~qilisdk.core.variables.Variable`) — with the following customizable parameters:
 
-    - **Domain** (:class:`~qilisdk.common.variables.Domain`): Specifies the variable type:
+    - **Domain** (:class:`~qilisdk.core.variables.Domain`): Specifies the variable type:
 
         - ``REAL``
         - ``INTEGER``
@@ -67,16 +67,16 @@ This module offers tools to define different types of variables:
     - **Bounds**: Defines the allowed value range of the variable.
     - **Encoding**: Specifies how the variable is represented using binary encodings:
 
-        - Bit-wise encoding (:class:`~qilisdk.common.variables.BitWise`)
-        - Domain wall encoding (:class:`~qilisdk.common.variables.DomainWall`)
-        - One-hot encoding (:class:`~qilisdk.common.variables.OneHot`)
+        - Bit-wise encoding (:class:`~qilisdk.core.variables.BitWise`)
+        - Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)
+        - One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)
     - **Precision**: Applicable to ``REAL`` domain; defines the resolution (e.g., floating-point precision).
 
 Example: creating different types of variables:
 
 .. code-block:: python
 
-    from qilisdk.common.variables import BinaryVariable, Bitwise, Domain, SpinVariable, Variable
+    from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, SpinVariable, Variable
 
     x = Variable("x", domain=Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
     s = SpinVariable("s")
@@ -110,7 +110,7 @@ Each binary variable configuration generates a float within the bounds, based on
 Terms
 ^^^^^
 
-Variables can be combined algebraically to form expressions known as :class:`~qilisdk.common.variables.Term`. Example:
+Variables can be combined algebraically to form expressions known as :class:`~qilisdk.core.variables.Term`. Example:
 
 .. code-block:: python
 
@@ -155,15 +155,15 @@ Parameters and Parameterizable Objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Many components in QiliSDK expose symbolic parameters that can be optimized or
-re-bound at runtime. The :class:`~qilisdk.common.variables.Parameter` class
+re-bound at runtime. The :class:`~qilisdk.core.variables.Parameter` class
 represents a scalar symbol with optional bounds, and
-:class:`~qilisdk.common.parameterizable.Parameterizable` provides a uniform API
+:class:`~qilisdk.core.parameterizable.Parameterizable` provides a uniform API
 (``get_parameter_names``, ``set_parameter_values``…) implemented by circuits,
 schedules, models, and more.
 
 .. code-block:: python
 
-    from qilisdk.common import Parameter
+    from qilisdk.core import Parameter
 
     theta = Parameter("theta", value=0.5, bounds=(0.0, 1.0))
     print(theta.value)     # 0.5
@@ -174,7 +174,7 @@ Parameters behave like symbolic variables in algebraic expressions, so you can
 combine them with other variables and evaluate terms without having to pass the
 parameter explicitly—its stored ``value`` is used automatically.
 
-Objects that inherit from :class:`~qilisdk.common.parameterizable.Parameterizable`
+Objects that inherit from :class:`~qilisdk.core.parameterizable.Parameterizable`
 collect all the :class:`Parameter` instances they encounter. For example:
 
 .. code-block:: python
@@ -231,7 +231,7 @@ Example:
 
 .. code-block:: python
 
-    from qilisdk.common.variables import LT
+    from qilisdk.core.variables import LT
     LT(2 * x - 1, 1)
 
 **Output**:
@@ -245,10 +245,10 @@ When a comparison term is created, constants are automatically moved to the righ
 Objectives and Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each :class:`~qilisdk.common.model.Model` consists of:
+Each :class:`~qilisdk.core.model.Model` consists of:
 
-- A single :class:`~qilisdk.common.model.Objective`
-- Zero or more :class:`~qilisdk.common.model.Constraint` instances
+- A single :class:`~qilisdk.core.model.Objective`
+- Zero or more :class:`~qilisdk.core.model.Constraint` instances
 
 **Objective**
 
@@ -256,7 +256,7 @@ The objective defines the function the model aims to minimize or maximize. Examp
 
 .. code-block:: python
 
-    from qilisdk.common.model import Model, ObjectiveSense
+    from qilisdk.core.model import Model, ObjectiveSense
     model = Model("example_model")
     model.set_objective(2*x + 3, label="obj", sense=ObjectiveSense.MINIMIZE)
     print(model)
@@ -371,7 +371,7 @@ For example:
 QUBO Models
 ^^^^^^^^^^^
 
-The :class:`~qilisdk.common.model.QUBO` subclass specializes in **Quadratic Unconstrained Binary Optimization** models, 
+The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic Unconstrained Binary Optimization** models, 
 where every decision variable is binary and the objective function is at most quadratic. 
 Unlike general models, “hard” constraints are not maintained separately but are encoded directly into the objective as penalty terms. 
 The strength of each penalty is controlled by its associated Lagrange multiplier.
@@ -467,7 +467,7 @@ Defining a QUBO
 
 .. code-block::  python
 
-    from qilisdk.common.model import QUBO, ObjectiveSense  
+    from qilisdk.core.model import QUBO, ObjectiveSense  
     model = QUBO("qubo_example")  
 
 2. **Objective**  
@@ -489,8 +489,8 @@ Example: Slack Penalization
 
 .. code-block:: python
 
-    from qilisdk.common.model import QUBO, ObjectiveSense
-    from qilisdk.common.variables import BinaryVariable, LEQ
+    from qilisdk.core.model import QUBO, ObjectiveSense
+    from qilisdk.core.variables import BinaryVariable, LEQ
 
     b, b2 = BinaryVariable("b"), BinaryVariable("b2")
     model = QUBO("slack_example")
@@ -512,8 +512,8 @@ Example: Unbalanced Penalization
 
 .. code-block:: python
 
-    from qilisdk.common.model import QUBO, ObjectiveSense
-    from qilisdk.common.variables import BinaryVariable, LEQ
+    from qilisdk.core.model import QUBO, ObjectiveSense
+    from qilisdk.core.variables import BinaryVariable, LEQ
 
     b, b2 = BinaryVariable("b"), BinaryVariable("b2")
     model = QUBO("unbalanced_penalization_example")
@@ -535,7 +535,7 @@ Interoperability
 ~~~~~~~~~~~~~~~~
 
 - **Convert any Model to QUBO**
-    If you have a generic :class:`~qilisdk.common.model.Model` with only linear/quadratic terms, you can automatically produce a QUBO:  
+    If you have a generic :class:`~qilisdk.core.model.Model` with only linear/quadratic terms, you can automatically produce a QUBO:  
 
     .. code-block:: python
 
@@ -552,11 +552,11 @@ Interoperability
 Quantum Objects
 ---------------
 
-The :mod:`~qilisdk.common.qtensor` module defines the :class:`~qilisdk.common.qtensor.QTensor`
+The :mod:`~qilisdk.core.qtensor` module defines the :class:`~qilisdk.core.qtensor.QTensor`
 class and related helpers for representing and manipulating quantum states and
 operators in sparse form.
 
-The :class:`~qilisdk.common.qtensor.QTensor` wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:
+The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:
 
 - **Kets** (column vectors of shape ``(2**N, 1)``)  
 - **Bras** (row vectors of shape ``(1, 2**N)``)  
@@ -568,7 +568,7 @@ Examples of creating various quantum objects:
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.common.qtensor import QTensor
+    from qilisdk.core.qtensor import QTensor
 
     # 1‑qubit |0> ket
     psi_ket = QTensor(np.array([[1], [0]]))
@@ -609,7 +609,7 @@ Helper constructors
 
 .. code-block:: python
 
-    from qilisdk.common.qtensor import ket, bra, basis_state
+    from qilisdk.core.qtensor import ket, bra, basis_state
 
     # Single‑qubit
     print("ket(0):\n", ket(0).dense, "\nis_ket?", ket(0).is_ket())
@@ -658,7 +658,7 @@ Examples:
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.common.qtensor import QTensor
+    from qilisdk.core.qtensor import QTensor
 
     # Adjoint of a non-Hermitian operator
     A = QTensor(np.array([[1+1j, 2], [3, 4]]))
@@ -678,7 +678,7 @@ Examples:
     print("trace norm(dm) =", dm.norm(order='tr'))
 
     # Partial trace of a Bell state
-    from qilisdk.common.qtensor import ket, tensor_prod
+    from qilisdk.core.qtensor import ket, tensor_prod
     bell = (tensor_prod([ket(0), ket(0)]) + tensor_prod([ket(1), ket(1)])).unit()
     rho_bell = bell.to_density_matrix()
     print("rho_bell:\n", rho_bell)
@@ -714,12 +714,12 @@ Examples:
 Extra Utilities
 ^^^^^^^^^^^^^^^
 
-- **Tensor product** with :func:`~qilisdk.common.qtensor.tensor_prod`  
-- **Expectation value** with :func:`~qilisdk.common.qtensor.expect_val`  
+- **Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`  
+- **Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`  
 
 .. code-block:: python
 
-    from qilisdk.common.qtensor import QTensor, expect_val, ket, tensor_prod
+    from qilisdk.core.qtensor import QTensor, expect_val, ket, tensor_prod
     import numpy as np
 
     # Two‑qubit Hadamard tensor

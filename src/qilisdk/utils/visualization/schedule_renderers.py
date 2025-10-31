@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.common.variables import Number
+    from qilisdk.core.variables import Number
 
 from qilisdk.utils.visualization.style import ScheduleStyle
 

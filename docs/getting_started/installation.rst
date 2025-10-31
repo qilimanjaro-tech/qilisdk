@@ -76,7 +76,7 @@ Define two Hamiltonians, build a linear interpolation schedule, and run on Qutip
 
     import numpy as np
     from qilisdk.analog import Schedule, X, Z
-    from qilisdk.common import ket, tensor_prod
+    from qilisdk.core import ket, tensor_prod
     from qilisdk.functionals import TimeEvolution
     from qilisdk.backends import QutipBackend
 

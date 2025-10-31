@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-from qilisdk.common import Parameter
+from qilisdk.core import Parameter
 from qilisdk.digital import RX, RZ, Circuit, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
 

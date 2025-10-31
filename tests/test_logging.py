@@ -1,7 +1,7 @@
 from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
-from qilisdk.common.model import Model, ObjectiveSense
-from qilisdk.common.variables import LT, BinaryVariable, Domain, OneHot, Variable
+from qilisdk.core.model import Model, ObjectiveSense
+from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
 
 
 def test_log_output(caplog):  # noqa: F811

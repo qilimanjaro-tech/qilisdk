@@ -103,8 +103,8 @@ class Constraint:
     Example:
         .. code-block:: python
 
-            from qilisdk.common.model import Constraint
-            from qilisdk.common.variables import BinaryVariable, LEQ
+            from qilisdk.core.model import Constraint
+            from qilisdk.core.variables import BinaryVariable, LEQ
 
             x = BinaryVariable("x")
             constraint = Constraint("limit", LEQ(x, 1))
@@ -195,8 +195,8 @@ class Objective:
     Example:
         .. code-block:: python
 
-            from qilisdk.common.model import Objective, ObjectiveSense
-            from qilisdk.common.variables import BinaryVariable
+            from qilisdk.core.model import Objective, ObjectiveSense
+            from qilisdk.core.variables import BinaryVariable
 
             x = BinaryVariable("x")
             obj = Objective("profit", 3 * x, sense=ObjectiveSense.MAXIMIZE)
@@ -275,7 +275,7 @@ class Model:
     Example:
         .. code-block:: python
 
-            from qilisdk.common import BinaryVariable, LEQ, Model
+            from qilisdk.core import BinaryVariable, LEQ, Model
 
             num_items = 4
             values = [1, 3, 5, 2]
@@ -517,8 +517,8 @@ class QUBO(Model):
     Example:
         .. code-block:: python
 
-            from qilisdk.common.model import QUBO
-            from qilisdk.common.variables import BinaryVariable
+            from qilisdk.core.model import QUBO
+            from qilisdk.core.variables import BinaryVariable
 
             x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
             qubo = QUBO("Example")

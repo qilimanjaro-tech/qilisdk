@@ -13,7 +13,7 @@
 # limitations under the License.
 import numpy as np
 
-from qilisdk.common.qtensor import QTensor
+from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 

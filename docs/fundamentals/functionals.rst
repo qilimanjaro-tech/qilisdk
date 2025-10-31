@@ -2,7 +2,7 @@ Functionals
 ===========
 
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
-:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.common` modules. Currently, it includes two primitive functionals:
+:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes two primitive functionals:
 
 - :class:`~qilisdk.functionals.sampling.Sampling` — Executes repeated sampling of a digital quantum circuit.
 - :class:`~qilisdk.functionals.time_evolution.TimeEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
@@ -18,7 +18,7 @@ Every functional conforms to the abstract :class:`~qilisdk.functionals.functiona
 functionals such as :class:`~qilisdk.functionals.sampling.Sampling` and
 :class:`~qilisdk.functionals.time_evolution.TimeEvolution` also inherit from
 :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, which mixes in the
-:class:`~qilisdk.common.parameterizable.Parameterizable` contract. This lets backends query and update symbolic
+:class:`~qilisdk.core.parameterizable.Parameterizable` contract. This lets backends query and update symbolic
 parameters consistently before execution.
 
 Each functional advertises a matching :attr:`result_type` pointing to a concrete
@@ -36,7 +36,7 @@ Result Objects
     stores shot counts, probabilities and convenience helpers such as
     :meth:`~qilisdk.functionals.sampling_result.SamplingResult.get_probabilities`.
 * :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
-    contains expectation values, the terminal :class:`~qilisdk.common.qtensor.QTensor` state, and (optionally) the list
+    contains expectation values, the terminal :class:`~qilisdk.core.qtensor.QTensor` state, and (optionally) the list
     of intermediate states when ``store_intermediate_results=True``.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
@@ -125,7 +125,7 @@ classical optimizers.
 **Parameters**
 
 - **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.
-- **initial_state** (:class:`~qilisdk.common.quantum_objects.QTensor`): Initial state of the system.
+- **initial_state** (:class:`~qilisdk.core.quantum_objects.QTensor`): Initial state of the system.
 - **observables** (List[:class:`~qilisdk.analog.hamiltonian.Hamiltonian` or :class:`~qilisdk.analog.hamiltonian.PauliOperator`]): Operators to measure after evolution.
 - **nshots** (int, optional): Number of repetitions for each observable measurement. Default is 1.
 - **store_intermediate_results** (bool, optional): If True, records the state at each time step. Default is False.
@@ -144,7 +144,7 @@ classical optimizers.
 
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
-    from qilisdk.common import ket, tensor_prod
+    from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
@@ -219,7 +219,7 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
 - **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): Classical optimizer that proposes new parameter
   values and optionally stores intermediate iterates.
 - **cost_model** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
-  to a scalar cost; frequently constructed from a :class:`~qilisdk.common.model.Model`.
+  to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.
 
@@ -238,8 +238,8 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
     import numpy as np
 
     from qilisdk.backends import QutipBackend
-    from qilisdk.common.model import Model, ObjectiveSense
-    from qilisdk.common.variables import LEQ, BinaryVariable
+    from qilisdk.core.model import Model, ObjectiveSense
+    from qilisdk.core.variables import LEQ, BinaryVariable
     from qilisdk.cost_functions.model_cost_function import ModelCostFunction
     from qilisdk.digital import CNOT, U3, HardwareEfficientAnsatz
     from qilisdk.functionals import Sampling

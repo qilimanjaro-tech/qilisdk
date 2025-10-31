@@ -24,7 +24,7 @@ from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
-from qilisdk.common.qtensor import QTensor
+from qilisdk.core.qtensor import QTensor
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult

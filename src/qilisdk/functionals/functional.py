@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import ClassVar, Generic, TypeVar
 
-from qilisdk.common.parameterizable import Parameterizable
+from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.functionals.functional_result import FunctionalResult
 
 TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
@@ -35,5 +35,5 @@ class Functional(ABC):
 
 class PrimitiveFunctional(Parameterizable, Functional, ABC, Generic[TResult_co]):
     """
-    Base class for functionals backed by a :class:`~qilisdk.common.parameterizable.Parameterizable` object.
+    Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
     """

@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
 import numpy as np
 from loguru import logger
 
-from qilisdk.common.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
+from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -998,7 +998,7 @@ class BinaryVariable(BaseVariable):
     Example:
         .. code-block:: python
 
-            from qilisdk.common.variables import BinaryVariable
+            from qilisdk.core.variables import BinaryVariable
 
             x = BinaryVariable("x")
     """
@@ -1067,7 +1067,7 @@ class Variable(BaseVariable):
     Example:
         .. code-block:: python
 
-            from qilisdk.common.variables import Domain, Variable
+            from qilisdk.core.variables import Domain, Variable
 
             price = Variable("price", domain=Domain.REAL, bounds=(0, 10))
             binary_term = price.to_binary()
@@ -1202,7 +1202,7 @@ class Parameter(BaseVariable):
     Example:
         .. code-block:: python
 
-            from qilisdk.common.variables import Parameter
+            from qilisdk.core.variables import Parameter
 
             theta = Parameter("theta", value=0.5)
             theta.set_value(0.75)

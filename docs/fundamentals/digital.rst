@@ -294,7 +294,7 @@ update them selectively:
 
     import numpy as np
 
-    from qilisdk.common.variables import Parameter
+    from qilisdk.core.variables import Parameter
     from qilisdk.digital import Circuit, RX, RZ
 
     circuit = Circuit(nqubits=2)

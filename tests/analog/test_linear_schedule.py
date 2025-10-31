@@ -1,6 +1,6 @@
 from qilisdk.analog import LinearSchedule
 from qilisdk.analog.hamiltonian import PauliZ
-from qilisdk.common.variables import Parameter
+from qilisdk.core.variables import Parameter
 
 
 def test_linear_schedule_interpolation():

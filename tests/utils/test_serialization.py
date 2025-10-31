@@ -5,7 +5,7 @@ import pytest
 
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
 from qilisdk.analog.schedule import Schedule
-from qilisdk.common.qtensor import ket, tensor_prod
+from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
 

@@ -17,7 +17,7 @@ from qilisdk.analog.hamiltonian import (
     Z,
     _get_pauli,
 )
-from qilisdk.common.variables import BinaryVariable
+from qilisdk.core.variables import BinaryVariable
 
 
 # Helper function to convert sparse matrix to dense NumPy array.

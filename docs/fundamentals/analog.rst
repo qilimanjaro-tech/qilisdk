@@ -205,15 +205,15 @@ Parameterized Schedules
 ^^^^^^^^^^^^^^^^^^^^^^^
 Schedule coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
-instances of :class:`~qilisdk.common.variables.Parameter` or algebraic
-expressions (:class:`~qilisdk.common.variables.Term`) built from parameters.
+instances of :class:`~qilisdk.core.variables.Parameter` or algebraic
+expressions (:class:`~qilisdk.core.variables.Term`) built from parameters.
 The schedule tracks every parameter it encounters so you can query or set them
 later.
 
 .. code-block:: python
 
     from qilisdk.analog import Schedule, Z
-    from qilisdk.common.variables import Parameter
+    from qilisdk.core.variables import Parameter
     T, dt = 10, 1
     gamma = Parameter("gamma", value=0.5, bounds=(0.0, 1.0))
     schedule = Schedule(
@@ -229,7 +229,7 @@ later.
 
 When coefficients arise from expressions (for example ``0.5 * gamma`` or
 ``gamma * (1 - t / T)`` inside :meth:`~qilisdk.analog.schedule.Schedule.add_hamiltonian`),
-the resulting :class:`~qilisdk.common.variables.Term` is also recorded. The
+the resulting :class:`~qilisdk.core.variables.Term` is also recorded. The
 helpers below give programmatic access to these symbolic coefficients:
 - ``get_parameter_names()`` and ``get_parameters()`` surface labels and values.
 - ``set_parameters({"gamma": 0.6})`` updates selected entries in-place.

@@ -24,9 +24,9 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import numpy as np
 from scipy.sparse import csr_matrix, identity, kron, spmatrix
 
-from qilisdk.common.parameterizable import Parameterizable
-from qilisdk.common.qtensor import QTensor
-from qilisdk.common.variables import BaseVariable, Parameter, Term
+from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.qtensor import QTensor
+from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation

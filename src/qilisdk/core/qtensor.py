@@ -66,7 +66,7 @@ class QTensor:
         .. code-block:: python
 
             import numpy as np
-            from qilisdk.common import QTensor
+            from qilisdk.core import QTensor
 
             ket = QTensor(np.array([[1.0], [0.0]]))
             density = ket * ket.adjoint()
