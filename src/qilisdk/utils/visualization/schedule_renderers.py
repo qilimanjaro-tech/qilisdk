@@ -146,6 +146,11 @@ class MatplotlibScheduleRenderer:
 
         self.ax.figure.savefig(filename, bbox_inches="tight")  # type: ignore[union-attr]
 
+    def show(self) -> None:  # noqa: PLR6301
+        """Show the current figure."""
+
+        plt.show()
+
     @staticmethod
     def _make_axes(dpi: int, style: ScheduleStyle) -> plt.Axes:
         """

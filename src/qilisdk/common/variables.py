@@ -890,6 +890,9 @@ class BaseVariable(ABC):
         if isinstance(other, Term):
             return other + self
 
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return Term(elements=[self, other], operation=Operation.ADD)
 
     __radd__ = __add__
@@ -901,6 +904,9 @@ class BaseVariable(ABC):
         if isinstance(other, Term):
             return other * self
 
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return Term(elements=[self, other], operation=Operation.MUL)
 
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
@@ -909,6 +915,9 @@ class BaseVariable(ABC):
         if isinstance(other, Term):
             return other * self
 
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return Term(elements=[other, self], operation=Operation.MUL)
 
     __imul__ = __mul__
@@ -916,11 +925,19 @@ class BaseVariable(ABC):
     def __sub__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return self + -1 * other
 
     def __rsub__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return -1 * self + other
 
     __isub__ = __sub__
@@ -935,6 +952,8 @@ class BaseVariable(ABC):
         if other == 0:
             raise ValueError("Division by zero is not allowed")
 
+        if isinstance(other, np.generic):
+            other = other.item()
         other = 1 / other
         return self * other
 
@@ -1665,6 +1684,10 @@ class Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         out.append(other)
         return Term(out, Operation.ADD)
 
@@ -1674,6 +1697,9 @@ class Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+
+        if isinstance(other, np.generic):
+            other = other.item()
         out.insert(0, other)
         return Term(out, Operation.ADD)
 
@@ -1683,6 +1709,10 @@ class Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         if len(out) == 0:
             out = [0]
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         out.append(other)
         return Term(out, Operation.MUL)._unfold_parentheses()
 
@@ -1694,6 +1724,10 @@ class Term:
         out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
         if len(out) == 0:
             out = [0]
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         out.insert(0, other)
         return Term(out, Operation.MUL)._unfold_parentheses()
 
@@ -1703,6 +1737,10 @@ class Term:
     def __sub__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
+
+        if isinstance(other, np.generic):
+            other = other.item()
+
         return self + -1 * other
 
     def __rsub__(self, other: Number | BaseVariable | Term) -> Term:

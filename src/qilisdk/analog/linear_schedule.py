@@ -85,7 +85,9 @@ class LinearSchedule(Schedule):
         if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
             raise ValueError("Something unexpected happened while retrieving the coefficient.")
         alpha: float = (t - prev_idx) / (next_idx - prev_idx)
-        return (1 - alpha) * prev_expr + alpha * next_expr
+        e1 = next_expr * alpha
+        e2 = prev_expr * (1 - alpha)
+        return e1 + e2
 
     def get_coefficient(self, time_step: float, hamiltonian_key: str) -> Number:
         """
@@ -98,6 +100,7 @@ class LinearSchedule(Schedule):
         Returns:
             Number: Evaluated coefficient value.
         """
+        time_step = float(time_step)
         val = self.get_coefficient_expression(time_step=time_step, hamiltonian_key=hamiltonian_key)
         return val.evaluate({}) if isinstance(val, Term) else (val.evaluate() if isinstance(val, Parameter) else val)
 

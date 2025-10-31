@@ -33,7 +33,6 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 if TYPE_CHECKING:
-    from qilisdk.common.variables import Number
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
 
@@ -183,28 +182,10 @@ class QutipBackend(Backend):
                 )
             )
 
-        def get_hamiltonian_schedule(
-            hamiltonian: str, dt: float, schedule: dict[int, dict[str, Number]], T: float
-        ) -> Callable:
-            def get_coeff(t: float) -> Number:
-                if int(t / dt) in schedule:
-                    return schedule[int(t / dt)][hamiltonian]
-                time_step = int(t / dt)
-                while time_step > 0:
-                    time_step -= 1
-                    if time_step in schedule:
-                        return schedule[time_step][hamiltonian]
-                return 0
-
-            return get_coeff
-            # return lambda t: schedule[int(t / dt)][ham] if int(t / dt) < int(T / dt) else schedule[int(T / dt)][ham]
-
         H_t = [
             [
                 qutip_hamiltonians[i],
-                get_hamiltonian_schedule(
-                    h, functional.schedule.dt, functional.schedule.schedule, functional.schedule.T
-                ),
+                np.array([functional.schedule.get_coefficient(t, h) for t in tlist]),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
