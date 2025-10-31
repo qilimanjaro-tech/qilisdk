@@ -33,8 +33,7 @@
 ## Bugfixes
 
 - Fixed the `HardwareEfficientAnsatz` so the first layer of single-qubit gates is not duplicated, restoring the expected gate and parameter counts. ([PR #90](https://github.com/qilimanjaro-tech/qilisdk/pulls/90))
-- Fixed the scheduler so numpy floats are accepted without errors.
-  Fixed the QuTiP backend by aligning the schedule-to-backend mapping structure. ([PR #91](https://github.com/qilimanjaro-tech/qilisdk/pulls/91))
+- Fixed the scheduler so numpy floats are accepted without errors. Fixed the QuTiP backend by aligning the schedule-to-backend mapping structure. ([PR #91](https://github.com/qilimanjaro-tech/qilisdk/pulls/91))
 
 ## Improved Documentation
 
