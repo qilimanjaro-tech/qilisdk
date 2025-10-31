@@ -300,6 +300,9 @@ def test_draw_method_runs(monkeypatch):
         def save(self, *a, **kw):
             return None
 
+        def show(self):
+            pass
+
     monkeypatch.setattr("qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer", DummyRenderer)
     sched.draw()
 

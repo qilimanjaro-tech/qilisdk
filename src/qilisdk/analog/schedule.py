@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import Callable
 
-import numpy as np
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
