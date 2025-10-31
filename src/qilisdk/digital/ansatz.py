@@ -188,9 +188,6 @@ class HardwareEfficientAnsatz(Ansatz):
         # Parameter iterator covering all single-qubit blocks, in order
         parameter_iterator = iter(self._parameter_blocks())
 
-        # U(0)
-        self._apply_single_qubit_block(parameter_iterator)
-
         # For each remaining layer: U -> E
         if self.structure == "grouped":
             for _ in range(self.layers):

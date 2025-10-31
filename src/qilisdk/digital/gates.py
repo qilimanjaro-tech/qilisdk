@@ -924,7 +924,7 @@ class U2(BasicGate):
         ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
 
     Other unitaries you can get from this one are:
-        - ``U2(phi=0, gamma=np.pi) = H``
+        - ``U2(phi=0, gamma=pi) = H``
         - ``U2(phi=0, gamma=0) = RY(theta=pi/2)``
         - ``U2(phi=-pi/2, gamma=pi/2) = RX(theta=pi/2)``
     """
