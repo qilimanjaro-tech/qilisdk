@@ -528,6 +528,7 @@ class SpeQtrum:
             response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
+        logger.info("Sampling job submitted: {}", job.id)
         return JobHandle.sampling(job.id)
 
     def _submit_rabi_program(
@@ -596,7 +597,7 @@ class SpeQtrum:
             response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
-        logger.info("Time evolution job submitted: {}", job.id)
+        logger.info("Time Evolution job submitted: {}", job.id)
         return JobHandle.time_evolution(job.id)
 
     @overload
