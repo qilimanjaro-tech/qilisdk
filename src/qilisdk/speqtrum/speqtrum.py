@@ -72,20 +72,19 @@ class _BearerAuth(httpx.Auth):
     """Bearer token auth handler with automatic refresh support."""
     requires_response_body = True
 
-    def __init__(self, username: str, token: Token) -> None:
-        self._username = username
-        self._token = token
+    def __init__(self, client: SpeQtrum) -> None:
+        self._client = client
 
     def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
-        request.headers["Authorization"] = f"Bearer {self._token.access_token}"
+        request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
         response = yield request
 
         if response.status_code == httpx.codes.UNAUTHORIZED:
             settings = get_settings()
-            response = yield httpx.Request("POST", settings.speqtrum_api_url + "/authorisation-tokens/refresh", headers={"Authorization": f"Bearer {self._token.refresh_token}"})
-            self._token = Token(**response.json())
-            store_credentials(self._username, self._token)
-            request.headers["Authorization"] = f"Bearer {self._token.access_token}"
+            response = yield httpx.Request("POST", settings.speqtrum_api_url + "/authorisation-tokens/refresh", headers={"Authorization": f"Bearer {self._client.token.refresh_token}"})
+            self._client.token = Token(**response.json())
+            store_credentials(self._client.username, self._client.token)
+            request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
             yield request
 
 
@@ -94,11 +93,6 @@ class SpeQtrum:
 
     def __init__(self) -> None:
         logger.debug("Initializing SpeQtrum client")
-        credentials = load_credentials()
-        if credentials is None:
-            logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
-            raise RuntimeError("Missing credentials - invoke SpeQtrum.login() first.")
-        self._username, self._token = credentials
         self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
             Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
             TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(
@@ -111,9 +105,12 @@ class SpeQtrum:
                 cast("T1Experiment", f), device, job_name
             ),
         }
-        self._settings = get_settings()
-        self._auth = _BearerAuth(self._username, self._token)
-        logger.success("SpeQtrum client initialised for user '{}'", self._username)
+        credentials = load_credentials()
+        if credentials is None:
+            logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
+            raise RuntimeError("Missing credentials - invoke SpeQtrum.login() first.")
+        self.username, self.token = credentials
+        logger.success("SpeQtrum client initialised for user '{}'", self.username)
 
     @classmethod
     def _get_headers(cls) -> dict:
@@ -123,10 +120,11 @@ class SpeQtrum:
 
     def _create_client(self) -> httpx.Client:
         """Return a freshly configured HTTP client for SpeQtrum interactions."""
+        settings = get_settings()
         return httpx.Client(
-            base_url=self._settings.speqtrum_api_url,
+            base_url=settings.speqtrum_api_url,
             headers=self._get_headers(),
-            auth=self._auth,
+            auth=_BearerAuth(self),
         )
 
     @classmethod

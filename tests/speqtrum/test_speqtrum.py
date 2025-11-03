@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
 import qilisdk.speqtrum.speqtrum as speqtrum
@@ -83,8 +84,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("alice", tok))
     q = speqtrum.SpeQtrum()
 
-    assert q._username == "alice"
-    assert q._token is tok
+    assert q.username == "alice"
+    assert q.token is tok
 
 
 def test_submit_dispatches_to_sampling_handler(monkeypatch):
@@ -374,3 +375,51 @@ def test_list_devices_filters_client_side(monkeypatch):
 
     assert [d["id"] for d in all_devices] == [1, 2]
     assert only_two == [{"id": 2}]
+
+
+def test_bearer_auth_refreshes_after_unauthorized(monkeypatch):
+    """Unauthorized responses should trigger a refresh token request."""
+
+    token = SimpleNamespace(access_token="old_access", refresh_token="old_refresh")
+    client = SimpleNamespace(token=token, username="alice")
+    auth = speqtrum._BearerAuth(client)
+
+    monkeypatch.setattr(speqtrum, "get_settings", lambda: SimpleNamespace(speqtrum_api_url="https://mock.api"))
+
+    stored: dict[str, tuple[str, object]] = {}
+
+    def fake_store(username: str, refreshed_token):
+        stored["args"] = (username, refreshed_token)
+
+    monkeypatch.setattr(speqtrum, "store_credentials", fake_store)
+
+    request = httpx.Request("GET", "https://mock.api/jobs")
+    flow = auth.auth_flow(request)
+
+    first_request = next(flow)
+    assert first_request.headers["Authorization"] == "Bearer old_access"
+
+    unauthorized = httpx.Response(status_code=401, request=first_request)
+    refresh_request = flow.send(unauthorized)
+    assert refresh_request.method == "POST"
+    assert str(refresh_request.url) == "https://mock.api/authorisation-tokens/refresh"
+    assert refresh_request.headers["Authorization"] == "Bearer old_refresh"
+
+    refresh_payload = {
+        "accessToken": "new_access",
+        "expiresIn": 123,
+        "issuedAt": "now",
+        "refreshToken": "new_refresh",
+        "tokenType": "bearer",
+    }
+    retry_request = flow.send(httpx.Response(status_code=200, json=refresh_payload, request=refresh_request))
+    assert retry_request is request
+    assert retry_request.headers["Authorization"] == "Bearer new_access"
+
+    assert "args" in stored
+    stored_username, stored_token = stored["args"]
+    assert stored_username == "alice"
+    assert stored_token.access_token == "new_access"
+
+    with pytest.raises(StopIteration):
+        flow.send(httpx.Response(status_code=200, request=retry_request))
