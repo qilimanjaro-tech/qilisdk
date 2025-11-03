@@ -19,7 +19,7 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generator, TypeAlias, TypeVar, cast, overload
 
 import httpx
 from loguru import logger
@@ -67,11 +67,13 @@ if TYPE_CHECKING:
 
 
 ResultT = TypeVar("ResultT", bound=FunctionalResult)
+JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 
-def _safe_json_loads(value: str, *, context: str) -> Any | None:
+def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
     try:
-        return json.loads(value)
+        result = json.loads(value)
+        return cast("JSONValue", result)
     except json.JSONDecodeError as exc:
         logger.warning("Failed to decode JSON for {}: {}", context, exc)
         return None
@@ -90,7 +92,7 @@ def _safe_b64_decode(value: str, *, context: str) -> str | None:
         return None
 
 
-def _safe_b64_json(value: str, *, context: str) -> Any | None:
+def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
     decoded_text = _safe_b64_decode(value, context=context)
     if decoded_text is None:
         return None
