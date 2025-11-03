@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 import time
 from base64 import urlsafe_b64encode
@@ -22,7 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast, overl
 
 import httpx
 from loguru import logger
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from qilisdk.functionals import (
     Sampling,
@@ -68,6 +69,34 @@ if TYPE_CHECKING:
 ResultT = TypeVar("ResultT", bound=FunctionalResult)
 
 
+def _safe_json_loads(value: str, *, context: str) -> Any | None:
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError as exc:
+        logger.warning("Failed to decode JSON for {}: {}", context, exc)
+        return None
+
+
+def _safe_b64_decode(value: str, *, context: str) -> str | None:
+    try:
+        decoded_bytes = base64.b64decode(value)
+    except (binascii.Error, ValueError) as exc:
+        logger.warning("Failed to base64 decode {}: {}", context, exc)
+        return None
+    try:
+        return decoded_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        logger.warning("Failed to UTF-8 decode {}: {}", context, exc)
+        return None
+
+
+def _safe_b64_json(value: str, *, context: str) -> Any | None:
+    decoded_text = _safe_b64_decode(value, context=context)
+    if decoded_text is None:
+        return None
+    return _safe_json_loads(decoded_text, context=context)
+
+
 class _BearerAuth(httpx.Auth):
     """Bearer token auth handler with automatic refresh support."""
     requires_response_body = True
@@ -81,8 +110,36 @@ class _BearerAuth(httpx.Auth):
 
         if response.status_code == httpx.codes.UNAUTHORIZED:
             settings = get_settings()
-            response = yield httpx.Request("POST", settings.speqtrum_api_url + "/authorisation-tokens/refresh", headers={"Authorization": f"Bearer {self._client.token.refresh_token}"})
-            self._client.token = Token(**response.json())
+            refresh_request = httpx.Request(
+                "POST",
+                settings.speqtrum_api_url + "/authorisation-tokens/refresh",
+                headers={"Authorization": f"Bearer {self._client.token.refresh_token}"},
+            )
+            refresh_response = yield refresh_request
+
+            try:
+                refresh_response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                logger.error(
+                    "Token refresh failed with status {} {}",
+                    exc.response.status_code,
+                    exc.response.reason_phrase,
+                )
+                raise
+
+            try:
+                payload = refresh_response.json()
+            except json.JSONDecodeError as exc:
+                logger.error("Token refresh returned invalid JSON: {}", exc)
+                raise RuntimeError("SpeQtrum token refresh failed: invalid JSON payload") from exc
+
+            try:
+                token = Token(**payload)
+            except (TypeError, ValidationError) as exc:
+                logger.error("Token refresh returned malformed payload: {}", exc)
+                raise RuntimeError("SpeQtrum token refresh failed: malformed token payload") from exc
+
+            self._client.token = token
             store_credentials(self._client.username, self._client.token)
             request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
             yield request
@@ -93,18 +150,6 @@ class SpeQtrum:
 
     def __init__(self) -> None:
         logger.debug("Initializing SpeQtrum client")
-        self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
-            Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
-            TimeEvolution: lambda f, device, job_name: self._submit_time_evolution(
-                cast("TimeEvolution", f), device, job_name
-            ),
-            RabiExperiment: lambda f, device, job_name: self._submit_rabi_program(
-                cast("RabiExperiment", f), device, job_name
-            ),
-            T1Experiment: lambda f, device, job_name: self._submit_t1_program(
-                cast("T1Experiment", f), device, job_name
-            ),
-        }
         credentials = load_credentials()
         if credentials is None:
             logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
@@ -272,25 +317,25 @@ class SpeQtrum:
             response.raise_for_status()
             data = response.json()
 
-        raw_payload = data["payload"]
-        if raw_payload is not None:
-            data["payload"] = json.loads(raw_payload)
+        raw_payload = data.get("payload")
+        if isinstance(raw_payload, str):
+            data["payload"] = _safe_json_loads(raw_payload, context=f"job {job_id} payload")
 
         raw_result = data.get("result")
-        if raw_result is not None:
-            decoded_result: bytes = base64.b64decode(raw_result)
-            text_result = decoded_result.decode("utf-8")
-            data["result"] = json.loads(text_result)
+        if isinstance(raw_result, str):
+            data["result"] = _safe_b64_json(raw_result, context=f"job {job_id} result")
 
         raw_error = data.get("error")
-        if raw_error is not None:
-            decoded_error: bytes = base64.b64decode(raw_error)
-            data["error"] = decoded_error.decode("utf-8")
+        if isinstance(raw_error, str):
+            data["error"] = _safe_b64_decode(raw_error, context=f"job {job_id} error")
 
         raw_logs = data.get("logs")
-        if raw_logs is not None:
-            decoded_logs: bytes = base64.b64decode(raw_logs)
-            data["logs"] = decoded_logs.decode("utf-8")
+        if isinstance(raw_logs, str):
+            data["logs"] = _safe_b64_decode(raw_logs, context=f"job {job_id} logs")
+
+        raw_error_logs = data.get("error_logs")
+        if isinstance(raw_error_logs, str):
+            data["error_logs"] = _safe_b64_decode(raw_error_logs, context=f"job {job_id} error logs")
 
         job_detail = TypeAdapter(JobDetail).validate_python(data)
         logger.debug("Job {} details retrieved (status {})", job_id, job_detail.status.value)
@@ -433,31 +478,35 @@ class SpeQtrum:
         Raises:
             NotImplementedError: If *functional* is not of a supported type.
         """
-        try:
-            if isinstance(functional, VariationalProgram):
-                inner = functional.functional
-                if isinstance(inner, Sampling):
-                    return self._submit_variational_program(cast("VariationalProgram[Sampling]", functional), device)
-                if isinstance(inner, TimeEvolution):
-                    return self._submit_variational_program(
-                        cast("VariationalProgram[TimeEvolution]", functional), device
-                    )
+        if isinstance(functional, VariationalProgram):
+            inner = functional.functional
+            if isinstance(inner, Sampling):
+                return self._submit_variational_program(cast("VariationalProgram[Sampling]", functional), device, job_name)
+            if isinstance(inner, TimeEvolution):
+                return self._submit_variational_program(
+                    cast("VariationalProgram[TimeEvolution]", functional), device, job_name
+                )
 
-                # Fallback to untyped handle for custom primitives.
-                job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device)
-                return cast("JobHandle[FunctionalResult]", job_handle)
+            # Fallback to untyped handle for custom primitives.
+            job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device, job_name)
+            return cast("JobHandle[FunctionalResult]", job_handle)
 
-            handler = self._handlers[type(functional)]
-        except KeyError as exc:
-            logger.error("Unsupported functional type: {}", type(functional).__qualname__)
-            raise NotImplementedError(
-                f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
-            ) from exc
+        if isinstance(functional, Sampling):
+            return self._submit_sampling(functional, device, job_name)
 
-        logger.info("Submitting {}", type(functional).__qualname__)
-        job_handle = handler(functional, device, job_name)
-        logger.success("Submission complete - job {}", job_handle.id)
-        return job_handle
+        if isinstance(functional, TimeEvolution):
+            return self._submit_time_evolution(functional, device, job_name)
+
+        if isinstance(functional, RabiExperiment):
+            return self._submit_rabi_program(functional, device, job_name)
+
+        if isinstance(functional, T1Experiment):
+            return self._submit_t1_program(functional, device, job_name)
+
+        logger.error("Unsupported functional type: {}", type(functional).__qualname__)
+        raise NotImplementedError(
+            f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
+        )
 
     def _submit_sampling(
         self, sampling: Sampling, device: str, job_name: str | None = None
