@@ -18,7 +18,7 @@ import json
 import time
 from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast, overload
 
 import httpx
 from loguru import logger
@@ -68,15 +68,36 @@ if TYPE_CHECKING:
 ResultT = TypeVar("ResultT", bound=FunctionalResult)
 
 
+class _BearerAuth(httpx.Auth):
+    """Bearer token auth handler with automatic refresh support."""
+    requires_response_body = True
+
+    def __init__(self, username: str, token: Token) -> None:
+        self._username = username
+        self._token = token
+
+    def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
+        request.headers["Authorization"] = f"Bearer {self._token.access_token}"
+        response = yield request
+
+        if response.status_code == httpx.codes.UNAUTHORIZED:
+            settings = get_settings()
+            response = yield httpx.Request("POST", settings.speqtrum_api_url + "/authorisation-tokens/refresh", headers={"Authorization": f"Bearer {self._token.refresh_token}"})
+            self._token = Token(**response.json())
+            store_credentials(self._username, self._token)
+            request.headers["Authorization"] = f"Bearer {self._token.access_token}"
+            yield request
+
+
 class SpeQtrum:
     """Synchronous client for the Qilimanjaro SpeQtrum API."""
 
     def __init__(self) -> None:
-        logger.debug("Initializing QaaS client")
+        logger.debug("Initializing SpeQtrum client")
         credentials = load_credentials()
         if credentials is None:
-            logger.error("No QaaS credentials found. Call `.login()` or set env vars before instantiation.")
-            raise RuntimeError("Missing QaaS credentials - invoke SpeQtrum.login() first.")
+            logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
+            raise RuntimeError("Missing credentials - invoke SpeQtrum.login() first.")
         self._username, self._token = credentials
         self._handlers: dict[type[Functional], Callable[[Functional, str, str | None], JobHandle[Any]]] = {
             Sampling: lambda f, device, job_name: self._submit_sampling(cast("Sampling", f), device, job_name),
@@ -91,7 +112,8 @@ class SpeQtrum:
             ),
         }
         self._settings = get_settings()
-        logger.success("QaaS client initialised for user '{}'", self._username)
+        self._auth = _BearerAuth(self._username, self._token)
+        logger.success("SpeQtrum client initialised for user '{}'", self._username)
 
     @classmethod
     def _get_headers(cls) -> dict:
@@ -99,8 +121,13 @@ class SpeQtrum:
 
         return {"User-Agent": f"qilisdk/{__version__}"}
 
-    def _get_authorized_headers(self) -> dict:
-        return {**self._get_headers(), "Authorization": f"Bearer {self._token.access_token}"}
+    def _create_client(self) -> httpx.Client:
+        """Return a freshly configured HTTP client for SpeQtrum interactions."""
+        return httpx.Client(
+            base_url=self._settings.speqtrum_api_url,
+            headers=self._get_headers(),
+            auth=self._auth,
+        )
 
     @classmethod
     def login(
@@ -142,15 +169,18 @@ class SpeQtrum:
                 "iat": int(datetime.now(timezone.utc).timestamp()),
             }
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
-            with httpx.Client(timeout=10.0) as client:
+            with httpx.Client(
+                base_url=settings.speqtrum_api_url,
+                headers=cls._get_headers(),
+                timeout=10.0,
+            ) as client:
                 response = client.post(
-                    settings.speqtrum_api_url + "/authorisation-tokens",
+                    "/authorisation-tokens",
                     json={
                         "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
                         "assertion": encoded_assertion,
                         "scope": "user profile",
                     },
-                    headers=cls._get_headers(),
                 )
                 response.raise_for_status()
                 token = Token(**response.json())
@@ -182,8 +212,8 @@ class SpeQtrum:
             A list of :class:`~qilisdk.models.Device` objects.
         """
         logger.debug("Fetching device list from server…")
-        with httpx.Client() as client:
-            response = client.get(self._settings.speqtrum_api_url + "/devices", headers=self._get_authorized_headers())
+        with self._create_client() as client:
+            response = client.get("/devices")
             response.raise_for_status()
 
             devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
@@ -203,8 +233,8 @@ class SpeQtrum:
             A list of :class:`~qilisdk.models.JobInfo` objects.
         """
         logger.debug("Fetching job list…")
-        with httpx.Client() as client:
-            response = client.get(self._settings.speqtrum_api_url + "/jobs", headers=self._get_authorized_headers())
+        with self._create_client() as client:
+            response = client.get("/jobs")
             response.raise_for_status()
 
             jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
@@ -230,10 +260,9 @@ class SpeQtrum:
         """
         job_id = job.id if isinstance(job, JobHandle) else job
         logger.debug("Retrieving job {} details", job_id)
-        with httpx.Client() as client:
+        with self._create_client() as client:
             response = client.get(
-                f"{self._settings.speqtrum_api_url}/jobs/{job_id}",
-                headers=self._get_authorized_headers(),
+                f"/jobs/{job_id}",
                 params={
                     "payload": True,
                     "result": True,
@@ -448,12 +477,8 @@ class SpeQtrum:
         if job_name:
             json["name"] = job_name
         logger.debug("Executing Sampling on device {}", device)
-        with httpx.Client() as client:
-            response = client.post(
-                self._settings.speqtrum_api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
+        with self._create_client() as client:
+            response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
         return JobHandle.sampling(job.id)
@@ -474,12 +499,8 @@ class SpeQtrum:
         if job_name:
             json["name"] = job_name
         logger.debug("Executing Rabi experiment on device {}", device)
-        with httpx.Client() as client:
-            response = client.post(
-                self._settings.speqtrum_api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
+        with self._create_client() as client:
+            response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Rabi experiment job submitted: {}", job.id)
@@ -501,12 +522,8 @@ class SpeQtrum:
         if job_name:
             json["name"] = job_name
         logger.debug("Executing T1 experiment on device {}", device)
-        with httpx.Client() as client:
-            response = client.post(
-                self._settings.speqtrum_api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
+        with self._create_client() as client:
+            response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
@@ -528,12 +545,8 @@ class SpeQtrum:
         if job_name:
             json["name"] = job_name
         logger.debug("Executing time evolution on device {}", device)
-        with httpx.Client() as client:
-            response = client.post(
-                self._settings.speqtrum_api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
+        with self._create_client() as client:
+            response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Time evolution job submitted: {}", job.id)
@@ -570,12 +583,8 @@ class SpeQtrum:
         if job_name:
             json["name"] = job_name
         logger.debug("Executing variational program on device {}", device)
-        with httpx.Client() as client:
-            response = client.post(
-                self._settings.speqtrum_api_url + "/execute",
-                headers=self._get_authorized_headers(),
-                json=json,
-            )
+        with self._create_client() as client:
+            response = client.post("/execute", json=json)
             response.raise_for_status()
             job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
