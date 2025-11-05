@@ -408,7 +408,7 @@ def test_bearer_auth_refreshes_after_unauthorized(monkeypatch):
     refresh_payload = {
         "accessToken": "new_access",
         "expiresIn": 123,
-        "issuedAt": "now",
+        "issuedAt": 100,
         "refreshToken": "new_refresh",
         "tokenType": "bearer",
     }
