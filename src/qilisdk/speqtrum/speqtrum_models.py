@@ -52,7 +52,7 @@ class Token(SpeQtrumModel):
 
     access_token: str = Field(alias="accessToken")
     expires_in: int = Field(alias="expiresIn")
-    issued_at: str = Field(alias="issuedAt")
+    issued_at: int = Field(alias="issuedAt")
     refresh_token: str = Field(alias="refreshToken")
     token_type: str = Field(alias="tokenType")
 
