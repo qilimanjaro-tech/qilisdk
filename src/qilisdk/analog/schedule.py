@@ -261,7 +261,7 @@ class Schedule(Parameterizable):
 
         if schedule is not None:
             for t in range(int(self.T / self.dt)):
-                time_step = schedule(float(t), **kwargs)
+                time_step = schedule(int(t), **kwargs)
                 if isinstance(time_step, Term):
                     for v in time_step.variables():
                         if not isinstance(v, Parameter):

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from qilisdk.analog import Schedule, X, Z
@@ -343,3 +344,30 @@ def test_add_hamiltonian_term_basevariable_errors():
 
     with pytest.raises(ValueError, match="can only contain Parameters"):
         sched.add_hamiltonian("H3", H1, schedule=coeff_func_basevar)
+
+
+def test_add_schedule_through_function():
+
+    # Define total time and timestep
+    T = 10.0
+    dt = 0.1
+    steps = np.linspace(0, T, int(T / dt))
+    nqubits = 1
+
+    # Define Hamiltonians
+    Hx = sum(X(i) for i in range(nqubits))
+    Hz = sum(Z(i) for i in range(nqubits)) - sum(Z(i) * Z(i + 1) for i in range(nqubits - 1))
+
+    # Build a time-dependent schedule
+    schedule = Schedule(T, dt)
+
+    # Add hx with a time-dependent coefficient function
+    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
+
+    # Add hz similarly
+    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+
+    assert schedule.get_coefficient(0, "hx") == 1
+    assert schedule.get_coefficient(0, "hz") == 0
+    assert schedule.get_coefficient(T / dt, "hx") == 0
+    assert schedule.get_coefficient(T / dt, "hz") == 1
