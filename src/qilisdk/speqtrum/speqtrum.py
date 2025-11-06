@@ -66,7 +66,7 @@ if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 
 
-ResultT = TypeVar("ResultT", bound=FunctionalResult)
+TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 
@@ -201,7 +201,7 @@ class _BearerAuth(httpx.Auth):
                 raise RuntimeError("SpeQtrum token refresh failed: invalid JSON payload") from exc
 
             try:
-                token = Token(**payload)
+                token = Token(**payload, refreshToken=self._client.token.refresh_token)
             except (TypeError, ValidationError) as exc:
                 logger.error("Token refresh returned malformed payload: {}", exc)
                 raise RuntimeError("SpeQtrum token refresh failed: malformed token payload") from exc
@@ -349,7 +349,7 @@ class SpeQtrum:
         return [j for j in jobs if where(j)] if where else jobs
 
     @overload
-    def get_job(self, job: JobHandle[ResultT]) -> TypedJobDetail[ResultT]: ...
+    def get_job(self, job: JobHandle[TFunctionalResult]) -> TypedJobDetail[TFunctionalResult]: ...
 
     @overload
     def get_job(self, job: int) -> JobDetail: ...
@@ -407,11 +407,11 @@ class SpeQtrum:
     @overload
     def wait_for_job(
         self,
-        job: JobHandle[ResultT],
+        job: JobHandle[TFunctionalResult],
         *,
         poll_interval: float = 5.0,
         timeout: float | None = None,
-    ) -> TypedJobDetail[ResultT]: ...
+    ) -> TypedJobDetail[TFunctionalResult]: ...
 
     @overload
     def wait_for_job(
@@ -495,8 +495,8 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: VariationalProgram[PrimitiveFunctional[ResultT]], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[ResultT]]: ...
+        self, functional: VariationalProgram[PrimitiveFunctional[TFunctionalResult]], device: str, job_name: str | None = None
+    ) -> JobHandle[VariationalProgramResult[TFunctionalResult]]: ...
 
     @overload
     def submit(
