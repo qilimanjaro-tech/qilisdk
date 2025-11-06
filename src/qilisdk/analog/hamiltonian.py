@@ -27,6 +27,7 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.variables import BaseVariable, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -36,6 +37,8 @@ if TYPE_CHECKING:
 
 
 Number = int | float | complex
+
+COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
 
 
 ###############################################################################
@@ -184,28 +187,28 @@ class PauliOperator(ABC):
 class PauliZ(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "X"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=COMPLEX_DTYPE)
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "I"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=COMPLEX_DTYPE)
 
 
 @yaml.register_class
@@ -425,7 +428,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix(np.zeros((dim, dim), dtype=COMPLEX_DTYPE))
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -453,7 +456,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix(np.zeros((dim, dim), dtype=COMPLEX_DTYPE))
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)

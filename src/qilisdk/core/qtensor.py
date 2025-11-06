@@ -21,9 +21,12 @@ from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatr
 from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 Complex = int | float | complex
+
+COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
 
 
 def _is_pow2(n: int) -> bool:
@@ -276,7 +279,7 @@ class QTensor:
             for _, items in buckets.items():
                 # x is (Kdim,) sparse vector represented by indices & values
                 ks = np.fromiter((i for i, _ in items), dtype=int)
-                vs = np.fromiter((v for _, v in items), dtype=complex)
+                vs = np.fromiter((v for _, v in items), dtype=COMPLEX_DTYPE)
                 # Outer product of this slice: accumulate into COO lists
                 # Note: number of pairs is len(items)^2 which is fine for very sparse ψ.
                 r = np.repeat(ks, ks.size)

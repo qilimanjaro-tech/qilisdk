@@ -29,6 +29,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -41,6 +42,8 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+
+COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
 
 
 class CudaSamplingMethod(str, Enum):
@@ -187,7 +190,7 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=np.complex128)),
+            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=COMPLEX_DTYPE)),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,

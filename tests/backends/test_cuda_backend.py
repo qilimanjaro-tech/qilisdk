@@ -17,6 +17,9 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+from qilisdk.settings import get_settings
+
+COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
 
 # --- Dummy classes and helper functions ---
 
@@ -99,7 +102,7 @@ class DummyGate(BasicGate):
         return "Dummy"
 
     def _generate_matrix(self) -> np.ndarray:
-        return np.eye(2, dtype=complex)
+        return np.eye(2, dtype=COMPLEX_DTYPE)
 
 
 # --- Parameterized test cases for basic gate handler ---
