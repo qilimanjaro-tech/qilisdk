@@ -14,13 +14,18 @@
 
 from openfermion import QubitOperator
 
-from qilisdk.analog import Hamiltonian, PauliX, PauliY, PauliZ
+from qilisdk.analog import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
 
 
 def openfermion_to_qili(of_ham: QubitOperator) -> Hamiltonian:
     pauli_map = {"X": PauliX, "Y": PauliY, "Z": PauliZ}
 
-    return Hamiltonian({tuple(pauli_map[op](q) for q, op in term): coeff for term, coeff in of_ham.terms.items()})
+    return Hamiltonian(
+        {
+            (tuple((pauli_map[op](q)) for q, op in term) if len(term) > 0 else (PauliI(0),)): coeff
+            for term, coeff in of_ham.terms.items()
+        }
+    )
 
 
 def qili_to_openfermion(qili_ham: Hamiltonian) -> QubitOperator:
@@ -29,7 +34,10 @@ def qili_to_openfermion(qili_ham: Hamiltonian) -> QubitOperator:
     for coeff, terms in qili_ham:
         of_term = ""
         for t in terms:
-            of_term += str(t).replace("(", "").replace(")", "") + " "
+            if isinstance(t, PauliI):
+                continue
+            else:
+                of_term += str(t).replace("(", "").replace(")", "") + " "
         of_term = of_term.rstrip()
 
         of_ham += QubitOperator(of_term, coeff)
