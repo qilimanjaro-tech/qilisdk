@@ -17,21 +17,21 @@ from openfermion import QubitOperator
 from qilisdk.analog import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
 
 
-def openfermion_to_qili(of_ham: QubitOperator) -> Hamiltonian:
+def openfermion_to_qilisdk(qubit_operator: QubitOperator) -> Hamiltonian:
     pauli_map = {"X": PauliX, "Y": PauliY, "Z": PauliZ}
 
     return Hamiltonian(
         {
             (tuple((pauli_map[op](q)) for q, op in term) if len(term) > 0 else (PauliI(0),)): coeff
-            for term, coeff in of_ham.terms.items()
+            for term, coeff in qubit_operator.terms.items()
         }
     )
 
 
-def qili_to_openfermion(qili_ham: Hamiltonian) -> QubitOperator:
+def qilisdk_to_openfermion(hamiltonian: Hamiltonian) -> QubitOperator:
     of_ham = QubitOperator()
 
-    for coeff, terms in qili_ham:
+    for coeff, terms in hamiltonian:
         of_term = ""
         for t in terms:
             if isinstance(t, PauliI):

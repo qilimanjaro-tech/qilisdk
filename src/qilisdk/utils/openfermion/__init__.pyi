@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .openfermion import openfermion_to_qili, qili_to_openfermion
+from .openfermion import openfermion_to_qilisdk, qilisdk_to_openfermion
 
-__all__ = ["openfermion_to_qili", "qili_to_openfermion"]
+__all__ = ["openfermion_to_qilisdk", "qilisdk_to_openfermion"]

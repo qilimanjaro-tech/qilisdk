@@ -22,8 +22,8 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
         name="openfermion",
         dependencies=["openfermion"],
         symbols=[
-            Symbol(path="qilisdk.utils.openfermion.openfermion", name="openfermion_to_qili"),
-            Symbol(path="qilisdk.utils.openfermion.openfermion", name="qili_to_openfermion"),
+            Symbol(path="qilisdk.utils.openfermion.openfermion", name="openfermion_to_qilisdk"),
+            Symbol(path="qilisdk.utils.openfermion.openfermion", name="qilisdk_to_openfermion"),
         ],
     ),
 ]
