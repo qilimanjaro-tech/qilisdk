@@ -200,6 +200,12 @@ class _BearerAuth(httpx.Auth):
                 logger.error("Token refresh returned invalid JSON: {}", exc)
                 raise RuntimeError("SpeQtrum token refresh failed: invalid JSON payload") from exc
 
+            if not isinstance(payload, dict):
+                logger.error("Token refresh returned non-object payload: {}", type(payload).__name__)
+                raise RuntimeError("SpeQtrum token refresh failed: malformed token payload")
+
+            payload.pop("refreshToken", None)
+
             try:
                 token = Token(**payload, refreshToken=self._client.token.refresh_token)
             except (TypeError, ValidationError) as exc:
