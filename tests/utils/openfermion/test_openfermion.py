@@ -33,7 +33,7 @@ def test_translation_from_open_fermion_to_qilisdk_and_back():
 def test_translation_from_qilisdk_to_openfermion_and_back():
     paulis = [X, Y, Z, I]
     nqubits = 3
-    gen = np.random.Generator(np.random.PCG64(13))
+    gen = np.random.Generator(np.random.PCG64(132))
     J = gen.random((nqubits, nqubits))
     qili_ham = sum(
         sum(gen.choice(paulis)(i) * gen.choice(paulis)(j) * J[i][j] for i in range(nqubits)) for j in range(nqubits)

@@ -36,8 +36,8 @@ def qili_to_openfermion(qili_ham: Hamiltonian) -> QubitOperator:
         for t in terms:
             if isinstance(t, PauliI):
                 continue
-            else:
-                of_term += str(t).replace("(", "").replace(")", "") + " "
+
+            of_term += str(t).replace("(", "").replace(")", "") + " "
         of_term = of_term.rstrip()
 
         of_ham += QubitOperator(of_term, coeff)
