@@ -70,6 +70,13 @@ ResultT = TypeVar("ResultT", bound=FunctionalResult)
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 
+class SpeQtrumAPIError(httpx.HTTPStatusError):
+    """Raised when the SpeQtrum API responds with a non-success HTTP status."""
+
+    def __init__(self, message: str, *, request: httpx.Request, response: httpx.Response) -> None:
+        super().__init__(message, request=request, response=response)
+
+
 def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
     try:
         result = json.loads(value)
@@ -97,6 +104,64 @@ def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
     if decoded_text is None:
         return None
     return _safe_json_loads(decoded_text, context=context)
+
+
+def _response_context(response: httpx.Response) -> str:
+    request = response.request
+    if request is None:
+        return "SpeQtrum API call"
+    return f"{request.method} {request.url}"
+
+
+def _stringify_payload(payload: JSONValue | None) -> str | None:
+    if payload is None:
+        return None
+    if isinstance(payload, dict):
+        for key in ("message", "detail", "error", "error_description", "title"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                code = payload.get("code") or payload.get("error_code") or payload.get("errorCode")
+                code_suffix = f" (code={code})" if isinstance(code, (str, int)) else ""
+                return value.strip() + code_suffix
+        try:
+            return json.dumps(payload, sort_keys=True)
+        except (TypeError, ValueError):
+            return str(payload)
+    if isinstance(payload, list):
+        preview = ", ".join(str(item) for item in payload[:3])
+        return preview or str(payload)
+    if isinstance(payload, (str, int, float, bool)):
+        return str(payload)
+    return None
+
+
+def _summarize_error_payload(response: httpx.Response) -> str:
+    context = _response_context(response)
+    body_text = response.text or ""
+    payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
+    detail = _stringify_payload(payload)
+    if detail:
+        return detail
+    if body_text.strip():
+        return body_text.strip()
+    return "no response body"
+
+
+def _ensure_ok(response: httpx.Response) -> None:
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        context = _response_context(response)
+        detail = _summarize_error_payload(response)
+        logger.error(
+            "{} failed with status {} {}: {}",
+            context,
+            response.status_code,
+            response.reason_phrase,
+            detail,
+        )
+        message = f"{context} failed with status {response.status_code}: {detail}"
+        raise SpeQtrumAPIError(message, request=response.request, response=response) from exc
 
 
 class _BearerAuth(httpx.Auth):
@@ -172,6 +237,7 @@ class SpeQtrum:
             base_url=settings.speqtrum_api_url,
             headers=self._get_headers(),
             auth=_BearerAuth(self),
+            event_hooks={"response": [_ensure_ok]},
         )
 
     @classmethod
@@ -218,6 +284,7 @@ class SpeQtrum:
                 base_url=settings.speqtrum_api_url,
                 headers=cls._get_headers(),
                 timeout=10.0,
+                event_hooks={"response": [_ensure_ok]},
             ) as client:
                 response = client.post(
                     "/authorisation-tokens",
@@ -259,10 +326,7 @@ class SpeQtrum:
         logger.debug("Fetching device list from server…")
         with self._create_client() as client:
             response = client.get("/devices")
-            response.raise_for_status()
-
-            devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
-
+        devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
         logger.success("{} devices retrieved", len(devices))
         return [d for d in devices if where(d)] if where else devices
 
@@ -280,10 +344,7 @@ class SpeQtrum:
         logger.debug("Fetching job list…")
         with self._create_client() as client:
             response = client.get("/jobs")
-            response.raise_for_status()
-
-            jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
-
+        jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
         logger.success("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
 
@@ -316,9 +377,7 @@ class SpeQtrum:
                     "error": True,
                 },
             )
-            response.raise_for_status()
-            data = response.json()
-
+        data = response.json()
         raw_payload = data.get("payload")
         if isinstance(raw_payload, str):
             data["payload"] = _safe_json_loads(raw_payload, context=f"job {job_id} payload")
@@ -528,8 +587,7 @@ class SpeQtrum:
         logger.debug("Executing Sampling on device {}", device)
         with self._create_client() as client:
             response = client.post("/execute", json=json)
-            response.raise_for_status()
-            job = JobId(**response.json())
+        job = JobId(**response.json())
         logger.info("Sampling job submitted: {}", job.id)
         return JobHandle.sampling(job.id)
 
@@ -551,8 +609,7 @@ class SpeQtrum:
         logger.debug("Executing Rabi experiment on device {}", device)
         with self._create_client() as client:
             response = client.post("/execute", json=json)
-            response.raise_for_status()
-            job = JobId(**response.json())
+        job = JobId(**response.json())
         logger.info("Rabi experiment job submitted: {}", job.id)
         return JobHandle.rabi_experiment(job.id)
 
@@ -574,8 +631,7 @@ class SpeQtrum:
         logger.debug("Executing T1 experiment on device {}", device)
         with self._create_client() as client:
             response = client.post("/execute", json=json)
-            response.raise_for_status()
-            job = JobId(**response.json())
+        job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
         return JobHandle.t1_experiment(job.id)
 
@@ -597,8 +653,7 @@ class SpeQtrum:
         logger.debug("Executing time evolution on device {}", device)
         with self._create_client() as client:
             response = client.post("/execute", json=json)
-            response.raise_for_status()
-            job = JobId(**response.json())
+        job = JobId(**response.json())
         logger.info("Time Evolution job submitted: {}", job.id)
         return JobHandle.time_evolution(job.id)
 
@@ -635,8 +690,7 @@ class SpeQtrum:
         logger.debug("Executing variational program on device {}", device)
         with self._create_client() as client:
             response = client.post("/execute", json=json)
-            response.raise_for_status()
-            job = JobId(**response.json())
+        job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
         inner = variational_program.functional
         if isinstance(inner, Sampling):

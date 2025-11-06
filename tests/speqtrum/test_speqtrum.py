@@ -11,6 +11,7 @@ import types
 from datetime import datetime, timezone
 from enum import Enum
 from types import SimpleNamespace
+from typing import Any
 
 import httpx
 import pytest
@@ -198,6 +199,48 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     assert isinstance(typed_result, SamplingResult)
     assert typed_result.samples == sampling_result.samples
     assert typed_result.nshots == sampling_result.nshots
+
+
+def test_ensure_ok_raises_with_api_payload():
+    """_ensure_ok must surface API-provided error messages in the exception."""
+
+    request = httpx.Request("GET", "https://speqtrum.example/devices")
+    response = httpx.Response(400, request=request, json={"message": "Bad request", "code": "E_BAD"})
+
+    with pytest.raises(speqtrum.SpeQtrumAPIError) as excinfo:
+        speqtrum._ensure_ok(response)
+
+    assert "Bad request" in str(excinfo.value)
+    assert "E_BAD" in str(excinfo.value)
+
+
+def test_create_client_registers_response_hook(monkeypatch):
+    """SpeQtrum HTTP client must install _ensure_ok as a response hook."""
+
+    captured: dict[str, Any] = {}
+
+    class RecordingClient:
+        def __init__(self, *_, **kwargs):
+            captured["event_hooks"] = kwargs.get("event_hooks")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    token = SimpleNamespace(access_token="tok", refresh_token="rtok")
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("user", token))
+    monkeypatch.setattr(speqtrum.httpx, "Client", RecordingClient)
+
+    client = speqtrum.SpeQtrum()
+    http_client = client._create_client()
+
+    assert captured["event_hooks"]["response"]
+    assert speqtrum._ensure_ok in captured["event_hooks"]["response"]
+
+    # the helper returns a client instance; ensure the stub can be closed cleanly
+    assert http_client.__enter__() is http_client  # noqa: PLC2801
 
 
 def test_variational_program_handle_preserves_inner_result(monkeypatch):
