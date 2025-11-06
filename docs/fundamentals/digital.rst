@@ -183,6 +183,16 @@ Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matpl
     # Render in a window
     circuit.draw()
 
+
+**Output**
+
+
+.. figure:: ../_static/circuit.png
+    :alt: Example digital circuit rendered with Circuit.draw
+    :align: center
+
+    Example circuit produced by ``circuit.draw()``.
+
 Saving to a file
 ^^^^^^^^^^^^^^^^
 
@@ -283,6 +293,20 @@ HardwareEfficientAnsatz
         structure="Interposed"
     )
 
+  
+This ansatz can be then used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
+
+
+.. code-block:: python 
+
+    from qilisdk.backends import QutipBackend
+    from qilisdk.functionals import Sampling
+
+    backend = QutipBackend()
+
+    backend.execute(Sampling(ansatz))
+
+
 Parameter Utilities
 -------------------
 
@@ -343,5 +367,10 @@ the circuit.
     # Record measurement results for both qubits
     circuit.add(M(0, 1))
 
-Controlled gates validate that control and target qubits are disjoint, and all
-wrapper gates forward parameter accessors to the underlying operation. 
+Controlled gates validate that control and target qubits are disjoint, and all wrapper gates forward parameter accessors to the underlying operation.
+
+.. note::
+
+   - The measurement gate cannot be controlled, conjugated, or exponentiated.
+   - If a circuit ends without explicit measurements, the backend assumes all qubits are measured.
+   - Measuring only a subset of qubits returns samples for that subset.
