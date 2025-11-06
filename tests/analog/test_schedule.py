@@ -358,10 +358,10 @@ def test_add_schedule_through_function():
     Hx = sum(X(i) for i in range(nqubits))
     Hz = sum(Z(i) for i in range(nqubits)) - sum(Z(i) * Z(i + 1) for i in range(nqubits - 1))
 
-    # Build a time‑dependent schedule
+    # Build a time-dependent schedule
     schedule = Schedule(T, dt)
 
-    # Add hx with a time‐dependent coefficient function
+    # Add hx with a time-dependent coefficient function
     schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
 
     # Add hz similarly
