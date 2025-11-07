@@ -4,7 +4,7 @@ version = "0.1.6"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
 urls = { "Homepage" = "https://github.com/qilimanjaro-tech/qilisdk", "Documentation" = "https://qilimanjaro-tech.github.io/qilisdk/", "Source" = "https://github.com/qilimanjaro-tech/qilisdk", "Issues" = "https://github.com/qilimanjaro-tech/qilisdk/issues", "Changelog" = "https://github.com/qilimanjaro-tech/qilisdk/blob/main/CHANGELOG.md" }
 classifiers = [
@@ -18,19 +18,21 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "dill>=0.3.9",
     "numpy>=1.26.4",
     "ruamel-yaml>=0.18.16",
-    "scipy>=1.15.3",
+    "scipy>=1.16.3; sys_platform == 'darwin'",
+    "scipy>=1.15,<1.16.3; sys_platform != 'darwin'",
     "pydantic>=2.12.3",
     "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.7",
+    # "mkl-service>=2.4.2; sys_platform != 'darwin'",
 ]
 
 [project.optional-dependencies]
@@ -43,7 +45,7 @@ speqtrum = [
     "keyrings-alt>=5.0.2",
 ]
 qutip = [
-    "qutip>=5.2.1",
+    "qutip>=5.2.2",
     "qutip-qip>=0.4.1",
 ]
 openfermion = [
@@ -52,13 +54,13 @@ openfermion = [
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.142.3",
-    "ipykernel>=7.0.1",
+    "hypothesis>=6.147.0",
+    "ipykernel>=7.1.0",
     "mypy>=1.18.2",
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pytest-sugar>=1.1.1",
-    "ruff>=0.14.2",
+    "ruff>=0.14.4",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
@@ -74,6 +76,18 @@ docs = [
     "sphinx-multiversion",
     "sphinxawesome-theme>=5.3.2",
 ]
+
+[tool.uv.sources]
+cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.12.0"}
+sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
+# numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
+# scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
+# mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
+
+# [[tool.uv.index]]
+# name = "numpy-mkl"
+# url = "https://urob.github.io/numpy-mkl"
+# explicit = true
 
 [build-system]
 requires = ["hatchling"]
@@ -96,10 +110,6 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/qilisdk"]
-
-[tool.uv.sources]
-cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.11.0"}
-sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
 
 [tool.ruff]
 line-length = 120
@@ -196,7 +206,7 @@ docstring-code-format = true
 docstring-code-line-length = "dynamic"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.13"
 ignore_missing_imports = true
 exclude = ["\\.ipynb$"]
 
