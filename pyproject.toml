@@ -78,7 +78,6 @@ docs = [
 ]
 
 [tool.uv.sources]
-cudaq = { git = "https://github.com/NVIDIA/cuda-quantum", tag = "0.12.0"}
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
 numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
 scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
