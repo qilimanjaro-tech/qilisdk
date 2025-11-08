@@ -347,7 +347,6 @@ def test_add_hamiltonian_term_basevariable_errors():
 
 
 def test_add_schedule_through_function():
-
     # Define total time and timestep
     T = 10.0
     dt = 0.1
