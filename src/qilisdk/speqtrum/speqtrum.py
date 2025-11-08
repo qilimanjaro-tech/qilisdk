@@ -137,7 +137,15 @@ def _stringify_payload(payload: JSONValue | None) -> str | None:
 
 def _summarize_error_payload(response: httpx.Response) -> str:
     context = _response_context(response)
-    body_text = response.text or ""
+    try:
+        body_text = response.text or ""
+    except httpx.ResponseNotRead:
+        try:
+            response.read()  # ensure body is buffered so we can reuse it later
+            body_text = response.text or ""
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug("Failed to read response body for {}: {}", context, exc)
+            body_text = ""
     payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
     detail = _stringify_payload(payload)
     if detail:
@@ -161,7 +169,7 @@ def _ensure_ok(response: httpx.Response) -> None:
             detail,
         )
         message = f"{context} failed with status {response.status_code}: {detail}"
-        raise SpeQtrumAPIError(message, request=response.request, response=response) from exc
+        raise SpeQtrumAPIError(message, request=response.request, response=response) from None
 
 
 class _BearerAuth(httpx.Auth):
