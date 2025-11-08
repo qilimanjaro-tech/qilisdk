@@ -181,6 +181,7 @@ def _ensure_ok(response: httpx.Response) -> None:
 
 class _BearerAuth(httpx.Auth):
     """Bearer token auth handler with automatic refresh support."""
+
     requires_response_body = True
 
     def __init__(self, client: SpeQtrum) -> None:
@@ -517,7 +518,10 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: VariationalProgram[PrimitiveFunctional[TFunctionalResult]], device: str, job_name: str | None = None
+        self,
+        functional: VariationalProgram[PrimitiveFunctional[TFunctionalResult]],
+        device: str,
+        job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult[TFunctionalResult]]: ...
 
     @overload
@@ -564,7 +568,9 @@ class SpeQtrum:
         if isinstance(functional, VariationalProgram):
             inner = functional.functional
             if isinstance(inner, Sampling):
-                return self._submit_variational_program(cast("VariationalProgram[Sampling]", functional), device, job_name)
+                return self._submit_variational_program(
+                    cast("VariationalProgram[Sampling]", functional), device, job_name
+                )
             if isinstance(inner, TimeEvolution):
                 return self._submit_variational_program(
                     cast("VariationalProgram[TimeEvolution]", functional), device, job_name
@@ -587,9 +593,7 @@ class SpeQtrum:
             return self._submit_t1_program(functional, device, job_name)
 
         logger.error("Unsupported functional type: {}", type(functional).__qualname__)
-        raise NotImplementedError(
-            f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
-        )
+        raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
     def _submit_sampling(
         self, sampling: Sampling, device: str, job_name: str | None = None

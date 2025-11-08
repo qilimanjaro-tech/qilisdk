@@ -8,7 +8,6 @@ from qilisdk.utils.openfermion import openfermion_to_qilisdk, qilisdk_to_openfer
 
 
 def test_translation_from_open_fermion_to_qilisdk_and_back():
-
     # Let's look at a very small model of jellium in 1D.
     grid = Grid(dimensions=1, length=3, scale=1.0)
     spinless = True
