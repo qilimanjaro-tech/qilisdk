@@ -143,7 +143,7 @@ def _summarize_error_payload(response: httpx.Response) -> str:
         try:
             response.read()  # ensure body is buffered so we can reuse it later
             body_text = response.text or ""
-        except Exception as exc:  # pragma: no cover - defensive
+        except Exception as exc:  # noqa: BLE001
             logger.debug("Failed to read response body for {}: {}", context, exc)
             body_text = ""
     payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
