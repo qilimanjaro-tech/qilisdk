@@ -70,6 +70,7 @@ TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
+_CONTEXT_EXTENSION = "qilisdk.request_context"
 
 
 class SpeQtrumAPIError(httpx.HTTPStatusError):
@@ -108,10 +109,22 @@ def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
     return _safe_json_loads(decoded_text, context=context)
 
 
+def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = False) -> dict[str, Any] | None:
+    extensions: dict[str, Any] = {}
+    if context:
+        extensions[_CONTEXT_EXTENSION] = context
+    if skip_ensure_ok:
+        extensions[_SKIP_ENSURE_OK_EXTENSION] = True
+    return extensions or None
+
+
 def _response_context(response: httpx.Response) -> str:
     request = response.request
     if request is None:
         return "SpeQtrum API call"
+    context = request.extensions.get(_CONTEXT_EXTENSION)
+    if isinstance(context, str) and context.strip():
+        return context
     return f"{request.method} {request.url}"
 
 
@@ -158,10 +171,10 @@ def _summarize_error_payload(response: httpx.Response) -> str:
 
 
 def _ensure_ok(response: httpx.Response) -> None:
-    if response.status_code == httpx.codes.UNAUTHORIZED:
-        return
     request = response.request
     if request is not None and request.extensions.get(_SKIP_ENSURE_OK_EXTENSION):
+        return
+    if response.status_code == httpx.codes.UNAUTHORIZED:
         return
     try:
         response.raise_for_status()
@@ -197,7 +210,7 @@ class _BearerAuth(httpx.Auth):
                 "POST",
                 settings.speqtrum_api_url + "/authorisation-tokens/refresh",
                 headers={"Authorization": f"Bearer {self._client.token.refresh_token}"},
-                extensions={_SKIP_ENSURE_OK_EXTENSION: True},
+                extensions=_request_extensions(context="Refreshing SpeQtrum token", skip_ensure_ok=True),
             )
             refresh_response = yield refresh_request
 
@@ -290,7 +303,7 @@ class SpeQtrum:
         apikey = apikey or settings.speqtrum_apikey
 
         if not username or not apikey:
-            logger.warning("Login called without credentials - aborting")
+            logger.error("Login called without credentials.")
             return False
 
         # Send login request to QaaS
@@ -316,14 +329,11 @@ class SpeQtrum:
                         "assertion": encoded_assertion,
                         "scope": "user profile",
                     },
+                    extensions=_request_extensions(context="Authenticating user"),
                 )
                 response.raise_for_status()
                 token = Token(**response.json())
-        except httpx.HTTPStatusError as exc:
-            logger.error("Login failed - server returned {} {}", exc.response.status_code, exc.response.reason_phrase)
-            return False
-        except httpx.RequestError:
-            logger.exception("Network error while logging in to QaaS")
+        except httpx.HTTPError:
             return False
 
         store_credentials(username=username, token=token)
@@ -348,7 +358,7 @@ class SpeQtrum:
         """
         logger.debug("Fetching device list from server…")
         with self._create_client() as client:
-            response = client.get("/devices")
+            response = client.get("/devices", extensions=_request_extensions(context="Fetching device list"))
         devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
         logger.success("{} devices retrieved", len(devices))
         return [d for d in devices if where(d)] if where else devices
@@ -366,7 +376,7 @@ class SpeQtrum:
         """
         logger.debug("Fetching job list…")
         with self._create_client() as client:
-            response = client.get("/jobs")
+            response = client.get("/jobs", extensions=_request_extensions(context="Fetching job list"))
         jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
         logger.success("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
@@ -399,6 +409,7 @@ class SpeQtrum:
                     "error_logs": True,
                     "error": True,
                 },
+                extensions=_request_extensions(context=f"Fetching job {job_id}"),
             )
         data = response.json()
         raw_payload = data.get("payload")
@@ -612,7 +623,7 @@ class SpeQtrum:
             json["name"] = job_name
         logger.debug("Executing Sampling on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json)
+            response = client.post("/execute", json=json, extensions=_request_extensions(context="Executing Sampling"))
         job = JobId(**response.json())
         logger.info("Sampling job submitted: {}", job.id)
         return JobHandle.sampling(job.id)
@@ -634,7 +645,11 @@ class SpeQtrum:
             json["name"] = job_name
         logger.debug("Executing Rabi experiment on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json)
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing Rabi experiment"),
+            )
         job = JobId(**response.json())
         logger.info("Rabi experiment job submitted: {}", job.id)
         return JobHandle.rabi_experiment(job.id)
@@ -656,7 +671,11 @@ class SpeQtrum:
             json["name"] = job_name
         logger.debug("Executing T1 experiment on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json)
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing T1 experiment"),
+            )
         job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
         return JobHandle.t1_experiment(job.id)
@@ -678,7 +697,11 @@ class SpeQtrum:
             json["name"] = job_name
         logger.debug("Executing time evolution on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json)
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing time evolution"),
+            )
         job = JobId(**response.json())
         logger.info("Time Evolution job submitted: {}", job.id)
         return JobHandle.time_evolution(job.id)
@@ -715,7 +738,11 @@ class SpeQtrum:
             json["name"] = job_name
         logger.debug("Executing variational program on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json)
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing variational program"),
+            )
         job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
         inner = variational_program.functional
