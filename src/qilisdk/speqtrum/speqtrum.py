@@ -69,6 +69,8 @@ if TYPE_CHECKING:
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
+_SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
+
 
 class SpeQtrumAPIError(httpx.HTTPStatusError):
     """Raised when the SpeQtrum API responds with a non-success HTTP status."""
@@ -156,9 +158,14 @@ def _summarize_error_payload(response: httpx.Response) -> str:
 
 
 def _ensure_ok(response: httpx.Response) -> None:
+    if response.status_code == httpx.codes.UNAUTHORIZED:
+        return
+    request = response.request
+    if request is not None and request.extensions.get(_SKIP_ENSURE_OK_EXTENSION):
+        return
     try:
         response.raise_for_status()
-    except httpx.HTTPStatusError as exc:
+    except httpx.HTTPStatusError:
         context = _response_context(response)
         detail = _summarize_error_payload(response)
         logger.error(
@@ -189,6 +196,7 @@ class _BearerAuth(httpx.Auth):
                 "POST",
                 settings.speqtrum_api_url + "/authorisation-tokens/refresh",
                 headers={"Authorization": f"Bearer {self._client.token.refresh_token}"},
+                extensions={_SKIP_ENSURE_OK_EXTENSION: True},
             )
             refresh_response = yield refresh_request
 
