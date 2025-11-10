@@ -52,7 +52,7 @@ class Token(SpeQtrumModel):
 
     access_token: str = Field(alias="accessToken")
     expires_in: int = Field(alias="expiresIn")
-    issued_at: str = Field(alias="issuedAt")
+    issued_at: int = Field(alias="issuedAt")
     refresh_token: str = Field(alias="refreshToken")
     token_type: str = Field(alias="tokenType")
 
@@ -228,11 +228,11 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
 
-ResultT_co = TypeVar("ResultT_co", bound=FunctionalResult, covariant=True)
-VariationalInnerResultT = TypeVar("VariationalInnerResultT", bound=FunctionalResult)
+TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult, covariant=True)
+TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
 
 
-ResultExtractor = Callable[[ExecuteResult], ResultT_co]
+ResultExtractor = Callable[[ExecuteResult], TFunctionalResult_co]
 
 
 # these helpers live outside the models so they can be referenced by default values
@@ -267,9 +267,9 @@ def _require_t1_experiment_result(result: ExecuteResult) -> T1ExperimentResult:
 
 
 def _require_variational_program_result_typed(
-    inner_result_type: type[VariationalInnerResultT],
-) -> ResultExtractor[VariationalProgramResult[VariationalInnerResultT]]:
-    def _extractor(result: ExecuteResult) -> VariationalProgramResult[VariationalInnerResultT]:
+    inner_result_type: type[TVariationalInnerResult],
+) -> ResultExtractor[VariationalProgramResult[TVariationalInnerResult]]:
+    def _extractor(result: ExecuteResult) -> VariationalProgramResult[TVariationalInnerResult]:
         variational_result = _require_variational_program_result(result)
         optimal_results = variational_result.optimal_execution_results
         if not isinstance(optimal_results, inner_result_type):
@@ -278,17 +278,17 @@ def _require_variational_program_result_typed(
                 f"({type(optimal_results).__qualname__}) does not match the expected "
                 f"{inner_result_type.__qualname__}."
             )
-        return cast("VariationalProgramResult[VariationalInnerResultT]", variational_result)
+        return cast("VariationalProgramResult[TVariationalInnerResult]", variational_result)
 
     return _extractor
 
 
-class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
+class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     """Strongly typed reference to a submitted SpeQtrum job."""
 
     id: int
     execute_type: ExecuteType
-    extractor: ResultExtractor[ResultT_co] = Field(repr=False, exclude=True)
+    extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
     @classmethod
     def sampling(cls, job_id: int) -> "JobHandle[SamplingResult]":
@@ -305,12 +305,12 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
     @overload
     @classmethod
     def variational_program(
-        cls, job_id: int, *, result_type: type[VariationalInnerResultT]
-    ) -> "JobHandle[VariationalProgramResult[VariationalInnerResultT]]": ...
+        cls, job_id: int, *, result_type: type[TVariationalInnerResult]
+    ) -> "JobHandle[VariationalProgramResult[TVariationalInnerResult]]": ...
 
     @classmethod
     def variational_program(
-        cls, job_id: int, *, result_type: type[VariationalInnerResultT] | None = None
+        cls, job_id: int, *, result_type: type[TVariationalInnerResult] | None = None
     ) -> "JobHandle[Any]":
         """Create a variational-program handle for an existing job identifier.
 
@@ -335,7 +335,7 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
 
         extractor = _require_variational_program_result_typed(result_type)
         handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)  # type: ignore[arg-type]
-        return cast("JobHandle[VariationalProgramResult[VariationalInnerResultT]]", handle)
+        return cast("JobHandle[VariationalProgramResult[TVariationalInnerResult]]", handle)
 
     @classmethod
     def rabi_experiment(cls, job_id: int) -> "JobHandle[RabiExperimentResult]":
@@ -345,7 +345,7 @@ class JobHandle(SpeQtrumModel, Generic[ResultT_co]):
     def t1_experiment(cls, job_id: int) -> "JobHandle[T1ExperimentResult]":
         return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)  # type: ignore[return-value, arg-type]
 
-    def bind(self, detail: "JobDetail") -> "TypedJobDetail[ResultT_co]":
+    def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":
         """Attach this handle's typing information to a concrete job detail.
 
         Args:
@@ -438,13 +438,13 @@ class JobDetail(JobInfo):
     error_logs: str | None = None
 
 
-class TypedJobDetail(JobDetail, Generic[ResultT_co]):
+class TypedJobDetail(JobDetail, Generic[TFunctionalResult_co]):
     """`JobDetail` subclass that exposes a strongly typed `get_results` method."""
 
     expected_type: ExecuteType = Field(repr=False)
-    extractor: ResultExtractor[ResultT_co] = Field(repr=False, exclude=True)
+    extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
-    def get_results(self) -> ResultT_co:
+    def get_results(self) -> TFunctionalResult_co:
         """Return the strongly typed execution result.
 
         Returns:

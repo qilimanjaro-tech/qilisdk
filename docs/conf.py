@@ -19,7 +19,8 @@ from sphinx.util.display import status_iterator
 from sphinxawesome_theme import ThemeOptions
 from sphinxawesome_theme.postprocess import Icons
 
-sys.path.insert(0, Path("../src").resolve())
+# -- Path setup ---------------------------------------------------------------
+sys.path.insert(0, str((Path(__file__).resolve().parent / "../src").resolve()))
 
 # -- Project information -----------------------------------------------------
 

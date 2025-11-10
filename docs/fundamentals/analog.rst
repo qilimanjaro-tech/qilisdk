@@ -55,7 +55,7 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 - Division by scalar: ``H / 5``
 - Negation: ``-H``
 
-** Extra Symbolic Operators**:
+**Extra Symbolic Operators**:
 
 - commutator: ``H1.commutator(H2)``  
 - anticommutator: ``H1.anticommutator(H2)``
@@ -64,12 +64,12 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 - trace: ``H.trace()``
 
 
-** Exporting Hamiltonians **:
+**Exporting Hamiltonians**:
 
 - to matrix: ``H.to_matrix(nqubits)``
 - to qtensor: ``H.to_qtensor(nqubits)``
 
-** Importing Hamiltonians **:
+**Importing Hamiltonians**:
 
 - from qtensor: ``Hamiltonian.from_qtensor(qtensor)``
 - from string: ``Hamiltonian.parse(hamiltonian_string)``

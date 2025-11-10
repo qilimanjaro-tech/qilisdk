@@ -11,7 +11,9 @@ import types
 from datetime import datetime, timezone
 from enum import Enum
 from types import SimpleNamespace
+from typing import Any
 
+import httpx
 import pytest
 
 import qilisdk.speqtrum.speqtrum as speqtrum
@@ -83,8 +85,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("alice", tok))
     q = speqtrum.SpeQtrum()
 
-    assert q._username == "alice"
-    assert q._token is tok
+    assert q.username == "alice"
+    assert q.token is tok
 
 
 def test_submit_dispatches_to_sampling_handler(monkeypatch):
@@ -197,6 +199,48 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     assert isinstance(typed_result, SamplingResult)
     assert typed_result.samples == sampling_result.samples
     assert typed_result.nshots == sampling_result.nshots
+
+
+def test_ensure_ok_raises_with_api_payload():
+    """_ensure_ok must surface API-provided error messages in the exception."""
+
+    request = httpx.Request("GET", "https://speqtrum.example/devices")
+    response = httpx.Response(400, request=request, json={"message": "Bad request", "code": "E_BAD"})
+
+    with pytest.raises(speqtrum.SpeQtrumAPIError) as excinfo:
+        speqtrum._ensure_ok(response)
+
+    assert "Bad request" in str(excinfo.value)
+    assert "E_BAD" in str(excinfo.value)
+
+
+def test_create_client_registers_response_hook(monkeypatch):
+    """SpeQtrum HTTP client must install _ensure_ok as a response hook."""
+
+    captured: dict[str, Any] = {}
+
+    class RecordingClient:
+        def __init__(self, *_, **kwargs):
+            captured["event_hooks"] = kwargs.get("event_hooks")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    token = SimpleNamespace(access_token="tok", refresh_token="rtok")
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("user", token))
+    monkeypatch.setattr(speqtrum.httpx, "Client", RecordingClient)
+
+    client = speqtrum.SpeQtrum()
+    http_client = client._create_client()
+
+    assert captured["event_hooks"]["response"]
+    assert speqtrum._ensure_ok in captured["event_hooks"]["response"]
+
+    # the helper returns a client instance; ensure the stub can be closed cleanly
+    assert http_client.__enter__() is http_client  # noqa: PLC2801
 
 
 def test_variational_program_handle_preserves_inner_result(monkeypatch):
@@ -374,3 +418,51 @@ def test_list_devices_filters_client_side(monkeypatch):
 
     assert [d["id"] for d in all_devices] == [1, 2]
     assert only_two == [{"id": 2}]
+
+
+def test_bearer_auth_refreshes_after_unauthorized(monkeypatch):
+    """Unauthorized responses should trigger a refresh token request."""
+
+    token = SimpleNamespace(access_token="old_access", refresh_token="old_refresh")
+    client = SimpleNamespace(token=token, username="alice")
+    auth = speqtrum._BearerAuth(client)
+
+    monkeypatch.setattr(speqtrum, "get_settings", lambda: SimpleNamespace(speqtrum_api_url="https://mock.api"))
+
+    stored: dict[str, tuple[str, object]] = {}
+
+    def fake_store(username: str, refreshed_token):
+        stored["args"] = (username, refreshed_token)
+
+    monkeypatch.setattr(speqtrum, "store_credentials", fake_store)
+
+    request = httpx.Request("GET", "https://mock.api/jobs")
+    flow = auth.auth_flow(request)
+
+    first_request = next(flow)
+    assert first_request.headers["Authorization"] == "Bearer old_access"
+
+    unauthorized = httpx.Response(status_code=401, request=first_request)
+    refresh_request = flow.send(unauthorized)
+    assert refresh_request.method == "POST"
+    assert str(refresh_request.url) == "https://mock.api/authorisation-tokens/refresh"
+    assert refresh_request.headers["Authorization"] == "Bearer old_refresh"
+
+    refresh_payload = {
+        "accessToken": "new_access",
+        "expiresIn": 123,
+        "issuedAt": 100,
+        "refreshToken": "new_refresh",
+        "tokenType": "bearer",
+    }
+    retry_request = flow.send(httpx.Response(status_code=200, json=refresh_payload, request=refresh_request))
+    assert retry_request is request
+    assert retry_request.headers["Authorization"] == "Bearer new_access"
+
+    assert "args" in stored
+    stored_username, stored_token = stored["args"]
+    assert stored_username == "alice"
+    assert stored_token.access_token == "new_access"
+
+    with pytest.raises(StopIteration):
+        flow.send(httpx.Response(status_code=200, request=retry_request))
