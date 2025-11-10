@@ -7,11 +7,15 @@ Currently, two backends are supported:
 - :class:`~qilisdk.backends.cuda_backend.CudaBackend`  
 - :class:`~qilisdk.backends.qutip_backend.QutipBackend`  
 
-Backends are optional; to install one, include its extra when installing QILISDK:
+.. NOTE::
 
-.. code-block:: console
+    Backends are optional; to install one, include its extra when installing QILISDK:
 
-    pip install qilisdk[<backend_name>]
+    .. code-block:: console
+
+        pip install qilisdk[<backend_name>]
+
+    For more information check the :doc:`../getting_started/installation` page.
 
 Once installed, any primitive functional can be executed by passing it to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method:
 
