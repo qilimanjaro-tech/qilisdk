@@ -14,13 +14,13 @@
 <link href="../../../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../_static/custom.css?v=a05de1eb" rel="stylesheet" type="text/css"/>
+<link href="../../../../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../search.html" rel="search" title="Search"/>
 <link href="../../../../genindex.html" rel="index" title="Index"/>
 <link href="optimizer/index.html" rel="next" title="qilisdk.optimizers.optimizer"/>
-<link href="../functionals/functional_result/index.html" rel="prev" title="qilisdk.functionals.functional_result"/>
+<link href="../functionals/variational_program_result/index.html" rel="prev" title="qilisdk.functionals.variational_program_result"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -81,6 +81,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
 <ul>
@@ -109,18 +110,25 @@
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/index.html">qilisdk.cost_functions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -130,16 +138,27 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="current reference internal expandable" href="#">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -150,6 +169,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
@@ -198,17 +218,19 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </div>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../functionals/functional_result/index.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../functionals/variational_program_result/index.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        qilisdk.functionals.functional_result
+        qilisdk.functionals.variational_program_result
       </a>
 </div>
 <div class="ml-auto">

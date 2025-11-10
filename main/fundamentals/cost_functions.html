@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../_static/custom.css?v=a05de1eb" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
 <link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
@@ -81,6 +81,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
 <ul class="current">
@@ -109,18 +110,25 @@
 <li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/cost_functions/index.html">qilisdk.cost_functions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -130,16 +138,27 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -150,6 +169,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
@@ -197,9 +217,9 @@ produced by a backend and evaluates a problem-specific metric such as an observa
 an abstract optimization model.</p>
 <p>You will typically use cost functions to:</p>
 <ul class="simple">
-<li><p>score intermediate iterations inside a <code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></p></li>
-<li><p>post-process <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code> samples into meaningful costs</p></li>
-<li><p>translate <code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code> states into expectation values</p></li>
+<li><p>score intermediate iterations inside a <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a></p></li>
+<li><p>post-process <a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult" title="qilisdk.functionals.sampling_result.SamplingResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code></a> samples into meaningful costs</p></li>
+<li><p>translate <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a> states into expectation values</p></li>
 </ul>
 <section id="costfunction-interface">
 <h2>CostFunction Interface<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#costfunction-interface" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#costfunction-interface'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -208,9 +228,9 @@ an abstract optimization model.</p>
 functional result and calls the appropriate protected hook:</p>
 <ul class="simple">
 <li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_cost_sampling()</span></code> receives a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code></p></li>
+<a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult" title="qilisdk.functionals.sampling_result.SamplingResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingResult</span></code></a></p></li>
 <li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_cost_time_evolution()</span></code> receives a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></p></li>
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a></p></li>
 </ul>
 <p>If your workflow introduces new functional result types you can subclass <code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code> and register additional
 handlers in <code class="docutils literal notranslate"><span class="pre">self._handlers</span></code> or override the protected methods above. Custom implementations must return a real or
@@ -221,9 +241,9 @@ complex number that represents the score you want to optimize.</p>
 <p>The <a class="reference internal" href="../code/api/qilisdk/cost_functions/observable_cost_function/index.html#qilisdk.cost_functions.observable_cost_function.ObservableCostFunction" title="qilisdk.cost_functions.observable_cost_function.ObservableCostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ObservableCostFunction</span></code></a> evaluates the expectation value of
 an observable against either a final state (from time evolution) or the probability distribution of sampled bitstrings.
 It accepts three interchangeable representations for the observable: a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code>, a symbolic
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code>, or a single
-<code class="xref py py-class docutils literal notranslate"><span class="pre">PauliOperator</span></code>. Internally, all inputs are converted to <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> so the same
+<a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>, a symbolic
+<a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a>, or a single
+<a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliOperator</span></code></a>. Internally, all inputs are converted to <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> so the same
 numeric pipeline can be reused for both analog and digital results.</p>
 <section id="example-expectation-value-from-time-evolution">
 <h3>Example: expectation value from time evolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-expectation-value-from-time-evolution" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-expectation-value-from-time-evolution'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
@@ -258,19 +278,19 @@ numeric pipeline can be reused for both analog and digital results.</p>
 </span></code></pre></div>
 </div>
 <p>For sampling workflows, the cost function iterates through the probability distribution exposed by
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">get_probabilities()</span></code> and accumulates the expectation value in
+<a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult.get_probabilities" title="qilisdk.functionals.sampling_result.SamplingResult.get_probabilities"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_probabilities()</span></code></a> and accumulates the expectation value in
 the computational basis.</p>
 </section>
 </section>
 <section id="modelcostfunction">
 <h2>ModelCostFunction<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#modelcostfunction" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#modelcostfunction'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>The <a class="reference internal" href="../code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction" title="qilisdk.cost_functions.model_cost_function.ModelCostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelCostFunction</span></code></a> bridges classical optimization models with
-quantum result objects. It accepts any <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code> (including convenience subclasses such as
-<code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code>) and evaluates it against measured bitstrings or the amplitudes of a final quantum
+quantum result objects. It accepts any <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> (including convenience subclasses such as
+<a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO" title="qilisdk.core.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a>) and evaluates it against measured bitstrings or the amplitudes of a final quantum
 state.</p>
-<p>When the provided model is a <code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code>, the cost function automatically converts it into a
+<p>When the provided model is a <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO" title="qilisdk.core.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a>, the cost function automatically converts it into a
 Hamiltonian and computes the expectation value. Otherwise, it maps each sample to the model’s variables, feeds them
-through <code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code>, and aggregates the resulting objective and constraint values.</p>
+through <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.evaluate" title="qilisdk.core.model.Model.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code></a>, and aggregates the resulting objective and constraint values.</p>
 <section id="example-scoring-samples-from-a-variational-circuit">
 <h3>Example: scoring samples from a variational circuit<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-scoring-samples-from-a-variational-circuit" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-scoring-samples-from-a-variational-circuit'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>

@@ -36,6 +36,9 @@ code, pre {
   --background: var(--qili-dark-blue);
   --accent: var(--qili-blue);
   --card: var(--qili-dark-blue);
+  --inline-code-bg: 240 18% 25%;
+  --inline-code-border: 240 20% 35%;
+  --inline-code-text: 349.14deg 63.74% 64.3; /* 40 93% 85%; */
 }
 
 #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
@@ -64,4 +67,12 @@ code, pre {
 #content h1 > a > code, #content h2 > a > code, #content h3 > a > code, #content h4 > a > code, h5 > a > code, #content h6 > a > code {
   background: none;
   position: static;
+}
+
+.dark :not(pre) > code {
+  color: hsl(var(--inline-code-text));
+  background-color: hsl(var(--inline-code-bg));
+  border: 1px solid hsl(var(--inline-code-border));
+  border-radius: 0.35rem;
+  padding: 0.05rem 0.3rem;
 }
