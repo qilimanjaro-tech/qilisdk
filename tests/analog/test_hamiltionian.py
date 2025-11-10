@@ -18,7 +18,7 @@ from qilisdk.analog.hamiltonian import (
     _get_pauli,
 )
 from qilisdk.core.variables import BinaryVariable
-from qilisdk.settings import get_settings
+from qilisdk.settings import Precision, get_settings
 
 COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
@@ -26,6 +26,30 @@ COMPLEX_DTYPE = get_settings().complex_precision.dtype
 # Helper function to convert sparse matrix to dense NumPy array.
 def dense(ham: Hamiltonian) -> np.ndarray:
     return ham.to_matrix().toarray()
+
+
+def test_pauli_matrix_dtype_updates_with_settings_change():
+    settings = get_settings()
+    original_precision = settings.complex_precision
+    try:
+        settings.complex_precision = Precision.COMPLEX_128
+        assert PauliX(0).matrix.dtype == np.dtype(np.complex128)
+        settings.complex_precision = Precision.COMPLEX_64
+        assert PauliX(0).matrix.dtype == np.dtype(np.complex64)
+    finally:
+        settings.complex_precision = original_precision
+
+
+def test_hamiltonian_matrix_dtype_updates_with_settings_change():
+    settings = get_settings()
+    original_precision = settings.complex_precision
+    try:
+        settings.complex_precision = Precision.COMPLEX_128
+        assert Z(0).to_matrix().dtype == np.dtype(np.complex128)
+        settings.complex_precision = Precision.COMPLEX_64
+        assert Z(0).to_matrix().dtype == np.dtype(np.complex64)
+    finally:
+        settings.complex_precision = original_precision
 
 
 def test_parameters():

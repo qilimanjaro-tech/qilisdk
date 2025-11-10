@@ -39,7 +39,7 @@ Number = int | float | complex
 
 
 def _complex_dtype() -> np.dtype:
-    return get_settings().complex_precision.dtype
+    return np.dtype(get_settings().complex_precision.dtype)
 
 
 ###############################################################################
@@ -108,8 +108,13 @@ class PauliOperator(ABC):
 
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
+    _MATRIX_CACHE: ClassVar[dict[np.dtype, np.ndarray]]
 
     # __slots__ = ("_qubit",)
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
         self._qubit = qubit
@@ -122,9 +127,17 @@ class PauliOperator(ABC):
     def name(self) -> str:
         return self._NAME
 
+    @classmethod
+    def _matrix_for_dtype(cls, dtype: np.dtype) -> np.ndarray:
+        cached = cls._MATRIX_CACHE.get(dtype)
+        if cached is None:
+            cached = cls._MATRIX.astype(dtype, copy=False)
+            cls._MATRIX_CACHE[dtype] = cached
+        return cached
+
     @property
     def matrix(self) -> np.ndarray:
-        return self._MATRIX
+        return type(self)._matrix_for_dtype(_complex_dtype())
 
     def to_hamiltonian(self) -> Hamiltonian:
         """Convert this single operator to a Hamiltonian with one term.
@@ -188,34 +201,45 @@ class PauliOperator(ABC):
 class PauliZ(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=get_settings().complex_precision.dtype)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=np.complex128)
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "X"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=get_settings().complex_precision.dtype)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=np.complex128)
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=get_settings().complex_precision.dtype)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "I"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=get_settings().complex_precision.dtype)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=np.complex128)
 
 
-# Cache sparse single-qubit matrices once to avoid rebuilding them for every term.
-_SINGLE_QUBIT_SPARSE: dict[str, csr_matrix] = {
-    cls._NAME: csr_matrix(cls._MATRIX) for cls in (PauliI, PauliX, PauliY, PauliZ)
-}
+_PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
+
+# Cache sparse single-qubit matrices once per dtype to avoid rebuilding them for every term.
+_SINGLE_QUBIT_SPARSE: dict[tuple[str, np.dtype], csr_matrix] = {}
+
+
+def _get_single_qubit_sparse_matrix(name: str) -> csr_matrix:
+    dtype = _complex_dtype()
+    key = (name, dtype)
+    cached = _SINGLE_QUBIT_SPARSE.get(key)
+    if cached is None:
+        pauli_cls = _PAULI_CLASS_BY_NAME[name]
+        cached = csr_matrix(pauli_cls._matrix_for_dtype(dtype), dtype=dtype)
+        _SINGLE_QUBIT_SPARSE[key] = cached
+    return cached
 
 
 @yaml.register_class
@@ -415,17 +439,17 @@ class Hamiltonian(Parameterizable):
         """
         total_qubits = self.nqubits + padding
         if total_qubits == 0:
-            return csr_matrix((1, 1), dtype=get_settings().complex_precision.dtype)
+            return csr_matrix((1, 1), dtype=_complex_dtype())
 
         ordered_terms = sorted(terms, key=lambda op: op.qubit)
-        identity_single = _SINGLE_QUBIT_SPARSE["I"]
+        identity_single = _get_single_qubit_sparse_matrix("I")
         idx = 0
         next_op = ordered_terms[0] if ordered_terms else None
         result: spmatrix | None = None
 
         for qubit in range(total_qubits):
             if next_op is not None and next_op.qubit == qubit:
-                single = _SINGLE_QUBIT_SPARSE[next_op.name]
+                single = _get_single_qubit_sparse_matrix(next_op.name)
                 idx += 1
                 next_op = ordered_terms[idx] if idx < len(ordered_terms) else None
             else:
@@ -443,7 +467,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=get_settings().complex_precision.dtype)
+        result = csr_matrix((dim, dim), dtype=_complex_dtype())
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -471,7 +495,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=get_settings().complex_precision.dtype)
+        result = csr_matrix((dim, dim), dtype=_complex_dtype())
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
