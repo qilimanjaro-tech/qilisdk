@@ -44,3 +44,7 @@ You can combine extras:
 .. NOTE::
 
     QiliSDK requires a python version 3.11 or higher.
+    Minimum OS requiremnets:
+        - Linux: Ubuntu 22.04 or higher
+        - Windows: Windows 11 or higher
+        - MacOS: MacOS 14 or higher
