@@ -137,7 +137,7 @@ class PauliOperator(ABC):
 
     @property
     def matrix(self) -> np.ndarray:
-        return type(self)._matrix_for_dtype(_complex_dtype())
+        return self._matrix_for_dtype(_complex_dtype())
 
     def to_hamiltonian(self) -> Hamiltonian:
         """Convert this single operator to a Hamiltonian with one term.
@@ -237,7 +237,7 @@ def _get_single_qubit_sparse_matrix(name: str) -> csr_matrix:
     cached = _SINGLE_QUBIT_SPARSE.get(key)
     if cached is None:
         pauli_cls = _PAULI_CLASS_BY_NAME[name]
-        cached = csr_matrix(pauli_cls._matrix_for_dtype(dtype), dtype=dtype)
+        cached = csr_matrix(pauli_cls._matrix_for_dtype(dtype), dtype=dtype)  # noqa: SLF001
         _SINGLE_QUBIT_SPARSE[key] = cached
     return cached
 
