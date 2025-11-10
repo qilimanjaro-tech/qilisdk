@@ -43,14 +43,19 @@ You can combine extras:
 
 .. NOTE::
 
-    QiliSDK requires a python version 3.10 or higher. and has a dependency on the following libraries: 
+    QiliSDK requires a python version 3.11 or higher. and has a dependency on the following libraries: 
     :: 
 
-        "dill>=0.3.9"
-        "numpy>=1.26.4"
-        "ruamel-yaml>=0.18.16"
-        "scipy>=1.15.3"
-        "pydantic>=2.12.3"
-        "pydantic-settings>=2.11.0"
-        "loguru>=0.7.3"
+        "dill>=0.3.9",
+        "numpy>=1.26.4",
+        "ruamel-yaml>=0.18.16",
+        "pydantic>=2.12.3",
+        "pydantic-settings>=2.11.0",
+        "loguru>=0.7.3",
         "matplotlib>=3.10.7"
+    
+    And for non-Mac systems, the following specific versions of scipy and mkl-service are used:
+    ::
+        "scipy>=1.15,<1.16.3,
+        "scipy>=1.16.3,
+        "mkl-service>=2.4.2

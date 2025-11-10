@@ -22,3 +22,5 @@ wheels/
 # Sphinx documentation
 docs/_build/*
 docs/code/api/*
+sphinx-verbose.log
+sphinx.log
