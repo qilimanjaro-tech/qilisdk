@@ -51,9 +51,7 @@ class QiliSDKSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8")
 
-    complex_precision: Precision = Field(
-        default=Precision.COMPLEX_128, description="[env: QILISDK_COMPLEX_PRECISION]"
-    )
+    complex_precision: Precision = Field(default=Precision.COMPLEX_128, description="[env: QILISDK_COMPLEX_PRECISION]")
     logging_config_path: Path = Field(
         default_factory=default_logging_config_path,
         description="YAML file used for logging configuration. [env: QILISDK_LOGGING_CONFIG_PATH]",

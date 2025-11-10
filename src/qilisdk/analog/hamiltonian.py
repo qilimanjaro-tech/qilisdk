@@ -212,8 +212,7 @@ class PauliI(PauliOperator):
 
 # Cache sparse single-qubit matrices once to avoid rebuilding them for every term.
 _SINGLE_QUBIT_SPARSE: dict[str, csr_matrix] = {
-    cls._NAME: csr_matrix(cls._MATRIX)
-    for cls in (PauliI, PauliX, PauliY, PauliZ)
+    cls._NAME: csr_matrix(cls._MATRIX) for cls in (PauliI, PauliX, PauliY, PauliZ)
 }
 
 
@@ -432,8 +431,6 @@ class Hamiltonian(Parameterizable):
 
             result = single if result is None else kron(result, single, format="csr")
 
-        # result is None only when total_qubits == 0 (handled above)
-        assert result is not None
         return result
 
     def to_matrix(self) -> spmatrix:
