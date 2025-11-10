@@ -23,7 +23,7 @@ from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNam
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 from qilisdk.settings import get_settings
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 # ------------------------------------------------------------------------------

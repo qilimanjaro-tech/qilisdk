@@ -30,7 +30,7 @@ class Precision(str, Enum):
     COMPLEX_128 = "COMPLEX_128"
 
     @property
-    def as_dtype(self) -> np.dtype:
+    def dtype(self) -> np.dtype:
         """
         Resolve the numpy dtype associated with this complex precision.
         """

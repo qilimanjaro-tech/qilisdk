@@ -19,7 +19,7 @@ from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 from qilisdk.settings import get_settings
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 # --- Dummy classes and helper functions ---
 

@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 Number = int | float | complex
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 ###############################################################################

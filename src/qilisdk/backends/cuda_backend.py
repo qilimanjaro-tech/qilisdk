@@ -43,7 +43,7 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 class CudaSamplingMethod(str, Enum):

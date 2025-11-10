@@ -26,7 +26,7 @@ from qilisdk.yaml import yaml
 
 Complex = int | float | complex
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 def _is_pow2(n: int) -> bool:

@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[QubitCircuit, TBasicGate, int], None]]
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)

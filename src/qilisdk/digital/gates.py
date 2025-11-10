@@ -34,7 +34,7 @@ from .exceptions import (
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 class Gate(Parameterizable, ABC):

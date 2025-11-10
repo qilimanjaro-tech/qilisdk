@@ -20,7 +20,7 @@ from qilisdk.analog.hamiltonian import (
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.settings import get_settings
 
-COMPLEX_DTYPE = get_settings().complex_precision.as_dtype
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 # Helper function to convert sparse matrix to dense NumPy array.
