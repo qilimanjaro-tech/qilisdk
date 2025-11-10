@@ -17,12 +17,11 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from functools import reduce
 from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
-from scipy.sparse import csr_matrix, identity, kron, spmatrix
+from scipy.sparse import csr_matrix, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
@@ -209,6 +208,13 @@ class PauliI(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "I"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=COMPLEX_DTYPE)
+
+
+# Cache sparse single-qubit matrices once to avoid rebuilding them for every term.
+_SINGLE_QUBIT_SPARSE: dict[str, csr_matrix] = {
+    cls._NAME: csr_matrix(cls._MATRIX)
+    for cls in (PauliI, PauliX, PauliY, PauliZ)
+}
 
 
 @yaml.register_class
@@ -406,19 +412,29 @@ class Hamiltonian(Parameterizable):
         Returns:
             spmatrix: The full matrix representation of the term.
         """
-        # Build a list of factors for each qubit
-        factors = []
-        for q in range(self.nqubits + padding):
-            # Look for an operator acting on qubit q
-            op = next((t for t in terms if t.qubit == q), None)
-            if op is not None:
-                # Wrap the operator's matrix as a sparse matrix.
-                factors.append(csr_matrix(np.array(op.matrix)))
+        total_qubits = self.nqubits + padding
+        if total_qubits == 0:
+            return csr_matrix((1, 1), dtype=COMPLEX_DTYPE)
+
+        ordered_terms = sorted(terms, key=lambda op: op.qubit)
+        identity_single = _SINGLE_QUBIT_SPARSE["I"]
+        idx = 0
+        next_op = ordered_terms[0] if ordered_terms else None
+        result: spmatrix | None = None
+
+        for qubit in range(total_qubits):
+            if next_op is not None and next_op.qubit == qubit:
+                single = _SINGLE_QUBIT_SPARSE[next_op.name]
+                idx += 1
+                next_op = ordered_terms[idx] if idx < len(ordered_terms) else None
             else:
-                factors.append(identity(2, format="csc"))
-        # Compute the tensor (Kronecker) product over all qubits.
-        full_matrix = reduce(lambda A, B: kron(A, B, format="csc"), factors)
-        return full_matrix
+                single = identity_single
+
+            result = single if result is None else kron(result, single, format="csr")
+
+        # result is None only when total_qubits == 0 (handled above)
+        assert result is not None
+        return result
 
     def to_matrix(self) -> spmatrix:
         """Return the full matrix representation of the Hamiltonian by summing over all terms.
@@ -428,7 +444,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=COMPLEX_DTYPE))
+        result = csr_matrix((dim, dim), dtype=COMPLEX_DTYPE)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -456,7 +472,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=COMPLEX_DTYPE))
+        result = csr_matrix((dim, dim), dtype=COMPLEX_DTYPE)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)

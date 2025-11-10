@@ -364,6 +364,37 @@ def test_to_matrix_three_qubit():
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
+# --- QTensor Tests ---
+
+
+def test_to_qtensor_matches_to_matrix():
+    H = 0.75 * Z(0) + (1.25 - 0.5j) * (X(1) * Y(2))
+    tensor = H.to_qtensor()
+
+    np.testing.assert_allclose(tensor.dense, dense(H), atol=1e-8)
+    assert tensor.nqubits == H.nqubits
+
+
+def test_to_qtensor_with_padding():
+    H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
+    tensor = H.to_qtensor(total_nqubits=4)
+
+    I2 = np.eye(2, dtype=COMPLEX_DTYPE)
+    Z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 3 * np.kron(np.kron(np.kron(I2, Z_matrix), X_matrix), I2)
+
+    np.testing.assert_allclose(tensor.dense, expected, atol=1e-8)
+    assert tensor.nqubits == 4
+
+
+def test_to_qtensor_raises_when_total_qubits_smaller():
+    H = Hamiltonian({(PauliZ(1),): 1})
+
+    with pytest.raises(ValueError, match=r"total number of qubits can't be less than the number"):
+        H.to_qtensor(total_nqubits=1)
+
+
 # ------ Hamiltonian Simplification Test -------
 
 
