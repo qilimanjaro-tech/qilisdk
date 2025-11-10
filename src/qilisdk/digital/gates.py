@@ -756,7 +756,9 @@ class RX(BasicGate):
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=get_settings().complex_precision.dtype)
+        return np.array(
+            [[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=get_settings().complex_precision.dtype
+        )
 
 
 @yaml.register_class
@@ -854,7 +856,9 @@ class RZ(BasicGate):
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
-        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=get_settings().complex_precision.dtype)
+        return np.array(
+            [[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=get_settings().complex_precision.dtype
+        )
 
 
 @yaml.register_class
@@ -1130,4 +1134,6 @@ class SWAP(BasicGate):
         return "SWAP"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=get_settings().complex_precision.dtype)
+        return np.array(
+            [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=get_settings().complex_precision.dtype
+        )
