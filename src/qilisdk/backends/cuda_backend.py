@@ -29,7 +29,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.settings import get_settings
+from qilisdk.settings import get_settings, Precision
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -42,8 +42,6 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
-
-COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 class CudaSamplingMethod(str, Enum):
@@ -125,7 +123,8 @@ class CudaBackend(Backend):
                 cudaq.set_target("qpp-cpu")
                 logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
             else:
-                cudaq.set_target("nvidia")
+                float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+                cudaq.set_target("nvidia", option=float_precision)
                 logger.debug("GPU detected, using cudaq's 'nvidia' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
@@ -190,7 +189,7 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=COMPLEX_DTYPE)),
+            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=get_settings().complex_precision.dtype)),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,

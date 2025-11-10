@@ -37,8 +37,6 @@ if TYPE_CHECKING:
 
 Number = int | float | complex
 
-COMPLEX_DTYPE = get_settings().complex_precision.dtype
-
 
 ###############################################################################
 # Flyweight Cache
@@ -186,28 +184,28 @@ class PauliOperator(ABC):
 class PauliZ(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=get_settings().complex_precision.dtype)
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "X"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=get_settings().complex_precision.dtype)
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=COMPLEX_DTYPE)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=get_settings().complex_precision.dtype)
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "I"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=COMPLEX_DTYPE)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=get_settings().complex_precision.dtype)
 
 
 # Cache sparse single-qubit matrices once to avoid rebuilding them for every term.
@@ -413,7 +411,7 @@ class Hamiltonian(Parameterizable):
         """
         total_qubits = self.nqubits + padding
         if total_qubits == 0:
-            return csr_matrix((1, 1), dtype=COMPLEX_DTYPE)
+            return csr_matrix((1, 1), dtype=get_settings().complex_precision.dtype)
 
         ordered_terms = sorted(terms, key=lambda op: op.qubit)
         identity_single = _SINGLE_QUBIT_SPARSE["I"]
@@ -441,7 +439,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=COMPLEX_DTYPE)
+        result = csr_matrix((dim, dim), dtype=get_settings().complex_precision.dtype)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -469,7 +467,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=COMPLEX_DTYPE)
+        result = csr_matrix((dim, dim), dtype=get_settings().complex_precision.dtype)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)

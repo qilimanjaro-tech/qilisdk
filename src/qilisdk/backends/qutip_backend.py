@@ -39,7 +39,6 @@ if TYPE_CHECKING:
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
-COMPLEX_DTYPE = get_settings().complex_precision.dtype
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[QubitCircuit, TBasicGate, int], None]]
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
@@ -412,7 +411,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _qutip_U1(phi: float) -> Qobj:
-        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=COMPLEX_DTYPE)
+        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=get_settings().complex_precision.dtype)
         return Qobj(mat, dims=[[2], [2]])
 
     @staticmethod
@@ -433,7 +432,7 @@ class QutipBackend(Backend):
                 [1, -np.exp(1j * gamma)],
                 [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
             ],
-            dtype=COMPLEX_DTYPE,
+            dtype=get_settings().complex_precision.dtype,
         )
         return Qobj(mat, dims=[[2], [2]])
 
@@ -456,7 +455,7 @@ class QutipBackend(Backend):
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
             ],
-            dtype=COMPLEX_DTYPE,
+            dtype=get_settings().complex_precision.dtype,
         )
         return Qobj(mat, dims=[[2], [2]])
 
