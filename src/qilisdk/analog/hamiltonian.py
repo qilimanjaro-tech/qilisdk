@@ -38,6 +38,10 @@ if TYPE_CHECKING:
 Number = int | float | complex
 
 
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
+
+
 ###############################################################################
 # Flyweight Cache
 ###############################################################################

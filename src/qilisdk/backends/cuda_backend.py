@@ -37,6 +37,10 @@ if TYPE_CHECKING:
     from qilisdk.functionals.time_evolution import TimeEvolution
 
 
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
+
+
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
 
@@ -74,7 +78,7 @@ class CudaBackend(Backend):
                 Defaults to STATE_VECTOR.
         """
         super().__init__()
-        cudaq.register_operation("i", np.array([1, 0, 0, 1]))
+        cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: CudaBackend._handle_I,
             X: CudaBackend._handle_X,
@@ -189,9 +193,7 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=State.from_data(
-                np.array(functional.initial_state.unit().dense, dtype=get_settings().complex_precision.dtype)
-            ),
+            initial_state=State.from_data(np.array(functional.initial_state.unit().dense, dtype=_complex_dtype())),
             observables=cuda_observables,
             collapse_operators=[],
             store_intermediate_results=functional.store_intermediate_results,
@@ -200,20 +202,27 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()],
+            dtype=_complex_dtype(),
         )
         expected_values = (
-            np.array([[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()])
+            np.array(
+                [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()],
+                dtype=_complex_dtype(),
+            )
             if evolution_result.expectation_values() is not None and functional.store_intermediate_results
             else None
         )
         final_state = (
-            QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))
+            QTensor(np.array(evolution_result.final_state(), dtype=_complex_dtype()).reshape(-1, 1))
             if evolution_result.final_state() is not None
             else None
         )
         intermediate_states = (
-            [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]
+            [
+                QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
+                for state in evolution_result.intermediate_states()
+            ]
             if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
             else None
         )
