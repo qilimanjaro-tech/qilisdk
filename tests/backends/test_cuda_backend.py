@@ -17,7 +17,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-from qilisdk.settings import get_settings
+from qilisdk.settings import get_settings, Precision
 
 COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
@@ -149,7 +149,8 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(Sampling(circuit, nshots=10))
-    mock_set_target.assert_called_with("nvidia")
+    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, SamplingResult)
     assert result.samples == {"0": 1000}
     assert result.nshots == 10
