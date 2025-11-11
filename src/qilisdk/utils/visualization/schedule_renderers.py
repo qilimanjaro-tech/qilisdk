@@ -29,8 +29,16 @@ from qilisdk.utils.visualization.style import ScheduleStyle
 class MatplotlibScheduleRenderer:
     """Render a Schedule using matplotlib, with theme support."""
 
-    def __init__(self, schedule: Schedule, ax: plt.Axes | None = None, *, style: ScheduleStyle | None = None) -> None:
+    def __init__(
+        self,
+        schedule: Schedule,
+        ax: plt.Axes | None = None,
+        *,
+        style: ScheduleStyle | None = None,
+        time_precision: float = 0.1,
+    ) -> None:
         self.schedule = schedule
+        self.time_precision = time_precision
         self.style = style or ScheduleStyle()
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
 
@@ -55,13 +63,16 @@ class MatplotlibScheduleRenderer:
             self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
         T = self.schedule.T
-        dt = self.schedule.dt
+        dt = self.time_precision
         hamiltonians = self.schedule.hamiltonians
-        times = [i * dt for i in range(int(T / dt))]
+        times = [i * dt for i in range(int((T + dt) / dt))]
+        for t in self.schedule.tlist:
+            if t not in times:
+                times.append(t)
+        times = sorted(times)
         for h in hamiltonians:
             plots[h] = []
-        for _t in range(int(T / dt)):
-            t = _t * dt
+        for t in times:
             for h in hamiltonians:
                 plots[h].append(self.schedule.get_coefficient(t, h))
 
