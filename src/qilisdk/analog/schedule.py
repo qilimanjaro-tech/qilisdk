@@ -18,7 +18,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import Any, cast
+from typing import Any, cast, overload
 
 import numpy as np
 from loguru import logger
@@ -166,17 +166,18 @@ class Schedule(Parameterizable):
         return self._hamiltonians
 
     @property
-    def coefficients(self) -> dict[int, dict[str, Number]]:
+    def coefficients(self) -> dict[int, dict[str, float | Parameter | Term]]:
         """
         Return the evaluated schedule of Hamiltonian coefficients.
 
         Returns:
             dict[int, dict[str, Number]]: Mapping from time indices to evaluated coefficients.
         """
-        out_dict: dict[int, dict[str, Number]] = {}
-        for k, v in self._coefficients.items():
-            out_dict[k] = {ham: self._get_value(coeff, self.tlist[k]) for ham, coeff in v.items()}
-        return dict(sorted(out_dict.items()))
+        # out_dict: dict[int, dict[str, Number]] = {}
+        # for k, v in self._coefficients.items():
+        #     out_dict[k] = {ham: self._get_value(coeff, self.tlist[k]) for ham, coeff in v.items()}
+        # return dict(sorted(out_dict.items()))
+        return dict(sorted(self._coefficients.items()))
 
     @property
     def T(self) -> float:
@@ -313,6 +314,46 @@ class Schedule(Parameterizable):
     def set_max_time(self, max_time: float | Parameter | Term) -> None:
         self._extract_parameters(max_time)
         self._max_time = max_time
+
+    def add_hamiltonian(
+        self,
+        label: str,
+        hamiltonian: Hamiltonian,
+        coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]],
+    ) -> None:
+        if label in self._hamiltonians:
+            raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
+        self._hamiltonians[label] = hamiltonian
+
+        for index, current in coefficients.items():
+            if callable(current):
+                c = cast("Callable[..., float | Term | Parameter]", current)
+                c_params = inspect.signature(c).parameters
+                for param_name, param_info in c_params.items():
+                    param_type = Domain.REAL
+                    if param_info.annotation != inspect.Parameter.empty and isinstance(param_info.annotation, int):
+                        param_type = Domain.INTEGER
+                    if param_info.default != inspect.Parameter.empty:
+                        # parameter
+                        self._parameters[param_name] = Parameter(param_name, param_info.default, param_type)
+                    elif param_name != self.TIME_PARAMETER_NAME:
+                        raise ValueError(
+                            f'Only time (parameter "{self.TIME_PARAMETER_NAME}") is allowed to be used without having a default value, but parameter "{param_name}" was provided.'
+                        )
+                param_dict = {
+                    param_name: self._parameters[param_name]
+                    for param_name in c_params
+                    if param_name != self.TIME_PARAMETER_NAME
+                }
+                if self.TIME_PARAMETER_NAME in c_params:
+                    self._coefficients[index][label] = copy(c(t=self._current_time, **param_dict))
+                else:
+                    self._coefficients[index][label] = copy(c(**param_dict))
+            elif isinstance(current, (int, float, Parameter, Term)):
+                self._extract_parameters(current)
+                self._coefficients[index][label] = copy(current)
+            else:
+                raise ValueError
 
     # def add_hamiltonian(
     #     self, label: str, hamiltonian: Hamiltonian, coefficients: Callable | None = None, **kwargs: dict
