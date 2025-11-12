@@ -14,25 +14,58 @@
 from __future__ import annotations
 
 import inspect
+from bisect import bisect_right
 from collections import defaultdict
-from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import Any, cast, overload
+from typing import TYPE_CHECKING, Any, overload
 
 import numpy as np
-from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Domain, Number, Parameter, Term, Variable
+from qilisdk.core.variables import Domain, Number, Parameter, Term
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+_TIME_PARAMETER_NAME = "t"
 
 
 class Interpolation(str, Enum):
     STEP = "Step function interpolation between schedule points"
     LINEAR = "linear interpolation between schedule points"
+
+
+def _process_callable(
+    function: Callable, current_time: Parameter, **kwargs: Any
+) -> tuple[float | Parameter | Term, dict[str, Parameter]]:
+
+    # Define variables
+    c = function
+    parameters: dict[str, Parameter] = {}
+
+    # get callable parameters
+    c_params = inspect.signature(c).parameters
+    EMPTY = inspect.Parameter.empty
+    # process callable parameters
+    for param_name, param_info in c_params.items():
+        # parameter type extraction
+        if param_info.annotation is not EMPTY and param_info.annotation is Parameter:
+            if param_info.default is not EMPTY:
+                parameters[param_info.default.label] = copy(param_info.default)
+            else:
+                value = kwargs.get(param_name, 0)
+                if isinstance(value, (float, int)):
+                    parameters[param_name] = Parameter(param_name, value)
+                elif isinstance(value, Parameter):
+                    parameters[value.label] = value
+
+    if _TIME_PARAMETER_NAME in c_params:
+        kwargs[_TIME_PARAMETER_NAME] = current_time
+    return copy(c(**kwargs)), parameters
 
 
 @yaml.register_class
@@ -74,6 +107,7 @@ class Schedule(Parameterizable):
             dict[int, dict[str, float | Term | Parameter | Callable[..., float | Term | Parameter]]] | None
         ) = None,
         interpolation: Interpolation = Interpolation.STEP,
+        **kwargs: dict,
     ) -> None:
         """
         Args:
@@ -89,11 +123,12 @@ class Schedule(Parameterizable):
         """
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[int, dict[str, int | float | Term | Parameter]] = {0: defaultdict(int)}
+        self._coefficient_index_cache: dict[str, list[int]] = {}
+        self._coefficient_index_cache_dirty = True
         self._tlist: list[float | Parameter | Term] = tlist
         self._interpolation = interpolation
         self._parameters: dict[str, Parameter] = {}
-        self.TIME_PARAMETER_NAME = "t"
-        self._current_time: Variable = Variable(self.TIME_PARAMETER_NAME, Domain.REAL)
+        self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
         self._nqubits = 0
         self._max_time: float | Parameter | Term | None = None
@@ -115,45 +150,35 @@ class Schedule(Parameterizable):
             self._extract_parameters(t)
 
         # --- resolve the coefficients ---
+        lambda_cache: dict[str, Callable] = {}
         if coefficients is not None:
-            for index, ham_map in coefficients.items():
+            for index in range(len(tlist)):
+                ham_map = coefficients.get(index, {})
                 aux = {}
                 for ham in self.hamiltonians:
                     if ham not in ham_map:
+                        if ham in lambda_cache:
+                            self._current_time.set_value(self.tlist[index])
+                            aux[ham], _params = _process_callable(lambda_cache[ham], self._current_time, **kwargs)
+                            if len(_params) > 0:
+                                self._parameters.update(_params)
                         continue
-
                     current = ham_map[ham]
                     if callable(current):
-                        c = cast("Callable[..., float | Term | Parameter]", current)
-                        c_params = inspect.signature(c).parameters
-                        for param_name, param_info in c_params.items():
-                            param_type = Domain.REAL
-                            if param_info.annotation != inspect.Parameter.empty and isinstance(
-                                param_info.annotation, int
-                            ):
-                                param_type = Domain.INTEGER
-                            if param_info.default != inspect.Parameter.empty:
-                                # parameter
-                                self._parameters[param_name] = Parameter(param_name, param_info.default, param_type)
-                            elif param_name != self.TIME_PARAMETER_NAME:
-                                raise ValueError(
-                                    f'Only time (parameter "{self.TIME_PARAMETER_NAME}") is allowed to be used without having a default value, but parameter "{param_name}" was provided.'
-                                )
-                        param_dict = {
-                            param_name: self._parameters[param_name]
-                            for param_name in c_params
-                            if param_name != self.TIME_PARAMETER_NAME
-                        }
-                        if self.TIME_PARAMETER_NAME in c_params:
-                            aux[ham] = copy(c(t=self._current_time, **param_dict))
-                        else:
-                            aux[ham] = copy(c(**param_dict))
+                        lambda_cache[ham] = current
+                        self._current_time.set_value(self.tlist[index])
+                        aux[ham], _params = _process_callable(current, self._current_time, **kwargs)
+                        if len(_params) > 0:
+                            self._parameters.update(_params)
                     elif isinstance(current, (int, float, Parameter, Term)):
+                        if ham in lambda_cache:
+                            lambda_cache.pop(ham)
                         self._extract_parameters(current)
                         aux[ham] = copy(current)
                     else:
                         raise ValueError
                 self._coefficients[index] = copy(aux)
+                self._mark_coefficient_index_cache_dirty()
 
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
@@ -178,6 +203,18 @@ class Schedule(Parameterizable):
         #     out_dict[k] = {ham: self._get_value(coeff, self.tlist[k]) for ham, coeff in v.items()}
         # return dict(sorted(out_dict.items()))
         return dict(sorted(self._coefficients.items()))
+
+    def _mark_coefficient_index_cache_dirty(self) -> None:
+        self._coefficient_index_cache_dirty = True
+
+    def _get_coefficient_indices(self, hamiltonian_key: str) -> list[int]:
+        if self._coefficient_index_cache_dirty:
+            self._coefficient_index_cache.clear()
+            self._coefficient_index_cache_dirty = False
+        if hamiltonian_key not in self._coefficient_index_cache:
+            indices = sorted(idx for idx, coeffs in self._coefficients.items() if hamiltonian_key in coeffs)
+            self._coefficient_index_cache[hamiltonian_key] = indices
+        return self._coefficient_index_cache[hamiltonian_key]
 
     @property
     def T(self) -> float:
@@ -219,21 +256,18 @@ class Schedule(Parameterizable):
         if isinstance(value, complex):
             return value.real
         if isinstance(value, Parameter):
+            if value.label == _TIME_PARAMETER_NAME:
+                if t is None:
+                    raise ValueError("Can't evaluate Parameter because time is not provided.")
+                value.set_value(t)
             return float(value.evaluate())
         if isinstance(value, Term):
-            if value.is_parameterized_term():
-                aux = value.evaluate({})
-                if isinstance(aux, complex):
-                    return aux.real
-                return aux
             if t is None:
                 raise ValueError("Can't evaluate term because time is not provided.")
             aux = value.evaluate({self._current_time: t})
             if isinstance(aux, complex):
                 return aux.real
             return aux
-        if isinstance(value, BaseVariable) and value.label == self.TIME_PARAMETER_NAME:
-            return value.evaluate(t)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
     def _extract_parameters(self, element: float | Parameter | Term) -> None:
@@ -315,11 +349,12 @@ class Schedule(Parameterizable):
         self._extract_parameters(max_time)
         self._max_time = max_time
 
-    def add_hamiltonian(
+    def _add_hamiltonian_from_dict(
         self,
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]],
+        **kwargs: Any,
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
@@ -327,153 +362,130 @@ class Schedule(Parameterizable):
 
         for index, current in coefficients.items():
             if callable(current):
-                c = cast("Callable[..., float | Term | Parameter]", current)
-                c_params = inspect.signature(c).parameters
-                for param_name, param_info in c_params.items():
-                    param_type = Domain.REAL
-                    if param_info.annotation != inspect.Parameter.empty and isinstance(param_info.annotation, int):
-                        param_type = Domain.INTEGER
-                    if param_info.default != inspect.Parameter.empty:
-                        # parameter
-                        self._parameters[param_name] = Parameter(param_name, param_info.default, param_type)
-                    elif param_name != self.TIME_PARAMETER_NAME:
-                        raise ValueError(
-                            f'Only time (parameter "{self.TIME_PARAMETER_NAME}") is allowed to be used without having a default value, but parameter "{param_name}" was provided.'
-                        )
-                param_dict = {
-                    param_name: self._parameters[param_name]
-                    for param_name in c_params
-                    if param_name != self.TIME_PARAMETER_NAME
-                }
-                if self.TIME_PARAMETER_NAME in c_params:
-                    self._coefficients[index][label] = copy(c(t=self._current_time, **param_dict))
-                else:
-                    self._coefficients[index][label] = copy(c(**param_dict))
+                self._current_time.set_value(self.tlist[index])
+                self._coefficients[index][label], _params = _process_callable(current, self._current_time, **kwargs)
+                if len(_params) > 0:
+                    self._parameters.update(_params)
+                self._mark_coefficient_index_cache_dirty()
             elif isinstance(current, (int, float, Parameter, Term)):
                 self._extract_parameters(current)
                 self._coefficients[index][label] = copy(current)
+                self._mark_coefficient_index_cache_dirty()
             else:
                 raise ValueError
 
-    # def add_hamiltonian(
-    #     self, label: str, hamiltonian: Hamiltonian, coefficients: Callable | None = None, **kwargs: dict
-    # ) -> None:
-    #     """
-    #     Add a Hamiltonian to the schedule with an optional coefficient coefficients function.
+    def _add_hamiltonian_from_lambda(
+        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., float | Term | Parameter], **kwargs: Any
+    ) -> None:
+        if label in self._hamiltonians:
+            raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
+        self._hamiltonians[label] = hamiltonian
+        self._current_time.set_value(self.tlist[0])
+        self._coefficients[0][label], _params = _process_callable(coefficients, self._current_time, **kwargs)
+        if len(_params) > 0:
+            self._parameters.update(_params)
+        self._mark_coefficient_index_cache_dirty()
 
-    #     If a Hamiltonian with the given label already exists, a warning is issued and only
-    #     the coefficients is updated if a callable is provided.
+    @overload
+    def add_hamiltonian(
+        self,
+        label: str,
+        hamiltonian: Hamiltonian,
+        coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]],
+        **kwargs: Any,
+    ) -> None: ...
 
-    #     Args:
-    #         label (str): The unique label to identify the Hamiltonian.
-    #         hamiltonian (Hamiltonian): The Hamiltonian object to add.
-    #         coefficients (Callable, optional): A function that returns the coefficient of the Hamiltonian at time t.
-    #             It should accept time (and any additional keyword arguments) and return a float.
-    #         **kwargs (dict): Additional keyword arguments to pass to the schedule function.
+    @overload
+    def add_hamiltonian(
+        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., float | Term | Parameter], **kwargs: Any
+    ) -> None: ...
 
-    #     Raises:
-    #         ValueError: if the parameterized coefficients contains generic variables instead of only Parameters.
-    #     """
-    #     if label in self._hamiltonians:
-    #         logger.warning(
-    #             (f"label {label} is already assigned to a hamiltonian, " + "updating coefficients of existing hamiltonian.")
-    #         )
-    #     self._hamiltonians[label] = hamiltonian
-    #     self._coefficients[0][label] = 0
-    #     self._nqubits = max(self._nqubits, hamiltonian.nqubits)
-    #     for _, param in hamiltonian.parameters.items():
-    #         self._parameters[param.label] = param
+    def add_hamiltonian(
+        self,
+        label: str,
+        hamiltonian: Hamiltonian,
+        coefficients: (
+            Callable[..., float | Term | Parameter]
+            | dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]]
+        ),
+        **kwargs: Any,
+    ) -> None:
+        if callable(coefficients):
+            self._add_hamiltonian_from_lambda(label, hamiltonian, coefficients, **kwargs)
+        elif isinstance(coefficients, dict):
+            self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, **kwargs)
+        else:
+            raise ValueError("Unsupported type of coefficient.")
 
-    #     if coefficients is not None:
-    #         for t in range(int(self.T / self.dt)):
-    #             time_step = coefficients(int(t), **kwargs)
-    #             if isinstance(time_step, Term):
-    #                 for v in time_step.variables():
-    #                     if not isinstance(v, Parameter):
-    #                         raise ValueError(
-    #                             f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #                         )
-    #                     self._parameters[v.label] = v
-    #             elif isinstance(time_step, BaseVariable):
-    #                 if not isinstance(time_step, Parameter):
-    #                     raise ValueError(
-    #                         f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #                     )
-    #                 self._parameters[time_step.label] = time_step
-    #             self.update_hamiltonian_coefficient_at_time_step(t, label, time_step)
+    def _update_hamiltonian_from_dict(
+        self,
+        label: str,
+        new_coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        if new_coefficients is not None:
+            for index, current in new_coefficients.items():
+                if callable(current):
+                    self._current_time.set_value(self.tlist[index])
+                    self._coefficients[index][label], _params = _process_callable(current, self._current_time, **kwargs)
+                    if len(_params) > 0:
+                        self._parameters.update(_params)
+                    self._mark_coefficient_index_cache_dirty()
+                elif isinstance(current, (int, float, Parameter, Term)):
+                    self._extract_parameters(current)
+                    self._coefficients[index][label] = copy(current)
+                    self._mark_coefficient_index_cache_dirty()
+                else:
+                    raise ValueError
 
-    # def add_schedule_step(
-    #     self, time_step: int, hamiltonian_coefficient_list: dict[str, float | Term | Parameter]
-    # ) -> None:
-    #     """
-    #     Add or update a schedule step with specified Hamiltonian coefficients.
+    def _update_hamiltonian_from_lambda(
+        self, label: str, new_coefficients: Callable[..., float | Term | Parameter] | None = None, **kwargs: Any
+    ) -> None:
+        if new_coefficients is not None:
+            self._current_time.set_value(self.tlist[0])
+            self._coefficients[0][label], _params = _process_callable(new_coefficients, self._current_time, **kwargs)
+            if len(_params) > 0:
+                self._parameters.update(_params)
+            self._mark_coefficient_index_cache_dirty()
 
-    #     Args:
-    #         time_step (int): The time step index at which the Hamiltonian coefficients are updated.
-    #             The actual time is computed as dt * time_step.
-    #         hamiltonian_coefficient_list (dict[str, float | Term | Parameter]): Mapping from Hamiltonian labels to coefficients
-    #             (numeric or symbolic) at this time step.
-    #             If a Hamiltonian is not included in the dictionary, it is assumed its coefficient remains unchanged.
+    @overload
+    def update_hamiltonian(
+        self,
+        label: str,
+        new_hamiltonian: Hamiltonian | None = None,
+        new_coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]] | None = None,
+        **kwargs: Any,
+    ) -> None: ...
 
-    #     Raises:
-    #         ValueError: If hamiltonian_coefficient_list references a Hamiltonian that is not defined in the schedule.
-    #     """
-    #     if time_step in self._coefficients:
-    #         logger.warning(
-    #             f"time step {time_step} is already defined in the schedule, the values are going to be overwritten.",
-    #         )
-    #     for key, coeff in hamiltonian_coefficient_list.items():
-    #         if key not in self._hamiltonians:
-    #             raise ValueError(f"trying to reference a hamiltonian {key} that is not defined in this schedule.")
-    #         if isinstance(coeff, Term):
-    #             for v in coeff.variables():
-    #                 if not isinstance(v, Parameter):
-    #                     raise ValueError(
-    #                         f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #                     )
-    #                 self._parameters[v.label] = v
-    #         if isinstance(coeff, BaseVariable):
-    #             if not isinstance(coeff, Parameter):
-    #                 raise ValueError(
-    #                     f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #                 )
-    #             self._parameters[coeff.label] = coeff
-    #     self._coefficients[time_step] = hamiltonian_coefficient_list
+    @overload
+    def update_hamiltonian(
+        self,
+        label: str,
+        new_hamiltonian: Hamiltonian | None = None,
+        new_coefficients: Callable[..., float | Term | Parameter] | None = None,
+        **kwargs: Any,
+    ) -> None: ...
 
-    # def update_hamiltonian_coefficient_at_time_step(
-    #     self, time_step: int, hamiltonian_label: str, new_coefficient: float | Term | Parameter
-    # ) -> None:
-    #     """
-    #     Update the coefficient value of a specific Hamiltonian at a given time step.
-
-    #     Args:
-    #         time_step (int): The time step (as an integer multiple of dt) at which to update the coefficient.
-    #         hamiltonian_label (str): The label of the Hamiltonian to update.
-    #         new_coefficient (float | Term | Parameter): The new coefficient value or symbolic expression.
-
-    #     Raises:
-    #         ValueError: If the specified time step exceeds the total annealing time.
-    #     """
-    #     if not (time_step * self.dt <= self.T):
-    #         raise ValueError("Can't add a time step which happens after the end of the annealing process.")
-
-    #     if time_step not in self._coefficients:
-    #         self._coefficients[time_step] = {}
-    #     self._coefficients[time_step][hamiltonian_label] = new_coefficient
-
-    #     if isinstance(new_coefficient, Term):
-    #         for v in new_coefficient.variables():
-    #             if not isinstance(v, Parameter):
-    #                 raise ValueError(
-    #                     f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #                 )
-    #             self._parameters[v.label] = v
-    #     if isinstance(new_coefficient, BaseVariable):
-    #         if not isinstance(new_coefficient, Parameter):
-    #             raise ValueError(
-    #                 f"The coefficients can only contain Parameters, but a generic variable was provided ({time_step})"
-    #             )
-    #         self._parameters[new_coefficient.label] = new_coefficient
+    def update_hamiltonian(
+        self,
+        label: str,
+        new_hamiltonian: Hamiltonian | None = None,
+        new_coefficients: (
+            Callable[..., float | Term | Parameter]
+            | dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]]
+            | None
+        ) = None,
+        **kwargs: Any,
+    ) -> None:
+        if new_hamiltonian is not None:
+            self._hamiltonians[label] = new_hamiltonian
+        if new_coefficients is not None:
+            if callable(new_coefficients):
+                self._update_hamiltonian_from_lambda(label, new_coefficients, **kwargs)
+            elif isinstance(new_coefficients, dict):
+                self._update_hamiltonian_from_dict(label, new_coefficients, **kwargs)
+            else:
+                raise ValueError("Unsupported type of coefficient.")
 
     def __getitem__(self, time_step: float) -> Hamiltonian:
         """
@@ -592,34 +604,37 @@ class Schedule(Parameterizable):
         # if t_idx in self._coefficients and hamiltonian_key in self._coefficients[t_idx]:
         #     return self._coefficients[t_idx][hamiltonian_key]
 
-        # search backwards
-        prev_idx, prev_expr = None, None
-        for i in range(t_idx, -1, -1):
-            if i in self._coefficients and hamiltonian_key in self._coefficients[i]:
-                prev_idx = i
-                prev_expr = self._coefficients[i][hamiltonian_key]
-                break
-
-        # search forwards
-        next_idx, next_expr = None, None
-        for i in range(t_idx + 1, int(self.T / self.dt) + 1):
-            if i in self._coefficients and hamiltonian_key in self._coefficients[i]:
-                next_idx = i
-                next_expr = self._coefficients[i][hamiltonian_key]
-                break
+        coeff_indices = self._get_coefficient_indices(hamiltonian_key)
+        if not coeff_indices:
+            return 0
+        insert_pos = bisect_right(coeff_indices, t_idx)
+        prev_idx = coeff_indices[insert_pos - 1] if insert_pos else None
+        next_idx = coeff_indices[insert_pos] if insert_pos < len(coeff_indices) else None
+        prev_expr = self._coefficients[prev_idx][hamiltonian_key] if prev_idx is not None else None
+        next_expr = self._coefficients[next_idx][hamiltonian_key] if next_idx is not None else None
 
         # cases
-        if prev_expr is None and next_expr is None:
-            return 0
         if prev_expr is None and next_expr is not None:
             return next_expr
         if next_expr is None and prev_expr is not None:
             return prev_expr
+        if prev_expr is None and next_expr is None:
+            return 0
 
         # linear interpolation (keeps expressions if they are Terms/Parameters)
         if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
             raise ValueError("Something unexpected happened while retrieving the coefficient.")
         alpha: float = (time_step - self.tlist[prev_idx]) / (self.tlist[next_idx] - self.tlist[prev_idx])
+        next_is_term = isinstance(next_expr, (Term, Parameter))
+        prev_is_term = isinstance(prev_expr, (Term, Parameter))
+        if next_is_term and prev_is_term and next_expr != prev_expr:
+            next_expr = self._get_value(next_expr, self.tlist[next_idx])
+            prev_expr = self._get_value(prev_expr, self.tlist[prev_idx])
+        elif next_is_term and not prev_is_term:
+            next_expr = self._get_value(next_expr, self.tlist[next_idx])
+        elif prev_is_term and not next_is_term:
+            prev_expr = self._get_value(prev_expr, self.tlist[prev_idx])
+
         e1 = next_expr * alpha
         e2 = prev_expr * (1 - alpha)
         return e1 + e2

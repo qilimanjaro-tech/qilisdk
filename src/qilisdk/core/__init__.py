@@ -31,6 +31,7 @@ from .variables import (
     NotEqual,
     Parameter,
     SpinVariable,
+    Term,
     Variable,
 )
 
@@ -56,6 +57,7 @@ __all__ = [
     "Parameter",
     "QTensor",
     "SpinVariable",
+    "Term",
     "Variable",
     "basis_state",
     "bra",

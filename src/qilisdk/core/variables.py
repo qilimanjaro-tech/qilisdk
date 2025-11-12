@@ -1290,6 +1290,40 @@ class Parameter(BaseVariable):
 
         self.set_bounds(lower_bound=bounds[0], upper_bound=bounds[1])
 
+    __hash__ = BaseVariable.__hash__
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, BaseVariable):
+            return super().__eq__(other)
+        if isinstance(other, (float, int)):
+            return self.value == other
+        return False
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value != other
+        return NotImplemented
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value <= other
+        return NotImplemented
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value < other
+        return NotImplemented
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value >= other
+        return NotImplemented
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value > other
+        return NotImplemented
+
 
 # Terms ###
 
@@ -1586,7 +1620,13 @@ class Term:
         _var_values = dict(var_values)
         for var in self.variables():
             if isinstance(var, Parameter):
-                _var_values[var] = var.value
+                if var not in _var_values:
+                    _var_values[var] = var.value
+                else:
+                    value = _var_values[var]
+                    if not isinstance(value, RealNumber):
+                        raise ValueError(f"setting a parameter ({var}) value with a list is not supported.")
+                    var.set_value(value)
             if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
