@@ -2619,7 +2619,7 @@ docs = [
 requires-dist = [
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda'", specifier = "==0.12.0.post1" },
     { name = "dill", specifier = ">=0.3.9" },
-    { name = "httpx", marker = "extra == 'speqtrum'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
