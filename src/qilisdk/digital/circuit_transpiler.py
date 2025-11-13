@@ -26,13 +26,8 @@ class CircuitTranspiler:
         CircuitTranspiler: New transpiler instance bound to the provided pipeline.
     """
 
-    def __init__(
-        self,
-        pipeline: list[CircuitTranspilerPass] | None = None
-    ) -> None:
-        self._pipeline = pipeline or [
-            DecomposeMultiControlledGatesPass()
-        ]
+    def __init__(self, pipeline: list[CircuitTranspilerPass] | None = None) -> None:
+        self._pipeline = pipeline or [DecomposeMultiControlledGatesPass()]
 
     def transpile(self, circuit: Circuit) -> Circuit:
         """Run the configured pass pipeline over the provided circuit.

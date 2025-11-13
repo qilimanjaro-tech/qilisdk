@@ -59,7 +59,6 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
         """
         # --- Multi-controlled gates ---
         if isinstance(gate, Controlled):
-
             base: BasicGate = gate.basic_gate
             if base.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
@@ -144,9 +143,7 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
     if isinstance(gate, (U2, U3, H, BasicGate)):
         U = gate.matrix
     else:
-        raise NotImplementedError(
-            f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}"
-        )
+        raise NotImplementedError(f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}")
 
     # Compute a matrix square root V such that V @ V ≈ U.
     Vs = _unitary_sqrt_2x2(U)
@@ -212,9 +209,7 @@ def _adjoint_of(gate: BasicGate) -> BasicGate:
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
         U = gate.matrix
     else:
-        raise NotImplementedError(
-            f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}"
-        )
+        raise NotImplementedError(f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}")
 
     # Take the matrix adjoint U† and convert to ZYZ → U3.
     U_dag = U.conj().T
