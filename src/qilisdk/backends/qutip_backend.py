@@ -33,7 +33,6 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals.sampling import Sampling
