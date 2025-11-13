@@ -17,6 +17,15 @@ from .circuit_transpiler_passes import CircuitTranspilerPass, DecomposeMultiCont
 
 
 class CircuitTranspiler:
+    """Apply a configurable pipeline of passes to digital circuits.
+
+    Args:
+        pipeline (list[CircuitTranspilerPass] | None): Sequential list of passes to execute while transpiling.
+
+    Returns:
+        CircuitTranspiler: New transpiler instance bound to the provided pipeline.
+    """
+
     def __init__(
         self,
         pipeline: list[CircuitTranspilerPass] | None = None
@@ -26,6 +35,13 @@ class CircuitTranspiler:
         ]
 
     def transpile(self, circuit: Circuit) -> Circuit:
+        """Run the configured pass pipeline over the provided circuit.
+
+        Args:
+            circuit (Circuit): Circuit to be rewritten by the transpiler passes.
+        Returns:
+            Circuit: The circuit returned by the last pass in the pipeline.
+        """
         for transpiler_pass in self._pipeline:
             circuit = transpiler_pass.run(circuit)
         return circuit

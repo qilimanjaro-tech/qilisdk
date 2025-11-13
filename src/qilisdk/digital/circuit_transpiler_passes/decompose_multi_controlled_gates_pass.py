@@ -20,16 +20,28 @@ from qilisdk.digital.gates import BasicGate, Controlled
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .numeric_helpers import (
-    _mat_U3,
     _unitary_sqrt_2x2,
     _zyz_from_unitary,
 )
 
 
 class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
-    """Decompose multi-controlled (k >= 2) 1-qubit gates."""
+    """Decompose multi-controlled (k >= 2) single-qubit gates.
+
+    Args:
+        None (None): This pass does not accept runtime configuration parameters.
+    Returns:
+        DecomposeMultiControlledGatesPass: Pass ready to be inserted into a transpiler pipeline.
+    """
 
     def run(self, circuit: Circuit) -> Circuit:
+        """Rewrite the circuit while decomposing multi-controlled gates.
+
+        Args:
+            circuit (Circuit): Circuit whose gates should be rewritten.
+        Returns:
+            Circuit: Newly built circuit containing only supported primitives.
+        """
         out = Circuit(circuit.nqubits)
         for g in circuit.gates:
             for h in self._rewrite_gate(g):
@@ -37,7 +49,14 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
 
         return out
 
-    def _rewrite_gate(self, gate: Gate) -> List[Gate]:
+    def _rewrite_gate(self, gate: Gate) -> List[Gate]:  # noqa: PLR6301
+        """Expand unsupported gates into equivalent elementary gates.
+
+        Args:
+            gate (Gate): Candidate gate potentially containing multiple controls.
+        Returns:
+            list[Gate]: Sequence of equivalent gates that rely on supported primitives.
+        """
         # --- Multi-controlled gates ---
         if isinstance(gate, Controlled):
 
@@ -45,34 +64,47 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             if base.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
 
-            return _multi_controlled(gate)
+            return _decompose(gate)
 
         # Everything else is untouched.
         return [gate]
 
 
-def _multi_controlled(gate: Controlled) -> List[Gate]:
+def _decompose(gate: Controlled) -> List[Gate]:
+    """Recursively decompose a multi-controlled single-qubit gate.
+
+    Args:
+        gate (Controlled): Controlled gate whose target operation is single-qubit.
+    Returns:
+        list[Gate]: Gate sequence computing the same unitary as `gate`.
+    """
     if len(gate.control_qubits) == 1:
         return [gate]
 
     c_last = gate.control_qubits[-1]
     rest = gate.control_qubits[:-1]
 
-    V = _sqrt_of_gate(gate.basic_gate)
-    Vd = _adjoint_1q(V)
+    V = _sqrt_of(gate.basic_gate)
+    Vd = _adjoint_of(V)
 
     seq: List[Gate] = []
-    seq += _multi_controlled(Controlled(c_last, basic_gate=V))
-    seq += _multi_controlled(X(c_last).controlled(*rest))
-    seq += _multi_controlled(Controlled(c_last, basic_gate=Vd))
-    seq += _multi_controlled(X(c_last).controlled(*rest))
-    seq += _multi_controlled(Controlled(*rest, basic_gate=V))
+    seq += _decompose(Controlled(c_last, basic_gate=V))
+    seq += _decompose(X(c_last).controlled(*rest))
+    seq += _decompose(Controlled(c_last, basic_gate=Vd))
+    seq += _decompose(X(c_last).controlled(*rest))
+    seq += _decompose(Controlled(*rest, basic_gate=V))
 
     return seq
 
 
-def _sqrt_of_gate(gate: BasicGate) -> BasicGate:
-    """Return V such that V^2 == gate."""
+def _sqrt_of(gate: BasicGate) -> BasicGate:
+    """Return a gate V whose square equals the provided gate.
+
+    Args:
+        gate (BasicGate): Single-qubit gate to compute the principal square root for.
+    Returns:
+        BasicGate: New primitive V that satisfies V · V ≡ gate.
+    """
     q = gate.qubits[0]
 
     # Identity: sqrt(I) = I
@@ -95,26 +127,21 @@ def _sqrt_of_gate(gate: BasicGate) -> BasicGate:
     if isinstance(gate, Y):
         return RY(q, theta=math.pi / 2.0)
 
-    # Phase gate U1(φ) = diag(1, e^{iφ}), sqrt is U1(φ/2).
+    # Phase gate U1(phi) = diag(1, e^{iphi}), sqrt is U1(phi/2).
     if isinstance(gate, U1):
         return RZ(q, phi=gate.phi / 2.0)
 
     # S and T: phase gates with known relation to RZ
-    # S = RZ(π/2) ⇒ sqrt(S) = RZ(π/4) ≡ T
+    # S = RZ(pi/2) ⇒ sqrt(S) = RZ(pi/4) ≡ T
     if isinstance(gate, S):
         return T(q)
 
-    # T = RZ(π/4) ⇒ sqrt(T) = RZ(π/8)
+    # T = RZ(pi/4) ⇒ sqrt(T) = RZ(pi/8)
     if isinstance(gate, T):
         return RZ(q, phi=math.pi / 8.0)
 
     # Build the 2x2 unitary matrix for gate
-    if isinstance(gate, U2):
-        # U2(φ, λ) = U3(π/2, φ, λ) up to a global phase.
-        U = _mat_U3(math.pi / 2.0, gate.phi, gate.gamma)
-    elif isinstance(gate, U3):
-        U = _mat_U3(gate.theta, gate.phi, gate.gamma)
-    elif isinstance(gate, (H, BasicGate)):
+    if isinstance(gate, (U2, U3, H, BasicGate)):
         U = gate.matrix
     else:
         raise NotImplementedError(
@@ -130,63 +157,66 @@ def _sqrt_of_gate(gate: BasicGate) -> BasicGate:
     return U3(q, theta=th, phi=ph, gamma=lam)
 
 
-def _adjoint_1q(g: BasicGate) -> BasicGate:
-    """Return the 1-qubit adjoint (inverse) of gate."""
-    q = g.qubits[0]
+def _adjoint_of(gate: BasicGate) -> BasicGate:
+    """Return the single-qubit adjoint (inverse) of a gate.
+
+    Args:
+        gate (BasicGate): Gate whose inverse should be produced.
+    Returns:
+        BasicGate: Gate that when composed with `gate` yields the identity.
+    """
+    q = gate.qubits[0]
 
     # Identity: self-adjoint.
-    if isinstance(g, I):
+    if isinstance(gate, I):
         return I(q)
 
-    if isinstance(g, RX):
-        return RX(q, theta=-g.theta)
-    if isinstance(g, RY):
-        return RY(q, theta=-g.theta)
-    if isinstance(g, RZ):
-        return RZ(q, phi=-g.phi)
-
-    if isinstance(g, U3):
-        # U3(θ, φ, λ)† = U3(-θ, -λ, -φ) (up to global phase).
-        return U3(q, theta=-g.theta, phi=-g.gamma, gamma=-g.phi)
-
-    if isinstance(g, U1):
-        # U1(λ)† = U1(-λ)
-        return RZ(q, phi=-g.phi)
-
-    # ---------- Named 1q gates ----------
-
     # Pauli & Hadamard: self-adjoint.
-    if isinstance(g, X):
+    if isinstance(gate, X):
         return X(q)
-    if isinstance(g, Y):
+    if isinstance(gate, Y):
         return Y(q)
-    if isinstance(g, Z):
+    if isinstance(gate, Z):
         return Z(q)
-    if isinstance(g, H):
+    if isinstance(gate, H):
         return H(q)
 
+    if isinstance(gate, RX):
+        return RX(q, theta=-gate.theta)
+    if isinstance(gate, RY):
+        return RY(q, theta=-gate.theta)
+    if isinstance(gate, RZ):
+        return RZ(q, phi=-gate.phi)
+
+    if isinstance(gate, U1):
+        # U1(gamma)† = U1(-gamma)
+        return RZ(q, phi=-gate.phi)
+    if isinstance(gate, U2):
+        # U2(phi, gamma)† = U3(pi/2, phi, gamma)† = U3(-pi/2, -phi, -gamma)
+        return U3(q, theta=-math.pi / 2.0, phi=-gate.gamma, gamma=-gate.phi)
+    if isinstance(gate, U3):
+        # U3(theta, phi, gamma)† = U3(-theta, -gamma, -phi)
+        return U3(q, theta=-gate.theta, phi=-gate.gamma, gamma=-gate.phi)
+
     # S, T: phase gates about Z.
-    # S = RZ(π/2)  ⇒ S† = RZ(-π/2)
-    if isinstance(g, S):
+    # S = RZ(pi/2)  ⇒ S† = RZ(-pi/2)
+    if isinstance(gate, S):
         return RZ(q, phi=-math.pi / 2.0)
 
-    # T = RZ(π/4)  ⇒ T† = RZ(-π/4)
-    if isinstance(g, T):
+    # T = RZ(pi/4)  ⇒ T† = RZ(-pi/4)
+    if isinstance(gate, T):
         return RZ(q, phi=-math.pi / 4.0)
 
     # ---------- Generic 1-qubit unitary via matrix adjoint ----------
 
-    # U2(φ, λ) we handle through its matrix; same idea as in sqrt.
-    if isinstance(g, U2):
-        U = _mat_U3(math.pi / 2.0, g.phi, g.gamma)
-    elif isinstance(g, BasicGate) and g.nqubits == 1:
-        U = g.matrix
+    if isinstance(gate, BasicGate) and gate.nqubits == 1:
+        U = gate.matrix
     else:
         raise NotImplementedError(
-            f"_adjoint_1q only supports 1-qubit gates; got {type(g).__name__}"
+            f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}"
         )
 
     # Take the matrix adjoint U† and convert to ZYZ → U3.
     U_dag = U.conj().T
-    th, ph, lam = _zyz_from_unitary(U_dag)
-    return U3(q, theta=th, phi=ph, gamma=lam)
+    theta, phi, gamma = _zyz_from_unitary(U_dag)
+    return U3(q, theta=theta, phi=phi, gamma=gamma)

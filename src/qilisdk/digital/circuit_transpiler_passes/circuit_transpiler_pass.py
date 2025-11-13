@@ -18,10 +18,19 @@ from qilisdk.digital import Circuit
 
 
 class CircuitTranspilerPass(ABC):
-    """
-    Base class for passes. Each pass can read/write a shared context.
-    Subclasses should implement `run(self, circuit) -> Circuit` and must NOT mutate the input circuit.
+    """Base class for non-mutating circuit transpiler passes.
+
+    Returns:
+        CircuitTranspilerPass: Instances expose the `run` API required by the transpiler.
     """
 
     @abstractmethod
-    def run(self, circuit: Circuit) -> Circuit: ...
+    def run(self, circuit: Circuit) -> Circuit:
+        """Create a new circuit built from `circuit` without mutating the input.
+
+        Args:
+            circuit (Circuit): Circuit to be transpiled.
+        Returns:
+            Circuit: Newly transpiled circuit.
+        """
+        ...

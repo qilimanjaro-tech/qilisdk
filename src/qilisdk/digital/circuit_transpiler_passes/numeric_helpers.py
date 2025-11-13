@@ -22,41 +22,29 @@ _SIG_DECIMALS = 12
 
 
 def _wrap_angle(a: float) -> float:
-    """Wrap angle to (-π, π]."""
+    """Wrap an angle to the (-pi, pi] range.
+
+    Args:
+        a (float): Angle value in radians.
+    Returns:
+        float: Angle mapped into the open-closed interval (-pi, pi].
+    """
     a = (a + math.pi) % (2.0 * math.pi) - math.pi
     if a <= -math.pi:
         a = math.pi
     return a
 
 
-def _round_f(x: float, d: int = _SIG_DECIMALS) -> float:
-    return 0.0 if abs(x) < _EPS else round(x, d)
-
-
-def _is_close_mod_2pi(a: float, b: float, eps: float = _EPS) -> bool:
-    return abs(_wrap_angle(a - b)) < eps
-
-
-def _mat_RZ(phi: float) -> np.ndarray:
-    return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
-
-
-def _mat_RY(theta: float) -> np.ndarray:
-    c, s = math.cos(theta / 2.0), math.sin(theta / 2.0)
-    return np.array([[c, -s], [s, c]], dtype=complex)
-
-
-def _mat_RX(theta: float) -> np.ndarray:
-    c, s = math.cos(theta / 2.0), -1j * math.sin(theta / 2.0)
-    return np.array([[c, s], [s, c]], dtype=complex)
-
-
-def _mat_U3(theta: float, phi: float, lam: float) -> np.ndarray:
-    # Convention: U3(θ, φ, λ) = RZ(φ) · RY(θ) · RZ(λ)
-    return _mat_RZ(phi) @ _mat_RY(theta) @ _mat_RZ(lam) * np.exp(0.5j * (phi + lam), dtype=complex)
-
-
 def _zyz_from_unitary(U: np.ndarray) -> tuple[float, float, float]:
+    """Recover ZYZ Euler angles from a 2x2 unitary.
+
+    Args:
+        U (np.ndarray): 2x2 unitary matrix.
+    Returns:
+        tuple[float, float, float]: Tuple containing theta, phi and gamma angles.
+    Raises:
+        ValueError: If matrix is not 2x2.
+    """
     if U.shape != (2, 2):
         raise ValueError("Expected 2x2 unitary for ZYZ decomposition.")
     det = np.linalg.det(U)
@@ -81,7 +69,13 @@ def _zyz_from_unitary(U: np.ndarray) -> tuple[float, float, float]:
 
 
 def _unitary_sqrt_2x2(U: np.ndarray) -> np.ndarray:
-    """Principal square root of a 2x2 unitary via eigendecomp (robust for 1-qubit)."""
+    """Compute the principal square root of a 2x2 unitary.
+
+    Args:
+        U (np.ndarray): 2x2 unitary matrix.
+    Returns:
+        np.ndarray: Matrix V such that V · V equals U.
+    """
     w, V = np.linalg.eig(U)
     ph = np.angle(w)
     sqrt_w = np.exp(0.5j * ph)
