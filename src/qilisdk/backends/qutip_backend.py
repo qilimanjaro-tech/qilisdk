@@ -335,7 +335,7 @@ class QutipBackend(Backend):
                 mat[dim_target:, dim_target:] = base_matrix
                 return Qobj(mat, dims=dims)
 
-            matrix_digest = hashlib.sha1(base_matrix.tobytes()).hexdigest()[:16]  # noqa: S324
+            matrix_digest = base_matrix.tobytes().hex()[:16]
             gate_name = f"{gate.name}_{matrix_digest}"
             if gate_name not in circuit.user_gates:
                 circuit.user_gates[gate_name] = qutip_controlled_gate
