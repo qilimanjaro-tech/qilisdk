@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-import hashlib
 from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
