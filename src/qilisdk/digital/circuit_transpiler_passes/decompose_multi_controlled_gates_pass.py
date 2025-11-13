@@ -28,10 +28,9 @@ from .numeric_helpers import (
 class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
     """Decompose multi-controlled (k >= 2) single-qubit gates.
 
-    Args:
-        None (None): This pass does not accept runtime configuration parameters.
-    Returns:
-        DecomposeMultiControlledGatesPass: Pass ready to be inserted into a transpiler pipeline.
+    The construction follows Lemma 7.5 from Barenco et al., *Elementary Gates for Quantum Computation*,
+    recursively replacing a k-controlled unitary with five layers of (k-1)-controlled operations built
+    from sqrt(U), its adjoint, and multi-controlled Pauli-X gates.
     """
 
     def run(self, circuit: Circuit) -> Circuit:

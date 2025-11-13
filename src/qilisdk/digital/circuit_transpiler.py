@@ -17,13 +17,17 @@ from .circuit_transpiler_passes import CircuitTranspilerPass, DecomposeMultiCont
 
 
 class CircuitTranspiler:
-    """Apply a configurable pipeline of passes to digital circuits.
+    """Apply an ordered pipeline of circuit transpilation passes.
+
+    The transpiler acts as a thin orchestrator: each pass receives the circuit from the previous
+    pass and must return a brand-new circuit, allowing both structural rewrites and device-specific
+    lowering steps to be chained deterministically. Today the pipeline defaults to a single
+    `DecomposeMultiControlledGatesPass`, but the API is designed so additional passes—e.g. layout,
+    routing, or hardware-aware optimizers—can be composed in future iterations without changing
+    backend code.
 
     Args:
         pipeline (list[CircuitTranspilerPass] | None): Sequential list of passes to execute while transpiling.
-
-    Returns:
-        CircuitTranspiler: New transpiler instance bound to the provided pipeline.
     """
 
     def __init__(self, pipeline: list[CircuitTranspilerPass] | None = None) -> None:
