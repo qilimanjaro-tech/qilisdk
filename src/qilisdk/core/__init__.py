@@ -22,6 +22,7 @@ from .variables import (
     LT,
     NEQ,
     BinaryVariable,
+    Domain,
     Equal,
     GreaterThan,
     GreaterThanOrEqual,
@@ -30,6 +31,7 @@ from .variables import (
     NotEqual,
     Parameter,
     SpinVariable,
+    Term,
     Variable,
 )
 
@@ -42,6 +44,7 @@ __all__ = [
     "NEQ",
     "BinaryVariable",
     "Constraint",
+    "Domain",
     "Equal",
     "GreaterThan",
     "GreaterThanOrEqual",
@@ -54,6 +57,7 @@ __all__ = [
     "Parameter",
     "QTensor",
     "SpinVariable",
+    "Term",
     "Variable",
     "basis_state",
     "bra",
