@@ -15,7 +15,7 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, Adjoint, Controlled
+from qilisdk.digital.gates import CNOT, Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -59,11 +59,21 @@ def test_execute_with_measurement_gate(backend):
 
 
 def test_unsupported_gate_raises(backend):
-    class FakeGate:
-        target_qubits = [0]
+    class DummyGate(BasicGate):
+        """A dummy basic gate to trigger unsupported-gate errors."""
+
+        def __init__(self, qubit: int) -> None:
+            super().__init__((qubit,))
+
+        @property
+        def name(self) -> str:
+            return "Dummy"
+
+        def _generate_matrix(self) -> np.ndarray:
+            return np.eye(2, dtype=complex)
 
     circuit = Circuit(nqubits=1)
-    circuit.gates.append(FakeGate())
+    circuit.gates.append(DummyGate(0))
     with pytest.raises(UnsupportedGateError):
         backend.execute(Sampling(circuit=circuit))
 
@@ -125,7 +135,7 @@ def test_controlled_handler(gate_instance):
     circuit.add(controlled_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
-    assert any(g.name == "Controlled_" + controlled_gate.name for g in qutip_circuit.gates)
+    assert any(g.name.startswith(controlled_gate.name) for g in qutip_circuit.gates)
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])

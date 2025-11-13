@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
@@ -27,10 +28,12 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
+from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals.sampling import Sampling
@@ -117,18 +120,17 @@ class QutipBackend(Backend):
 
         """
         logger.info("Executing Sampling (shots={})", functional.nshots)
-        qutip_circuit = self._get_qutip_circuit(functional.circuit)
 
-        counts: Counter[str] = Counter()
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
         measurements_set = set()
         for m in functional.circuit.gates:
             if isinstance(m, M):
                 measurements_set.update(list(m.target_qubits))
-
         measurements = sorted(measurements_set)
 
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        qutip_circuit = self._get_qutip_circuit(transpiled_circuit)
         sim = CircuitSimulator(qutip_circuit)
 
         res = sim.run_statistics(init_state)  # runs the full circuit for one shot
@@ -308,10 +310,10 @@ class QutipBackend(Backend):
 
     def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # noqa: PLR6301
         """
-        Handle a controlled gate operation.
+        Handle a controlled gate operation by registering a custom QuTiP gate.
 
-        This method processes a controlled gate by creating a temporary kernel for the basic gate,
-        applying its handler, and then integrating it into the main kernel as a controlled operation.
+        For non-native controlled gates we construct the block-matrix explicitly, mirroring
+        the approach recommended in the QuTiP QIP documentation for custom controlled rotations.
 
         Raises:
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
@@ -320,13 +322,22 @@ class QutipBackend(Backend):
             logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
 
-        def qutip_controlled_gate() -> Qobj:
-            return QutipGates.controlled_gate(Qobj(gate.basic_gate.matrix), controls=0, targets=1)
-
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
         else:
-            gate_name = "Controlled_" + gate.name
+            base_matrix = gate.basic_gate.matrix
+            dim_target = base_matrix.shape[0]
+            dim_total = 2 * dim_target
+            dims = [[2] + [2] * len(gate.target_qubits), [2] + [2] * len(gate.target_qubits)]
+
+            def qutip_controlled_gate() -> Qobj:
+                mat = np.zeros((dim_total, dim_total), dtype=np.complex128)
+                mat[:dim_target, :dim_target] = np.eye(dim_target, dtype=np.complex128)
+                mat[dim_target:, dim_target:] = base_matrix
+                return Qobj(mat, dims=dims)
+
+            matrix_digest = hashlib.sha1(base_matrix.tobytes()).hexdigest()[:16]  # noqa: S324
+            gate_name = f"{gate.name}_{matrix_digest}"
             if gate_name not in circuit.user_gates:
                 circuit.user_gates[gate_name] = qutip_controlled_gate
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
