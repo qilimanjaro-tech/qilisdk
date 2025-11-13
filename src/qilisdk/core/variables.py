@@ -18,7 +18,7 @@ import copy
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
+from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar, overload
 
 import numpy as np
 from loguru import logger
@@ -246,6 +246,7 @@ class Operation(str, Enum):
     ADD = "+"
     DIV = "/"
     SUB = "-"
+    MATH_MAP = "mathematical_map"
 
     @classmethod
     def to_yaml(cls, representer: RoundTripRepresenter, node: Operation) -> ScalarNode:
@@ -1147,6 +1148,8 @@ class Variable(BaseVariable):
         return super().update_variable(domain, bounds)
 
     def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
+        if not isinstance(value, (list, RealNumber)):
+            raise ValueError("Invalid Value Provided to evaluate a Variable.")
         if isinstance(value, int | float):
             if not self.domain.check_value(value):
                 raise ValueError(f"The value {value} is invalid for the domain {self.domain.value}")
@@ -1502,7 +1505,7 @@ class Term:
         Returns:
             (Term | BaseVariable): the simplified term.
         """
-        if len(self) == 1:
+        if len(self) == 1 and not isinstance(self, MathematicalMap):
             item = next(iter(self._elements.keys()))
             if self._elements[item] == 1:
                 return item
@@ -2007,3 +2010,72 @@ class ComparisonTerm:
             "Symbolic Constraint Term objects do not have an inherent truth value. "
             "Use a method like .evaluate() to obtain a Boolean value."
         )
+
+
+class MathematicalMap(Term, ABC):
+    MATH_SYMBOL = ""
+
+    @overload
+    def __init__(self, arg: Term, /) -> None: ...
+    @overload
+    def __init__(self, arg: Parameter, /) -> None: ...
+    @overload
+    def __init__(self, arg: BaseVariable, /) -> None: ...
+
+    def __init__(self, arg: Term | Parameter | BaseVariable) -> None:
+        if isinstance(arg, Term):
+            self._initialize_with_term(arg)
+        elif isinstance(arg, Parameter):
+            self._initialize_with_parameter(arg)
+        elif isinstance(arg, BaseVariable):
+            self._initialize_with_variable(arg)
+        else:
+            raise TypeError("Sin expects Term | Parameter | BaseVariable")
+
+    def _initialize_with_term(self, term: Term) -> None:
+        super().__init__(elements=[term], operation=Operation.MATH_MAP)
+
+    def _initialize_with_parameter(self, parameter: Parameter) -> None:
+        super().__init__(elements=[parameter], operation=Operation.MATH_MAP)
+
+    def _initialize_with_variable(self, variable: BaseVariable) -> None:
+        super().__init__(elements=[variable], operation=Operation.MATH_MAP)
+
+    @abstractmethod
+    def _apply_mathematical_map(self, value: Number) -> Number: ...
+
+    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
+        value: Number = 0
+
+        for e in self:
+            if isinstance(e, Term):
+                value += e.evaluate(var_values)
+            else:
+                value += e.evaluate(var_values[e])
+
+        return self._apply_mathematical_map(value)
+
+    def __repr__(self) -> str:
+        return f"{self.MATH_SYMBOL}[{super().__repr__()}]"
+
+    __str__ = __repr__
+
+
+class Sin(MathematicalMap):
+    MATH_SYMBOL = "sin"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.sin(_assert_real(value)))
+
+    def __copy__(self) -> Sin:
+        return Sin(super().__copy__())
+
+
+class Cos(MathematicalMap):
+    MATH_SYMBOL = "cos"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.cos(_assert_real(value)))
+
+    def __copy__(self) -> Cos:
+        return Cos(super().__copy__())
