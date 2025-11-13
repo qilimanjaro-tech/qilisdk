@@ -29,11 +29,16 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -73,7 +78,7 @@ class CudaBackend(Backend):
                 Defaults to STATE_VECTOR.
         """
         super().__init__()
-        cudaq.register_operation("i", np.array([1, 0, 0, 1]))
+        cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: CudaBackend._handle_I,
             X: CudaBackend._handle_X,
@@ -122,7 +127,8 @@ class CudaBackend(Backend):
                 cudaq.set_target("qpp-cpu")
                 logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
             else:
-                cudaq.set_target("nvidia")
+                float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+                cudaq.set_target("nvidia", option=float_precision)
                 logger.debug("GPU detected, using cudaq's 'nvidia' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
@@ -196,20 +202,27 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()],
+            dtype=_complex_dtype(),
         )
         expected_values = (
-            np.array([[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()])
+            np.array(
+                [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()],
+                dtype=_complex_dtype(),
+            )
             if evolution_result.expectation_values() is not None and functional.store_intermediate_results
             else None
         )
         final_state = (
-            QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))
+            QTensor(np.array(evolution_result.final_state(), dtype=_complex_dtype()).reshape(-1, 1))
             if evolution_result.final_state() is not None
             else None
         )
         intermediate_states = (
-            [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]
+            [
+                QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
+                for state in evolution_result.intermediate_states()
+            ]
             if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
             else None
         )
