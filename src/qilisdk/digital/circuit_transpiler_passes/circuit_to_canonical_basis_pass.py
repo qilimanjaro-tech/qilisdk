@@ -87,31 +87,71 @@ def _U3_to_RXRZ(q: int, theta: float, phi: float, lam: float) -> List[Gate]:
     ]
 
 
-def _U1_as_RZ(q: int, lam: float) -> List[Gate]:
+def _U1_as_RZ(q: int, phi: float) -> List[Gate]:
     # U1(λ) = RZ(λ)
-    return [RZ(q, phi=_wrap_angle(lam))]
+    return [RZ(q, phi=_wrap_angle(phi))]
 
 
-def _U2_as_RXRZ(q: int, phi: float, lam: float) -> List[Gate]:
+def _U2_as_RXRZ(q: int, phi: float, gamma: float) -> List[Gate]:
     # U2(φ, λ) = U3(π/2, φ, λ)
-    return _U3_to_RXRZ(q, math.pi / 2.0, phi, lam)
+    return _U3_to_RXRZ(q, math.pi / 2.0, phi, gamma)
 
 
-def _normalized_u3_gate(q: int, theta: float, phi: float, lam: float) -> U3:
+def _normalized_u3_gate(q: int, theta: float, phi: float, gamma: float) -> U3:
     """Return a normalized U3 instance with wrapped angles."""
 
-    return U3(q, theta=_wrap_angle(theta), phi=_wrap_angle(phi), gamma=_wrap_angle(lam))
+    return U3(q, theta=_wrap_angle(theta), phi=_wrap_angle(phi), gamma=_wrap_angle(gamma))
 
 
-# ---------- 1-qubit: named Clifford / Pauli / rotations ----------
+# ---------- Rotation Gates: RX, RY, RZ ----------
 
 
 def _RX_as_RX(q: int, theta: float) -> List[Gate]:
     return [RX(q, theta=_wrap_angle(theta))]
 
 
+def _RY_as_RY(q: int, theta: float) -> list[Gate]:
+    return [RY(q, theta=_wrap_angle(theta))]
+
+
 def _RZ_as_RZ(q: int, phi: float) -> List[Gate]:
     return [RZ(q, phi=_wrap_angle(phi))]
+
+
+def _RX_as_clifford_t(q: int, theta: float) -> List[Gate]:
+    """Express RX(θ) as H · RZ(θ) · H using Clifford+T-compatible rotations."""
+
+    phase = _RZ_as_clifford_t(q, theta)
+    return [H(q), *phase, H(q)]
+
+
+def _RZ_as_clifford_t(q: int, phi: float) -> List[Gate]:
+    """Express RZ(φ) as a sequence of S and T gates."""
+
+    phi = _wrap_angle(phi)
+    k = round(phi / (math.pi / 4.0))
+    approx = k * (math.pi / 4.0)
+    if not math.isclose(phi, approx, abs_tol=ANGLE_TOL):
+        raise ValueError(
+            "RZ rotations must be multiples of π/4 to express them with Clifford+T gates."
+        )
+
+    steps = int(k % 8)
+    seq: List[Gate] = []
+    for _ in range(steps // 2):
+        seq.append(S(q))
+    if steps % 2:
+        seq.append(T(q))
+    return seq
+
+
+def _RY_as_clifford_t(q: int, theta: float) -> List[Gate]:
+    """Express RY(θ) via the RZ–RX–RZ pattern in Clifford+T-compatible rotations."""
+
+    pre = _RZ_as_clifford_t(q, math.pi / 2.0)
+    mid = _RX_as_clifford_t(q, theta)
+    post = _RZ_as_clifford_t(q, -math.pi / 2.0)
+    return [*pre, *mid, *post]
 
 
 def _RY_as_RXRZ(q: int, theta: float) -> List[Gate]:
@@ -126,21 +166,6 @@ def _RY_as_RXRZ(q: int, theta: float) -> List[Gate]:
 def _H_as_RXRZ(q: int) -> List[Gate]:
     # H = U3(π/2, 0, π) → RX/RZ via _U3_to_RXRZ
     return _U3_to_RXRZ(q, math.pi / 2.0, 0.0, math.pi)
-
-
-def _X_as_RX(q: int) -> List[Gate]:
-    # X = RX(π)
-    return _RX_as_RX(q, math.pi)
-
-
-def _Y_as_RXRZ(q: int) -> List[Gate]:
-    # Y = RY(π) = RZ(π/2) RX(π) RZ(-π/2)
-    return _RY_as_RXRZ(q, math.pi)
-
-
-def _Z_as_RZ(q: int) -> List[Gate]:
-    # Z = RZ(π)
-    return _RZ_as_RZ(q, math.pi)
 
 
 # ---------- 2-qubit: CNOT <-> CZ, SWAP ----------
@@ -334,33 +359,6 @@ def _angles_equivalent(value: float, target: float) -> bool:
     return abs(_wrap_angle(value - target)) <= ANGLE_TOL
 
 
-def _RZ_as_clifford_t(q: int, phi: float) -> List[Gate]:
-    """Express RZ(φ) as a sequence of S and T gates."""
-
-    phi = _wrap_angle(phi)
-    k = round(phi / (math.pi / 4.0))
-    approx = k * (math.pi / 4.0)
-    if not math.isclose(phi, approx, abs_tol=ANGLE_TOL):
-        raise ValueError(
-            "RZ rotations must be multiples of π/4 to express them with Clifford+T gates."
-        )
-
-    steps = int(k % 8)
-    seq: List[Gate] = []
-    for _ in range(steps // 2):
-        seq.append(S(q))
-    if steps % 2:
-        seq.append(T(q))
-    return seq
-
-
-def _RX_as_clifford_t(q: int, theta: float) -> List[Gate]:
-    """Express RX(θ) as H · RZ(θ) · H using Clifford+T-compatible rotations."""
-
-    phase = _RZ_as_clifford_t(q, theta)
-    return [H(q), *phase, H(q)]
-
-
 def _recover_ry_sequences(gates: List[Gate]) -> List[Gate]:
     """Collapse Z-X-Z patterns back into RY for the XYZ basis."""
 
@@ -422,71 +420,109 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
 
     def _rewrite_gate(self, g: Gate) -> List[Gate]:
         basis = self._basis
+
         # measurement passes through
         if isinstance(g, M):
             return [g]
+
+        # identity gets eliminated
+        if isinstance(g, I):
+            return []
+
+        if isinstance(g, X):
+            q = g.qubits[0]
+            if basis == CanonicalBasis.XYZ_ROTATIONS:
+                return _RX_as_RX(q, math.pi)
+            if basis == CanonicalBasis.ZX_EULER:
+                return _RX_as_RX(q, math.pi)
+            if basis == CanonicalBasis.CLIFFORD_T:
+                return _RX_as_clifford_t(q, theta=math.pi)
+            if basis == CanonicalBasis.U3_CX:
+                return [U3(q, theta=math.pi, phi=0.0, gamma=0.0)]
+        if isinstance(g, Y):
+            q = g.qubits[0]
+            if basis == CanonicalBasis.XYZ_ROTATIONS:
+                return [RY(q, theta=_wrap_angle(math.pi))]
+            if basis in {CanonicalBasis.ZX_EULER, CanonicalBasis.CLIFFORD_T}:
+                return _RY_as_RXRZ(q, math.pi)
+            if basis == CanonicalBasis.U3_CX:
+                return [_normalized_u3_gate(q, math.pi, math.pi / 2.0, -math.pi / 2.0)]
+        if isinstance(g, Z):
+            q = g.qubits[0]
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _RZ_as_RZ(q, math.pi)
+            if basis == CanonicalBasis.U3_CX:
+                return [_normalized_u3_gate(q, 0.0, 0.0, math.pi)]
+        if isinstance(g, H):
+            q = g.qubits[0]
+            if basis == CanonicalBasis.CLIFFORD_T:
+                return [H(q)]
+            if basis in {CanonicalBasis.XYZ_ROTATIONS, CanonicalBasis.ZX_EULER}:
+                return _H_as_RXRZ(q)
+            if basis == CanonicalBasis.U3_CX:
+                return [_normalized_u3_gate(q, math.pi / 2.0, 0.0, math.pi)]
+        if isinstance(g, S):
+            q = g.qubits[0]
+            if basis == CanonicalBasis.CLIFFORD_T:
+                return [S(q)]
+            if basis in {CanonicalBasis.XYZ_ROTATIONS, CanonicalBasis.ZX_EULER}:
+                return _RZ_as_RZ(q, math.pi / 2.0)
+            if basis == CanonicalBasis.U3_CX:
+                return [_normalized_u3_gate(q, 0.0, math.pi / 2.0, 0.0)]
+        if isinstance(g, T):
+            q = g.qubits[0]
+            if basis == CanonicalBasis.CLIFFORD_T:
+                return [T(q)]
+            if basis in {CanonicalBasis.XYZ_ROTATIONS, CanonicalBasis.ZX_EULER}:
+                return _RZ_as_RZ(q, math.pi / 4.0)
+            if basis == CanonicalBasis.U3_CX:
+                return [_normalized_u3_gate(q, 0.0, math.pi / 4.0, 0.0)]
 
         # Explicit U3/RY are not in the basis: decompose them.
         if isinstance(g, U3):
             q = g.qubits[0]
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, g.theta, g.phi, g.gamma)]
-            return _U3_to_RXRZ(q, g.theta, g.phi, g.gamma)
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _U3_to_RXRZ(q, g.theta, g.phi, g.gamma)
         if isinstance(g, RY):
             q = g.qubits[0]
             if basis == CanonicalBasis.XYZ_ROTATIONS:
                 return [RY(q, theta=_wrap_angle(g.theta))]
+            if basis in {CanonicalBasis.ZX_EULER, CanonicalBasis.CLIFFORD_T}:
+                return _RY_as_RXRZ(q, g.theta)
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, g.theta, math.pi / 2.0, -math.pi / 2.0)]
-            return _RY_as_RXRZ(q, g.theta)
-
-        # already basis
-        if isinstance(g, (RX, RZ, CZ)):
-            return [g]
-
-        # simple 1q
-        if isinstance(g, I):
-            return []
-        if isinstance(g, H):
-            q = g.qubits[0]
-            if basis == CanonicalBasis.CLIFFORD_T:
-                return [H(q)]
-            if basis == CanonicalBasis.U3_CX:
-                return [_normalized_u3_gate(q, math.pi / 2.0, 0.0, math.pi)]
-            return _H_as_RXRZ(q)
-        if isinstance(g, X):
-            return _X_as_RX(g.qubits[0])
-        if isinstance(g, Y):
-            q = g.qubits[0]
-            if basis == CanonicalBasis.XYZ_ROTATIONS:
-                return [RY(q, theta=_wrap_angle(math.pi))]
-            if basis == CanonicalBasis.U3_CX:
-                return [_normalized_u3_gate(q, math.pi, math.pi / 2.0, -math.pi / 2.0)]
-            return _Y_as_RXRZ(q)
-        if isinstance(g, Z):
-            return _Z_as_RZ(g.qubits[0])
-        if isinstance(g, S):
-            q = g.qubits[0]
-            if basis == CanonicalBasis.CLIFFORD_T:
-                return [S(q)]
-            return _RZ_as_RZ(q, math.pi / 2.0)
-        if isinstance(g, T):
-            q = g.qubits[0]
-            if basis == CanonicalBasis.CLIFFORD_T:
-                return [T(q)]
-            return _RZ_as_RZ(q, math.pi / 4.0)
 
         # param 1q
         if isinstance(g, U1):
             q = g.qubits[0]
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, 0.0, g.phi, 0.0)]
-            return _U1_as_RZ(q, g.phi)
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _U1_as_RZ(q, g.phi)
         if isinstance(g, U2):
             q = g.qubits[0]
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, math.pi / 2.0, g.phi, g.gamma)]
-            return _U2_as_RXRZ(q, g.phi, g.gamma)
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _U2_as_RXRZ(q, g.phi, g.gamma)
 
         # 2q
         if isinstance(g, CNOT):
@@ -540,7 +576,12 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
             q = base.qubits[0]
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, th, ph, lam)]
-            return _U3_to_RXRZ(q, th, ph, lam)
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _U3_to_RXRZ(q, th, ph, lam)
 
         # generic 1q
         if isinstance(g, BasicGate) and g.nqubits == 1:
@@ -548,7 +589,12 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
             q = g.qubits[0]
             if basis == CanonicalBasis.U3_CX:
                 return [_normalized_u3_gate(q, th, ph, lam)]
-            return _U3_to_RXRZ(q, th, ph, lam)
+            if basis in {
+                CanonicalBasis.XYZ_ROTATIONS,
+                CanonicalBasis.ZX_EULER,
+                CanonicalBasis.CLIFFORD_T,
+            }:
+                return _U3_to_RXRZ(q, th, ph, lam)
 
         raise NotImplementedError(f"No canonicalization rule for {type(g).__name__}")
 
@@ -571,6 +617,8 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
         for g in gates:
             if isinstance(g, RX):
                 out.extend(_RX_as_clifford_t(g.qubits[0], g.theta))
+            elif isinstance(g, RY):
+                out.extend(_RY_as_clifford_t(g.qubits[0], g.theta))
             elif isinstance(g, RZ):
                 out.extend(_RZ_as_clifford_t(g.qubits[0], g.phi))
             else:
