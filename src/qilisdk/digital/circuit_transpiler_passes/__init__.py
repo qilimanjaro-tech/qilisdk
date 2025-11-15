@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .circuit_to_canonical_basis_pass import CircuitToCanonicalBasisPass, CanonicalBasis
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
 
-__all__ = ["CircuitTranspilerPass", "DecomposeMultiControlledGatesPass"]
+__all__ = [
+    "CanonicalBasis",
+    "CircuitToCanonicalBasisPass",
+    "CircuitTranspilerPass",
+    "DecomposeMultiControlledGatesPass",
+]
