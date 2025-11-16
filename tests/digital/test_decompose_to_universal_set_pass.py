@@ -79,6 +79,11 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
 ]
 
 
+ADJOINT_FACTORIES: list[tuple[str, GateFactory]] = [
+    (name, factory) for name, factory in GATE_FACTORIES if name.startswith("Adjoint_")
+]
+
+
 def _int_to_bits(value: int, width: int) -> tuple[int, ...]:
     return tuple((value >> shift) & 1 for shift in reversed(range(width)))
 
@@ -96,6 +101,11 @@ def _qubit_order(gate: Gate) -> tuple[int, ...]:
         if qubit not in order:
             order.append(qubit)
     return tuple(order)
+
+
+def _gate_signature(gate: Gate) -> tuple:
+    params = tuple(sorted(gate.get_parameters().items())) if gate.is_parameterized else tuple()
+    return (type(gate), gate.qubits, params)
 
 
 def _expand_gate_to_order(gate: Gate, order: tuple[int, ...]) -> np.ndarray | None:
@@ -192,6 +202,14 @@ def _helper_cases() -> list:
     return cases
 
 
+def _adjoint_cases() -> list:
+    cases = []
+    for name, factory in ADJOINT_FACTORIES:
+        for basis in UniversalSet:
+            cases.append(pytest.param(factory, basis, id=f"{name}-{basis.name}"))
+    return cases
+
+
 @pytest.mark.parametrize(("factory", "basis", "helper"), _helper_cases())
 def test_universal_set_helpers_preserve_behavior(
     factory: GateFactory, basis: UniversalSet, helper: Callable[[Gate], list[Gate]]
@@ -223,3 +241,31 @@ def test_pass_rewrites_circuit_to_target_basis() -> None:
     transpiled = DecomposeToUniversalSetPass(UniversalSet.U3_CX).run(circuit)
 
     assert all(isinstance(g, (CNOT, U3, M)) for g in transpiled.gates)
+
+
+@pytest.mark.parametrize(("factory", "basis"), _adjoint_cases())
+def test_adjoints_match_manual_reverse_sequences(factory: GateFactory, basis: UniversalSet) -> None:
+    adjoint_gate = factory()
+    base_gate = adjoint_gate.basic_gate
+    base_sequence = decompose_gate_for_universal_set(base_gate, basis)
+
+    expected: list[Gate] = []
+    for primitive in reversed(base_sequence):
+        if hasattr(primitive, "adjoint"):
+            adjoint = primitive.adjoint()
+            expected.extend(decompose_gate_for_universal_set(adjoint, basis))
+        else:
+            expected.append(primitive)
+
+    actual = decompose_gate_for_universal_set(adjoint_gate, basis)
+
+    assert len(actual) == len(expected)
+    for produced, reference in zip(actual, expected):
+        assert _gate_signature(produced) == _gate_signature(reference)
+
+
+@pytest.mark.parametrize(("factory", "basis"), _adjoint_cases())
+def test_adjoints_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
+    gate = factory()
+    primitives = decompose_gate_for_universal_set(gate, basis)
+    _assert_matrix_equivalence(gate, primitives)
