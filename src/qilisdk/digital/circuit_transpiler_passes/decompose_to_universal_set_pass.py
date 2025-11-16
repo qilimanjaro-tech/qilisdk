@@ -1129,11 +1129,11 @@ def _special_controlled_mapping(
         return adapters[basis](CNOT(control, target))
     if gate.is_modified_from(Z):
         adapters = {
-            UniversalSet.CLIFFORD_T: _CZ_for_CliffordT,
-            UniversalSet.RZ_RX_CX: _CZ_for_RzRxCX,
-            UniversalSet.U3_CX: _CZ_for_U3CX,
+            UniversalSet.CLIFFORD_T: _CZ_for_CliffordT,  # type: ignore[dict-item]
+            UniversalSet.RZ_RX_CX: _CZ_for_RzRxCX,  # type: ignore[dict-item]
+            UniversalSet.U3_CX: _CZ_for_U3CX,  # type: ignore[dict-item]
         }
-        return adapters[basis](CZ(control, target))
+        return adapters[basis](CZ(control, target))  # type: ignore[arg-type]
     if gate.is_modified_from(RZ):
         phi = gate.basic_gate.phi  # type: ignore[attr-defined]
         sequence = _crz_sequence(control, target, phi)

@@ -254,9 +254,7 @@ def _helper_cases() -> list:
                 except ValueError:
                     continue
             helper = _DECOMPOSERS[gate_cls][basis]
-            cases.append(
-                pytest.param(factory, basis, helper, id=f"{name}-{basis.name}")
-            )
+            cases.append(pytest.param(factory, basis, helper, id=f"{name}-{basis.name}"))
     return cases
 
 
