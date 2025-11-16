@@ -31,6 +31,7 @@ from qilisdk.digital.gates import (
     U3,
     Adjoint,
     BasicGate,
+    Controlled,
     Exponential,
     Gate,
     H,
@@ -1038,6 +1039,66 @@ def _Exponential_for_U3CX(gate: Exponential[BasicGate]) -> list[Gate]:
     return [_normalized_u3(qubit, theta, phi, gamma)]
 
 
+def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, float, float, float]:
+    base = gate.basic_gate
+    if base.nqubits != 1:
+        msg = "Controlled decomposition only supports single-qubit target gates."
+        raise NotImplementedError(msg)
+    if len(gate.control_qubits) != 1:
+        msg = "Only single-control gates are supported in this pass."
+        raise NotImplementedError(msg)
+    control = gate.control_qubits[0]
+    target = base.target_qubits[0]
+    theta, phi, lam = _zyz_from_unitary(base.matrix)
+    return (control, target, theta, phi, lam)
+
+
+def _controlled_rxrz_sequence(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+    seq: list[Gate] = []
+    seq.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
+    seq.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
+    seq.append(CNOT(control, target))
+    seq.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(lam + phi) / 2.0)))
+    seq.append(CNOT(control, target))  # noqa: FURB113
+    seq.append(RZ(target, phi=_wrap_angle((lam - phi) / 2.0)))
+    return seq
+
+
+def _map_rxrz_sequence(
+    sequence: list[Gate],
+    rx_mapper: Callable[[RX], list[Gate]],
+    rz_mapper: Callable[[RZ], list[Gate]],
+    cnot_mapper: Callable[[CNOT], list[Gate]],
+) -> list[Gate]:
+    mapped: list[Gate] = []
+    for gate in sequence:
+        if isinstance(gate, RX):
+            mapped.extend(rx_mapper(gate))
+        elif isinstance(gate, RZ):
+            mapped.extend(rz_mapper(gate))
+        elif isinstance(gate, CNOT):
+            mapped.extend(cnot_mapper(gate))
+        else:
+            msg = f"Unsupported gate {type(gate).__name__} while mapping controlled sequences."
+            raise ValueError(msg)
+    return mapped
+
+
+def _Controlled_for_RzRxCX(gate: Controlled[BasicGate]) -> list[Gate]:
+    control, target, theta, phi, lam = _controlled_gate_parameters(gate)
+    return _controlled_rxrz_sequence(control, target, theta, phi, lam)
+
+
+def _Controlled_for_CliffordT(gate: Controlled[BasicGate]) -> list[Gate]:
+    base_sequence = _Controlled_for_RzRxCX(gate)
+    return _map_rxrz_sequence(base_sequence, _RX_for_CliffordT, _RZ_for_CliffordT, _CNOT_for_CliffordT)
+
+
+def _Controlled_for_U3CX(gate: Controlled[BasicGate]) -> list[Gate]:
+    base_sequence = _Controlled_for_RzRxCX(gate)
+    return _map_rxrz_sequence(base_sequence, _RX_for_U3CX, _RZ_for_U3CX, _CNOT_for_U3CX)
+
+
 _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = {
     M: {
         UniversalSet.CLIFFORD_T: _M_for_CliffordT,
@@ -1133,6 +1194,11 @@ _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = 
         UniversalSet.CLIFFORD_T: _Exponential_for_CliffordT,
         UniversalSet.RZ_RX_CX: _Exponential_for_RzRxCX,
         UniversalSet.U3_CX: _Exponential_for_U3CX,
+    },
+    Controlled: {
+        UniversalSet.CLIFFORD_T: _Controlled_for_CliffordT,
+        UniversalSet.RZ_RX_CX: _Controlled_for_RzRxCX,
+        UniversalSet.U3_CX: _Controlled_for_U3CX,
     },
 }
 

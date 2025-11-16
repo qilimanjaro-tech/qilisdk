@@ -9,6 +9,8 @@ from qilisdk.digital.circuit_transpiler_passes.decompose_to_universal_set_pass i
     _DECOMPOSERS,
     DecomposeToUniversalSetPass,
     UniversalSet,
+    _u3_to_rxrz_sequence,
+    _wrap_angle,
     decompose_gate_for_universal_set,
 )
 from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _zyz_from_unitary
@@ -79,11 +81,22 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
     ("Adjoint_S", lambda: S(0).adjoint()),
     ("Adjoint_T", lambda: T(0).adjoint()),
     ("Adjoint_SWAP", lambda: SWAP(0, 1).adjoint()),
+    ("Controlled_X", lambda: X(1).controlled(0)),
+    ("Controlled_RY", lambda: RY(1, theta=math.pi / 2.0).controlled(0)),
+    (
+        "Controlled_U3",
+        lambda: U3(1, theta=math.pi / 2.0, phi=0.0, gamma=math.pi / 2.0).controlled(0),
+    ),
 ]
 
 
 ADJOINT_FACTORIES: list[tuple[str, GateFactory]] = [
     (name, factory) for name, factory in GATE_FACTORIES if name.startswith("Adjoint_")
+]
+
+
+CONTROLLED_FACTORIES: list[tuple[str, GateFactory]] = [
+    (name, factory) for name, factory in GATE_FACTORIES if name.startswith("Controlled_")
 ]
 
 
@@ -245,12 +258,52 @@ def _exponential_cases() -> list:
     return cases
 
 
+def _controlled_cases() -> list:
+    cases = []
+    for name, factory in CONTROLLED_FACTORIES:
+        for basis in UniversalSet:
+            cases.append(pytest.param(factory, basis, id=f"{name}-{basis.name}"))
+    return cases
+
+
 def _u3_equivalent_from_exponential(gate: Exponential[BasicGate]) -> U3:
     base = gate.basic_gate
     if base.nqubits != 1:
         raise NotImplementedError("Exponential of multi-qubit gates not supported in tests.")
     theta, phi, gamma = _zyz_from_unitary(gate.matrix)
     return U3(base.qubits[0], theta=theta, phi=phi, gamma=gamma)
+
+
+def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float]:
+    base = gate.basic_gate  # type: ignore[attr-defined]
+    control = gate.control_qubits[0]  # type: ignore[attr-defined]
+    target = base.target_qubits[0]
+    theta, phi, lam = _zyz_from_unitary(base.matrix)
+    return control, target, theta, phi, lam
+
+
+def _controlled_reference_rxrz(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+    sequence: list[Gate] = []
+    sequence.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
+    sequence.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
+    sequence.append(CNOT(control, target))
+    sequence.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(lam + phi) / 2.0)))
+    sequence.append(CNOT(control, target))
+    sequence.append(RZ(target, phi=_wrap_angle((lam - phi) / 2.0)))
+    return sequence
+
+
+def _convert_sequence_to_basis(sequence: list[Gate], basis: UniversalSet) -> list[Gate]:
+    converted: list[Gate] = []
+    for gate in sequence:
+        converted.extend(decompose_gate_for_universal_set(gate, basis))
+    return converted
+
+
+def _controlled_reference_sequence(gate: Gate, basis: UniversalSet) -> list[Gate]:
+    control, target, theta, phi, lam = _controlled_parameters(gate)
+    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam)
+    return _convert_sequence_to_basis(rxrz_sequence, basis)
 
 
 @pytest.mark.parametrize(("factory", "basis", "helper"), _helper_cases())
@@ -328,6 +381,24 @@ def test_exponentials_match_u3_decomposition(factory: GateFactory, basis: Univer
 
 @pytest.mark.parametrize(("factory", "basis"), _exponential_cases())
 def test_exponentials_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
+    gate = factory()
+    primitives = decompose_gate_for_universal_set(gate, basis)
+    _assert_matrix_equivalence(gate, primitives)
+
+
+@pytest.mark.parametrize(("factory", "basis"), _controlled_cases())
+def test_controlled_gates_match_reference_sequence(factory: GateFactory, basis: UniversalSet) -> None:
+    gate = factory()
+    expected = _controlled_reference_sequence(gate, basis)
+    actual = decompose_gate_for_universal_set(gate, basis)
+
+    assert len(actual) == len(expected)
+    for produced, reference in zip(actual, expected):
+        assert _gate_signature(produced) == _gate_signature(reference)
+
+
+@pytest.mark.parametrize(("factory", "basis"), _controlled_cases())
+def test_controlled_gates_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
     gate = factory()
     primitives = decompose_gate_for_universal_set(gate, basis)
     _assert_matrix_equivalence(gate, primitives)
