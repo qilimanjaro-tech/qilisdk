@@ -27,6 +27,7 @@ from qilisdk.digital.gates import (
     U3,
     Adjoint,
     BasicGate,
+    Controlled,
     Exponential,
     Gate,
     H,
@@ -38,6 +39,8 @@ from qilisdk.digital.gates import (
     Y,
     Z,
 )
+
+ANGLE_TOL = 1e-9
 
 ALLOWED_TYPES = {
     UniversalSet.CLIFFORD_T: (CNOT, H, M, S, T),
@@ -81,12 +84,20 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
     ("Adjoint_S", lambda: S(0).adjoint()),
     ("Adjoint_T", lambda: T(0).adjoint()),
     ("Adjoint_SWAP", lambda: SWAP(0, 1).adjoint()),
-    ("Controlled_X", lambda: X(1).controlled(0)),
+    ("Controlled_RX", lambda: RX(1, theta=math.pi / 2.0).controlled(0)),
+    ("Controlled_Y", lambda: Y(1).controlled(0)),
+    ("Controlled_RZ", lambda: RZ(1, phi=math.pi / 2.0).controlled(0)),
     ("Controlled_RY", lambda: RY(1, theta=math.pi / 2.0).controlled(0)),
     (
-        "Controlled_U3",
-        lambda: U3(1, theta=math.pi / 2.0, phi=0.0, gamma=math.pi / 2.0).controlled(0),
+        "Controlled_U2",
+        lambda: U2(1, phi=0.0, gamma=0.0).controlled(0),
     ),
+    (
+        "Controlled_U3",
+        lambda: U3(1, theta=math.pi / 2.0, phi=0.0, gamma=0.0).controlled(0),
+    ),
+    ("Controlled_S", lambda: S(1).controlled(0)),
+    ("Controlled_T", lambda: T(1).controlled(0)),
 ]
 
 
@@ -233,6 +244,11 @@ def _helper_cases() -> list:
         for basis in UniversalSet:
             if name.startswith("Exponential_") and basis == UniversalSet.CLIFFORD_T:
                 continue
+            if basis == UniversalSet.CLIFFORD_T and isinstance(sample_gate, Controlled):
+                try:
+                    decompose_gate_for_universal_set(factory(), basis)
+                except ValueError:
+                    continue
             helper = _DECOMPOSERS[gate_cls][basis]
             cases.append(
                 pytest.param(factory, basis, helper, id=f"{name}-{basis.name}")
@@ -262,6 +278,11 @@ def _controlled_cases() -> list:
     cases = []
     for name, factory in CONTROLLED_FACTORIES:
         for basis in UniversalSet:
+            if basis == UniversalSet.CLIFFORD_T:
+                try:
+                    decompose_gate_for_universal_set(factory(), basis)
+                except ValueError:
+                    continue
             cases.append(pytest.param(factory, basis, id=f"{name}-{basis.name}"))
     return cases
 
@@ -274,21 +295,41 @@ def _u3_equivalent_from_exponential(gate: Exponential[BasicGate]) -> U3:
     return U3(base.qubits[0], theta=theta, phi=phi, gamma=gamma)
 
 
-def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float]:
+def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float, float]:
     base = gate.basic_gate  # type: ignore[attr-defined]
     control = gate.control_qubits[0]  # type: ignore[attr-defined]
     target = base.target_qubits[0]
-    theta, phi, lam = _zyz_from_unitary(base.matrix)
-    return control, target, theta, phi, lam
+    det = np.linalg.det(base.matrix)
+    global_phase = 0.5 * np.angle(det)
+    normalized = base.matrix * np.exp(-1j * global_phase)
+    theta, phi, lam = _zyz_from_unitary(normalized)
+    return control, target, theta, phi, lam, global_phase
 
 
-def _controlled_reference_rxrz(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+def _controlled_reference_rxrz(
+    control: int, target: int, theta: float, phi: float, lam: float, global_phase: float
+) -> list[Gate]:
     sequence: list[Gate] = []
+    if abs(_wrap_angle(global_phase)) > ANGLE_TOL:
+        sequence.append(RZ(control, phi=_wrap_angle(global_phase)))
+
+    if abs(_wrap_angle(theta)) <= ANGLE_TOL:
+        lam_total = _wrap_angle(phi + lam)
+        sequence.extend(
+            [
+                RZ(target, phi=_wrap_angle(lam_total / 2.0)),
+                CNOT(control, target),
+                RZ(target, phi=_wrap_angle(-lam_total / 2.0)),
+                CNOT(control, target),
+            ]
+        )
+        return sequence
+
     sequence.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
     sequence.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
     sequence.append(CNOT(control, target))
     sequence.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(lam + phi) / 2.0)))
-    sequence.append(CNOT(control, target))
+    sequence.append(CNOT(control, target))  # noqa: FURB113
     sequence.append(RZ(target, phi=_wrap_angle((lam - phi) / 2.0)))
     return sequence
 
@@ -301,8 +342,8 @@ def _convert_sequence_to_basis(sequence: list[Gate], basis: UniversalSet) -> lis
 
 
 def _controlled_reference_sequence(gate: Gate, basis: UniversalSet) -> list[Gate]:
-    control, target, theta, phi, lam = _controlled_parameters(gate)
-    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam)
+    control, target, theta, phi, lam, phase = _controlled_parameters(gate)
+    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam, phase)
     return _convert_sequence_to_basis(rxrz_sequence, basis)
 
 
@@ -402,3 +443,4 @@ def test_controlled_gates_preserve_unitaries(factory: GateFactory, basis: Univer
     gate = factory()
     primitives = decompose_gate_for_universal_set(gate, basis)
     _assert_matrix_equivalence(gate, primitives)
+

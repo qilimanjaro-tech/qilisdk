@@ -18,6 +18,8 @@ import math
 from enum import Enum
 from typing import Callable
 
+import numpy as np
+
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import (
     CNOT,
@@ -1039,7 +1041,7 @@ def _Exponential_for_U3CX(gate: Exponential[BasicGate]) -> list[Gate]:
     return [_normalized_u3(qubit, theta, phi, gamma)]
 
 
-def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, float, float, float]:
+def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, float, float, float, float]:
     base = gate.basic_gate
     if base.nqubits != 1:
         msg = "Controlled decomposition only supports single-qubit target gates."
@@ -1049,12 +1051,37 @@ def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, 
         raise NotImplementedError(msg)
     control = gate.control_qubits[0]
     target = base.target_qubits[0]
-    theta, phi, lam = _zyz_from_unitary(base.matrix)
-    return (control, target, theta, phi, lam)
+    det = np.linalg.det(base.matrix)
+    global_phase = 0.5 * np.angle(det)
+    normalized = base.matrix * np.exp(-1j * global_phase)
+    theta, phi, lam = _zyz_from_unitary(normalized)
+    return (control, target, theta, phi, lam, global_phase)
 
 
-def _controlled_rxrz_sequence(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+def _controlled_rxrz_sequence(
+    control: int,
+    target: int,
+    theta: float,
+    phi: float,
+    lam: float,
+    global_phase: float,
+) -> list[Gate]:
     seq: list[Gate] = []
+    if abs(_wrap_angle(global_phase)) > ANGLE_TOL:
+        seq.append(RZ(control, phi=_wrap_angle(global_phase)))
+
+    if abs(_wrap_angle(theta)) <= ANGLE_TOL:
+        lam_total = _wrap_angle(phi + lam)
+        seq.extend(
+            [
+                RZ(target, phi=_wrap_angle(lam_total / 2.0)),
+                CNOT(control, target),
+                RZ(target, phi=_wrap_angle(-lam_total / 2.0)),
+                CNOT(control, target),
+            ]
+        )
+        return seq
+
     seq.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
     seq.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
     seq.append(CNOT(control, target))
@@ -1085,8 +1112,8 @@ def _map_rxrz_sequence(
 
 
 def _Controlled_for_RzRxCX(gate: Controlled[BasicGate]) -> list[Gate]:
-    control, target, theta, phi, lam = _controlled_gate_parameters(gate)
-    return _controlled_rxrz_sequence(control, target, theta, phi, lam)
+    control, target, theta, phi, lam, phase = _controlled_gate_parameters(gate)
+    return _controlled_rxrz_sequence(control, target, theta, phi, lam, phase)
 
 
 def _Controlled_for_CliffordT(gate: Controlled[BasicGate]) -> list[Gate]:
