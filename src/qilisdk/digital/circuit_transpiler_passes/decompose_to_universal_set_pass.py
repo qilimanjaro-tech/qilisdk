@@ -31,7 +31,6 @@ from qilisdk.digital.gates import (
     U3,
     Adjoint,
     BasicGate,
-    Controlled,
     Exponential,
     Gate,
     H,
@@ -385,6 +384,9 @@ def _convert_rxrz_sequence_to_clifford(sequence: list[Gate]) -> list[Gate]:
 
     Args:
         sequence (list[Gate]): Sequence containing RX and RZ gates only.
+
+    Raises:
+        ValueError: If other gates than RX or RZ are encountered.
 
     Returns:
         list[Gate]: Sequence that uses the Clifford+T universal set exclusively.

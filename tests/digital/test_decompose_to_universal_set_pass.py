@@ -314,7 +314,7 @@ def test_adjoints_preserve_unitaries(factory: GateFactory, basis: UniversalSet) 
     _assert_matrix_equivalence(gate, primitives)
 
 
-@pytest.mark.parametrize("factory,basis", _exponential_cases())
+@pytest.mark.parametrize(("factory", "basis"), _exponential_cases())
 def test_exponentials_match_u3_decomposition(factory: GateFactory, basis: UniversalSet) -> None:
     gate = factory()
     equivalent_u3 = _u3_equivalent_from_exponential(gate)
@@ -326,7 +326,7 @@ def test_exponentials_match_u3_decomposition(factory: GateFactory, basis: Univer
         assert _gate_signature(produced) == _gate_signature(reference)
 
 
-@pytest.mark.parametrize("factory,basis", _exponential_cases())
+@pytest.mark.parametrize(("factory", "basis"), _exponential_cases())
 def test_exponentials_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
     gate = factory()
     primitives = decompose_gate_for_universal_set(gate, basis)
