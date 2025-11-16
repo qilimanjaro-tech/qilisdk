@@ -45,6 +45,7 @@ from qilisdk.digital.gates import (
 )
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+from .numeric_helpers import _zyz_from_unitary
 
 ANGLE_TOL = 1e-9
 
@@ -140,14 +141,14 @@ def _ry_as_rxrz_sequence(qubit: int, theta: float) -> list[Gate]:
     ]
 
 
-def _u3_to_rxrz_sequence(qubit: int, theta: float, phi: float, lam: float) -> list[Gate]:
+def _u3_to_rxrz_sequence(qubit: int, theta: float, phi: float, gamma: float) -> list[Gate]:
     """Convert a U3 gate into the canonical RZ RX RZ pattern.
 
     Args:
         qubit (int): Target qubit index.
         theta (float): Polar rotation expressed in radians.
         phi (float): First azimuthal rotation expressed in radians.
-        lam (float): Second azimuthal rotation expressed in radians.
+        gamma (float): Second azimuthal rotation expressed in radians.
 
     Returns:
         list[Gate]: Sequence composed of RX and RZ gates equivalent to the original U3 gate.
@@ -156,7 +157,7 @@ def _u3_to_rxrz_sequence(qubit: int, theta: float, phi: float, lam: float) -> li
     return [
         RZ(qubit, phi=_wrap_angle(phi + math.pi / 2.0)),
         RX(qubit, theta=_wrap_angle(theta)),
-        RZ(qubit, phi=_wrap_angle(lam - math.pi / 2.0)),
+        RZ(qubit, phi=_wrap_angle(gamma - math.pi / 2.0)),
     ]
 
 
@@ -940,6 +941,15 @@ def _SWAP_for_U3CX(gate: SWAP) -> list[Gate]:
     return _swap_via_cnot(a, b)
 
 
+def _exponential_angles(gate: Exponential[BasicGate]) -> tuple[int, float, float, float]:
+    base = gate.basic_gate
+    if base.nqubits != 1:
+        msg = "Exponential of multi-qubit gates is not supported."
+        raise NotImplementedError(msg)
+    theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+    return (base.qubits[0], theta, phi, gamma)
+
+
 def _adjoint_gate_for_clifford_t(gate: Gate) -> list[Gate]:
     if isinstance(gate, H):
         return [H(gate.qubits[0])]
@@ -1008,6 +1018,22 @@ def _Adjoint_for_RzRxCX(gate: Adjoint[BasicGate]) -> list[Gate]:
 def _Adjoint_for_U3CX(gate: Adjoint[BasicGate]) -> list[Gate]:
     primitives = decompose_gate_for_universal_set(gate.basic_gate, UniversalSet.U3_CX)
     return _adjoint_sequence(primitives, UniversalSet.U3_CX)
+
+
+def _Exponential_for_CliffordT(gate: Exponential[BasicGate]) -> list[Gate]:
+    qubit, theta, phi, gamma = _exponential_angles(gate)
+    rxrz = _u3_to_rxrz_sequence(qubit, theta, phi, gamma)
+    return _convert_rxrz_sequence_to_clifford(rxrz)
+
+
+def _Exponential_for_RzRxCX(gate: Exponential[BasicGate]) -> list[Gate]:
+    qubit, theta, phi, gamma = _exponential_angles(gate)
+    return _u3_to_rxrz_sequence(qubit, theta, phi, gamma)
+
+
+def _Exponential_for_U3CX(gate: Exponential[BasicGate]) -> list[Gate]:
+    qubit, theta, phi, gamma = _exponential_angles(gate)
+    return [_normalized_u3(qubit, theta, phi, gamma)]
 
 
 _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = {
@@ -1100,6 +1126,11 @@ _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = 
         UniversalSet.CLIFFORD_T: _Adjoint_for_CliffordT,
         UniversalSet.RZ_RX_CX: _Adjoint_for_RzRxCX,
         UniversalSet.U3_CX: _Adjoint_for_U3CX,
+    },
+    Exponential: {
+        UniversalSet.CLIFFORD_T: _Exponential_for_CliffordT,
+        UniversalSet.RZ_RX_CX: _Exponential_for_RzRxCX,
+        UniversalSet.U3_CX: _Exponential_for_U3CX,
     },
 }
 

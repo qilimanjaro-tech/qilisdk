@@ -11,6 +11,7 @@ from qilisdk.digital.circuit_transpiler_passes.decompose_to_universal_set_pass i
     UniversalSet,
     decompose_gate_for_universal_set,
 )
+from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _zyz_from_unitary
 from qilisdk.digital.exceptions import GateHasNoMatrixError
 from qilisdk.digital.gates import (
     CNOT,
@@ -23,6 +24,8 @@ from qilisdk.digital.gates import (
     U2,
     U3,
     Adjoint,
+    BasicGate,
+    Exponential,
     Gate,
     H,
     I,
@@ -84,6 +87,26 @@ ADJOINT_FACTORIES: list[tuple[str, GateFactory]] = [
 ]
 
 
+class _SkewHermitianGenerator(BasicGate):
+    def __init__(self, qubit: int, strength: float) -> None:
+        self._strength = strength
+        super().__init__((qubit,))
+
+    @property
+    def name(self) -> str:  # pragma: no cover - trivial
+        return "SkewHermitian"
+
+    def _generate_matrix(self) -> np.ndarray:  # pragma: no cover - trivial
+        a = self._strength
+        return np.array([[0.0, a], [-a, 0.0]], dtype=complex)
+
+
+EXPONENTIAL_FACTORIES: list[tuple[str, GateFactory]] = [
+    ("Exponential_Skew_0.5", lambda: _SkewHermitianGenerator(0, 0.5).exponential()),
+    ("Exponential_Skew_1.0", lambda: _SkewHermitianGenerator(0, 1.0).exponential()),
+]
+
+
 def _int_to_bits(value: int, width: int) -> tuple[int, ...]:
     return tuple((value >> shift) & 1 for shift in reversed(range(width)))
 
@@ -104,7 +127,7 @@ def _qubit_order(gate: Gate) -> tuple[int, ...]:
 
 
 def _gate_signature(gate: Gate) -> tuple:
-    params = tuple(sorted(gate.get_parameters().items())) if gate.is_parameterized else tuple()
+    params = tuple(sorted(gate.get_parameters().items())) if gate.is_parameterized else ()
     return (type(gate), gate.qubits, params)
 
 
@@ -195,6 +218,8 @@ def _helper_cases() -> list:
         sample_gate = factory()
         gate_cls = type(sample_gate)
         for basis in UniversalSet:
+            if name.startswith("Exponential_") and basis == UniversalSet.CLIFFORD_T:
+                continue
             helper = _DECOMPOSERS[gate_cls][basis]
             cases.append(
                 pytest.param(factory, basis, helper, id=f"{name}-{basis.name}")
@@ -208,6 +233,24 @@ def _adjoint_cases() -> list:
         for basis in UniversalSet:
             cases.append(pytest.param(factory, basis, id=f"{name}-{basis.name}"))
     return cases
+
+
+def _exponential_cases() -> list:
+    cases = []
+    for name, factory in EXPONENTIAL_FACTORIES:
+        for basis in UniversalSet:
+            if basis == UniversalSet.CLIFFORD_T:
+                continue
+            cases.append(pytest.param(factory, basis, id=f"{name}-{basis.name}"))
+    return cases
+
+
+def _u3_equivalent_from_exponential(gate: Exponential[BasicGate]) -> U3:
+    base = gate.basic_gate
+    if base.nqubits != 1:
+        raise NotImplementedError("Exponential of multi-qubit gates not supported in tests.")
+    theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+    return U3(base.qubits[0], theta=theta, phi=phi, gamma=gamma)
 
 
 @pytest.mark.parametrize(("factory", "basis", "helper"), _helper_cases())
@@ -266,6 +309,25 @@ def test_adjoints_match_manual_reverse_sequences(factory: GateFactory, basis: Un
 
 @pytest.mark.parametrize(("factory", "basis"), _adjoint_cases())
 def test_adjoints_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
+    gate = factory()
+    primitives = decompose_gate_for_universal_set(gate, basis)
+    _assert_matrix_equivalence(gate, primitives)
+
+
+@pytest.mark.parametrize("factory,basis", _exponential_cases())
+def test_exponentials_match_u3_decomposition(factory: GateFactory, basis: UniversalSet) -> None:
+    gate = factory()
+    equivalent_u3 = _u3_equivalent_from_exponential(gate)
+    expected = decompose_gate_for_universal_set(equivalent_u3, basis)
+    actual = decompose_gate_for_universal_set(gate, basis)
+
+    assert len(actual) == len(expected)
+    for produced, reference in zip(actual, expected):
+        assert _gate_signature(produced) == _gate_signature(reference)
+
+
+@pytest.mark.parametrize("factory,basis", _exponential_cases())
+def test_exponentials_preserve_unitaries(factory: GateFactory, basis: UniversalSet) -> None:
     gate = factory()
     primitives = decompose_gate_for_universal_set(gate, basis)
     _assert_matrix_equivalence(gate, primitives)
