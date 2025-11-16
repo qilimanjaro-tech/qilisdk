@@ -84,10 +84,13 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
     ("Adjoint_S", lambda: S(0).adjoint()),
     ("Adjoint_T", lambda: T(0).adjoint()),
     ("Adjoint_SWAP", lambda: SWAP(0, 1).adjoint()),
+    ("Controlled_X", lambda: X(1).controlled(0)),
+    ("Controlled_Z", lambda: Z(1).controlled(0)),
     ("Controlled_RX", lambda: RX(1, theta=math.pi / 2.0).controlled(0)),
-    ("Controlled_Y", lambda: Y(1).controlled(0)),
     ("Controlled_RZ", lambda: RZ(1, phi=math.pi / 2.0).controlled(0)),
     ("Controlled_RY", lambda: RY(1, theta=math.pi / 2.0).controlled(0)),
+    ("Controlled_Y", lambda: Y(1).controlled(0)),
+    ("Controlled_U1", lambda: U1(1, phi=math.pi / 2.0).controlled(0)),
     (
         "Controlled_U2",
         lambda: U2(1, phi=0.0, gamma=0.0).controlled(0),
@@ -96,6 +99,7 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
         "Controlled_U3",
         lambda: U3(1, theta=math.pi / 2.0, phi=0.0, gamma=0.0).controlled(0),
     ),
+    ("Controlled_H", lambda: H(1).controlled(0)),
     ("Controlled_S", lambda: S(1).controlled(0)),
     ("Controlled_T", lambda: T(1).controlled(0)),
 ]
@@ -295,36 +299,16 @@ def _u3_equivalent_from_exponential(gate: Exponential[BasicGate]) -> U3:
     return U3(base.qubits[0], theta=theta, phi=phi, gamma=gamma)
 
 
-def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float, float]:
+def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float]:
     base = gate.basic_gate  # type: ignore[attr-defined]
     control = gate.control_qubits[0]  # type: ignore[attr-defined]
     target = base.target_qubits[0]
-    det = np.linalg.det(base.matrix)
-    global_phase = 0.5 * np.angle(det)
-    normalized = base.matrix * np.exp(-1j * global_phase)
-    theta, phi, lam = _zyz_from_unitary(normalized)
-    return control, target, theta, phi, lam, global_phase
+    theta, phi, lam = _zyz_from_unitary(base.matrix)
+    return control, target, theta, phi, lam
 
 
-def _controlled_reference_rxrz(
-    control: int, target: int, theta: float, phi: float, lam: float, global_phase: float
-) -> list[Gate]:
+def _controlled_reference_rxrz(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
     sequence: list[Gate] = []
-    if abs(_wrap_angle(global_phase)) > ANGLE_TOL:
-        sequence.append(RZ(control, phi=_wrap_angle(global_phase)))
-
-    if abs(_wrap_angle(theta)) <= ANGLE_TOL:
-        lam_total = _wrap_angle(phi + lam)
-        sequence.extend(
-            [
-                RZ(target, phi=_wrap_angle(lam_total / 2.0)),
-                CNOT(control, target),
-                RZ(target, phi=_wrap_angle(-lam_total / 2.0)),
-                CNOT(control, target),
-            ]
-        )
-        return sequence
-
     sequence.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
     sequence.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
     sequence.append(CNOT(control, target))
@@ -342,9 +326,40 @@ def _convert_sequence_to_basis(sequence: list[Gate], basis: UniversalSet) -> lis
 
 
 def _controlled_reference_sequence(gate: Gate, basis: UniversalSet) -> list[Gate]:
-    control, target, theta, phi, lam, phase = _controlled_parameters(gate)
-    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam, phase)
+    control, target, theta, phi, lam = _controlled_parameters(gate)
+    if isinstance(gate, Controlled) and gate.is_modified_from(X):
+        return decompose_gate_for_universal_set(CNOT(control, target), basis)
+    if isinstance(gate, Controlled) and gate.is_modified_from(Z):
+        return decompose_gate_for_universal_set(CZ(control, target), basis)
+    if isinstance(gate, Controlled) and gate.is_modified_from(RZ):
+        phi_angle = gate.basic_gate.phi  # type: ignore[attr-defined]
+        base_seq = _test_crz_sequence(control, target, phi_angle)
+        return _convert_sequence_to_basis(base_seq, basis)
+    if isinstance(gate, Controlled) and gate.is_modified_from(U1):
+        phi_angle = gate.basic_gate.phi  # type: ignore[attr-defined]
+        base_seq = _test_cu1_sequence(control, target, phi_angle)
+        return _convert_sequence_to_basis(base_seq, basis)
+    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam)
     return _convert_sequence_to_basis(rxrz_sequence, basis)
+
+
+def _test_crz_sequence(control: int, target: int, phi: float) -> list[Gate]:
+    return [
+        RZ(target, phi=_wrap_angle(phi / 2.0)),
+        CNOT(control, target),
+        RZ(target, phi=_wrap_angle(-phi / 2.0)),
+        CNOT(control, target),
+    ]
+
+
+def _test_cu1_sequence(control: int, target: int, phi: float) -> list[Gate]:
+    return [
+        U1(control, phi=_wrap_angle(phi / 2.0)),
+        U1(target, phi=_wrap_angle(phi / 2.0)),
+        CNOT(control, target),
+        U1(target, phi=_wrap_angle(-phi / 2.0)),
+        CNOT(control, target),
+    ]
 
 
 @pytest.mark.parametrize(("factory", "basis", "helper"), _helper_cases())
@@ -443,4 +458,3 @@ def test_controlled_gates_preserve_unitaries(factory: GateFactory, basis: Univer
     gate = factory()
     primitives = decompose_gate_for_universal_set(gate, basis)
     _assert_matrix_equivalence(gate, primitives)
-
