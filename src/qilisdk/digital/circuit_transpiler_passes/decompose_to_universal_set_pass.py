@@ -60,14 +60,14 @@ class UniversalSet(Enum):
 class DecomposeToUniversalSetPass(CircuitTranspilerPass):
     """Rewrite every gate in a circuit to a configurable universal set."""
 
-    def __init__(self, target_set: UniversalSet = UniversalSet.RZ_RX_CX) -> None:
+    def __init__(self, universal_set: UniversalSet = UniversalSet.RZ_RX_CX) -> None:
         """Initialize the transpiler pass.
 
         Args:
-            target_set (UniversalSet): Universal set that the circuit must use after decomposition.
+            universal_set (UniversalSet): Universal set that the circuit must use after decomposition.
         """
 
-        self._target_set = target_set
+        self._universal_set = universal_set
 
     def run(self, circuit: Circuit) -> Circuit:
         """Return a circuit equivalent to ``circuit`` using the selected universal set.
@@ -81,7 +81,7 @@ class DecomposeToUniversalSetPass(CircuitTranspilerPass):
 
         out = Circuit(circuit.nqubits)
         for gate in circuit.gates:
-            primitives = decompose_gate_for_universal_set(gate, self._target_set.value)
+            primitives = decompose_gate_for_universal_set(gate, self._universal_set)
             for primitive in primitives:
                 out.add(primitive)
         return out
@@ -643,7 +643,7 @@ def _Y_for_U3CX(gate: Y) -> list[Gate]:
         list[Gate]: Sequence containing a single U3 gate equivalent to the Y gate.
     """
 
-    return [_normalized_u3(gate.qubits[0], math.pi, math.pi / 2.0, -math.pi / 2.0)]
+    return [_normalized_u3(gate.qubits[0], math.pi, math.pi / 2.0, math.pi / 2.0)]
 
 
 def _Z_for_CliffordT(gate: Z) -> list[Gate]:
