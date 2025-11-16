@@ -22,6 +22,7 @@ from qilisdk.digital.gates import (
     U1,
     U2,
     U3,
+    Adjoint,
     Gate,
     H,
     I,
@@ -61,6 +62,20 @@ GATE_FACTORIES: list[tuple[str, GateFactory]] = [
     ("CNOT", lambda: CNOT(0, 1)),
     ("CZ", lambda: CZ(0, 1)),
     ("SWAP", lambda: SWAP(0, 1)),
+    ("Adjoint_I", lambda: I(0).adjoint()),
+    ("Adjoint_RX", lambda: RX(0, theta=math.pi / 2.0).adjoint()),
+    ("Adjoint_RY", lambda: RY(0, theta=math.pi / 2.0).adjoint()),
+    ("Adjoint_RZ", lambda: RZ(0, phi=math.pi / 2.0).adjoint()),
+    ("Adjoint_U1", lambda: U1(0, phi=math.pi / 2.0).adjoint()),
+    ("Adjoint_U2", lambda: U2(0, phi=0.0, gamma=math.pi / 2.0).adjoint()),
+    ("Adjoint_U3", lambda: U3(0, theta=math.pi / 2.0, phi=0.0, gamma=math.pi / 2.0).adjoint()),
+    ("Adjoint_X", lambda: X(0).adjoint()),
+    ("Adjoint_Y", lambda: Y(0).adjoint()),
+    ("Adjoint_Z", lambda: Z(0).adjoint()),
+    ("Adjoint_H", lambda: H(0).adjoint()),
+    ("Adjoint_S", lambda: S(0).adjoint()),
+    ("Adjoint_T", lambda: T(0).adjoint()),
+    ("Adjoint_SWAP", lambda: SWAP(0, 1).adjoint()),
 ]
 
 
@@ -129,7 +144,7 @@ def _sequence_matrix(gates: list[Gate], order: tuple[int, ...]) -> np.ndarray | 
 
 def _assert_gate_types(gate: Gate, basis: UniversalSet, primitives: list[Gate]) -> None:
     if not primitives:
-        assert isinstance(gate, I)
+        assert isinstance(gate, I) or (isinstance(gate, Adjoint) and isinstance(gate.basic_gate, I))
         return
 
     allowed = ALLOWED_TYPES[basis]

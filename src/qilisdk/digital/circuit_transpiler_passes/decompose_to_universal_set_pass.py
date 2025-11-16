@@ -940,6 +940,76 @@ def _SWAP_for_U3CX(gate: SWAP) -> list[Gate]:
     return _swap_via_cnot(a, b)
 
 
+def _adjoint_gate_for_clifford_t(gate: Gate) -> list[Gate]:
+    if isinstance(gate, H):
+        return [H(gate.qubits[0])]
+    if isinstance(gate, S):
+        return _RZ_for_CliffordT(RZ(gate.qubits[0], phi=-math.pi / 2.0))
+    if isinstance(gate, T):
+        return _RZ_for_CliffordT(RZ(gate.qubits[0], phi=-math.pi / 4.0))
+    if isinstance(gate, CNOT):
+        c, t = gate.control_qubits[0], gate.target_qubits[0]
+        return [CNOT(c, t)]
+    if isinstance(gate, M):
+        return [gate]
+    msg = f"Unsupported gate {type(gate).__name__} for Clifford+T adjoint."
+    raise NotImplementedError(msg)
+
+
+def _adjoint_gate_for_rzrx(gate: Gate) -> list[Gate]:
+    if isinstance(gate, RX):
+        return [RX(gate.qubits[0], theta=_wrap_angle(-gate.theta))]
+    if isinstance(gate, RZ):
+        return [RZ(gate.qubits[0], phi=_wrap_angle(-gate.phi))]
+    if isinstance(gate, CNOT):
+        c, t = gate.control_qubits[0], gate.target_qubits[0]
+        return [CNOT(c, t)]
+    if isinstance(gate, M):
+        return [gate]
+    msg = f"Unsupported gate {type(gate).__name__} for RzRxCX adjoint."
+    raise NotImplementedError(msg)
+
+
+def _adjoint_gate_for_u3cx(gate: Gate) -> list[Gate]:
+    if isinstance(gate, U3):
+        return [_normalized_u3(gate.qubits[0], -gate.theta, -gate.gamma, -gate.phi)]
+    if isinstance(gate, CNOT):
+        c, t = gate.control_qubits[0], gate.target_qubits[0]
+        return [CNOT(c, t)]
+    if isinstance(gate, M):
+        return [gate]
+    msg = f"Unsupported gate {type(gate).__name__} for U3CX adjoint."
+    raise NotImplementedError(msg)
+
+
+def _adjoint_sequence(primitives: list[Gate], basis: UniversalSet) -> list[Gate]:
+    mapper: dict[UniversalSet, Callable[[Gate], list[Gate]]] = {
+        UniversalSet.CLIFFORD_T: _adjoint_gate_for_clifford_t,
+        UniversalSet.RZ_RX_CX: _adjoint_gate_for_rzrx,
+        UniversalSet.U3_CX: _adjoint_gate_for_u3cx,
+    }
+    transform = mapper[basis]
+    sequence: list[Gate] = []
+    for gate in reversed(primitives):
+        sequence.extend(transform(gate))
+    return sequence
+
+
+def _Adjoint_for_CliffordT(gate: Adjoint[BasicGate]) -> list[Gate]:
+    primitives = decompose_gate_for_universal_set(gate.basic_gate, UniversalSet.CLIFFORD_T)
+    return _adjoint_sequence(primitives, UniversalSet.CLIFFORD_T)
+
+
+def _Adjoint_for_RzRxCX(gate: Adjoint[BasicGate]) -> list[Gate]:
+    primitives = decompose_gate_for_universal_set(gate.basic_gate, UniversalSet.RZ_RX_CX)
+    return _adjoint_sequence(primitives, UniversalSet.RZ_RX_CX)
+
+
+def _Adjoint_for_U3CX(gate: Adjoint[BasicGate]) -> list[Gate]:
+    primitives = decompose_gate_for_universal_set(gate.basic_gate, UniversalSet.U3_CX)
+    return _adjoint_sequence(primitives, UniversalSet.U3_CX)
+
+
 _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = {
     M: {
         UniversalSet.CLIFFORD_T: _M_for_CliffordT,
@@ -1025,6 +1095,11 @@ _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = 
         UniversalSet.CLIFFORD_T: _SWAP_for_CliffordT,
         UniversalSet.RZ_RX_CX: _SWAP_for_RzRxCX,
         UniversalSet.U3_CX: _SWAP_for_U3CX,
+    },
+    Adjoint: {
+        UniversalSet.CLIFFORD_T: _Adjoint_for_CliffordT,
+        UniversalSet.RZ_RX_CX: _Adjoint_for_RzRxCX,
+        UniversalSet.U3_CX: _Adjoint_for_U3CX,
     },
 }
 
