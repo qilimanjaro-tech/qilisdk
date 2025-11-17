@@ -1247,7 +1247,7 @@ class Parameter(BaseVariable):
         """
         return 0
 
-    def evaluate(self, value: list[int] | RealNumber = 0) -> RealNumber:
+    def evaluate(self, value: list[int] | RealNumber | None = None) -> RealNumber:
         """Evaluates the value of the variable given a binary string or a number.
 
         Args:
@@ -1259,6 +1259,11 @@ class Parameter(BaseVariable):
         Returns:
             float: the evaluated vale of the variable.
         """
+        if value is not None:
+            if isinstance(value, RealNumber):
+                self.set_value(value)
+            else:
+                raise NotImplementedError("Evaluating the value of a parameter with a list is not supported.")
         return self.value
 
     def to_binary(self) -> Term:
@@ -2048,10 +2053,9 @@ class MathematicalMap(Term, ABC):
         value: Number = 0
 
         for e in self:
-            if isinstance(e, Term):
-                value += e.evaluate(var_values)
-            else:
-                value += e.evaluate(var_values[e])
+            aux = e.evaluate(var_values) if isinstance(e, Term) else e.evaluate(var_values[e])
+
+            value += aux * self[e]
 
         return self._apply_mathematical_map(value)
 

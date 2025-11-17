@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 _TIME_PARAMETER_NAME = "t"
+PARAMETERIZED_NUMBER = float | Parameter | Term
 
 
 class Interpolation(str, Enum):
@@ -41,7 +42,7 @@ class Interpolation(str, Enum):
 
 def _process_callable(
     function: Callable, current_time: Parameter, **kwargs: Any
-) -> tuple[float | Parameter | Term, dict[str, Parameter]]:
+) -> tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]:
 
     # Define variables
     c = function
@@ -101,11 +102,9 @@ class Schedule(Parameterizable):
 
     def __init__(
         self,
-        tlist: list[float | Parameter | Term],
+        tlist: list[PARAMETERIZED_NUMBER],
         hamiltonians: dict[str, Hamiltonian] | None = None,
-        coefficients: (
-            dict[int, dict[str, float | Term | Parameter | Callable[..., float | Term | Parameter]]] | None
-        ) = None,
+        coefficients: dict[str, dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]] | None = None,
         interpolation: Interpolation = Interpolation.STEP,
         **kwargs: dict,
     ) -> None:
@@ -114,7 +113,7 @@ class Schedule(Parameterizable):
             tlist (list[float]): a list of the time steps to evaluate the schedule.
             hamiltonians (dict[str, Hamiltonian] | None, optional): Mapping from labels to Hamiltonian instances that
                 define the building blocks of the schedule. Defaults to None, which creates an empty mapping.
-            coefficients (dict[int, dict[str, float | Term | Parameter]] | None, optional): Predefined coefficients for
+            coefficients (dict[int, dict[str, PARAMETERIZED_NUMBER]] | None, optional): Predefined coefficients for
                 specific time steps. Each inner dictionary maps Hamiltonian labels to numerical or symbolic
                 coefficients. Defaults to {0: {}} if None.
 
@@ -122,22 +121,24 @@ class Schedule(Parameterizable):
             ValueError: If the provided schedule references Hamiltonians that have not been defined.
         """
         self._hamiltonians: dict[str, Hamiltonian] = hamiltonians if hamiltonians is not None else {}
-        self._coefficients: dict[int, dict[str, int | float | Term | Parameter]] = {0: defaultdict(int)}
+        self._coefficients: dict[int, dict[str, int | PARAMETERIZED_NUMBER]] = {0: defaultdict(int)}
         self._coefficient_index_cache: dict[str, list[int]] = {}
         self._coefficient_index_cache_dirty = True
-        self._tlist: list[float | Parameter | Term] = tlist
+        self._tlist: list[PARAMETERIZED_NUMBER] = tlist
         self._interpolation = interpolation
         self._parameters: dict[str, Parameter] = {}
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
         self._nqubits = 0
-        self._max_time: float | Parameter | Term | None = None
-        self._max_coefficient: float | Parameter | Term | None = None
+        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_coefficient: PARAMETERIZED_NUMBER | None = None
 
-        if coefficients is not None and max(coefficients.keys()) > len(tlist) - 1:
-            raise ValueError(
-                f"Can't index tlist point ({max(coefficients.keys())}) that is outside of range (len(tlist) = {len(tlist)})"
-            )
+        if coefficients is not None:
+            T_max = max(max(coefficients[h].keys()) for h in self.hamiltonians)
+            if T_max > len(tlist) - 1:
+                raise ValueError(
+                    f"Can't index tlist point ({T_max}) that is outside of range tlist (len(tlist) = {len(tlist)})"
+                )
 
         # --- Gather the parameters from the Hamiltonians ---
         for hamiltonian in self._hamiltonians.values():
@@ -150,35 +151,28 @@ class Schedule(Parameterizable):
             self._extract_parameters(t)
 
         # --- resolve the coefficients ---
-        lambda_cache: dict[str, Callable] = {}
         if coefficients is not None:
-            for index in range(len(tlist)):
-                ham_map = coefficients.get(index, {})
-                aux = {}
-                for ham in self.hamiltonians:
-                    if ham not in ham_map:
-                        if ham in lambda_cache:
-                            self._current_time.set_value(self.tlist[index])
-                            aux[ham], _params = _process_callable(lambda_cache[ham], self._current_time, **kwargs)
-                            if len(_params) > 0:
-                                self._parameters.update(_params)
-                        continue
-                    current = ham_map[ham]
-                    if callable(current):
-                        lambda_cache[ham] = current
-                        self._current_time.set_value(self.tlist[index])
-                        aux[ham], _params = _process_callable(current, self._current_time, **kwargs)
+            for ham, ham_coeff in coefficients.items():
+                previous_t_indx = 0
+                previous_coeff: PARAMETERIZED_NUMBER = 0
+                for t_indx in ham_coeff:
+                    while previous_t_indx < t_indx - 1:
+                        self._coefficients[previous_t_indx + 1][ham] = previous_coeff
+                        previous_t_indx += 1
+                    coeff = ham_coeff[t_indx]
+                    if callable(coeff):
+                        self._current_time.set_value(self.tlist[t_indx])
+                        coeff, _params = _process_callable(coeff, self._current_time, **kwargs)
                         if len(_params) > 0:
                             self._parameters.update(_params)
-                    elif isinstance(current, (int, float, Parameter, Term)):
-                        if ham in lambda_cache:
-                            lambda_cache.pop(ham)
-                        self._extract_parameters(current)
-                        aux[ham] = copy(current)
+                    elif isinstance(coeff, (int, float, Parameter, Term)):
+                        self._extract_parameters(coeff)
+                        coeff = copy(coeff)
                     else:
                         raise ValueError
-                self._coefficients[index] = copy(aux)
-                self._mark_coefficient_index_cache_dirty()
+                    self._coefficients[t_indx][ham] = coeff
+                    previous_coeff = coeff
+                    previous_t_indx = t_indx
 
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
@@ -191,7 +185,7 @@ class Schedule(Parameterizable):
         return self._hamiltonians
 
     @property
-    def coefficients(self) -> dict[int, dict[str, float | Parameter | Term]]:
+    def coefficients(self) -> dict[int, dict[str, PARAMETERIZED_NUMBER]]:
         """
         Return the evaluated schedule of Hamiltonian coefficients.
 
@@ -270,7 +264,7 @@ class Schedule(Parameterizable):
             return aux
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
-    def _extract_parameters(self, element: float | Parameter | Term) -> None:
+    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
         if isinstance(element, Parameter):
             self._parameters[element.label] = element
         elif isinstance(element, Term):
@@ -345,7 +339,7 @@ class Schedule(Parameterizable):
                 )
             self._parameters[label].set_bounds(bound[0], bound[1])
 
-    def set_max_time(self, max_time: float | Parameter | Term) -> None:
+    def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
         self._extract_parameters(max_time)
         self._max_time = max_time
 
@@ -353,7 +347,7 @@ class Schedule(Parameterizable):
         self,
         label: str,
         hamiltonian: Hamiltonian,
-        coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]],
+        coefficients: dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]],
         **kwargs: Any,
     ) -> None:
         if label in self._hamiltonians:
@@ -375,7 +369,7 @@ class Schedule(Parameterizable):
                 raise ValueError
 
     def _add_hamiltonian_from_lambda(
-        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., float | Term | Parameter], **kwargs: Any
+        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., PARAMETERIZED_NUMBER], **kwargs: Any
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
@@ -391,13 +385,13 @@ class Schedule(Parameterizable):
         self,
         label: str,
         hamiltonian: Hamiltonian,
-        coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]],
+        coefficients: dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]],
         **kwargs: Any,
     ) -> None: ...
 
     @overload
     def add_hamiltonian(
-        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., float | Term | Parameter], **kwargs: Any
+        self, label: str, hamiltonian: Hamiltonian, coefficients: Callable[..., PARAMETERIZED_NUMBER], **kwargs: Any
     ) -> None: ...
 
     def add_hamiltonian(
@@ -405,8 +399,7 @@ class Schedule(Parameterizable):
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: (
-            Callable[..., float | Term | Parameter]
-            | dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]]
+            Callable[..., PARAMETERIZED_NUMBER] | dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
         ),
         **kwargs: Any,
     ) -> None:
@@ -420,7 +413,7 @@ class Schedule(Parameterizable):
     def _update_hamiltonian_from_dict(
         self,
         label: str,
-        new_coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]] | None = None,
+        new_coefficients: dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]] | None = None,
         **kwargs: Any,
     ) -> None:
         if new_coefficients is not None:
@@ -439,7 +432,7 @@ class Schedule(Parameterizable):
                     raise ValueError
 
     def _update_hamiltonian_from_lambda(
-        self, label: str, new_coefficients: Callable[..., float | Term | Parameter] | None = None, **kwargs: Any
+        self, label: str, new_coefficients: Callable[..., PARAMETERIZED_NUMBER] | None = None, **kwargs: Any
     ) -> None:
         if new_coefficients is not None:
             self._current_time.set_value(self.tlist[0])
@@ -453,7 +446,7 @@ class Schedule(Parameterizable):
         self,
         label: str,
         new_hamiltonian: Hamiltonian | None = None,
-        new_coefficients: dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]] | None = None,
+        new_coefficients: dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]] | None = None,
         **kwargs: Any,
     ) -> None: ...
 
@@ -462,7 +455,7 @@ class Schedule(Parameterizable):
         self,
         label: str,
         new_hamiltonian: Hamiltonian | None = None,
-        new_coefficients: Callable[..., float | Term | Parameter] | None = None,
+        new_coefficients: Callable[..., PARAMETERIZED_NUMBER] | None = None,
         **kwargs: Any,
     ) -> None: ...
 
@@ -471,8 +464,8 @@ class Schedule(Parameterizable):
         label: str,
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: (
-            Callable[..., float | Term | Parameter]
-            | dict[int, float | Term | Parameter | Callable[..., float | Term | Parameter]]
+            Callable[..., PARAMETERIZED_NUMBER]
+            | dict[int, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
             | None
         ) = None,
         **kwargs: Any,
@@ -486,25 +479,6 @@ class Schedule(Parameterizable):
                 self._update_hamiltonian_from_dict(label, new_coefficients, **kwargs)
             else:
                 raise ValueError("Unsupported type of coefficient.")
-
-    def __getitem__(self, time_step: float) -> Hamiltonian:
-        """
-        Retrieve the effective Hamiltonian at a given time step.
-
-        The effective Hamiltonian is computed by summing the contributions of all Hamiltonians,
-        using the latest defined coefficients at or before the given time step.
-
-        Args:
-            time_step (float): Time step for which to retrieve the Hamiltonian (``time_step * dt`` in units).
-
-        Returns:
-            Hamiltonian: The effective Hamiltonian at the specified time step with coefficients evaluated to numbers.
-        """
-        ham = Hamiltonian()
-        for ham_label in self._hamiltonians:
-            coeff = self.get_coefficient(time_step, ham_label)
-            ham += coeff * self._hamiltonians[ham_label]
-        return ham.get_static_hamiltonian()
 
     def get_coefficient(self, time_step: float, hamiltonian_key: str) -> float:
         """
@@ -639,6 +613,25 @@ class Schedule(Parameterizable):
         e2 = prev_expr * (1 - alpha)
         return e1 + e2
 
+    def __getitem__(self, time_step: float) -> Hamiltonian:
+        """
+        Retrieve the effective Hamiltonian at a given time step.
+
+        The effective Hamiltonian is computed by summing the contributions of all Hamiltonians,
+        using the latest defined coefficients at or before the given time step.
+
+        Args:
+            time_step (float): Time step for which to retrieve the Hamiltonian (``time_step * dt`` in units).
+
+        Returns:
+            Hamiltonian: The effective Hamiltonian at the specified time step with coefficients evaluated to numbers.
+        """
+        ham = Hamiltonian()
+        for ham_label in self._hamiltonians:
+            coeff = self.get_coefficient(time_step, ham_label)
+            ham += coeff * self._hamiltonians[ham_label]
+        return ham.get_static_hamiltonian()
+
     def __len__(self) -> int:
         """
         Get the total number of discrete time steps in the annealing process.
@@ -697,3 +690,300 @@ class Schedule(Parameterizable):
             renderer.save(filepath)
         else:
             renderer.show()
+
+
+class Interpolator(Parameterizable):
+    """It's a dictionary that can interpolate between defined indecies."""
+
+    def __init__(
+        self,
+        time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]],
+        interpolation: Interpolation = Interpolation.LINEAR,
+        **kwargs: Any,
+    ) -> None:
+        self._interpolation = interpolation
+        self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
+        self._current_time = Parameter("t", 0)
+        self._parameters: dict[str, Parameter] = {}
+        self._total_time: float | None = None
+        self._cached = False
+        self._cached_time: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
+        self._tlist: list[PARAMETERIZED_NUMBER] | None = None
+        self._fixed_tlist: list[float] | None = None
+
+        for time, coefficient in time_dict.items():
+            if isinstance(time, tuple):
+                if len(time) != 2:  # noqa: PLR2004
+                    raise ValueError(
+                        f"time intervals need to be defined by two points, but this interval was provided: {time}"
+                    )
+                self.add_time_point(time[0], coefficient, **kwargs)
+                self.add_time_point(time[1], coefficient, **kwargs)
+            else:
+                self.add_time_point(time, coefficient, **kwargs)
+
+    @property
+    def tlist(self) -> list[PARAMETERIZED_NUMBER]:
+        if self._tlist:
+            return self._tlist
+        tlist = list(self._time_dict.keys())
+        self._tlist = sorted(tlist, key=self._get_value)
+        return self._tlist
+
+    @property
+    def fixed_tlist(self) -> list[float]:
+        if self._fixed_tlist:
+            return self._fixed_tlist
+        self._fixed_tlist = [self._get_value(k) for k in self.tlist]
+        return self._fixed_tlist
+
+    @property
+    def total_time(self) -> float:
+        if not self._total_time:
+            self._total_time = max(self.fixed_tlist)
+        return self._total_time
+
+    @property
+    def nparameters(self) -> int:
+        """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
+        return len(self._parameters)
+
+    def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+        return list(self._time_dict.items())
+
+    def fixed_items(self) -> list[tuple[float, float]]:
+        return [(t, self._get_value(self[t], t)) for t in self.fixed_tlist]
+
+    @property
+    def coefficients(self) -> list[PARAMETERIZED_NUMBER]:
+        return [self._time_dict[t] for t in self.tlist]
+
+    @property
+    def fixed_coefficeints(self) -> list[float]:
+        return [self._get_value(self[t]) for t in self.fixed_tlist]
+
+    def _delete_cache(self) -> None:
+        self.cahce = False
+        self._total_time = None
+        self._cached_time = {}
+        self._tlist = None
+        self._fixed_tlist = None
+
+    def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+        if isinstance(value, (int, float)):
+            return value
+        if isinstance(value, complex):
+            return value.real
+        if isinstance(value, Parameter):
+            if value.label == _TIME_PARAMETER_NAME:
+                if t is None:
+                    raise ValueError("Can't evaluate Parameter because time is not provided.")
+                value.set_value(t)
+            return float(value.evaluate())
+        if isinstance(value, Term):
+            for v in value.variables():
+                if v.label == _TIME_PARAMETER_NAME and t is None:
+                    raise ValueError("Can't evaluate Parameter because time is not provided.")
+            aux = value.evaluate({self._current_time: t}) if t is not None else value.evaluate({})
+            if isinstance(aux, complex):
+                return aux.real
+            return aux
+        raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
+
+    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+        if isinstance(element, Parameter):
+            self._parameters[element.label] = element
+        elif isinstance(element, Term):
+            if not element.is_parameterized_term():
+                raise ValueError(
+                    f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
+                )
+            for p in element.variables():
+                if isinstance(p, Parameter):
+                    self._parameters[p.label] = p
+
+    def add_time_point(
+        self,
+        time: PARAMETERIZED_NUMBER,
+        coefficient: PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER],
+        **kwargs: Any,
+    ) -> None:
+        self._extract_parameters(time)
+        coeff = copy(coefficient)
+        if callable(coeff):
+            self._current_time.set_value(self._get_value(time))
+            coeff, _params = _process_callable(coeff, self._current_time, **kwargs)
+            if len(_params) > 0:
+                self._parameters.update(_params)
+        elif isinstance(coeff, (int, float, Parameter, Term)):
+            self._extract_parameters(coeff)
+            coeff = copy(coeff)
+        else:
+            raise ValueError
+        self._time_dict[time] = coeff
+        self._delete_cache()
+
+    def get_parameter_values(self) -> list[float]:
+        """Return the current values associated with the schedule parameters."""
+        return [param.value for param in self._parameters.values()]
+
+    def get_parameter_names(self) -> list[str]:
+        """Return the ordered list of parameter labels managed by the schedule."""
+        return list(self._parameters.keys())
+
+    def get_parameters(self) -> dict[str, float]:
+        """Return a mapping from parameter labels to their current numerical values."""
+        return {label: param.value for label, param in self._parameters.items()}
+
+    def set_parameter_values(self, values: list[float]) -> None:
+        """
+        Update the numerical values of all parameters referenced by the schedule.
+
+        Args:
+            values (list[float]): New parameter values ordered according to ``get_parameter_names()``.
+
+        Raises:
+            ValueError: If the number of provided values does not match ``nparameters``.
+        """
+        self._fixed_tlist = None
+        if len(values) != self.nparameters:
+            raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
+        param_names = self.get_parameter_names()
+        value_dict = {param_names[i]: values[i] for i in range(len(values))}
+        self.set_parameters(value_dict)
+
+    def set_parameters(self, parameter_dict: dict[str, int | float]) -> None:
+        """
+        Update a subset of parameters by label.
+
+        Args:
+            parameter_dict (dict[str, float]): Mapping from parameter labels to new values.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
+        self._fixed_tlist = None
+        for label, param in parameter_dict.items():
+            if label not in self._parameters:
+                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
+            self._parameters[label].set_value(param)
+
+    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the bounds registered for each schedule parameter."""
+        return {k: v.bounds for k, v in self._parameters.items()}
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update the bounds of existing parameters.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Mapping from label to ``(lower, upper)`` bounds.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
+        self._fixed_tlist = None
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
+
+    def get_coefficient(self, time_step: float) -> float:
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+
+        val = self.get_coefficient_expression(time_step=time_step)
+        return self._get_value(val, time_step)
+
+    def get_coefficient_expression(self, time_step: float) -> Number | Term | Parameter:
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+
+        if time_step in self.fixed_tlist:
+            indx = self.fixed_tlist.index(time_step)
+            return self._time_dict[self.tlist[indx]]
+        if time_step in self._cached_time:
+            return self._cached_time[time_step]
+
+        if self._interpolation is Interpolation.STEP:
+            return self._get_coefficient_expression_step(time_step)
+        if self._interpolation is Interpolation.LINEAR:
+            return self._get_coefficient_expression_linear(time_step)
+
+        raise ValueError(f"interpolation {self._interpolation.value} is not supported!")
+
+    def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
+
+        prev_indx = bisect_right(self.tlist, time_step, key=self._get_value)
+        if prev_indx >= len(self.tlist):
+            prev_indx = -1
+        prev_time_step = self.tlist[prev_indx]
+        self._cached_time[time_step] = self._time_dict[prev_time_step]
+        return self._cached_time[time_step]
+
+    def _get_coefficient_expression_linear(self, time_step: float) -> Number | Term | Parameter:
+        insert_pos = bisect_right(self.tlist, time_step, key=self._get_value)
+
+        prev_idx = self.tlist[insert_pos - 1] if insert_pos else None
+        next_idx = self.tlist[insert_pos] if insert_pos < len(self.tlist) else None
+        prev_expr = self._time_dict[prev_idx] if prev_idx is not None else None
+        next_expr = self._time_dict[next_idx] if next_idx is not None else None
+
+        def _linear_value(
+            t0: PARAMETERIZED_NUMBER, v0: PARAMETERIZED_NUMBER, t1: PARAMETERIZED_NUMBER, v1: PARAMETERIZED_NUMBER
+        ) -> PARAMETERIZED_NUMBER:
+            t0_val = self._get_value(t0)
+            t1_val = self._get_value(t1)
+            if t0_val == t1_val:
+                raise ValueError(
+                    f"Ambigous evaluation: The same time step {t0_val} has two different coefficient assignation ({v0} and {v1})."
+                )
+            alpha: float = (time_step - t0_val) / (t1_val - t0_val)
+            next_is_term = isinstance(v1, (Term, Parameter))
+            prev_is_term = isinstance(v0, (Term, Parameter))
+            if next_is_term and prev_is_term and v1 != v0:
+                v1 = self._get_value(v1, t1_val)
+                v0 = self._get_value(v0, t0_val)
+            elif next_is_term and not prev_is_term:
+                v1 = self._get_value(v1, t1_val)
+            elif prev_is_term and not next_is_term:
+                v0 = self._get_value(v0, t0_val)
+
+            return v1 * alpha + v0 * (1 - alpha)
+
+        if prev_expr is None and next_expr is not None:
+            if len(self.tlist) == 1:
+                return next_expr
+            first_idx = self.tlist[0]
+            second_idx = self.tlist[1]
+            return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
+
+        if next_expr is None and prev_expr is not None:
+            if len(self.tlist) == 1:
+                return prev_expr
+            last_idx = self.tlist[-1]
+            penultimate_idx = self.tlist[-2]
+            return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
+        if prev_expr is None and next_expr is None:
+            return 0
+
+        if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
+            raise ValueError("Something unexpected happened while retrieving the coefficient.")
+        return _linear_value(prev_idx, prev_expr, next_idx, next_expr)
+
+    def __getitem__(self, time_step: float) -> float:
+        return self.get_coefficient(time_step)
+
+    def __len__(self) -> int:
+        return len(self.tlist)
+
+    def __iter__(self) -> "Interpolator":
+        self.iter_time_step = 0
+        return self
+
+    def __next__(self) -> float:
+        if self.iter_time_step < self.__len__():
+            result = self[self.fixed_tlist[self.iter_time_step]]
+            self.iter_time_step += 1
+            return result
+        raise StopIteration
