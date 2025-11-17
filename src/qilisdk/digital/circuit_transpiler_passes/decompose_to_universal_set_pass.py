@@ -85,6 +85,8 @@ class DecomposeToUniversalSetPass(CircuitTranspilerPass):
             primitives = decompose_gate_for_universal_set(gate, self._universal_set)
             for primitive in primitives:
                 out.add(primitive)
+
+        self.add_output_to_context(out)
         return out
 
 
