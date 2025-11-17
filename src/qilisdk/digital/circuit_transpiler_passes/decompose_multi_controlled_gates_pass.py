@@ -149,8 +149,8 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
 
     # Express V as a U3 on the same qubit. This introduces a new gate in U3 form
     # for the *square root*, but leaves the original g untouched.
-    th, ph, lam = _zyz_from_unitary(Vs)
-    return U3(q, theta=th, phi=ph, gamma=lam)
+    th, ph, gamma = _zyz_from_unitary(Vs)
+    return U3(q, theta=th, phi=ph, gamma=gamma)
 
 
 def _adjoint_of(gate: BasicGate) -> BasicGate:

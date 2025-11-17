@@ -60,12 +60,12 @@ def _zyz_from_unitary(U: np.ndarray) -> tuple[float, float, float]:
     s = math.sin(theta / 2.0)
 
     if s < _EPS:
-        lam = _wrap_angle(np.angle(a11))
-        return (0.0, 0.0, lam)
+        gamma = _wrap_angle(np.angle(a11))
+        return (0.0, 0.0, gamma)
 
     phi = _wrap_angle(np.angle(a10))
-    lam = _wrap_angle(np.angle(-a01))
-    return (theta, phi, lam)
+    gamma = _wrap_angle(np.angle(-a01))
+    return (theta, phi, gamma)
 
 
 def _unitary_sqrt_2x2(U: np.ndarray) -> np.ndarray:

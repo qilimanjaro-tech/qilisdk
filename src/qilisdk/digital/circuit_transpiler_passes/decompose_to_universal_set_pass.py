@@ -1049,18 +1049,18 @@ def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, 
         raise NotImplementedError(msg)
     control = gate.control_qubits[0]
     target = base.target_qubits[0]
-    theta, phi, lam = _zyz_from_unitary(base.matrix)
-    return (control, target, theta, phi, lam)
+    theta, phi, gamma = _zyz_from_unitary(base.matrix)
+    return (control, target, theta, phi, gamma)
 
 
-def _controlled_rxrz_sequence(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+def _controlled_rxrz_sequence(control: int, target: int, theta: float, phi: float, gamma: float) -> list[Gate]:
     seq: list[Gate] = []
-    seq.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
+    seq.append(RZ(control, phi=_wrap_angle((gamma + phi) / 2.0)))
     seq.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
     seq.append(CNOT(control, target))
-    seq.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(lam + phi) / 2.0)))
+    seq.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(gamma + phi) / 2.0)))
     seq.append(CNOT(control, target))  # noqa: FURB113
-    seq.append(RZ(target, phi=_wrap_angle((lam - phi) / 2.0)))
+    seq.append(RZ(target, phi=_wrap_angle((gamma - phi) / 2.0)))
     return seq
 
 
@@ -1165,11 +1165,11 @@ def _cu1_sequence(control: int, target: int, phi: float) -> list[Gate]:
 
 
 def _Controlled_for_RzRxCX(gate: Controlled[BasicGate]) -> list[Gate]:
-    control, target, theta, phi, lam = _controlled_gate_parameters(gate)
+    control, target, theta, phi, gamma = _controlled_gate_parameters(gate)
     special = _special_controlled_mapping(gate, control, target, UniversalSet.RZ_RX_CX)
     if special is not None:
         return special
-    return _controlled_rxrz_sequence(control, target, theta, phi, lam)
+    return _controlled_rxrz_sequence(control, target, theta, phi, gamma)
 
 
 def _Controlled_for_CliffordT(gate: Controlled[BasicGate]) -> list[Gate]:

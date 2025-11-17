@@ -301,18 +301,18 @@ def _controlled_parameters(gate: Gate) -> tuple[int, int, float, float, float]:
     base = gate.basic_gate  # type: ignore[attr-defined]
     control = gate.control_qubits[0]  # type: ignore[attr-defined]
     target = base.target_qubits[0]
-    theta, phi, lam = _zyz_from_unitary(base.matrix)
-    return control, target, theta, phi, lam
+    theta, phi, gamma = _zyz_from_unitary(base.matrix)
+    return control, target, theta, phi, gamma
 
 
-def _controlled_reference_rxrz(control: int, target: int, theta: float, phi: float, lam: float) -> list[Gate]:
+def _controlled_reference_rxrz(control: int, target: int, theta: float, phi: float, gamma: float) -> list[Gate]:
     sequence: list[Gate] = []
-    sequence.append(RZ(control, phi=_wrap_angle((lam + phi) / 2.0)))
+    sequence.append(RZ(control, phi=_wrap_angle((gamma + phi) / 2.0)))
     sequence.extend(_u3_to_rxrz_sequence(target, theta / 2.0, phi, 0.0))
     sequence.append(CNOT(control, target))
-    sequence.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(lam + phi) / 2.0)))
+    sequence.extend(_u3_to_rxrz_sequence(target, -theta / 2.0, 0.0, _wrap_angle(-(gamma + phi) / 2.0)))
     sequence.append(CNOT(control, target))  # noqa: FURB113
-    sequence.append(RZ(target, phi=_wrap_angle((lam - phi) / 2.0)))
+    sequence.append(RZ(target, phi=_wrap_angle((gamma - phi) / 2.0)))
     return sequence
 
 
@@ -324,7 +324,7 @@ def _convert_sequence_to_basis(sequence: list[Gate], basis: UniversalSet) -> lis
 
 
 def _controlled_reference_sequence(gate: Gate, basis: UniversalSet) -> list[Gate]:
-    control, target, theta, phi, lam = _controlled_parameters(gate)
+    control, target, theta, phi, gamma = _controlled_parameters(gate)
     if isinstance(gate, Controlled) and gate.is_modified_from(X):
         return decompose_gate_for_universal_set(CNOT(control, target), basis)
     if isinstance(gate, Controlled) and gate.is_modified_from(Z):
@@ -337,7 +337,7 @@ def _controlled_reference_sequence(gate: Gate, basis: UniversalSet) -> list[Gate
         phi_angle = gate.basic_gate.phi  # type: ignore[attr-defined]
         base_seq = _test_cu1_sequence(control, target, phi_angle)
         return _convert_sequence_to_basis(base_seq, basis)
-    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, lam)
+    rxrz_sequence = _controlled_reference_rxrz(control, target, theta, phi, gamma)
     return _convert_sequence_to_basis(rxrz_sequence, basis)
 
 
