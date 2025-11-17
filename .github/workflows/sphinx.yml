@@ -25,7 +25,7 @@ jobs:
           cache-dependency-glob: |
             **/pyproject.toml
             **/uv.lock
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc

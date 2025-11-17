@@ -3,6 +3,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
+[![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/main/index.html)
 
 **QiliSDK** is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms.
 
@@ -157,18 +158,27 @@ print("Optimal Parameters:", result.optimal_parameters)
 QiliSDK includes a client for interacting with Qilimanjaro's SpeQtrum platform. This module supports secure login and a unified interface for both digital circuits and analog evolutions:
 
 ```python
-from qilisdk.speqtrum import SpeQtrum
+from qilisdk.backends import CudaBackend, CudaSamplingMethod
+from qilisdk.digital import Circuit, H, M
 from qilisdk.functionals import Sampling
+from qilisdk.speqtrum import SpeQtrum
+
+
+# Build a single-qubit circuit
+circuit = Circuit(nqubits=1)
+circuit.add(H(0))
+circuit.add(M(0))
 
 # Login to QaaSBackend with credentials (or use environment variables)
 # This only needs to be run once.
-SpeQtrum.login(username="your_username", apikey="your_apikey")
+SpeQtrum.login(username="YOUR_USERNAME", apikey="YOUR_APIKEY")
 
 # Instantiate QaaSBackend
 client = SpeQtrum()
 
-# # Execute a pre-built circuit (see Digital Quantum Circuits section)
-job_id = client.submit(Sampling(circuit, 1000), device="cuda_state_vector")
+# Execute a pre-built circuit (see Digital Quantum Circuits section)
+# make sure to select the device (you can list available devices using ``client.list_devices()``)
+job_id = client.submit(Sampling(circuit, 1000), device="SELECTED_DEVICE")
 print("job id:", job_id)
 print("job status:", client.get_job(job_id).status)
 print("job result:", client.get_job(job_id).result)

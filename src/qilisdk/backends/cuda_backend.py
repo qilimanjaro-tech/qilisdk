@@ -25,6 +25,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import QTensor
+from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -137,13 +138,14 @@ class CudaBackend(Backend):
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
-        for gate in functional.circuit.gates:
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        for gate in transpiled_circuit.gates:
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
                 self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
             elif isinstance(gate, M):
-                self._handle_M(kernel, gate, functional.circuit, qubits)
+                self._handle_M(kernel, gate, transpiled_circuit, qubits)
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
