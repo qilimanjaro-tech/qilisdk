@@ -1041,6 +1041,34 @@ def _Exponential_for_U3CX(gate: Exponential[BasicGate]) -> list[Gate]:
     return [_normalized_u3(qubit, theta, phi, gamma)]
 
 
+def _Controlled_for_RzRxCX(gate: Controlled[BasicGate]) -> list[Gate]:
+    control, target, theta, phi, gamma = _controlled_gate_parameters(gate)
+    special = _special_controlled_mapping(gate, control, target, UniversalSet.RZ_RX_CX)
+    if special is not None:
+        return special
+    return _controlled_rxrz_sequence(control, target, theta, phi, gamma)
+
+
+def _Controlled_for_CliffordT(gate: Controlled[BasicGate]) -> list[Gate]:
+    control = gate.control_qubits[0]
+    target = gate.basic_gate.target_qubits[0]
+    special = _special_controlled_mapping(gate, control, target, UniversalSet.CLIFFORD_T)
+    if special is not None:
+        return special
+    base_sequence = _Controlled_for_RzRxCX(gate)
+    return _map_rxrz_sequence(base_sequence, _RX_for_CliffordT, _RZ_for_CliffordT, _CNOT_for_CliffordT)
+
+
+def _Controlled_for_U3CX(gate: Controlled[BasicGate]) -> list[Gate]:
+    control = gate.control_qubits[0]
+    target = gate.basic_gate.target_qubits[0]
+    special = _special_controlled_mapping(gate, control, target, UniversalSet.U3_CX)
+    if special is not None:
+        return special
+    base_sequence = _Controlled_for_RzRxCX(gate)
+    return _map_rxrz_sequence(base_sequence, _RX_for_U3CX, _RZ_for_U3CX, _CNOT_for_U3CX)
+
+
 def _controlled_gate_parameters(gate: Controlled[BasicGate]) -> tuple[int, int, float, float, float]:
     base = gate.basic_gate
     if base.nqubits != 1:
@@ -1164,34 +1192,6 @@ def _cu1_sequence(control: int, target: int, phi: float) -> list[Gate]:
         U1(target, phi=_wrap_angle(-phi / 2.0)),
         CNOT(control, target),
     ]
-
-
-def _Controlled_for_RzRxCX(gate: Controlled[BasicGate]) -> list[Gate]:
-    control, target, theta, phi, gamma = _controlled_gate_parameters(gate)
-    special = _special_controlled_mapping(gate, control, target, UniversalSet.RZ_RX_CX)
-    if special is not None:
-        return special
-    return _controlled_rxrz_sequence(control, target, theta, phi, gamma)
-
-
-def _Controlled_for_CliffordT(gate: Controlled[BasicGate]) -> list[Gate]:
-    control = gate.control_qubits[0]
-    target = gate.basic_gate.target_qubits[0]
-    special = _special_controlled_mapping(gate, control, target, UniversalSet.CLIFFORD_T)
-    if special is not None:
-        return special
-    base_sequence = _Controlled_for_RzRxCX(gate)
-    return _map_rxrz_sequence(base_sequence, _RX_for_CliffordT, _RZ_for_CliffordT, _CNOT_for_CliffordT)
-
-
-def _Controlled_for_U3CX(gate: Controlled[BasicGate]) -> list[Gate]:
-    control = gate.control_qubits[0]
-    target = gate.basic_gate.target_qubits[0]
-    special = _special_controlled_mapping(gate, control, target, UniversalSet.U3_CX)
-    if special is not None:
-        return special
-    base_sequence = _Controlled_for_RzRxCX(gate)
-    return _map_rxrz_sequence(base_sequence, _RX_for_U3CX, _RZ_for_U3CX, _CNOT_for_U3CX)
 
 
 _DECOMPOSERS: dict[type[Gate], dict[UniversalSet, Callable[..., list[Gate]]]] = {
