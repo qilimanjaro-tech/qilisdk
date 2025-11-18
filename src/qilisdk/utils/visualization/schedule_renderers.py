@@ -74,7 +74,7 @@ class MatplotlibScheduleRenderer:
             plots[h] = []
         for t in times:
             for h in hamiltonians:
-                plots[h].append(self.schedule.get_coefficient(t, h))
+                plots[h].append(self.schedule.coefficients[h][t])
 
         # Generate gradient colors between primary and accent
         def hex_to_rgb(hex_color: str) -> tuple[int, ...]:

@@ -147,8 +147,12 @@ class Schedule(Parameterizable):
         return self._hamiltonians
 
     @property
-    def coefficients(self) -> dict[str, dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+    def coefficients_dict(self) -> dict[str, dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
         return {ham: self._coefficients[ham].coefficients_dict for ham in self._hamiltonians}
+
+    @property
+    def coefficients(self) -> dict[str, Interpolator]:
+        return {ham: self._coefficients[ham] for ham in self._hamiltonians}
 
     @property
     def T(self) -> float:
@@ -230,14 +234,17 @@ class Schedule(Parameterizable):
     def set_parameter_values(self, values: list[float]) -> None:
         if len(values) != self.nparameters:
             raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
-        for i, parameter in enumerate(self._parameters.values()):
-            parameter.set_value(values[i])
+        param_names = self.get_parameter_names()
+        value_dict = {param_names[i]: values[i] for i in range(len(values))}
+        self.set_parameters(value_dict)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         for label, param in parameters.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this Schedule.")
             self._parameters[label].set_value(param)
+            for inter in self._coefficients.values():
+                inter.set_parameters(parameters)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return the bounds registered for each schedule parameter."""
