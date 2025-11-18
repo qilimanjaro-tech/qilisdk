@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform != 'darwin'",
@@ -2556,7 +2556,7 @@ wheels = [
 
 [[package]]
 name = "qilisdk"
-version = "0.1.6"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "dill" },
@@ -2619,7 +2619,7 @@ docs = [
 requires-dist = [
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda'", specifier = "==0.12.0.post1" },
     { name = "dill", specifier = ">=0.3.9" },
-    { name = "httpx", marker = "extra == 'speqtrum'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
