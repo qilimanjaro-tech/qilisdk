@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
@@ -35,10 +36,8 @@ class MatplotlibScheduleRenderer:
         ax: plt.Axes | None = None,
         *,
         style: ScheduleStyle | None = None,
-        time_precision: float = 0.1,
     ) -> None:
         self.schedule = schedule
-        self.time_precision = time_precision
         self.style = style or ScheduleStyle()
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
 
@@ -63,9 +62,9 @@ class MatplotlibScheduleRenderer:
             self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
         T = self.schedule.T
-        dt = self.time_precision
+        dt = self.schedule.dt
         hamiltonians = self.schedule.hamiltonians
-        times = [i * dt for i in range(int((T + dt) / dt))]
+        times = list(np.linspace(0, T, int(1 / dt), dtype=float))  # [i * dt for i in range(int((T + dt) / dt))]
         for t in self.schedule.tlist:
             if t not in times:
                 times.append(t)
@@ -173,5 +172,5 @@ class MatplotlibScheduleRenderer:
         Returns:
             A newly created Matplotlib Axes.
         """
-        _, ax = plt.subplots(figsize=style.figsize, dpi=style.dpi, facecolor=style.theme.background)
+        _, ax = plt.subplots(figsize=style.figsize, dpi=dpi or style.dpi, facecolor=style.theme.background)
         return ax

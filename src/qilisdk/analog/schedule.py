@@ -18,13 +18,13 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import Any, overload
+from typing import Any, Mapping, overload
 
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Domain, Number, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Domain, Number, Parameter, Term
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
@@ -207,13 +207,10 @@ class Schedule(Parameterizable):
                 value.set_value(t)
             return float(value.evaluate())
         if isinstance(value, Term):
-            for v in value.variables():
-                if v.label == _TIME_PARAMETER_NAME and t is None:
-                    raise ValueError("Can't evaluate Parameter because time is not provided.")
-            aux = value.evaluate({self._current_time: t}) if t is not None else value.evaluate({})
-            if isinstance(aux, complex):
-                return aux.real
-            return aux
+            ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
+            aux = value.evaluate(ctx)
+
+            return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
@@ -458,7 +455,7 @@ class Schedule(Parameterizable):
         from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer  # noqa: PLC0415
 
         style = style or ScheduleStyle()
-        renderer = MatplotlibScheduleRenderer(self, style=style, time_precision=self.dt)
+        renderer = MatplotlibScheduleRenderer(self, style=style)
         renderer.plot()
         if filepath:
             renderer.save(filepath)
@@ -486,6 +483,7 @@ class Interpolator(Parameterizable):
         self._tlist: list[PARAMETERIZED_NUMBER] | None = None
         self._fixed_tlist: list[float] | None = None
         self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._time_scale_cache: float | None = None
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
@@ -508,8 +506,11 @@ class Interpolator(Parameterizable):
         if self._tlist is None:
             self._tlist = self._generate_tlist()
         if self._max_time is not None:
-            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
-            return [t * factor for t in self._tlist]
+            if self._time_scale_cache is None:
+                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
+                    max(self._tlist, key=self._get_value)
+                )
+            return [t * self._time_scale_cache for t in self._tlist]
         return self._tlist
 
     @property
@@ -532,8 +533,11 @@ class Interpolator(Parameterizable):
 
     def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
         if self._max_time is not None and self._tlist is not None:
-            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
-            return [(k * factor, v) for k, v in self._time_dict.items()]
+            if self._time_scale_cache is None:
+                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
+                    max(self._tlist, key=self._get_value)
+                )
+            return [(k * self._time_scale_cache, v) for k, v in self._time_dict.items()]
         return list(self._time_dict.items())
 
     def fixed_items(self) -> list[tuple[float, float]]:
@@ -565,6 +569,7 @@ class Interpolator(Parameterizable):
         self._cached_time = {}
         self._tlist = None
         self._fixed_tlist = None
+        self._time_scale_cache = None
 
     def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
         if isinstance(value, (int, float)):
@@ -578,13 +583,10 @@ class Interpolator(Parameterizable):
                 value.set_value(t)
             return float(value.evaluate())
         if isinstance(value, Term):
-            for v in value.variables():
-                if v.label == _TIME_PARAMETER_NAME and t is None:
-                    raise ValueError("Can't evaluate Parameter because time is not provided.")
-            aux = value.evaluate({self._current_time: t}) if t is not None else value.evaluate({})
-            if isinstance(aux, complex):
-                return aux.real
-            return aux
+            ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
+            aux = value.evaluate(ctx)
+
+            return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
@@ -618,8 +620,11 @@ class Interpolator(Parameterizable):
         else:
             raise ValueError
         if self._max_time is not None and self._tlist is not None:
-            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
-            time /= factor
+            if self._time_scale_cache is None:
+                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
+                    max(self._tlist, key=self._get_value)
+                )
+            time /= self._time_scale_cache
         self._time_dict[time] = coeff
         self._delete_cache()
 
@@ -694,10 +699,12 @@ class Interpolator(Parameterizable):
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
-        factor = 1.0
         if self._max_time is not None and self._tlist is not None:
-            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
-            time_step /= factor
+            if self._time_scale_cache is None:
+                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
+                    max(self._tlist, key=self._get_value)
+                )
+            time_step /= self._time_scale_cache
 
         return self._get_value(val, time_step)
 
@@ -713,10 +720,13 @@ class Interpolator(Parameterizable):
         if time_step in self._cached_time:
             return self._cached_time[time_step]
 
-        factor = 1.0
         if self._max_time is not None and self._tlist is not None:
-            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
-            time_step /= factor
+            if self._time_scale_cache is None:
+                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
+                    max(self._tlist, key=self._get_value)
+                )
+            time_step /= self._time_scale_cache
+        factor = self._time_scale_cache or 1.0
 
         result = None
         if self._interpolation is Interpolation.STEP:
