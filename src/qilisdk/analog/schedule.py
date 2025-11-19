@@ -343,7 +343,9 @@ class Schedule(Parameterizable):
         **kwargs: Any,
     ) -> None:
         if new_coefficients is not None:
-            self._coefficients[label] = Interpolator(new_coefficients, interpolation, **kwargs)
+            self._coefficients[label] = Interpolator(
+                new_coefficients, interpolation, **kwargs
+            )  # TODO (ameer): allow for partial updates of the coefficients
 
     def _update_hamiltonian_from_interpolator(self, label: str, new_coefficients: Interpolator | None = None) -> None:
         if new_coefficients is not None:
@@ -615,6 +617,9 @@ class Interpolator(Parameterizable):
             coeff = copy(coeff)
         else:
             raise ValueError
+        if self._max_time is not None and self._tlist is not None:
+            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
+            time /= factor
         self._time_dict[time] = coeff
         self._delete_cache()
 
