@@ -10,6 +10,7 @@ from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling import Sampling
@@ -302,13 +303,24 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
-def test_controlled_multiple_controls_error(mock_set_target, mock_sample, mock_make_kernel):
+def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sample, mock_make_kernel):
+    dummy_make_kernel.main_kernel = DummyKernel()
     backend = CudaBackend()
     circuit = Circuit(nqubits=3)
     controlled_gate = Controlled(0, 1, basic_gate=X(2))
     circuit._gates.append(controlled_gate)
-    with pytest.raises(UnsupportedGateError):
-        backend.execute(Sampling(circuit, nshots=10))
+
+    transpiled = DecomposeMultiControlledGatesPass().run(circuit)
+    expected_control_calls = [
+        ("control", f"q{gate.control_qubits[0]}", f"q{gate.target_qubits[0]}")
+        for gate in transpiled.gates
+        if isinstance(gate, Controlled)
+    ]
+
+    backend.execute(Sampling(circuit, nshots=10))
+    actual_control_calls = [call for call in dummy_make_kernel.main_kernel.calls if call[0] == "control"]
+
+    assert actual_control_calls == expected_control_calls
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
