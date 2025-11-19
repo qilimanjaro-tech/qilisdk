@@ -18,7 +18,12 @@ import numpy as np
 from qilisdk.core.model import Model
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
 
 
 @yaml.register_class
@@ -40,8 +45,10 @@ class TimeEvolutionResult(FunctionalResult):
             intermediate_states (list[QTensor] | None, optional): Intermediate states captured during the evolution.
         """
         super().__init__()
-        self._final_expected_values = final_expected_values if final_expected_values is not None else np.array([])
-        self._expected_values = expected_values if expected_values is not None else np.array([])
+        self._final_expected_values = (
+            final_expected_values if final_expected_values is not None else np.array([], dtype=_complex_dtype())
+        )
+        self._expected_values = expected_values if expected_values is not None else np.array([], dtype=_complex_dtype())
         self._final_state = final_state
         self._intermediate_states = intermediate_states or []
 
