@@ -123,9 +123,15 @@ class Schedule(Parameterizable):
 
         coefficients = coefficients or {}
 
-        for ham in self._hamiltonians:
+        for ham, hamiltonian in self._hamiltonians.items():
+            # Gather Hamiltonian parameters and nqubits
+            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
+            for param in hamiltonian.parameters.values():
+                self._parameters[param.label] = param
+
+            # Build hamiltonian schedule
             if ham not in coefficients:
-                self._coefficients[ham] = Interpolator({0: 0}, interpolation=interpolation)
+                self._coefficients[ham] = Interpolator({0: 1}, interpolation=interpolation)
                 continue
             coeff = copy(coefficients[ham])
             if isinstance(coeff, Interpolator):
@@ -243,8 +249,6 @@ class Schedule(Parameterizable):
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this Schedule.")
             self._parameters[label].set_value(param)
-            for inter in self._coefficients.values():
-                inter.set_parameters(parameters)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return the bounds registered for each schedule parameter."""
@@ -270,6 +274,8 @@ class Schedule(Parameterizable):
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
         self._extract_parameters(max_time)
         self._max_time = max_time
+        for ham in self._hamiltonians:
+            self._coefficients[ham].set_max_time(max_time)
 
     def _add_hamiltonian_from_dict(
         self,
@@ -318,6 +324,10 @@ class Schedule(Parameterizable):
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
+
+        if not isinstance(hamiltonian, Hamiltonian):
+            raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
+
         if isinstance(coefficients, Interpolator):
             self._add_hamiltonian_from_interpolator(label, hamiltonian, coefficients)
         elif isinstance(coefficients, dict):
@@ -335,7 +345,7 @@ class Schedule(Parameterizable):
         if new_coefficients is not None:
             self._coefficients[label] = Interpolator(new_coefficients, interpolation, **kwargs)
 
-    def _update_hamiltonian_from_lambda(self, label: str, new_coefficients: Interpolator | None = None) -> None:
+    def _update_hamiltonian_from_interpolator(self, label: str, new_coefficients: Interpolator | None = None) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = new_coefficients
 
@@ -367,10 +377,12 @@ class Schedule(Parameterizable):
         **kwargs: Any,
     ) -> None:
         if new_hamiltonian is not None:
+            if not isinstance(new_hamiltonian, Hamiltonian):
+                raise ValueError(f"Expecting a Hamiltonian object but received {type(new_hamiltonian)} instead.")
             self._hamiltonians[label] = new_hamiltonian
         if new_coefficients is not None:
-            if callable(new_coefficients):
-                self._update_hamiltonian_from_lambda(label, new_coefficients)
+            if isinstance(new_coefficients, Interpolator):
+                self._update_hamiltonian_from_interpolator(label, new_coefficients)
             elif isinstance(new_coefficients, dict):
                 self._update_hamiltonian_from_dict(label, new_coefficients, interpolation, **kwargs)
             else:
@@ -468,9 +480,10 @@ class Interpolator(Parameterizable):
         self._total_time: float | None = None
         self.iter_time_step = 0
         self._cached = False
-        self._cached_time: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
+        self._cached_time: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER | Number] = {}
         self._tlist: list[PARAMETERIZED_NUMBER] | None = None
         self._fixed_tlist: list[float] | None = None
+        self._max_time: PARAMETERIZED_NUMBER | None = None
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
@@ -478,17 +491,23 @@ class Interpolator(Parameterizable):
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient, **kwargs)
-                self.add_time_point(time[1], coefficient, **kwargs)
+                for t in np.linspace(0, 1, 100):
+                    self.add_time_point((1 - t) * time[0] + t * time[1], coefficient, **kwargs)
+
             else:
                 self.add_time_point(time, coefficient, **kwargs)
+        self._tlist = self._generate_tlist()
+
+    def _generate_tlist(self) -> list[PARAMETERIZED_NUMBER]:
+        return sorted((self._time_dict.keys()), key=self._get_value)
 
     @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
-        if self._tlist:
-            return self._tlist
-        tlist = list(self._time_dict.keys())
-        self._tlist = sorted(tlist, key=self._get_value)
+        if self._tlist is None:
+            self._tlist = self._generate_tlist()
+        if self._max_time is not None:
+            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
+            return [t * factor for t in self._tlist]
         return self._tlist
 
     @property
@@ -510,6 +529,9 @@ class Interpolator(Parameterizable):
         return len(self._parameters)
 
     def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+        if self._max_time is not None and self._tlist is not None:
+            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
+            return [(k * factor, v) for k, v in self._time_dict.items()]
         return list(self._time_dict.items())
 
     def fixed_items(self) -> list[tuple[float, float]]:
@@ -530,6 +552,10 @@ class Interpolator(Parameterizable):
     @property
     def parameters(self) -> dict[str, Parameter]:
         return self._parameters
+
+    def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
+        self._delete_cache()
+        self._max_time = max_time
 
     def _delete_cache(self) -> None:
         self._cached = False
@@ -614,7 +640,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the number of provided values does not match ``nparameters``.
         """
-        self._fixed_tlist = None
+        self._delete_cache()
         if len(values) != self.nparameters:
             raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
         param_names = self.get_parameter_names()
@@ -631,7 +657,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
-        self._fixed_tlist = None
+        self._delete_cache()
         for label, param in parameters.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this Schedule.")
@@ -651,7 +677,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
-        self._fixed_tlist = None
+        self._delete_cache()
         for label, bound in ranges.items():
             if label not in self._parameters:
                 raise ValueError(
@@ -661,40 +687,58 @@ class Interpolator(Parameterizable):
 
     def get_coefficient(self, time_step: float) -> float:
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
-
         val = self.get_coefficient_expression(time_step=time_step)
+
+        factor = 1.0
+        if self._max_time is not None and self._tlist is not None:
+            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
+            time_step /= factor
+
         return self._get_value(val, time_step)
 
     def get_coefficient_expression(self, time_step: float) -> Number | Term | Parameter:
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
+        # generate the tlist
+        self._tlist = self._generate_tlist()
+
         if time_step in self.fixed_tlist:
             indx = self.fixed_tlist.index(time_step)
-            return self._time_dict[self.tlist[indx]]
+            return self._time_dict[self._tlist[indx]]
         if time_step in self._cached_time:
             return self._cached_time[time_step]
 
-        if self._interpolation is Interpolation.STEP:
-            return self._get_coefficient_expression_step(time_step)
-        if self._interpolation is Interpolation.LINEAR:
-            return self._get_coefficient_expression_linear(time_step)
+        factor = 1.0
+        if self._max_time is not None and self._tlist is not None:
+            factor = self._get_value(self._max_time) / self._get_value(max(self._tlist, key=self._get_value))
+            time_step /= factor
 
-        raise ValueError(f"interpolation {self._interpolation.value} is not supported!")
+        result = None
+        if self._interpolation is Interpolation.STEP:
+            result = self._get_coefficient_expression_step(time_step)
+        if self._interpolation is Interpolation.LINEAR:
+            result = self._get_coefficient_expression_linear(time_step)
+
+        if result is None:
+            raise ValueError(f"interpolation {self._interpolation.value} is not supported!")
+        self._cached_time[time_step * factor] = result
+        return result
 
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
 
-        prev_indx = bisect_right(self.tlist, time_step, key=self._get_value)
-        if prev_indx >= len(self.tlist):
+        self._tlist = self._generate_tlist()
+        prev_indx = bisect_right(self._tlist, time_step, key=self._get_value)
+        if prev_indx >= len(self._tlist):
             prev_indx = -1
-        prev_time_step = self.tlist[prev_indx]
-        self._cached_time[time_step] = self._time_dict[prev_time_step]
-        return self._cached_time[time_step]
+        prev_time_step = self._tlist[prev_indx]
+        return prev_time_step
 
     def _get_coefficient_expression_linear(self, time_step: float) -> Number | Term | Parameter:
-        insert_pos = bisect_right(self.tlist, time_step, key=self._get_value)
+        self._tlist = self._generate_tlist()
+        insert_pos = bisect_right(self._tlist, time_step, key=self._get_value)
 
-        prev_idx = self.tlist[insert_pos - 1] if insert_pos else None
-        next_idx = self.tlist[insert_pos] if insert_pos < len(self.tlist) else None
+        prev_idx = self._tlist[insert_pos - 1] if insert_pos else None
+        next_idx = self._tlist[insert_pos] if insert_pos < len(self._tlist) else None
         prev_expr = self._time_dict[prev_idx] if prev_idx is not None else None
         next_expr = self._time_dict[next_idx] if next_idx is not None else None
 
@@ -721,17 +765,17 @@ class Interpolator(Parameterizable):
             return v1 * alpha + v0 * (1 - alpha)
 
         if prev_expr is None and next_expr is not None:
-            if len(self.tlist) == 1:
+            if len(self._tlist) == 1:
                 return next_expr
-            first_idx = self.tlist[0]
-            second_idx = self.tlist[1]
+            first_idx = self._tlist[0]
+            second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
         if next_expr is None and prev_expr is not None:
-            if len(self.tlist) == 1:
+            if len(self._tlist) == 1:
                 return prev_expr
-            last_idx = self.tlist[-1]
-            penultimate_idx = self.tlist[-2]
+            last_idx = self._tlist[-1]
+            penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
         if prev_expr is None and next_expr is None:
             return 0
@@ -755,5 +799,4 @@ class Interpolator(Parameterizable):
             result = self[self.fixed_tlist[self.iter_time_step]]
             self.iter_time_step += 1
             return result
-        raise StopIteration
         raise StopIteration

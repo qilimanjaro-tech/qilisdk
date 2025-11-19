@@ -185,7 +185,7 @@ class QutipBackend(Backend):
         H_t = [
             [
                 qutip_hamiltonians[i],
-                np.array([functional.schedule.get_coefficient(t, h) for t in tlist]),
+                np.array([functional.schedule.coefficients[h][t] for t in tlist]),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
