@@ -762,6 +762,7 @@ class BaseVariable(ABC):
         if lower_bound > upper_bound:
             raise InvalidBoundsError("lower bound can't be larger than the upper bound.")
         self._bounds = (lower_bound, upper_bound)
+        self._hash_cache: int | None = None
 
     @property
     def bounds(self) -> tuple[float, float]:
@@ -820,6 +821,7 @@ class BaseVariable(ABC):
             OutOfBoundsException: the lower bound or the upper bound don't correspond to the variable domain.
             InvalidBoundsError: the lower bound is higher than the upper bound.
         """
+        self._hash_cache = None
         if lower_bound is None:
             lower_bound = self._domain.min()
         if upper_bound is None:
@@ -867,7 +869,7 @@ class BaseVariable(ABC):
             domain (Domain): The updated domain of the variable.
             bounds (tuple[float | None, float | None]): The updated bounds of the variable. Defaults to (None, None)
         """
-
+        self._hash_cache = None
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
 
@@ -983,7 +985,9 @@ class BaseVariable(ABC):
         return out
 
     def __hash__(self) -> int:
-        return hash((self._label, self._domain.value, self._bounds))
+        if self._hash_cache is None:
+            self._hash_cache = hash((self._label, self._domain.value, self._bounds))
+        return self._hash_cache
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BaseVariable):
