@@ -112,10 +112,10 @@ def test_schedule_constructor_invalid_schedule_reference():
 
 
 @pytest.mark.parametrize(("T", "dt"), [(10, 1), (20, 2)])
-def test_len_schedule(dt):
+def test_len_schedule(T, dt):
     """The length of a Schedule is T/dt (as an integer)."""
-    sched = Schedule(dt=dt)
-    assert len(sched) == 1
+    sched = Schedule(dt=dt, T=T)
+    assert len(sched) == 2
 
 
 # --- Schedule Modification Tests ---
@@ -374,7 +374,6 @@ def test_add_schedule_through_function():
 
 
 def test_linear_schedule_interpolation():
-    T = 10
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
     sch = {0: {"H1": 0.0}, 5: {"H1": 1.0}, 10: {"H1": 2.0}}

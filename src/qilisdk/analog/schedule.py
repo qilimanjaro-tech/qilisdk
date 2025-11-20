@@ -114,7 +114,7 @@ class Schedule(Parameterizable):
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
         dt: float = 0.1,
-        T: float | None = None,
+        T: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
@@ -125,7 +125,7 @@ class Schedule(Parameterizable):
         self._parameters: dict[str, Parameter] = {}
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
-        self._max_time: PARAMETERIZED_NUMBER | None = T
+        self._max_time: PARAMETERIZED_NUMBER | None = None
         if dt <= 0:
             raise ValueError("dt must be greater than zero.")
         self._dt = dt
@@ -154,6 +154,9 @@ class Schedule(Parameterizable):
             for p_name, p_value in self._coefficients[ham].parameters.items():
                 self._parameters[p_name] = p_value
 
+        if T is not None:
+            self.set_max_time(T)
+
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
         """
@@ -181,10 +184,11 @@ class Schedule(Parameterizable):
     def tlist(self) -> list[float]:
         _tlist: set[float] = set()
         if len(self._hamiltonians) == 0:
-            return [0]
-        for ham in self._hamiltonians:
-            _tlist.update(self._coefficients[ham].fixed_tlist)
-        tlist = list(_tlist)
+            tlist = [0]
+        else:
+            for ham in self._hamiltonians:
+                _tlist.update(self._coefficients[ham].fixed_tlist)
+            tlist = list(_tlist)
         if self._max_time is not None:
             max_t = max(tlist) or 1
             max_t = max_t if max_t != 0 else 1

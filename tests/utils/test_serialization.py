@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
