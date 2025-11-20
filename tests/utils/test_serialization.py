@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
@@ -13,7 +12,6 @@ from qilisdk.utils.serialization import DeserializationError, deserialize, deser
 def test_time_evolution_algorithm_serialization():
     T = 100
     dt = 1
-    steps = np.linspace(0, T, int(T / dt))
 
     nqubits = 1
 
@@ -21,16 +19,9 @@ def test_time_evolution_algorithm_serialization():
     H2 = sum(Z(i) for i in range(nqubits))
 
     schedule = Schedule(
-        T,
-        dt,
+        dt=dt,
         hamiltonians={"h1": H1, "h2": H2},
-        schedule={
-            t: {
-                "h1": 1 - steps[t] / T,
-                "h2": steps[t] / T,
-            }
-            for t in range(len(steps))
-        },
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
     state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
