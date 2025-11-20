@@ -361,6 +361,8 @@ class Schedule(Parameterizable):
             self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, interpolation, **kwargs)
         else:
             raise ValueError("Unsupported type of coefficient.")
+        if self._max_time is not None:
+            self._coefficients[label].set_max_time(self._max_time)
 
     def _update_hamiltonian_from_dict(
         self,
@@ -424,6 +426,9 @@ class Schedule(Parameterizable):
                 self._update_hamiltonian_from_dict(label, new_coefficients, interpolation, **kwargs)
             else:
                 raise ValueError("Unsupported type of coefficient.")
+
+        if self._max_time is not None:
+            self._coefficients[label].set_max_time(self._max_time)
 
     def __getitem__(self, time_step: float) -> Hamiltonian:
         """
