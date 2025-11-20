@@ -179,16 +179,13 @@ def test_time_dependent_hamiltonian():
     dt = 1
     T = 1000
 
-    steps = np.linspace(0, T, int(T / dt))
-
     schedule = Schedule(
-        T,
-        dt,
+        dt=dt,
         hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
-        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
-    psi0 = (ket(0) + ket(1)).unit()
+    psi0 = (ket(0) - ket(1)).unit()
     obs = [
         pauli_z(0),  # measure z
     ]
@@ -199,24 +196,21 @@ def test_time_dependent_hamiltonian():
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
-    assert pytest.approx(expect_z, rel=1e-2) == 1.0
+    assert pytest.approx(expect_z, rel=1e-2) == -1.0
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():
     dt = 1
     T = 5000
-    # steps = int(T / dt) - 1
 
-    steps = np.linspace(0, T, int(T / dt))
     h1 = pauli_x(0) + pauli_x(1) + pauli_x(2)
     h2 = -1 * pauli_z(0) - 1 * pauli_z(1) - 2 * pauli_z(2) + 3 * pauli_z(0) * pauli_z(1)
 
     # Create a schedule for the time evolution
     schedule = Schedule(
-        T,
-        dt,
+        dt=dt,
         hamiltonians={"h1": h1, "h2": h2},
-        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
     psi0 = (ket(0) + ket(1)).unit()

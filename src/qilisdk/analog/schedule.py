@@ -68,7 +68,14 @@ def _process_callable(
 
     if _TIME_PARAMETER_NAME in c_params:
         kwargs[_TIME_PARAMETER_NAME] = current_time
-    return copy(c(**kwargs)), parameters
+    term = copy(c(**kwargs))
+    if isinstance(term, Term) and not all(
+        (isinstance(v, Parameter) or v.label == _TIME_PARAMETER_NAME) for v in term.variables()
+    ):
+        raise ValueError("function contains variables that are not time. Only Parameters are allowed.")
+    if isinstance(term, BaseVariable) and not (isinstance(term, Parameter) or term.label == _TIME_PARAMETER_NAME):
+        raise ValueError("function contains variables that are not time. Only Parameters are allowed.")
+    return term, parameters
 
 
 @yaml.register_class
@@ -107,6 +114,7 @@ class Schedule(Parameterizable):
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
         dt: float = 0.1,
+        T: float | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
@@ -117,15 +125,19 @@ class Schedule(Parameterizable):
         self._parameters: dict[str, Parameter] = {}
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
-        self._nqubits = 0
-        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_time: PARAMETERIZED_NUMBER | None = T
+        if dt <= 0:
+            raise ValueError("dt must be greater than zero.")
         self._dt = dt
 
         coefficients = coefficients or {}
 
+        if not coefficients.keys() <= self._hamiltonians.keys():
+            missing = coefficients.keys() - self._hamiltonians.keys()
+            raise ValueError(f"Missing keys in hamiltonians: {missing}")
+
         for ham, hamiltonian in self._hamiltonians.items():
             # Gather Hamiltonian parameters and nqubits
-            self._nqubits = max(self._nqubits, hamiltonian.nqubits)
             for param in hamiltonian.parameters.values():
                 self._parameters[param.label] = param
 
@@ -168,13 +180,19 @@ class Schedule(Parameterizable):
     @property
     def tlist(self) -> list[float]:
         _tlist: set[float] = set()
+        if len(self._hamiltonians) == 0:
+            return [0]
         for ham in self._hamiltonians:
             _tlist.update(self._coefficients[ham].fixed_tlist)
-        tlist = sorted(_tlist)
+        tlist = list(_tlist)
         if self._max_time is not None:
-            max_t = max(tlist)
-            tlist = [t * self._get_value(self._max_time) / max_t for t in tlist]
-        return tlist
+            max_t = max(tlist) or 1
+            max_t = max_t if max_t != 0 else 1
+            T = self._get_value(self._max_time)
+            tlist = [t * T / max_t for t in tlist]
+            if T not in tlist:
+                tlist.append(T)
+        return sorted(tlist)
 
     @property
     def dt(self) -> float:
@@ -188,7 +206,9 @@ class Schedule(Parameterizable):
     @property
     def nqubits(self) -> int:
         """Maximum number of qubits affected by Hamiltonians contained in the schedule."""
-        return self._nqubits
+        if len(self._hamiltonians) == 0:
+            return 0
+        return max(self._hamiltonians.values(), key=lambda v: v.nqubits).nqubits
 
     @property
     def nparameters(self) -> int:
@@ -287,6 +307,9 @@ class Schedule(Parameterizable):
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = Interpolator(coefficients, interpolation, **kwargs)
 
+        for p_name, p_value in self._coefficients[label].parameters.items():
+            self._parameters[p_name] = p_value
+
     def _add_hamiltonian_from_interpolator(
         self, label: str, hamiltonian: Hamiltonian, coefficients: Interpolator
     ) -> None:
@@ -294,6 +317,9 @@ class Schedule(Parameterizable):
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = coefficients
+
+        for p_name, p_value in self._coefficients[label].parameters.items():
+            self._parameters[p_name] = p_value
 
     @overload
     def add_hamiltonian(
@@ -344,9 +370,15 @@ class Schedule(Parameterizable):
                 new_coefficients, interpolation, **kwargs
             )  # TODO (ameer): allow for partial updates of the coefficients
 
+            for p_name, p_value in self._coefficients[label].parameters.items():
+                self._parameters[p_name] = p_value
+
     def _update_hamiltonian_from_interpolator(self, label: str, new_coefficients: Interpolator | None = None) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = new_coefficients
+
+            for p_name, p_value in self._coefficients[label].parameters.items():
+                self._parameters[p_name] = p_value
 
     @overload
     def update_hamiltonian(
@@ -375,6 +407,8 @@ class Schedule(Parameterizable):
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
+        if label not in self._hamiltonians:
+            raise ValueError(f"Can't update unknown hamiltonian {label}. Did you mean `add_hamiltonian`?")
         if new_hamiltonian is not None:
             if not isinstance(new_hamiltonian, Hamiltonian):
                 raise ValueError(f"Expecting a Hamiltonian object but received {type(new_hamiltonian)} instead.")
@@ -463,6 +497,7 @@ class Schedule(Parameterizable):
             renderer.show()
 
 
+@yaml.register_class
 class Interpolator(Parameterizable):
     """It's a dictionary that can interpolate between defined indecies."""
 
@@ -507,9 +542,9 @@ class Interpolator(Parameterizable):
             self._tlist = self._generate_tlist()
         if self._max_time is not None:
             if self._time_scale_cache is None:
-                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
-                    max(self._tlist, key=self._get_value)
-                )
+                max_t = self._get_value(max(self._tlist, key=self._get_value)) or 1
+                max_t = max_t if max_t != 0 else 1
+                self._time_scale_cache = self._get_value(self._max_time) / max_t
             return [t * self._time_scale_cache for t in self._tlist]
         return self._tlist
 
@@ -742,11 +777,11 @@ class Interpolator(Parameterizable):
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
 
         self._tlist = self._generate_tlist()
-        prev_indx = bisect_right(self._tlist, time_step, key=self._get_value)
+        prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
         if prev_indx >= len(self._tlist):
             prev_indx = -1
         prev_time_step = self._tlist[prev_indx]
-        return prev_time_step
+        return self._time_dict[prev_time_step]
 
     def _get_coefficient_expression_linear(self, time_step: float) -> Number | Term | Parameter:
         self._tlist = self._generate_tlist()
