@@ -184,7 +184,7 @@ class Schedule(Parameterizable):
     def tlist(self) -> list[float]:
         _tlist: set[float] = set()
         if len(self._hamiltonians) == 0:
-            tlist = [0]
+            tlist = [0.0]
         else:
             for ham in self._hamiltonians:
                 _tlist.update(self._coefficients[ham].fixed_tlist)
