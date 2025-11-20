@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from qilisdk.analog import Schedule, X, Z
@@ -113,7 +112,7 @@ def test_schedule_constructor_invalid_schedule_reference():
 
 
 @pytest.mark.parametrize(("T", "dt"), [(10, 1), (20, 2)])
-def test_len_schedule(T, dt):
+def test_len_schedule(dt):
     """The length of a Schedule is T/dt (as an integer)."""
     sched = Schedule(dt=dt)
     assert len(sched) == 1
@@ -411,7 +410,6 @@ def test_linear_schedule_edge_cases():
 
 
 def test_linear_schedule_expression():
-    T = 10
     dt = 1
     p = Parameter("p", 2.0)
     H1 = PauliZ(0).to_hamiltonian()

@@ -22,7 +22,6 @@ from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
-from qilisdk.analog import schedule
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import QTensor

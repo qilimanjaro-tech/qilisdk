@@ -13,7 +13,6 @@ from qilisdk.utils.serialization import DeserializationError, deserialize, deser
 def test_time_evolution_algorithm_serialization():
     T = 100
     dt = 1
-    steps = np.linspace(0, T, int(T / dt))
 
     nqubits = 1
 
