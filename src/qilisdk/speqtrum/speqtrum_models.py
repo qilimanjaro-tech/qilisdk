@@ -18,6 +18,7 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
+from qilisdk.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
 from qilisdk.functionals import (
     Sampling,
     SamplingResult,
@@ -27,7 +28,6 @@ from qilisdk.functionals import (
     VariationalProgramResult,
 )
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.speqtrum.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 

@@ -35,7 +35,7 @@ from qilisdk.functionals import (
 )
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
-from qilisdk.speqtrum.experiments import (
+from qilisdk.experiments import (
     RabiExperiment,
     RabiExperimentResult,
     T1Experiment,
