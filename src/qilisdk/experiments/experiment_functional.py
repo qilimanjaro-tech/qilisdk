@@ -16,12 +16,12 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-from qilisdk.functionals.functional import Functional
-from qilisdk.speqtrum.experiments.experiment_result import (
+from qilisdk.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
 )
+from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
