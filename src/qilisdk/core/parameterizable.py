@@ -13,28 +13,39 @@
 # limitations under the License.
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from typing import TYPE_CHECKING
+
+from qilisdk.core.variables import BaseVariable
+
+if TYPE_CHECKING:
+    from qilisdk.core.variables import ComparisonTerm, Parameter
 
 
 class Parameterizable(ABC):
+
+    def __init__(self) -> None:
+        super(Parameterizable, self).__init__()
+        self._parameters: dict[str, Parameter] = {}
+        self._parameter_constraints: list[ComparisonTerm] = []
+
     @property
-    @abstractmethod
     def nparameters(self) -> int:
         """Number of tunable parameters defined by the object."""
+        return len(self._parameters)
 
-    @abstractmethod
     def get_parameter_values(self) -> list[float]:
         """Return the current numerical values of the parameters."""
+        return [param.value for param in self._parameters.values()]
 
-    @abstractmethod
     def get_parameter_names(self) -> list[str]:
         """Return the ordered list of parameter labels."""
+        return list(self._parameters.keys())
 
-    @abstractmethod
     def get_parameters(self) -> dict[str, float]:
         """Return a mapping from parameter labels to their current numerical values."""
+        return {label: param.value for label, param in self._parameters.items()}
 
-    @abstractmethod
     def set_parameter_values(self, values: list[float]) -> None:
         """
         Update all parameter values at once.
@@ -45,8 +56,12 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
+        if len(values) != self.nparameters:
+            raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
+        param_names = self.get_parameter_names()
+        value_dict = {param_names[i]: values[i] for i in range(len(values))}
+        self.set_parameters(value_dict)
 
-    @abstractmethod
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
         Update a subset of parameters by label.
@@ -57,12 +72,19 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        if not self.check_constraints(parameters):
+            raise ValueError(
+                f"New assignation of the parameters breaks the parameter constraints: \n{self.get_constraints()}"
+            )
+        for label, param in parameters.items():
+            if label not in self._parameters:
+                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
+            self._parameters[label].set_value(param)
 
-    @abstractmethod
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return the ``(lower, upper)`` bounds associated with each parameter."""
+        return {label: param.bounds for label, param in self._parameters.items()}
 
-    @abstractmethod
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
         Update the allowable ranges for the specified parameters.
@@ -73,3 +95,27 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        for label, bound in ranges.items():
+            if label not in self._parameters:
+                raise ValueError(
+                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
+                )
+            self._parameters[label].set_bounds(bound[0], bound[1])
+
+    def get_constraints(self) -> list[ComparisonTerm]:
+        """Get all constraints on the parameters.
+
+        Returns:
+            list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.
+        """
+        return self._parameter_constraints
+
+    def check_constraints(self, parameters: dict[str, float]) -> bool:
+        evaluate_dict: dict[BaseVariable, float] = {}
+        for label, value in parameters.items():
+            if label not in self._parameters:
+                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
+            evaluate_dict[self._parameters[label]] = value
+        constraints = self.get_constraints()
+        valid = all(con.evaluate(evaluate_dict) for con in constraints)
+        return valid

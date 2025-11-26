@@ -18,13 +18,14 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
+from itertools import chain
 from typing import Any, Mapping, overload
 
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Domain, Number, Parameter, Term
+from qilisdk.core.variables import LEQ, BaseVariable, ComparisonTerm, Domain, Number, Parameter, Term
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
@@ -114,11 +115,12 @@ class Schedule(Parameterizable):
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
         dt: float = 0.1,
-        T: PARAMETERIZED_NUMBER | None = None,
+        total_time: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
         # THIS is the only runtime implementation
+        super(Schedule, self).__init__()
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[str, Interpolator] = {}
         self._interpolation = None
@@ -132,7 +134,7 @@ class Schedule(Parameterizable):
 
         coefficients = coefficients or {}
 
-        if not coefficients.keys() <= self._hamiltonians.keys():
+        if coefficients.keys() > self._hamiltonians.keys():
             missing = coefficients.keys() - self._hamiltonians.keys()
             raise ValueError(f"Missing keys in hamiltonians: {missing}")
 
@@ -143,19 +145,19 @@ class Schedule(Parameterizable):
 
             # Build hamiltonian schedule
             if ham not in coefficients:
-                self._coefficients[ham] = Interpolator({0: 1}, interpolation=interpolation)
+                self._coefficients[ham] = Interpolator({0: 1}, interpolation=interpolation, nsamples=int(1 / dt))
                 continue
             coeff = copy(coefficients[ham])
             if isinstance(coeff, Interpolator):
                 self._coefficients[ham] = coeff
             elif isinstance(coeff, dict):
-                self._coefficients[ham] = Interpolator(coeff, interpolation, **kwargs)
+                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt), **kwargs)
 
             for p_name, p_value in self._coefficients[ham].parameters.items():
                 self._parameters[p_name] = p_value
 
-        if T is not None:
-            self.set_max_time(T)
+        if total_time is not None:
+            self.set_max_time(total_time)
 
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
@@ -249,48 +251,32 @@ class Schedule(Parameterizable):
                 if isinstance(p, Parameter):
                     self._parameters[p.label] = p
 
-    def get_parameter_values(self) -> list[float]:
-        return [param.value for param in self._parameters.values()]
-
-    def get_parameter_names(self) -> list[str]:
-        return list(self._parameters.keys())
-
-    def get_parameters(self) -> dict[str, float]:
-        return {label: param.value for label, param in self._parameters.items()}
-
-    def set_parameter_values(self, values: list[float]) -> None:
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
-        param_names = self.get_parameter_names()
-        value_dict = {param_names[i]: values[i] for i in range(len(values))}
-        self.set_parameters(value_dict)
-
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
-        for label, param in parameters.items():
+        for label in parameters:
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this Schedule.")
-            self._parameters[label].set_value(param)
-
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the bounds registered for each schedule parameter."""
-        return {k: v.bounds for k, v in self._parameters.items()}
+        for h in self._hamiltonians:
+            self._coefficients[h].set_parameters(
+                {p: parameters[p] for p in self._coefficients[h].get_parameter_names() if p in parameters}
+            )
+        super().set_parameters(parameters)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """
-        Update the bounds of existing parameters.
-
-        Args:
-            ranges (dict[str, tuple[float, float]]): Mapping from label to ``(lower, upper)`` bounds.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label, bound in ranges.items():
+        for label in ranges:
             if label not in self._parameters:
                 raise ValueError(
                     f"The provided parameter label {label} is not defined in the list of parameters in this object."
                 )
-            self._parameters[label].set_bounds(bound[0], bound[1])
+        for h in self._hamiltonians:
+            self._coefficients[h].set_parameter_bounds(
+                {p: ranges[p] for p in self._coefficients[h].get_parameter_names() if p in ranges}
+            )
+        super().set_parameter_bounds(ranges)
+
+    def get_constraints(self) -> list[ComparisonTerm]:
+        const_lists = [coeff.get_constraints() for coeff in self._coefficients.values()]
+        combined_list = chain.from_iterable(const_lists)
+        return list(set(combined_list))
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
         self._extract_parameters(max_time)
@@ -309,7 +295,7 @@ class Schedule(Parameterizable):
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
-        self._coefficients[label] = Interpolator(coefficients, interpolation, **kwargs)
+        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs)
 
         for p_name, p_value in self._coefficients[label].parameters.items():
             self._parameters[p_name] = p_value
@@ -373,7 +359,7 @@ class Schedule(Parameterizable):
     ) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = Interpolator(
-                new_coefficients, interpolation, **kwargs
+                new_coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs
             )  # TODO (ameer): allow for partial updates of the coefficients
 
             for p_name, p_value in self._coefficients[label].parameters.items():
@@ -514,12 +500,13 @@ class Interpolator(Parameterizable):
         self,
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
+        nsamples: int = 100,
         **kwargs: Any,
     ) -> None:
+        super(Interpolator, self).__init__()
         self._interpolation = interpolation
         self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
         self._current_time = Parameter("t", 0)
-        self._parameters: dict[str, Parameter] = {}
         self._total_time: float | None = None
         self.iter_time_step = 0
         self._cached = False
@@ -535,12 +522,29 @@ class Interpolator(Parameterizable):
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                for t in np.linspace(0, 1, 100):
+                for t in np.linspace(0, 1, (max(2, nsamples))):
                     self.add_time_point((1 - t) * time[0] + t * time[1], coefficient, **kwargs)
 
             else:
                 self.add_time_point(time, coefficient, **kwargs)
         self._tlist = self._generate_tlist()
+
+        time_insertion_list = sorted(
+            [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
+            key=self._get_value,
+        )
+        l = len(time_insertion_list)
+        for i in range(l):
+            t = time_insertion_list[i]
+            if isinstance(t, (Parameter, Term)):
+                term = None
+                if i > 0:
+                    term = LEQ(time_insertion_list[i - 1], t)
+                if i < l - 1:
+                    term = LEQ(t, time_insertion_list[i + 1])
+
+                if term is not None and term not in self._parameter_constraints:
+                    self._parameter_constraints.append(term)
 
     def _generate_tlist(self) -> list[PARAMETERIZED_NUMBER]:
         return sorted((self._time_dict.keys()), key=self._get_value)
@@ -569,11 +573,6 @@ class Interpolator(Parameterizable):
         if not self._total_time:
             self._total_time = max(self.fixed_tlist)
         return self._total_time
-
-    @property
-    def nparameters(self) -> int:
-        """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
-        return len(self._parameters)
 
     def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
         if self._max_time is not None and self._tlist is not None:
@@ -652,7 +651,7 @@ class Interpolator(Parameterizable):
         **kwargs: Any,
     ) -> None:
         self._extract_parameters(time)
-        coeff = copy(coefficient)
+        coeff = coefficient
         if callable(coeff):
             self._current_time.set_value(self._get_value(time))
             coeff, _params = _process_callable(coeff, self._current_time, **kwargs)
@@ -660,7 +659,6 @@ class Interpolator(Parameterizable):
                 self._parameters.update(_params)
         elif isinstance(coeff, (int, float, Parameter, Term)):
             self._extract_parameters(coeff)
-            coeff = copy(coeff)
         else:
             raise ValueError
         if self._max_time is not None and self._tlist is not None:
@@ -672,72 +670,17 @@ class Interpolator(Parameterizable):
         self._time_dict[time] = coeff
         self._delete_cache()
 
-    def get_parameter_values(self) -> list[float]:
-        """Return the current values associated with the schedule parameters."""
-        return [param.value for param in self._parameters.values()]
-
-    def get_parameter_names(self) -> list[str]:
-        """Return the ordered list of parameter labels managed by the schedule."""
-        return list(self._parameters.keys())
-
-    def get_parameters(self) -> dict[str, float]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items()}
-
     def set_parameter_values(self, values: list[float]) -> None:
-        """
-        Update the numerical values of all parameters referenced by the schedule.
-
-        Args:
-            values (list[float]): New parameter values ordered according to ``get_parameter_names()``.
-
-        Raises:
-            ValueError: If the number of provided values does not match ``nparameters``.
-        """
         self._delete_cache()
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
-        param_names = self.get_parameter_names()
-        value_dict = {param_names[i]: values[i] for i in range(len(values))}
-        self.set_parameters(value_dict)
+        super().set_parameter_values(values)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
-        """
-        Update a subset of parameters by label.
-
-        Args:
-            parameters (dict[str, float]): Mapping from parameter labels to new values.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
         self._delete_cache()
-        for label, param in parameters.items():
-            if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
-            self._parameters[label].set_value(param)
-
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the bounds registered for each schedule parameter."""
-        return {k: v.bounds for k, v in self._parameters.items()}
+        super().set_parameters(parameters)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """
-        Update the bounds of existing parameters.
-
-        Args:
-            ranges (dict[str, tuple[float, float]]): Mapping from label to ``(lower, upper)`` bounds.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
         self._delete_cache()
-        for label, bound in ranges.items():
-            if label not in self._parameters:
-                raise ValueError(
-                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
-                )
-            self._parameters[label].set_bounds(bound[0], bound[1])
+        super().set_parameter_bounds(ranges)
 
     def get_coefficient(self, time_step: float) -> float:
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)

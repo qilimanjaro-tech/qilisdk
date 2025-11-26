@@ -212,13 +212,14 @@ class BasicGate(Gate):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] = {}) -> None:
+    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] | None = None) -> None:
         # Check for duplicate integers in target_qubits.
+        super(BasicGate, self).__init__()
         if len(target_qubits) != len(set(target_qubits)):
             raise ValueError("Duplicate target qubits found.")
 
         self._target_qubits: tuple[int, ...] = target_qubits
-        self._parameters: dict[str, Parameter] = parameters
+        self._parameters: dict[str, Parameter] = parameters or {}
         self._matrix: np.ndarray = self._generate_matrix()
 
     @property

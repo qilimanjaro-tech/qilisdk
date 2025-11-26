@@ -1235,13 +1235,19 @@ class Parameter(BaseVariable):
     def value(self) -> RealNumber:
         return self._value
 
-    def set_value(self, value: RealNumber) -> None:
+    def check_value(self, value: RealNumber) -> None:
         if not self.domain.check_value(value):
             raise ValueError(
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
         if value > self.bounds[1] or value < self.bounds[0]:
             raise ValueError(f"The value provided ({value}) is outside the bound of the parameter {self.bounds}")
+
+    def set_value(self, value: RealNumber) -> None:
+        self.check_value(value)
+
+        if isinstance(value, np.generic):
+            value = value.item()
         self._value = value
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
@@ -1265,9 +1271,9 @@ class Parameter(BaseVariable):
         """
         if value is not None:
             if isinstance(value, RealNumber):
-                self.set_value(value)
-            else:
-                raise NotImplementedError("Evaluating the value of a parameter with a list is not supported.")
+                self.check_value(value)
+                return value
+            raise NotImplementedError("Evaluating the value of a parameter with a list is not supported.")
         return self.value
 
     def to_binary(self) -> Term:
@@ -1638,7 +1644,7 @@ class Term:
                     value = _var_values[var]
                     if not isinstance(value, RealNumber):
                         raise ValueError(f"setting a parameter ({var}) value with a list is not supported.")
-                    var.set_value(value)
+                    # var.set_value(value)
             if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
@@ -2019,6 +2025,14 @@ class ComparisonTerm:
             "Symbolic Constraint Term objects do not have an inherent truth value. "
             "Use a method like .evaluate() to obtain a Boolean value."
         )
+
+    def __hash__(self) -> int:
+        return hash((hash(self._lhs), self.operation, hash(self._rhs)))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ComparisonTerm):
+            return False
+        return hash(self) == hash(other)
 
 
 class MathematicalMap(Term, ABC):

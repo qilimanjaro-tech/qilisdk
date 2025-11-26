@@ -153,7 +153,7 @@ def test_constant_hamiltonian():
     schedule = Schedule(
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
-        T=10,
+        total_time=10,
         schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
     )
     psi0 = ket(0)
@@ -200,8 +200,8 @@ def test_time_dependent_hamiltonian():
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():
-    dt = 1
-    T = 5000
+    dt = 0.01
+    T = 50
 
     h1 = pauli_x(0) + pauli_x(1) + pauli_x(2)
     h2 = -1 * pauli_z(0) - 1 * pauli_z(1) - 2 * pauli_z(2) + 3 * pauli_z(0) * pauli_z(1)

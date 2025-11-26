@@ -29,7 +29,7 @@ def test_schedule_parameters():
     H0 = p[0] * X(1) + X(0)
     H1 = p[1] * Z(1) + Z(0)
 
-    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
 
     assert p[0] in list(schedule._parameters.values())
     assert p[1] in list(schedule._parameters.values())
@@ -114,7 +114,7 @@ def test_schedule_constructor_invalid_schedule_reference():
 @pytest.mark.parametrize(("T", "dt"), [(10, 1), (20, 2)])
 def test_len_schedule(T, dt):
     """The length of a Schedule is T/dt (as an integer)."""
-    sched = Schedule(dt=dt, T=T)
+    sched = Schedule(dt=dt, total_time=T)
     assert len(sched) == 2
 
 
@@ -125,7 +125,7 @@ def test_add_schedule_step_valid():
     """Adding a new schedule step inserts the coefficient and warns on overwrite."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
+    sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
     # Add time step 2 with a new coefficient.
     sched.update_hamiltonian("H1", new_coefficients={2: 1.5})
     assert sched.coefficients["H1"][2] == 1.5
@@ -135,7 +135,7 @@ def test_add_schedule_step_invalid_reference():
     """Attempting to add a schedule step referencing an undefined Hamiltonian raises ValueError."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
+    sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
     with pytest.raises(
         ValueError, match=r"Can't update unknown hamiltonian H_unknown. Did you mean `add_hamiltonian`?"
     ):
@@ -171,7 +171,7 @@ def test_add_hamiltonian_new():
 def test_add_hamiltonian_existing():
     """Adding a Hamiltonian with an existing label warns and does not override the original."""
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
     # The original Hamiltonian (H1) remains unchanged.
     assert sched.hamiltonians["H1"] == H1
 
@@ -230,7 +230,7 @@ def test_iteration():
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     # For T=4, dt=1, __len__() returns 4 but iteration yields time steps 0,1,2,3,4 (5 items).
-    sched = Schedule(dt=1, hamiltonians=hams, coefficients={"H1": {(0, 4): 0.5}})
+    sched = Schedule(dt=0.01, hamiltonians=hams, coefficients={"H1": {(0, 4): 0.5}})
     results = list(iter(sched))
     assert len(results) == 100
     # The first item from iteration should equal sched[0].
@@ -266,7 +266,7 @@ def test_schedule_term_and_basevariable_errors():
         ValueError,
         match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
     ):
-        Schedule(T=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch)
+        Schedule(total_time=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch)
 
 
 def test_add_schedule_step_term_basevariable_errors():
@@ -290,7 +290,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
     with pytest.raises(
         ValueError,
         match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
@@ -302,7 +302,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
 
 def test_draw_method_runs(monkeypatch):
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
+    sched = Schedule(total_time=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
 
     # Monkeypatch renderer to avoid actual plotting
     class DummyRenderer:
