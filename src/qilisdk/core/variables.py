@@ -2036,6 +2036,7 @@ class ComparisonTerm:
 
 
 class MathematicalMap(Term, ABC):
+    """Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter."""
     MATH_SYMBOL = ""
 
     @overload
@@ -2084,6 +2085,7 @@ class MathematicalMap(Term, ABC):
 
 
 class Sin(MathematicalMap):
+    """Apply a sine map to a parameter or term."""
     MATH_SYMBOL = "sin"
 
     def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
@@ -2094,6 +2096,7 @@ class Sin(MathematicalMap):
 
 
 class Cos(MathematicalMap):
+    """Apply a cosine map to a parameter or term."""
     MATH_SYMBOL = "cos"
 
     def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301

@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 
 class Parameterizable(ABC):
+    """Mixin for objects that expose tunable parameters and constraints."""
 
     def __init__(self) -> None:
         super(Parameterizable, self).__init__()
@@ -57,7 +58,7 @@ class Parameterizable(ABC):
             ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
         if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but Schedule has {self.nparameters} parameters.")
+            raise ValueError(f"Provided {len(values)} but this object has {self.nparameters} parameters.")
         param_names = self.get_parameter_names()
         value_dict = {param_names[i]: values[i] for i in range(len(values))}
         self.set_parameters(value_dict)
@@ -70,7 +71,7 @@ class Parameterizable(ABC):
             parameters (dict[str, float]): Mapping from parameter labels to updated numeric values.
 
         Raises:
-            ValueError: If an unknown parameter label is provided.
+            ValueError: If an unknown parameter label is provided or constraints are violated.
         """
         if not self.check_constraints(parameters):
             raise ValueError(
@@ -78,7 +79,7 @@ class Parameterizable(ABC):
             )
         for label, param in parameters.items():
             if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
+                raise ValueError(f"Parameter {label} is not defined for this object.")
             self._parameters[label].set_value(param)
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
@@ -111,10 +112,21 @@ class Parameterizable(ABC):
         return self._parameter_constraints
 
     def check_constraints(self, parameters: dict[str, float]) -> bool:
+        """Validate that proposed parameter updates satisfy all constraints.
+
+        Args:
+            parameters (dict[str, float]): Candidate parameter values keyed by label.
+
+        Returns:
+            bool: True if every constraint evaluates to True for the provided values.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
         evaluate_dict: dict[BaseVariable, float] = {}
         for label, value in parameters.items():
             if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
+                raise ValueError(f"Parameter {label} is not defined for this object.")
             evaluate_dict[self._parameters[label]] = value
         constraints = self.get_constraints()
         valid = all(con.evaluate(evaluate_dict) for con in constraints)

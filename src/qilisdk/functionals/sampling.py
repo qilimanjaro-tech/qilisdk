@@ -81,4 +81,8 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
         self.circuit.set_parameter_bounds(ranges)
 
     def get_constraints(self) -> list[ComparisonTerm]:
+        """Expose parameter constraints defined on the circuit.
+        Returns:
+            list[ComparisonTerm]: a list of constraints on the circuit parameters.
+        """
         return self.circuit.get_constraints()

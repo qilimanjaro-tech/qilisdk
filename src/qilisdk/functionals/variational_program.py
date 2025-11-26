@@ -58,6 +58,8 @@ class VariationalProgram(Functional, Generic[TFunctional]):
             optimizer (Optimizer): Optimization routine controlling parameter updates.
             cost_function (CostFunction): Metric used to evaluate functional executions.
             store_intermediate_results (bool, optional): Persist intermediate executions if requested by the optimizer.
+            parameter_constraints (list[ComparisonTerm] | None): Optional constraints on parameter values that are
+                enforced before optimizer updates are applied.
 
         Raises:
             ValueError: if the user applies constraints on parameters that are not present in the variational program.
@@ -101,9 +103,18 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         return self._store_intermediate_results
 
     def get_constraints(self) -> list[ComparisonTerm]:
+        """Return variational-program-level constraints plus those from the underlying functional."""
         return self._parameter_constraints + self._functional.get_constraints()
 
     def _check_constraints(self, parameters: dict[str, float]) -> list[bool]:
+        """Evaluate each constraint with a proposed parameter set.
+
+        Returns:
+            list[bool]: list of booleans that correspond to whether each constraint is satisfied or not.
+
+        Raises:
+            ValueError: if the parameter is not defined in the underlying functional.
+        """
         params: list[BaseVariable] = functools.reduce(
             operator.iadd, (con.variables() for con in self.get_constraints()), []
         )
@@ -122,5 +133,6 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         return [con.evaluate(evaluate_dict) for con in constraints]
 
     def check_parameter_constraints(self, parameters: dict[str, float]) -> int:
+        """Return a penalty-like score (0 if valid) indicating how many constraints are violated."""
         const_list = self._check_constraints(parameters)
         return sum((100 if not con else 0) for con in const_list)

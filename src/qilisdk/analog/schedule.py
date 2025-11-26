@@ -85,9 +85,8 @@ class Schedule(Parameterizable):
     Builds a set of time-dependent coefficients applied to a collection of Hamiltonians.
 
     A Schedule defines the evolution of a system by associating time steps with a set
-    of Hamiltonian coefficients. It maintains a dictionary of Hamiltonian objects and a
-    corresponding schedule that specifies the coefficients (weights) for each Hamiltonian
-    at discrete time steps.
+    of Hamiltonian coefficients. Coefficients can be provided directly, defined as
+    functions of time, or specified over time intervals and interpolated (step or linear).
 
     Example:
         .. code-block:: python
@@ -95,17 +94,18 @@ class Schedule(Parameterizable):
             import numpy as np
             from qilisdk.analog import Schedule, X, Z
 
-            T, dt = 10, 1
-            steps = np.linspace(0, T, int(T / dt))
+            T, dt = 10.0, 1.0
 
             h1 = X(0) + X(1) + X(2)
             h2 = -Z(0) - Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
 
             schedule = Schedule(
-                T=T,
                 dt=dt,
                 hamiltonians={"driver": h1, "problem": h2},
-                schedule={i: {"driver": 1 - t / T, "problem": t / T} for i, t in enumerate(steps)},
+                coefficients={
+                    "driver": {(0, T): lambda t: 1 - t / T},
+                    "problem": {(0, T): lambda t: t / T},
+                },
             )
             schedule.draw()
     """
@@ -252,6 +252,14 @@ class Schedule(Parameterizable):
                     self._parameters[p.label] = p
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
+        """Update parameter values across all Hamiltonian coefficient interpolators.
+
+        Args:
+            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
         for label in parameters:
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this Schedule.")
@@ -262,6 +270,14 @@ class Schedule(Parameterizable):
         super().set_parameters(parameters)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """Propagate bound updates to all interpolators and cached parameters.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Mapping of parameter label to ``(lower, upper)`` bounds.
+
+        Raises:
+            ValueError: If an unknown parameter label is provided.
+        """
         for label in ranges:
             if label not in self._parameters:
                 raise ValueError(
@@ -274,11 +290,13 @@ class Schedule(Parameterizable):
         super().set_parameter_bounds(ranges)
 
     def get_constraints(self) -> list[ComparisonTerm]:
+        """Return the set of parameter constraints arising from all interpolators."""
         const_lists = [coeff.get_constraints() for coeff in self._coefficients.values()]
         combined_list = chain.from_iterable(const_lists)
         return list(set(combined_list))
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
+        """Rescale the schedule to a new maximum time while keeping relative points fixed."""
         self._extract_parameters(max_time)
         self._max_time = max_time
         for ham in self._hamiltonians:
@@ -424,7 +442,7 @@ class Schedule(Parameterizable):
         using the latest defined coefficients at or before the given time step.
 
         Args:
-            time_step (float): Time step for which to retrieve the Hamiltonian (``time_step * dt`` in units).
+            time_step (float): Physical time (same units as the schedule definition) at which to sample.
 
         Returns:
             Hamiltonian: The effective Hamiltonian at the specified time step with coefficients evaluated to numbers.
@@ -603,6 +621,7 @@ class Interpolator(Parameterizable):
         return self._parameters
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
+        """Rescale all time points to a new maximum duration while keeping relative spacing."""
         self._delete_cache()
         self._max_time = max_time
 
