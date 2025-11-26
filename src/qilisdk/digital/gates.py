@@ -213,6 +213,15 @@ class BasicGate(Gate):
     """
 
     def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] | None = None) -> None:
+        """Build a basic gate.
+
+        Args:
+            target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
+            parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
+
+        Raises:
+            ValueError: if duplicate target qubits are found.
+        """
         # Check for duplicate integers in target_qubits.
         super(BasicGate, self).__init__()
         if len(target_qubits) != len(set(target_qubits)):

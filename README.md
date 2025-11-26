@@ -206,18 +206,17 @@ print("CUDA Backend Results:", results)
 
 ### Time Evolution using Qutip
 
-For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses a linear schedule to interpolate between two Hamiltonians on a Qutip backend:
+For analog simulations, the `TimeEvolution` and unified `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses callable coefficients defined over an interval to interpolate between two Hamiltonians on a Qutip backend:
 
 ```python
-import numpy as np
 from qilisdk.analog import Schedule, X, Z, Y
 from qilisdk.core import ket, tensor_prod
 from qilisdk.backends import QutipBackend
 from qilisdk.functionals import TimeEvolution
 
 # Define total time and timestep
-T = 100
-steps = np.linspace(0, T, T)
+T = 100.0
+dt = 0.1
 nqubits = 1
 
 # Define Hamiltonians
@@ -225,13 +224,14 @@ Hx = sum(X(i) for i in range(nqubits))
 Hz = sum(Z(i) for i in range(nqubits))
 
 # Build a time‑dependent schedule
-schedule = Schedule(T)
-
-# Add hx with a time‐dependent coefficient function
-schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
-
-# Add hz similarly
-schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+schedule = Schedule(
+    hamiltonians={"hx": Hx, "hz": Hz},
+    coefficients={
+        "hx": {(0.0, T): lambda t: 1 - t / T},
+        "hz": {(0.0, T): lambda t: t / T},
+    },
+    dt=dt,
+)
 
 # draw the schedule
 schedule.draw()

@@ -119,6 +119,19 @@ class Schedule(Parameterizable):
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
+        """Create a Schedule that assigns time-dependent coefficients to Hamiltonians.
+
+        Args:
+            hamiltonians (dict[str, Hamiltonian] | None): Mapping of labels to Hamiltonian objects. If omitted, an empty schedule is created.
+            coefficients (InterpDict | CoeffDict | None): Per-Hamiltonian time definitions. Keys are time points or intervals; values are coefficients or callables. If an :class:`Interpolator` is supplied, it is used directly.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+            total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
+            interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
+            **kwargs: Passed to :class:`Interpolator` construction when coefficients are provided as dictionaries.
+
+        Raises:
+            ValueError: if the coefficients reference an undefined hamiltonian.
+        """
         # THIS is the only runtime implementation
         super(Schedule, self).__init__()
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
@@ -521,6 +534,17 @@ class Interpolator(Parameterizable):
         nsamples: int = 100,
         **kwargs: Any,
     ) -> None:
+        """Initialize an interpolator over discrete points or intervals.
+
+        Args:
+            time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
+            interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
+            nsamples (int): Number of samples used to expand interval definitions.
+            **kwargs: Extra arguments forwarded to callable coefficient processing.
+
+        Raises:
+            ValueError:if the time intervals contain a number of points different than 2.
+        """
         super(Interpolator, self).__init__()
         self._interpolation = interpolation
         self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
@@ -541,7 +565,10 @@ class Interpolator(Parameterizable):
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
                 for t in np.linspace(0, 1, (max(2, nsamples))):
-                    self.add_time_point((1 - t) * time[0] + t * time[1], coefficient, **kwargs)
+                    time_point = (1 - float(t)) * time[0] + float(t) * time[1]
+                    if isinstance(time_point, (Parameter, Term)):
+                        self._extract_parameters(time_point)
+                    self.add_time_point(time_point, coefficient, **kwargs)
 
             else:
                 self.add_time_point(time, coefficient, **kwargs)
@@ -652,7 +679,7 @@ class Interpolator(Parameterizable):
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
-        if isinstance(element, Parameter):
+        if isinstance(element, Parameter) and element.label != _TIME_PARAMETER_NAME:
             self._parameters[element.label] = element
         elif isinstance(element, Term):
             if not element.is_parameterized_term():
@@ -660,7 +687,7 @@ class Interpolator(Parameterizable):
                     f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
                 )
             for p in element.variables():
-                if isinstance(p, Parameter):
+                if isinstance(p, Parameter) and p.label != _TIME_PARAMETER_NAME:
                     self._parameters[p.label] = p
 
     def add_time_point(
@@ -674,6 +701,7 @@ class Interpolator(Parameterizable):
         if callable(coeff):
             self._current_time.set_value(self._get_value(time))
             coeff, _params = _process_callable(coeff, self._current_time, **kwargs)
+            self._extract_parameters(coeff)
             if len(_params) > 0:
                 self._parameters.update(_params)
         elif isinstance(coeff, (int, float, Parameter, Term)):
