@@ -79,10 +79,10 @@ def test_schedule_parameters():
     ):
         schedule.set_parameters({"test": 0})
 
-    with pytest.raises(ValueError, match=r"Provided 8 but Schedule has 4 parameters."):
+    with pytest.raises(ValueError, match=r"Provided 8 but this object has 4 parameters."):
         schedule.set_parameter_values([0] * 8)
 
-    with pytest.raises(ValueError, match=r"Provided 2 but Schedule has 4 parameters."):
+    with pytest.raises(ValueError, match=r"Provided 2 but this object has 4 parameters."):
         schedule.set_parameter_values([0] * 2)
 
 

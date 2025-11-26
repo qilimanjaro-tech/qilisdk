@@ -16,10 +16,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from qilisdk.core.variables import BaseVariable
-
 if TYPE_CHECKING:
-    from qilisdk.core.variables import ComparisonTerm, Parameter
+    from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
 
 class Parameterizable(ABC):
