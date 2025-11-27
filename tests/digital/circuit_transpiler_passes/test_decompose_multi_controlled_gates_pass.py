@@ -68,8 +68,12 @@ def test_multi_controlled_gates_match_original_unitary(factory_name: str, factor
     transpiled = _run_pass_with_gate(gate, nqubits)
 
     states = _basis_states_for_controls(ncontrols)
-    assert _sequences_equivalent([gate], transpiled.gates, nqubits, states), f"Vector equality for {factory_name} with {ncontrols} controls"
-    assert _sequences_equivalent([gate], transpiled.gates, nqubits, None), f"Unitary equality for {factory_name} with {ncontrols} controls"
+    assert _sequences_equivalent([gate], transpiled.gates, nqubits, states), (
+        f"Vector equality for {factory_name} with {ncontrols} controls"
+    )
+    assert _sequences_equivalent([gate], transpiled.gates, nqubits, None), (
+        f"Unitary equality for {factory_name} with {ncontrols} controls"
+    )
 
     for rewritten in transpiled.gates:
         if isinstance(rewritten, Controlled):

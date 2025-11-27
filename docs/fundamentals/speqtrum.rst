@@ -191,7 +191,7 @@ functional objects mirror the interfaces described in the :doc:`functionals` cha
 
     import numpy as np
     from qilisdk.speqtrum import DeviceType, SpeQtrum
-    from qilisdk.speqtrum.experiments import RabiExperiment, T1Experiment
+    from qilisdk.experiments import RabiExperiment, T1Experiment
 
     client = SpeQtrum()
     device = client.list_devices(

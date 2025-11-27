@@ -8,7 +8,7 @@ requires-python = ">=3.11"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
 urls = { "Homepage" = "https://github.com/qilimanjaro-tech/qilisdk", "Documentation" = "https://qilimanjaro-tech.github.io/qilisdk/", "Source" = "https://github.com/qilimanjaro-tech/qilisdk", "Issues" = "https://github.com/qilimanjaro-tech/qilisdk/issues", "Changelog" = "https://github.com/qilimanjaro-tech/qilisdk/blob/main/CHANGELOG.md" }
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
     "License :: OSI Approved :: Apache Software License",
@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "dill>=0.3.9",
-    "numpy>=1.26.4",
+    "numpy>=2.2.0",
     "ruamel-yaml>=0.18.16",
     "scipy>=1.16.3; sys_platform == 'darwin'",
     "scipy>=1.15,<1.16.3; sys_platform != 'darwin'",
@@ -37,7 +37,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cuda = [
-    "cuda-quantum-cu12==0.12.0.post1",
+    "cuda-quantum-cu12==0.13.0",
 ]
 speqtrum = [
     "httpx==0.28.1",
@@ -60,7 +60,7 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pytest-sugar>=1.1.1",
-    "ruff>=0.14.4",
+    "ruff>=0.14.6",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
