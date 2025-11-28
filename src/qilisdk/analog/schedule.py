@@ -309,7 +309,14 @@ class Schedule(Parameterizable):
         return list(set(combined_list))
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
-        """Rescale the schedule to a new maximum time while keeping relative points fixed."""
+        """
+        Rescale the schedule to a new maximum time while keeping relative points fixed.
+
+        Raises:
+            ValueError: If the max time provided is zero.
+        """
+        if self._get_value(max_time) == 0:
+            raise ValueError("Setting the total time to zero.")
         self._extract_parameters(max_time)
         self._max_time = max_time
         for ham in self._hamiltonians:
@@ -648,7 +655,14 @@ class Interpolator(Parameterizable):
         return self._parameters
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
-        """Rescale all time points to a new maximum duration while keeping relative spacing."""
+        """
+        Rescale all time points to a new maximum duration while keeping relative spacing.
+
+        Raises:
+            ValueError: If the max time is set to zero.
+        """
+        if self._get_value(max_time) == 0:
+            raise ValueError("Setting the max time to zero.")
         self._delete_cache()
         self._max_time = max_time
 
