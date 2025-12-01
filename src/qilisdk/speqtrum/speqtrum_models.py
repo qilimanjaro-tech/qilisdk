@@ -18,7 +18,16 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
-from qilisdk.experiments import RabiExperiment, RabiExperimentResult, T1Experiment, T1ExperimentResult
+from qilisdk.experiments import (
+    RabiExperiment,
+    RabiExperimentResult,
+    T1Experiment,
+    T1ExperimentResult,
+    T2Experiment,
+    T2ExperimentResult,
+    TwoTonesExperiment,
+    TwoTonesExperimentResult,
+)
 from qilisdk.functionals import (
     Sampling,
     SamplingResult,
@@ -88,6 +97,8 @@ class ExecuteType(str, Enum):
     VARIATIONAL_PROGRAM = "variational_program"
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"
+    T2_EXPERIMENT = "t2_experiment"
+    TWO_TONES_EXPERIMENT = "two_tones_experiment"
 
 
 class SamplingPayload(SpeQtrumModel):
@@ -160,6 +171,34 @@ class T1ExperimentPayload(SpeQtrumModel):
         return v
 
 
+class T2ExperimentPayload(SpeQtrumModel):
+    t2_experiment: T2Experiment = Field(...)
+
+    @field_serializer("t2_experiment")
+    def _serialize_t2_experiment(self, t2_experiment: T2Experiment, _info):
+        return serialize(t2_experiment)
+
+    @field_validator("t2_experiment", mode="before")
+    def _load_t2_experiment(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, T2Experiment)
+        return v
+
+
+class TwoTonesExperimentPayload(SpeQtrumModel):
+    two_tones_experiment: TwoTonesExperiment = Field(...)
+
+    @field_serializer("two_tones_experiment")
+    def _serialize_two_tones_experiment(self, two_tones_experiment: TwoTonesExperiment, _info):
+        return serialize(two_tones_experiment)
+
+    @field_validator("two_tones_experiment", mode="before")
+    def _load_two_tones_experiment(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, TwoTonesExperiment)
+        return v
+
+
 class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     sampling_payload: SamplingPayload | None = None
@@ -167,6 +206,8 @@ class ExecutePayload(SpeQtrumModel):
     variational_program_payload: VariationalProgramPayload | None = None
     rabi_experiment_payload: RabiExperimentPayload | None = None
     t1_experiment_payload: T1ExperimentPayload | None = None
+    t2_experiment_payload: T2ExperimentPayload | None = None
+    two_tones_experiment_payload: TwoTonesExperimentPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
@@ -176,6 +217,8 @@ class ExecuteResult(SpeQtrumModel):
     variational_program_result: VariationalProgramResult | None = None
     rabi_experiment_result: RabiExperimentResult | None = None
     t1_experiment_result: T1ExperimentResult | None = None
+    t2_experiment_result: T2ExperimentResult | None = None
+    two_tones_experiment_result: TwoTonesExperimentResult | None = None
 
     @field_serializer("sampling_result")
     def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
@@ -227,6 +270,26 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, T1ExperimentResult)
         return v
 
+    @field_serializer("t2_experiment_result")
+    def _serialize_t2_experiment_resultt(self, t2_experiment_result: T2ExperimentResult, _info):
+        return serialize(t2_experiment_result) if t2_experiment_result is not None else None
+
+    @field_validator("t2_experiment_result", mode="before")
+    def _load_t2_experiment_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, T2ExperimentResult)
+        return v
+
+    @field_serializer("two_tones_experiment_result")
+    def _serialize_two_tones_experiment_result(self, two_tones_experiment_result: TwoTonesExperimentResult, _info):
+        return serialize(two_tones_experiment_result) if two_tones_experiment_result is not None else None
+
+    @field_validator("two_tones_experiment_result", mode="before")
+    def _load_two_tones_experiment_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, TwoTonesExperimentResult)
+        return v
+
 
 TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult, covariant=True)
 TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
@@ -264,6 +327,20 @@ def _require_t1_experiment_result(result: ExecuteResult) -> T1ExperimentResult:
     if result.t1_experiment_result is None:
         raise RuntimeError("SpeQtrum did not return a t1_experiment_result for a T1 experiment execution.")
     return result.t1_experiment_result
+
+
+def _require_t2_experiment_result(result: ExecuteResult) -> T2ExperimentResult:
+    if result.t2_experiment_result is None:
+        raise RuntimeError("SpeQtrum did not return a t2_experiment_result for a T2 experiment execution.")
+    return result.t2_experiment_result
+
+
+def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesExperimentResult:
+    if result.two_tones_experiment_result is None:
+        raise RuntimeError(
+            "SpeQtrum did not return a two_tones_experiment_result for a Two-Tones experiment execution."
+        )
+    return result.two_tones_experiment_result
 
 
 def _require_variational_program_result_typed(
@@ -344,6 +421,16 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     @classmethod
     def t1_experiment(cls, job_id: int) -> "JobHandle[T1ExperimentResult]":
         return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)  # type: ignore[return-value, arg-type]
+
+    @classmethod
+    def t2_experiment(cls, job_id: int) -> "JobHandle[T2ExperimentResult]":
+        return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)  # type: ignore[return-value, arg-type]
+
+    @classmethod
+    def two_tones_experiment(cls, job_id: int) -> "JobHandle[TwoTonesExperimentResult]":
+        return cls(
+            id=job_id, execute_type=ExecuteType.TWO_TONES_EXPERIMENT, extractor=_require_two_tones_experiment_result  # type: ignore[return-value, arg-type]
+        )
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":
         """Attach this handle's typing information to a concrete job detail.
