@@ -429,8 +429,8 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     @classmethod
     def two_tones_experiment(cls, job_id: int) -> "JobHandle[TwoTonesExperimentResult]":
         return cls(
-            id=job_id, execute_type=ExecuteType.TWO_TONES_EXPERIMENT, extractor=_require_two_tones_experiment_result
-        )  # type: ignore[return-value, arg-type]
+            id=job_id, execute_type=ExecuteType.TWO_TONES_EXPERIMENT, extractor=_require_two_tones_experiment_result  # type: ignore[return-value, arg-type]
+        )
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":
         """Attach this handle's typing information to a concrete job detail.
