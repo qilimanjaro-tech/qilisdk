@@ -41,10 +41,10 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 
 **Pauli operators**:
 
-- ``X(i)`` - Pauli X acting on qubit *i*  
-- ``Y(i)`` - Pauli Y acting on qubit *i*  
-- ``Z(i)`` - Pauli Z acting on qubit *i*  
-- ``I(i)`` - Identity acting on qubit *i*
+- :func:`X(i)<qilisdk.analog.hamiltonian.X>` - Pauli X acting on qubit *i*  
+- :func:`Y(i)<qilisdk.analog.hamiltonian.Y>` - Pauli Y acting on qubit *i*
+- :func:`Z(i)<qilisdk.analog.hamiltonian.Z>` - Pauli Z acting on qubit *i*
+- :func:`I(i)<qilisdk.analog.hamiltonian.I>` - Identity acting on qubit *i*
 
 **Arithmetic operations**:
 
@@ -57,22 +57,22 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 
 **Extra Symbolic Operators**:
 
-- commutator: ``H1.commutator(H2)``  
-- anticommutator: ``H1.anticommutator(H2)``
-- vector_norm: ``H.vector_norm()``
-- forbenius_norm: ``H.frobenius_norm()``
-- trace: ``H.trace()``
+- commutator: :meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`  
+- anticommutator: :meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`
+- vector_norm: :meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`
+- frobenius_norm: :meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`
+- trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`
 
 
 **Exporting Hamiltonians**:
 
-- to matrix: ``H.to_matrix(nqubits)``
-- to qtensor: ``H.to_qtensor(nqubits)``
+- to matrix: :meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`
+- to qtensor: :meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`
 
 **Importing Hamiltonians**:
 
-- from qtensor: ``Hamiltonian.from_qtensor(qtensor)``
-- from string: ``Hamiltonian.parse(hamiltonian_string)``
+- from qtensor: :meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`
+- from string: :meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`
 
 Example: Ising Hamiltonian
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,7 +203,7 @@ This lets you insert or override coefficients without rebuilding the full map.
 
 Parameterized Schedules
 ^^^^^^^^^^^^^^^^^^^^^^^
-Schedule coefficients can be symbolic, enabling classical optimization loops or
+:class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
 instances of :class:`~qilisdk.core.variables.Parameter` or algebraic
 expressions (:class:`~qilisdk.core.variables.Term`) built from parameters.
@@ -231,9 +231,10 @@ When coefficients arise from expressions (for example ``0.5 * gamma`` or
 ``gamma * (1 - t / T)`` inside :meth:`~qilisdk.analog.schedule.Schedule.add_hamiltonian`),
 the resulting :class:`~qilisdk.core.variables.Term` is also recorded. The
 helpers below give programmatic access to these symbolic coefficients:
-- ``get_parameter_names()`` and ``get_parameters()`` surface labels and values.
-- ``set_parameters({"gamma": 0.6})`` updates selected entries in-place.
-- ``get_parameter_bounds()`` returns the per-parameter bounds dictionary.
+
+- :meth:`~qilisdk.analog.schedule.Schedule.get_parameter_names` and :meth:`~qilisdk.analog.schedule.Schedule.get_parameters` surface labels and values.
+- :meth:`set_parameters({"gamma": 0.6})<qilisdk.analog.schedule.Schedule.set_parameters>` updates selected entries in-place.
+- :meth:`~qilisdk.analog.schedule.Schedule.get_parameter_bounds` returns the per-parameter bounds dictionary.
 
 LinearSchedule
 --------------
@@ -277,7 +278,7 @@ in intermediate coefficients on demand.
     Driver coefficient at midpoint (unevaluated parameters): (0.4444444444444444) + (0.5555555555555556) * gamma
 
 
-``LinearSchedule`` preserves symbolic parameters when computing interpolation
+:class:`~qilisdk.analog.linear_schedule.LinearSchedule` preserves symbolic parameters when computing interpolation
 results. Use :meth:`~qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression`
 to obtain the unevaluated expression (with parameters intact) or
 :meth:`~qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient` to

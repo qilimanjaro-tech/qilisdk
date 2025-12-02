@@ -24,10 +24,7 @@ parameters consistently before execution.
 Each functional advertises a matching :attr:`result_type` pointing to a concrete
 :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass. When you call
 :meth:`~qilisdk.backends.backend.Backend.execute`, the backend inspects this attribute to decide which result object to
-construct and return. Variational workflows reuse this mechanism: :meth:`~qilisdk.backends.backend.Backend.optimize`
-drives a :class:`~qilisdk.functionals.variational_program.VariationalProgram` by repeatedly updating the nested
-functional's parameters and finally wrapping the optimizer report inside a
-:class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`.
+construct and return.
 
 Result Objects
 --------------
@@ -42,7 +39,7 @@ Result Objects
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
 
-These objects make post-processing workflows ergonomic. For example, ``SamplingResult`` can surface the most likely
+These objects make post-processing workflows ergonomic. For example, :class:`~qilisdk.functionals.sampling_result.SamplingResult` can surface the most likely
 bitstrings:
 
 .. code-block:: python
@@ -125,7 +122,7 @@ classical optimizers.
 **Parameters**
 
 - **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.
-- **initial_state** (:class:`~qilisdk.core.quantum_objects.QTensor`): Initial state of the system.
+- **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the system.
 - **observables** (List[:class:`~qilisdk.analog.hamiltonian.Hamiltonian` or :class:`~qilisdk.analog.hamiltonian.PauliOperator`]): Operators to measure after evolution.
 - **nshots** (int, optional): Number of repetitions for each observable measurement. Default is 1.
 - **store_intermediate_results** (bool, optional): If True, records the state at each time step. Default is False.
@@ -206,8 +203,7 @@ Variational Programs
 
 The :class:`~qilisdk.functionals.variational_program.VariationalProgram` functional gathers the pieces required for a
 variational quantum algorithm. It accepts a parameterized primitive functional, an optimizer, and a cost function. When
-you call :meth:`~qilisdk.backends.backend.Backend.optimize`, the backend reuses the existing
-:meth:`~qilisdk.backends.backend.Backend.execute` workflow: it evaluates the functional repeatedly with updated
+you call :meth:`~qilisdk.backends.backend.Backend.execute` it evaluates the functional repeatedly with updated
 parameters, feeds the resulting :class:`~qilisdk.functionals.functional_result.FunctionalResult` into the supplied
 cost function, and finally returns a :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`.
 
