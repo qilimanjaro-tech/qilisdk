@@ -23,12 +23,12 @@ code, pre {
 }
 
 :root {
-    --qili-blue: 254 72% 62%;
-    --qili-purple: 304 33% 54%;
-    --qili-red: 351 66% 65%;
-    --qili-dark-blue: 244 45% 13%;
-
-   --primary: var(--qili-blue);
+  --qili-blue: 254 72% 62%;
+  --qili-purple: 304 33% 54%;
+  --qili-red: 351 66% 65%;
+  --qili-dark-blue: 244 45% 13%;
+  --primary: var(--qili-blue);
+  --inline-code-text: var(--foreground);
 }
 
 .dark {
@@ -60,6 +60,13 @@ code, pre {
 #content h1 > a, #content h2 > a, #content h3 > a, #content h4 > a, #content h5 > a, #content h6 > a {
   color: inherit !important;
   -webkit-text-fill-color: inherit;
+  background: none;
+  text-decoration: none;
+}
+
+#content h1 > code > span, #content h2 > code > span, #content h3 > code > span, #content h4 > code > span, #content h5 > code > span, #content h6 > code > span {
+  color: hsl(var(--inline-code-text));
+  -webkit-text-fill-color: hsl(var(--inline-code-text));
   background: none;
   text-decoration: none;
 }
