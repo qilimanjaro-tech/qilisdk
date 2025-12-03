@@ -229,3 +229,19 @@ class T1ExperimentResult(ExperimentResult):
 
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
+
+
+@yaml.register_class
+class T2ExperimentResult(ExperimentResult):
+    """Result container for T2 dephasing experiments."""
+
+    plot_title: ClassVar[str] = "T2"
+    """Default title for T2 experiment plots."""
+
+
+@yaml.register_class
+class TwoTonesExperimentResult(ExperimentResult):
+    """Result container for TwoTones experiments."""
+
+    plot_title: ClassVar[str] = "TwoTones"
+    """Default title for TwoTones experiment plots."""
