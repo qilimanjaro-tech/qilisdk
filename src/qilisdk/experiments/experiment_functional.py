@@ -16,12 +16,14 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-from qilisdk.functionals.functional import Functional
-from qilisdk.speqtrum.experiments.experiment_result import (
+from qilisdk.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
+    T2ExperimentResult,
+    TwoTonesExperimentResult,
 )
+from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -122,3 +124,89 @@ class T1Experiment(ExperimentFunctional[T1ExperimentResult]):
             np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.
         """
         return self._wait_duration_values
+
+
+@yaml.register_class
+class T2Experiment(ExperimentFunctional[T2ExperimentResult]):
+    """T2 dephasing experiment functional for a single qubit.
+
+    This functional defines a Ramsey/spin-echo style T2 experiment, where
+    the free-evolution delay between phase-sensitive pulses is swept to
+    extract the qubit coherence time.
+    """
+
+    result_type: ClassVar[type[T2ExperimentResult]] = T2ExperimentResult
+    """Result type returned by this functional."""
+
+    def __init__(self, qubit: int, wait_duration_values: np.ndarray) -> None:
+        """Initialize a T2 dephasing experiment functional.
+
+        Args:
+            qubit (int): The physical qubit index on which the experiment is performed.
+            wait_duration_values (np.ndarray): Array of free-evolution delays
+                (in nanoseconds) between the phase-sensitive pulses.
+        """
+        super().__init__(qubit=qubit)
+        self._wait_duration_values: np.ndarray = wait_duration_values
+
+    @property
+    def wait_duration_values(self) -> np.ndarray:
+        """Free-evolution delay sweep values.
+
+        Returns:
+            np.ndarray: The set of delay durations (in nanoseconds) used to estimate T2.
+        """
+        return self._wait_duration_values
+
+
+@yaml.register_class
+class TwoTonesExperiment(ExperimentFunctional[TwoTonesExperimentResult]):
+    """Two-tone spectroscopy functional for a single qubit.
+
+    Sweeps a drive tone frequency while monitoring the readout tone to
+    identify the qubit transition frequency.
+    """
+
+    result_type: ClassVar[type[TwoTonesExperimentResult]] = TwoTonesExperimentResult
+    """Result type returned by this functional."""
+
+    def __init__(self, qubit: int, frequency_start: float, frequency_stop: float, frequency_step: float) -> None:
+        """Initialize a two-tone spectroscopy functional.
+
+        Args:
+            qubit (int): The physical qubit index on which the experiment is performed.
+            frequency_start (float): Starting frequency of the swept drive tone (in Hz).
+            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).
+            frequency_step (float): Frequency increment between sweep points (in Hz).
+        """
+        super().__init__(qubit=qubit)
+        self._frequency_start: float = frequency_start
+        self._frequency_stop: float = frequency_stop
+        self._frequency_step: float = frequency_step
+
+    @property
+    def frequency_start(self) -> float:
+        """Start frequency for the drive tone sweep.
+
+        Returns:
+            float: Starting frequency of the drive tone (in Hz).
+        """
+        return self._frequency_start
+
+    @property
+    def frequency_stop(self) -> float:
+        """Stop frequency for the drive tone sweep.
+
+        Returns:
+            float: Ending frequency of the drive tone (in Hz).
+        """
+        return self._frequency_stop
+
+    @property
+    def frequency_step(self) -> float:
+        """Step size for the drive tone sweep.
+
+        Returns:
+            float: Frequency increment between sweep points (in Hz).
+        """
+        return self._frequency_step
