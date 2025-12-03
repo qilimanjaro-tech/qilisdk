@@ -41,7 +41,6 @@ class Interpolation(str, Enum):
 def _process_callable(
     function: Callable[[], PARAMETERIZED_NUMBER], current_time: Parameter, **kwargs: Any
 ) -> tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]:
-
     # Define variables
     parameters: dict[str, Parameter] = {}
 
@@ -331,7 +330,6 @@ class Interpolator(Parameterizable):
         return result
 
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
-
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
         if prev_indx >= len(self._tlist):

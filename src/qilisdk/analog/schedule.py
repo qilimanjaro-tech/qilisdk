@@ -328,7 +328,6 @@ class Schedule(Parameterizable):
         interpolation: Interpolation = Interpolation.LINEAR,
         **kwargs: Any,
     ) -> None:
-
         if not isinstance(hamiltonian, Hamiltonian):
             raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
 
