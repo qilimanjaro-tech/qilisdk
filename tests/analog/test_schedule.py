@@ -2,7 +2,7 @@ import pytest
 
 from qilisdk.analog import Schedule, X, Z
 from qilisdk.analog.hamiltonian import PauliX, PauliZ
-from qilisdk.analog.schedule import Interpolation
+from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.variables import BinaryVariable, Parameter
 
 # --- Constructor and Property Tests ---

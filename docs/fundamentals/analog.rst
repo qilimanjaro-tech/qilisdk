@@ -21,8 +21,8 @@ Quick Start
     schedule = Schedule(
         hamiltonians={"driver": driver, "problem": problem},
         coefficients={
-            "driver": {(0.0, 10.0): lambda t: 1 - t / T},
-            "problem": {(0.0, 10.0): lambda t: t / T},
+            "driver": {(0.0, T): lambda t: 1 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
         },
         dt=1.0,
     )
@@ -115,7 +115,10 @@ Key arguments
 
 - **dt** (float): resolution of time samples. Default is 0.1.
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances.
-- **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value is a coefficient or callable returning a coefficient. Interpolation is stepwise or linear.
+- **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value can be:
+    - the coefficient of the hamiltonian at that time
+    - or callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
+    Interpolation is stepwise or linear.
 - **interpolation** (:class:`~qilisdk.analog.schedule.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
 - **total_time** (float | Parameter | Term | None): Optional max time that rescales all time points while preserving relative positions.
 

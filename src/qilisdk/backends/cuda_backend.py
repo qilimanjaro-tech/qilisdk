@@ -166,7 +166,7 @@ class CudaBackend(Backend):
 
         cuda_schedule = CudaSchedule(steps, ["t"])
 
-        def get_schedule(key: str) -> Callable:
+        def get_schedule(key: str) -> Callable[[complex], float]:
             return lambda t: (functional.schedule.coefficients[key][t.real])
 
         cuda_hamiltonian = sum(
