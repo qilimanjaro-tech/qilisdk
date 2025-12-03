@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from qilisdk.analog import Schedule, X, Z
@@ -96,7 +97,7 @@ def test_schedule_constructor_with_hamiltonians_and_schedule():
     sch = {"H1": {0: 0.5}}
     sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
     # At t=0, H1 coefficient is set; H2 should be filled in with 0.
-    assert sched.coefficients["H1"][0] == 0.5
+    assert np.isclose(sched.coefficients["H1"][0], 0.5)
     assert sched.coefficients["H2"][0] == 1
     # nqubits should be the maximum among Hamiltonians (here, 2 because H2 acts on qubit 1).
     assert sched.nqubits == 2
@@ -128,7 +129,7 @@ def test_add_schedule_step_valid():
     sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
     # Add time step 2 with a new coefficient.
     sched.update_hamiltonian("H1", new_coefficients={2: 1.5})
-    assert sched.coefficients["H1"][2] == 1.5
+    assert np.isclose(sched.coefficients["H1"][2], 1.5)
 
 
 def test_add_schedule_step_invalid_reference():
@@ -148,7 +149,7 @@ def test_update_hamiltonian_coefficient_valid():
     hams = {"H1": H1}
     sched = Schedule(dt=1, hamiltonians=hams)
     sched.update_hamiltonian("H1", new_coefficients={5: 3.0})
-    assert sched.coefficients["H1"][5] == 3.0
+    assert np.isclose(sched.coefficients["H1"][5], 3.0)
 
 
 def test_add_hamiltonian_new():
@@ -215,10 +216,10 @@ def test_get_coefficient():
     hams = {"H1": H1}
     sch = {"H1": {0: 0.5, 4: 1.0}}
     sched = Schedule(hamiltonians=hams, coefficients=sch, interpolation=Interpolation.STEP, dt=0.01)
-    assert sched.coefficients["H1"][0] == 0.5
-    assert sched.coefficients["H1"][2] == 0.5  # falls back to t=0
-    assert sched.coefficients["H1"][4] == 1.0
-    assert sched.coefficients["H1"][8] == 1.0  # falls back to t=4
+    assert np.isclose(sched.coefficients["H1"][0], 0.5)
+    assert np.isclose(sched.coefficients["H1"][2], 0.5)  # falls back to t=0
+    assert np.isclose(sched.coefficients["H1"][4], 1.0)
+    assert np.isclose(sched.coefficients["H1"][8], 1.0)  # falls back to t=4
     # For an undefined Hamiltonian key, get_coefficient returns 0.
 
     with pytest.raises(KeyError):
@@ -376,24 +377,23 @@ def test_add_schedule_through_function():
 def test_linear_schedule_interpolation():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
-    sch = {0: {"H1": 0.0}, 5: {"H1": 1.0}, 10: {"H1": 2.0}}
     sch = {"H1": {0: 0, 5: 1, 10: 2}}
     sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
 
     # At t=0, should be 0.0
-    assert sched.coefficients["H1"][0] == 0.0
+    assert np.isclose(sched.coefficients["H1"][0], 0.0)
 
     # At t=5, should be 1.0
-    assert sched.coefficients["H1"][5] == 1.0
+    assert np.isclose(sched.coefficients["H1"][5], 1.0)
     # At t=10, should be 2.0
-    assert sched.coefficients["H1"][10] == 2.0
+    assert np.isclose(sched.coefficients["H1"][10], 2.0)
 
     # At t=2, should interpolate between 0 and 1
 
-    assert sched.coefficients["H1"][2] == 0.4
+    assert np.isclose(sched.coefficients["H1"][2], 0.4)
     # At t=7, should interpolate between 1 and 2
 
-    assert sched.coefficients["H1"][7] == 1.4
+    assert np.isclose(sched.coefficients["H1"][7], 1.4)
 
 
 def test_linear_schedule_edge_cases():
@@ -405,7 +405,7 @@ def test_linear_schedule_edge_cases():
     sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
     # All times should return 3.0
     for t in range(0, T + 1, dt):
-        assert sched.coefficients["H1"][t] == 3.0
+        assert np.isclose(sched.coefficients["H1"][t], 3.0)
 
 
 def test_linear_schedule_expression():
@@ -417,7 +417,7 @@ def test_linear_schedule_expression():
     # At t=0, should be p
     assert sched.coefficients["H1"].get_coefficient_expression(0) == p
     # At t=10, should be 4.0
-    assert sched.coefficients["H1"].get_coefficient_expression(10) == 4.0
+    assert np.isclose(sched.coefficients["H1"].get_coefficient_expression(10), 4.0)
     # At t=5, should interpolate between p and 4.0
     expr = sched.coefficients["H1"].get_coefficient(5)
     # Should be a linear combination of p and 4.0
