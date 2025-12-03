@@ -15,11 +15,16 @@ from abc import ABC
 from typing import Iterator, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, RX, BasicGate, H, RZ, RZConstant
 from qilisdk.yaml import yaml
+from qilisdk.core.variables import Parameter
+from numpy import pi
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
 Structure = Literal["grouped", "interposed"]
+MixerType = Literal["X"]
+
 
 
 class Ansatz(Circuit, ABC):
@@ -198,3 +203,160 @@ class HardwareEfficientAnsatz(Ansatz):
                 for q in range(self.nqubits):
                     self._apply_single_qubit(q, parameter_iterator)
                     self._apply_entanglers()
+
+@yaml.register_class
+class QAOA(Ansatz):
+    """
+    Quantum Approximate Optimization Algorithm (QAOA) ansatz.
+
+    This ansatz alternates between applying a problem Hamiltonian and a mixer Hamiltonian,
+    parameterized by angles alpha and beta, respectively.
+
+    By default, the mixer Hamiltonian is chosen to be a transverse field (X gates on all qubits).
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital.ansatz import QAOA
+
+            ansatz = QAOA(
+                nqubits=4,
+                hamiltonian=your_problem_hamiltonian,
+                mixer_type='X',
+                layers=3,
+            )
+            ansatz.draw()
+
+    """
+
+    def __init__(
+        self,
+        nqubits: int,
+        hamiltonian: Hamiltonian,
+        layers: int = 1,
+        mixer_type: MixerType = "X",
+    ) -> None:
+        """
+        Args:
+            nqubits (int): Number of qubits in the circuit.
+            hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.
+            layers (int, optional): Number of QAOA layers. Defaults to 1.
+            mixer_type (str, optional): The type of mixer Hamiltonian to use. Defaults to 'X'.
+
+        Raises:
+            ValueError: If ``nqubits`` is non-positive.
+            ValueError: If ``layers`` is negative or the connectivity definition is invalid.
+            ValueError: If ``hamiltonian`` has no qubits.
+            ValueError: If ``nqubits`` does not match the number of qubits in ``hamiltonian``.
+        """
+        super().__init__(nqubits)
+
+        if layers < 0:
+            raise ValueError("layers must be >= 0")
+
+        if hamiltonian.nqubits <= 0:
+            raise ValueError("hamiltonian must have at least one qubit")
+        
+        if hamiltonian.nqubits != nqubits:
+            raise ValueError("nqubits must match the number of qubits in hamiltonian")
+
+        self._layers = int(layers)
+        self._hamiltonian = hamiltonian
+        self._mixer_type = mixer_type
+
+        self._build_circuit()
+
+    @property
+    def layers(self) -> int:
+        """Number of entangling layers."""
+        return self._layers
+
+    @property
+    def hamiltonian(self) -> Hamiltonian:
+        """The problem Hamiltonian encoding the cost function."""
+        return self._hamiltonian
+
+    @property
+    def mixer_type(self) -> str:
+        """The type of mixer Hamiltonian used ('X' or 'XY')."""
+        return self._mixer_type
+
+    def _build_circuit(self) -> None:
+        """Populate the circuit according to the Hamiltonian and mixer settings."""
+
+        print("Problem Hamiltonian:")
+        print(self.hamiltonian)
+
+        # Split the problem hamiltonian into commuting parts
+        commuting_parts = self.hamiltonian.get_commuting_partitions()
+
+        print()
+        print("Commuting parts:")
+        for i, part in enumerate(commuting_parts):
+            print(f" Part {i}:", part)
+
+        def _pauli_evolution(term: tuple[PauliOperator, ...], coeff: float, time: Parameter) -> Iterator[BasicGate]:
+            """
+                An iterator of parameterized gates performing the evolution of a given Pauli string
+            """
+
+            qubit_indices = sorted([pauli.qubit for pauli in term if pauli.name != "I"])
+            if len(qubit_indices) == 0:
+                return
+
+            # Move everything to Z basis
+            for pauli in term:
+                q = pauli.qubit
+                name = pauli.name
+                if name == "X":
+                    yield H(q)
+                elif name == "Y":
+                    yield RX(q, **{"theta": pi / 2})
+
+            # Apply CNOT ladder
+            for i in range(len(qubit_indices) - 1):
+                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+
+            # Apply RZ rotation on last qubit
+            last_qubit = qubit_indices[-1]
+            yield RZConstant(last_qubit, phi=(-2 * coeff).real)
+            yield RZ(last_qubit, **{"phi": time})
+
+            # Undo CNOT ladder
+            for i in reversed(range(len(qubit_indices) - 1)):
+                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+
+            # Move back from Z basis
+            for pauli in term:
+                q = pauli.qubit
+                name = pauli.name
+                if name == "X":
+                    yield H(q)
+                elif name == "Y":
+                    yield RX(q, **{"theta": -pi / 2})
+
+        # Applied to the equal superposition initial state |+>
+        for qubit in range(self.nqubits):
+            self.add(H(qubit))
+
+        # Build the layers
+        for _ in range(self.layers):
+
+            # Apply problem Hamiltonian
+            alpha_param = Parameter("alpha_" + str(_), 0.0)
+            for part in commuting_parts:
+                for term, coeff in part.items():
+                    for gate in _pauli_evolution(term, coeff, alpha_param):
+                        self.add(gate)
+                    
+            # Apply mixer Hamiltonian
+            beta_param = Parameter("beta_" + str(_), 0.0)
+            if self.mixer_type == "X":
+                for qubit in range(self.nqubits):
+                    self.add(RX(qubit, **{"theta": beta_param}))
+        
+        # Print all gates
+        for gate in self.gates:
+            print(gate)
+
+        print(self.get_parameters())

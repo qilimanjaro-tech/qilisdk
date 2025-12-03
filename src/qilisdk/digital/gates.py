@@ -855,6 +855,60 @@ class RZ(BasicGate):
         phi = self.phi
         return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
 
+@yaml.register_class
+class RZConstant(BasicGate):
+    """
+    Represents a `phi` angle rotation around the Z-axis (azimuthal) in the Bloch sphere.
+
+    The associated matrix is:
+
+    .. code-block:: text
+
+        [[exp(-i*phi/2),              0],
+         [0,               exp(i*phi/2)]]
+
+    This is an exponential of the Pauli-Z operator:
+        ``RZ(phi) = exp(-i*phi*Z/2)``
+
+    Which is equivalent to the U1 gate plus a global phase:
+        ``RZ(phi) = exp(-i*phi/2)U1(phi)``
+
+    Other unitaries you can get from this one are:
+        - ``RZ(phi=pi) = exp(-i*pi/2) Z = -i Z``
+        - ``RZ(phi=pi/2) = exp(-i*pi/4) S``
+        - ``RZ(phi=pi/4) = exp(-i*pi/8) T``
+    """
+
+    PARAMETER_NAMES: ClassVar[list[str]] = []
+    _phi: float = 0.0
+
+    def __init__(self, qubit: int, *, phi: float) -> None:
+        """
+        Initialize an RZ gate.
+
+        Args:
+            qubit (int): The target qubit index for the rotation.
+            phi (float): The rotation angle (azimuthal) in radians.
+        """
+        super().__init__(
+            target_qubits=(qubit,),
+            parameters={},
+        )
+        self._phi = phi
+
+    @property
+    def name(self) -> str:
+        return f"RZC({self._phi})"
+
+    @property
+    def phi(self) -> float:
+        return self._phi
+
+    def _generate_matrix(self) -> np.ndarray:
+        phi = self.phi
+        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
+
+
 
 @yaml.register_class
 class U1(BasicGate):
