@@ -89,7 +89,14 @@ class Backend(ABC):
 
         def evaluate_sample(parameters: list[float]) -> float:
             param_names = functional.functional.get_parameter_names()
-            functional.functional.set_parameters({param_names[i]: param for i, param in enumerate(parameters)})
+            param_bounds = functional.functional.get_parameter_bounds()
+            new_param_dict = {}
+            for i, param in enumerate(parameters):
+                name = param_names[i]
+                lower_bound, upper_bound = param_bounds[name]
+                if lower_bound != upper_bound:
+                    new_param_dict[name] = param
+            functional.functional.set_parameters(new_param_dict)
             results = self.execute(functional.functional)
             final_results = functional.cost_function.compute_cost(results)
             if isinstance(final_results, float):

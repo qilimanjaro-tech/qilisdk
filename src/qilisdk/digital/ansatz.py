@@ -15,10 +15,10 @@ from abc import ABC
 from typing import Iterator, Literal, Type
 
 from qilisdk.digital.circuit import Circuit
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, RX, BasicGate, H, RZ, RZConstant
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator, PauliX
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, RX, BasicGate, H, RZ
 from qilisdk.yaml import yaml
-from qilisdk.core.variables import Parameter
+from qilisdk.core.variables import Parameter, Domain
 from numpy import pi
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
@@ -210,7 +210,7 @@ class QAOA(Ansatz):
     Quantum Approximate Optimization Algorithm (QAOA) ansatz.
 
     This ansatz alternates between applying a problem Hamiltonian and a mixer Hamiltonian,
-    parameterized by angles alpha and beta, respectively.
+    parameterized by angles gamma and alpha, respectively.
 
     By default, the mixer Hamiltonian is chosen to be a transverse field (X gates on all qubits).
 
@@ -222,8 +222,9 @@ class QAOA(Ansatz):
             ansatz = QAOA(
                 nqubits=4,
                 hamiltonian=your_problem_hamiltonian,
-                mixer_type='X',
                 layers=3,
+                mixer_type=None,
+                trotter_steps=1,
             )
             ansatz.draw()
 
@@ -232,37 +233,56 @@ class QAOA(Ansatz):
     def __init__(
         self,
         nqubits: int,
-        hamiltonian: Hamiltonian,
+        problem_hamiltonian: Hamiltonian,
         layers: int = 1,
-        mixer_type: MixerType = "X",
+        mixer_hamiltonian: Hamiltonian = None,
+        trotter_steps: int = 1,
     ) -> None:
         """
         Args:
             nqubits (int): Number of qubits in the circuit.
-            hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.
+            problem_hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.
             layers (int, optional): Number of QAOA layers. Defaults to 1.
-            mixer_type (str, optional): The type of mixer Hamiltonian to use. Defaults to 'X'.
+            mixer_hamiltonian (Hamiltonian, optional): The mixer Hamiltonian. Defaults to X mixer.
+            trotter_steps (int, optional): Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.
 
         Raises:
             ValueError: If ``nqubits`` is non-positive.
             ValueError: If ``layers`` is negative or the connectivity definition is invalid.
-            ValueError: If ``hamiltonian`` has no qubits.
+            ValueError: If ``problem_hamiltonian`` has no qubits.
+            ValueError: If ``mixer_hamiltonian`` is provided but has no qubits.
             ValueError: If ``nqubits`` does not match the number of qubits in ``hamiltonian``.
+            ValueError: If ``nqubits`` does not match the number of qubits in ``mixer_hamiltonian``.
+            ValueError: If ``trotter_steps`` is not positive.
         """
         super().__init__(nqubits)
 
         if layers < 0:
             raise ValueError("layers must be >= 0")
 
-        if hamiltonian.nqubits <= 0:
+        if problem_hamiltonian.nqubits <= 0:
             raise ValueError("hamiltonian must have at least one qubit")
+
+        if trotter_steps <= 0:
+            raise ValueError("trotter_steps must be >= 1")
         
-        if hamiltonian.nqubits != nqubits:
+        if problem_hamiltonian.nqubits != nqubits:
             raise ValueError("nqubits must match the number of qubits in hamiltonian")
 
+        # If no mixer, default to X mixer
+        if mixer_hamiltonian is None:
+            mixer_terms = { (PauliX(q),): 1.0 for q in range(nqubits) }
+            mixer_hamiltonian = Hamiltonian(mixer_terms)
+
+        if mixer_hamiltonian.nqubits <= 0:
+            raise ValueError("mixer_hamiltonian must have at least one qubit")
+        
+        if mixer_hamiltonian.nqubits != nqubits:
+            raise ValueError("nqubits must match the number of qubits in mixer_hamiltonian")
+
         self._layers = int(layers)
-        self._hamiltonian = hamiltonian
-        self._mixer_type = mixer_type
+        self._problem_hamiltonian = problem_hamiltonian
+        self._mixer_hamiltonian = mixer_hamiltonian
 
         self._build_circuit()
 
@@ -272,27 +292,42 @@ class QAOA(Ansatz):
         return self._layers
 
     @property
-    def hamiltonian(self) -> Hamiltonian:
+    def problem_hamiltonian(self) -> Hamiltonian:
         """The problem Hamiltonian encoding the cost function."""
-        return self._hamiltonian
+        return self._problem_hamiltonian
 
     @property
-    def mixer_type(self) -> str:
-        """The type of mixer Hamiltonian used ('X' or 'XY')."""
-        return self._mixer_type
+    def mixer_hamiltonian(self) -> Hamiltonian:
+        """The mixer Hamiltonian used."""
+        return self._mixer_hamiltonian
 
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
 
-        print("Problem Hamiltonian:")
-        print(self.hamiltonian)
-
-        # Split the problem hamiltonian into commuting parts
-        commuting_parts = self.hamiltonian.get_commuting_partitions()
-
+        # DEBUG
         print()
-        print("Commuting parts:")
-        for i, part in enumerate(commuting_parts):
+        print("Problem Hamiltonian:")
+        print(self.problem_hamiltonian)
+        print()
+        print("Mixer Hamiltonian:")
+        print(self.mixer_hamiltonian)
+
+        # Split the hamiltonians into commuting parts
+        commuting_parts_problem = self.problem_hamiltonian.get_commuting_partitions()
+        commuting_parts_mixer = self.mixer_hamiltonian.get_commuting_partitions()
+
+        # If either contains non-commuting terms, set the trotter steps to > 1
+        trotter_steps_problem = (self.trotter_steps if len(commuting_parts_problem) > 1 else 1)
+        trotter_steps_mixer = (self.trotter_steps if len(commuting_parts_mixer) > 1 else 1)
+
+        # DEBUG
+        print()
+        print("Commuting parts (problem):")
+        for i, part in enumerate(commuting_parts_problem):
+            print(f" Part {i}:", part)
+        print()
+        print("Commuting parts (mixer):")
+        for i, part in enumerate(commuting_parts_mixer):
             print(f" Part {i}:", part)
 
         def _pauli_evolution(term: tuple[PauliOperator, ...], coeff: float, time: Parameter) -> Iterator[BasicGate]:
@@ -311,7 +346,8 @@ class QAOA(Ansatz):
                 if name == "X":
                     yield H(q)
                 elif name == "Y":
-                    yield RX(q, **{"theta": pi / 2})
+                    gateVal = pi / 2
+                    yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
 
             # Apply CNOT ladder
             for i in range(len(qubit_indices) - 1):
@@ -319,7 +355,8 @@ class QAOA(Ansatz):
 
             # Apply RZ rotation on last qubit
             last_qubit = qubit_indices[-1]
-            yield RZConstant(last_qubit, phi=(-2 * coeff).real)
+            scaled_coeff = (-2 * coeff).real
+            yield RZ(last_qubit, phi=Parameter("fixed_" + str(scaled_coeff), scaled_coeff, Domain.REAL, (scaled_coeff, scaled_coeff)))
             yield RZ(last_qubit, **{"phi": time})
 
             # Undo CNOT ladder
@@ -333,30 +370,32 @@ class QAOA(Ansatz):
                 if name == "X":
                     yield H(q)
                 elif name == "Y":
-                    yield RX(q, **{"theta": -pi / 2})
+                    gateVal = -pi / 2
+                    yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
 
         # Applied to the equal superposition initial state |+>
         for qubit in range(self.nqubits):
             self.add(H(qubit))
 
         # Build the layers
-        for _ in range(self.layers):
+        for i in range(self.layers):
 
             # Apply problem Hamiltonian
-            alpha_param = Parameter("alpha_" + str(_), 0.0)
-            for part in commuting_parts:
-                for term, coeff in part.items():
-                    for gate in _pauli_evolution(term, coeff, alpha_param):
-                        self.add(gate)
+            gamma_param = Parameter("gamma_" + str(i), 0.0)
+            for _ in range(trotter_steps_problem):
+                for part in commuting_parts_problem:
+                    for term, coeff in part.items():
+                        for gate in _pauli_evolution(term, coeff, gamma_param):
+                            self.add(gate)
                     
             # Apply mixer Hamiltonian
-            beta_param = Parameter("beta_" + str(_), 0.0)
-            if self.mixer_type == "X":
-                for qubit in range(self.nqubits):
-                    self.add(RX(qubit, **{"theta": beta_param}))
+            alpha_param = Parameter("alpha_" + str(i), 0.0)
+            print(alpha_param)
+            for _ in range(trotter_steps_mixer):
+                for part in commuting_parts_mixer:
+                    for term, coeff in part.items():
+                        for gate in _pauli_evolution(term, coeff, alpha_param):
+                            self.add(gate)
         
-        # Print all gates
-        for gate in self.gates:
-            print(gate)
-
+        # DEBUG
         print(self.get_parameters())
