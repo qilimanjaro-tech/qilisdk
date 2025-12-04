@@ -11,8 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from .hamiltonian import Hamiltonian, I, PauliI, PauliX, PauliY, PauliZ, X, Y, Z
-from .schedule import Schedule
-
-__all__ = ["Hamiltonian", "I", "PauliI", "PauliX", "PauliY", "PauliZ", "Schedule", "X", "Y", "Z"]

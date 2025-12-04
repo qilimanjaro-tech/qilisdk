@@ -18,7 +18,7 @@ import copy
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar
+from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar, overload
 
 import numpy as np
 from loguru import logger
@@ -246,6 +246,7 @@ class Operation(str, Enum):
     ADD = "+"
     DIV = "/"
     SUB = "-"
+    MATH_MAP = "mathematical_map"
 
     @classmethod
     def to_yaml(cls, representer: RoundTripRepresenter, node: Operation) -> ScalarNode:
@@ -761,6 +762,7 @@ class BaseVariable(ABC):
         if lower_bound > upper_bound:
             raise InvalidBoundsError("lower bound can't be larger than the upper bound.")
         self._bounds = (lower_bound, upper_bound)
+        self._hash_cache: int | None = None
 
     @property
     def bounds(self) -> tuple[float, float]:
@@ -819,6 +821,7 @@ class BaseVariable(ABC):
             OutOfBoundsException: the lower bound or the upper bound don't correspond to the variable domain.
             InvalidBoundsError: the lower bound is higher than the upper bound.
         """
+        self._hash_cache = None
         if lower_bound is None:
             lower_bound = self._domain.min()
         if upper_bound is None:
@@ -866,7 +869,7 @@ class BaseVariable(ABC):
             domain (Domain): The updated domain of the variable.
             bounds (tuple[float | None, float | None]): The updated bounds of the variable. Defaults to (None, None)
         """
-
+        self._hash_cache = None
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
 
@@ -982,7 +985,9 @@ class BaseVariable(ABC):
         return out
 
     def __hash__(self) -> int:
-        return hash((self._label, self._domain.value, self._bounds))
+        if self._hash_cache is None:
+            self._hash_cache = hash((self._label, self._domain.value, self._bounds))
+        return self._hash_cache
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BaseVariable):
@@ -1147,6 +1152,8 @@ class Variable(BaseVariable):
         return super().update_variable(domain, bounds)
 
     def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
+        if not isinstance(value, (list, RealNumber)):
+            raise ValueError("Invalid Value Provided to evaluate a Variable.")
         if isinstance(value, int | float):
             if not self.domain.check_value(value):
                 raise ValueError(f"The value {value} is invalid for the domain {self.domain.value}")
@@ -1228,13 +1235,19 @@ class Parameter(BaseVariable):
     def value(self) -> RealNumber:
         return self._value
 
-    def set_value(self, value: RealNumber) -> None:
+    def check_value(self, value: RealNumber) -> None:
         if not self.domain.check_value(value):
             raise ValueError(
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
         if value > self.bounds[1] or value < self.bounds[0]:
             raise ValueError(f"The value provided ({value}) is outside the bound of the parameter {self.bounds}")
+
+    def set_value(self, value: RealNumber) -> None:
+        self.check_value(value)
+
+        if isinstance(value, np.generic):
+            value = value.item()
         self._value = value
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
@@ -1244,7 +1257,7 @@ class Parameter(BaseVariable):
         """
         return 0
 
-    def evaluate(self, value: list[int] | RealNumber = 0) -> RealNumber:
+    def evaluate(self, value: list[int] | RealNumber | None = None) -> RealNumber:
         """Evaluates the value of the variable given a binary string or a number.
 
         Args:
@@ -1256,6 +1269,11 @@ class Parameter(BaseVariable):
         Returns:
             float: the evaluated vale of the variable.
         """
+        if value is not None:
+            if isinstance(value, RealNumber):
+                self.check_value(value)
+                return value
+            raise NotImplementedError("Evaluating the value of a parameter with a list is not supported.")
         return self.value
 
     def to_binary(self) -> Term:
@@ -1289,6 +1307,40 @@ class Parameter(BaseVariable):
             )
 
         self.set_bounds(lower_bound=bounds[0], upper_bound=bounds[1])
+
+    __hash__ = BaseVariable.__hash__
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, BaseVariable):
+            return super().__eq__(other)
+        if isinstance(other, (float, int)):
+            return self.value == other
+        return False
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value != other
+        return NotImplemented
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value <= other
+        return NotImplemented
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value < other
+        return NotImplemented
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value >= other
+        return NotImplemented
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, (float, int)):
+            return self.value > other
+        return NotImplemented
 
 
 # Terms ###
@@ -1468,7 +1520,7 @@ class Term:
         Returns:
             (Term | BaseVariable): the simplified term.
         """
-        if len(self) == 1:
+        if len(self) == 1 and not isinstance(self, MathematicalMap):
             item = next(iter(self._elements.keys()))
             if self._elements[item] == 1:
                 return item
@@ -1586,7 +1638,13 @@ class Term:
         _var_values = dict(var_values)
         for var in self.variables():
             if isinstance(var, Parameter):
-                _var_values[var] = var.value
+                if var not in _var_values:
+                    _var_values[var] = var.value
+                else:
+                    value = _var_values[var]
+                    if not isinstance(value, RealNumber):
+                        raise ValueError(f"setting a parameter ({var}) value with a list is not supported.")
+                    # var.set_value(value)
             if var not in _var_values:
                 raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
         output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
@@ -1967,3 +2025,88 @@ class ComparisonTerm:
             "Symbolic Constraint Term objects do not have an inherent truth value. "
             "Use a method like .evaluate() to obtain a Boolean value."
         )
+
+    def __hash__(self) -> int:
+        return hash((hash(self._lhs), self.operation, hash(self._rhs)))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ComparisonTerm):
+            return False
+        return hash(self) == hash(other)
+
+
+class MathematicalMap(Term, ABC):
+    """Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter."""
+
+    MATH_SYMBOL = ""
+
+    @overload
+    def __init__(self, arg: Term, /) -> None: ...
+    @overload
+    def __init__(self, arg: Parameter, /) -> None: ...
+    @overload
+    def __init__(self, arg: BaseVariable, /) -> None: ...
+
+    def __init__(self, arg: Term | Parameter | BaseVariable) -> None:
+        if isinstance(arg, Term):
+            self._initialize_with_term(arg)
+        elif isinstance(arg, Parameter):
+            self._initialize_with_parameter(arg)
+        elif isinstance(arg, BaseVariable):
+            self._initialize_with_variable(arg)
+        else:
+            raise TypeError("Sin expects Term | Parameter | BaseVariable")
+
+    def _initialize_with_term(self, term: Term) -> None:
+        super().__init__(elements=[term], operation=Operation.MATH_MAP)
+
+    def _initialize_with_parameter(self, parameter: Parameter) -> None:
+        super().__init__(elements=[parameter], operation=Operation.MATH_MAP)
+
+    def _initialize_with_variable(self, variable: BaseVariable) -> None:
+        super().__init__(elements=[variable], operation=Operation.MATH_MAP)
+
+    @abstractmethod
+    def _apply_mathematical_map(self, value: Number) -> Number: ...
+
+    def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
+        value: Number = 0
+
+        for e in self:
+            if e not in var_values and isinstance(e, Parameter):
+                aux: Number = e.evaluate()
+            else:
+                aux = e.evaluate(var_values) if isinstance(e, Term) else e.evaluate(var_values[e])
+
+            value += aux * self[e]
+
+        return self._apply_mathematical_map(value)
+
+    def __repr__(self) -> str:
+        return f"{self.MATH_SYMBOL}[{super().__repr__()}]"
+
+    __str__ = __repr__
+
+
+class Sin(MathematicalMap):
+    """Apply a sine map to a parameter or term."""
+
+    MATH_SYMBOL = "sin"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.sin(_assert_real(value)))
+
+    def __copy__(self) -> Sin:
+        return Sin(super().__copy__())
+
+
+class Cos(MathematicalMap):
+    """Apply a cosine map to a parameter or term."""
+
+    MATH_SYMBOL = "cos"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.cos(_assert_real(value)))
+
+    def __copy__(self) -> Cos:
+        return Cos(super().__copy__())
