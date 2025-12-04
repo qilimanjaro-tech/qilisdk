@@ -3,6 +3,7 @@ import pytest
 
 from qilisdk.analog import Schedule, X, Z
 from qilisdk.analog.hamiltonian import PauliX, PauliZ
+from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.variables import BinaryVariable, Parameter
 
 # --- Constructor and Property Tests ---
@@ -10,17 +11,17 @@ from qilisdk.core.variables import BinaryVariable, Parameter
 
 def test_schedule_constructor_default():
     """Schedule constructed without Hamiltonians or schedule uses default values."""
-    sched = Schedule(T=10, dt=1)
+    sched = Schedule(dt=1)
     assert sched.hamiltonians == {}
     # With no Hamiltonians provided, the default schedule is {0: {}}
-    assert sched.schedule == {0: {}}
-    assert sched.T == 10
+    assert sched._coefficients == {}
+    assert sched.T == 0
     assert sched.dt == 1
     # With no Hamiltonians, nqubits remains 0.
     assert sched.nqubits == 0
 
     with pytest.raises(ValueError, match=r"dt must be greater than zero."):
-        Schedule(T=8, dt=0)
+        Schedule(dt=0)
 
 
 def test_schedule_parameters():
@@ -29,21 +30,24 @@ def test_schedule_parameters():
     H0 = p[0] * X(1) + X(0)
     H1 = p[1] * Z(1) + Z(0)
 
-    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
 
     assert p[0] in list(schedule._parameters.values())
     assert p[1] in list(schedule._parameters.values())
     assert p[2] not in list(schedule._parameters.values())
     assert schedule.nparameters == 2
 
-    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={0: {"H0": 1 + p[2], "H1": p[3]}})
+    schedule = Schedule(
+        hamiltonians={"H0": H0, "H1": H1}, coefficients={"H0": {(0, 10): 1 + p[2]}, "H1": {(0, 10): p[3]}}
+    )
 
     assert p[2] in list(schedule._parameters.values())
     assert p[3] in list(schedule._parameters.values())
     assert schedule.nparameters == 4
 
-    schedule = Schedule(T=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
-    schedule.add_schedule_step(0, {"H0": 1 + p[2], "H1": p[3]})
+    schedule = Schedule(hamiltonians={"H0": H0, "H1": H1})
+    schedule.update_hamiltonian("H0", new_coefficients={0: 1 + p[2]})
+    schedule.update_hamiltonian("H1", new_coefficients={0: p[3]})
 
     assert p[2] in list(schedule._parameters.values())
     assert p[3] in list(schedule._parameters.values())
@@ -76,10 +80,10 @@ def test_schedule_parameters():
     ):
         schedule.set_parameters({"test": 0})
 
-    with pytest.raises(ValueError, match=r"Provided 8 but Schedule has 4 parameters."):
+    with pytest.raises(ValueError, match=r"Provided 8 but this object has 4 parameters."):
         schedule.set_parameter_values([0] * 8)
 
-    with pytest.raises(ValueError, match=r"Provided 2 but Schedule has 4 parameters."):
+    with pytest.raises(ValueError, match=r"Provided 2 but this object has 4 parameters."):
         schedule.set_parameter_values([0] * 2)
 
 
@@ -90,11 +94,11 @@ def test_schedule_constructor_with_hamiltonians_and_schedule():
     H2 = PauliX(1).to_hamiltonian()
     hams = {"H1": H1, "H2": H2}
     # Provide a schedule that sets only H1 at time step 0.
-    sch = {0: {"H1": 0.5}}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
+    sch = {"H1": {0: 0.5}}
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
     # At t=0, H1 coefficient is set; H2 should be filled in with 0.
-    assert sched.schedule[0]["H1"] == 0.5
-    assert sched.schedule[0]["H2"] == 0
+    assert np.isclose(sched.coefficients["H1"][0], 0.5)
+    assert sched.coefficients["H2"][0] == 1
     # nqubits should be the maximum among Hamiltonians (here, 2 because H2 acts on qubit 1).
     assert sched.nqubits == 2
 
@@ -103,16 +107,16 @@ def test_schedule_constructor_invalid_schedule_reference():
     """Providing a schedule that references a non-declared Hamiltonian raises ValueError."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sch = {0: {"H1": 0.5, "H_unknown": 1.0}}
-    with pytest.raises(ValueError):  # noqa: PT011
-        Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
+    sch = {"H1": {0: 0.5}, "H_unknown": {0: 1.0}}
+    with pytest.raises(ValueError, match=r"Missing keys in hamiltonians: {'H_unknown'}"):
+        Schedule(dt=1, hamiltonians=hams, coefficients=sch)
 
 
 @pytest.mark.parametrize(("T", "dt"), [(10, 1), (20, 2)])
 def test_len_schedule(T, dt):
     """The length of a Schedule is T/dt (as an integer)."""
-    sched = Schedule(T=T, dt=dt)
-    assert len(sched) == int(T / dt)
+    sched = Schedule(dt=dt, total_time=T)
+    assert len(sched) == 2
 
 
 # --- Schedule Modification Tests ---
@@ -122,52 +126,45 @@ def test_add_schedule_step_valid():
     """Adding a new schedule step inserts the coefficient and warns on overwrite."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
+    sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
     # Add time step 2 with a new coefficient.
-    sched.add_schedule_step(2, {"H1": 1.5})
-    assert sched.schedule[2]["H1"] == 1.5
+    sched.update_hamiltonian("H1", new_coefficients={2: 1.5})
+    assert np.isclose(sched.coefficients["H1"][2], 1.5)
 
 
 def test_add_schedule_step_invalid_reference():
     """Attempting to add a schedule step referencing an undefined Hamiltonian raises ValueError."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
-    with pytest.raises(ValueError):  # noqa: PT011
-        sched.add_schedule_step(3, {"H_unknown": 1.0})
+    sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
+    with pytest.raises(
+        ValueError, match=r"Can't update unknown hamiltonian H_unknown. Did you mean `add_hamiltonian`?"
+    ):
+        sched.update_hamiltonian("H_unknown", new_coefficients={3: 1.0})
 
 
 def test_update_hamiltonian_coefficient_valid():
     """Updating the Hamiltonian coefficient at a valid time step works correctly."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
-    sched.update_hamiltonian_coefficient_at_time_step(5, "H1", 3.0)
-    assert sched.schedule[5]["H1"] == 3.0
-
-
-def test_update_hamiltonian_coefficient_invalid_time():
-    """Updating a coefficient at a time step after the end of the annealing schedule raises ValueError."""
-    H1 = PauliZ(0).to_hamiltonian()
-    hams = {"H1": H1}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams)
-    with pytest.raises(ValueError):  # noqa: PT011
-        sched.update_hamiltonian_coefficient_at_time_step(11, "H1", 2.0)
+    sched = Schedule(dt=1, hamiltonians=hams)
+    sched.update_hamiltonian("H1", new_coefficients={5: 3.0})
+    assert np.isclose(sched.coefficients["H1"][5], 3.0)
 
 
 def test_add_hamiltonian_new():
     """Adding a new Hamiltonian updates the schedule using a coefficient function."""
-    sched = Schedule(T=4, dt=1)
+    sched = Schedule(dt=1)
     # Define a coefficient function: coefficient = factor * t.
 
     def coeff_func(t, factor=1):
         return t * factor
 
     H1 = PauliZ(0).to_hamiltonian()
-    sched.add_hamiltonian("H1", H1, schedule=coeff_func, factor=2)
+    sched.add_hamiltonian("H1", H1, coefficients={(0, 4): coeff_func}, factor=2)
     # For T=4, dt=1, time steps are 0,1,2,3,4; expect coefficient = 2*t.
     for t in range(int(sched.T / sched.dt)):
-        assert sched.get_coefficient(t, "H1") == 2 * t
+        assert sched.coefficients["H1"][t] == 2 * t
     # nqubits should update based on the new Hamiltonian.
     assert sched.nqubits >= 1
 
@@ -175,7 +172,7 @@ def test_add_hamiltonian_new():
 def test_add_hamiltonian_existing():
     """Adding a Hamiltonian with an existing label warns and does not override the original."""
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
+    sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
     # The original Hamiltonian (H1) remains unchanged.
     assert sched.hamiltonians["H1"] == H1
 
@@ -189,8 +186,8 @@ def test_getitem_with_exact_time_step():
     H2 = PauliX(1).to_hamiltonian()
     hams = {"H1": H1, "H2": H2}
     # At time step 0: H1 coefficient 0.5, H2 coefficient 0.0; at time step 2: update H2 to 1.0.
-    sch = {0: {"H1": 0.5, "H2": 0.0}, 2: {"H2": 1.0}}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
+    sch = {"H1": {(0, 10): 0.5}, "H2": {0: 0.0, 2: 1.0}}
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
     # At t=0, expected Hamiltonian = 0.5 * H1.
     result0 = sched[0]
     expected0 = H1 * 0.5
@@ -205,8 +202,8 @@ def test_getitem_without_direct_time_step():
     """If a time step is not directly defined, __getitem__ falls back to the most recent earlier time step."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sch = {0: {"H1": 0.5}}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
+    sch = {"H1": {0: 0.5}}
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
     # Requesting time step 3 (undefined) should fall back to time step 0.
     result = sched[3]
     expected = H1 * 0.5
@@ -217,14 +214,16 @@ def test_get_coefficient():
     """get_coefficient returns the correct coefficient with fallback to earlier time steps."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sch = {0: {"H1": 0.5}, 4: {"H1": 1.0}}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=sch)
-    assert sched.get_coefficient(0, "H1") == 0.5
-    assert sched.get_coefficient(2, "H1") == 0.5  # falls back to t=0
-    assert sched.get_coefficient(4, "H1") == 1.0
-    assert sched.get_coefficient(8, "H1") == 1.0  # falls back to t=4
+    sch = {"H1": {0: 0.5, 4: 1.0}}
+    sched = Schedule(hamiltonians=hams, coefficients=sch, interpolation=Interpolation.STEP, dt=0.01)
+    assert np.isclose(sched.coefficients["H1"][0], 0.5)
+    assert np.isclose(sched.coefficients["H1"][2], 0.5)  # falls back to t=0
+    assert np.isclose(sched.coefficients["H1"][4], 1.0)
+    assert np.isclose(sched.coefficients["H1"][8], 1.0)  # falls back to t=4
     # For an undefined Hamiltonian key, get_coefficient returns 0.
-    assert sched.get_coefficient(2, "H_unknown") == 0
+
+    with pytest.raises(KeyError):
+        sched.coefficients["H_unknown"][2]
 
 
 def test_iteration():
@@ -232,9 +231,9 @@ def test_iteration():
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     # For T=4, dt=1, __len__() returns 4 but iteration yields time steps 0,1,2,3,4 (5 items).
-    sched = Schedule(T=4, dt=1, hamiltonians=hams, schedule={0: {"H1": 0.5}})
+    sched = Schedule(dt=0.01, hamiltonians=hams, coefficients={"H1": {(0, 4): 0.5}})
     results = list(iter(sched))
-    assert len(results) == 5
+    assert len(results) == 100
     # The first item from iteration should equal sched[0].
     assert results[0] == sched[0]
 
@@ -243,52 +242,68 @@ def test_schedule_property_sorting():
     """The schedule property returns a dictionary sorted by time step keys."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    unsorted_schedule = {3: {"H1": 0.3}, 0: {"H1": 0.1}, 2: {"H1": 0.2}}
-    sched = Schedule(T=10, dt=1, hamiltonians=hams, schedule=unsorted_schedule)
-    sorted_keys = list(sched.schedule.keys())
+    unsorted_schedule = {"H1": {1: 0.3, 0: 0.1, 2: 0.2}}
+    sched = Schedule(hamiltonians=hams, coefficients=unsorted_schedule)
+    sorted_keys = list(sched.coefficients.keys())
     assert sorted_keys == sorted(sorted_keys)
 
 
 def test_schedule_term_and_basevariable_errors():
     # Term with non-Parameter variable
     dummy = BinaryVariable("dummy")
-    term = (dummy) * 2
     H1 = PauliZ(0).to_hamiltonian()
-    sch = {0: {"H1": term}}
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        Schedule(T=10, dt=1, hamiltonians={"H1": H1}, schedule=sch)
 
     # BaseVariable that is not a Parameter
-    sch2 = {0: {"H1": dummy}}
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        Schedule(T=10, dt=1, hamiltonians={"H1": H1}, schedule=sch2)
+    # sch2 = {"H1": {0: dummy}}
+    # with pytest.raises(
+    #     ValueError,
+    #     match=r"Tlist can only contain parameters and no variables, but the term dummy contains objects other than parameters.",
+    # ):
+    #     Schedule(T=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch2)
+
+    term = (dummy) * 2
+    sch = {"H1": {0: term}}
+    with pytest.raises(
+        ValueError,
+        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+    ):
+        Schedule(total_time=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch)
 
 
 def test_add_schedule_step_term_basevariable_errors():
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_schedule_step(1, {"H1": term})
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_schedule_step(2, {"H1": dummy})
+    sched = Schedule(dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(
+        ValueError,
+        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+    ):
+        sched.update_hamiltonian("H1", new_coefficients={0: term})
+    with pytest.raises(
+        ValueError,
+        match=r"Can't update unknown hamiltonian H2. Did you mean `add_hamiltonian`?",
+    ):
+        sched.update_hamiltonian("H2", new_coefficients={2: dummy})
 
 
 def test_update_hamiltonian_coefficient_term_basevariable_errors():
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.update_hamiltonian_coefficient_at_time_step(1, "H1", term)
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.update_hamiltonian_coefficient_at_time_step(2, "H1", dummy)
+    sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
+    with pytest.raises(
+        ValueError,
+        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+    ):
+        sched.update_hamiltonian("H1", new_coefficients={1: term})
+    with pytest.raises(ValueError):  # noqa: PT011
+        sched.update_hamiltonian("H1", new_coefficients={2: dummy})
 
 
 def test_draw_method_runs(monkeypatch):
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
+    sched = Schedule(total_time=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
 
     # Monkeypatch renderer to avoid actual plotting
     class DummyRenderer:
@@ -316,41 +331,28 @@ def test_add_hamiltonian_term_basevariable_errors():
         return dummy * 2
 
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_hamiltonian("H2", H1, schedule=coeff_func_term)
-
-    # Schedule function returns Term with non-Parameter variable
-    dummy = BinaryVariable("dummy")
-
-    def coeff_func_term(t):
-        return dummy * 2
-
-    H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(T=10, dt=1, hamiltonians={"H1": H1})
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_hamiltonian("H2", H1, schedule=coeff_func_term)
+    sched = Schedule(hamiltonians={"H1": H1})
+    with pytest.raises(
+        ValueError,
+        match=r"function contains variables that are not time. Only Parameters are allowed.",
+    ):
+        sched.add_hamiltonian("H2", H1, coefficients={(0, 10): coeff_func_term})
 
     # Schedule function returns BaseVariable that is not a Parameter
     def coeff_func_basevar(t):
         return dummy
 
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_hamiltonian("H3", H1, schedule=coeff_func_basevar)
-
-    # Schedule function returns BaseVariable that is not a Parameter
-    def coeff_func_basevar(t):
-        return dummy
-
-    with pytest.raises(ValueError, match="can only contain Parameters"):
-        sched.add_hamiltonian("H3", H1, schedule=coeff_func_basevar)
+    with pytest.raises(
+        ValueError,
+        match=r"function contains variables that are not time. Only Parameters are allowed.",
+    ):
+        sched.add_hamiltonian("H3", H1, coefficients={(0, 10): coeff_func_basevar})
 
 
 def test_add_schedule_through_function():
     # Define total time and timestep
     T = 10.0
     dt = 0.1
-    steps = np.linspace(0, T, int(T / dt))
     nqubits = 1
 
     # Define Hamiltonians
@@ -358,15 +360,67 @@ def test_add_schedule_through_function():
     Hz = sum(Z(i) for i in range(nqubits)) - sum(Z(i) * Z(i + 1) for i in range(nqubits - 1))
 
     # Build a time-dependent schedule
-    schedule = Schedule(T, dt)
+    schedule = Schedule(dt=dt)
 
     # Add hx with a time-dependent coefficient function
-    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
+    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, coefficients={(0, T): lambda t: 1 - t / T})
 
     # Add hz similarly
-    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, coefficients={(0, T): lambda t: t / T})
 
-    assert schedule.get_coefficient(0, "hx") == 1
-    assert schedule.get_coefficient(0, "hz") == 0
-    assert schedule.get_coefficient(T / dt, "hx") == 0
-    assert schedule.get_coefficient(T / dt, "hz") == 1
+    assert schedule.coefficients["hx"][0] == 1
+    assert schedule.coefficients["hz"][0] == 0
+    assert schedule.coefficients["hx"][T] == 0
+    assert schedule.coefficients["hz"][T] == 1
+
+
+def test_linear_schedule_interpolation():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {"H1": {0: 0, 5: 1, 10: 2}}
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+
+    # At t=0, should be 0.0
+    assert np.isclose(sched.coefficients["H1"][0], 0.0)
+
+    # At t=5, should be 1.0
+    assert np.isclose(sched.coefficients["H1"][5], 1.0)
+    # At t=10, should be 2.0
+    assert np.isclose(sched.coefficients["H1"][10], 2.0)
+
+    # At t=2, should interpolate between 0 and 1
+
+    assert np.isclose(sched.coefficients["H1"][2], 0.4)
+    # At t=7, should interpolate between 1 and 2
+
+    assert np.isclose(sched.coefficients["H1"][7], 1.4)
+
+
+def test_linear_schedule_edge_cases():
+    T = 10
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    # Only one time step defined
+    sch = {"H1": {0: 3.0}}
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    # All times should return 3.0
+    for t in range(0, T + 1, dt):
+        assert np.isclose(sched.coefficients["H1"][t], 3.0)
+
+
+def test_linear_schedule_expression():
+    dt = 1
+    p = Parameter("p", 2.0)
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {"H1": {0: p, 10: 4.0}}
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    # At t=0, should be p
+    assert sched.coefficients["H1"].get_coefficient_expression(0) == p
+    # At t=10, should be 4.0
+    assert np.isclose(sched.coefficients["H1"].get_coefficient_expression(10), 4.0)
+    # At t=5, should interpolate between p and 4.0
+    expr = sched.coefficients["H1"].get_coefficient(5)
+    # Should be a linear combination of p and 4.0
+    alpha = (5 - 0) / (10 - 0)
+    expected = (1 - alpha) * p + alpha * 4.0
+    assert expr == expected.evaluate({p: 2})

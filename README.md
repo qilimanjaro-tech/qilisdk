@@ -206,18 +206,17 @@ print("CUDA Backend Results:", results)
 
 ### Time Evolution using Qutip
 
-For analog simulations, the new `TimeEvolution` and `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses a linear schedule to interpolate between two Hamiltonians on a Qutip backend:
+For analog simulations, the `TimeEvolution` and unified `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses callable coefficients defined over an interval to interpolate between two Hamiltonians on a Qutip backend:
 
 ```python
-import numpy as np
 from qilisdk.analog import Schedule, X, Z, Y
 from qilisdk.core import ket, tensor_prod
 from qilisdk.backends import QutipBackend
 from qilisdk.functionals import TimeEvolution
 
 # Define total time and timestep
-T = 100
-steps = np.linspace(0, T, T)
+T = 100.0
+dt = 0.1
 nqubits = 1
 
 # Define Hamiltonians
@@ -225,13 +224,14 @@ Hx = sum(X(i) for i in range(nqubits))
 Hz = sum(Z(i) for i in range(nqubits))
 
 # Build a time‑dependent schedule
-schedule = Schedule(T)
-
-# Add hx with a time‐dependent coefficient function
-schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
-
-# Add hz similarly
-schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
+schedule = Schedule(
+    hamiltonians={"hx": Hx, "hz": Hz},
+    coefficients={
+        "hx": {(0.0, T): lambda t: 1 - t / T},
+        "hz": {(0.0, T): lambda t: t / T},
+    },
+    dt=dt,
+)
 
 # draw the schedule
 schedule.draw()
@@ -382,6 +382,42 @@ print()
 print("Reconstructed Circuit:")
 restored_circuit.draw()
 ```
+
+### OpenFermion Integration
+
+`QiliSDK` can translate ``QubitOperator`` objects from ``OpenFermion`` to ``QiliSDK``'s ``Hamiltonian`` Objects and vice versa.
+
+This code is available under an optional dependency that can be installed using ``pip install qilisdk[openfermion]``.
+
+here is an example of the usage: 
+```python
+from openfermion.hamiltonians import jellium_model
+from openfermion.transforms import fourier_transform, jordan_wigner
+from openfermion.utils import Grid
+
+from qilisdk.utils.openfermion import openfermion_to_qilisdk, qilisdk_to_openfermion
+
+# Let's look at a very small model of jellium in 1D.
+grid = Grid(dimensions=1, length=3, scale=1.0)
+spinless = True
+
+# Get the momentum Hamiltonian.
+momentum_hamiltonian = jellium_model(grid, spinless)
+momentum_qubit_operator = jordan_wigner(momentum_hamiltonian)
+momentum_qubit_operator.compress()
+
+# Fourier transform the Hamiltonian to the position basis.
+position_hamiltonian = fourier_transform(momentum_hamiltonian, grid, spinless)
+position_qubit_operator = jordan_wigner(position_hamiltonian)
+position_qubit_operator.compress()
+
+qilisdk_ham = openfermion_to_qilisdk(position_qubit_operator)
+openfermion_ham = qilisdk_to_openfermion(qilisdk_ham)
+
+```
+
+
+
 
 ---
 
