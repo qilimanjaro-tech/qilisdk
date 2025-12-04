@@ -2073,7 +2073,10 @@ class MathematicalMap(Term, ABC):
         value: Number = 0
 
         for e in self:
-            aux = e.evaluate(var_values) if isinstance(e, Term) else e.evaluate(var_values[e])
+            if e not in var_values and isinstance(e, Parameter):
+                aux: Number = e.evaluate()
+            else:
+                aux = e.evaluate(var_values) if isinstance(e, Term) else e.evaluate(var_values[e])
 
             value += aux * self[e]
 
