@@ -111,7 +111,6 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -124,6 +123,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -138,10 +138,17 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../../../../../0.1.5/index.html">0.1.5</a></li>
-<li><a href="../../../../../../0.1.6/index.html">0.1.6</a></li>
-<li><a href="index.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.6/index.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.5/index.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="index.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -242,7 +263,7 @@
 <dd></dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">VariationalProgram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">functional</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TFunctional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><span class="pre">qilisdk.optimizers.optimizer.Optimizer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><span class="pre">qilisdk.cost_functions.cost_function.CostFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_intermediate_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">VariationalProgram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">functional</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TFunctional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><span class="pre">qilisdk.optimizers.optimizer.Optimizer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><span class="pre">qilisdk.cost_functions.cost_function.CostFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_intermediate_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><span class="pre">qilisdk.core.variables.ComparisonTerm</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../functional/index.html#qilisdk.functionals.functional.Functional" title="qilisdk.functionals.functional.Functional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.functionals.functional.Functional</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Generic</span></code>[<a class="reference internal" href="#qilisdk.functionals.variational_program.TFunctional" title="qilisdk.functionals.variational_program.TFunctional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFunctional</span></code></a>]</p>
 <p>Bundle a parameterized functional, optimizer, and cost function into a variational loop.</p>
 <p class="rubric">Example</p>
@@ -256,7 +277,13 @@
 <li><p><strong>optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Optimization routine controlling parameter updates.</p></li>
 <li><p><strong>cost_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code>) – Metric used to evaluate functional executions.</p></li>
 <li><p><strong>store_intermediate_results</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span> <span class="pre">optional</span></code>) – Persist intermediate executions if requested by the optimizer.</p></li>
+<li><p><strong>parameter_constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[ComparisonTerm]</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Optional constraints on parameter values that are
+enforced before optimizer updates are applied.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the user applies constraints on parameters that are not present in the variational program.
+Or the constraints contain Objects that are not parameters.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -282,6 +309,16 @@
 <dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">store_intermediate_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.store_intermediate_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Indicate whether intermediate execution data should be stored.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.get_constraints">
+<span class="sig-name descname"><span class="pre">get_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><span class="pre">qilisdk.core.variables.ComparisonTerm</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.get_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.get_constraints" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.get_constraints'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Return variational-program-level constraints plus those from the underlying functional.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints">
+<span class="sig-name descname"><span class="pre">check_parameter_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/variational_program.html#VariationalProgram.check_parameter_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Return a penalty-like score (0 if valid) indicating how many constraints are violated.</p>
 </dd></dl>
 </dd></dl>
 </section>
@@ -316,6 +353,8 @@
 <li><a :data-current="activeSection === '#qilisdk.functionals.variational_program.VariationalProgram.optimizer'" class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram.optimizer"><code class="docutils literal notranslate"><span class="pre">VariationalProgram.optimizer</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.functionals.variational_program.VariationalProgram.cost_function'" class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram.cost_function"><code class="docutils literal notranslate"><span class="pre">VariationalProgram.cost_function</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results'" class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results"><code class="docutils literal notranslate"><span class="pre">VariationalProgram.store_intermediate_results</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.functionals.variational_program.VariationalProgram.get_constraints'" class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram.get_constraints"><code class="docutils literal notranslate"><span class="pre">VariationalProgram.get_constraints()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints'" class="reference internal" href="#qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints"><code class="docutils literal notranslate"><span class="pre">VariationalProgram.check_parameter_constraints()</span></code></a></li>
 </ul>
 </li>
 </ul>

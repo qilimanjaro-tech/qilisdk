@@ -111,7 +111,6 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -124,6 +123,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -138,10 +138,17 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../0.1.5/fundamentals/speqtrum.html">0.1.5</a></li>
-<li><a href="../../0.1.6/fundamentals/speqtrum.html">0.1.6</a></li>
-<li><a href="speqtrum.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.6/fundamentals/speqtrum.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.5/fundamentals/speqtrum.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="speqtrum.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -324,7 +345,7 @@ must supply a <code class="docutils literal notranslate"><span class="pre">devic
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Physical QPUs currently do not support analog functionals built on <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>.TimeEvolution;
-for now, analog hardware can run only pulse experiments from <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments" title="qilisdk.speqtrum.experiments"><code class="xref py py-mod docutils literal notranslate"><span class="pre">experiments</span></code></a>.</p>
+for now, analog hardware can run only pulse experiments from <code class="xref py py-mod docutils literal notranslate"><span class="pre">experiments</span></code>.</p>
 </div>
 </section>
 <section id="variational-programs">
@@ -367,11 +388,11 @@ function) and submit it as any other functional.</p>
 </section>
 <section id="pulse-experiments">
 <h2>Pulse Experiments<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#pulse-experiments" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#pulse-experiments'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The SpeQtrum client also supports calibration-style experiments defined in <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments" title="qilisdk.speqtrum.experiments"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.speqtrum.experiments</span></code></a>. These
+<p>The SpeQtrum client also supports calibration-style experiments defined in <code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.speqtrum.experiments</span></code>. These
 functional objects mirror the interfaces described in the <a class="reference internal" href="functionals.html"><span class="doc">Functionals</span></a> chapter and return rich result types.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceType</span><span class="p">,</span> <span class="n">SpeQtrum</span>
-</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">RabiExperiment</span><span class="p">,</span> <span class="n">T1Experiment</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.experiments</span><span class="w"> </span><span class="kn">import</span> <span class="n">RabiExperiment</span><span class="p">,</span> <span class="n">T1Experiment</span>
 </span><span id="line-4">
 </span><span id="line-5"><span class="n">client</span> <span class="o">=</span> <span class="n">SpeQtrum</span><span class="p">()</span>
 </span><span id="line-6"><span class="n">device</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_devices</span><span class="p">(</span>
@@ -391,8 +412,8 @@ functional objects mirror the interfaces described in the <a class="reference in
 </span><span id="line-20"><span class="n">t1_result</span> <span class="o">=</span> <span class="n">t1_response</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
-<p>The resulting <a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult" title="qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RabiExperimentResult</span></code></a> and
-<a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult" title="qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">T1ExperimentResult</span></code></a> objects can then be used directly.</p>
+<p>The resulting <code class="xref py py-class docutils literal notranslate"><span class="pre">RabiExperimentResult</span></code> and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">T1ExperimentResult</span></code> objects can then be used directly.</p>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

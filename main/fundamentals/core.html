@@ -111,7 +111,6 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -124,6 +123,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -138,10 +138,17 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../0.1.5/index.html">0.1.5</a></li>
-<li><a href="../../0.1.6/fundamentals/core.html">0.1.6</a></li>
-<li><a href="core.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.6/fundamentals/core.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.5/index.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="core.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -383,6 +404,29 @@ collect all the <code class="xref py py-class docutils literal notranslate"><spa
 <p>Whenever you interact with one of these parameterizable objects, the helper
 methods let you list, bound, or update the symbolic degrees of freedom in a
 consistent way.</p>
+</section>
+<section id="mathematical-maps-sin-cos">
+<h3>Mathematical Maps (sin, cos)<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#mathematical-maps-sin-cos" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#mathematical-maps-sin-cos'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<p>Use <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap" title="qilisdk.core.variables.MathematicalMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a> helpers to apply common
+functions to a parameter or term while keeping expressions symbolic.
+<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin" title="qilisdk.core.variables.Sin"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sin</span></code></a> and <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos" title="qilisdk.core.variables.Cos"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cos</span></code></a>
+wrap a <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>, <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>,
+or any other base variable and defer evaluation until values are provided.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Sin</span><span class="p">,</span> <span class="n">Cos</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">theta</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">"theta"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">expr</span> <span class="o">=</span> <span class="n">Sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">Cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>                <span class="c1"># sin[theta] + cos[(2) * theta]</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({}))</span>   <span class="c1"># uses theta.value automatically</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># You can also supply a different value at evaluation time:</span>
+</span><span id="line-10"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span><span class="n">theta</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}))</span>
+</span></code></pre></div>
+</div>
+<p>These maps compose naturally with other terms, so you can include them in
+constraints or objectives and rely on the same evaluation and encoding rules
+as other symbolic expressions.</p>
 </section>
 <section id="comparison-terms">
 <h3>Comparison Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#comparison-terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#comparison-terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
@@ -907,6 +951,7 @@ operators in sparse form.</p>
 <li><a :data-current="activeSection === '#variables'" class="reference internal" href="#variables">Variables</a></li>
 <li><a :data-current="activeSection === '#terms'" class="reference internal" href="#terms">Terms</a></li>
 <li><a :data-current="activeSection === '#parameters-and-parameterizable-objects'" class="reference internal" href="#parameters-and-parameterizable-objects">Parameters and Parameterizable Objects</a></li>
+<li><a :data-current="activeSection === '#mathematical-maps-sin-cos'" class="reference internal" href="#mathematical-maps-sin-cos">Mathematical Maps (sin, cos)</a></li>
 <li><a :data-current="activeSection === '#comparison-terms'" class="reference internal" href="#comparison-terms">Comparison Terms</a></li>
 <li><a :data-current="activeSection === '#objectives-and-constraints'" class="reference internal" href="#objectives-and-constraints">Objectives and Constraints</a></li>
 <li><a :data-current="activeSection === '#evaluating-a-model'" class="reference internal" href="#evaluating-a-model">Evaluating a Model</a></li>

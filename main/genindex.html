@@ -142,7 +142,6 @@
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -155,6 +154,7 @@
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/core/index.html">qilisdk.core</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -169,10 +169,17 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/experiments/index.html">qilisdk.experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
@@ -193,7 +200,6 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -215,12 +221,35 @@
 </ul>
 
 </nav>
-<h3>Versions</h3>
-<ul>
-  <li><a href="../0.1.5/index.html">0.1.5</a></li>
-  <li><a href="../0.1.6/index.html">0.1.6</a></li>
-  <li><a href="genindex.html">main</a></li>
-</ul>
+  
+  
+
+  <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Releases</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.1.6/index.html">0.1.6</a>
+      </li>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.1.5/index.html">0.1.5</a>
+      </li>
+    </ul>
+    
+
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Development</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="genindex.html">main</a>
+      </li>
+    </ul>
+    
+  </nav>
 
       </div>
     </div>
@@ -281,7 +310,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__class_vars__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__class_vars__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__class_vars__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__class_vars__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__class_vars__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -305,7 +338,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__private_attributes__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__private_attributes__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__private_attributes__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__private_attributes__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__private_attributes__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -329,7 +366,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_complete__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_complete__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_complete__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_complete__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_complete__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -353,7 +394,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_computed_fields__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_computed_fields__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_computed_fields__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_computed_fields__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_computed_fields__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -377,7 +422,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_core_schema__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_core_schema__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_core_schema__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_core_schema__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_core_schema__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -401,7 +450,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_custom_init__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_custom_init__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_custom_init__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_custom_init__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_custom_init__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -425,7 +478,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_decorators__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_decorators__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_decorators__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_decorators__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_decorators__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -449,7 +506,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_extra__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_extra__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_extra__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_extra__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_extra__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -473,7 +534,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_fields__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_fields__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_fields__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -499,7 +564,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields_set__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_fields_set__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_fields_set__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_fields_set__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields_set__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -523,7 +592,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_generic_metadata__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_generic_metadata__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_generic_metadata__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_generic_metadata__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_generic_metadata__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -547,7 +620,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_parent_namespace__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_parent_namespace__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_parent_namespace__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_parent_namespace__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_parent_namespace__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -571,7 +648,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_post_init__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_post_init__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_post_init__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_post_init__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_post_init__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -595,7 +676,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_private__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_private__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_private__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_private__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_private__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -619,7 +704,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_root_model__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_root_model__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_root_model__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_root_model__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_root_model__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -643,7 +732,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_serializer__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_serializer__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_serializer__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_serializer__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_serializer__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -667,7 +760,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_validator__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__pydantic_validator__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_validator__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__pydantic_validator__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_validator__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -691,7 +788,11 @@
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__signature__">(T1ExperimentPayload attribute)</a>
 </li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.__signature__">(T2ExperimentPayload attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__signature__">(TimeEvolutionPayload attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.__signature__">(TwoTonesExperimentPayload attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__signature__">(VariationalProgramPayload attribute)</a>
 </li>
@@ -719,7 +820,7 @@
       </ul></li>
       <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.add_hamiltonian">add_hamiltonian() (Schedule method)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.add_schedule_step">add_schedule_step() (Schedule method)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.add_time_point">add_time_point() (Interpolator method)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Adjoint">Adjoint (class in qilisdk.digital.gates)</a>
 </li>
@@ -801,6 +902,10 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">CANCELLED (JobStatus attribute)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.check_constraints">check_constraints() (Parameterizable method)</a>
+</li>
+      <li><a href="code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.check_parameter_constraints">check_parameter_constraints() (VariationalProgram method)</a>
+</li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Bitwise.check_valid">check_valid() (Bitwise static method)</a>
 
       <ul style="list-style-type:none">
@@ -814,15 +919,37 @@
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.check_value">check_value() (Domain method)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.check_value">(Parameter method)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit">Circuit (class in qilisdk.digital.circuit)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle">CircuitStyle (class in qilisdk.utils.visualization.style)</a>
+</li>
+      <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspiler">CircuitTranspiler (class in qilisdk.digital.circuit_transpiler)</a>
+</li>
+      <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass.CircuitTranspilerPass">CircuitTranspilerPass (class in qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT">CNOT (class in qilisdk.digital.gates)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.code">code (Device attribute)</a>
 </li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.CoeffDict">CoeffDict (in module qilisdk.analog.schedule)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.coefficients">coefficients (Interpolator property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.coefficients">(Schedule property)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.coefficients_dict">coefficients_dict (Interpolator property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.coefficients_dict">(Schedule property)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.commutator">commutator() (Hamiltonian method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonOperation">ComparisonOperation (class in qilisdk.core.variables)</a>
@@ -835,6 +962,8 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.Complex">Complex (in module qilisdk.core.qtensor)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision.COMPLEX_128">COMPLEX_128 (Precision attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision.COMPLEX_64">COMPLEX_64 (Precision attribute)</a>
@@ -849,8 +978,6 @@
         <li><a href="code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.compute_cost">(TimeEvolutionResult method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.connectivity">connectivity (HardwareEfficientAnsatz property)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.Connectivity">Connectivity (in module qilisdk.digital.ansatz)</a>
@@ -876,6 +1003,8 @@
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Controlled">Controlled (class in qilisdk.digital.gates)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.controlled">controlled() (BasicGate method)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos">Cos (class in qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/optimizers/optimizer_result/index.html#qilisdk.optimizers.optimizer_result.OptimizerIntermediateResult.cost">cost (OptimizerIntermediateResult property)</a>
 </li>
@@ -905,6 +1034,8 @@
       <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.dark">dark (in module qilisdk.utils.visualization.themes)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.data">data (QTensor property)</a>
+</li>
+      <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/decompose_multi_controlled_gates_pass/index.html#qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass.DecomposeMultiControlledGatesPass">DecomposeMultiControlledGatesPass (class in qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.default_line_style">default_line_style (ScheduleStyle attribute)</a>
 </li>
@@ -950,7 +1081,7 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.DIGITAL">DIGITAL (JobType attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.Dimension">Dimension (class in qilisdk.speqtrum.experiments.experiment_result)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension">Dimension (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Operation.DIV">DIV (Operation attribute)</a>
 </li>
@@ -968,7 +1099,7 @@
         <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw">(Schedule method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.drive_duration_values">drive_duration_values (RabiExperiment property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.drive_duration_values">drive_duration_values (RabiExperiment property)</a>
 </li>
       <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.dt">dt (Schedule property)</a>
 </li>
@@ -1036,6 +1167,8 @@
 </li>
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Encoding.evaluate">(Encoding static method)</a>
 </li>
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap.evaluate">(MathematicalMap method)</a>
+</li>
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.evaluate">(Model method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.OneHot.evaluate">(OneHot static method)</a>
@@ -1071,9 +1204,9 @@
 </li>
       <li><a href="code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values">expected_values (TimeEvolutionResult property)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.ExperimentFunctional">ExperimentFunctional (class in qilisdk.speqtrum.experiments.experiment_functional)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.ExperimentFunctional">ExperimentFunctional (class in qilisdk.experiments.experiment_functional)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult">ExperimentResult (class in qilisdk.speqtrum.experiments.experiment_result)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult">ExperimentResult (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.expires_in">expires_in (Token attribute)</a>
 </li>
@@ -1102,6 +1235,12 @@
 </li>
       <li><a href="code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_state">final_state (TimeEvolutionResult property)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_coefficeints">fixed_coefficeints (Interpolator property)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_items">fixed_items() (Interpolator method)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_tlist">fixed_tlist (Interpolator property)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.font">font (Style property)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontfamily">fontfamily (Style attribute)</a>
@@ -1118,10 +1257,16 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontweight">fontweight (Style attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm">frobenius_norm() (Hamiltonian method)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_start">frequency_start (TwoTonesExperiment property)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_step">frequency_step (TwoTonesExperiment property)</a>
+</li>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_stop">frequency_stop (TwoTonesExperiment property)</a>
+</li>
+      <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm">frobenius_norm() (Hamiltonian method)</a>
+</li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.from_model">from_model() (QUBO class method)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2">from_qasm2() (in module qilisdk.utils.openqasm2)</a>
@@ -1181,22 +1326,26 @@
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GEQ">GEQ() (in module qilisdk.core.variables)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/linear_schedule/index.html#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient">get_coefficient() (LinearSchedule method)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_coefficient">(Schedule method)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.get_coefficient">get_coefficient() (Interpolator method)</a>
 </li>
-      </ul></li>
-      <li><a href="code/api/qilisdk/analog/linear_schedule/index.html#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression">get_coefficient_expression() (LinearSchedule method)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_coefficient_expression">(Schedule method)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.get_coefficient_expression">get_coefficient_expression() (Interpolator method)</a>
 </li>
-      </ul></li>
       <li><a href="code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj">get_compact_qobj() (QutipI method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.get_constant">get_constant() (Term method)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_constraints">get_constraints() (Parameterizable method)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_constraints">(Sampling method)</a>
+</li>
+        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_constraints">(Schedule method)</a>
+</li>
+        <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_constraints">(TimeEvolution method)</a>
+</li>
+        <li><a href="code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.get_constraints">(VariationalProgram method)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.get_job">get_job() (SpeQtrum method)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.get_parameter_bounds">get_parameter_bounds() (BasicGate method)</a>
@@ -1206,15 +1355,11 @@
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameter_bounds">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds">(Hamiltonian method)</a>
-</li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.get_parameter_bounds">(Modified method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_bounds">(Parameterizable method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_bounds">(Sampling method)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_parameter_bounds">(Schedule method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_bounds">(TimeEvolution method)</a>
 </li>
@@ -1224,15 +1369,11 @@
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameter_names">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names">(Hamiltonian method)</a>
-</li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.get_parameter_names">(Modified method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_names">(Parameterizable method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_names">(Sampling method)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_parameter_names">(Schedule method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_names">(TimeEvolution method)</a>
 </li>
@@ -1244,15 +1385,11 @@
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameter_values">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values">(Hamiltonian method)</a>
-</li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.get_parameter_values">(Modified method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_values">(Parameterizable method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_values">(Sampling method)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_parameter_values">(Schedule method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_values">(TimeEvolution method)</a>
 </li>
@@ -1264,15 +1401,11 @@
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameters">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters">(Hamiltonian method)</a>
-</li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.get_parameters">(Modified method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameters">(Parameterizable method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameters">(Sampling method)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.get_parameters">(Schedule method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameters">(TimeEvolution method)</a>
 </li>
@@ -1343,14 +1476,20 @@
       </ul></li>
       <li><a href="code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.intermediate_states">intermediate_states (TimeEvolutionResult property)</a>
 </li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.InterpDict">InterpDict (in module qilisdk.analog.schedule)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolation">Interpolation (class in qilisdk.core.interpolator)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator">Interpolator (class in qilisdk.core.interpolator)</a>
+</li>
       <li><a href="code/api/qilisdk/core/exceptions/index.html#qilisdk.core.exceptions.InvalidBoundsError">InvalidBoundsError</a>
 </li>
       <li><a href="code/api/qilisdk/analog/exceptions/index.html#qilisdk.analog.exceptions.InvalidHamiltonianOperation">InvalidHamiltonianOperation</a>
 </li>
-      <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError">InvalidParameterNameError</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError">InvalidParameterNameError</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_bra">is_bra() (QTensor method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_density_matrix">is_density_matrix() (QTensor method)</a>
@@ -1374,6 +1513,8 @@
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_scalar">is_scalar() (QTensor method)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.issued_at">issued_at (Token attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.items">items() (Interpolator method)</a>
 </li>
   </ul></td>
   </tr>
@@ -1434,7 +1575,7 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.label_pad">label_pad (CircuitStyle attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.Dimension.labels">labels (Dimension attribute)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.labels">labels (Dimension attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.lagrange_multipliers">lagrange_multipliers (Model property)</a>
 </li>
@@ -1476,7 +1617,7 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.line_styles">line_styles (ScheduleStyle attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/linear_schedule/index.html#qilisdk.analog.linear_schedule.LinearSchedule">LinearSchedule (class in qilisdk.analog.linear_schedule)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolation.LINEAR">LINEAR (Interpolation attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices">list_devices() (SpeQtrum method)</a>
 </li>
@@ -1518,6 +1659,18 @@
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker_size">marker_size (ScheduleStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.math_fontfamily">math_fontfamily (Style attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Operation.MATH_MAP">MATH_MAP (Operation attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos.MATH_SYMBOL">MATH_SYMBOL (Cos attribute)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL">(MathematicalMap attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin.MATH_SYMBOL">(Sin attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap">MathematicalMap (class in qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer">MatplotlibCircuitRenderer (class in qilisdk.utils.visualization.circuit_renderers)</a>
 </li>
@@ -1581,8 +1734,6 @@
 </li>
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#module-qilisdk.analog.hamiltonian">qilisdk.analog.hamiltonian</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/linear_schedule/index.html#module-qilisdk.analog.linear_schedule">qilisdk.analog.linear_schedule</a>
-</li>
         <li><a href="code/api/qilisdk/analog/schedule/index.html#module-qilisdk.analog.schedule">qilisdk.analog.schedule</a>
 </li>
         <li><a href="code/api/qilisdk/backends/index.html#module-qilisdk.backends">qilisdk.backends</a>
@@ -1598,6 +1749,8 @@
         <li><a href="code/api/qilisdk/core/algorithm/index.html#module-qilisdk.core.algorithm">qilisdk.core.algorithm</a>
 </li>
         <li><a href="code/api/qilisdk/core/exceptions/index.html#module-qilisdk.core.exceptions">qilisdk.core.exceptions</a>
+</li>
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#module-qilisdk.core.interpolator">qilisdk.core.interpolator</a>
 </li>
         <li><a href="code/api/qilisdk/core/model/index.html#module-qilisdk.core.model">qilisdk.core.model</a>
 </li>
@@ -1623,9 +1776,25 @@
 </li>
         <li><a href="code/api/qilisdk/digital/circuit/index.html#module-qilisdk.digital.circuit">qilisdk.digital.circuit</a>
 </li>
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#module-qilisdk.digital.circuit_transpiler">qilisdk.digital.circuit_transpiler</a>
+</li>
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/index.html#module-qilisdk.digital.circuit_transpiler_passes">qilisdk.digital.circuit_transpiler_passes</a>
+</li>
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#module-qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass">qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass</a>
+</li>
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/decompose_multi_controlled_gates_pass/index.html#module-qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass">qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass</a>
+</li>
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/numeric_helpers/index.html#module-qilisdk.digital.circuit_transpiler_passes.numeric_helpers">qilisdk.digital.circuit_transpiler_passes.numeric_helpers</a>
+</li>
         <li><a href="code/api/qilisdk/digital/exceptions/index.html#module-qilisdk.digital.exceptions">qilisdk.digital.exceptions</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#module-qilisdk.digital.gates">qilisdk.digital.gates</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/index.html#module-qilisdk.experiments">qilisdk.experiments</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#module-qilisdk.experiments.experiment_functional">qilisdk.experiments.experiment_functional</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#module-qilisdk.experiments.experiment_result">qilisdk.experiments.experiment_result</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/index.html#module-qilisdk.functionals">qilisdk.functionals</a>
 </li>
@@ -1656,12 +1825,6 @@
         <li><a href="code/api/qilisdk/settings/index.html#module-qilisdk.settings">qilisdk.settings</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum">qilisdk.speqtrum</a>
-</li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments">qilisdk.speqtrum.experiments</a>
-</li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#module-qilisdk.speqtrum.experiments.experiment_functional">qilisdk.speqtrum.experiments.experiment_functional</a>
-</li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#module-qilisdk.speqtrum.experiments.experiment_result">qilisdk.speqtrum.experiments.experiment_result</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#module-qilisdk.speqtrum.keyring">qilisdk.speqtrum.keyring</a>
 </li>
@@ -1773,10 +1936,10 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_200">NEUTRAL_200 (in module qilisdk.utils.visualization.themes)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_600">NEUTRAL_600 (in module qilisdk.utils.visualization.themes)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_600">NEUTRAL_600 (in module qilisdk.utils.visualization.themes)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_800">NEUTRAL_800 (in module qilisdk.utils.visualization.themes)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_900">NEUTRAL_900 (in module qilisdk.utils.visualization.themes)</a>
@@ -1797,8 +1960,6 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.nparameters">(Gate property)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.nparameters">(Hamiltonian property)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.nparameters">(Modified property)</a>
 </li>
@@ -1961,12 +2122,20 @@
       </ul></li>
       <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable">Parameterizable (class in qilisdk.core.parameterizable)</a>
 </li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.PARAMETERIZED_NUMBER">PARAMETERIZED_NUMBER (in module qilisdk.analog.schedule)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER">(in module qilisdk.core.interpolator)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.parameters">parameters (BasicGate property)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.parameters">(Gate property)</a>
 </li>
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.parameters">(Hamiltonian property)</a>
+</li>
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.parameters">(Interpolator property)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.parameters">(Modified property)</a>
 </li>
@@ -2009,7 +2178,7 @@
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3.phi">(U3 property)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot">plot() (ExperimentResult method)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.plot">plot() (ExperimentResult method)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.plot">(MatplotlibCircuitRenderer method)</a>
@@ -2017,12 +2186,16 @@
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">(MatplotlibScheduleRenderer method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot_title">plot_title (ExperimentResult attribute)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.plot_title">plot_title (ExperimentResult attribute)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult.plot_title">(RabiExperimentResult attribute)</a>
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.RabiExperimentResult.plot_title">(RabiExperimentResult attribute)</a>
 </li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult.plot_title">(T1ExperimentResult attribute)</a>
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T1ExperimentResult.plot_title">(T1ExperimentResult attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T2ExperimentResult.plot_title">(T2ExperimentResult attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.TwoTonesExperimentResult.plot_title">(TwoTonesExperimentResult attribute)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.pop">pop() (Term method)</a>
@@ -2083,13 +2256,6 @@
 </li>
       </ul></li>
       <li>
-    qilisdk.analog.linear_schedule
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/analog/linear_schedule/index.html#module-qilisdk.analog.linear_schedule">module</a>
-</li>
-      </ul></li>
-      <li>
     qilisdk.analog.schedule
 
       <ul style="list-style-type:none">
@@ -2143,6 +2309,13 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/core/exceptions/index.html#module-qilisdk.core.exceptions">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.core.interpolator
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#module-qilisdk.core.interpolator">module</a>
 </li>
       </ul></li>
       <li>
@@ -2230,6 +2403,41 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.digital.circuit_transpiler
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#module-qilisdk.digital.circuit_transpiler">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.digital.circuit_transpiler_passes
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/index.html#module-qilisdk.digital.circuit_transpiler_passes">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#module-qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/decompose_multi_controlled_gates_pass/index.html#module-qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.digital.circuit_transpiler_passes.numeric_helpers
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/numeric_helpers/index.html#module-qilisdk.digital.circuit_transpiler_passes.numeric_helpers">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.digital.exceptions
 
       <ul style="list-style-type:none">
@@ -2244,12 +2452,35 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.experiments
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/experiments/index.html#module-qilisdk.experiments">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.experiments.experiment_functional
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#module-qilisdk.experiments.experiment_functional">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.experiments.experiment_result
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#module-qilisdk.experiments.experiment_result">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.functionals
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/functionals/index.html#module-qilisdk.functionals">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.functionals.functional
 
@@ -2285,8 +2516,6 @@
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#module-qilisdk.functionals.time_evolution">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.functionals.time_evolution_result
 
@@ -2348,27 +2577,6 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum">module</a>
-</li>
-      </ul></li>
-      <li>
-    qilisdk.speqtrum.experiments
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments">module</a>
-</li>
-      </ul></li>
-      <li>
-    qilisdk.speqtrum.experiments.experiment_functional
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#module-qilisdk.speqtrum.experiments.experiment_functional">module</a>
-</li>
-      </ul></li>
-      <li>
-    qilisdk.speqtrum.experiments.experiment_result
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#module-qilisdk.speqtrum.experiments.experiment_result">module</a>
 </li>
       </ul></li>
       <li>
@@ -2479,7 +2687,7 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor">QTensor (class in qilisdk.core.qtensor)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.ExperimentFunctional.qubit">qubit (ExperimentFunctional property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.ExperimentFunctional.qubit">qubit (ExperimentFunctional property)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator.qubit">(PauliOperator property)</a>
@@ -2516,11 +2724,11 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.rabi_experiment_result">rabi_experiment_result (ExecuteResult attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment">RabiExperiment (class in qilisdk.speqtrum.experiments.experiment_functional)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment">RabiExperiment (class in qilisdk.experiments.experiment_functional)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload">RabiExperimentPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult">RabiExperimentResult (class in qilisdk.speqtrum.experiments.experiment_result)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.RabiExperimentResult">RabiExperimentResult (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.REAL">REAL (Domain attribute)</a>
 </li>
@@ -2532,30 +2740,40 @@
 </li>
       <li><a href="code/api/qilisdk/core/result/index.html#qilisdk.core.result.Result">Result (class in qilisdk.core.result)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.result">result (JobDetail attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional.result_type">result_type (Functional attribute)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.result_type">(RabiExperiment attribute)</a>
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.result_type">(RabiExperiment attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.result_type">(Sampling attribute)</a>
 </li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.result_type">(T1Experiment attribute)</a>
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment.result_type">(T1Experiment attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment.result_type">(T2Experiment attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.result_type">(TimeEvolution attribute)</a>
+</li>
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.result_type">(TwoTonesExperiment attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.result_type">(VariationalProgram attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ResultExtractor">ResultExtractor (in module qilisdk.speqtrum.speqtrum_models)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.rhs">rhs (ComparisonTerm property)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint.rhs">(Constraint property)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass.CircuitTranspilerPass.run">run() (CircuitTranspilerPass method)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/decompose_multi_controlled_gates_pass/index.html#qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass.DecomposeMultiControlledGatesPass.run">(DecomposeMultiControlledGatesPass method)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.RUNNING">RUNNING (JobStatus attribute)</a>
@@ -2575,11 +2793,11 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.S">S (class in qilisdk.digital.gates)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21">s21 (ExperimentResult property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21">s21 (ExperimentResult property)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_db">s21_db (ExperimentResult property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21_db">s21_db (ExperimentResult property)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_modulus">s21_modulus (ExperimentResult property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21_modulus">s21_modulus (ExperimentResult property)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult.samples">samples (SamplingResult property)</a>
 </li>
@@ -2607,9 +2825,9 @@
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">(MatplotlibScheduleRenderer method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule">Schedule (class in qilisdk.analog.schedule)</a>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.scale_max_time">scale_max_time() (Schedule method)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.schedule">schedule (Schedule property)</a>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule">Schedule (class in qilisdk.analog.schedule)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle">ScheduleStyle (class in qilisdk.utils.visualization.style)</a>
 </li>
@@ -2629,7 +2847,11 @@
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.set_bounds">(Parameter method)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.set_dt">set_dt() (Schedule method)</a>
+</li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.set_lagrange_multiplier">set_lagrange_multiplier() (Model method)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.set_max_time">set_max_time() (Interpolator method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.set_objective">set_objective() (Model method)</a>
 
@@ -2644,7 +2866,7 @@
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.set_parameter_bounds">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds">(Hamiltonian method)</a>
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.set_parameter_bounds">(Interpolator method)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.set_parameter_bounds">(Modified method)</a>
 </li>
@@ -2664,15 +2886,13 @@
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.set_parameter_values">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values">(Hamiltonian method)</a>
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.set_parameter_values">(Interpolator method)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.set_parameter_values">(Modified method)</a>
 </li>
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_parameter_values">(Parameterizable method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.set_parameter_values">(Sampling method)</a>
-</li>
-        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.set_parameter_values">(Schedule method)</a>
 </li>
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.set_parameter_values">(TimeEvolution method)</a>
 </li>
@@ -2686,7 +2906,7 @@
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.set_parameters">(Gate method)</a>
 </li>
-        <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters">(Hamiltonian method)</a>
+        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.set_parameters">(Interpolator method)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Modified.set_parameters">(Modified method)</a>
 </li>
@@ -2710,6 +2930,8 @@
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.simplify">simplify() (Hamiltonian method)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.SIMULATOR">SIMULATOR (DeviceType attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin">Sin (class in qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.SlackCounter">SlackCounter (class in qilisdk.core.model)</a>
 </li>
@@ -2741,6 +2963,8 @@
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.status">(JobInfo attribute)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolation.STEP">STEP (Interpolation attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.store_credentials">store_credentials() (in module qilisdk.speqtrum.keyring)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram.store_intermediate_results">store_intermediate_results (VariationalProgram property)</a>
@@ -2786,11 +3010,27 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.t1_experiment_result">t1_experiment_result (ExecuteResult attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment">T1Experiment (class in qilisdk.speqtrum.experiments.experiment_functional)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment">T1Experiment (class in qilisdk.experiments.experiment_functional)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload">T1ExperimentPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult">T1ExperimentResult (class in qilisdk.speqtrum.experiments.experiment_result)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T1ExperimentResult">T1ExperimentResult (class in qilisdk.experiments.experiment_result)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.T2_EXPERIMENT">T2_EXPERIMENT (ExecuteType attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload.t2_experiment">t2_experiment (T2ExperimentPayload attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobHandle.t2_experiment">t2_experiment() (JobHandle class method)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.t2_experiment_payload">t2_experiment_payload (ExecutePayload attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.t2_experiment_result">t2_experiment_result (ExecuteResult attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment">T2Experiment (class in qilisdk.experiments.experiment_functional)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T2ExperimentPayload">T2ExperimentPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T2ExperimentResult">T2ExperimentResult (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.target_qubits">target_qubits (BasicGate property)</a>
 
@@ -2858,6 +3098,8 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.time_evolution_result">time_evolution_result (ExecuteResult attribute)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.TimeDict">TimeDict (in module qilisdk.core.interpolator)</a>
+</li>
       <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution">TimeEvolution (class in qilisdk.functionals.time_evolution)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload">TimeEvolutionPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
@@ -2866,12 +3108,18 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.TIMEOUT">TIMEOUT (JobStatus attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.title">title (Style attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.title_fontsize">title_fontsize (ScheduleStyle attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.tlist">tlist (Interpolator property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.tlist">(Schedule property)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BaseVariable.to_binary">to_binary() (BaseVariable method)</a>
 
       <ul style="list-style-type:none">
@@ -2930,6 +3178,8 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.token_type">token_type (Token attribute)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.total_time">total_time (Interpolator property)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.TPauliOperator">TPauliOperator (in module qilisdk.backends.cuda_backend)</a>
 
       <ul style="list-style-type:none">
@@ -2942,18 +3192,20 @@
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.trace">(QTensor method)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile">transpile() (CircuitTranspiler method)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.TResult">TResult (in module qilisdk.backends.backend)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.TResult">(in module qilisdk.cost_functions.cost_function)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.TResult_co">TResult_co (in module qilisdk.functionals.functional)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TResult_co">TResult_co (in module qilisdk.experiments.experiment_functional)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.TResult_co">(in module qilisdk.functionals.variational_program_result)</a>
+        <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.TResult_co">(in module qilisdk.functionals.functional)</a>
 </li>
-        <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.TResult_co">(in module qilisdk.speqtrum.experiments.experiment_functional)</a>
+        <li><a href="code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.TResult_co">(in module qilisdk.functionals.variational_program_result)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/yaml/index.html#qilisdk.yaml.tuple_constructor">tuple_constructor() (in module qilisdk.yaml)</a>
@@ -2963,6 +3215,22 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TVariationalInnerResult">TVariationalInnerResult (in module qilisdk.speqtrum.speqtrum_models)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.two_qubit_gate">two_qubit_gate (HardwareEfficientAnsatz property)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.TWO_TONES_EXPERIMENT">TWO_TONES_EXPERIMENT (ExecuteType attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload.two_tones_experiment">two_tones_experiment (TwoTonesExperimentPayload attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobHandle.two_tones_experiment">two_tones_experiment() (JobHandle class method)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.two_tones_experiment_payload">two_tones_experiment_payload (ExecutePayload attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.two_tones_experiment_result">two_tones_experiment_result (ExecuteResult attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment">TwoTonesExperiment (class in qilisdk.experiments.experiment_functional)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TwoTonesExperimentPayload">TwoTonesExperimentPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.TwoTonesExperimentResult">TwoTonesExperimentResult (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.type">type (Device attribute)</a>
 
@@ -2995,7 +3263,7 @@
 </li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.UnsupportedGateError">UnsupportedGateError</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.update_hamiltonian_coefficient_at_time_step">update_hamiltonian_coefficient_at_time_step() (Schedule method)</a>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.update_hamiltonian">update_hamiltonian() (Schedule method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
@@ -3026,7 +3294,7 @@
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.value">value (Parameter property)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.Dimension.values">values (Dimension attribute)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.values">values (Dimension attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable">Variable (class in qilisdk.core.variables)</a>
 </li>
@@ -3073,8 +3341,12 @@
   <h2 id="W">W</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.wait_duration_values">wait_duration_values (T1Experiment property)</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment.wait_duration_values">wait_duration_values (T1Experiment property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment.wait_duration_values">(T2Experiment property)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job">wait_for_job() (SpeQtrum method)</a>
 </li>
   </ul></td>

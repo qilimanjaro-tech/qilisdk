@@ -19,7 +19,7 @@
 <link href="../../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Search"/>
 <link href="../../../../../genindex.html" rel="index" title="Index"/>
-<link href="../linear_schedule/index.html" rel="next" title="qilisdk.analog.linear_schedule"/>
+<link href="../schedule/index.html" rel="next" title="qilisdk.analog.schedule"/>
 <link href="../exceptions/index.html" rel="prev" title="qilisdk.analog.exceptions"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -111,7 +111,6 @@
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -124,6 +123,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -138,10 +138,17 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../../../../../0.1.5/index.html">0.1.5</a></li>
-<li><a href="../../../../../../0.1.6/index.html">0.1.6</a></li>
-<li><a href="index.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.6/index.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.5/index.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="index.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -428,73 +449,9 @@
 <dd><p>Return the stored operator-coefficient mapping with symbolic terms evaluated.</p>
 </dd></dl>
 <dl class="py property">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.nparameters">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.nparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.nparameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.nparameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the number of unique symbolic parameters contained in the Hamiltonian.</p>
-</dd></dl>
-<dl class="py property">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.parameters">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">qilisdk.core.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Return a mapping from parameter labels to their corresponding parameter objects.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values">
-<span class="sig-name descname"><span class="pre">get_parameter_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the current numeric values of the Hamiltonian parameters.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names">
-<span class="sig-name descname"><span class="pre">get_parameter_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the ordered list of parameter labels defined in the Hamiltonian.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameters">
-<span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return a mapping from parameter labels to their current numerical values.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values">
-<span class="sig-name descname"><span class="pre">set_parameter_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameter_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Update the numerical values of the Hamiltonian parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>) – New values ordered according to <code class="docutils literal notranslate"><span class="pre">get_parameter_names()</span></code>.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the number of provided values does not match <code class="docutils literal notranslate"><span class="pre">nparameters</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameters">
-<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Update a subset of parameters by label.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">float]</span></code>) – Mapping from parameter labels to new numerical values.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds">
-<span class="sig-name descname"><span class="pre">get_parameter_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.get_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the lower and upper bounds currently associated with each parameter.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds">
-<span class="sig-name descname"><span class="pre">set_parameter_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ranges</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/hamiltonian.html#Hamiltonian.set_parameter_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Update parameter bounds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ranges</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">tuple[float,</span> <span class="pre">float]]</span></code>) – Mapping from parameter labels to <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> bounds.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If an unknown parameter label is provided.</p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.analog.hamiltonian.Hamiltonian.simplify">
@@ -655,8 +612,8 @@ returning a qilisdk.analog.Hamiltonian.</p>
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../linear_schedule/index.html">
-        qilisdk.analog.linear_schedule
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../schedule/index.html">
+        qilisdk.analog.schedule
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -689,15 +646,7 @@ returning a qilisdk.analog.Hamiltonian.</p>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.ZERO'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.ZERO"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.ZERO</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.nqubits'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.nqubits"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.nqubits</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.elements'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.elements"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.elements</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.nparameters'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.nparameters"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.nparameters</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.parameters'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.parameters"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.parameters</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_values"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.get_parameter_values()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_names"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.get_parameter_names()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameters"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.get_parameters()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_values"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.set_parameter_values()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameters"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.set_parameters()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.get_parameter_bounds"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.get_parameter_bounds()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.set_parameter_bounds"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.set_parameter_bounds()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.simplify'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.simplify"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.simplify()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.to_matrix'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.to_matrix"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.to_matrix()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor'" class="reference internal" href="#qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.to_qtensor()</span></code></a></li>

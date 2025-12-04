@@ -12,9 +12,9 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
   
-    <title>qilisdk.speqtrum.experiments.experiment_functional | QiliSDK</title>
-    <meta property="og:title" content="qilisdk.speqtrum.experiments.experiment_functional | QiliSDK" />
-    <meta name="twitter:title" content="qilisdk.speqtrum.experiments.experiment_functional | QiliSDK" />
+    <title>qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass | QiliSDK</title>
+    <meta property="og:title" content="qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass | QiliSDK" />
+    <meta name="twitter:title" content="qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass | QiliSDK" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=6aa05603" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=42baaae4" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
@@ -142,7 +142,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -155,6 +154,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/core/index.html">qilisdk.core</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -169,10 +169,17 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/experiments/index.html">qilisdk.experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
@@ -193,7 +200,6 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -215,12 +221,35 @@
 </ul>
 
 </nav>
-<h3>Versions</h3>
-<ul>
-  <li><a href="../../../../../0.1.5/index.html">0.1.5</a></li>
-  <li><a href="../../../../../0.1.6/index.html">0.1.6</a></li>
-  <li><a href="experiment_functional.html">main</a></li>
-</ul>
+  
+  
+
+  <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Releases</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.1.6/index.html">0.1.6</a>
+      </li>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.1.5/index.html">0.1.5</a>
+      </li>
+    </ul>
+    
+
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Development</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="circuit_transpiler_pass.html">main</a>
+      </li>
+    </ul>
+    
+  </nav>
 
       </div>
     </div>
@@ -256,11 +285,11 @@
        href="../../../index.html">Module code</a>
     
 <div class="mr-1">/</div><span aria-current="page"
-        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.speqtrum.experiments.experiment_functional</span>
+        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass</span>
 </nav>
 
     <div id="content" role="main">
-      <h1>Source code for qilisdk.speqtrum.experiments.experiment_functional</h1><div class="highlight"><pre>
+      <h1>Source code for qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass</h1><div class="highlight"><pre>
 <span></span><code><span id="line-1"><span class="c1"># Copyright 2025 Qilimanjaro Quantum Tech</span>
 </span><span id="line-2"><span class="c1">#</span>
 </span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -274,142 +303,33 @@
 </span><span id="line-11"><span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 </span><span id="line-12"><span class="c1"># See the License for the specific language governing permissions and</span>
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
-</span><span id="line-14"><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
-</span><span id="line-15">
-</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
-</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+</span><span id="line-16">
+</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
 </span><span id="line-18">
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">Functional</span>
-</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.experiments.experiment_result</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-21">    <span class="n">ExperimentResult</span><span class="p">,</span>
-</span><span id="line-22">    <span class="n">RabiExperimentResult</span><span class="p">,</span>
-</span><span id="line-23">    <span class="n">T1ExperimentResult</span><span class="p">,</span>
-</span><span id="line-24"><span class="p">)</span>
-</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-19">
+<div class="viewcode-block" id="CircuitTranspilerPass">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass.CircuitTranspilerPass">[docs]</a>
+</span><span id="line-20"><span class="k">class</span><span class="w"> </span><span class="nc">CircuitTranspilerPass</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-21"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for non-mutating circuit transpiler passes.</span>
+</span><span id="line-22">
+</span><span id="line-23"><span class="sd">    Returns:</span>
+</span><span id="line-24"><span class="sd">        CircuitTranspilerPass: Instances expose the `run` API required by the transpiler.</span>
+</span><span id="line-25"><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="line-26">
-</span><span id="line-27"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-28">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-29">
-<div class="viewcode-block" id="TResult_co">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.TResult_co">[docs]</a>
-</span><span id="line-30"><span class="n">TResult_co</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TResult_co&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-
-</span><span id="line-31">
-</span><span id="line-32">
-</span><span id="line-33"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="ExperimentFunctional">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.ExperimentFunctional">[docs]</a>
-</span><span id="line-34"><span class="k">class</span><span class="w"> </span><span class="nc">ExperimentFunctional</span><span class="p">(</span><span class="n">Functional</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span>
-</span><span id="line-35"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for single-qubit experiment functionals.</span>
-</span><span id="line-36">
-</span><span id="line-37"><span class="sd">    This class serves as a generic interface for defining quantum</span>
-</span><span id="line-38"><span class="sd">    characterization experiments such as Rabi or T1. Each subclass</span>
-</span><span id="line-39"><span class="sd">    specifies a concrete `ExperimentResult` type and the corresponding</span>
-</span><span id="line-40"><span class="sd">    sweep parameters.</span>
-</span><span id="line-41"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-42">
-</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-44"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the experiment functional.</span>
-</span><span id="line-45">
-</span><span id="line-46"><span class="sd">        Args:</span>
-</span><span id="line-47"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-48"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-49">        <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span> <span class="o">=</span> <span class="n">qubit</span>
-</span><span id="line-50">
-</span><span id="line-51">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ExperimentFunctional.qubit">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.ExperimentFunctional.qubit">[docs]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">        Returns:</span>
-</span><span id="line-56"><span class="sd">            int: Index of the qubit.</span>
-</span><span id="line-57"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-58">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span></div>
-</div>
-
-</span><span id="line-59">
-</span><span id="line-60">
-</span><span id="line-61"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="RabiExperiment">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment">[docs]</a>
-</span><span id="line-62"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]):</span>
-</span><span id="line-63"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rabi experiment functional for a single qubit.</span>
-</span><span id="line-64">
-</span><span id="line-65"><span class="sd">    This functional defines a standard Rabi oscillation experiment where</span>
-</span><span id="line-66"><span class="sd">    the drive pulse duration is swept to measure the oscillatory response</span>
-</span><span id="line-67"><span class="sd">    of the qubit under continuous driving.</span>
-</span><span id="line-68"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-69">
-<div class="viewcode-block" id="RabiExperiment.result_type">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.result_type">[docs]</a>
-</span><span id="line-70">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RabiExperimentResult</span></div>
-
-</span><span id="line-71"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-72">
-</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Rabi experiment functional.</span>
-</span><span id="line-75">
-</span><span id="line-76"><span class="sd">        Args:</span>
-</span><span id="line-77"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-78"><span class="sd">            drive_duration_values (np.ndarray): Array of drive pulse durations (in nanoseconds)</span>
-</span><span id="line-79"><span class="sd">                used to sweep the experiment.</span>
-</span><span id="line-80"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-81">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-82">        <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span> <span class="o">=</span> <span class="n">drive_duration_values</span>
-</span><span id="line-83">
-</span><span id="line-84">    <span class="nd">@property</span>
-<div class="viewcode-block" id="RabiExperiment.drive_duration_values">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment.drive_duration_values">[docs]</a>
-</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">drive_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive pulse duration sweep values.</span>
-</span><span id="line-87">
-</span><span id="line-88"><span class="sd">        Returns:</span>
-</span><span id="line-89"><span class="sd">            np.ndarray: The set of drive durations (in nanoseconds) used in the Rabi experiment.</span>
-</span><span id="line-90"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-91">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span></div>
-</div>
-
-</span><span id="line-92">
-</span><span id="line-93">
-</span><span id="line-94"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="T1Experiment">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment">[docs]</a>
-</span><span id="line-95"><span class="k">class</span><span class="w"> </span><span class="nc">T1Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]):</span>
-</span><span id="line-96"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment functional for a single qubit.</span>
-</span><span id="line-97">
-</span><span id="line-98"><span class="sd">    This functional defines a standard T1 (energy relaxation) experiment,</span>
-</span><span id="line-99"><span class="sd">    where the delay between excitation and measurement is varied to extract</span>
-</span><span id="line-100"><span class="sd">    the relaxation time constant of the qubit.</span>
-</span><span id="line-101"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-102">
-<div class="viewcode-block" id="T1Experiment.result_type">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.result_type">[docs]</a>
-</span><span id="line-103">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1ExperimentResult</span></div>
-
-</span><span id="line-104"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-105">
-</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-107"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 experiment functional.</span>
-</span><span id="line-108">
-</span><span id="line-109"><span class="sd">        Args:</span>
-</span><span id="line-110"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-111"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
-</span><span id="line-112"><span class="sd">                between excitation and measurement.</span>
-</span><span id="line-113"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-114">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-115">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
-</span><span id="line-116">
-</span><span id="line-117">    <span class="nd">@property</span>
-<div class="viewcode-block" id="T1Experiment.wait_duration_values">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_functional/index.html#qilisdk.speqtrum.experiments.experiment_functional.T1Experiment.wait_duration_values">[docs]</a>
-</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-119"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
-</span><span id="line-120">
-</span><span id="line-121"><span class="sd">        Returns:</span>
-</span><span id="line-122"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.</span>
-</span><span id="line-123"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-124">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
+</span><span id="line-27">    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="CircuitTranspilerPass.run">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass.CircuitTranspilerPass.run">[docs]</a>
+</span><span id="line-28">    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-29"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new circuit built from `circuit` without mutating the input.</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="sd">        Args:</span>
+</span><span id="line-32"><span class="sd">            circuit (Circuit): Circuit to be transpiled.</span>
+</span><span id="line-33"><span class="sd">        Returns:</span>
+</span><span id="line-34"><span class="sd">            Circuit: Newly transpiled circuit.</span>
+</span><span id="line-35"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-36">        <span class="o">...</span></div>
 </div>
 
 </span></code></pre></div>

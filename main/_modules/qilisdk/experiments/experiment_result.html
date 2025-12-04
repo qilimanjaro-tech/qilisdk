@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"
-      data-content_root="../../../../"
+      data-content_root="../../../"
       x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
       x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
       class="scroll-smooth"
@@ -12,18 +12,18 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
   
-    <title>qilisdk.speqtrum.experiments.experiment_result | QiliSDK</title>
-    <meta property="og:title" content="qilisdk.speqtrum.experiments.experiment_result | QiliSDK" />
-    <meta name="twitter:title" content="qilisdk.speqtrum.experiments.experiment_result | QiliSDK" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=6aa05603" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=42baaae4" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=cc3b9bd9" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../../_static/q_trans.png" />
-        <link rel="search" title="Search" href="../../../../search.html" />
-        <link rel="index" title="Index" href="../../../../genindex.html" />
+    <title>qilisdk.experiments.experiment_result | QiliSDK</title>
+    <meta property="og:title" content="qilisdk.experiments.experiment_result | QiliSDK" />
+    <meta name="twitter:title" content="qilisdk.experiments.experiment_result | QiliSDK" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=6aa05603" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=42baaae4" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=cc3b9bd9" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
+      <link rel="icon" href="../../../_static/q_trans.png" />
+        <link rel="search" title="Search" href="../../../search.html" />
+        <link rel="index" title="Index" href="../../../genindex.html" />
 
     <script>
     <!-- Prevent Flash of wrong theme -->
@@ -44,9 +44,9 @@
     </a><header
   class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
-      <a href="../../../../index.html" class="flex items-center mr-6">
-          <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../../_static/q_trans.png" alt="Logo" />
-        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../../_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
+      <a href="../../../index.html" class="flex items-center mr-6">
+          <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
+        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
       </a></div><button
       class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
       type="button" @click="showSidebar = true">
@@ -59,7 +59,7 @@
     </button>
     <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
       <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
-      action="../../../../search.html"
+      action="../../../search.html"
       method="get"
       class="relative flex items-center group"
       @keydown.k.window.meta="$refs.search.focus()">
@@ -101,113 +101,119 @@
   class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
-    <a href="../../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../../_static/q_trans.png" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../../_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+    <a href="../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
+        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
+        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
     <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/analog.html">Analog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/core.html">Core</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/code_examples.html">Code Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
 </ul>
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../code/api/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../code/api/qilisdk/index.html">qilisdk</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code/api/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../code/api/qilisdk/index.html">qilisdk</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/analog/index.html">qilisdk.analog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/core/index.html">qilisdk.core</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/core/index.html">qilisdk.core</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/cost_functions/index.html">qilisdk.cost_functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/cost_functions/cost_function/index.html">qilisdk.cost_functions.cost_function</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/cost_functions/model_cost_function/index.html">qilisdk.cost_functions.model_cost_function</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/cost_functions/observable_cost_function/index.html">qilisdk.cost_functions.observable_cost_function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/cost_functions/index.html">qilisdk.cost_functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/cost_functions/cost_function/index.html">qilisdk.cost_functions.cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/cost_functions/model_cost_function/index.html">qilisdk.cost_functions.model_cost_function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/cost_functions/observable_cost_function/index.html">qilisdk.cost_functions.observable_cost_function</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/experiments/index.html">qilisdk.experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
 </ul>
@@ -215,12 +221,35 @@
 </ul>
 
 </nav>
-<h3>Versions</h3>
-<ul>
-  <li><a href="../../../../../0.1.5/index.html">0.1.5</a></li>
-  <li><a href="../../../../../0.1.6/index.html">0.1.6</a></li>
-  <li><a href="experiment_result.html">main</a></li>
-</ul>
+  
+  
+
+  <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Releases</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.1.6/index.html">0.1.6</a>
+      </li>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.1.5/index.html">0.1.5</a>
+      </li>
+    </ul>
+    
+
+    
+    <p class="caption" role="heading">
+      <span class="caption_text">Development</span>
+    </p>
+    <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="experiment_result.html">main</a>
+      </li>
+    </ul>
+    
+  </nav>
 
       </div>
     </div>
@@ -238,7 +267,7 @@
 <nav aria-label="breadcrumbs"
      class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
   <a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground"
-     href="../../../../index.html">
+     href="../../../index.html">
     <span class="hidden md:inline">QiliSDK</span>
     <svg xmlns="http://www.w3.org/2000/svg"
          height="18"
@@ -253,14 +282,14 @@
   </a>
   
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap"
-       href="../../../index.html">Module code</a>
+       href="../../index.html">Module code</a>
     
 <div class="mr-1">/</div><span aria-current="page"
-        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.speqtrum.experiments.experiment_result</span>
+        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.experiments.experiment_result</span>
 </nav>
 
     <div id="content" role="main">
-      <h1>Source code for qilisdk.speqtrum.experiments.experiment_result</h1><div class="highlight"><pre>
+      <h1>Source code for qilisdk.experiments.experiment_result</h1><div class="highlight"><pre>
 <span></span><code><span id="line-1"><span class="c1"># Copyright 2025 Qilimanjaro Quantum Tech</span>
 </span><span id="line-2"><span class="c1">#</span>
 </span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -287,7 +316,7 @@
 </span><span id="line-24">
 </span><span id="line-25"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="Dimension">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.Dimension">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension">[docs]</a>
 </span><span id="line-26"><span class="k">class</span><span class="w"> </span><span class="nc">Dimension</span><span class="p">:</span>
 </span><span id="line-27"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a labeled dimension in an experiment sweep.</span>
 </span><span id="line-28">
@@ -315,7 +344,7 @@
 </span><span id="line-49">
 </span><span id="line-50"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="ExperimentResult">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult">[docs]</a>
 </span><span id="line-51"><span class="k">class</span><span class="w"> </span><span class="nc">ExperimentResult</span><span class="p">(</span><span class="n">FunctionalResult</span><span class="p">):</span>
 </span><span id="line-52"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for storing and visualizing experiment results.</span>
 </span><span id="line-53">
@@ -325,7 +354,7 @@
 </span><span id="line-57"><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="line-58">
 <div class="viewcode-block" id="ExperimentResult.plot_title">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot_title">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.plot_title">[docs]</a>
 </span><span id="line-59">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
 
 </span><span id="line-60"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default plot title; subclasses provide the concrete label.&quot;&quot;&quot;</span>
@@ -344,7 +373,7 @@
 </span><span id="line-73">
 </span><span id="line-74">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21">[docs]</a>
 </span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="nf">s21</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Complex S21 transmission parameter.</span>
 </span><span id="line-77">
@@ -356,7 +385,7 @@
 </span><span id="line-82">
 </span><span id="line-83">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21_modulus">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_modulus">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21_modulus">[docs]</a>
 </span><span id="line-84">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_modulus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="line-85"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of the S21 parameter.</span>
 </span><span id="line-86">
@@ -368,7 +397,7 @@
 </span><span id="line-91">
 </span><span id="line-92">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentResult.s21_db">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.s21_db">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.s21_db">[docs]</a>
 </span><span id="line-93">    <span class="k">def</span><span class="w"> </span><span class="nf">s21_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="line-94"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Magnitude of S21 in decibels (dB).</span>
 </span><span id="line-95">
@@ -379,7 +408,7 @@
 
 </span><span id="line-100">
 <div class="viewcode-block" id="ExperimentResult.plot">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.ExperimentResult.plot">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.plot">[docs]</a>
 </span><span id="line-101">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-102"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot the S21 parameter from experiment results.</span>
 </span><span id="line-103">
@@ -501,12 +530,12 @@
 </span><span id="line-217">
 </span><span id="line-218"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RabiExperimentResult">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.RabiExperimentResult">[docs]</a>
 </span><span id="line-219"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
 </span><span id="line-220"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for Rabi experiments.&quot;&quot;&quot;</span>
 </span><span id="line-221">
 <div class="viewcode-block" id="RabiExperimentResult.plot_title">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult.plot_title">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.RabiExperimentResult.plot_title">[docs]</a>
 </span><span id="line-222">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Rabi&quot;</span></div>
 
 </span><span id="line-223"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for Rabi experiment plots.&quot;&quot;&quot;</span></div>
@@ -515,15 +544,43 @@
 </span><span id="line-225">
 </span><span id="line-226"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T1ExperimentResult">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T1ExperimentResult">[docs]</a>
 </span><span id="line-227"><span class="k">class</span><span class="w"> </span><span class="nc">T1ExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
 </span><span id="line-228"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for T1 relaxation experiments.&quot;&quot;&quot;</span>
 </span><span id="line-229">
 <div class="viewcode-block" id="T1ExperimentResult.plot_title">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/speqtrum/experiments/experiment_result/index.html#qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult.plot_title">[docs]</a>
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T1ExperimentResult.plot_title">[docs]</a>
 </span><span id="line-230">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;T1&quot;</span></div>
 
 </span><span id="line-231"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for T1 experiment plots.&quot;&quot;&quot;</span></div>
+
+</span><span id="line-232">
+</span><span id="line-233">
+</span><span id="line-234"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="T2ExperimentResult">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T2ExperimentResult">[docs]</a>
+</span><span id="line-235"><span class="k">class</span><span class="w"> </span><span class="nc">T2ExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
+</span><span id="line-236"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for T2 dephasing experiments.&quot;&quot;&quot;</span>
+</span><span id="line-237">
+<div class="viewcode-block" id="T2ExperimentResult.plot_title">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T2ExperimentResult.plot_title">[docs]</a>
+</span><span id="line-238">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;T2&quot;</span></div>
+
+</span><span id="line-239"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for T2 experiment plots.&quot;&quot;&quot;</span></div>
+
+</span><span id="line-240">
+</span><span id="line-241">
+</span><span id="line-242"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="TwoTonesExperimentResult">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.TwoTonesExperimentResult">[docs]</a>
+</span><span id="line-243"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesExperimentResult</span><span class="p">(</span><span class="n">ExperimentResult</span><span class="p">):</span>
+</span><span id="line-244"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result container for TwoTones experiments.&quot;&quot;&quot;</span>
+</span><span id="line-245">
+<div class="viewcode-block" id="TwoTonesExperimentResult.plot_title">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.TwoTonesExperimentResult.plot_title">[docs]</a>
+</span><span id="line-246">    <span class="n">plot_title</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;TwoTones&quot;</span></div>
+
+</span><span id="line-247"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default title for TwoTones experiment plots.&quot;&quot;&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -539,11 +596,11 @@
 </footer>
   </div>
   
-    <script src="../../../../_static/documentation_options.js?v=7f41d439"></script>
-    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../../_static/theme.js?v=073f68d9"></script>
-    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../../_static/documentation_options.js?v=7f41d439"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=073f68d9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
   
 </body>

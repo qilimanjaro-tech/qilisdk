@@ -7,9 +7,9 @@
 <meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>qilisdk.analog.linear_schedule | QiliSDK</title>
-<meta content="qilisdk.analog.linear_schedule | QiliSDK" property="og:title"/>
-<meta content="qilisdk.analog.linear_schedule | QiliSDK" name="twitter:title"/>
+<title>qilisdk.digital.circuit_transpiler | QiliSDK</title>
+<meta content="qilisdk.digital.circuit_transpiler | QiliSDK" property="og:title"/>
+<meta content="qilisdk.digital.circuit_transpiler | QiliSDK" name="twitter:title"/>
 <link href="../../../../../_static/pygments.css?v=6aa05603" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
@@ -19,8 +19,8 @@
 <link href="../../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Search"/>
 <link href="../../../../../genindex.html" rel="index" title="Index"/>
-<link href="../schedule/index.html" rel="next" title="qilisdk.analog.schedule"/>
-<link href="../hamiltonian/index.html" rel="prev" title="qilisdk.analog.hamiltonian"/>
+<link href="../exceptions/index.html" rel="next" title="qilisdk.digital.exceptions"/>
+<link href="../circuit/index.html" rel="prev" title="qilisdk.digital.circuit"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -108,11 +108,10 @@
 <ul class="current">
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../index.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.analog.exceptions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.analog.linear_schedule</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../schedule/index.html">qilisdk.analog.schedule</a></li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -124,6 +123,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -137,11 +137,18 @@
 <li class="toctree-l4"><a class="reference internal" href="../../cost_functions/observable_cost_function/index.html">qilisdk.cost_functions.observable_cost_function</a></li>
 </ul>
 </li>
-<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
+<li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ansatz/index.html">qilisdk.digital.ansatz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.digital.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../../../../../0.1.5/index.html">0.1.5</a></li>
-<li><a href="../../../../../../0.1.6/index.html">0.1.6</a></li>
-<li><a href="index.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.6/index.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.5/index.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="index.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -208,18 +229,18 @@
 </a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../../../index.html">API Reference</a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../../index.html">qilisdk</a>
-<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../index.html">qilisdk.analog</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.analog.linear_schedule</span>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../index.html">qilisdk.digital</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">qilisdk.digital.circuit_transpiler</span>
 </nav>
 <div id="content" role="main">
-<section id="module-qilisdk.analog.linear_schedule">
-<span id="qilisdk-analog-linear-schedule"></span><h1>qilisdk.analog.linear_schedule<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-qilisdk.analog.linear_schedule"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<section id="module-qilisdk.digital.circuit_transpiler">
+<span id="qilisdk-digital-circuit-transpiler"></span><h1>qilisdk.digital.circuit_transpiler<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-qilisdk.digital.circuit_transpiler"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <section id="classes">
 <h2>Classes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#classes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#classes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.analog.linear_schedule.LinearSchedule" title="qilisdk.analog.linear_schedule.LinearSchedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LinearSchedule</span></code></a></p></td>
-<td><p>Schedule implementation that linearly interpolates coefficients between defined time steps.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.circuit_transpiler.CircuitTranspiler" title="qilisdk.digital.circuit_transpiler.CircuitTranspiler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CircuitTranspiler</span></code></a></p></td>
+<td><p>Apply an ordered pipeline of circuit transpilation passes.</p></td>
 </tr>
 </tbody>
 </table>
@@ -227,75 +248,33 @@
 <section id="module-contents">
 <h2>Module Contents<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-contents" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#module-contents'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="qilisdk.analog.linear_schedule.LinearSchedule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LinearSchedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonians</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><span class="pre">qilisdk.core.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">qilisdk.core.variables.Parameter</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/linear_schedule.html#LinearSchedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.linear_schedule.LinearSchedule" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.linear_schedule.LinearSchedule'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.analog.schedule.Schedule</span></code></a></p>
-<p>Schedule implementation that linearly interpolates coefficients between defined time steps.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">Z</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.linear_schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearSchedule</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="n">h</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="line-5"><span class="n">schedule</span> <span class="o">=</span> <span class="n">LinearSchedule</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"hz"</span><span class="p">:</span> <span class="n">h</span><span class="p">})</span>
-</span><span id="line-6"><span class="n">schedule</span><span class="o">.</span><span class="n">add_schedule_step</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span><span class="s2">"hz"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
-</span><span id="line-7"><span class="n">schedule</span><span class="o">.</span><span class="n">add_schedule_step</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">{</span><span class="s2">"hz"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
-</span><span id="line-8"><span class="k">assert</span> <span class="n">schedule</span><span class="o">.</span><span class="n">get_coefficient</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="s2">"hz"</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.5</span>
-</span></code></pre></div>
-</div>
+<dt class="sig sig-object py" id="qilisdk.digital.circuit_transpiler.CircuitTranspiler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CircuitTranspiler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">qilisdk.digital.circuit_transpiler_passes.CircuitTranspilerPass</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit_transpiler.html#CircuitTranspiler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit_transpiler.CircuitTranspiler" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit_transpiler.CircuitTranspiler'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Apply an ordered pipeline of circuit transpilation passes.</p>
+<p>The transpiler acts as a thin orchestrator: each pass receives the circuit from the previous
+pass and must return a brand-new circuit, allowing both structural rewrites and device-specific
+lowering steps to be chained deterministically. Today the pipeline defaults to a single
+<cite>DecomposeMultiControlledGatesPass</cite>, but the API is designed so additional passes—e.g. layout,
+routing, or hardware-aware optimizers—can be composed in future iterations without changing
+backend code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>T</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Total annealing time (in nanoseconds).</p></li>
-<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float,</span> <span class="pre">optional</span></code>) – Discretization step of the time grid. Defaults to 1.</p></li>
-<li><p><strong>hamiltonians</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">Hamiltonian]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">optional</span></code>) – Mapping from labels to Hamiltonian instances that
-define the building blocks of the schedule. Defaults to None, which creates an empty mapping.</p></li>
-<li><p><strong>schedule</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[int,</span> <span class="pre">dict[str,</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Term</span> <span class="pre">|</span> <span class="pre">Parameter]]</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">optional</span></code>) – Predefined coefficients for
-specific time steps. Each inner dictionary maps Hamiltonian labels to numerical or symbolic
-coefficients. Defaults to {0: {}} if None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the provided schedule references Hamiltonians that have not been defined.</p>
+<dd class="field-odd"><p><strong>pipeline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[CircuitTranspilerPass]</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Sequential list of passes to execute while transpiling.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression">
-<span class="sig-name descname"><span class="pre">get_coefficient_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">qilisdk.core.variables.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><span class="pre">qilisdk.core.variables.Term</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">qilisdk.core.variables.Parameter</span></a></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/linear_schedule.html#LinearSchedule.get_coefficient_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the symbolic coefficient for a Hamiltonian at an arbitrary time step.</p>
+<dt class="sig sig-object py" id="qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile">
+<span class="sig-name descname"><span class="pre">transpile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">qilisdk.digital.Circuit</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">qilisdk.digital.Circuit</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit_transpiler.html#CircuitTranspiler.transpile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Run the configured pass pipeline over the provided circuit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The time at which to evaluate the coefficient.</p></li>
-<li><p><strong>hamiltonian_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Label of the Hamiltonian inside the schedule.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>circuit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code>) – Circuit to be rewritten by the transpiler passes.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The (possibly symbolic) coefficient associated with <code class="docutils literal notranslate"><span class="pre">hamiltonian_key</span></code>.</p>
+<dd class="field-even"><p>The circuit returned by the last pass in the pipeline.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number | <a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term">Term</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If something unexpected happens during coefficient retrieval.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient">
-<span class="sig-name descname"><span class="pre">get_coefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamiltonian_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">qilisdk.core.variables.Number</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/analog/linear_schedule.html#LinearSchedule.get_coefficient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Return the numeric coefficient for a Hamiltonian at <code class="docutils literal notranslate"><span class="pre">time_step</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>time_step</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Time at which to evaluate the coefficient.</p></li>
-<li><p><strong>hamiltonian_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Label of the Hamiltonian.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Evaluated coefficient value.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number</p>
+<dd class="field-odd"><p><a class="reference internal" href="../circuit/index.html#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit">Circuit</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -304,16 +283,16 @@ coefficients. Defaults to {0: {}} if None.</p></li>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../hamiltonian/index.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../circuit/index.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        qilisdk.analog.hamiltonian
+        qilisdk.digital.circuit
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../schedule/index.html">
-        qilisdk.analog.schedule
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../exceptions/index.html">
+        qilisdk.digital.exceptions
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -324,9 +303,8 @@ coefficients. Defaults to {0: {}} if None.</p></li>
 <ul>
 <li><a :data-current="activeSection === '#classes'" class="reference internal" href="#classes">Classes</a></li>
 <li><a :data-current="activeSection === '#module-contents'" class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a :data-current="activeSection === '#qilisdk.analog.linear_schedule.LinearSchedule'" class="reference internal" href="#qilisdk.analog.linear_schedule.LinearSchedule"><code class="docutils literal notranslate"><span class="pre">LinearSchedule</span></code></a><ul>
-<li><a :data-current="activeSection === '#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression'" class="reference internal" href="#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient_expression"><code class="docutils literal notranslate"><span class="pre">LinearSchedule.get_coefficient_expression()</span></code></a></li>
-<li><a :data-current="activeSection === '#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient'" class="reference internal" href="#qilisdk.analog.linear_schedule.LinearSchedule.get_coefficient"><code class="docutils literal notranslate"><span class="pre">LinearSchedule.get_coefficient()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit_transpiler.CircuitTranspiler'" class="reference internal" href="#qilisdk.digital.circuit_transpiler.CircuitTranspiler"><code class="docutils literal notranslate"><span class="pre">CircuitTranspiler</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile'" class="reference internal" href="#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile"><code class="docutils literal notranslate"><span class="pre">CircuitTranspiler.transpile()</span></code></a></li>
 </ul>
 </li>
 </ul>

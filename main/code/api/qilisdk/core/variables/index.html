@@ -111,7 +111,6 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../analog/index.html">qilisdk.analog<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../analog/exceptions/index.html">qilisdk.analog.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/hamiltonian/index.html">qilisdk.analog.hamiltonian</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../analog/linear_schedule/index.html">qilisdk.analog.linear_schedule</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../analog/schedule/index.html">qilisdk.analog.schedule</a></li>
 </ul>
 </li>
@@ -124,6 +123,7 @@
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../qtensor/index.html">qilisdk.core.qtensor</a></li>
@@ -138,10 +138,17 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
+</ul>
+</li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../experiments/index.html">qilisdk.experiments<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_functional/index.html">qilisdk.experiments.experiment_functional</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../experiments/experiment_result/index.html">qilisdk.experiments.experiment_result</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -162,7 +169,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
@@ -183,12 +189,27 @@
 </li>
 </ul>
 </nav>
-<h3>Versions</h3>
+<nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+<p class="caption" role="heading">
+<span class="caption_text">Releases</span>
+</p>
 <ul>
-<li><a href="../../../../../../0.1.5/index.html">0.1.5</a></li>
-<li><a href="../../../../../../0.1.6/index.html">0.1.6</a></li>
-<li><a href="index.html">main</a></li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.6/index.html">0.1.6</a>
+</li>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.5/index.html">0.1.5</a>
+</li>
 </ul>
+<p class="caption" role="heading">
+<span class="caption_text">Development</span>
+</p>
+<ul>
+<li class="toctree-l1">
+<a class="reference internal" href="index.html">main</a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 <button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
@@ -305,6 +326,15 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ComparisonTerm</span></code></a></p></td>
 <td><p>Represents a mathematical comparison Term, that can be an equality or an inequality between two <code class="docutils literal notranslate"><span class="pre">Term</span></code> objects</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.core.variables.MathematicalMap" title="qilisdk.core.variables.MathematicalMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a></p></td>
+<td><p>Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.core.variables.Sin" title="qilisdk.core.variables.Sin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sin</span></code></a></p></td>
+<td><p>Apply a sine map to a parameter or term.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.core.variables.Cos" title="qilisdk.core.variables.Cos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Cos</span></code></a></p></td>
+<td><p>Apply a cosine map to a parameter or term.</p></td>
 </tr>
 </tbody>
 </table>
@@ -632,6 +662,10 @@ errors defaults to ‘strict’.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="qilisdk.core.variables.Operation.SUB">
 <span class="sig-name descname"><span class="pre">SUB</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'-'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Operation.SUB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Operation.SUB" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Operation.SUB'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Operation.MATH_MAP">
+<span class="sig-name descname"><span class="pre">MATH_MAP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'mathematical_map'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Operation.MATH_MAP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Operation.MATH_MAP" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Operation.MATH_MAP'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.core.variables.Operation.to_yaml">
@@ -1738,6 +1772,10 @@ variable’s domain is chosen.</p></li>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">RealNumber</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Parameter.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Parameter.value" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Parameter.value'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd></dd></dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Parameter.check_value">
+<span class="sig-name descname"><span class="pre">check_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">RealNumber</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Parameter.check_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Parameter.check_value" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Parameter.check_value'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.core.variables.Parameter.set_value">
 <span class="sig-name descname"><span class="pre">set_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">RealNumber</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Parameter.set_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Parameter.set_value" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Parameter.set_value'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd></dd></dl>
@@ -1749,7 +1787,7 @@ int: the number of binary variables that are needed to represent this variable i
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.core.variables.Parameter.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">RealNumber</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">RealNumber</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Parameter.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Parameter.evaluate" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Parameter.evaluate'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">RealNumber</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">RealNumber</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Parameter.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Parameter.evaluate" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Parameter.evaluate'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Evaluates the value of the variable given a binary string or a number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2061,6 +2099,106 @@ side before the generation of the list. Therefore, you can assume that the right
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.core.variables.MathematicalMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MathematicalMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><span class="pre">Term</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#MathematicalMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.MathematicalMap" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.MathematicalMap'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MathematicalMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">Parameter</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MathematicalMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">BaseVariable</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <a class="reference internal" href="#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Term</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter.</p>
+<p>initialize a new term object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elements</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[BaseVariable</span>  <span class="pre">|</span>  <span class="pre">Term</span>  <span class="pre">|</span>  <span class="pre">Number]</span></code>) – a list of elements in the term.</p></li>
+<li><p><strong>operation</strong> (<a class="reference internal" href="#qilisdk.core.variables.Operation" title="qilisdk.core.variables.Operation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></a>) – the mathematical operation between these elements.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.core.variables.MathematicalMap.MATH_SYMBOL">
+<span class="sig-name descname"><span class="pre">MATH_SYMBOL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#MathematicalMap.MATH_SYMBOL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.core.variables.MathematicalMap.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">BaseVariable</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">RealNumber</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Number</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#MathematicalMap.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.MathematicalMap.evaluate" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.MathematicalMap.evaluate'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Evaluates the term given a set of values for the variables in the term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>var_values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping[BaseVariable,</span> <span class="pre">list[int]</span>  <span class="pre">|</span>  <span class="pre">Number]</span></code>) – the values of the variables in the term.
+If the value provided is binary list (list[int]) then the value of the variable is evaluated based on
+its binary representation. This representation is constructed using the encoding, bounds and domain
+of the variable. To check the binary representation of a variable you can check the method <cite>to_binary()</cite></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if not all variables in the term are provided a value.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the result from evaluating the term.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Sin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Sin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><span class="pre">Term</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Sin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Sin" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Sin'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Sin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">Parameter</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Sin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">BaseVariable</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <a class="reference internal" href="#qilisdk.core.variables.MathematicalMap" title="qilisdk.core.variables.MathematicalMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a></p>
+<p>Apply a sine map to a parameter or term.</p>
+<p>initialize a new term object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elements</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[BaseVariable</span>  <span class="pre">|</span>  <span class="pre">Term</span>  <span class="pre">|</span>  <span class="pre">Number]</span></code>) – a list of elements in the term.</p></li>
+<li><p><strong>operation</strong> (<a class="reference internal" href="#qilisdk.core.variables.Operation" title="qilisdk.core.variables.Operation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></a>) – the mathematical operation between these elements.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Sin.MATH_SYMBOL">
+<span class="sig-name descname"><span class="pre">MATH_SYMBOL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sin'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Sin.MATH_SYMBOL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Sin.MATH_SYMBOL" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Sin.MATH_SYMBOL'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Cos">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Cos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><span class="pre">Term</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Cos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Cos" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Cos'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Cos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><span class="pre">Parameter</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Cos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">BaseVariable</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <a class="reference internal" href="#qilisdk.core.variables.MathematicalMap" title="qilisdk.core.variables.MathematicalMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a></p>
+<p>Apply a cosine map to a parameter or term.</p>
+<p>initialize a new term object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elements</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[BaseVariable</span>  <span class="pre">|</span>  <span class="pre">Term</span>  <span class="pre">|</span>  <span class="pre">Number]</span></code>) – a list of elements in the term.</p></li>
+<li><p><strong>operation</strong> (<a class="reference internal" href="#qilisdk.core.variables.Operation" title="qilisdk.core.variables.Operation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></a>) – the mathematical operation between these elements.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the items inside elements are not from the listed types (BaseVariable  |  Term  |  Number).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.core.variables.Cos.MATH_SYMBOL">
+<span class="sig-name descname"><span class="pre">MATH_SYMBOL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cos'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/core/variables.html#Cos.MATH_SYMBOL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.core.variables.Cos.MATH_SYMBOL" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.core.variables.Cos.MATH_SYMBOL'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -2124,6 +2262,7 @@ side before the generation of the list. Therefore, you can assume that the right
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.ADD'" class="reference internal" href="#qilisdk.core.variables.Operation.ADD"><code class="docutils literal notranslate"><span class="pre">Operation.ADD</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.DIV'" class="reference internal" href="#qilisdk.core.variables.Operation.DIV"><code class="docutils literal notranslate"><span class="pre">Operation.DIV</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.SUB'" class="reference internal" href="#qilisdk.core.variables.Operation.SUB"><code class="docutils literal notranslate"><span class="pre">Operation.SUB</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.MATH_MAP'" class="reference internal" href="#qilisdk.core.variables.Operation.MATH_MAP"><code class="docutils literal notranslate"><span class="pre">Operation.MATH_MAP</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.to_yaml'" class="reference internal" href="#qilisdk.core.variables.Operation.to_yaml"><code class="docutils literal notranslate"><span class="pre">Operation.to_yaml()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Operation.from_yaml'" class="reference internal" href="#qilisdk.core.variables.Operation.from_yaml"><code class="docutils literal notranslate"><span class="pre">Operation.from_yaml()</span></code></a></li>
 </ul>
@@ -2218,6 +2357,7 @@ side before the generation of the list. Therefore, you can assume that the right
 </li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter'" class="reference internal" href="#qilisdk.core.variables.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a><ul>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter.value'" class="reference internal" href="#qilisdk.core.variables.Parameter.value"><code class="docutils literal notranslate"><span class="pre">Parameter.value</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter.check_value'" class="reference internal" href="#qilisdk.core.variables.Parameter.check_value"><code class="docutils literal notranslate"><span class="pre">Parameter.check_value()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter.set_value'" class="reference internal" href="#qilisdk.core.variables.Parameter.set_value"><code class="docutils literal notranslate"><span class="pre">Parameter.set_value()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter.num_binary_equivalent'" class="reference internal" href="#qilisdk.core.variables.Parameter.num_binary_equivalent"><code class="docutils literal notranslate"><span class="pre">Parameter.num_binary_equivalent()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.Parameter.evaluate'" class="reference internal" href="#qilisdk.core.variables.Parameter.evaluate"><code class="docutils literal notranslate"><span class="pre">Parameter.evaluate()</span></code></a></li>
@@ -2248,6 +2388,19 @@ side before the generation of the list. Therefore, you can assume that the right
 <li><a :data-current="activeSection === '#qilisdk.core.variables.ComparisonTerm.to_list'" class="reference internal" href="#qilisdk.core.variables.ComparisonTerm.to_list"><code class="docutils literal notranslate"><span class="pre">ComparisonTerm.to_list()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.ComparisonTerm.to_binary'" class="reference internal" href="#qilisdk.core.variables.ComparisonTerm.to_binary"><code class="docutils literal notranslate"><span class="pre">ComparisonTerm.to_binary()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.core.variables.ComparisonTerm.evaluate'" class="reference internal" href="#qilisdk.core.variables.ComparisonTerm.evaluate"><code class="docutils literal notranslate"><span class="pre">ComparisonTerm.evaluate()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.MathematicalMap'" class="reference internal" href="#qilisdk.core.variables.MathematicalMap"><code class="docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL'" class="reference internal" href="#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL"><code class="docutils literal notranslate"><span class="pre">MathematicalMap.MATH_SYMBOL</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.MathematicalMap.evaluate'" class="reference internal" href="#qilisdk.core.variables.MathematicalMap.evaluate"><code class="docutils literal notranslate"><span class="pre">MathematicalMap.evaluate()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Sin'" class="reference internal" href="#qilisdk.core.variables.Sin"><code class="docutils literal notranslate"><span class="pre">Sin</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Sin.MATH_SYMBOL'" class="reference internal" href="#qilisdk.core.variables.Sin.MATH_SYMBOL"><code class="docutils literal notranslate"><span class="pre">Sin.MATH_SYMBOL</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Cos'" class="reference internal" href="#qilisdk.core.variables.Cos"><code class="docutils literal notranslate"><span class="pre">Cos</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.core.variables.Cos.MATH_SYMBOL'" class="reference internal" href="#qilisdk.core.variables.Cos.MATH_SYMBOL"><code class="docutils literal notranslate"><span class="pre">Cos.MATH_SYMBOL</span></code></a></li>
 </ul>
 </li>
 </ul>
