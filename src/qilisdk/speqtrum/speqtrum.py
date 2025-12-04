@@ -30,6 +30,10 @@ from qilisdk.experiments import (
     RabiExperimentResult,
     T1Experiment,
     T1ExperimentResult,
+    T2Experiment,
+    T2ExperimentResult,
+    TwoTonesExperiment,
+    TwoTonesExperimentResult,
 )
 from qilisdk.functionals import (
     Sampling,
@@ -56,8 +60,10 @@ from .speqtrum_models import (
     RabiExperimentPayload,
     SamplingPayload,
     T1ExperimentPayload,
+    T2ExperimentPayload,
     TimeEvolutionPayload,
     Token,
+    TwoTonesExperimentPayload,
     TypedJobDetail,
     VariationalProgramPayload,
 )
@@ -598,10 +604,16 @@ class SpeQtrum:
             return self._submit_time_evolution(functional, device, job_name)
 
         if isinstance(functional, RabiExperiment):
-            return self._submit_rabi_program(functional, device, job_name)
+            return self._submit_rabi(functional, device, job_name)
 
         if isinstance(functional, T1Experiment):
-            return self._submit_t1_program(functional, device, job_name)
+            return self._submit_t1(functional, device, job_name)
+
+        if isinstance(functional, T2Experiment):
+            return self._submit_t2(functional, device, job_name)
+
+        if isinstance(functional, TwoTonesExperiment):
+            return self._submit_two_tones(functional, device, job_name)
 
         logger.error("Unsupported functional type: {}", type(functional).__qualname__)
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
@@ -628,7 +640,7 @@ class SpeQtrum:
         logger.info("Sampling job submitted: {}", job.id)
         return JobHandle.sampling(job.id)
 
-    def _submit_rabi_program(
+    def _submit_rabi(
         self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[RabiExperimentResult]:
         payload = ExecutePayload(
@@ -654,7 +666,7 @@ class SpeQtrum:
         logger.info("Rabi experiment job submitted: {}", job.id)
         return JobHandle.rabi_experiment(job.id)
 
-    def _submit_t1_program(
+    def _submit_t1(
         self, t1_experiment: T1Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T1ExperimentResult]:
         payload = ExecutePayload(
@@ -679,6 +691,58 @@ class SpeQtrum:
         job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
         return JobHandle.t1_experiment(job.id)
+
+    def _submit_t2(
+        self, t2_experiment: T2Experiment, device: str, job_name: str | None = None
+    ) -> JobHandle[T2ExperimentResult]:
+        payload = ExecutePayload(
+            type=ExecuteType.T2_EXPERIMENT,
+            t2_experiment_payload=T2ExperimentPayload(t2_experiment=t2_experiment),
+        )
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.PULSE,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("Executing T2 experiment on device {}", device)
+        with self._create_client() as client:
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing T2 experiment"),
+            )
+        job = JobId(**response.json())
+        logger.info("T2 experiment job submitted: {}", job.id)
+        return JobHandle.t2_experiment(job.id)
+
+    def _submit_two_tones(
+        self, two_tones_experiment: TwoTonesExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[TwoTonesExperimentResult]:
+        payload = ExecutePayload(
+            type=ExecuteType.TWO_TONES_EXPERIMENT,
+            two_tones_experiment_payload=TwoTonesExperimentPayload(two_tones_experiment=two_tones_experiment),
+        )
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.PULSE,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("Executing Two-Tones experiment on device {}", device)
+        with self._create_client() as client:
+            response = client.post(
+                "/execute",
+                json=json,
+                extensions=_request_extensions(context="Executing Two-Tones experiment"),
+            )
+        job = JobId(**response.json())
+        logger.info("Two-Tones experiment job submitted: {}", job.id)
+        return JobHandle.two_tones_experiment(job.id)
 
     def _submit_time_evolution(
         self, time_evolution: TimeEvolution, device: str, job_name: str | None = None

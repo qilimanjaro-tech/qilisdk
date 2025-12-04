@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import ClassVar
 
-from qilisdk.core.variables import RealNumber
+from qilisdk.core.variables import ComparisonTerm, RealNumber
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -79,3 +79,10 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """Update the admissible range for selected circuit parameters."""
         self.circuit.set_parameter_bounds(ranges)
+
+    def get_constraints(self) -> list[ComparisonTerm]:
+        """Expose parameter constraints defined on the circuit.
+        Returns:
+            list[ComparisonTerm]: a list of constraints on the circuit parameters.
+        """
+        return self.circuit.get_constraints()

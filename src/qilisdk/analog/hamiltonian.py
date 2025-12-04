@@ -256,6 +256,7 @@ class Hamiltonian(Parameterizable):
         Raises:
             ValueError: If the provided coefficients include generic variables instead of parameters.
         """
+        super(Hamiltonian, self).__init__()
         self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
         self._parameters: dict[str, Parameter] = {}
         if elements:
@@ -295,77 +296,9 @@ class Hamiltonian(Parameterizable):
         }
 
     @property
-    def nparameters(self) -> int:
-        """Return the number of unique symbolic parameters contained in the Hamiltonian."""
-        return len(self._parameters)
-
-    @property
     def parameters(self) -> dict[str, Parameter]:
         """Return a mapping from parameter labels to their corresponding parameter objects."""
         return self._parameters
-
-    def get_parameter_values(self) -> list[float]:
-        """Return the current numeric values of the Hamiltonian parameters."""
-        return [param.value for param in self._parameters.values()]
-
-    def get_parameter_names(self) -> list[str]:
-        """Return the ordered list of parameter labels defined in the Hamiltonian."""
-        return list(self._parameters.keys())
-
-    def get_parameters(self) -> dict[str, float]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items()}
-
-    def set_parameter_values(self, values: list[float]) -> None:
-        """
-        Update the numerical values of the Hamiltonian parameters.
-
-        Args:
-            values (list[float]): New values ordered according to ``get_parameter_names()``.
-
-        Raises:
-            ValueError: If the number of provided values does not match ``nparameters``.
-        """
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but Hamiltonian has {self.nparameters} parameters.")
-        for i, parameter in enumerate(self._parameters.values()):
-            parameter.set_value(values[i])
-
-    def set_parameters(self, parameter_dict: dict[str, float]) -> None:
-        """
-        Update a subset of parameters by label.
-
-        Args:
-            parameter_dict (dict[str, float]): Mapping from parameter labels to new numerical values.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label, param in parameter_dict.items():
-            if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this hamiltonian.")
-            self._parameters[label].set_value(param)
-
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the lower and upper bounds currently associated with each parameter."""
-        return {k: v.bounds for k, v in self._parameters.items()}
-
-    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """
-        Update parameter bounds.
-
-        Args:
-            ranges (dict[str, tuple[float, float]]): Mapping from parameter labels to ``(lower, upper)`` bounds.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label, bound in ranges.items():
-            if label not in self._parameters:
-                raise ValueError(
-                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
-                )
-            self._parameters[label].set_bounds(bound[0], bound[1])
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.

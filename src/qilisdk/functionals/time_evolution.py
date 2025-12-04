@@ -16,7 +16,7 @@ from typing import ClassVar
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.variables import RealNumber
+from qilisdk.core.variables import ComparisonTerm, RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -35,7 +35,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             from qilisdk.functionals.time_evolution import TimeEvolution
 
             h0 = Z(0)
-            schedule = Schedule(T=10.0, hamiltonians={"h0": h0})
+            schedule = Schedule(hamiltonians={"h0": h0}, total_time=10.0)
             functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
     """
 
@@ -96,3 +96,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """Update bounds for selected schedule parameters."""
         self.schedule.set_parameter_bounds(ranges)
+
+    def get_constraints(self) -> list[ComparisonTerm]:
+        """Return the parameter constraints defined within the underlying schedule."""
+        return self.schedule.get_constraints()

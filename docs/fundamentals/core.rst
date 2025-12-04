@@ -192,6 +192,32 @@ Whenever you interact with one of these parameterizable objects, the helper
 methods let you list, bound, or update the symbolic degrees of freedom in a
 consistent way.
 
+Mathematical Maps (sin, cos)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
+functions to a parameter or term while keeping expressions symbolic.
+:class:`~qilisdk.core.variables.Sin` and :class:`~qilisdk.core.variables.Cos`
+wrap a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
+or any other base variable and defer evaluation until values are provided.
+
+.. code-block:: python
+
+    from qilisdk.core.variables import Parameter, Sin, Cos
+
+    theta = Parameter("theta", 0.5)
+    expr = Sin(theta) + Cos(2 * theta)
+
+    print(expr)                # sin[theta] + cos[(2) * theta]
+    print(expr.evaluate({}))   # uses theta.value automatically
+
+    # You can also supply a different value at evaluation time:
+    print(expr.evaluate({theta: 1.0}))
+
+These maps compose naturally with other terms, so you can include them in
+constraints or objectives and rely on the same evaluation and encoding rules
+as other symbolic expressions.
+
 
 Comparison Terms
 ^^^^^^^^^^^^^^^^
