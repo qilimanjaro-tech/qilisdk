@@ -32,12 +32,12 @@ Architecture Overview
 ---------------------
 
 All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
-across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. Sampling or TimeEvolution)
+across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution`)
 to the appropriate simulation routine and returns the functional-specific result object (see the :doc:`Functionals
 <functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
 the underlying parameterized primitive functional.
 
-Backends register handlers for the functionals they support. If a functional is not implemented, ``execute`` raises
+Backends register handlers for the functionals they support. If a functional is not implemented, :meth:`~qilisdk.backends.backend.Backend.execute` raises
 ``NotImplementedError`` to surface the mismatch early.
 
 Hardware & Dependencies
@@ -66,9 +66,7 @@ drivers to be present on the system.
 Functional Support
 ------------------
 
-The table below summarizes which primitive functionals each backend can execute. Variational programs work whenever the
-underlying primitive functional is available, because :meth:`~qilisdk.backends.backend.Backend.optimize` orchestrates
-repeated :meth:`~qilisdk.backends.backend.Backend.execute` calls.
+The table below summarizes which primitive :mod:`~qilisdk.functionals` each backend can execute.
 
 .. list-table::
    :header-rows: 1
@@ -118,9 +116,9 @@ commodity hardware before moving to accelerated machines.
 
 **Sampling methods**
 
-- **STATE_VECTOR**: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
-- **TENSOR_NETWORK**: Tensor-network contraction, suited for shallow yet wide circuits.  
-- **MATRIX_PRODUCT_STATE**: Matrix-product-state simulation for low-entanglement workloads.
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`: Tensor-network contraction, suited for shallow yet wide circuits.  
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`: Matrix-product-state simulation for low-entanglement workloads.
 
 **Example**
 
@@ -148,6 +146,7 @@ commodity hardware before moving to accelerated machines.
 **Output**  
 
 ::
+
     {'11': 237, '00': 263}
 
 
