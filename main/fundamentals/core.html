@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=dd92ca46" rel="stylesheet" type="text/css"/>
 <link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
@@ -121,7 +121,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
@@ -195,6 +194,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../0.1.7/fundamentals/core.html">0.1.7</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../0.1.6/fundamentals/core.html">0.1.6</a>
 </li>
 <li class="toctree-l1">
@@ -234,7 +236,7 @@
 <h1>Core<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#core"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <p>The <a class="reference internal" href="../code/api/qilisdk/core/index.html#module-qilisdk.core" title="qilisdk.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.core</span></code></a> layer underpins both the digital and analog stacks. It
 provides symbolic variables, optimization models, sparse quantum tensors, and
-the <code class="docutils literal notranslate"><span class="pre">Parameterizable</span></code> mixin used throughout the SDK.</p>
+the <a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable" title="qilisdk.core.parameterizable.Parameterizable"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> mixin used throughout the SDK.</p>
 <p>Highlights:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#module-qilisdk.core.variables" title="qilisdk.core.variables"><code class="xref py py-mod docutils literal notranslate"><span class="pre">variables</span></code></a> supplies binary, spin, continuous, and
@@ -285,19 +287,19 @@ QUBO penalty form, and exports the corresponding Hamiltonian:</p>
 <li><p><strong>Domain</strong> (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain" title="qilisdk.core.variables.Domain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Domain</span></code></a>): Specifies the variable type:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">REAL</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">INTEGER</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">POSITIVE_INTEGER</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BINARY</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SPIN</span></code></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.REAL" title="qilisdk.core.variables.Domain.REAL"><code class="xref py py-class docutils literal notranslate"><span class="pre">REAL</span></code></a></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.INTEGER" title="qilisdk.core.variables.Domain.INTEGER"><code class="xref py py-class docutils literal notranslate"><span class="pre">INTEGER</span></code></a></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.POSITIVE_INTEGER" title="qilisdk.core.variables.Domain.POSITIVE_INTEGER"><code class="xref py py-class docutils literal notranslate"><span class="pre">POSITIVE_INTEGER</span></code></a></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.BINARY" title="qilisdk.core.variables.Domain.BINARY"><code class="xref py py-class docutils literal notranslate"><span class="pre">BINARY</span></code></a></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.SPIN" title="qilisdk.core.variables.Domain.SPIN"><code class="xref py py-class docutils literal notranslate"><span class="pre">SPIN</span></code></a></p></li>
 </ul>
 </div></blockquote>
 </li>
 <li><p><strong>Bounds</strong>: Defines the allowed value range of the variable.</p></li>
-<li><p><strong>Encoding</strong>: Specifies how the variable is represented using binary encodings:</p>
+<li><p><strong>Encoding</strong> (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Encoding" title="qilisdk.core.variables.Encoding"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a>): Specifies how the variable is represented using binary encodings:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Bit-wise encoding (<code class="xref py py-class docutils literal notranslate"><span class="pre">BitWise</span></code>)</p></li>
+<li><p>Bit-wise encoding (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Bitwise" title="qilisdk.core.variables.Bitwise"><code class="xref py py-class docutils literal notranslate"><span class="pre">Bitwise</span></code></a>)</p></li>
 <li><p>Domain wall encoding (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.DomainWall" title="qilisdk.core.variables.DomainWall"><code class="xref py py-class docutils literal notranslate"><span class="pre">DomainWall</span></code></a>)</p></li>
 <li><p>One-hot encoding (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.OneHot" title="qilisdk.core.variables.OneHot"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneHot</span></code></a>)</p></li>
 </ul>
@@ -308,7 +310,7 @@ QUBO penalty form, and exports the corresponding Hamiltonian:</p>
 </div></blockquote>
 </li>
 </ul>
-<p>Example: creating different types of variables:</p>
+<p>An example of creating different types of variables:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">Bitwise</span><span class="p">,</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">SpinVariable</span><span class="p">,</span> <span class="n">Variable</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="n">Bitwise</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">)</span>
@@ -336,7 +338,8 @@ Each binary variable configuration generates a float within the bounds, based on
 </section>
 <section id="terms">
 <h3>Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>Variables can be combined algebraically to form expressions known as <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>. Example:</p>
+<p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable" title="qilisdk.core.variables.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Variables</span></code></a> can be combined algebraically to form expressions
+known as <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Terms</span></code></a>. For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">3</span>
 </span><span id="line-2"><span class="nb">print</span><span class="p">(</span><span class="s2">"t1:"</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
 </span><span id="line-3"><span class="n">t2</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">4</span>
@@ -376,7 +379,7 @@ Each binary variable configuration generates a float within the bounds, based on
 re-bound at runtime. The <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> class
 represents a scalar symbol with optional bounds, and
 <a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable" title="qilisdk.core.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> provides a uniform API
-(<code class="docutils literal notranslate"><span class="pre">get_parameter_names</span></code>, <code class="docutils literal notranslate"><span class="pre">set_parameter_values</span></code>…) implemented by circuits,
+(<a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_names" title="qilisdk.core.parameterizable.Parameterizable.get_parameter_names"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_names()</span></code></a>, <a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_parameter_values" title="qilisdk.core.parameterizable.Parameterizable.set_parameter_values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_parameter_values()</span></code></a>…) implemented by circuits,
 schedules, models, and more.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 </span><span id="line-2">
@@ -390,7 +393,7 @@ schedules, models, and more.</p>
 combine them with other variables and evaluate terms without having to pass the
 parameter explicitly—its stored <code class="docutils literal notranslate"><span class="pre">value</span></code> is used automatically.</p>
 <p>Objects that inherit from <a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable" title="qilisdk.core.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a>
-collect all the <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> instances they encounter. For example:</p>
+collect all the <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> instances they encounter. For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">RX</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -430,7 +433,8 @@ as other symbolic expressions.</p>
 </section>
 <section id="comparison-terms">
 <h3>Comparison Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#comparison-terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#comparison-terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>Comparison terms define constraints using mathematical comparisons. Use the following operators to construct them:</p>
+<p>Each <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComparisonTerm</span></code></a> defines a constraint using mathematical comparisons.
+Use the following operators to construct them:</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 33.3%"/>
@@ -445,28 +449,28 @@ as other symbolic expressions.</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Equality</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">Equal(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">EQ(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Equal" title="qilisdk.core.variables.Equal"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Equal(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.EQ" title="qilisdk.core.variables.EQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>Not Equal</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">NotEqual(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">NEQ(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.NotEqual" title="qilisdk.core.variables.NotEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">NotEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.NEQ" title="qilisdk.core.variables.NEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">NEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 <tr class="row-even"><td><p>Less Than</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">LessThan(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">LT(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LessThan" title="qilisdk.core.variables.LessThan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LessThan(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LT" title="qilisdk.core.variables.LT"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LT(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>Less Than or Equal</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">LessThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">LEQ(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LessThanOrEqual" title="qilisdk.core.variables.LessThanOrEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LessThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LEQ" title="qilisdk.core.variables.LEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 <tr class="row-even"><td><p>Greater Than</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">GreaterThan(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">GT(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThan" title="qilisdk.core.variables.GreaterThan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GreaterThan(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GT" title="qilisdk.core.variables.GT"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GT(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>Greater Than or Equal</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">GreaterThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">GEQ(lhs,</span> <span class="pre">rhs)</span></code></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThanOrEqual" title="qilisdk.core.variables.GreaterThanOrEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GreaterThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GEQ" title="qilisdk.core.variables.GEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
 </tr>
 </tbody>
 </table>
@@ -490,7 +494,7 @@ as other symbolic expressions.</p>
 <li><p>Zero or more <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint" title="qilisdk.core.model.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constraint</span></code></a> instances</p></li>
 </ul>
 <p><strong>Objective</strong></p>
-<p>The objective defines the function the model aims to minimize or maximize. Example:</p>
+<p>The <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Objective" title="qilisdk.core.model.Objective"><code class="xref py py-class docutils literal notranslate"><span class="pre">Objective</span></code></a> defines the function the model aims to minimize or maximize. Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
 </span><span id="line-2"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"example_model"</span><span class="p">)</span>
 </span><span id="line-3"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
@@ -534,7 +538,7 @@ as other symbolic expressions.</p>
 </span></code></pre></div>
 </div>
 <p><strong>Constraints</strong></p>
-<p>Additional constraints can be added to restrict the solution space:</p>
+<p>Additional <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint" title="qilisdk.core.model.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constraints</span></code></a> can be added to restrict the solution space:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"test_constraint"</span><span class="p">,</span> <span class="n">LT</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </span><span id="line-2"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </span></code></pre></div>
@@ -561,7 +565,7 @@ as other symbolic expressions.</p>
 </section>
 <section id="evaluating-a-model">
 <h3>Evaluating a Model<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#evaluating-a-model" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#evaluating-a-model'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>To evaluate a model, provide values for all involved variables:</p>
+<p>To evaluate a <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, provide values for all involved variables:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span>
 </span><span id="line-2">    <span class="n">x</span><span class="p">:</span> <span class="mf">1.4</span>
 </span><span id="line-3"><span class="p">})</span>
@@ -571,7 +575,8 @@ as other symbolic expressions.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span><span class="s1">'obj'</span><span class="p">:</span> <span class="mf">5.8</span><span class="p">,</span> <span class="s1">'test_constraint'</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 </span></code></pre></div>
 </div>
-<p>The evaluation returns a dictionary with values for the objective and constraints. A constraint returns <cite>0.0</cite> if satisfied, or its Lagrange multiplier if violated.</p>
+<p>The evaluation returns a dictionary with values for the objective and constraints. A constraint returns <cite>0.0</cite> if satisfied, or
+its Lagrange multiplier if violated.</p>
 <p>For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span>
 </span><span id="line-2">    <span class="n">x</span><span class="p">:</span> <span class="mi">2</span>
@@ -692,6 +697,9 @@ we define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n}
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">8.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">11.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="mf">20.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
+<div class="line-block">
+<div class="line"><br/></div>
+</div>
 </section>
 <section id="example-unbalanced-penalization">
 <h5>Example: Unbalanced Penalization<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-unbalanced-penalization"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h5>
@@ -732,9 +740,8 @@ we define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n}
 </dl>
 </li>
 <li><dl>
-<dt><strong>Export to Hamiltonian</strong></dt><dd><p>Once in QUBO form, translate directly into an analog Ising Hamiltonian for simulation or hardware:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span>
-</span><span id="line-2"><span class="n">h</span> <span class="o">=</span> <span class="n">qubo_model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+<dt><strong>Export to Hamiltonian</strong></dt><dd><p>Once in QUBO form, translate directly into an analog Ising <code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code> for simulation or hardware:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">h</span> <span class="o">=</span> <span class="n">qubo_model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
 </dd>
@@ -831,11 +838,11 @@ operators in sparse form.</p>
 </ul>
 <p>Key methods:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">.adjoint()</span></code>: conjugate transpose</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.expm()</span></code>: matrix exponential</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.norm(order=1)</span></code>: vector or matrix norm</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.unit(order='tr')</span></code>: normalize to unit norm</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.ptrace(keep,</span> <span class="pre">dims=None)</span></code>: partial trace</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.adjoint" title="qilisdk.core.qtensor.QTensor.adjoint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.adjoint()</span></code></a>: conjugate transpose</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.expm" title="qilisdk.core.qtensor.QTensor.expm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.expm()</span></code></a>: matrix exponential</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.norm" title="qilisdk.core.qtensor.QTensor.norm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.norm(order=1)</span></code></a>: vector or matrix norm</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.unit" title="qilisdk.core.qtensor.QTensor.unit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.unit(order='tr')</span></code></a>: normalize to unit norm</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.ptrace" title="qilisdk.core.qtensor.QTensor.ptrace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.ptrace(keep,</span> <span class="pre">dims=None)</span></code></a>: partial trace</p></li>
 </ul>
 <p>Examples:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>

@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=dd92ca46" rel="stylesheet" type="text/css"/>
 <link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
@@ -121,7 +121,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
@@ -195,6 +194,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../0.1.7/fundamentals/cost_functions.html">0.1.7</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../0.1.6/fundamentals/cost_functions.html">0.1.6</a>
 </li>
 <li class="toctree-l1">
@@ -253,7 +255,7 @@ functional result and calls the appropriate protected hook:</p>
 <li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_cost_time_evolution()</span></code> receives a
 <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a></p></li>
 </ul>
-<p>If your workflow introduces new functional result types you can subclass <code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code> and register additional
+<p>If your workflow introduces new functional result types you can subclass <a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code></a> and register additional
 handlers in <code class="docutils literal notranslate"><span class="pre">self._handlers</span></code> or override the protected methods above. Custom implementations must return a real or
 complex number that represents the score you want to optimize.</p>
 </section>
@@ -264,7 +266,7 @@ an observable against either a final state (from time evolution) or the probabil
 It accepts three interchangeable representations for the observable: a
 <a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>, a symbolic
 <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a>, or a single
-<a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliOperator</span></code></a>. Internally, all inputs are converted to <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> so the same
+<a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator" title="qilisdk.analog.hamiltonian.PauliOperator"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliOperator</span></code></a>. Internally, all inputs are converted to <a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> so the same
 numeric pipeline can be reused for both analog and digital results.</p>
 <section id="example-expectation-value-from-time-evolution">
 <h3>Example: expectation value from time evolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-expectation-value-from-time-evolution" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-expectation-value-from-time-evolution'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
@@ -350,9 +352,10 @@ through <a class="reference internal" href="../code/api/qilisdk/core/model/index
 </section>
 <section id="cost-functions-in-variational-programs">
 <h2>Cost Functions in Variational Programs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#cost-functions-in-variational-programs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#cost-functions-in-variational-programs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Variational workflows combine a parameterized functional, a classical optimizer, and a cost function. At each optimizer
-iteration the backend executes the functional, obtains a result object, and feeds it into the configured cost function
-to obtain the scalar that drives the optimization loop.</p>
+<p>Variational workflows combine a parameterized <a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional" title="qilisdk.functionals.functional.Functional"><code class="xref py py-class docutils literal notranslate"><span class="pre">Functional</span></code></a>, a classical optimizer,
+and a <a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code></a>. At each optimizer iteration the backend executes
+the functional, obtains a <a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalResult</span></code></a>
+object, and feeds it into the configured cost function to obtain the scalar that drives the optimization loop.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.cost_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelCostFunction</span>
 </span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalProgram</span><span class="p">,</span> <span class="n">Sampling</span>
@@ -371,8 +374,8 @@ to obtain the scalar that drives the optimization loop.</p>
 </span></code></pre></div>
 </div>
 <p>Swapping the cost function lets you explore alternative objective definitions without touching the functional itself.
-For example, you can start with <code class="xref py py-class docutils literal notranslate"><span class="pre">ObservableCostFunction</span></code> to reproduce a physics-inspired energy expectation and
-later try <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelCostFunction</span></code> to include constraint penalties from a combinatorial problem.</p>
+For example, you can start with <a class="reference internal" href="../code/api/qilisdk/cost_functions/observable_cost_function/index.html#qilisdk.cost_functions.observable_cost_function.ObservableCostFunction" title="qilisdk.cost_functions.observable_cost_function.ObservableCostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ObservableCostFunction</span></code></a> to reproduce a physics-inspired energy expectation and
+later try <a class="reference internal" href="../code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction" title="qilisdk.cost_functions.model_cost_function.ModelCostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelCostFunction</span></code></a> to include constraint penalties from a combinatorial problem.</p>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

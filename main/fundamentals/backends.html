@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=dd92ca46" rel="stylesheet" type="text/css"/>
 <link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
@@ -121,7 +121,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
@@ -195,6 +194,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../0.1.7/fundamentals/backends.html">0.1.7</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../0.1.6/fundamentals/backends.html">0.1.6</a>
 </li>
 <li class="toctree-l1">
@@ -258,10 +260,10 @@ Currently, two backends are supported:</p>
 <section id="architecture-overview">
 <h2>Architecture Overview<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#architecture-overview" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#architecture-overview'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>All concrete backends subclass <a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend" title="qilisdk.backends.backend.Backend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code></a>, which centralizes the execution workflow used
-across the SDK. The <a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> dispatches a primitive functional (e.g. Sampling or TimeEvolution)
+across the SDK. The <a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> dispatches a primitive functional (e.g. <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> or <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>)
 to the appropriate simulation routine and returns the functional-specific result object (see the <a class="reference internal" href="functionals.html"><span class="doc">Functionals</span></a> chapter). The Execute method is also used to optimize variational programs via repeated calls to
 the underlying parameterized primitive functional.</p>
-<p>Backends register handlers for the functionals they support. If a functional is not implemented, <code class="docutils literal notranslate"><span class="pre">execute</span></code> raises
+<p>Backends register handlers for the functionals they support. If a functional is not implemented, <a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> raises
 <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> to surface the mismatch early.</p>
 </section>
 <section id="hardware-dependencies">
@@ -298,9 +300,7 @@ drivers to be present on the system.</p>
 </section>
 <section id="functional-support">
 <h2>Functional Support<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functional-support" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#functional-support'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The table below summarizes which primitive functionals each backend can execute. Variational programs work whenever the
-underlying primitive functional is available, because <code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize()</span></code> orchestrates
-repeated <a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> calls.</p>
+<p>The table below summarizes which primitive <a class="reference internal" href="../code/api/qilisdk/functionals/index.html#module-qilisdk.functionals" title="qilisdk.functionals"><code class="xref py py-mod docutils literal notranslate"><span class="pre">functionals</span></code></a> each backend can execute.</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 35.0%"/>
@@ -354,9 +354,9 @@ commodity hardware before moving to accelerated machines.</p>
 </ul>
 <p><strong>Sampling methods</strong></p>
 <ul class="simple">
-<li><p><strong>STATE_VECTOR</strong>: Full state-vector simulation (switches to CPU if a GPU is unavailable).</p></li>
-<li><p><strong>TENSOR_NETWORK</strong>: Tensor-network contraction, suited for shallow yet wide circuits.</p></li>
-<li><p><strong>MATRIX_PRODUCT_STATE</strong>: Matrix-product-state simulation for low-entanglement workloads.</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR"><code class="xref py py-class docutils literal notranslate"><span class="pre">STATE_VECTOR</span></code></a>: Full state-vector simulation (switches to CPU if a GPU is unavailable).</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK"><code class="xref py py-class docutils literal notranslate"><span class="pre">TENSOR_NETWORK</span></code></a>: Tensor-network contraction, suited for shallow yet wide circuits.</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MATRIX_PRODUCT_STATE</span></code></a>: Matrix-product-state simulation for low-entanglement workloads.</p></li>
 </ul>
 <p><strong>Example</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -380,10 +380,9 @@ commodity hardware before moving to accelerated machines.</p>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong></p>
-<dl class="simple">
-<dt>::</dt><dd><p>{‘11’: 237, ‘00’: 263}</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">{</span><span class="s1">'11'</span><span class="p">:</span> <span class="mi">237</span><span class="p">,</span> <span class="s1">'00'</span><span class="p">:</span> <span class="mi">263</span><span class="p">}</span>
+</span></code></pre></div>
+</div>
 </section>
 <section id="qutip-backend">
 <h2>Qutip Backend<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qutip-backend" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qutip-backend'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>

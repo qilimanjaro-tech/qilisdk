@@ -14,7 +14,7 @@
 <link href="../../../../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/custom.css?v=dd92ca46" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Search"/>
@@ -121,7 +121,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/exceptions/index.html">qilisdk.core.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/model/index.html">qilisdk.core.model</a></li>
@@ -195,6 +194,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.7/index.html">0.1.7</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../../../../../0.1.6/index.html">0.1.6</a>
 </li>
 <li class="toctree-l1">
@@ -266,7 +268,7 @@
 <dd></dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.functionals.functional.Functional">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Functional</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/functional.html#Functional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.functional.Functional" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.functional.Functional'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Functional</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/functional.html#Functional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.functional.Functional" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.functional.Functional'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract interface for executable routines that return a <code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalResult</span></code>.</p>
 <p>Subclasses detail the concrete <cite>result_type</cite> they generate.</p>
@@ -278,7 +280,7 @@
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.functionals.functional.PrimitiveFunctional">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PrimitiveFunctional</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/functional.html#PrimitiveFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.functional.PrimitiveFunctional" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.functional.PrimitiveFunctional'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PrimitiveFunctional</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/functionals/functional.html#PrimitiveFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.functionals.functional.PrimitiveFunctional" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.functionals.functional.PrimitiveFunctional'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable" title="qilisdk.core.parameterizable.Parameterizable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qilisdk.core.parameterizable.Parameterizable</span></code></a>, <a class="reference internal" href="#qilisdk.functionals.functional.Functional" title="qilisdk.functionals.functional.Functional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Functional</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Generic</span></code>[<a class="reference internal" href="#qilisdk.functionals.functional.TResult_co" title="qilisdk.functionals.functional.TResult_co"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TResult_co</span></code></a>]</p>
 <p>Base class for functionals backed by a <a class="reference internal" href="../../core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable" title="qilisdk.core.parameterizable.Parameterizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterizable</span></code></a> object.</p>
 </dd></dl>

@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../_static/custom.css?v=cc3b9bd9" rel="stylesheet" type="text/css"/>
+<link href="../_static/custom.css?v=dd92ca46" rel="stylesheet" type="text/css"/>
 <link href="../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Search"/>
@@ -121,7 +121,6 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/core/index.html">qilisdk.core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/algorithm/index.html">qilisdk.core.algorithm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
@@ -195,6 +194,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../0.1.7/fundamentals/analog.html">0.1.7</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../0.1.6/fundamentals/analog.html">0.1.6</a>
 </li>
 <li class="toctree-l1">
@@ -266,10 +268,10 @@
 </ul>
 <p><strong>Pauli operators</strong>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">X(i)</span></code> - Pauli X acting on qubit <em>i</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Y(i)</span></code> - Pauli Y acting on qubit <em>i</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Z(i)</span></code> - Pauli Z acting on qubit <em>i</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">I(i)</span></code> - Identity acting on qubit <em>i</em></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.X" title="qilisdk.analog.hamiltonian.X"><code class="xref py py-func docutils literal notranslate"><span class="pre">X(i)</span></code></a> - Pauli X acting on qubit <em>i</em></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Y" title="qilisdk.analog.hamiltonian.Y"><code class="xref py py-func docutils literal notranslate"><span class="pre">Y(i)</span></code></a> - Pauli Y acting on qubit <em>i</em></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Z" title="qilisdk.analog.hamiltonian.Z"><code class="xref py py-func docutils literal notranslate"><span class="pre">Z(i)</span></code></a> - Pauli Z acting on qubit <em>i</em></p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.I" title="qilisdk.analog.hamiltonian.I"><code class="xref py py-func docutils literal notranslate"><span class="pre">I(i)</span></code></a> - Identity acting on qubit <em>i</em></p></li>
 </ul>
 <p><strong>Arithmetic operations</strong>:</p>
 <ul class="simple">
@@ -282,21 +284,21 @@
 </ul>
 <p><strong>Extra Symbolic Operators</strong>:</p>
 <ul class="simple">
-<li><p>commutator: <code class="docutils literal notranslate"><span class="pre">H1.commutator(H2)</span></code></p></li>
-<li><p>anticommutator: <code class="docutils literal notranslate"><span class="pre">H1.anticommutator(H2)</span></code></p></li>
-<li><p>vector_norm: <code class="docutils literal notranslate"><span class="pre">H.vector_norm()</span></code></p></li>
-<li><p>forbenius_norm: <code class="docutils literal notranslate"><span class="pre">H.frobenius_norm()</span></code></p></li>
-<li><p>trace: <code class="docutils literal notranslate"><span class="pre">H.trace()</span></code></p></li>
+<li><p>commutator: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.commutator" title="qilisdk.analog.hamiltonian.Hamiltonian.commutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H1.commutator(H2)</span></code></a></p></li>
+<li><p>anticommutator: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.anticommutator" title="qilisdk.analog.hamiltonian.Hamiltonian.anticommutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H1.anticommutator(H2)</span></code></a></p></li>
+<li><p>vector_norm: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.vector_norm" title="qilisdk.analog.hamiltonian.Hamiltonian.vector_norm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H.vector_norm()</span></code></a></p></li>
+<li><p>frobenius_norm: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm" title="qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H.frobenius_norm()</span></code></a></p></li>
+<li><p>trace: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.trace" title="qilisdk.analog.hamiltonian.Hamiltonian.trace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H.trace()</span></code></a></p></li>
 </ul>
 <p><strong>Exporting Hamiltonians</strong>:</p>
 <ul class="simple">
-<li><p>to matrix: <code class="docutils literal notranslate"><span class="pre">H.to_matrix(nqubits)</span></code></p></li>
-<li><p>to qtensor: <code class="docutils literal notranslate"><span class="pre">H.to_qtensor(nqubits)</span></code></p></li>
+<li><p>to matrix: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.to_matrix" title="qilisdk.analog.hamiltonian.Hamiltonian.to_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H.to_matrix(nqubits)</span></code></a></p></li>
+<li><p>to qtensor: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor" title="qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H.to_qtensor(nqubits)</span></code></a></p></li>
 </ul>
 <p><strong>Importing Hamiltonians</strong>:</p>
 <ul class="simple">
-<li><p>from qtensor: <code class="docutils literal notranslate"><span class="pre">Hamiltonian.from_qtensor(qtensor)</span></code></p></li>
-<li><p>from string: <code class="docutils literal notranslate"><span class="pre">Hamiltonian.parse(hamiltonian_string)</span></code></p></li>
+<li><p>from qtensor: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor" title="qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Hamiltonian.from_qtensor(qtensor)</span></code></a></p></li>
+<li><p>from string: <a class="reference internal" href="../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.parse" title="qilisdk.analog.hamiltonian.Hamiltonian.parse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Hamiltonian.parse(hamiltonian_string)</span></code></a></p></li>
 </ul>
 <section id="example-ising-hamiltonian">
 <h3>Example: Ising Hamiltonian<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-ising-hamiltonian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-ising-hamiltonian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
@@ -396,7 +398,7 @@ constrains those parameters to stay between their neighboring time points so the
 </section>
 <section id="parameterized-schedules">
 <h3>Parameterized Schedules<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#parameterized-schedules" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#parameterized-schedules'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>Schedule coefficients can be symbolic, enabling classical optimization loops or
+<p><a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
 instances of <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> or algebraic
 expressions (<a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>) built from parameters.
@@ -417,10 +419,9 @@ later.</p>
 </span><span id="line-13">
 </span><span id="line-14"><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
 </span><span id="line-15">
-</span><span id="line-16">
-</span><span id="line-17"><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="s2">"gamma"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">})</span>
-</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">())</span>   <span class="c1"># ['gamma', 'T']</span>
-</span><span id="line-19"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">())</span>       <span class="c1"># [0 &lt;= T]</span>
+</span><span id="line-16"><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="s2">"gamma"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">})</span>
+</span><span id="line-17"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">())</span>   <span class="c1"># ['gamma', 'T']</span>
+</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">())</span>       <span class="c1"># [0 &lt;= T]</span>
 </span></code></pre></div>
 </div>
 </section>
