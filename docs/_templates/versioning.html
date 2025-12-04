@@ -1,8 +1,32 @@
 {% if versions %}
-<h3>{{ _('Versions') }}</h3>
-<ul>
-  {%- for item in versions|reverse %}
-  <li><a href="{{ item.url }}">{{ item.name }}</a></li>
-  {%- endfor %}
-</ul>
+  {% set dev_versions = versions | selectattr("name", "equalto", "main") | list %}
+  {% set release_versions = versions | rejectattr("name", "equalto", "main") | list %}
+
+  <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
+    {% if release_versions %}
+    <p class="caption" role="heading">
+      <span class="caption_text">{{ _('Releases') }}</span>
+    </p>
+    <ul>
+      {%- for item in release_versions|reverse %}
+      <li class="toctree-l1">
+        <a class="reference internal" href="{{ item.url }}">{{ item.name }}</a>
+      </li>
+      {%- endfor %}
+    </ul>
+    {% endif %}
+
+    {% if dev_versions %}
+    <p class="caption" role="heading">
+      <span class="caption_text">{{ _('Development') }}</span>
+    </p>
+    <ul>
+      {%- for item in dev_versions %}
+      <li class="toctree-l1">
+        <a class="reference internal" href="{{ item.url }}">{{ item.name }}</a>
+      </li>
+      {%- endfor %}
+    </ul>
+    {% endif %}
+  </nav>
 {% endif %}
