@@ -3,9 +3,10 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
-[![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/main/index.html)
+[![Docs](https://img.shields.io/badge/docs-0.1.7-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/0.1.7/index.html)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819871.svg)](https://doi.org/10.5281/zenodo.17819871)
 
-**QiliSDK** is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms.
+**QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and optimizers, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution.
 
 ---
 
@@ -25,6 +26,7 @@
     - [Variational Programs](#variational-programs)
     - [Open QASM Serialization](#open-qasm-serialization)
     - [YAML Serialization](#yaml-serialization)
+    - [OpenFermion Integration](#openfermion-integration)
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Setup \& Dependency Management](#setup--dependency-management)
@@ -478,7 +480,13 @@ Now you can run all development commands (tests, linting, etc.) within this envi
 
 ### Testing
 
-TODO: to_be_filled
+We use **pytest** for the test suite. After syncing dependencies and activating `.venv`, run:
+
+```bash
+pytest tests
+```
+
+To exercise the CUDA, qutip, and SpeQtrum backend tests, install the optional extras first (e.g., `uv sync --all-extras`).
 
 ### Linting & Formatting
 
