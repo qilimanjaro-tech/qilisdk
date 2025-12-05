@@ -574,13 +574,13 @@ class Hamiltonian(Parameterizable):
 
     def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
         """
-        Split the Hamiltonian into a list of commuting partitions.
+        Split the Hamiltonian into a list of partitions, each containing commuting terms.
 
         For now this is a greedy algorithm, but a smarter graph-coloring approach could be used later.
 
         Returns:
             list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
-                A list of dictionaries, each representing a commuting partition of the Hamiltonian.
+                A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
         """
         partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
 

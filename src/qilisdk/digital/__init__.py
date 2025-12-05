@@ -30,6 +30,7 @@ __all__ = [
     "Gate",
     "H",
     "HardwareEfficientAnsatz",
+    "QAOA",
     "I",
     "M",
     "S",

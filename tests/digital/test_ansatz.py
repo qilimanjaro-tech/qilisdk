@@ -14,8 +14,9 @@
 
 import pytest
 
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz, QAOA
 from qilisdk.digital.gates import CNOT, CZ, U1
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ, PauliX
 
 # ------------------------------ Helpers ------------------------------
 
@@ -171,3 +172,83 @@ def test_case_insensitivity_of_connectivity():
     for word in ("linear", "Linear", "LINEAR"):
         ans = HardwareEfficientAnsatz(nqubits=3, connectivity=word)
         assert list(ans.connectivity) == [(0, 1), (1, 2)]
+
+def test_nparameters_property_qaoa():
+    """
+    nparameters should equal: layers * 2 for QAOA (gamma and alpha per layer).
+    Example: 2 layers => 3 * 2 * 2 = 4.
+    """
+    n_qubits = 3
+    layers = 2
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    ansatz = QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers)
+    expected = layers * 2
+    assert ansatz.nparameters == expected
+
+
+def test_numqubits_qaoa():
+    """numqubits property should reflect nqubits argument."""
+    n_qubits = 3
+    layers = 2
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    ansatz = QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers)
+    assert ansatz.nqubits == n_qubits
+
+def test_qaoa_invalid_layers_raises():
+    """Providing non-positive layers should raise ValueError."""
+    n_qubits = 3
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    with pytest.raises(ValueError, match="layers must be >= 1"):
+        QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=0)
+    with pytest.raises(ValueError, match="layers must be >= 1"):
+        QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=-1)
+
+def test_qaoa_nqubits_must_match_problem_hamiltonian():
+    """nqubits must match the number of qubits in problem_hamiltonian."""
+    n_qubits = 3
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    with pytest.raises(ValueError, match="nqubits must match the number of qubits in problem_hamiltonian"):
+        QAOA(nqubits=2, problem_hamiltonian=test_hamiltonian, layers=1)
+
+def test_qaoa_nqubits_must_match_mixer_hamiltonian():
+    """nqubits must match the number of qubits in mixer_hamiltonian if provided."""
+    n_qubits = 3
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    mixer_hamiltonian = Hamiltonian({ (PauliX(q),): 1.0 for q in range(n_qubits + 1) })
+    with pytest.raises(ValueError, match="nqubits must match the number of qubits in mixer_hamiltonian"):
+        QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, mixer_hamiltonian=mixer_hamiltonian, layers=1)
+        
+def test_qaoa_trotter_steps_validation():
+    """trotter_steps must be a positive integer."""
+    n_qubits = 3
+    layers = 1
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    with pytest.raises(ValueError, match="trotter_steps must be >= 1"):
+        QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=0)
+    with pytest.raises(ValueError, match="trotter_steps must be >= 1"):
+        QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=-2)
+
+def test_qaoa_default_mixer_hamiltonian():
+    """If no mixer_hamiltonian is provided, it defaults to X-mixer."""
+    n_qubits = 2
+    layers = 1
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    ansatz = QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers)
+    # Construct expected X-mixer
+    expected_mixer = Hamiltonian({ (PauliX(q),): 1.0 for q in range(n_qubits) })
+    assert ansatz.mixer_hamiltonian == expected_mixer
+
+def test_qaoa_gate_count():
+    """Verify the number of gates in the QAOA ansatz."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({ (PauliZ(q),): 1.0 for q in range(n_qubits) })
+    test_mixer = Hamiltonian({ (PauliX(q),): 1.0 for q in range(n_qubits) })
+    ansatz = QAOA(nqubits=n_qubits, problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=1, mixer_hamiltonian=test_mixer)
+    
+    # Each layer has (assuming Z problem Hamiltonian and X mixer):
+    # - Problem unitary: 2m-1 gates per term of size m in problem_hamiltonian (CNOT, RZ, CNOT)
+    # - Mixer unitary: 3 gates per qubit (H RZ H)
+    expected_gates_per_layer = (2 * len(test_hamiltonian.elements) - 1) + 3 * n_qubits
+    expected_total_gates = expected_gates_per_layer * layers
+    assert len(ansatz.gates) == expected_total_gates

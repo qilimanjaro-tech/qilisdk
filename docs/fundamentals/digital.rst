@@ -325,9 +325,10 @@ HardwareEfficientAnsatz
         two_qubit_gate=CNOT, 
         structure="Interposed"
     )
+    ansatz.draw()
 
   
-This ansatz can be then used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
+This ansatz can then be used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
 
 
 .. code-block:: python 
@@ -339,6 +340,60 @@ This ansatz can be then used as a circuit. For example, we can execute this ansa
 
     backend.execute(Sampling(ansatz))
 
+QAOA
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the time evolution of a 
+problem Hamiltonian and a mixer Hamiltonian using the Trotter-Suzuki decomposition [1]_. 
+By starting with the ground state of the mixer Hamiltonian (often simply the uniform superposition) and then 
+applying the evolution scaled by parameters :math:`\gamma_i` and :math:`\alpha_i`, at a certain set of parameters the ansatz should 
+approximate the ground state of the problem Hamiltonian as per the adiabatic theorem. The hope is that by evolving these
+parameters as a variational quantum algorithm, we can find an approximation to the ground state of the problem Hamiltonian.
+
+.. [1] Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. "A quantum approximate optimization algorithm." arXiv preprint `arXiv:1411.4028 <https://arxiv.org/abs/1411.4028>`_ (2014).
+
+Configuration options:
+
+- **nqubits**: Number of qubits in the circuit.
+- **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
+- **layers**: Number of repeating layers of gates.
+- **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
+- **trotter_steps**: Number of Trotter steps for Hamiltonian evolution,
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.digital import QAOA, Z
+
+    problem_hamiltonian = Z(0) * Z(1) + Z(2)
+    ansatz = QAOA(
+        nqubits=3, 
+        problem_hamiltonian=problem_hamiltonian,
+        layers=2,
+        mixer_hamiltonian=None,
+        trotter_steps=1
+    )
+    ansatz.draw()
+
+As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as a circuit. 
+Or, to instead perform variational optimization over the parameters to minimize the 
+expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </fundamentals/functionals>` for more details):
+
+.. code-block:: python 
+
+    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+
+    vqa = VariationalProgram(functional=Sampling(ansatz), 
+                             optimizer=SciPyOptimizer(method="powell", tol=1e-7), 
+                             cost_function=ObservableCostFunction(problem_hamiltonian))
+
+    print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
+    backend = QutipBackend()
+    result = backend.execute(vqa)
+    print("VQA Result:", result)
 
 Parameter Utilities
 -------------------

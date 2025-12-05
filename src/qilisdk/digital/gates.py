@@ -21,7 +21,7 @@ from scipy.linalg import expm
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Parameter
+from qilisdk.core.variables import Parameter, Term, Operation
 from qilisdk.yaml import yaml
 
 from .exceptions import (
@@ -830,17 +830,36 @@ class RZ(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter) -> None:
+    def __init__(self, qubit: int, *, phi: float | Parameter | Term) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            phi (float): The rotation angle (azimuthal) in radians.
+            phi (float | Parameter | Term): The rotation angle (azimuthal) in radians.
         """
+        
+        self.parameter_terms = {"phi": None}
+
+        # Get or create the parameters for the gate
+        phi_param = None
+        if isinstance(phi, Parameter):
+            phi_param = phi
+        elif isinstance(phi, Term):
+            phi_param = phi.variables()[0]
+        else:
+            phi_param = Parameter("phi", phi)
+
+        # If it's a term, store it, otherwise create a term from the float/Parameter value
+        if isinstance(phi, Term):
+            self.parameter_terms["phi"] = phi
+        else:
+            self.parameter_terms["phi"] = Term([phi], Operation.ADD)
+        
+        # Initialize the base class
         super().__init__(
             target_qubits=(qubit,),
-            parameters={"phi": phi if isinstance(phi, Parameter) else Parameter("phi", phi)},
+            parameters={"phi": phi_param},
         )
 
     @property
@@ -849,7 +868,10 @@ class RZ(BasicGate):
 
     @property
     def phi(self) -> float:
-        return self.get_parameters()["phi"]
+        if self.parameter_terms is not None and self.parameter_terms["phi"] is not None:
+            return self.parameter_terms["phi"].evaluate(self.get_parameters())
+        else:
+            return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi

@@ -23,7 +23,6 @@ from numpy import pi
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
 Structure = Literal["grouped", "interposed"]
-MixerType = Literal["X"]
 
 
 
@@ -257,8 +256,8 @@ class QAOA(Ansatz):
         """
         super().__init__(nqubits)
 
-        if layers < 0:
-            raise ValueError("layers must be >= 0")
+        if layers <= 0:
+            raise ValueError("layers must be >= 1")
 
         if problem_hamiltonian.nqubits <= 0:
             raise ValueError("hamiltonian must have at least one qubit")
@@ -267,7 +266,7 @@ class QAOA(Ansatz):
             raise ValueError("trotter_steps must be >= 1")
         
         if problem_hamiltonian.nqubits != nqubits:
-            raise ValueError("nqubits must match the number of qubits in hamiltonian")
+            raise ValueError("nqubits must match the number of qubits in problem_hamiltonian")
 
         # If no mixer, default to X mixer
         if mixer_hamiltonian is None:
@@ -304,14 +303,6 @@ class QAOA(Ansatz):
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
 
-        # DEBUG
-        print()
-        print("Problem Hamiltonian:")
-        print(self.problem_hamiltonian)
-        print()
-        print("Mixer Hamiltonian:")
-        print(self.mixer_hamiltonian)
-
         # Split the hamiltonians into commuting parts
         commuting_parts_problem = self.problem_hamiltonian.get_commuting_partitions()
         commuting_parts_mixer = self.mixer_hamiltonian.get_commuting_partitions()
@@ -320,22 +311,12 @@ class QAOA(Ansatz):
         trotter_steps_problem = (self.trotter_steps if len(commuting_parts_problem) > 1 else 1)
         trotter_steps_mixer = (self.trotter_steps if len(commuting_parts_mixer) > 1 else 1)
 
-        # DEBUG
-        print()
-        print("Commuting parts (problem):")
-        for i, part in enumerate(commuting_parts_problem):
-            print(f" Part {i}:", part)
-        print()
-        print("Commuting parts (mixer):")
-        for i, part in enumerate(commuting_parts_mixer):
-            print(f" Part {i}:", part)
-
         def _pauli_evolution(term: tuple[PauliOperator, ...], coeff: float, time: Parameter) -> Iterator[BasicGate]:
             """
                 An iterator of parameterized gates performing the evolution of a given Pauli string
             """
 
-            qubit_indices = sorted([pauli.qubit for pauli in term if pauli.name != "I"])
+            qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
             if len(qubit_indices) == 0:
                 return
 
@@ -355,9 +336,7 @@ class QAOA(Ansatz):
 
             # Apply RZ rotation on last qubit
             last_qubit = qubit_indices[-1]
-            scaled_coeff = (-2 * coeff).real
-            yield RZ(last_qubit, phi=Parameter("fixed_" + str(scaled_coeff), scaled_coeff, Domain.REAL, (scaled_coeff, scaled_coeff)))
-            yield RZ(last_qubit, **{"phi": time})
+            yield RZ(last_qubit, **{"phi": (2 * coeff) * time})
 
             # Undo CNOT ladder
             for i in reversed(range(len(qubit_indices) - 1)):
@@ -390,12 +369,8 @@ class QAOA(Ansatz):
                     
             # Apply mixer Hamiltonian
             alpha_param = Parameter("alpha_" + str(i), 0.0)
-            print(alpha_param)
             for _ in range(trotter_steps_mixer):
                 for part in commuting_parts_mixer:
                     for term, coeff in part.items():
                         for gate in _pauli_evolution(term, coeff, alpha_param):
                             self.add(gate)
-        
-        # DEBUG
-        print(self.get_parameters())

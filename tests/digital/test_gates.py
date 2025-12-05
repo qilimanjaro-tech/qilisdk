@@ -21,6 +21,8 @@ from scipy.linalg import expm
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
+from qilisdk.digital.gates import Adjoint, Controlled, Exponential
+from qilisdk.core.variables import Parameter, Term, Operation
 
 
 # ------------------------------------------------------------------------------
@@ -153,6 +155,22 @@ def test_rz_gate(angle: float):
     expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=complex)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
+def test_rz_gate_term():
+    """
+    Create an RZ gate with a Term object as the angle parameter.
+    """
+    qubit = 3
+    angle = np.pi
+    constant = 2.0
+    angle_term = constant*Parameter("test_angle", np.pi/constant)
+    gate = RZ(qubit, phi=angle_term)
+
+    assert gate.name == "RZ"
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
+
+    expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=complex)
+    assert_matrix_equal(gate.matrix, expected_matrix)
 
 # ------------------------------------------------------------------------------
 # U1 Gate Tests
