@@ -31,17 +31,17 @@ Use these constructors to apply standard single- and two-qubit operations:
   Phase gate (π/2 rotation about Z).  
 - ``T(qubit: int)``  
   T gate (π/4 rotation about Z).  
-- ``RX(qubit: int, theta: float)``  
+- ``RX(qubit: int, theta: float | Parameter | Term)``  
   Rotation by angle `theta` around X.  
-- ``RY(qubit: int, theta: float)``  
+- ``RY(qubit: int, theta: float | Parameter | Term)``
   Rotation by angle `theta` around Y.  
-- ``RZ(qubit: int, phi: float)``  
+- ``RZ(qubit: int, phi: float | Parameter | Term)``  
   Rotation by angle `phi` around Z.  
-- ``U1(qubit: int, *, phi: float)``  
+- ``U1(qubit: int, *, phi: float | Parameter | Term)``  
   Phase shift equivalent to RZ plus global phase.  
-- ``U2(qubit: int, *, phi: float, gamma: float)``
+- ``U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)``
   π/2 Y-rotation sandwiched by Z-rotations.
-- ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``
+- ``U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)``
   General single-qubit unitary: RZ-RY-RZ decomposition.
 - ``SWAP(a: int, b: int)``  
   Exchanges the states of qubits ``a`` and ``b``.
@@ -343,22 +343,23 @@ This ansatz can then be used as a circuit. For example, we can execute this ansa
 QAOA
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-:class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the time evolution of a 
-problem Hamiltonian and a mixer Hamiltonian using the Trotter-Suzuki decomposition [1]_. 
-By starting with the ground state of the mixer Hamiltonian (often simply the uniform superposition) and then 
-applying the evolution scaled by parameters :math:`\gamma_i` and :math:`\alpha_i`, at a certain set of parameters the ansatz should 
-approximate the ground state of the problem Hamiltonian as per the adiabatic theorem. The hope is that by evolving these
-parameters as a variational quantum algorithm, we can find an approximation to the ground state of the problem Hamiltonian.
+:class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the alternating time evolution of a 
+problem Hamiltonian and a mixer Hamiltonian [1]_. 
+By initializing the circuit as the ground state of the mixer Hamiltonian (often simply the uniform superposition) and then 
+applying the alternating evolution scaled by parameters :math:`\gamma_i` and :math:`\alpha_i`, the idea is that at a certain set of 
+parameters the ansatz should approximate the evolution from the ground state of the mixer Hamiltonian to the ground state of the problem Hamiltonian, 
+as per the quantum adiabatic theorem. By treating this parameterized circuit as an ansatz for a variational quantum algorithm, we can optimize
+to try to minimize the expectation value of the problem Hamiltonian and thus solve the encoded optimization problem.
 
 .. [1] Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. "A quantum approximate optimization algorithm." arXiv preprint `arXiv:1411.4028 <https://arxiv.org/abs/1411.4028>`_ (2014).
 
 Configuration options:
 
-- **nqubits**: Number of qubits in the circuit.
+- **nqubits**: Number of qubits in the circuit. This should match the number of qubits of both of the Hamiltonians.
 - **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
-- **layers**: Number of repeating layers of gates.
+- **layers**: Number of repeating layers of gates. Each layer applies two evolutions: one for the problem Hamiltonian and one for the mixer Hamiltonian.
 - **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
-- **trotter_steps**: Number of Trotter steps for Hamiltonian evolution,
+- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contain non-commuting terms.
 
 **Example**
 
@@ -376,7 +377,7 @@ Configuration options:
     )
     ansatz.draw()
 
-As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as a circuit. 
+As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as per any QiliSDK circuit. 
 Or, to instead perform variational optimization over the parameters to minimize the 
 expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </fundamentals/functionals>` for more details):
 

@@ -300,6 +300,47 @@ class QAOA(Ansatz):
         """The mixer Hamiltonian used."""
         return self._mixer_hamiltonian
 
+    def _pauli_evolution(self, term: tuple[PauliOperator, ...], coeff: float, time: Parameter) -> Iterator[BasicGate]:
+        """
+            An iterator of parameterized gates performing the evolution of a given Pauli string
+        """
+
+        qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
+        if len(qubit_indices) == 0:
+            return
+
+        # Move everything to Z basis
+        for pauli in term:
+            q = pauli.qubit
+            name = pauli.name
+            if name == "X":
+                yield H(q)
+            elif name == "Y":
+                gateVal = pi / 2
+                yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
+
+        # Apply CNOT ladder
+        for i in range(len(qubit_indices) - 1):
+            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+
+        # Apply RZ rotation on last qubit
+        last_qubit = qubit_indices[-1]
+        yield RZ(last_qubit, **{"phi": (2 * coeff) * time})
+
+        # Undo CNOT ladder
+        for i in reversed(range(len(qubit_indices) - 1)):
+            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+
+        # Move back from Z basis
+        for pauli in term:
+            q = pauli.qubit
+            name = pauli.name
+            if name == "X":
+                yield H(q)
+            elif name == "Y":
+                gateVal = -pi / 2
+                yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
+
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
 
@@ -311,66 +352,29 @@ class QAOA(Ansatz):
         trotter_steps_problem = (self.trotter_steps if len(commuting_parts_problem) > 1 else 1)
         trotter_steps_mixer = (self.trotter_steps if len(commuting_parts_mixer) > 1 else 1)
 
-        def _pauli_evolution(term: tuple[PauliOperator, ...], coeff: float, time: Parameter) -> Iterator[BasicGate]:
-            """
-                An iterator of parameterized gates performing the evolution of a given Pauli string
-            """
-
-            qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
-            if len(qubit_indices) == 0:
-                return
-
-            # Move everything to Z basis
-            for pauli in term:
-                q = pauli.qubit
-                name = pauli.name
-                if name == "X":
-                    yield H(q)
-                elif name == "Y":
-                    gateVal = pi / 2
-                    yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
-
-            # Apply CNOT ladder
-            for i in range(len(qubit_indices) - 1):
-                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
-
-            # Apply RZ rotation on last qubit
-            last_qubit = qubit_indices[-1]
-            yield RZ(last_qubit, **{"phi": (2 * coeff) * time})
-
-            # Undo CNOT ladder
-            for i in reversed(range(len(qubit_indices) - 1)):
-                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
-
-            # Move back from Z basis
-            for pauli in term:
-                q = pauli.qubit
-                name = pauli.name
-                if name == "X":
-                    yield H(q)
-                elif name == "Y":
-                    gateVal = -pi / 2
-                    yield RX(q, theta=Parameter("fixed_" + str(gateVal), gateVal, Domain.REAL, (gateVal, gateVal)))
-
-        # Applied to the equal superposition initial state |+>
+        # Start with all |+> states
         for qubit in range(self.nqubits):
             self.add(H(qubit))
 
         # Build the layers
         for i in range(self.layers):
 
+            # Initial parameter values
+            initial_val_problem = i
+            initial_val_mixer = i*2
+
             # Apply problem Hamiltonian
-            gamma_param = Parameter("gamma_" + str(i), 0.0)
+            gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
             for _ in range(trotter_steps_problem):
                 for part in commuting_parts_problem:
                     for term, coeff in part.items():
-                        for gate in _pauli_evolution(term, coeff, gamma_param):
+                        for gate in self._pauli_evolution(term, coeff, gamma_param):
                             self.add(gate)
                     
             # Apply mixer Hamiltonian
-            alpha_param = Parameter("alpha_" + str(i), 0.0)
+            alpha_param = Parameter("alpha_" + str(i), initial_val_mixer)
             for _ in range(trotter_steps_mixer):
                 for part in commuting_parts_mixer:
                     for term, coeff in part.items():
-                        for gate in _pauli_evolution(term, coeff, alpha_param):
+                        for gate in self._pauli_evolution(term, coeff, alpha_param):
                             self.add(gate)
