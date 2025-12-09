@@ -302,10 +302,12 @@ class QAOA(Ansatz):
         """The mixer Hamiltonian used."""
         return self._mixer_hamiltonian
 
-    def _build_circuit(self) -> None:
-        """Populate the circuit according to the Hamiltonian and mixer settings."""
-
-        def _pauli_evolution(term: tuple[PauliOperator, ...], coeff: complex, time: Parameter) -> Iterator[BasicGate]:
+    @staticmethod
+    def _pauli_evolution(
+            term: tuple[PauliOperator, ...],
+            coeff: complex,
+            time: Parameter
+            ) -> Iterator[BasicGate]:
             """
             An iterator of parameterized gates performing the evolution of a given Pauli string.
 
@@ -354,7 +356,8 @@ class QAOA(Ansatz):
                     gate_val = -pi / 2
                     yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
 
-        def _trotter_evolution(
+    def _trotter_evolution(
+            self,
             commuting_parts: list[dict[tuple[PauliOperator, ...], complex]],
             time: Parameter,
             trotter_steps: int,
@@ -373,8 +376,11 @@ class QAOA(Ansatz):
             for _ in range(trotter_steps):
                 for part in commuting_parts:
                     for term, coeff in part.items():
-                        for gate in _pauli_evolution(term, coeff, time / trotter_steps):
+                        for gate in self._pauli_evolution(term, coeff, time / trotter_steps):
                             yield gate
+
+    def _build_circuit(self) -> None:
+        """Populate the circuit according to the Hamiltonian and mixer settings."""
 
         # Split the hamiltonians into commuting parts
         commuting_parts_problem = self.problem_hamiltonian.get_commuting_partitions()
@@ -396,10 +402,10 @@ class QAOA(Ansatz):
 
             # Apply problem Hamiltonian
             gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
-            for gate in _trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
+            for gate in self._trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
                 self.add(gate)
 
             # Apply mixer Hamiltonian
             alpha_param = Parameter("alpha_" + str(i), initial_val_mixer)
-            for gate in _trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
+            for gate in self._trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
                 self.add(gate)
