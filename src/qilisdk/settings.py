@@ -62,6 +62,10 @@ class QiliSDKSettings(BaseSettings):
         default="urn:qilimanjaro.tech:public-api:beren",
         description="Audience claim expected in the JWT used for authentication. [env: QILISDK_SPEQTRUM_AUDIENCE]",
     )
+    zero_tolerance: float = Field(
+        default=1e-10,
+        description="Numerical tolerance below which values are considered zero. [env: QILISDK_ZERO_TOLERANCE]",
+    )
 
 
 @lru_cache(maxsize=1)

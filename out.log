@@ -1,0 +1,39 @@
+./src/qilisdk/settings.py:65:    zero_tolerance: float = Field(
+./src/qilisdk/settings.py:67:        description="Numerical tolerance below which values are considered zero. [env: QILISDK_ZERO_TOLERANCE]",
+./src/qilisdk/core/qtensor.py:441:    def is_density_matrix(self, tol: float = get_settings().zero_tolerance) -> bool:
+./src/qilisdk/core/qtensor.py:448:            tol (float, optional): The numerical tolerance for verifying Hermiticity,
+./src/qilisdk/core/qtensor.py:449:                eigenvalue non-negativity, and trace. Defaults to the global setting for zero tolerance.
+./src/qilisdk/core/qtensor.py:457:        if abs(self.trace() - 1.0) > tol:
+./src/qilisdk/core/qtensor.py:459:        if not self.is_hermitian(tol=tol):
+./src/qilisdk/core/qtensor.py:463:            vals = eigsh(self._data, k=1, which="SA", return_eigenvectors=False, tol=1e-6)
+./src/qilisdk/core/qtensor.py:473:        return lam_min >= -tol
+./src/qilisdk/core/qtensor.py:475:    def is_hermitian(self, tol: float = get_settings().zero_tolerance) -> bool:
+./src/qilisdk/core/qtensor.py:480:            tol (float, optional): The numerical tolerance for verifying Hermiticity.
+./src/qilisdk/core/qtensor.py:481:                Defaults to the global setting for zero tolerance.
+./src/qilisdk/core/qtensor.py:491:        return float(scipy_norm(diff, ord="fro")) <= tol
+./src/qilisdk/yaml.py:31:        "data": data.data.tolist(),
+./src/qilisdk/yaml.py:32:        "indices": data.indices.tolist(),
+./src/qilisdk/yaml.py:33:        "indptr": data.indptr.tolist(),
+./src/qilisdk/yaml.py:50:    value = {"dtype": str(data.dtype), "shape": data.shape, "data": data.ravel().tolist()}
+./src/qilisdk/optimizers/scipy_optimizer.py:94:                OptimizerIntermediateResult(cost=intermediate_result.fun, parameters=intermediate_result.x.tolist())
+./src/qilisdk/optimizers/scipy_optimizer.py:109:            tol=self.extra_arguments.get("tol", None),
+./src/qilisdk/optimizers/scipy_optimizer.py:116:            optimal_parameters=res.x.tolist(),
+./src/qilisdk/analog/hamiltonian.py:510:    def from_qtensor(cls, tensor: QTensor, tol: float = get_settings().zero_tolerance, prune: float = get_settings().zero_tolerance) -> Hamiltonian:
+./src/qilisdk/analog/hamiltonian.py:516:            tol (float): Hermiticity check tolerance. Defaults to global zero tolerance setting.
+./src/qilisdk/analog/hamiltonian.py:517:            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise. Defaults to global zero tolerance setting.
+./src/qilisdk/analog/hamiltonian.py:523:            ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
+./src/qilisdk/analog/hamiltonian.py:532:            raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
+./src/qilisdk/analog/hamiltonian.py:559:            if abs(c.imag) < tol:
+./src/qilisdk/analog/hamiltonian.py:565:        # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
+./src/qilisdk/analog/hamiltonian.py:566:        if not np.allclose(H.to_qtensor(n).dense, A, atol=max(10 * prune, 1e-9)):
+./src/qilisdk/analog/hamiltonian.py:567:            # If this triggers, consider lowering `prune` or raising `tol`.
+./src/qilisdk/analog/hamiltonian.py:568:            raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
+./src/qilisdk/cost_functions/model_cost_function.py:80:            total_cost = complex(np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state), tol=get_settings().zero_tolerance))
+./src/qilisdk/cost_functions/model_cost_function.py:87:        if results.final_state.is_density_matrix(tol=1e-5):
+./src/qilisdk/cost_functions/model_cost_function.py:93:                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense @ rho), tol=get_settings().zero_tolerance))
+./src/qilisdk/cost_functions/model_cost_function.py:118:        total_cost = complex(np.real_if_close(total_cost, tol=get_settings().zero_tolerance))
+./src/qilisdk/cost_functions/observable_cost_function.py:82:        total_cost = complex(np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().zero_tolerance))
+./src/qilisdk/cost_functions/observable_cost_function.py:105:            evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().zero_tolerance))
+./src/qilisdk/utils/visualization/circuit_renderers.py:721:    def _pi_fraction(value: float, /, tol: float = 1e-2) -> str:
+./src/qilisdk/utils/visualization/circuit_renderers.py:727:            tol: Tolerance for accepting the rational approximation.
+./src/qilisdk/utils/visualization/circuit_renderers.py:735:        if abs(frac - coeff) < tol:

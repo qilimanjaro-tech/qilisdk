@@ -21,6 +21,7 @@ from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatr
 from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 Complex = int | float | complex
@@ -437,7 +438,7 @@ class QTensor:
             raise ValueError("Cannot normalize density matrix with zero trace.")
         return QTensor(rho.data / tr)  # keep it sparse
 
-    def is_density_matrix(self, tol: float = 1e-8) -> bool:
+    def is_density_matrix(self, tol: float = get_settings().zero_tolerance) -> bool:
         """
         Determine if the QTensor is a valid density matrix.
 
@@ -445,7 +446,7 @@ class QTensor:
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity,
-                eigenvalue non-negativity, and trace. Defaults to 1e-8.
+                eigenvalue non-negativity, and trace. Defaults to the global setting for zero tolerance.
 
         Returns:
             bool: True if the QTensor is a valid density matrix, False otherwise.
@@ -471,13 +472,13 @@ class QTensor:
                 return False
         return lam_min >= -tol
 
-    def is_hermitian(self, tol: float = 1e-8) -> bool:
+    def is_hermitian(self, tol: float = get_settings().zero_tolerance) -> bool:
         """
         Check if the QTensor is Hermitian.
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity.
-                Defaults to 1e-8.
+                Defaults to the global setting for zero tolerance.
 
         Returns:
             bool: True if the QTensor is Hermitian, False otherwise.

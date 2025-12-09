@@ -27,6 +27,7 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.variables import BaseVariable, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -506,14 +507,14 @@ class Hamiltonian(Parameterizable):
         return " ".join(parts)
 
     @classmethod
-    def from_qtensor(cls, tensor: QTensor, tol: float = 1e-10, prune: float = 1e-12) -> Hamiltonian:
+    def from_qtensor(cls, tensor: QTensor, tol: float = get_settings().zero_tolerance, prune: float = get_settings().zero_tolerance) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
         returning a qilisdk.analog.Hamiltonian.
 
         Args:
-            tol (float): Hermiticity check tolerance.
-            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise.
+            tol (float): Hermiticity check tolerance. Defaults to global zero tolerance setting.
+            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise. Defaults to global zero tolerance setting.
 
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n

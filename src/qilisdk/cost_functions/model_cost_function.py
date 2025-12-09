@@ -20,6 +20,7 @@ import numpy as np
 from qilisdk.core.model import QUBO, Model
 from qilisdk.core.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.variables import Number
@@ -76,7 +77,7 @@ class ModelCostFunction(CostFunction):
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
-            total_cost = complex(np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state)))
+            total_cost = complex(np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state), tol=get_settings().zero_tolerance))
             if total_cost.imag == 0:
                 return total_cost.real
             return total_cost
@@ -89,7 +90,7 @@ class ModelCostFunction(CostFunction):
             for i in range(rho.shape[0]):
                 state = [int(b) for b in f"{i:0{n}b}"]
                 _ket_state = ket(*state)
-                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense @ rho)))
+                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense @ rho), tol=get_settings().zero_tolerance))
                 variable_map = {v: int(state[i]) for i, v in enumerate(self.model.variables())}
                 evaluate_results = self.model.evaluate(variable_map)
                 total_cost += sum(v for v in evaluate_results.values()) * _prob
@@ -114,7 +115,7 @@ class ModelCostFunction(CostFunction):
             evaluate_results = self.model.evaluate(variable_map)
             total_cost += sum(v for v in evaluate_results.values()) * np.abs(prob**2)
 
-        total_cost = complex(np.real_if_close(total_cost, tol=1e-12))
+        total_cost = complex(np.real_if_close(total_cost, tol=get_settings().zero_tolerance))
         if total_cost.imag == 0:
             return total_cost.real
         return total_cost
