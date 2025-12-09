@@ -212,14 +212,24 @@ class BasicGate(Gate):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] = {}, parameter_transforms: dict[str, Term] = {}) -> None:
+    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] | None = None, parameter_transforms: dict[str, Term] | None = None) -> None:
+        """Build a basic gate.
+
+        Args:
+            target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
+            parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
+
+        Raises:
+            ValueError: if duplicate target qubits are found.
+        """
         # Check for duplicate integers in target_qubits.
+        super(BasicGate, self).__init__()
         if len(target_qubits) != len(set(target_qubits)):
             raise ValueError("Duplicate target qubits found.")
 
         self._target_qubits: tuple[int, ...] = target_qubits
-        self._parameters: dict[str, Parameter] = parameters
-        self._parameter_transforms: dict[str, Term] = parameter_transforms
+        self._parameters: dict[str, Parameter] = parameters or {}
+        self._parameter_transforms: dict[str, Term] = parameter_transforms or {}
         self._matrix: np.ndarray = self._generate_matrix()
 
         # Check that anything mentioned in parameter_transforms is also in parameters

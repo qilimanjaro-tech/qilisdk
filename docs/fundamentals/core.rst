@@ -3,7 +3,7 @@ Core
 
 The :mod:`qilisdk.core` layer underpins both the digital and analog stacks. It
 provides symbolic variables, optimization models, sparse quantum tensors, and
-the ``Parameterizable`` mixin used throughout the SDK.
+the :mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used throughout the SDK.
 
 Highlights:
 
@@ -59,20 +59,20 @@ This module offers tools to define different types of variables:
 
     - **Domain** (:class:`~qilisdk.core.variables.Domain`): Specifies the variable type:
 
-        - ``REAL``
-        - ``INTEGER``
-        - ``POSITIVE_INTEGER``
-        - ``BINARY``
-        - ``SPIN``
+        - :class:`~qilisdk.core.variables.Domain.REAL`
+        - :class:`~qilisdk.core.variables.Domain.INTEGER`
+        - :class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`
+        - :class:`~qilisdk.core.variables.Domain.BINARY`
+        - :class:`~qilisdk.core.variables.Domain.SPIN`
     - **Bounds**: Defines the allowed value range of the variable.
-    - **Encoding**: Specifies how the variable is represented using binary encodings:
+    - **Encoding** (:class:`~qilisdk.core.variables.Encoding`): Specifies how the variable is represented using binary encodings:
 
-        - Bit-wise encoding (:class:`~qilisdk.core.variables.BitWise`)
+        - Bit-wise encoding (:class:`~qilisdk.core.variables.Bitwise`)
         - Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)
         - One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)
     - **Precision**: Applicable to ``REAL`` domain; defines the resolution (e.g., floating-point precision).
 
-Example: creating different types of variables:
+An example of creating different types of variables:
 
 .. code-block:: python
 
@@ -110,7 +110,8 @@ Each binary variable configuration generates a float within the bounds, based on
 Terms
 ^^^^^
 
-Variables can be combined algebraically to form expressions known as :class:`~qilisdk.core.variables.Term`. Example:
+:class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically to form expressions 
+known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
 
 .. code-block:: python
 
@@ -158,7 +159,7 @@ Many components in QiliSDK expose symbolic parameters that can be optimized or
 re-bound at runtime. The :class:`~qilisdk.core.variables.Parameter` class
 represents a scalar symbol with optional bounds, and
 :class:`~qilisdk.core.parameterizable.Parameterizable` provides a uniform API
-(``get_parameter_names``, ``set_parameter_values``…) implemented by circuits,
+(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`, :meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…) implemented by circuits,
 schedules, models, and more.
 
 .. code-block:: python
@@ -175,7 +176,7 @@ combine them with other variables and evaluate terms without having to pass the
 parameter explicitly—its stored ``value`` is used automatically.
 
 Objects that inherit from :class:`~qilisdk.core.parameterizable.Parameterizable`
-collect all the :class:`Parameter` instances they encounter. For example:
+collect all the :class:`~qilisdk.core.variables.Parameter` instances they encounter. For example:
 
 .. code-block:: python
 
@@ -192,11 +193,38 @@ Whenever you interact with one of these parameterizable objects, the helper
 methods let you list, bound, or update the symbolic degrees of freedom in a
 consistent way.
 
+Mathematical Maps (sin, cos)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
+functions to a parameter or term while keeping expressions symbolic.
+:class:`~qilisdk.core.variables.Sin` and :class:`~qilisdk.core.variables.Cos`
+wrap a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
+or any other base variable and defer evaluation until values are provided.
+
+.. code-block:: python
+
+    from qilisdk.core.variables import Parameter, Sin, Cos
+
+    theta = Parameter("theta", 0.5)
+    expr = Sin(theta) + Cos(2 * theta)
+
+    print(expr)                # sin[theta] + cos[(2) * theta]
+    print(expr.evaluate({}))   # uses theta.value automatically
+
+    # You can also supply a different value at evaluation time:
+    print(expr.evaluate({theta: 1.0}))
+
+These maps compose naturally with other terms, so you can include them in
+constraints or objectives and rely on the same evaluation and encoding rules
+as other symbolic expressions.
+
 
 Comparison Terms
 ^^^^^^^^^^^^^^^^
 
-Comparison terms define constraints using mathematical comparisons. Use the following operators to construct them:
+Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint using mathematical comparisons. 
+Use the following operators to construct them:
 
 .. list-table::
    :class: longtable
@@ -207,23 +235,23 @@ Comparison terms define constraints using mathematical comparisons. Use the foll
      - QiliSDK Method
      - Alias
    * - Equality
-     - ``Equal(lhs, rhs)``
-     - ``EQ(lhs, rhs)``
+     - :meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`
+     - :meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`
    * - Not Equal
-     - ``NotEqual(lhs, rhs)``
-     - ``NEQ(lhs, rhs)``
+     - :meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`
+     - :meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`
    * - Less Than
-     - ``LessThan(lhs, rhs)``
-     - ``LT(lhs, rhs)``
+     - :meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`
+     - :meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`
    * - Less Than or Equal
-     - ``LessThanOrEqual(lhs, rhs)``
-     - ``LEQ(lhs, rhs)``
+     - :meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`
+     - :meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`
    * - Greater Than
-     - ``GreaterThan(lhs, rhs)``
-     - ``GT(lhs, rhs)``
+     - :meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`
+     - :meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`
    * - Greater Than or Equal
-     - ``GreaterThanOrEqual(lhs, rhs)``
-     - ``GEQ(lhs, rhs)``
+     - :meth:`GreaterThanOrEqual(lhs, rhs)<qilisdk.core.variables.GreaterThanOrEqual>`
+     - :meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`
 
 *Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side expressions, respectively.
 
@@ -252,7 +280,7 @@ Each :class:`~qilisdk.core.model.Model` consists of:
 
 **Objective**
 
-The objective defines the function the model aims to minimize or maximize. Example:
+The :class:`~qilisdk.core.model.Objective` defines the function the model aims to minimize or maximize. Example:
 
 .. code-block:: python
 
@@ -306,7 +334,7 @@ You can update the multiplier like so:
 
 **Constraints**
 
-Additional constraints can be added to restrict the solution space:
+Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be added to restrict the solution space:
 
 .. code-block:: python
 
@@ -338,7 +366,7 @@ Additional constraints can be added to restrict the solution space:
 Evaluating a Model
 ^^^^^^^^^^^^^^^^^^
 
-To evaluate a model, provide values for all involved variables:
+To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all involved variables:
 
 .. code-block:: python
 
@@ -352,7 +380,8 @@ To evaluate a model, provide values for all involved variables:
 
     {'obj': 5.8, 'test_constraint': 0.0}
 
-The evaluation returns a dictionary with values for the objective and constraints. A constraint returns `0.0` if satisfied, or its Lagrange multiplier if violated.
+The evaluation returns a dictionary with values for the objective and constraints. A constraint returns `0.0` if satisfied, or 
+its Lagrange multiplier if violated.
 
 For example:
 
@@ -505,7 +534,7 @@ Example: Slack Penalization
 
     obj: (-8.0) * b + b2 + (11.0) + (40.0) * (b2 * b) + (40.0) * (b2 * c1_slack(0)) + (20.0) * (b * c1_slack(0)) + (-10.0) * c1_slack(0)
 
-
+|
 
 Example: Unbalanced Penalization
 ''''''''''''''''''''''''''''''''
@@ -542,11 +571,10 @@ Interoperability
         qubo_model = model.to_qubo()
 
 - **Export to Hamiltonian**  
-    Once in QUBO form, translate directly into an analog Ising Hamiltonian for simulation or hardware:  
+    Once in QUBO form, translate directly into an analog Ising :class:`~qilisdk.core.hamiltonian.Hamiltonian` for simulation or hardware:  
 
     .. code-block:: python
 
-        from qilisdk.analog.hamiltonian import Hamiltonian
         h = qubo_model.to_hamiltonian()
 
 Quantum Objects
@@ -646,12 +674,11 @@ All data are stored sparsely, but you can retrieve dense or sparse views:
 
 Key methods:
 
-- ``.adjoint()``: conjugate transpose  
-- ``.expm()``: matrix exponential  
-- ``.norm(order=1)``: vector or matrix norm  
-- ``.unit(order='tr')``: normalize to unit norm  
-- ``.ptrace(keep, dims=None)``: partial trace  
-
+- :meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: conjugate transpose  
+- :meth:`.expm()<qilisdk.core.qtensor.QTensor.expm>`: matrix exponential
+- :meth:`.norm(order=1)<qilisdk.core.qtensor.QTensor.norm>`: vector or matrix norm
+- :meth:`.unit(order='tr')<qilisdk.core.qtensor.QTensor.unit>`: normalize to unit norm
+- :meth:`.ptrace(keep, dims=None)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
 
 Examples:
 

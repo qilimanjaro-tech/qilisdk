@@ -17,39 +17,39 @@ Simple Gates
 
 Use these constructors to apply standard single- and two-qubit operations:
 
-- ``X(qubit: int)``  
+- :class:`X(qubit: int)<qilisdk.digital.gates.X>`
   Pauli X (bit-flip) on the specified qubit.  
-- ``Y(qubit: int)``  
+- :class:`Y(qubit: int)<qilisdk.digital.gates.Y>`
   Pauli Y (bit-and-phase-flip).  
-- ``Z(qubit: int)``  
+- :class:`Z(qubit: int)<qilisdk.digital.gates.Z>`
   Pauli Z (phase-flip).  
-- ``H(qubit: int)``  
+- :class:`H(qubit: int)<qilisdk.digital.gates.H>`
   Hadamard: creates superposition.  
-- ``I(qubit: int)``  
+- :class:`I(qubit: int)<qilisdk.digital.gates.I>`
   Identity gate: leaves the qubit unchanged.  
-- ``S(qubit: int)``  
+- :class:`S(qubit: int)<qilisdk.digital.gates.S>`
   Phase gate (π/2 rotation about Z).  
-- ``T(qubit: int)``  
+- :class:`T(qubit: int)<qilisdk.digital.gates.T>`
   T gate (π/4 rotation about Z).  
-- ``RX(qubit: int, theta: float | Parameter | Term)``  
+- :class:`RX(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RX>`
   Rotation by angle `theta` around X.  
-- ``RY(qubit: int, theta: float | Parameter | Term)``
+- :class:`RY(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RY>`
   Rotation by angle `theta` around Y.  
-- ``RZ(qubit: int, phi: float | Parameter | Term)``  
+- :class:`RZ(qubit: int, phi: float | Parameter | Term)<qilisdk.digital.gates.RZ>`
   Rotation by angle `phi` around Z.  
-- ``U1(qubit: int, *, phi: float | Parameter | Term)``  
+- :class:`U1(qubit: int, *, phi: float | Parameter | Term)<qilisdk.digital.gates.U1>`
   Phase shift equivalent to RZ plus global phase.  
-- ``U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)``
+- :class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U2>`
   π/2 Y-rotation sandwiched by Z-rotations.
-- ``U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)``
+- :class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U3>`
   General single-qubit unitary: RZ-RY-RZ decomposition.
-- ``SWAP(a: int, b: int)``  
+- :class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>`
   Exchanges the states of qubits ``a`` and ``b``.
-- ``CNOT(control: int, target: int)``
+- :class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>`
   Controlled-X: flips target if control is |1⟩.
-- ``CZ(control: int, target: int)``
+- :class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>`
   Controlled-Z: applies Z on target if control is |1⟩.
-- ``M(*qubits: int)``  
+- :class:`M(*qubits: int)<qilisdk.digital.gates.M>`
   Measures the listed qubits in the computational basis.
 
 Controlled Gates
@@ -121,7 +121,7 @@ Circuits can include parameterized gates. Adding them is similar to regular gate
 
     circuit.add(RX(0, theta=np.pi))
 
-You can retrieve the current parameter:
+You can retrieve the current parameter using:
 
 .. code-block:: python
 
@@ -135,7 +135,7 @@ You can retrieve the current parameter:
     Initial Parameters: {'RX(0)_theta_0': 3.141592653589793}
 
 
-You can also retrieve the current parameter values only:
+You can also retrieve a list containing only the current parameter values:
 
 .. code-block:: python
 
@@ -149,7 +149,7 @@ You can also retrieve the current parameter values only:
     Initial parameter values: [3.141592653589793]
 
 
-To update parameter by key:
+To update parameters by their keys:
 
 .. code-block:: python
 
@@ -157,7 +157,7 @@ To update parameter by key:
 
 
 
-To update parameter by value:
+To update all parameters with new values:
 
 .. code-block:: python
 
@@ -170,7 +170,10 @@ To update parameter by value:
 Visualization
 -------------
 
-Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matplotlib. By default, the renderer applies the library's built-in styling (including the bundled default font if available). You can **bypass all defaults** by passing a custom :class:`~qilisdk.utils.visualization.CircuitStyle`, which confines styling to the specific call without modifying global Matplotlib settings.
+Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matplotlib. 
+By default, the renderer applies the library's built-in styling (including the bundled default font if available). 
+You can **bypass all defaults** by passing a custom :class:`~qilisdk.utils.visualization.style.CircuitStyle`, which 
+confines styling to the specific call without modifying global Matplotlib settings.
 
 .. code-block:: python
 
@@ -201,11 +204,11 @@ Saving to a file
     # Save as SVG (use .png, .pdf, etc. as needed)
     circuit.draw(filepath="my_circuit.svg")
 
-Custom styling with :class:`~qilisdk.utils.visualization.CircuitStyle`
+Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to ``draw`` overrides the library defaults for this call.
-You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible changing the patameter **layout** to *"normal"* (default) or *"compact"* respectively.
+Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to :meth:`~qilisdk.digital.circuit.Circuit.draw` overrides the library defaults for this call.
+You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible by changing the parameter **layout** to *"normal"* (default) or *"compact"* respectively.
 
 .. code-block:: python
 
@@ -299,12 +302,14 @@ HardwareEfficientAnsatz
 
 - **layers**: Number of repeating layers of gates.
 - **connectivity**:
-  - ``Circular``: Qubits form a ring.
-  - ``Linear``: Qubits are connected linearly.
-  - ``Full``: All-to-all connectivity.
+
+  - ``circular``: Qubits form a ring.
+  - ``linear``: Qubits are connected linearly.
+  - ``full``: All-to-all connectivity.
 - **one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
 - **two_qubit_gate**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
+
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
   - ``interposed``: Interleaves single and two-qubit gates.
 

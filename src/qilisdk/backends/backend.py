@@ -96,6 +96,9 @@ class Backend(ABC):
                 lower_bound, upper_bound = param_bounds[name]
                 if lower_bound != upper_bound:
                     new_param_dict[name] = param
+            err = functional.check_parameter_constraints(new_param_dict)
+            if err > 0:
+                return err
             functional.functional.set_parameters(new_param_dict)
             results = self.execute(functional.functional)
             final_results = functional.cost_function.compute_cost(results)
