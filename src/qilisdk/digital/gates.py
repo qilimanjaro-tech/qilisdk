@@ -212,7 +212,12 @@ class BasicGate(Gate):
     Represents a quantum gate that can be used in quantum circuits.
     """
 
-    def __init__(self, target_qubits: tuple[int, ...], parameters: dict[str, Parameter] | None = None, parameter_transforms: dict[str, Term] | None = None) -> None:
+    def __init__(
+        self,
+        target_qubits: tuple[int, ...],
+        parameters: dict[str, Parameter] | None = None,
+        parameter_transforms: dict[str, Term] | None = None,
+    ) -> None:
         """Build a basic gate.
 
         Args:
@@ -239,7 +244,6 @@ class BasicGate(Gate):
                     raise ValueError(
                         f"Parameter transform '{term}' contains parameter '{param.label}' which is not defined in the parameters list."
                     )
-
 
     @property
     def matrix(self) -> np.ndarray:
@@ -757,27 +761,35 @@ class RX(BasicGate):
         Args:
             qubit (int): The target qubit index for the rotation.
             theta (float | Parameter | Term): The rotation angle (polar) in radians.
+
         """
-        
+
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # If we have a Parameter, use it directly
-        if isinstance(theta, Parameter):
-            params_to_init["theta"] = theta
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"RX gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # If we have a Term, extract Parameters from it
-        elif isinstance(theta, Term):
-            if not theta.is_parameterized_term and len(theta.variables()) > 0:
-                raise ValueError("RX gate Term must contain a Parameter and not Variables.")
-            for param in theta.variables():
-                params_to_init[param.label] = param
-            terms_to_init["theta"] = theta
-            
-        # If we have a float, create a Parameter for it
-        else:
-            params_to_init["theta"] = Parameter("theta", theta)
+        # Process the parameters
+        _process_param("theta", theta)
 
         # Initialize the base class
         super().__init__(
@@ -794,8 +806,7 @@ class RX(BasicGate):
     def theta(self) -> float:
         if "theta" in self._parameter_transforms:
             return self._parameter_transforms["theta"].evaluate({})
-        else:
-            return self.get_parameters()["theta"]
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta
@@ -829,27 +840,35 @@ class RY(BasicGate):
         Args:
             qubit (int): The target qubit index for the rotation.
             theta (float | Parameter | Term): The rotation angle (polar) in radians.
+
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # If we have a Parameter, use it directly
-        if isinstance(theta, Parameter):
-            params_to_init["theta"] = theta
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"RY gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # If we have a Term, extract Parameters from it
-        elif isinstance(theta, Term):
-            if not theta.is_parameterized_term and len(theta.variables()) > 0:
-                raise ValueError("RY gate Term must contain a Parameter and not Variables.")
-            for param in theta.variables():
-                params_to_init[param.label] = param
-            terms_to_init["theta"] = theta
-
-        # If we have a float, create a Parameter for it
-        else:
-            params_to_init["theta"] = Parameter("theta", theta)
+        # Process the parameters
+        _process_param("theta", theta)
 
         # Initialize the base class
         super().__init__(
@@ -866,8 +885,7 @@ class RY(BasicGate):
     def theta(self) -> float:
         if "theta" in self._parameter_transforms:
             return self._parameter_transforms["theta"].evaluate({})
-        else:
-            return self.get_parameters()["theta"]
+        return self.get_parameters()["theta"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta
@@ -909,27 +927,35 @@ class RZ(BasicGate):
         Args:
             qubit (int): The target qubit index for the rotation.
             phi (float | Parameter | Term): The rotation angle (azimuthal) in radians.
+
         """
-        
+
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # If we have a Parameter, use it directly
-        if isinstance(phi, Parameter):
-            params_to_init["phi"] = phi
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"RZ gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # If we have a Term, extract Parameters from it
-        elif isinstance(phi, Term):
-            if not phi.is_parameterized_term and len(phi.variables()) > 0:
-                raise ValueError("RZ gate Term must contain a Parameter and not Variables.")
-            for param in phi.variables():
-                params_to_init[param.label] = param
-            terms_to_init["phi"] = phi
-        
-        # If we have a float, create a Parameter for it
-        else:
-            params_to_init["phi"] = Parameter("phi", phi)
+        # Process the parameters
+        _process_param("phi", phi)
 
         # Initialize the base class
         super().__init__(
@@ -946,12 +972,12 @@ class RZ(BasicGate):
     def phi(self) -> float:
         if "phi" in self._parameter_transforms:
             return self._parameter_transforms["phi"].evaluate({})
-        else:
-            return self.get_parameters()["phi"]
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
         return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
+
 
 @yaml.register_class
 class U1(BasicGate):
@@ -988,21 +1014,28 @@ class U1(BasicGate):
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # If we have a Parameter, use it directly
-        if isinstance(phi, Parameter):
-            params_to_init["phi"] = phi
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"U1 gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # If we have a Term, extract Parameters from it
-        elif isinstance(phi, Term):
-            if not phi.is_parameterized_term and len(phi.variables()) > 0:
-                raise ValueError("U1 gate Term must contain a Parameter and not Variables.")
-            for param in phi.variables():
-                params_to_init[param.label] = param
-            terms_to_init["phi"] = phi
-
-        # If we have a float, create a Parameter for it
-        else:
-            params_to_init["phi"] = Parameter("phi", phi)
+        # Process the parameters
+        _process_param("phi", phi)
 
         # Initialize the base class
         super().__init__(
@@ -1019,8 +1052,7 @@ class U1(BasicGate):
     def phi(self) -> float:
         if "phi" in self._parameter_transforms:
             return self._parameter_transforms["phi"].evaluate({})
-        else:
-            return self.get_parameters()["phi"]
+        return self.get_parameters()["phi"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
@@ -1061,34 +1093,35 @@ class U2(BasicGate):
             qubit (int): The target qubit index for the U2 gate.
             phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # Process phi
-        if isinstance(phi, Parameter):
-            params_to_init["phi"] = phi
-        elif isinstance(phi, Term):
-            if not phi.is_parameterized_term and len(phi.variables()) > 0:
-                raise ValueError("U2 gate Term 'phi' must contain a Parameter and not Variables.")
-            for param in phi.variables():
-                params_to_init[param.label] = param
-            terms_to_init["phi"] = phi
-        else:
-            params_to_init["phi"] = Parameter("phi", phi)
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"U1 gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # Process gamma
-        if isinstance(gamma, Parameter):
-            params_to_init["gamma"] = gamma
-        elif isinstance(gamma, Term):
-            if not gamma.is_parameterized_term and len(gamma.variables()) > 0:
-                raise ValueError("U2 gate Term 'gamma' must contain a Parameter and not Variables.")
-            for param in gamma.variables():
-                params_to_init[param.label] = param
-            terms_to_init["gamma"] = gamma
-        else:
-            params_to_init["gamma"] = Parameter("gamma", gamma)
+        # Process the parameters
+        _process_param("phi", phi)
+        _process_param("gamma", gamma)
 
         # Initialize the base class
         super().__init__(
@@ -1105,15 +1138,13 @@ class U2(BasicGate):
     def phi(self) -> float:
         if "phi" in self._parameter_transforms:
             return self._parameter_transforms["phi"].evaluate({})
-        else:
-            return self.get_parameters()["phi"]
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
         if "gamma" in self._parameter_transforms:
             return self._parameter_transforms["gamma"].evaluate({})
-        else:
-            return self.get_parameters()["gamma"]
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
@@ -1155,7 +1186,12 @@ class U3(BasicGate):
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta", "phi", "gamma"]
 
     def __init__(
-        self, qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term
+        self,
+        qubit: int,
+        *,
+        theta: float | Parameter | Term,
+        phi: float | Parameter | Term,
+        gamma: float | Parameter | Term,
     ) -> None:
         """
         Initialize a U3 gate.
@@ -1165,47 +1201,37 @@ class U3(BasicGate):
             theta (float | Parameter | Term): The rotation angle (polar), in between both phase rotations (azimuthal).
             phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
             gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+
         """
-        
+
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
         terms_to_init: dict[str, Term] = {}
 
-        # Process theta
-        if isinstance(theta, Parameter):
-            params_to_init["theta"] = theta
-        elif isinstance(theta, Term):
-            if not theta.is_parameterized_term and len(theta.variables()) > 0:
-                raise ValueError("U3 gate Term 'theta' must contain a Parameter and not Variables.")
-            for param in theta.variables():
-                params_to_init[param.label] = param
-            terms_to_init["theta"] = theta
-        else:
-            params_to_init["theta"] = Parameter("theta", theta)
+        def _process_param(name: str, value: float | Parameter | Term) -> None:
+            """
+            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+            Args:
+                name (str): The name of the parameter.
+                value (float | Parameter | Term): The value of the parameter.
+            Raises:
+                ValueError: If a Term is provided that contains Variables instead of Parameters.
+            """
+            if isinstance(value, Parameter):
+                params_to_init[name] = value
+            elif isinstance(value, Term):
+                if not value.is_parameterized_term and len(value.variables()) > 0:
+                    raise ValueError(f"U3 gate Term '{name}' must contain a Parameter and not Variables.")
+                for param in value.variables():
+                    params_to_init[param.label] = param
+                terms_to_init[name] = value
+            else:
+                params_to_init[name] = Parameter(name, value)
 
-        # Process phi
-        if isinstance(phi, Parameter):
-            params_to_init["phi"] = phi
-        elif isinstance(phi, Term):
-            if not phi.is_parameterized_term and len(phi.variables()) > 0:
-                raise ValueError("U3 gate Term 'phi' must contain a Parameter and not Variables.")
-            for param in phi.variables():
-                params_to_init[param.label] = param
-            terms_to_init["phi"] = phi
-        else:
-            params_to_init["phi"] = Parameter("phi", phi)
-
-        # Process gamma
-        if isinstance(gamma, Parameter):
-            params_to_init["gamma"] = gamma
-        elif isinstance(gamma, Term):
-            if not gamma.is_parameterized_term and len(gamma.variables()) > 0:
-                raise ValueError("U3 gate Term 'gamma' must contain a Parameter and not Variables.")
-            for param in gamma.variables():
-                params_to_init[param.label] = param
-            terms_to_init["gamma"] = gamma
-        else:
-            params_to_init["gamma"] = Parameter("gamma", gamma)
+        # Process the parameters
+        _process_param("theta", theta)
+        _process_param("phi", phi)
+        _process_param("gamma", gamma)
 
         # Initialize the base class
         super().__init__(
@@ -1222,22 +1248,19 @@ class U3(BasicGate):
     def theta(self) -> float:
         if "theta" in self._parameter_transforms:
             return self._parameter_transforms["theta"].evaluate({})
-        else:
-            return self.get_parameters()["theta"]
+        return self.get_parameters()["theta"]
 
     @property
     def phi(self) -> float:
         if "phi" in self._parameter_transforms:
             return self._parameter_transforms["phi"].evaluate({})
-        else:
-            return self.get_parameters()["phi"]
+        return self.get_parameters()["phi"]
 
     @property
     def gamma(self) -> float:
         if "gamma" in self._parameter_transforms:
             return self._parameter_transforms["gamma"].evaluate({})
-        else:
-            return self.get_parameters()["gamma"]
+        return self.get_parameters()["gamma"]
 
     def _generate_matrix(self) -> np.ndarray:
         theta = self.theta

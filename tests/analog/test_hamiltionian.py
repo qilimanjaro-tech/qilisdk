@@ -399,7 +399,9 @@ def test_eq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamilton
 def test_neq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian != expected_hamiltonian
 
+
 # ---- Commuting Partition Tests -----
+
 
 def test_get_commuting_partitions():
     """
