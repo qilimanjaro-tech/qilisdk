@@ -201,7 +201,7 @@ class QutipBackend(Backend):
             logger.error("Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
-        qutip_init_state = Qobj(functional.initial_state.dense, dims=state_dim)
+        qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
 
@@ -230,7 +230,7 @@ class QutipBackend(Backend):
                 raise ValueError(f"unsupported observable type of {obs.__class__}")
             if aux_obs is not None:
                 qutip_obs.append(
-                    Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
+                    Qobj(aux_obs.dense(), dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
                 )
 
         results = mesolve(

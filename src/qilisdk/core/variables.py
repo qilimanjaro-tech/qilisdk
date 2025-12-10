@@ -24,6 +24,7 @@ import numpy as np
 from loguru import logger
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -154,7 +155,7 @@ def _extract_number(label: str) -> int:
 def _float_if_real(value: Number) -> Number:
     if isinstance(value, RealNumber):
         return value
-    if isinstance(value, complex) and value.imag == 0:
+    if isinstance(value, complex) and abs(value.imag) < get_settings().atol:
         return value.real
     return value
 
@@ -388,6 +389,36 @@ class Encoding(ABC):
         """
 
 
+def _check_output(var: Variable, output: Number) -> RealNumber:
+    """Parse the output of an eval, converting it to a real number if possible and ensuring it is within the variable's domain.
+
+    Args:
+        var (Variable): The variable for which the output is being parsed.
+        output (Number): The number to be parsed.
+
+    Returns:
+        Number: The output as a valid number within the variable's domain.
+
+    Raises:
+        ValueError: If the output is not a valid real number.
+    """
+    if isinstance(output, RealNumber):
+        out = float(output)
+    elif isinstance(output, complex) and abs(output.imag) < get_settings().atol:
+        out = float(output.real)
+    else:
+        raise ValueError(f"Evaluation answer ({output}) is outside the variable domain ({var.domain}).")
+
+    out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
+
+    if not var.domain.check_value(out):
+        raise ValueError(
+            f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
+        )  # not sure this line can be reached.
+
+    return out
+
+
 @yaml.register_class
 class Bitwise(Encoding):
     """Represents a Bitwise variable encoding class."""
@@ -446,20 +477,8 @@ class Bitwise(Encoding):
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
         _out = term.evaluate(binary_dict)
+        out = _check_output(var, _out)
 
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure this line can be reached.
         return out
 
     @staticmethod
@@ -558,20 +577,7 @@ class OneHot(Encoding):
                 binary_dict[binary_var[i - 1]] = [binary_list[i]]
 
         _out = term.evaluate(binary_dict)
-
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure this line can be reached.
+        out = _check_output(var, _out)
 
         return out
 
@@ -670,20 +676,8 @@ class DomainWall(Encoding):
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
         _out = term.evaluate(binary_dict)
+        out = _check_output(var, _out)
 
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure if this line is reachable.
         return out
 
     @staticmethod
@@ -725,6 +719,8 @@ class BaseVariable(ABC):
     """
     Abstract base class for symbolic decision variables.
     """
+
+    TOL = get_settings().atol
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
@@ -952,7 +948,7 @@ class BaseVariable(ABC):
         if not isinstance(other, RealNumber):
             raise NotImplementedError("Only division by real numbers is currently supported")
 
-        if other == 0:
+        if abs(other) < self.TOL:
             raise ValueError("Division by zero is not allowed")
 
         if isinstance(other, np.generic):
@@ -1356,6 +1352,7 @@ class Term:
     """
 
     CONST = Variable(CONST_KEY, Domain.REAL)
+    TOL = get_settings().atol
 
     def __init__(self, elements: Sequence[BaseVariable | Term | Number], operation: Operation) -> None:
         """initialize a new term object.
@@ -1660,7 +1657,7 @@ class Term:
                     output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
         if isinstance(output, RealNumber):
             return float(output)
-        if isinstance(output, complex) and output.imag == 0:
+        if isinstance(output, complex) and abs(output.imag) < self.TOL:
             return float(output.real)
         return output
 
@@ -1812,7 +1809,7 @@ class Term:
         if not isinstance(other, Number):
             raise NotImplementedError("Only division by numbers is currently supported")
 
-        if other == 0:
+        if abs(other) < self.TOL:
             raise ValueError("Division by zero is not allowed")
 
         other = 1 / other

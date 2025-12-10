@@ -170,7 +170,7 @@ def test_constant_hamiltonian():
     # Intermediate states should replicate constant behavior
     assert res.intermediate_states is not None
     for state in res.intermediate_states:
-        psi = state.dense.flatten()
+        psi = state.dense().flatten()
         assert pytest.approx(abs(psi[0]) ** 2, rel=1e-6) == 1.0
 
 
