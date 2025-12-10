@@ -281,7 +281,7 @@ class BasicGate(Gate):
         on both the control and target qubits.
 
         Args:
-            *control_qubits (int | list[int]): One or more integer indices specifying the control qubits.
+            *control_qubits (int): One or more integer indices specifying the control qubits.
 
         Returns:
             Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
@@ -380,7 +380,6 @@ class Modified(Gate, Generic[TBasicGate]):
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
-
         super().__init__(basic_gate=basic_gate)
 
         # Check for duplicate integers in control_qubits.
