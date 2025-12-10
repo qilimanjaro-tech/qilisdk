@@ -521,7 +521,7 @@ class Hamiltonian(Parameterizable):
         Raises
             ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
         """
-        A = np.asarray(tensor.dense)
+        A = np.asarray(tensor.dense())
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
@@ -549,7 +549,7 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense
+            P_dense = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
             c = norm * np.trace(A @ P_dense)
@@ -562,7 +562,7 @@ class Hamiltonian(Parameterizable):
                 H += c * op
 
         # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
-        if not np.allclose(H.to_qtensor(n).dense, A, atol=max(10 * prune, 1e-9)):
+        if not np.allclose(H.to_qtensor(n).dense(), A, atol=max(10 * prune, 1e-9)):
             # If this triggers, consider lowering `prune` or raising `tol`.
             raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
 

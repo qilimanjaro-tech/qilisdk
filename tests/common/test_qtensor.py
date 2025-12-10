@@ -66,11 +66,11 @@ def test_nqubits(array, expected_nqubits):
     assert qobj.nqubits == expected_nqubits
 
 
-def test_dense_property():
-    """The dense property should return a NumPy array equivalent to the original data."""
+def test_dense_method():
+    """The dense method should return a NumPy array equivalent to the original data."""
     arr = np.array([[1, 2], [3, 4]])
     qobj = QTensor(arr)
-    np.testing.assert_array_equal(qobj.dense, arr)
+    np.testing.assert_array_equal(qobj.dense(), arr)
 
 
 # --- Method Tests ---
@@ -81,7 +81,7 @@ def test_dag():
     arr = np.array([[1 + 2j, 2], [3, 4 + 5j]])
     qobj = QTensor(arr)
     dagger_qobj = qobj.adjoint()
-    np.testing.assert_array_equal(dagger_qobj.dense, arr.conj().T)
+    np.testing.assert_array_equal(dagger_qobj.dense(), arr.conj().T)
 
 
 def test_ptrace_valid():
@@ -113,24 +113,24 @@ def test_ptrace_valid():
     expected_double_qubit = ket(1, 0).to_density_matrix()
 
     # Checks:
-    np.testing.assert_allclose(reduced_single_qubit_ground.dense, expected_single_qubit_ground.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_single_qubit_excited.dense, expected_single_qubit_excited.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_double_qubit_1.dense, expected_double_qubit.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_double_qubit_2.dense, expected_double_qubit.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_double_qubit_3.dense, expected_double_qubit.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_1.dense, expected_single_qubit_excited.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_0.dense, expected_single_qubit_ground.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_1_big.dense, expected_single_qubit_excited.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_0_big.dense, expected_single_qubit_ground.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_1_big_bra.dense, expected_single_qubit_excited.dense, atol=1e-8)
-    np.testing.assert_allclose(reduced_ket_qubit_0_big_bra.dense, expected_single_qubit_ground.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_single_qubit_ground.dense(), expected_single_qubit_ground.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_single_qubit_excited.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_1.dense(), expected_double_qubit.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_2.dense(), expected_double_qubit.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_double_qubit_3.dense(), expected_double_qubit.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0.dense(), expected_single_qubit_ground.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1_big.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0_big.dense(), expected_single_qubit_ground.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_1_big_bra.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
+    np.testing.assert_allclose(reduced_ket_qubit_0_big_bra.dense(), expected_single_qubit_ground.dense(), atol=1e-8)
 
 
 def test_ptrace_valid_keep_with_automatic_dims_and_density_matrix():
     qket = ket(0, 0, 1, 0)
     reduced_single_qubit = qket.ptrace(keep=[2, 3])
     expected_single_qubit = ket(1, 0).to_density_matrix()
-    np.testing.assert_allclose(reduced_single_qubit.dense, expected_single_qubit.dense, atol=1e-8)
+    np.testing.assert_allclose(reduced_single_qubit.dense(), expected_single_qubit.dense(), atol=1e-8)
 
 
 def test_ptrace_works_for_operators_which_are_not_density_matrices():
@@ -144,7 +144,7 @@ def test_ptrace_works_for_operators_which_are_not_density_matrices():
     # Pick an out of order keep list:
     keep = [0, 2]  # subspace 2 *then* subspace 0
     expected_result = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]])
-    np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense, expected_result, atol=1e-8)
+    np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense(), expected_result, atol=1e-8)
 
 
 # def test_ptrace_invalid_dims():
@@ -178,7 +178,7 @@ def test_add_scalar_zero(other):
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     result = qobj + other
-    np.testing.assert_array_equal(result.dense, qobj.dense)
+    np.testing.assert_array_equal(result.dense(), qobj.dense())
 
 
 def test_add_QTensor():
@@ -187,7 +187,7 @@ def test_add_QTensor():
     q1 = QTensor(arr)
     q2 = QTensor(arr)
     result = q1 + q2
-    np.testing.assert_array_equal(result.dense, arr + arr)
+    np.testing.assert_array_equal(result.dense(), arr + arr)
 
 
 def test_add_invalid_type():
@@ -205,7 +205,7 @@ def test_sub_QTensor():
     q1 = QTensor(arr1)
     q2 = QTensor(arr2)
     result = q1 - q2
-    np.testing.assert_array_equal(result.dense, arr1 - arr2)
+    np.testing.assert_array_equal(result.dense(), arr1 - arr2)
 
 
 def test_sub_invalid_type():
@@ -222,7 +222,7 @@ def test_mul_scalar(scalar):
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     result = qobj * scalar
-    np.testing.assert_array_equal(result.dense, arr * scalar)
+    np.testing.assert_array_equal(result.dense(), arr * scalar)
 
 
 def test_mul_QTensor():
@@ -232,7 +232,7 @@ def test_mul_QTensor():
     q1 = QTensor(arr1)
     q2 = QTensor(arr2)
     result = q1 * q2
-    np.testing.assert_array_equal(result.dense, arr1 * arr2)
+    np.testing.assert_array_equal(result.dense(), arr1 * arr2)
 
 
 def test_mul_invalid_type():
@@ -248,7 +248,7 @@ def test_rmul():
     arr = np.array([[1, 0], [0, 1]])
     qobj = QTensor(arr)
     result = 3 * qobj
-    np.testing.assert_array_equal(result.dense, arr * 3)
+    np.testing.assert_array_equal(result.dense(), arr * 3)
 
 
 def test_matmul():
@@ -257,7 +257,7 @@ def test_matmul():
     q1 = QTensor(arr)
     q2 = QTensor(np.eye(2))
     result = q1 @ q2
-    np.testing.assert_array_equal(result.dense, arr @ np.eye(2))
+    np.testing.assert_array_equal(result.dense(), arr @ np.eye(2))
 
 
 def test_matmul_invalid_type():
@@ -325,7 +325,7 @@ def test_expm():
     qobj = QTensor(arr)
     result = qobj.expm()
     expected = np.array([[1, 0], [0, 2]])
-    np.testing.assert_allclose(result.dense, expected, atol=1e-8)
+    np.testing.assert_allclose(result.dense(), expected, atol=1e-8)
 
 
 def test_is_ket():
@@ -374,7 +374,7 @@ def test_to_dm_from_dm():
     """to_dm() called on a density matrix should return a valid density matrix."""
     qdm = ket(0).to_density_matrix()
     dm2 = qdm.to_density_matrix()
-    np.testing.assert_allclose(dm2.dense, qdm.dense, atol=1e-8)
+    np.testing.assert_allclose(dm2.dense(), qdm.dense(), atol=1e-8)
 
 
 def test_to_dm_from_ket():
@@ -400,7 +400,7 @@ def test_basis():
     n = 2
     qbasis = basis_state(n, N)
     assert qbasis.shape == (N, 1)
-    dense = qbasis.dense.flatten()
+    dense = qbasis.dense().flatten()
     expected = np.zeros(N)
     expected[n] = 1
     np.testing.assert_array_equal(dense, expected)
@@ -441,7 +441,7 @@ def test_tensor():
     q1 = ket(0)
     q2 = ket(1)
     qt = tensor_prod([q1, q2])
-    np.testing.assert_array_equal(qt.dense.shape, (4, 1))
+    np.testing.assert_array_equal(qt.dense().shape, (4, 1))
 
 
 def test_expect_density():
@@ -471,8 +471,8 @@ def test_to_density_matrix():
 
     s = ket(0)
     qdm = s.to_density_matrix()
-    np.testing.assert_allclose(qdm.dense, np.array([[1, 0], [0, 0]]), atol=1e-8)
+    np.testing.assert_allclose(qdm.dense(), np.array([[1, 0], [0, 0]]), atol=1e-8)
 
     s = bra(0)
     qdm = s.to_density_matrix()
-    np.testing.assert_allclose(qdm.dense, np.array([[1, 0], [0, 0]]), atol=1e-8)
+    np.testing.assert_allclose(qdm.dense(), np.array([[1, 0], [0, 0]]), atol=1e-8)

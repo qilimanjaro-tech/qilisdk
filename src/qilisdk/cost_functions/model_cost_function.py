@@ -84,12 +84,12 @@ class ModelCostFunction(CostFunction):
         total_cost = complex(0.0)
 
         if results.final_state.is_density_matrix(tol=1e-5):
-            rho = results.final_state.dense
+            rho = results.final_state.dense()
             n = results.final_state.nqubits
             for i in range(rho.shape[0]):
                 state = [int(b) for b in f"{i:0{n}b}"]
                 _ket_state = ket(*state)
-                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense @ rho)))
+                _prob = complex(np.real_if_close(np.trace((_ket_state @ _ket_state.adjoint()).dense() @ rho)))
                 variable_map = {v: int(state[i]) for i, v in enumerate(self.model.variables())}
                 evaluate_results = self.model.evaluate(variable_map)
                 total_cost += sum(v for v in evaluate_results.values()) * _prob
@@ -99,9 +99,9 @@ class ModelCostFunction(CostFunction):
 
         dense_state = None
         if results.final_state.is_ket():
-            dense_state = results.final_state.dense.T[0]
+            dense_state = results.final_state.dense().T[0]
         elif results.final_state.is_bra():
-            dense_state = results.final_state.dense[0]
+            dense_state = results.final_state.dense()[0]
 
         if dense_state is None:
             raise ValueError("The final state is invalid.")
