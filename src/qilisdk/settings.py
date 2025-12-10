@@ -64,11 +64,11 @@ class QiliSDKSettings(BaseSettings):
     )
     atol: float = Field(
         default=1e-10,
-        description="Numerical tolerance below which values are considered zero. [env: QILISDK_ZERO_TOLERANCE]",
+        description="Numerical tolerance below which values are considered zero. [env: QILISDK_ATOL]",
     )
     rtol: float = Field(
         default=1e-5,
-        description="Numerical relative tolerance below which values are considered zero. [env: QILISDK_RELATIVE_TOLERANCE]",
+        description="Numerical relative tolerance below which values are considered zero. [env: QILISDK_RTOL]",
     )
 
 
