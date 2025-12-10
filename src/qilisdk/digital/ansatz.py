@@ -75,7 +75,7 @@ class HardwareEfficientAnsatz(Ansatz):
             nqubits (int): Number of qubits in the circuit.
             layers (int, optional): Number of entangling layers. Defaults to 1.
             connectivity (Connectivity, optional): Topology used for two-qubit gates.
-                Accepts ``"linear"``, ``"circular"``, ``"full"``, or an explicit list of edges.
+                Accepts ``"linear"``, ``"circular"``, ``"full"``, or an explicit list of tuples defining the edges.
                 Defaults to ``"linear"``.
             structure (Structure, optional): Layout of single- and two-qubit gates within each layer.
                 ``"grouped"`` applies all single-qubit gates before the entangler block; ``"interposed"``
