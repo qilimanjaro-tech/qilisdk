@@ -24,6 +24,7 @@ import numpy as np
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import LEQ, BaseVariable, Number, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 _TIME_PARAMETER_NAME = "t"
@@ -203,7 +204,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the max time is set to zero.
         """
-        if self._get_value(max_time) == 0:
+        if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Setting the max time to zero.")
         self._delete_cache()
         self._max_time = max_time
