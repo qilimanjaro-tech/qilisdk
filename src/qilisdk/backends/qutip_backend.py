@@ -178,7 +178,7 @@ class QutipBackend(Backend):
         for hamiltonian in functional.schedule.hamiltonians.values():
             qutip_hamiltonians.append(
                 Qobj(
-                    hamiltonian.to_qtensor(total_nqubits=functional.schedule.nqubits).dense,
+                    hamiltonian.to_qtensor(total_nqubits=functional.schedule.nqubits).dense(),
                     dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)],
                 )
             )

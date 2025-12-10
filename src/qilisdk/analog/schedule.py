@@ -151,8 +151,7 @@ class Schedule(Parameterizable):
         """Total annealing time of the schedule."""
         if self._max_time is not None:
             return self._get_value(self._max_time)
-        max_t = self._get_coefficients_max_time() or 1
-        max_t = max_t if max_t != 0 else 1
+        max_t = self._get_coefficients_max_time()
         return self._get_value(max_t)
 
     @property
