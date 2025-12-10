@@ -614,7 +614,7 @@ class QUBO(Model):
         def to_real(num: Number) -> RealNumber:
             if isinstance(num, RealNumber):
                 return num
-            if isinstance(num, complex) and abs(num.imag) < get_settings().zero_tolerance:
+            if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
                 return num.real
             raise ValueError("Complex values encountered in the constraint.")
 

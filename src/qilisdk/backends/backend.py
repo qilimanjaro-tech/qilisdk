@@ -99,7 +99,7 @@ class Backend(ABC):
             final_results = functional.cost_function.compute_cost(results)
             if isinstance(final_results, float):
                 return final_results
-            if isinstance(final_results, complex) and abs(final_results.imag) < get_settings().zero_tolerance:
+            if isinstance(final_results, complex) and abs(final_results.imag) < get_settings().atol:
                 return final_results.real
             raise ValueError(f"Unsupported result type {type(final_results)}.")
 

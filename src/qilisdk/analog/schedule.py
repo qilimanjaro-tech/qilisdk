@@ -269,7 +269,7 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the max time provided is zero.
         """
-        if abs(self._get_value(max_time)) < get_settings().zero_tolerance:
+        if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Setting the total time to zero.")
         self._extract_parameters(max_time)
         self._max_time = max_time

@@ -155,7 +155,7 @@ def _extract_number(label: str) -> int:
 def _float_if_real(value: Number) -> Number:
     if isinstance(value, RealNumber):
         return value
-    if isinstance(value, complex) and abs(value.imag) < get_settings().zero_tolerance:
+    if isinstance(value, complex) and abs(value.imag) < get_settings().atol:
         return value.real
     return value
 
@@ -404,7 +404,7 @@ def _check_output(var: Variable, output: Number) -> RealNumber:
     """
     if isinstance(output, RealNumber):
         out = float(output)
-    elif isinstance(output, complex) and abs(output.imag) < get_settings().zero_tolerance:
+    elif isinstance(output, complex) and abs(output.imag) < get_settings().atol:
         out = float(output.real)
     else:
         raise ValueError(f"Evaluation answer ({output}) is outside the variable domain ({var.domain}).")
@@ -720,7 +720,7 @@ class BaseVariable(ABC):
     Abstract base class for symbolic decision variables.
     """
 
-    TOL = get_settings().zero_tolerance
+    TOL = get_settings().atol
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
@@ -1352,7 +1352,7 @@ class Term:
     """
 
     CONST = Variable(CONST_KEY, Domain.REAL)
-    TOL = get_settings().zero_tolerance
+    TOL = get_settings().atol
 
     def __init__(self, elements: Sequence[BaseVariable | Term | Number], operation: Operation) -> None:
         """initialize a new term object.

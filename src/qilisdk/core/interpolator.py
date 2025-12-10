@@ -204,7 +204,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the max time is set to zero.
         """
-        if abs(self._get_value(max_time)) < get_settings().zero_tolerance:
+        if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Setting the max time to zero.")
         self._delete_cache()
         self._max_time = max_time

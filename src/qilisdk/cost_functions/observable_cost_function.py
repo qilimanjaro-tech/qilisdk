@@ -79,8 +79,8 @@ class ObservableCostFunction(CostFunction):
             raise ValueError(
                 "can't compute cost using Observables from time evolution results when the state is not provided."
             )
-        total_cost = complex(np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().zero_tolerance))
-        if abs(total_cost.imag) < get_settings().zero_tolerance:
+        total_cost = complex(np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().atol))
+        if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
 
@@ -102,9 +102,9 @@ class ObservableCostFunction(CostFunction):
                 raise ValueError(
                     f"The samples provided have {state.nqubits} qubits but the observable has {nqubits} qubits"
                 )
-            evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().zero_tolerance))
+            evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().atol))
             total_cost += evaluate_results * prob
 
-        if abs(total_cost.imag) < get_settings().zero_tolerance:
+        if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
