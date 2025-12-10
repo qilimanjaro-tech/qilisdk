@@ -390,7 +390,7 @@ class QTensor:
             QTensor: A new QTensor that is the normalized version of this object.
         """
         norm = self.norm(order=order)
-        if norm == 0:
+        if abs(norm) < get_settings().zero_tolerance:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
 
         return QTensor(self._data / norm)
@@ -434,7 +434,7 @@ class QTensor:
             raise ValueError("Invalid object for density matrix conversion.")
 
         tr = float(np.real(rho.trace()))
-        if tr == 0.0:
+        if abs(tr) < get_settings().zero_tolerance:
             raise ValueError("Cannot normalize density matrix with zero trace.")
         return QTensor(rho.data / tr)  # keep it sparse
 
@@ -495,7 +495,7 @@ class QTensor:
     def __add__(self, other: QTensor | Complex) -> QTensor:
         if isinstance(other, QTensor):
             return QTensor(self._data + other._data)
-        if other == 0:
+        if abs(other) < get_settings().zero_tolerance:
             return self
         return NotImplemented
 

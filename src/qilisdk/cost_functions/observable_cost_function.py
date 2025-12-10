@@ -80,7 +80,7 @@ class ObservableCostFunction(CostFunction):
                 "can't compute cost using Observables from time evolution results when the state is not provided."
             )
         total_cost = complex(np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().zero_tolerance))
-        if total_cost.imag == 0:
+        if abs(total_cost.imag) < get_settings().zero_tolerance:
             return total_cost.real
         return total_cost
 
@@ -105,6 +105,6 @@ class ObservableCostFunction(CostFunction):
             evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().zero_tolerance))
             total_cost += evaluate_results * prob
 
-        if total_cost.imag == 0:
+        if abs(total_cost.imag) < get_settings().zero_tolerance:
             return total_cost.real
         return total_cost

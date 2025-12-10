@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 import numpy as np
 from loguru import logger
 
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .variables import (
@@ -613,7 +614,7 @@ class QUBO(Model):
         def to_real(num: Number) -> RealNumber:
             if isinstance(num, RealNumber):
                 return num
-            if isinstance(num, complex) and num.imag == 0:
+            if isinstance(num, complex) and abs(num.imag) < get_settings().zero_tolerance:
                 return num.real
             raise ValueError("Complex values encountered in the constraint.")
 

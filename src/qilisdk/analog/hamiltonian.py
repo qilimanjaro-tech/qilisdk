@@ -870,7 +870,7 @@ class Hamiltonian(Parameterizable):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().zero_tolerance:
                 return
             # Add the scalar to (I(0),)
             self._elements[PauliI(0),] += other
@@ -895,7 +895,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().zero_tolerance:
                 return
             self._elements[PauliI(0),] -= other
         elif isinstance(other, (Term, Parameter)):
@@ -916,7 +916,7 @@ class Hamiltonian(Parameterizable):
     def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
         if isinstance(other, (int, float, complex)):
             # 0 short-circuit
-            if other == 0:
+            if abs(other) < get_settings().zero_tolerance:
                 # everything becomes 0
                 self._elements.clear()
                 return None
@@ -980,6 +980,6 @@ class Hamiltonian(Parameterizable):
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
             raise InvalidHamiltonianOperation("Division by operators is not supported")
-        if other == 0:
+        if abs(other) < get_settings().zero_tolerance:
             raise ZeroDivisionError("Cannot divide by zero.")
         self._mul_inplace(1 / other)

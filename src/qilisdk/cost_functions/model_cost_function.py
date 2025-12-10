@@ -78,7 +78,7 @@ class ModelCostFunction(CostFunction):
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
             total_cost = complex(np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state), tol=get_settings().zero_tolerance))
-            if total_cost.imag == 0:
+            if abs(total_cost.imag) < get_settings().zero_tolerance:
                 return total_cost.real
             return total_cost
 
@@ -94,7 +94,7 @@ class ModelCostFunction(CostFunction):
                 variable_map = {v: int(state[i]) for i, v in enumerate(self.model.variables())}
                 evaluate_results = self.model.evaluate(variable_map)
                 total_cost += sum(v for v in evaluate_results.values()) * _prob
-            if total_cost.imag == 0:
+            if abs(total_cost.imag) < get_settings().zero_tolerance:
                 return total_cost.real
             return total_cost
 
@@ -116,7 +116,7 @@ class ModelCostFunction(CostFunction):
             total_cost += sum(v for v in evaluate_results.values()) * np.abs(prob**2)
 
         total_cost = complex(np.real_if_close(total_cost, tol=get_settings().zero_tolerance))
-        if total_cost.imag == 0:
+        if abs(total_cost.imag) < get_settings().zero_tolerance:
             return total_cost.real
         return total_cost
 
@@ -141,6 +141,6 @@ class ModelCostFunction(CostFunction):
             evaluate_results = self.model.evaluate(variable_map)
             total_cost += sum(v for v in evaluate_results.values()) * prob
 
-        if total_cost.imag == 0:
+        if abs(total_cost.imag) < get_settings().zero_tolerance:
             return total_cost.real
         return total_cost

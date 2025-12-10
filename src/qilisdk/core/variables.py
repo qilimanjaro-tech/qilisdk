@@ -24,6 +24,7 @@ import numpy as np
 from loguru import logger
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -154,7 +155,7 @@ def _extract_number(label: str) -> int:
 def _float_if_real(value: Number) -> Number:
     if isinstance(value, RealNumber):
         return value
-    if isinstance(value, complex) and value.imag == 0:
+    if isinstance(value, complex) and abs(value.imag) < get_settings().zero_tolerance:
         return value.real
     return value
 
@@ -449,7 +450,7 @@ class Bitwise(Encoding):
 
         if isinstance(_out, RealNumber):
             out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
+        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
             out = float(_out.real)
         else:
             raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
@@ -561,7 +562,7 @@ class OneHot(Encoding):
 
         if isinstance(_out, RealNumber):
             out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
+        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
             out = float(_out.real)
         else:
             raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
@@ -673,7 +674,7 @@ class DomainWall(Encoding):
 
         if isinstance(_out, RealNumber):
             out = float(_out)
-        elif isinstance(_out, complex) and _out.imag == 0:
+        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
             out = float(_out.real)
         else:
             raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
@@ -952,7 +953,7 @@ class BaseVariable(ABC):
         if not isinstance(other, RealNumber):
             raise NotImplementedError("Only division by real numbers is currently supported")
 
-        if other == 0:
+        if abs(other) < get_settings().zero_tolerance:
             raise ValueError("Division by zero is not allowed")
 
         if isinstance(other, np.generic):
@@ -1660,7 +1661,7 @@ class Term:
                     output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
         if isinstance(output, RealNumber):
             return float(output)
-        if isinstance(output, complex) and output.imag == 0:
+        if isinstance(output, complex) and abs(output.imag) < get_settings().zero_tolerance:
             return float(output.real)
         return output
 
@@ -1812,7 +1813,7 @@ class Term:
         if not isinstance(other, Number):
             raise NotImplementedError("Only division by numbers is currently supported")
 
-        if other == 0:
+        if abs(other) < get_settings().zero_tolerance:
             raise ValueError("Division by zero is not allowed")
 
         other = 1 / other
