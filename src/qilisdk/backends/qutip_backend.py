@@ -315,12 +315,7 @@ class QutipBackend(Backend):
         For non-native controlled gates we construct the block-matrix explicitly, mirroring
         the approach recommended in the QuTiP QIP documentation for custom controlled rotations.
 
-        Raises:
-            UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
-        if len(gate.control_qubits) != 1:
-            logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
-            raise UnsupportedGateError
 
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
