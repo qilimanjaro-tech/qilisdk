@@ -172,22 +172,21 @@ class QutipBackend(Backend):
             ValueError: if the initial state provided is invalid.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
-        tlist = np.array(functional.schedule.tlist)
-        steps = np.union1d(steps, tlist)
+        steps = functional.schedule.tlist
 
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
             qutip_hamiltonians.append(
                 Qobj(
-                    hamiltonian.to_matrix().toarray(), dims=[[2 for _ in range(hamiltonian.nqubits)] for _ in range(2)]
+                    hamiltonian.to_qtensor(total_nqubits=functional.schedule.nqubits).dense,
+                    dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)],
                 )
             )
 
         H_t = [
             [
                 qutip_hamiltonians[i],
-                np.array([functional.schedule.coefficients[h][t] for t in tlist]),
+                np.array([functional.schedule.coefficients[h][t] for t in steps]),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
@@ -238,7 +237,7 @@ class QutipBackend(Backend):
             H=H_t,
             e_ops=qutip_obs,
             rho0=qutip_init_state,
-            tlist=tlist,
+            tlist=steps,
             options={
                 "store_states": functional.store_intermediate_results,
                 "store_final_state": True,

@@ -17,6 +17,8 @@ from copy import copy
 from itertools import chain
 from typing import Any, Mapping, overload
 
+from numpy import linspace
+
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
@@ -146,25 +148,24 @@ class Schedule(Parameterizable):
     @property
     def T(self) -> float:
         """Total annealing time of the schedule."""
-        return max(self.tlist)
+        if self._max_time is not None:
+            return self._get_value(self._max_time)
+        max_t = self._get_coefficients_max_time() or 1
+        max_t = max_t if max_t != 0 else 1
+        return self._get_value(max_t)
 
     @property
     def tlist(self) -> list[float]:
-        _tlist: set[float] = set()
+        T = self.T
+        return list(linspace(0, T, int(T // self.dt), dtype=float))
+
+    def _get_coefficients_max_time(self) -> float:
         if len(self._hamiltonians) == 0:
-            tlist = [0.0]
-        else:
-            for ham in self._hamiltonians:
-                _tlist.update(self._coefficients[ham].fixed_tlist)
-            tlist = list(_tlist)
-        if self._max_time is not None:
-            max_t = max(tlist) or 1
-            max_t = max_t if max_t != 0 else 1
-            T = self._get_value(self._max_time)
-            tlist = [t * T / max_t for t in tlist]
-            if T not in tlist:
-                tlist.append(T)
-        return sorted(tlist)
+            return 0
+        _tlist: set[float] = set()
+        for ham in self._hamiltonians:
+            _tlist.update(self._coefficients[ham].fixed_tlist)
+        return max(_tlist)
 
     @property
     def dt(self) -> float:

@@ -107,18 +107,36 @@ class Interpolator(Parameterizable):
         self._max_time: PARAMETERIZED_NUMBER | None = None
         self._time_scale_cache: float | None = None
 
+        fixed_times = sorted(
+            time_dict.keys(),
+            key=lambda t: (
+                self._get_value(t) if not isinstance(t, tuple) else self._get_value(min(t, key=self._get_value))
+            ),
+        )
+
+        for i in range(len(fixed_times) - 1):
+            ti = fixed_times[i]
+            tj = fixed_times[i + 1]
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
+            if t0 == self._get_value(t1):
+                raise ValueError(f"The time point {self._get_value(t0)} is defined twice.")
+            if self._get_value(t0) > self._get_value(t1):
+                raise ValueError(f"Can't provide a point that intersects an interval (issue in: {ti} and {tj}).")
+
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
                 if len(time) != 2:  # noqa: PLR2004
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                for t in np.linspace(0, 1, (max(2, nsamples))):
-                    time_point = (1 - float(t)) * time[0] + float(t) * time[1]
-                    if isinstance(time_point, (Parameter, Term)):
-                        self._extract_parameters(time_point)
-                    self.add_time_point(time_point, coefficient, **kwargs)
-
+                # for t in np.linspace(0, 1, (max(2, nsamples))):
+                #     time_point = (1 - float(t)) * time[0] + float(t) * time[1]
+                #     if isinstance(time_point, (Parameter, Term)):
+                #         self._extract_parameters(time_point)
+                #     self.add_time_point(time_point, coefficient, **kwargs)
+                self.add_time_point(time[0], coefficient, **kwargs)
+                self.add_time_point(time[1], coefficient, **kwargs)
             else:
                 self.add_time_point(time, coefficient, **kwargs)
         self._tlist = self._generate_tlist()
@@ -182,7 +200,7 @@ class Interpolator(Parameterizable):
 
     @property
     def coefficients(self) -> list[PARAMETERIZED_NUMBER]:
-        return [self._time_dict[t] for t in self.tlist]
+        return list(self._time_dict.values())
 
     @property
     def coefficients_dict(self) -> dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]:
