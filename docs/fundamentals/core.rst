@@ -600,22 +600,22 @@ Examples of creating various quantum objects:
 
     # 1‑qubit |0> ket
     psi_ket = QTensor(np.array([[1], [0]]))
-    print("Ket:", psi_ket.dense, "is_ket?", psi_ket.is_ket())
+    print("Ket:", psi_ket.dense(), "is_ket?", psi_ket.is_ket())
     print("-" * 20)
 
     # 1‑qubit <0| bra
     psi_bra = QTensor(np.array([[1, 0]]))
-    print("Bra:", psi_bra.dense, "is_bra?", psi_bra.is_bra())
+    print("Bra:", psi_bra.dense(), "is_bra?", psi_bra.is_bra())
     print("-" * 20)
 
     # Density matrix |0><0|
     rho = QTensor(np.array([[1, 0], [0, 0]]))
-    print("Density matrix:\n", rho.dense, "is_density_matrix?", rho.is_density_matrix())
+    print("Density matrix:\n", rho.dense(), "is_density_matrix?", rho.is_density_matrix())
     print("-" * 20)
 
     # Scalar 0.5
     scalar = QTensor(np.array([[0.5]]))
-    print("Scalar:", scalar.dense, "is_scalar?", scalar.is_scalar())
+    print("Scalar:", scalar.dense(), "is_scalar?", scalar.is_scalar())
 
 **Output**
 
@@ -640,11 +640,11 @@ Helper constructors
     from qilisdk.core.qtensor import ket, bra, basis_state
 
     # Single‑qubit
-    print("ket(0):\n", ket(0).dense, "\nis_ket?", ket(0).is_ket())
-    print("bra(1):\n", bra(1).dense, "\nis_bra?", bra(1).is_bra())
+    print("ket(0):\n", ket(0).dense(), "\nis_ket?", ket(0).is_ket())
+    print("bra(1):\n", bra(1).dense(), "\nis_bra?", bra(1).is_bra())
 
     # Fock basis in N=4 Hilbert space
-    print("basis_state(2,4):\n", basis_state(2, 4).dense, "\nshape:", basis_state(2, 4).shape)
+    print("basis_state(2,4):\n", basis_state(2, 4).dense(), "\nshape:", basis_state(2, 4).shape)
 
 **Output**
 
@@ -670,7 +670,7 @@ Quantum Object Properties & Operations
 All data are stored sparsely, but you can retrieve dense or sparse views:
 
 - ``.data``: sparse :class:`scipy.sparse.csr_matrix`  
-- ``.dense``: full NumPy array
+- ``.dense()``: get a full NumPy array (note: could be expensive for large sparse objects)
 
 Key methods:
 
@@ -690,13 +690,13 @@ Examples:
     # Adjoint of a non-Hermitian operator
     A = QTensor(np.array([[1+1j, 2], [3, 4]]))
     A_dag = A.adjoint()
-    print("A:\n", A.dense)
-    print("A†:\n", A_dag.dense)
+    print("A:\n", A.dense())
+    print("A†:\n", A_dag.dense())
 
     # Matrix exponential of Pauli-X
     X = QTensor(np.array([[0, 1], [1, 0]]))
     expX = X.expm()
-    print("exp(X):\n", np.round(expX.dense, 3))
+    print("exp(X):\n", np.round(expX.dense(), 3))
 
     # Norm of a ket and a density matrix
     ket0 = QTensor(np.array([[1], [0]]))
@@ -710,7 +710,7 @@ Examples:
     rho_bell = bell.to_density_matrix()
     print("rho_bell:\n", rho_bell)
     rhoA = rho_bell.ptrace([0])
-    print("rho_A:\n", rhoA.dense)
+    print("rho_A:\n", rhoA.dense())
 
 **Output**
 
@@ -752,7 +752,7 @@ Extra Utilities
     # Two‑qubit Hadamard tensor
     H = QTensor(np.array([[1, 1], [1, -1]]) / np.sqrt(2))
     H2 = tensor_prod([H, H])
-    print("H ⊗ H:\n", np.round(H2.dense, 3))
+    print("H ⊗ H:\n", np.round(H2.dense(), 3))
 
     # Expectation of Z⊗Z on |00>
     Z = QTensor(np.array([[1, 0], [0, -1]]))

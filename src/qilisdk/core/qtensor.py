@@ -144,7 +144,6 @@ class QTensor:
         """
         return self._data.shape
 
-    @property
     def dense(self) -> np.ndarray:
         """
         Get the dense (NumPy array) representation of the QTensor.
