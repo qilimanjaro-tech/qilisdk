@@ -389,6 +389,36 @@ class Encoding(ABC):
         """
 
 
+def _check_output(var: Variable, output: Number) -> RealNumber:
+    """Parse the output of an eval, converting it to a real number if possible and ensuring it is within the variable's domain.
+
+    Args:
+        var (Variable): The variable for which the output is being parsed.
+        output (Number): The number to be parsed.
+
+    Returns:
+        Number: The output as a valid number within the variable's domain.
+
+    Raises:
+        ValueError: If the output is not a valid real number.
+    """
+    if isinstance(output, RealNumber):
+        out = float(output)
+    elif isinstance(output, complex) and abs(output.imag) < get_settings().zero_tolerance:
+        out = float(output.real)
+    else:
+        raise ValueError(f"Evaluation answer ({output}) is outside the variable domain ({var.domain}).")
+
+    out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
+
+    if not var.domain.check_value(out):
+        raise ValueError(
+            f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
+        )  # not sure this line can be reached.
+
+    return out
+
+
 @yaml.register_class
 class Bitwise(Encoding):
     """Represents a Bitwise variable encoding class."""
@@ -447,20 +477,8 @@ class Bitwise(Encoding):
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
         _out = term.evaluate(binary_dict)
+        out = _check_output(var, _out)
 
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure this line can be reached.
         return out
 
     @staticmethod
@@ -559,20 +577,7 @@ class OneHot(Encoding):
                 binary_dict[binary_var[i - 1]] = [binary_list[i]]
 
         _out = term.evaluate(binary_dict)
-
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure this line can be reached.
+        out = _check_output(var, _out)
 
         return out
 
@@ -671,20 +676,8 @@ class DomainWall(Encoding):
         binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
 
         _out = term.evaluate(binary_dict)
+        out = _check_output(var, _out)
 
-        if isinstance(_out, RealNumber):
-            out = float(_out)
-        elif isinstance(_out, complex) and abs(_out.imag) < get_settings().zero_tolerance:
-            out = float(_out.real)
-        else:
-            raise ValueError(f"Evaluation answer ({_out}) is outside the variable domain ({var.domain}).")
-
-        out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
-
-        if not var.domain.check_value(out):
-            raise ValueError(
-                f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-            )  # not sure if this line is reachable.
         return out
 
     @staticmethod
