@@ -64,7 +64,7 @@ Any basic gate can be turned into a controlled gate using the :class:`~qilisdk.d
     controlled_y = Controlled(0, basic_gate=Y(1))
     multiple_controlled_y = Controlled(0, 1, basic_gate=Y(2))
 
-Or alternatively, you can use the ``.controlled()`` method on any gate instance:
+Or alternatively, you can use the :meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method on any gate instance:
 
 .. code-block:: python
 
