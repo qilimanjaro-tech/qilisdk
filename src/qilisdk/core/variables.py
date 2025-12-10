@@ -727,6 +727,8 @@ class BaseVariable(ABC):
     Abstract base class for symbolic decision variables.
     """
 
+    TOL = get_settings().zero_tolerance
+
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
 
@@ -953,7 +955,7 @@ class BaseVariable(ABC):
         if not isinstance(other, RealNumber):
             raise NotImplementedError("Only division by real numbers is currently supported")
 
-        if abs(other) < get_settings().zero_tolerance:
+        if abs(other) < self.TOL:
             raise ValueError("Division by zero is not allowed")
 
         if isinstance(other, np.generic):
@@ -1357,6 +1359,7 @@ class Term:
     """
 
     CONST = Variable(CONST_KEY, Domain.REAL)
+    TOL = get_settings().zero_tolerance
 
     def __init__(self, elements: Sequence[BaseVariable | Term | Number], operation: Operation) -> None:
         """initialize a new term object.
@@ -1661,7 +1664,7 @@ class Term:
                     output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
         if isinstance(output, RealNumber):
             return float(output)
-        if isinstance(output, complex) and abs(output.imag) < get_settings().zero_tolerance:
+        if isinstance(output, complex) and abs(output.imag) < self.TOL:
             return float(output.real)
         return output
 
@@ -1813,7 +1816,7 @@ class Term:
         if not isinstance(other, Number):
             raise NotImplementedError("Only division by numbers is currently supported")
 
-        if abs(other) < get_settings().zero_tolerance:
+        if abs(other) < self.TOL:
             raise ValueError("Division by zero is not allowed")
 
         other = 1 / other
