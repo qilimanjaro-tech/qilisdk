@@ -409,3 +409,16 @@ def test_real_example():
     output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), ModelCostFunction(model)))
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}
+
+
+def test_integer_gates():
+    backend = CudaBackend()
+    circuit = Circuit(1)
+    circuit.add(RX(0, theta=1))
+    circuit.add(RY(0, theta=1))
+    circuit.add(RZ(0, phi=1))
+    circuit.add(U1(0, phi=1))
+    circuit.add(U2(0, phi=1, gamma=1))
+    circuit.add(U3(0, theta=1, phi=1, gamma=1))
+    result = backend.execute(Sampling(circuit, nshots=1000))
+    assert isinstance(result, SamplingResult)
