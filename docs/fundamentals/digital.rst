@@ -317,6 +317,7 @@ HardwareEfficientAnsatz
   - ``circular``: Qubits form a ring.
   - ``linear``: Qubits are connected linearly.
   - ``full``: All-to-all connectivity.
+  - Or a list of tuples explicitly specifying the connectivity.
 - **one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
 - **two_qubit_gate**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
