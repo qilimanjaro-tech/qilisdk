@@ -21,6 +21,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import BaseVariable, ComparisonTerm, Domain, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
@@ -268,7 +269,7 @@ class Schedule(Parameterizable):
         Raises:
             ValueError: If the max time provided is zero.
         """
-        if self._get_value(max_time) == 0:
+        if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Setting the total time to zero.")
         self._extract_parameters(max_time)
         self._max_time = max_time

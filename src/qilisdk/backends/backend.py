@@ -21,6 +21,7 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
@@ -104,7 +105,7 @@ class Backend(ABC):
             final_results = functional.cost_function.compute_cost(results)
             if isinstance(final_results, float):
                 return final_results
-            if isinstance(final_results, complex) and final_results.imag == 0:
+            if isinstance(final_results, complex) and abs(final_results.imag) < get_settings().atol:
                 return final_results.real
             raise ValueError(f"Unsupported result type {type(final_results)}.")
 

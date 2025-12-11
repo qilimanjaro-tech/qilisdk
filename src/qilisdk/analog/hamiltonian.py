@@ -27,6 +27,7 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.variables import BaseVariable, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -566,14 +567,14 @@ class Hamiltonian(Parameterizable):
         return partitions
 
     @classmethod
-    def from_qtensor(cls, tensor: QTensor, tol: float = 1e-10, prune: float = 1e-12) -> Hamiltonian:
+    def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
         returning a qilisdk.analog.Hamiltonian.
 
         Args:
-            tol (float): Hermiticity check tolerance.
-            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise.
+            tol (float): Hermiticity check tolerance. Defaults to global zero tolerance setting.
+            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise. Defaults to global zero tolerance setting.
 
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
@@ -581,7 +582,12 @@ class Hamiltonian(Parameterizable):
         Raises
             ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
         """
-        A = np.asarray(tensor.dense)
+        if tol is None:
+            tol = get_settings().atol
+        if prune is None:
+            prune = get_settings().atol
+
+        A = np.asarray(tensor.dense())
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
@@ -609,7 +615,7 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense
+            P_dense = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
             c = norm * np.trace(A @ P_dense)
@@ -622,7 +628,7 @@ class Hamiltonian(Parameterizable):
                 H += c * op
 
         # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
-        if not np.allclose(H.to_qtensor(n).dense, A, atol=max(10 * prune, 1e-9)):
+        if not np.allclose(H.to_qtensor(n).dense(), A, atol=max(10 * prune, 1e-9)):
             # If this triggers, consider lowering `prune` or raising `tol`.
             raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
 
@@ -929,7 +935,7 @@ class Hamiltonian(Parameterizable):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 return
             # Add the scalar to (I(0),)
             self._elements[PauliI(0),] += other
@@ -954,7 +960,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 return
             self._elements[PauliI(0),] -= other
         elif isinstance(other, (Term, Parameter)):
@@ -975,7 +981,7 @@ class Hamiltonian(Parameterizable):
     def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
         if isinstance(other, (int, float, complex)):
             # 0 short-circuit
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 # everything becomes 0
                 self._elements.clear()
                 return None
@@ -1039,6 +1045,6 @@ class Hamiltonian(Parameterizable):
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
             raise InvalidHamiltonianOperation("Division by operators is not supported")
-        if other == 0:
+        if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")
         self._mul_inplace(1 / other)

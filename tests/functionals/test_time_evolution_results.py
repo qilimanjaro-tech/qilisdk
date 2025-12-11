@@ -45,5 +45,5 @@ def test_time_evolution_results_initialization():
     )
 
     expected_list = [[0], [1]]
-    for i, l in enumerate(list(ter.final_state.dense)):
+    for i, l in enumerate(list(ter.final_state.dense())):
         assert list(l) == expected_list[i]
