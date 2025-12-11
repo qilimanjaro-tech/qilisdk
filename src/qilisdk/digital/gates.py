@@ -226,6 +226,8 @@ class BasicGate(Gate):
 
         Raises:
             ValueError: if duplicate target qubits are found.
+            ValueError: if any parameter transform is not a parameterized term.
+            ValueError: if any parameter mentioned in parameter_transforms is not defined in parameters.
         """
         # Check for duplicate integers in target_qubits.
         super(BasicGate, self).__init__()
@@ -237,8 +239,15 @@ class BasicGate(Gate):
         self._parameter_transforms: dict[str, Term] = parameter_transforms or {}
         self._matrix: np.ndarray = self._generate_matrix()
 
-        # Check that anything mentioned in parameter_transforms is also in parameters
+        # Check the transforms
         for term in self._parameter_transforms:
+            # Ensure it's a parameterized term (i.e. no variables)
+            if not self._parameter_transforms[term].is_parameterized_term():
+                raise ValueError(
+                    f"Parameter transform '{term}' must be a parameterized term containing only Parameters."
+                )
+
+            # Check that anything mentioned in parameter_transforms is also in parameters
             for param in self._parameter_transforms[term].variables():
                 if param.label not in self._parameters:
                     raise ValueError(

@@ -417,4 +417,4 @@ def test_get_commuting_partitions():
         for i in range(len(as_tensors)):
             for j in range(i + 1, len(as_tensors)):
                 commutator = as_tensors[i] @ as_tensors[j] - as_tensors[j] @ as_tensors[i]
-                np.testing.assert_allclose(commutator.dense, np.zeros_like(commutator.dense), atol=1e-8)
+                np.testing.assert_allclose(commutator.dense(), np.zeros_like(commutator.dense()), atol=1e-8)

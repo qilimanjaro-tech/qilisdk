@@ -232,7 +232,6 @@ class QAOA(Ansatz):
 
     def __init__(
         self,
-        nqubits: int,
         problem_hamiltonian: Hamiltonian,
         layers: int = 1,
         mixer_hamiltonian: Hamiltonian = Hamiltonian(),
@@ -240,44 +239,37 @@ class QAOA(Ansatz):
     ) -> None:
         """
         Args:
-            nqubits (int): Number of qubits in the circuit.
             problem_hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.
             layers (int, optional): Number of QAOA layers. Defaults to 1.
             mixer_hamiltonian (Hamiltonian, optional): The mixer Hamiltonian. Defaults to X mixer.
             trotter_steps (int, optional): Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.
 
         Raises:
-            ValueError: If ``nqubits`` is non-positive.
             ValueError: If ``layers`` is negative or the connectivity definition is invalid.
             ValueError: If ``problem_hamiltonian`` has no qubits.
-            ValueError: If ``mixer_hamiltonian`` is provided but has no qubits.
-            ValueError: If ``nqubits`` does not match the number of qubits in ``hamiltonian``.
-            ValueError: If ``nqubits`` does not match the number of qubits in ``mixer_hamiltonian``.
             ValueError: If ``trotter_steps`` is not positive.
+            ValueError: If ``problem_hamiltonian`` and ``mixer_hamiltonian`` have different number of qubits.
         """
-        super().__init__(nqubits)
+
+        nqubits = problem_hamiltonian.nqubits
 
         if layers <= 0:
             raise ValueError("layers must be >= 1")
 
         if problem_hamiltonian.nqubits <= 0:
-            raise ValueError("hamiltonian must have at least one qubit")
+            raise ValueError("problem hamiltonian must have at least one qubit")
 
         if trotter_steps <= 0:
             raise ValueError("trotter_steps must be >= 1")
-
-        if problem_hamiltonian.nqubits != nqubits:
-            raise ValueError("nqubits must match the number of qubits in problem_hamiltonian")
 
         # If no mixer, default to X mixer
         if mixer_hamiltonian.nqubits == 0:
             mixer_hamiltonian = Hamiltonian({(PauliX(q),): complex(1.0) for q in range(nqubits)})
 
-        if mixer_hamiltonian.nqubits <= 0:
-            raise ValueError("mixer_hamiltonian must have at least one qubit")
+        if problem_hamiltonian.nqubits != mixer_hamiltonian.nqubits:
+            raise ValueError("qubits in problem_hamiltonian and mixer_hamiltonian must match")
 
-        if mixer_hamiltonian.nqubits != nqubits:
-            raise ValueError("nqubits must match the number of qubits in mixer_hamiltonian")
+        super().__init__(nqubits=nqubits)
 
         self._layers = int(layers)
         self._problem_hamiltonian = problem_hamiltonian
