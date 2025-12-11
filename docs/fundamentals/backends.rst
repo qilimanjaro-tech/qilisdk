@@ -190,8 +190,7 @@ It is the most lightweight option, ideal for local development or environments w
 
     # Define total time and timestep
     T = 10.0
-    dt = 0.1
-    steps = np.linspace(0, T + dt, int(T / dt))
+    dt = 0.5
     nqubits = 1
 
     # Define Hamiltonians
@@ -205,7 +204,7 @@ It is the most lightweight option, ideal for local development or environments w
             "driver": {(0.0, T): lambda t: 1 - t / T},
             "problem": {(0.0, T): lambda t: t / T},
         },
-        dt=0.5,
+        dt=dt,
         interpolation=Interpolation.LINEAR,
     )
     
