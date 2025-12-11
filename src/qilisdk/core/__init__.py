@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .interpolator import Interpolation, Interpolator
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
@@ -48,6 +49,8 @@ __all__ = [
     "Equal",
     "GreaterThan",
     "GreaterThanOrEqual",
+    "Interpolation",
+    "Interpolator",
     "LessThan",
     "LessThanOrEqual",
     "Model",

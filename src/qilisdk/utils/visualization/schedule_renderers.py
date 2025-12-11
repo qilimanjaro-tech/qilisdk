@@ -18,13 +18,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
     from qilisdk.core.variables import Number
 
-from qilisdk.analog import schedule
 from qilisdk.utils.visualization.style import ScheduleStyle
 
 
