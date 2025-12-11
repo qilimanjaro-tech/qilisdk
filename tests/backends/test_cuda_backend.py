@@ -410,6 +410,7 @@ def test_real_example():
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}
 
+
 def test_integer_gates():
     backend = CudaBackend()
     circuit = Circuit(1)
