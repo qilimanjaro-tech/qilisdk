@@ -361,11 +361,12 @@ to try to minimize the expectation value of the problem Hamiltonian and thus sol
 
 Configuration options:
 
-- **nqubits**: Number of qubits in the circuit. This should match the number of qubits of both of the Hamiltonians.
 - **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
 - **layers**: Number of repeating layers of gates. Each layer applies two evolutions: one for the problem Hamiltonian and one for the mixer Hamiltonian.
 - **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
-- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contain non-commuting terms.
+- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contains non-commuting terms.
+- **problem_params**: Initial parameter values for the problem Hamiltonian evolution angles. Defaults to 0.0 for all layers.
+- **mixer_params**: Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to 0.0 for all layers.
 
 **Example**
 
@@ -375,11 +376,12 @@ Configuration options:
 
     problem_hamiltonian = Z(0) * Z(1) + Z(2)
     ansatz = QAOA(
-        nqubits=3, 
         problem_hamiltonian=problem_hamiltonian,
         layers=2,
         mixer_hamiltonian=None,
         trotter_steps=1
+        problem_params=[0.5, 1.0],
+        mixer_params=[0.25, 0.75]
     )
     ansatz.draw()
 

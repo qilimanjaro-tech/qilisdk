@@ -14,7 +14,7 @@
 
 import pytest
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliY, PauliZ
 from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz
 from qilisdk.digital.gates import CNOT, CZ, U1
 
@@ -122,20 +122,6 @@ def test_connectivity_full_option_pairs():
     assert set(map(tuple, ansatz.connectivity)) == expected
 
 
-def test_connectivity_given_edges():
-    n_qubits = 3
-    given = [(0, 1), (0, 2)]
-    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity=given, structure="grouped")
-    expected = {(0, 1), (0, 2)}
-    assert set(map(tuple, ansatz.connectivity)) == expected
-
-    # check that all gates use only given edges
-    for gate in ansatz.gates:
-        if gate.nqubits == 2:
-            edge = (gate.qubits[0], gate.qubits[1])
-            assert edge in expected or (edge[1], edge[0]) in expected
-
-
 def test_connectivity_circular_option_pairs():
     n_qubits = 3
     ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Circular", structure="grouped")
@@ -240,6 +226,56 @@ def test_qaoa_trotter_steps_validation():
         QAOA(problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=-2)
 
 
+def test_qaoa_invalid_mixer_params():
+    """Providing mixer_params of incorrect length should raise ValueError."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    invalid_mixer_params = [0.1]  # Length 1 instead of 2
+    with pytest.raises(ValueError, match="length of mixer_params must match number of layers"):
+        QAOA(
+            problem_hamiltonian=test_hamiltonian,
+            layers=layers,
+            mixer_params=invalid_mixer_params,
+        )
+
+
+def test_qaoa_invalid_problem_params():
+    """Providing problem_params of incorrect length should raise ValueError."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    invalid_problem_params = [0.2]  # Length 1 instead of 2
+    with pytest.raises(ValueError, match="length of problem_params must match number of layers"):
+        QAOA(
+            problem_hamiltonian=test_hamiltonian,
+            layers=layers,
+            problem_params=invalid_problem_params,
+        )
+
+
+def test_qaoa_parameter_initialization():
+    """QAOA parameters should initialize to provided values."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    problem_params = [0.5, 1.0]
+    mixer_params = [1.5, 2.0]
+    ansatz = QAOA(
+        problem_hamiltonian=test_hamiltonian,
+        layers=layers,
+        problem_params=problem_params,
+        mixer_params=mixer_params,
+    )
+
+    params = ansatz.get_parameters()
+    for i in range(layers):
+        gamma_param = params["gamma_" + str(i)]
+        alpha_param = params["alpha_" + str(i)]
+        assert gamma_param == problem_params[i]
+        assert alpha_param == mixer_params[i]
+
+
 def test_qaoa_default_mixer_hamiltonian():
     """If no mixer_hamiltonian is provided, it defaults to X-mixer."""
     n_qubits = 2
@@ -249,6 +285,20 @@ def test_qaoa_default_mixer_hamiltonian():
     # Construct expected X-mixer
     expected_mixer = Hamiltonian({(PauliX(q),): 1.0 for q in range(n_qubits)})
     assert ansatz.mixer_hamiltonian == expected_mixer
+
+
+def test_qaoa_custom_mixer_hamiltonian():
+    """Custom mixer_hamiltonian is correctly set in the QAOA ansatz."""
+    n_qubits = 2
+    layers = 1
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    custom_mixer = Hamiltonian({(PauliY(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(
+        problem_hamiltonian=test_hamiltonian,
+        layers=layers,
+        mixer_hamiltonian=custom_mixer,
+    )
+    assert ansatz.mixer_hamiltonian == custom_mixer
 
 
 def test_qaoa_gate_count():

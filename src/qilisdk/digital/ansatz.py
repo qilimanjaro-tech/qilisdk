@@ -234,8 +234,10 @@ class QAOA(Ansatz):
         self,
         problem_hamiltonian: Hamiltonian,
         layers: int = 1,
-        mixer_hamiltonian: Hamiltonian = Hamiltonian(),
+        mixer_hamiltonian: Hamiltonian | None = None,
         trotter_steps: int = 1,
+        problem_params: list[float] | None = None,
+        mixer_params: list[float] | None = None,
     ) -> None:
         """
         Args:
@@ -243,12 +245,17 @@ class QAOA(Ansatz):
             layers (int, optional): Number of QAOA layers. Defaults to 1.
             mixer_hamiltonian (Hamiltonian, optional): The mixer Hamiltonian. Defaults to X mixer.
             trotter_steps (int, optional): Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.
+            problem_params (list[float], optional): Initial parameter values for the problem Hamiltonian evolution angles. Defaults to all zeros.
+            mixer_params (list[float], optional): Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to all zeros.
 
         Raises:
-            ValueError: If ``layers`` is negative or the connectivity definition is invalid.
+            ValueError: If ``layers`` is not positive.
             ValueError: If ``problem_hamiltonian`` has no qubits.
+            ValueError: If ``mixer_hamiltonian`` has no qubits.
             ValueError: If ``trotter_steps`` is not positive.
             ValueError: If ``problem_hamiltonian`` and ``mixer_hamiltonian`` have different number of qubits.
+            ValueError: If the length of ``problem_params`` does not match ``layers``.
+            ValueError: If the length of ``mixer_params`` does not match ``layers``.
         """
 
         nqubits = problem_hamiltonian.nqubits
@@ -259,15 +266,29 @@ class QAOA(Ansatz):
         if problem_hamiltonian.nqubits <= 0:
             raise ValueError("problem hamiltonian must have at least one qubit")
 
+        # If no mixer, default to X mixer
+        if mixer_hamiltonian is None:
+            mixer_hamiltonian = Hamiltonian({(PauliX(q),): complex(1.0) for q in range(nqubits)})
+
+        if mixer_hamiltonian.nqubits <= 0:
+            raise ValueError("mixer hamiltonian must have at least one qubit")
+
         if trotter_steps <= 0:
             raise ValueError("trotter_steps must be >= 1")
 
-        # If no mixer, default to X mixer
-        if mixer_hamiltonian.nqubits == 0:
-            mixer_hamiltonian = Hamiltonian({(PauliX(q),): complex(1.0) for q in range(nqubits)})
-
         if problem_hamiltonian.nqubits != mixer_hamiltonian.nqubits:
             raise ValueError("qubits in problem_hamiltonian and mixer_hamiltonian must match")
+
+        if problem_params is None:
+            problem_params = [0.0] * layers
+        if mixer_params is None:
+            mixer_params = [0.0] * layers
+
+        if len(problem_params) != layers:
+            raise ValueError("length of problem_params must match number of layers")
+
+        if len(mixer_params) != layers:
+            raise ValueError("length of mixer_params must match number of layers")
 
         super().__init__(nqubits=nqubits)
 
@@ -275,6 +296,8 @@ class QAOA(Ansatz):
         self._problem_hamiltonian = problem_hamiltonian
         self._mixer_hamiltonian = mixer_hamiltonian
         self._trotter_steps = int(trotter_steps)
+        self._problem_params = problem_params
+        self._mixer_params = mixer_params
 
         self._build_circuit()
 
@@ -391,9 +414,10 @@ class QAOA(Ansatz):
 
         # Build the layers
         for i in range(self.layers):
+
             # Initial parameter values
-            initial_val_problem = i
-            initial_val_mixer = i * 2
+            initial_val_problem = self._problem_params[i]
+            initial_val_mixer = self._mixer_params[i]
 
             # Apply problem Hamiltonian
             gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
