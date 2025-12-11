@@ -122,6 +122,20 @@ def test_connectivity_full_option_pairs():
     assert set(map(tuple, ansatz.connectivity)) == expected
 
 
+def test_connectivity_given_edges():
+    n_qubits = 3
+    given = [(0, 1), (0, 2)]
+    ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity=given, structure="grouped")
+    expected = {(0, 1), (0, 2)}
+    assert set(map(tuple, ansatz.connectivity)) == expected
+
+    # check that all gates use only given edges
+    for gate in ansatz.gates:
+        if gate.nqubits == 2:
+            edge = (gate.qubits[0], gate.qubits[1])
+            assert edge in expected or (edge[1], edge[0]) in expected
+
+
 def test_connectivity_circular_option_pairs():
     n_qubits = 3
     ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, connectivity="Circular", structure="grouped")
