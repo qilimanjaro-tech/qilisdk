@@ -18,7 +18,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
@@ -61,14 +60,8 @@ class MatplotlibScheduleRenderer:
         if hasattr(ax, "figure"):
             self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
-        T = self.schedule.T
-        dt = self.schedule.dt
         hamiltonians = self.schedule.hamiltonians
-        times = list(np.linspace(0, T, int(1 / dt), dtype=float))  # [i * dt for i in range(int((T + dt) / dt))]
-        for t in self.schedule.tlist:
-            if t not in times:
-                times.append(t)
-        times = sorted(times)
+        times = self.schedule.tlist
         for h in hamiltonians:
             coef = self.schedule.coefficients[h]
             plots[h] = [coef[float(t)] for t in times]

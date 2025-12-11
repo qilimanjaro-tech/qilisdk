@@ -160,9 +160,7 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
-        steps = np.linspace(0, functional.schedule.T, (round(functional.schedule.T // functional.schedule.dt) + 1))
-        tlist = np.array(functional.schedule.tlist)
-        steps = np.union1d(steps, tlist)
+        steps = functional.schedule.tlist
 
         cuda_schedule = CudaSchedule(steps, ["t"])
 
