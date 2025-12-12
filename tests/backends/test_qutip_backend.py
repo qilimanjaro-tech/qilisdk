@@ -182,7 +182,7 @@ def test_constant_hamiltonian():
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
         total_time=10,
-        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+        coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]

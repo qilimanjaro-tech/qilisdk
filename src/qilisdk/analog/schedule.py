@@ -280,12 +280,11 @@ class Schedule(Parameterizable):
         hamiltonian: Hamiltonian,
         coefficients: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
-        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs)
+        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt))
 
         for p_name, p_value in self._coefficients[label].parameters.items():
             self._parameters[p_name] = p_value
@@ -307,7 +306,6 @@ class Schedule(Parameterizable):
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: TimeDict,
-        **kwargs: Any,
     ) -> None: ...
 
     @overload
@@ -316,7 +314,6 @@ class Schedule(Parameterizable):
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: Interpolator,
-        **kwargs: Any,
     ) -> None: ...
 
     def add_hamiltonian(
@@ -325,7 +322,6 @@ class Schedule(Parameterizable):
         hamiltonian: Hamiltonian,
         coefficients: Interpolator | TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if not isinstance(hamiltonian, Hamiltonian):
             raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
@@ -333,7 +329,7 @@ class Schedule(Parameterizable):
         if isinstance(coefficients, Interpolator):
             self._add_hamiltonian_from_interpolator(label, hamiltonian, coefficients)
         elif isinstance(coefficients, dict):
-            self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, interpolation, **kwargs)
+            self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, interpolation)
         else:
             raise ValueError("Unsupported type of coefficient.")
         if self._max_time is not None:
@@ -344,11 +340,10 @@ class Schedule(Parameterizable):
         label: str,
         new_coefficients: TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = Interpolator(
-                new_coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs
+                new_coefficients, interpolation, nsamples=int(1 / self.dt)
             )  # TODO (ameer): allow for partial updates of the coefficients
 
             for p_name, p_value in self._coefficients[label].parameters.items():
@@ -368,7 +363,6 @@ class Schedule(Parameterizable):
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None: ...
 
     @overload
@@ -377,7 +371,6 @@ class Schedule(Parameterizable):
         label: str,
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: Interpolator | None = None,
-        **kwargs: Any,
     ) -> None: ...
 
     def update_hamiltonian(
@@ -386,7 +379,6 @@ class Schedule(Parameterizable):
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: Interpolator | TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if label not in self._hamiltonians:
             raise ValueError(f"Can't update unknown hamiltonian {label}. Did you mean `add_hamiltonian`?")
@@ -398,7 +390,7 @@ class Schedule(Parameterizable):
             if isinstance(new_coefficients, Interpolator):
                 self._update_hamiltonian_from_interpolator(label, new_coefficients)
             elif isinstance(new_coefficients, dict):
-                self._update_hamiltonian_from_dict(label, new_coefficients, interpolation, **kwargs)
+                self._update_hamiltonian_from_dict(label, new_coefficients, interpolation)
             else:
                 raise ValueError("Unsupported type of coefficient.")
 
