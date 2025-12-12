@@ -120,9 +120,13 @@ class Backend(ABC):
         )
 
         param_names = functional.functional.get_parameter_names()
-        functional.functional.set_parameters(
-            {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
-        )
+        optimal_parameter_dict = {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
+        err = functional.check_parameter_constraints(optimal_parameter_dict)
+        if err > 0:
+            raise ValueError(
+                "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
+            )
+        functional.functional.set_parameters(optimal_parameter_dict)
         optimal_results: TResult = cast("TResult", self.execute(functional.functional))
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
