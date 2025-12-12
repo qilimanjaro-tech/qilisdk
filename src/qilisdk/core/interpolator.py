@@ -42,6 +42,20 @@ class Interpolation(str, Enum):
 def _process_callable(
     function: Callable[[], PARAMETERIZED_NUMBER], current_time: Parameter, **kwargs: Any
 ) -> tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]:
+    """
+    Evaluate a coefficient-producing callable and collect any parameters it exposes.
+
+    Args:
+        function (Callable[..., PARAMETERIZED_NUMBER]): Callable that returns a coefficient expression.
+        current_time (Parameter): Time parameter to bind when evaluating the callable.
+        **kwargs: Additional keyword arguments passed to the callable.
+
+    Returns:
+        tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]: Evaluated expression and parameters discovered.
+
+    Raises:
+        ValueError: If the callable uses variables other than time or ``Parameter`` instances.
+    """
     # Define variables
     parameters: dict[str, Parameter] = {}
 
@@ -82,7 +96,6 @@ class Interpolator(Parameterizable):
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
         nsamples: int = 100,
-        **kwargs: Any,
     ) -> None:
         """Initialize an interpolator over discrete points or intervals.
 
@@ -90,10 +103,9 @@ class Interpolator(Parameterizable):
             time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
             interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
             nsamples (int): Number of samples used to expand interval definitions.
-            **kwargs: Extra arguments forwarded to callable coefficient processing.
 
         Raises:
-            ValueError:if the time intervals contain a number of points different than 2.
+            ValueError: If the time intervals contain a number of points different than 2.
         """
         super(Interpolator, self).__init__()
         self._interpolation = interpolation
@@ -118,10 +130,10 @@ class Interpolator(Parameterizable):
                     time_point = (1 - float(t)) * time[0] + float(t) * time[1]
                     if isinstance(time_point, (Parameter, Term)):
                         self._extract_parameters(time_point)
-                    self.add_time_point(time_point, coefficient, **kwargs)
+                    self.add_time_point(time_point, coefficient)
 
             else:
-                self.add_time_point(time, coefficient, **kwargs)
+                self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
 
         time_insertion_list = sorted(
@@ -142,10 +154,22 @@ class Interpolator(Parameterizable):
                         self._parameter_constraints.append(term)
 
     def _generate_tlist(self) -> list[PARAMETERIZED_NUMBER]:
+        """
+        Generate a sorted list of the registered time keys.
+
+        Returns:
+            list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.
+        """
         return sorted((self._time_dict.keys()), key=self._get_value)
 
     @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
+        """
+        Return the (possibly rescaled) list of time points used for interpolation.
+
+        Returns:
+            list[PARAMETERIZED_NUMBER]: Interpolation time points, rescaled if ``max_time`` is set.
+        """
         if self._tlist is None:
             self._tlist = self._generate_tlist()
         if self._max_time is not None:
@@ -158,6 +182,12 @@ class Interpolator(Parameterizable):
 
     @property
     def fixed_tlist(self) -> list[float]:
+        """
+        Return the list of time points as plain floats.
+
+        Returns:
+            list[float]: Evaluated time points.
+        """
         if self._fixed_tlist:
             return self._fixed_tlist
         self._fixed_tlist = [self._get_value(k) for k in self.tlist]
@@ -165,11 +195,23 @@ class Interpolator(Parameterizable):
 
     @property
     def total_time(self) -> float:
+        """
+        Return the maximum time among all points.
+
+        Returns:
+            float: Largest time value in ``fixed_tlist``.
+        """
         if not self._total_time:
             self._total_time = max(self.fixed_tlist)
         return self._total_time
 
     def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+        """
+        Return (time, coefficient) pairs, rescaling time if a max is set.
+
+        Returns:
+            list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]: Time and coefficient pairs.
+        """
         if self._max_time is not None and self._tlist is not None:
             if self._time_scale_cache is None:
                 self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
@@ -179,27 +221,60 @@ class Interpolator(Parameterizable):
         return list(self._time_dict.items())
 
     def fixed_items(self) -> list[tuple[float, float]]:
+        """
+        Return (time, coefficient) pairs evaluated to floats.
+
+        Returns:
+            list[tuple[float, float]]: Evaluated time and coefficient pairs.
+        """
         return [(t, self._get_value(self[t], t)) for t in self.fixed_tlist]
 
     @property
     def coefficients(self) -> list[PARAMETERIZED_NUMBER]:
+        """
+        Return coefficients in the order of ``tlist`` without evaluation.
+
+        Returns:
+            list[PARAMETERIZED_NUMBER]: Coefficients aligned with ``tlist``.
+        """
         return [self._time_dict[t] for t in self.tlist]
 
     @property
     def coefficients_dict(self) -> dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]:
+        """
+        Return a shallow copy of the internal time-to-coefficient mapping.
+
+        Returns:
+            dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]: Mapping from time to coefficient expressions.
+        """
         return copy(self._time_dict)
 
     @property
-    def fixed_coefficeints(self) -> list[float]:
+    def fixed_coefficients(self) -> list[float]:
+        """
+        Return coefficients evaluated to floats in the order of ``fixed_tlist``.
+
+        Returns:
+            list[float]: Evaluated coefficients.
+        """
         return [self._get_value(self[t]) for t in self.fixed_tlist]
 
     @property
     def parameters(self) -> dict[str, Parameter]:
+        """
+        Return the parameters discovered while building the interpolator.
+
+        Returns:
+            dict[str, Parameter]: Parameters collected from time points and coefficients.
+        """
         return self._parameters
 
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
         """
         Rescale all time points to a new maximum duration while keeping relative spacing.
+
+        Args:
+            max_time (PARAMETERIZED_NUMBER): Desired maximum time after rescaling.
 
         Raises:
             ValueError: If the max time is set to zero.
@@ -210,6 +285,7 @@ class Interpolator(Parameterizable):
         self._max_time = max_time
 
     def _delete_cache(self) -> None:
+        """Clear cached evaluations and derived lists."""
         self._cached = False
         self._total_time = None
         self._cached_time = {}
@@ -218,6 +294,19 @@ class Interpolator(Parameterizable):
         self._time_scale_cache = None
 
     def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+        """
+        Evaluate a numeric, parameter, or term into a concrete float.
+
+        Args:
+            value (PARAMETERIZED_NUMBER | complex): Value or expression to evaluate.
+            t (float | None): Time value to bind when evaluating time-dependent expressions.
+
+        Returns:
+            float: Evaluated numeric value.
+
+        Raises:
+            ValueError: If evaluating a time parameter without a provided time, or an unsupported type is used.
+        """
         if isinstance(value, (int, float)):
             return value
         if isinstance(value, complex):
@@ -236,6 +325,15 @@ class Interpolator(Parameterizable):
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+        """
+        Collect parameters from an element, ensuring only allowed variables are used.
+
+        Args:
+            element (PARAMETERIZED_NUMBER): Element to inspect for parameters.
+
+        Raises:
+            ValueError: If the element contains variables that are not parameters.
+        """
         if isinstance(element, Parameter) and element.label != _TIME_PARAMETER_NAME:
             self._parameters[element.label] = element
         elif isinstance(element, Term):
@@ -251,13 +349,22 @@ class Interpolator(Parameterizable):
         self,
         time: PARAMETERIZED_NUMBER,
         coefficient: PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER],
-        **kwargs: Any,
     ) -> None:
+        """
+        Add or update a coefficient associated with a time point, processing callables if needed.
+
+        Args:
+            time (PARAMETERIZED_NUMBER): Time point for the coefficient.
+            coefficient (PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]): Coefficient value or callable.
+
+        Raises:
+            ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
+        """
         self._extract_parameters(time)
         coeff = coefficient
         if callable(coeff):
             self._current_time.set_value(self._get_value(time))
-            coeff, _params = _process_callable(coeff, self._current_time, **kwargs)
+            coeff, _params = _process_callable(coeff, self._current_time)
             self._extract_parameters(coeff)
             if len(_params) > 0:
                 self._parameters.update(_params)
@@ -275,18 +382,45 @@ class Interpolator(Parameterizable):
         self._delete_cache()
 
     def set_parameter_values(self, values: list[float]) -> None:
+        """
+        Assign parameter values by position and clear caches.
+
+        Args:
+            values (list[float]): New values ordered consistently with ``get_parameter_names()``.
+        """
         self._delete_cache()
         super().set_parameter_values(values)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
+        """
+        Assign parameter values by name and clear caches.
+
+        Args:
+            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
+        """
         self._delete_cache()
         super().set_parameters(parameters)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update parameter bounds and clear caches.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
+        """
         self._delete_cache()
         super().set_parameter_bounds(ranges)
 
     def get_coefficient(self, time_step: float) -> float:
+        """
+        Return the numeric coefficient at a given time, applying interpolation and scaling.
+
+        Args:
+            time_step (float): Time at which to evaluate the coefficient.
+
+        Returns:
+            float: Evaluated coefficient.
+        """
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
@@ -300,6 +434,18 @@ class Interpolator(Parameterizable):
         return self._get_value(val, time_step)
 
     def get_coefficient_expression(self, time_step: float) -> Number | Term | Parameter:
+        """
+        Return the raw expression for the coefficient at ``time_step`` without final evaluation.
+
+        Args:
+            time_step (float): Time at which to retrieve the coefficient expression.
+
+        Returns:
+            Number | Term | Parameter: Coefficient expression before numeric evaluation.
+
+        Raises:
+            ValueError: If the interpolation mode is unsupported or evaluation fails.
+        """
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
@@ -331,6 +477,15 @@ class Interpolator(Parameterizable):
         return result
 
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
+        """
+        Return the step-interpolated coefficient expression for ``time_step``.
+
+        Args:
+            time_step (float): Time at which to retrieve the coefficient.
+
+        Returns:
+            Number | Term | Parameter: Coefficient expression for the previous time point.
+        """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
         if prev_indx >= len(self._tlist):
@@ -339,6 +494,18 @@ class Interpolator(Parameterizable):
         return self._time_dict[prev_time_step]
 
     def _get_coefficient_expression_linear(self, time_step: float) -> Number | Term | Parameter:
+        """
+        Return the linearly interpolated coefficient expression for ``time_step``.
+
+        Args:
+            time_step (float): Time at which to interpolate.
+
+        Returns:
+            Number | Term | Parameter: Coefficient expression interpolated between neighbor points.
+
+        Raises:
+            ValueError: If two points share the same time or an unexpected interpolation state is reached.
+        """
         self._tlist = self._generate_tlist()
         insert_pos = bisect_right(self._tlist, time_step, key=self._get_value)
 
@@ -390,16 +557,46 @@ class Interpolator(Parameterizable):
         return _linear_value(prev_idx, prev_expr, next_idx, next_expr)
 
     def __getitem__(self, time_step: float) -> float:
+        """
+        Enable bracket access to coefficients: ``interp[t]``.
+
+        Args:
+            time_step (float): Time at which to evaluate the coefficient.
+
+        Returns:
+            float: Evaluated coefficient.
+        """
         return self.get_coefficient(time_step)
 
     def __len__(self) -> int:
+        """
+        Return the number of defined time points.
+
+        Returns:
+            int: Number of time points stored.
+        """
         return len(self.tlist)
 
     def __iter__(self) -> "Interpolator":
+        """
+        Return an iterator over evaluated coefficients in time order.
+
+        Returns:
+            Interpolator: Iterator over the instance.
+        """
         self.iter_time_step = 0
         return self
 
     def __next__(self) -> float:
+        """
+        Iterate over evaluated coefficients across the schedule.
+
+        Returns:
+            float: Next coefficient in time order.
+
+        Raises:
+            StopIteration: When all coefficients have been iterated over.
+        """
         if self.iter_time_step < self.__len__():
             result = self[self.fixed_tlist[self.iter_time_step]]
             self.iter_time_step += 1

@@ -71,7 +71,6 @@ class Schedule(Parameterizable):
         dt: float = 0.1,
         total_time: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         """Create a Schedule that assigns time-dependent coefficients to Hamiltonians.
 
@@ -81,7 +80,6 @@ class Schedule(Parameterizable):
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
             total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
-            **kwargs: Passed to :class:`Interpolator` construction when coefficients are provided as dictionaries.
 
         Raises:
             ValueError: if the coefficients reference an undefined hamiltonian.
@@ -118,7 +116,7 @@ class Schedule(Parameterizable):
             if isinstance(coeff, Interpolator):
                 self._coefficients[ham] = coeff
             elif isinstance(coeff, dict):
-                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt), **kwargs)
+                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt))
 
             for p_name, p_value in self._coefficients[ham].parameters.items():
                 self._parameters[p_name] = p_value
