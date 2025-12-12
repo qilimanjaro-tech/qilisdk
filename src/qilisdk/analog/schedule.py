@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from copy import copy
 from itertools import chain
-from typing import Any, Mapping, overload
+from typing import Mapping, overload
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
