@@ -116,7 +116,7 @@ class ScheduleStyle(Style):
 
     # Title and labels
     title_fontsize: int = Field(default=16, description="Font size for the plot title.")
-    xlabel: str = Field(default="time (dt)", description="Label for the x-axis.")
+    xlabel: str = Field(default="time", description="Label for the x-axis.")
     ylabel: str = Field(default="coefficient value", description="Label for the y-axis.")
     label_fontsize: int = Field(default=14, description="Font size for axis labels.")
 
