@@ -148,8 +148,8 @@ class Interpolator(Parameterizable):
                 #     if isinstance(time_point, (Parameter, Term)):
                 #         self._extract_parameters(time_point)
                 #     self.add_time_point(time_point, coefficient, **kwargs)
-                self.add_time_point(time[0], coefficient, **kwargs)
-                self.add_time_point(time[1], coefficient, **kwargs)
+                self.add_time_point(time[0], coefficient)
+                self.add_time_point(time[1], coefficient)
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
