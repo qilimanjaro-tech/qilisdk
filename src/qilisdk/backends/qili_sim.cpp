@@ -1,3 +1,16 @@
+// Copyright 2025 Qilimanjaro Quantum Tech
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <iostream>
 #include <string>
@@ -240,9 +253,22 @@ public:
             throw std::runtime_error("Matrix dimensions do not match for multiplication: " +
                                         get_dims() + " * " + other.get_dims());
         }
+
+        // std::cout << "First matrix:" << std::endl;
+        // for (int r = 0; r < nrows_; ++r) {
+        //     for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+        //         std::cout << "(" << r << ", " << cols_[idx] << ") = " << values_[idx] << std::endl;
+        //     }
+        // }
+        // std::cout << "Second matrix:" << std::endl;
+        // for (int r = 0; r < other.nrows_; ++r) {
+        //     for (int idx = other.rows_[r]; idx < other.rows_[r + 1]; ++idx) {
+        //         std::cout << "(" << r << ", " << other.cols_[idx] << ") = " << other.values_[idx] << std::endl;
+        //     }
+        // }
         
         // Perform multiplication
-        std::vector<std::tuple<int, int, std::complex<double>>> entries;
+        std::map<std::tuple<int, int>, std::complex<double>> entries_map;
         for (size_t r = 0; r < rows_.size() - 1; ++r) {
             for (int idxA = rows_[r]; idxA < rows_[r + 1]; ++idxA) {
                 int colA = cols_[idxA];
@@ -250,12 +276,27 @@ public:
                 for (int idxB = other.rows_[colA]; idxB < other.rows_[colA + 1]; ++idxB) {
                     int colB = other.cols_[idxB];
                     std::complex<double> valB = other.values_[idxB];
-                    entries.emplace_back(r, colB, valA * valB);
+                    entries_map[std::make_tuple(r, colB)] += valA * valB;
                 }
             }
         }
+
+        // std::cout << "Entries map:" << std::endl;
+        // for (const auto& entry : entries_map) {
+        //     std::cout << "(" << std::get<0>(entry.first) << ", " << std::get<1>(entry.first) << ") = " << entry.second << std::endl;
+        // }
+
+        // Convert map to vector
+        std::vector<std::tuple<int, int, std::complex<double>>> entries;
+        for (const auto& entry : entries_map) {
+            if (std::abs(entry.second) > atol_) {
+                entries.emplace_back(std::get<0>(entry.first), std::get<1>(entry.first), entry.second);
+            }
+        }
+
         SparseMatrix result(entries, nrows_, other.ncols_);
         return result;
+
     }
 
 };
@@ -357,11 +398,6 @@ private:
         int needed_after = num_qubits - needed_before - base_gate_qubits;
         std::vector<std::tuple<int, int, std::complex<double>>> out_entries = base_gate.to_tuples();
 
-        std::cout << "Gate before controls:" << std::endl;
-        for (const auto& entry : out_entries) {
-            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
-        }
-
         // Make it controlled if needed
         // Reminder that control gates look like:
         // 1 0 0 0
@@ -370,7 +406,6 @@ private:
         // 0 0 G G
         for (int cq : control_qubits) {
             int delta = 1 << (target_qubits.size());
-            std::cout << "Adding control on qubit " << cq << " with delta " << delta << std::endl;
             std::vector<std::tuple<int, int, std::complex<double>>> new_entries;
             for (const auto& entry : out_entries) {
                 int row = std::get<0>(entry);
@@ -384,19 +419,51 @@ private:
             out_entries = new_entries;
         }
 
-        std::cout << "Gate before tensor:" << std::endl;
-        for (const auto& entry : out_entries) {
-            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
-        }
+        // std::cout << "-------------------------------------------" << std::endl;
+        // std::cout << "Gate before tensor:" << std::endl;
+        // for (const auto& entry : out_entries) {
+        //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        // }
+        // std::cout << "Needed before: " << needed_before << ", after: " << needed_after << std::endl;
 
         // Perform the tensor products with the identity
         std::vector<std::tuple<int, int, std::complex<double>>> identity_entries = {{0, 0, 1.0}, {1, 1, 1.0}};
+        int gate_size = 1 << (target_qubits.size() + control_qubits.size());
         for (int i = 0; i < needed_before; ++i) {
-            out_entries = tensor_product(identity_entries, out_entries, 2, base_gate.get_width());
+            out_entries = tensor_product(identity_entries, out_entries, 2, gate_size);
+            gate_size *= 2;
         }
         for (int i = 0; i < needed_after; ++i) {
-            out_entries = tensor_product(out_entries, identity_entries, base_gate.get_width(), 2);
+            out_entries = tensor_product(out_entries, identity_entries, gate_size, 2);
+            gate_size *= 2;
         }
+
+        // std::cout << "Gate after tensor:" << std::endl;
+        // for (const auto& entry : out_entries) {
+        //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        // }
+
+        // Form the dense matrix and print
+        // std::vector<std::vector<std::complex<double>>> dense_matrix(1 << num_qubits,
+        //                                                             std::vector<std::complex<double>>(1 << num_qubits, 0.0));  
+        // for (const auto& entry : out_entries) {
+        //     int row = std::get<0>(entry);
+        //     int col = std::get<1>(entry);
+        //     std::complex<double> val = std::get<2>(entry);
+        //     dense_matrix[row][col] = val;
+        // }
+        // std::cout << "Dense matrix after tensor:" << std::endl;
+        // for (int r = 0; r < (1 << num_qubits); ++r) {
+        //     for (int c = 0; c < (1 << num_qubits); ++c) {
+        //         std::cout << dense_matrix[r][c] << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+
+        // Get a list of all qubits involved
+        std::vector<int> all_qubits;
+        for (auto q : control_qubits) all_qubits.push_back(q);
+        for (auto q : target_qubits) all_qubits.push_back(q);
 
         // Determine the permutation to map qubits to their correct positions
         // perm is initially 0 1 2
@@ -406,31 +473,49 @@ private:
         for (int q = 0; q < num_qubits; ++q) {
             perm[q] = q;
         }
-        // for (int i = 0; i < target_qubits.size(); ++i) {
-        //     perm[needed_before + i] = target_qubits[i];
+        // std::cout << "Initial perm: ";
+        // for (int q = 0; q < num_qubits; ++q) {
+        //     std::cout << perm[q] << " ";
         // }
-        // perm = {0, 2, 1};
+        // std::cout << std::endl;
+        for (int i = 0; i < all_qubits.size(); ++i) {
+            // std::cout << "Swapping perm[" << needed_before + i << "] and perm[" << all_qubits[i] << "]" << std::endl;
+            if (perm[needed_before + i] != all_qubits[i]) {
+                std::swap(perm[needed_before + i], perm[all_qubits[i]]);
+            }
+            // std::cout << "Perm is now: ";
+            // for (int q = 0; q < num_qubits; ++q) {
+            //     std::cout << perm[q] << " ";
+            // }
+            // std::cout << std::endl;
+        }
+        // invert the perm
+        std::vector<int> inv_perm(num_qubits);
+        for (int q = 0; q < num_qubits; ++q) {
+            inv_perm[perm[q]] = q;
+        }
+        perm = inv_perm;
 
         // debug output TODO
-        std::cout << "Base gate non-zero elements: " << base_gate.size() << std::endl;
-        std::cout << "Base gate width: " << base_gate.get_width() << std::endl;
-        std::cout << "Num qubits before: " << needed_before << ", after: " << needed_after << std::endl;
-        std::cout << "Target qubits: ";
-        for (int q : target_qubits) {
-            std::cout << q << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "Control qubits: ";
-        for (int q : control_qubits) {
-            std::cout << q << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "Getting gate full matrix for gate type " << static_cast<int>(type) << std::endl;
-        std::cout << "Permutation: ";
-        for (int q = 0; q < num_qubits; ++q) {
-            std::cout << perm[q] << " ";
-        }
-        std::cout << std::endl;
+        // std::cout << "Getting gate full matrix for gate type " << static_cast<int>(type) << std::endl;
+        // std::cout << "Base gate non-zero elements: " << base_gate.size() << std::endl;
+        // std::cout << "Base gate width: " << base_gate.get_width() << std::endl;
+        // std::cout << "Num qubits before: " << needed_before << ", after: " << needed_after << std::endl;
+        // std::cout << "Target qubits: ";
+        // for (int q : target_qubits) {
+        //     std::cout << q << " ";
+        // }
+        // std::cout << std::endl;
+        // std::cout << "Control qubits: ";
+        // for (int q : control_qubits) {
+        //     std::cout << q << " ";
+        // }
+        // std::cout << std::endl;
+        // std::cout << "Permutation: ";
+        // for (int q = 0; q < num_qubits; ++q) {
+        //     std::cout << perm[q] << " ";
+        // }
+        // std::cout << std::endl;
         
         // Apply the permutation
         for (int i=0; i<out_entries.size(); ++i) {
@@ -452,10 +537,27 @@ private:
                       }
                   });
 
-        std::cout << "Final gate matrix:" << std::endl;
-        for (const auto& entry : out_entries) {
-            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
-        }
+        // Form the dense matrix and print
+        // std::vector<std::vector<std::complex<double>>> dense_matrix(1 << num_qubits,
+        //                                                             std::vector<std::complex<double>>(1 << num_qubits, 0.0));  
+        // for (const auto& entry : out_entries) {
+        //     int row = std::get<0>(entry);
+        //     int col = std::get<1>(entry);
+        //     std::complex<double> val = std::get<2>(entry);
+        //     dense_matrix[row][col] = val;
+        // }
+        // std::cout << "Dense matrix after permute:" << std::endl;
+        // for (int r = 0; r < (1 << num_qubits); ++r) {
+        //     for (int c = 0; c < (1 << num_qubits); ++c) {
+        //         std::cout << dense_matrix[r][c] << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+
+        // std::cout << "Final gate matrix:" << std::endl;
+        // for (const auto& entry : out_entries) {
+        //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        // }
 
         // Form the matrix and return
         int full_size = 1 << num_qubits;
@@ -478,6 +580,12 @@ public:
         Returns:
             SparseMatrix: The base matrix representation of the gate.
         */
+        double theta = 0.0;
+        double phi = 0.0;
+        double gamma = 0.0;
+        double cos_half = 0.0;
+        double sin_half = 0.0;
+        double scale = 0.0;
         switch (type) {
             case GateType::H:
                 return SparseMatrix({{1 / std::sqrt(2), 1 / std::sqrt(2)},
@@ -494,8 +602,45 @@ public:
             case GateType::CNOT:
                 return SparseMatrix({{0, 1},
                                      {1, 0}});
+            case GateType::RX:
+                theta = parameters[0];
+                cos_half = std::cos(theta / 2);
+                sin_half = std::sin(theta / 2);
+                return SparseMatrix({{cos_half, std::complex<double>(0, -sin_half)},
+                                     {std::complex<double>(0, -sin_half), cos_half}});
+            case GateType::RY:
+                theta = parameters[0];
+                cos_half = std::cos(theta / 2);
+                sin_half = std::sin(theta / 2);
+                return SparseMatrix({{cos_half, -sin_half},
+                                     {sin_half, cos_half}});
+            case GateType::RZ:
+                phi = parameters[0];
+                return SparseMatrix({{std::exp(std::complex<double>(0, -phi / 2)), 0},
+                                     {0, std::exp(std::complex<double>(0, phi / 2))}});
+            case GateType::U1:
+                phi = parameters[0];
+                return SparseMatrix({{1, 0},
+                                     {0, std::exp(std::complex<double>(0, phi))}});
+            case GateType::U2:
+                phi = parameters[0];
+                gamma = parameters[1];
+                scale = 1 / std::sqrt(2);
+                return SparseMatrix({{scale, -scale * std::exp(std::complex<double>(0, gamma))},
+                                     {scale * std::exp(std::complex<double>(0, phi)), scale * std::exp(std::complex<double>(0, phi + gamma))}});
+            case GateType::U3:
+                theta = parameters[0];
+                phi = parameters[1];
+                gamma = parameters[2];
+                cos_half = std::cos(theta / 2);
+                sin_half = std::sin(theta / 2);
+                return SparseMatrix({{cos_half, -std::exp(std::complex<double>(0, gamma)) * sin_half},
+                                     {std::exp(std::complex<double>(0, phi)) * sin_half, std::exp(std::complex<double>(0, phi + gamma)) * cos_half}});
+            case GateType::M:
+                return SparseMatrix({{1, 0},
+                                     {0, 1}});
             default:
-                throw std::runtime_error("Unsupported gate type");
+                throw std::runtime_error("Unsupported gate type: " + std::to_string(static_cast<int>(type)));
         }
     }
 
@@ -541,6 +686,9 @@ public:
             std::string gate_name;
             iss >> gate_name;
             GateType gate_type = GateType::UNKNOWN;
+            while (gate_name != "CNOT" && gate_name.size() > 1 && gate_name[0] == 'C') {
+                gate_name = gate_name.substr(1);
+            }
             if (gate_name == "H") gate_type = GateType::H;
             else if (gate_name == "X") gate_type = GateType::X;
             else if (gate_name == "Y") gate_type = GateType::Y;
@@ -553,6 +701,7 @@ public:
             else if (gate_name == "U3") gate_type = GateType::U3;
             else if (gate_name == "M") gate_type = GateType::M;
             else if (gate_name == "CNOT") gate_type = GateType::CNOT;
+            else throw std::runtime_error("Unknown gate name: " + gate_name);
 
             // Gate info
             int n_controls, n_targets, n_params;
@@ -585,12 +734,14 @@ public:
         int mat_size = 1 << nqubits_;
         SparseMatrix state({std::make_tuple(0, 0, 1.0)}, mat_size, 1);
 
-        std::cout << "Executing sampling with " << nshots_ << " shots on " << nqubits_ << " qubits and " << ngates << " gates." << std::endl;
-
         // Apply each gate in the circuit
         for (const auto& gate : circuit_) {
             SparseMatrix gate_matrix = gate.get_full_matrix(nqubits_);
             state = gate_matrix * state;
+            // std::cout << "State after:" << std::endl;
+            // for (const auto& entry : state.to_tuples()) {
+            //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+            // }
         }
 
         // Get the probabilities

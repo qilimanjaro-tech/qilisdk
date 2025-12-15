@@ -21,7 +21,7 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 
-class QiliSim(Backend):
+class QiliSimCpp(Backend):
     """
     Backend based that runs both digital-circuit sampling and analog
     time-evolution experiments using a custom c++ simulator.
