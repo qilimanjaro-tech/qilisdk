@@ -398,3 +398,23 @@ def test_eq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamilton
 )
 def test_neq_hamiltonian(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian != expected_hamiltonian
+
+
+# ---- Commuting Partition Tests -----
+
+
+def test_get_commuting_partitions():
+    """
+    Test the get_commuting_partitions method of the Hamiltonian class.
+    This test creates a Hamiltonian with multiple terms and verifies that the
+    returned partitions contain only mutually commuting terms.
+    """
+    H = Z(0) * Z(1) + X(0) * X(1) + Z(2) + X(2) + X(2) * Y(3)
+    partitions = H.get_commuting_partitions()
+    for partition in partitions:
+        hamiltonians = [Hamiltonian({key: value}) for key, value in partition.items()]
+        as_tensors = [part.to_qtensor(4) for part in hamiltonians]
+        for i in range(len(as_tensors)):
+            for j in range(i + 1, len(as_tensors)):
+                commutator = as_tensors[i] @ as_tensors[j] - as_tensors[j] @ as_tensors[i]
+                np.testing.assert_allclose(commutator.dense(), np.zeros_like(commutator.dense()), atol=1e-8)

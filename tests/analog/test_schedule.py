@@ -30,7 +30,7 @@ def test_schedule_parameters():
     H0 = p[0] * X(1) + X(0)
     H1 = p[1] * Z(1) + Z(0)
 
-    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, schedule={})
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
 
     assert p[0] in list(schedule._parameters.values())
     assert p[1] in list(schedule._parameters.values())
@@ -157,11 +157,11 @@ def test_add_hamiltonian_new():
     sched = Schedule(dt=1)
     # Define a coefficient function: coefficient = factor * t.
 
-    def coeff_func(t, factor=1):
+    def coeff_func(t, factor=2):
         return t * factor
 
     H1 = PauliZ(0).to_hamiltonian()
-    sched.add_hamiltonian("H1", H1, coefficients={(0, 4): coeff_func}, factor=2)
+    sched.add_hamiltonian("H1", H1, coefficients={(0, 4): coeff_func})
     # For T=4, dt=1, time steps are 0,1,2,3,4; expect coefficient = 2*t.
     for t in range(int(sched.T / sched.dt)):
         assert sched.coefficients["H1"][t] == 2 * t
@@ -303,7 +303,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
 
 def test_draw_method_runs(monkeypatch):
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(total_time=4, dt=1, hamiltonians={"H1": H1}, schedule={0: {"H1": 0.5}})
+    sched = Schedule(total_time=4, dt=1, hamiltonians={"H1": H1}, coefficients={"H1": {0: 0.5}})
 
     # Monkeypatch renderer to avoid actual plotting
     class DummyRenderer:

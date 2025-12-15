@@ -184,13 +184,13 @@ It is the most lightweight option, ideal for local development or environments w
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.core import ket, tensor_prod
+    from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
     # Define total time and timestep
     T = 10.0
-    dt = 0.1
-    steps = np.linspace(0, T + dt, int(T / dt))
+    dt = 0.5
     nqubits = 1
 
     # Define Hamiltonians
@@ -198,14 +198,16 @@ It is the most lightweight option, ideal for local development or environments w
     Hz = sum(Z(i) for i in range(nqubits))
 
     # Build a time‑dependent schedule
-    schedule = Schedule(T, dt)
-
-    # Add hx with a time‐dependent coefficient function
-    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
-
-    # Add hz similarly
-    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
-
+    schedule = Schedule(
+        hamiltonians={"driver": Hx, "problem": Hz},
+        coefficients={
+            "driver": {(0.0, T): lambda t: 1 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
+        },
+        dt=dt,
+        interpolation=Interpolation.LINEAR,
+    )
+    
     # Prepare an equal superposition initial state
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 

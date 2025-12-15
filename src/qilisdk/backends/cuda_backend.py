@@ -333,32 +333,32 @@ class CudaBackend(Backend):
     @staticmethod
     def _handle_RX(kernel: cudaq.Kernel, gate: RX, qubit: cudaq.QuakeValue) -> None:
         """Handle an RX gate operation."""
-        kernel.rx(*gate.get_parameter_values(), qubit)
+        kernel.rx(*[float(param) for param in gate.get_parameter_values()], qubit)
 
     @staticmethod
     def _handle_RY(kernel: cudaq.Kernel, gate: RY, qubit: cudaq.QuakeValue) -> None:
         """Handle an RY gate operation."""
-        kernel.ry(*gate.get_parameter_values(), qubit)
+        kernel.ry(*[float(param) for param in gate.get_parameter_values()], qubit)
 
     @staticmethod
     def _handle_RZ(kernel: cudaq.Kernel, gate: RZ, qubit: cudaq.QuakeValue) -> None:
         """Handle an RZ gate operation."""
-        kernel.rz(*gate.get_parameter_values(), qubit)
+        kernel.rz(*[float(param) for param in gate.get_parameter_values()], qubit)
 
     @staticmethod
     def _handle_U1(kernel: cudaq.Kernel, gate: U1, qubit: cudaq.QuakeValue) -> None:
         """Handle an U1 gate operation."""
-        kernel.u3(theta=0.0, phi=gate.phi, delta=0.0, target=qubit)
+        kernel.u3(theta=0.0, phi=float(gate.phi), delta=0.0, target=qubit)
 
     @staticmethod
     def _handle_U2(kernel: cudaq.Kernel, gate: U2, qubit: cudaq.QuakeValue) -> None:
         """Handle an U2 gate operation."""
-        kernel.u3(theta=np.pi / 2, phi=gate.phi, delta=gate.gamma, target=qubit)
+        kernel.u3(theta=np.pi / 2, phi=float(gate.phi), delta=float(gate.gamma), target=qubit)
 
     @staticmethod
     def _handle_U3(kernel: cudaq.Kernel, gate: U3, qubit: cudaq.QuakeValue) -> None:
         """Handle an U3 gate operation."""
-        kernel.u3(theta=gate.theta, phi=gate.phi, delta=gate.gamma, target=qubit)
+        kernel.u3(theta=float(gate.theta), phi=float(gate.phi), delta=float(gate.gamma), target=qubit)
 
     @staticmethod
     def _handle_SWAP(kernel: cudaq.Kernel, gate: SWAP, qubit_0: cudaq.QuakeValue, qubit_1: cudaq.QuakeValue) -> None:

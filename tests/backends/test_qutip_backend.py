@@ -139,6 +139,34 @@ def test_controlled_handler(gate_instance):
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
+def test_multi_controlled_handler(gate_instance):
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=10)
+    controlled_gate = Controlled(7, 8, 9, basic_gate=gate_instance)
+    circuit.add(controlled_gate)
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+    expected_targets = set(controlled_gate.target_qubits).union(set(controlled_gate.control_qubits))
+
+    assert any(g.name.startswith(controlled_gate.name) for g in qutip_circuit.gates)
+    assert any(set(g.targets) == expected_targets for g in qutip_circuit.gates)
+
+
+def test_multi_controlled_execution():
+    # Create two Xs then a multi-controlled X (Toffoli) gate
+    # Expect roughly all shots to be '111'
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    circuit.add(X(1))
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    result = backend.execute(Sampling(circuit=circuit, nshots=100))
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "111" in samples
+    assert samples["111"] == 100
+
+
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_handlers(gate_instance):
     backend = QutipBackend()
     circuit = Circuit(nqubits=10)
@@ -154,7 +182,7 @@ def test_constant_hamiltonian():
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
         total_time=10,
-        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+        coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]

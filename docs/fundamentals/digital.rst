@@ -31,17 +31,17 @@ Use these constructors to apply standard single- and two-qubit operations:
   Phase gate (π/2 rotation about Z).  
 - :class:`T(qubit: int)<qilisdk.digital.gates.T>`
   T gate (π/4 rotation about Z).  
-- :class:`RX(qubit: int, theta: float)<qilisdk.digital.gates.RX>`
+- :class:`RX(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RX>`
   Rotation by angle `theta` around X.  
-- :class:`RY(qubit: int, theta: float)<qilisdk.digital.gates.RY>`
+- :class:`RY(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RY>`
   Rotation by angle `theta` around Y.  
-- :class:`RZ(qubit: int, phi: float)<qilisdk.digital.gates.RZ>`
+- :class:`RZ(qubit: int, phi: float | Parameter | Term)<qilisdk.digital.gates.RZ>`
   Rotation by angle `phi` around Z.  
-- :class:`U1(qubit: int, *, phi: float)<qilisdk.digital.gates.U1>`
+- :class:`U1(qubit: int, *, phi: float | Parameter | Term)<qilisdk.digital.gates.U1>`
   Phase shift equivalent to RZ plus global phase.  
-- :class:`U2(qubit: int, *, phi: float, gamma: float)<qilisdk.digital.gates.U2>`
+- :class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U2>`
   π/2 Y-rotation sandwiched by Z-rotations.
-- :class:`U3(qubit: int, *, theta: float, phi: float, gamma: float)<qilisdk.digital.gates.U3>`
+- :class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U3>`
   General single-qubit unitary: RZ-RY-RZ decomposition.
 - :class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>`
   Exchanges the states of qubits ``a`` and ``b``.
@@ -62,6 +62,17 @@ Any basic gate can be turned into a controlled gate using the :class:`~qilisdk.d
     from qilisdk.digital.gates import Controlled, Y
 
     controlled_y = Controlled(0, basic_gate=Y(1))
+    multiple_controlled_y = Controlled(0, 1, basic_gate=Y(2))
+
+Or alternatively, you can use the :meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method on any gate instance:
+
+.. code-block:: python
+
+    from qilisdk.digital.gates import Y
+
+    controlled_y = Y(1).controlled(0)
+    multiple_controlled_y = Y(2).controlled(0, 1)
+
 
 Adjoint Gates
 ^^^^^^^^^^^^^
@@ -306,6 +317,7 @@ HardwareEfficientAnsatz
   - ``circular``: Qubits form a ring.
   - ``linear``: Qubits are connected linearly.
   - ``full``: All-to-all connectivity.
+  - Or a list of tuples explicitly specifying the connectivity.
 - **one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
 - **two_qubit_gate**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
@@ -330,9 +342,10 @@ HardwareEfficientAnsatz
         two_qubit_gate=CNOT, 
         structure="Interposed"
     )
+    ansatz.draw()
 
   
-This ansatz can be then used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
+This ansatz can then be used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
 
 
 .. code-block:: python 
@@ -344,6 +357,63 @@ This ansatz can be then used as a circuit. For example, we can execute this ansa
 
     backend.execute(Sampling(ansatz))
 
+QAOA
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the alternating time evolution of a 
+problem Hamiltonian and a mixer Hamiltonian [1]_. 
+By initializing the circuit as the ground state of the mixer Hamiltonian (often simply the uniform superposition) and then 
+applying the alternating evolution scaled by parameters :math:`\gamma_i` and :math:`\alpha_i`, the idea is that at a certain set of 
+parameters the ansatz should approximate the evolution from the ground state of the mixer Hamiltonian to the ground state of the problem Hamiltonian, 
+as per the quantum adiabatic theorem. By treating this parameterized circuit as an ansatz for a variational quantum algorithm, we can optimize
+to try to minimize the expectation value of the problem Hamiltonian and thus solve the encoded optimization problem.
+
+.. [1] Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. "A quantum approximate optimization algorithm." arXiv preprint `arXiv:1411.4028 <https://arxiv.org/abs/1411.4028>`_ (2014).
+
+Configuration options:
+
+- **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
+- **layers**: Number of repeating layers of gates. Each layer applies two evolutions: one for the problem Hamiltonian and one for the mixer Hamiltonian.
+- **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
+- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contains non-commuting terms.
+- **problem_params**: Initial parameter values for the problem Hamiltonian evolution angles. Defaults to 0.0 for all layers.
+- **mixer_params**: Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to 0.0 for all layers.
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.digital import QAOA, Z
+
+    problem_hamiltonian = Z(0) * Z(1) + Z(2)
+    ansatz = QAOA(
+        problem_hamiltonian=problem_hamiltonian,
+        layers=2,
+        mixer_hamiltonian=None,
+        trotter_steps=1
+        problem_params=[0.5, 1.0],
+        mixer_params=[0.25, 0.75]
+    )
+    ansatz.draw()
+
+As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as per any QiliSDK circuit. 
+Or, to instead perform variational optimization over the parameters to minimize the 
+expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </fundamentals/functionals>` for more details):
+
+.. code-block:: python 
+
+    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+
+    vqa = VariationalProgram(functional=Sampling(ansatz), 
+                             optimizer=SciPyOptimizer(method="powell", tol=1e-7), 
+                             cost_function=ObservableCostFunction(problem_hamiltonian))
+
+    print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
+    backend = QutipBackend()
+    result = backend.execute(vqa)
+    print("VQA Result:", result)
 
 Parameter Utilities
 -------------------
