@@ -177,3 +177,22 @@ class Circuit(Parameterizable):
         renderer.plot()
         if filepath:
             renderer.save(filepath)
+
+    def randomize(self, single_qubit_gates: set[Gate], two_qubit_gates: set[Gate], ngates: int) -> None:
+        """
+        Generate a random quantum circuit from a given set of gates.
+
+        Args:
+            set[Gate]: A set of gates to choose from when constructing the circuit.
+            ngates (int): The number of gates to include in the circuit.
+
+        """
+        import random
+        gate_list = list(single_qubit_gates) + list(two_qubit_gates)
+        for _ in range(ngates):
+            gate_class = random.choice(gate_list)
+            gate_nqubits = 1 if gate_class in single_qubit_gates else 2
+            n_qubits = self.nqubits
+            qubits = random.sample(range(n_qubits), gate_nqubits)
+            gate = gate_class(*qubits)
+            self.add(gate)

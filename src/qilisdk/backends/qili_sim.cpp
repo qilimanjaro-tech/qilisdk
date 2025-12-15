@@ -163,6 +163,15 @@ public:
         return values_.size();
     }
 
+    int get_width() const {
+        /*
+        Get the number of columns in the matrix.
+        Returns:
+            int: The number of columns.
+        */
+        return ncols_;
+    }
+
     std::complex<double> get(int row, int col) const {
         /*
         Get the value at (row, col). Returns 0 if not present.
@@ -267,16 +276,16 @@ private:
     std::vector<std::tuple<int, int, std::complex<double>>> tensor_product(
         const std::vector<std::tuple<int, int, std::complex<double>>>& A,
         const std::vector<std::tuple<int, int, std::complex<double>>>& B,
-        int A_size,
-        int B_size
+        int A_width,
+        int B_width
     ) const {
         /*
         Compute the tensor product of two sets of (row, col, value) tuples.
         Args:
             A (std::vector<std::tuple<int, int, std::complex<double>>>): First matrix entries.
             B (std::vector<std::tuple<int, int, std::complex<double>>>): Second matrix entries.
-            A_size (int): Size of the first matrix (assumed square).
-            B_size (int): Size of the second matrix (assumed square).
+            A_width (int): Width of the first matrix (assumed square).
+            B_width (int): Width of the second matrix (assumed square).
         Returns:
             std::vector<std::tuple<int, int, std::complex<double>>>: The tensor product entries.
         */
@@ -286,8 +295,8 @@ private:
         std::complex<double> val = 0.0;
         for (const auto& a : A) {
             for (const auto& b : B) {
-                row = std::get<0>(a) * B_size + std::get<0>(b);
-                col = std::get<1>(a) * B_size + std::get<1>(b);
+                row = std::get<0>(a) * B_width + std::get<0>(b);
+                col = std::get<1>(a) * B_width + std::get<1>(b);
                 val = std::get<2>(a) * std::get<2>(b);
                 result.emplace_back(row, col, val);
             }
@@ -298,17 +307,24 @@ private:
     int permute_bits(int index, const std::vector<int>& perm) const {
         /*
         Permute the bits of an index according to a given permutation.
+        This works by taking each bit from the original index and placing it in the new position
+        specified by the permutation vector.
+        Also note, the qubit versus bit ordering is reversed (i.e. {1, 0, 2} swaps the 
+        first bits (0 and 1), not the last/least-significant).
         Args:
             index (int): The original index.
             perm (std::vector<int>): The permutation vector.
         Returns:
             int: The permuted index.
         */
+        int n = perm.size();
         int out = 0;
-        for (int old_q = 0; old_q < perm.size(); old_q++) {
+        for (int old_q = 0; old_q < n; old_q++) {
             int new_q = perm[old_q];
-            int bit = (index >> old_q) & 1ULL;
-            out |= (bit << new_q);
+            int old_bit = n - 1 - old_q;
+            int new_bit = n - 1 - new_q;
+            int bit = (index >> old_bit) & 1;
+            out |= (bit << new_bit);
         }
         return out;
     }
@@ -336,45 +352,87 @@ private:
         for (int q : target_qubits) {
             if (q < min_qubit) min_qubit = q;
         }
-        int base_gate_qubits = target_qubits.size();
+        int base_gate_qubits = target_qubits.size() + control_qubits.size();
         int needed_before = min_qubit;
         int needed_after = num_qubits - needed_before - base_gate_qubits;
+        std::vector<std::tuple<int, int, std::complex<double>>> out_entries = base_gate.to_tuples();
+
+        std::cout << "Gate before controls:" << std::endl;
+        for (const auto& entry : out_entries) {
+            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        }
+
+        // Make it controlled if needed
+        // Reminder that control gates look like:
+        // 1 0 0 0
+        // 0 1 0 0
+        // 0 0 G G
+        // 0 0 G G
+        for (int cq : control_qubits) {
+            int delta = 1 << (target_qubits.size());
+            std::cout << "Adding control on qubit " << cq << " with delta " << delta << std::endl;
+            std::vector<std::tuple<int, int, std::complex<double>>> new_entries;
+            for (const auto& entry : out_entries) {
+                int row = std::get<0>(entry);
+                int col = std::get<1>(entry);
+                std::complex<double> val = std::get<2>(entry);
+                new_entries.emplace_back(row + delta, col + delta, val);
+            }
+            for (int i = 0; i < delta; ++i) {
+                new_entries.emplace_back(i, i, 1.0);
+            }
+            out_entries = new_entries;
+        }
+
+        std::cout << "Gate before tensor:" << std::endl;
+        for (const auto& entry : out_entries) {
+            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        }
 
         // Perform the tensor products with the identity
         std::vector<std::tuple<int, int, std::complex<double>>> identity_entries = {{0, 0, 1.0}, {1, 1, 1.0}};
-        std::vector<std::tuple<int, int, std::complex<double>>> out_entries = base_gate.to_tuples();
         for (int i = 0; i < needed_before; ++i) {
-            out_entries = tensor_product(identity_entries, out_entries, 2, base_gate.size());
+            out_entries = tensor_product(identity_entries, out_entries, 2, base_gate.get_width());
         }
         for (int i = 0; i < needed_after; ++i) {
-            out_entries = tensor_product(out_entries, identity_entries, base_gate.size(), 2);
+            out_entries = tensor_product(out_entries, identity_entries, base_gate.get_width(), 2);
         }
 
-        // Remap the qubits to their correct positions TODO
+        // Determine the permutation to map qubits to their correct positions
+        // perm is initially 0 1 2
+        // if we have a CNOT on qubits 0 and 2, we actually did it on 0 and 1 internally
+        // so we have 0 2 1 and we need to map back
         std::vector<int> perm(num_qubits);
         for (int q = 0; q < num_qubits; ++q) {
             perm[q] = q;
         }
-        // perm is initially like 0 1 2
-        // if we have a CNOT on qubits 0 and 2, we actually did it on 0 and 1 internally
-        // so we have 0 2 1 and we need to map back
-        int target_idx = 0;
+        // for (int i = 0; i < target_qubits.size(); ++i) {
+        //     perm[needed_before + i] = target_qubits[i];
+        // }
+        // perm = {0, 2, 1};
+
+        // debug output TODO
+        std::cout << "Base gate non-zero elements: " << base_gate.size() << std::endl;
+        std::cout << "Base gate width: " << base_gate.get_width() << std::endl;
+        std::cout << "Num qubits before: " << needed_before << ", after: " << needed_after << std::endl;
+        std::cout << "Target qubits: ";
         for (int q : target_qubits) {
-            perm[q] = target_idx + needed_before;
-            target_idx++;
+            std::cout << q << " ";
         }
-        int control_idx = 0;
+        std::cout << std::endl;
+        std::cout << "Control qubits: ";
         for (int q : control_qubits) {
-            perm[q] = target_idx + needed_before;
-            target_idx++;
+            std::cout << q << " ";
         }
-        // debug output permutation
+        std::cout << std::endl;
         std::cout << "Getting gate full matrix for gate type " << static_cast<int>(type) << std::endl;
         std::cout << "Permutation: ";
         for (int q = 0; q < num_qubits; ++q) {
             std::cout << perm[q] << " ";
         }
         std::cout << std::endl;
+        
+        // Apply the permutation
         for (int i=0; i<out_entries.size(); ++i) {
             int old_row = std::get<0>(out_entries[i]);
             int old_col = std::get<1>(out_entries[i]);
@@ -393,6 +451,11 @@ private:
                           return std::get<1>(a) < std::get<1>(b);
                       }
                   });
+
+        std::cout << "Final gate matrix:" << std::endl;
+        for (const auto& entry : out_entries) {
+            std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
+        }
 
         // Form the matrix and return
         int full_size = 1 << num_qubits;
@@ -429,10 +492,8 @@ public:
                 return SparseMatrix({{1, 0},
                                      {0, -1}});
             case GateType::CNOT:
-                return SparseMatrix({{1, 0, 0, 0},
-                                     {0, 1, 0, 0},
-                                     {0, 0, 0, 1},
-                                     {0, 0, 1, 0}});
+                return SparseMatrix({{0, 1},
+                                     {1, 0}});
             default:
                 throw std::runtime_error("Unsupported gate type");
         }
