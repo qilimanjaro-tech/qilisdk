@@ -257,12 +257,33 @@ class _BearerAuth(httpx.Auth):
 class SpeQtrum:
     """Synchronous client for the Qilimanjaro SpeQtrum API."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        username: str | None = None,
+        apikey: str | None = None,
+    ) -> None:
+        """
+
+        Args:
+            username: SpeQtrum account user name. If ``None``, the value is read
+                from the environment.
+            apikey: SpeQtrum API key. If ``None``, the value is read from the
+                environment.
+
+        Raises:
+            RuntimeError: If the user credentials are not present in the environment and were not provided in this constructor.
+
+        Note:
+            The resulting tokens are stored securely in the OS keyring so that future
+            :class:`SpeQtrum` constructions require no explicit credentials.
+        """
         logger.debug("Initializing SpeQtrum client")
+        if username is not None or apikey is not None:
+            self.login(username=username, apikey=apikey)
         credentials = load_credentials()
         if credentials is None:
-            logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
-            raise RuntimeError("Missing credentials - invoke SpeQtrum.login() first.")
+            logger.error("No credentials found. Please provide the Username and Api key.")
+            raise RuntimeError("Missing credentials - Please provide the Username and Api key.")
         self.username, self.token = credentials
         logger.success("SpeQtrum client initialised for user '{}'", self.username)
 
@@ -282,9 +303,8 @@ class SpeQtrum:
             event_hooks={"response": [_ensure_ok]},
         )
 
-    @classmethod
     def login(
-        cls,
+        self,
         username: str | None = None,
         apikey: str | None = None,
     ) -> bool:
@@ -324,7 +344,7 @@ class SpeQtrum:
             encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(
                 base_url=settings.speqtrum_api_url,
-                headers=cls._get_headers(),
+                headers=self._get_headers(),
                 timeout=10.0,
                 event_hooks={"response": [_ensure_ok]},
             ) as client:

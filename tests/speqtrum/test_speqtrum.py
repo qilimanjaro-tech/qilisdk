@@ -348,21 +348,37 @@ def test_wait_for_job_times_out(monkeypatch):
 
 
 def test_login_success(monkeypatch):
-    """`login` returns True and stores the credentials on success."""
+    """Constructing with credentials logs in and stores them."""
     # replace the outbound HTTP client with a stub
     monkeypatch.setattr(
         speqtrum.httpx,
         "Client",
-        lambda **_: DummyClient(post_payload={"access_token": "abc", "expires_at": 0, "refresh_token": "r"}),
+        lambda **_: DummyClient(
+            post_payload={
+                "accessToken": "abc",
+                "expiresIn": 0,
+                "issuedAt": 0,
+                "refreshToken": "r",
+                "tokenType": "bearer",
+            }
+        ),
     )
 
     # spy on store_credentials so we can assert it was called
-    stored: list[tuple[str, object]] = []
+    stored: dict[str, object] = {}
 
     def fake_store(username: str, token):
-        stored.append((username, token))
+        stored["user"] = username
+        stored["token"] = token
+
+    # load from the captured store so __init__ can read cached creds
+    def fake_load_credentials():
+        if "user" not in stored:
+            return None
+        return stored["user"], stored["token"]
 
     monkeypatch.setattr(speqtrum, "store_credentials", fake_store)
+    monkeypatch.setattr(speqtrum, "load_credentials", fake_load_credentials)
 
     # any object with an __init__(**kwargs) works here - we never use the token later
     class FakeToken:
@@ -371,9 +387,12 @@ def test_login_success(monkeypatch):
 
     monkeypatch.setattr(speqtrum, "Token", FakeToken)
 
-    assert speqtrum.SpeQtrum.login("bob", "APIKEY") is True
-    assert stored
-    assert stored[0][0] == "bob"
+    client = speqtrum.SpeQtrum(username="bob", apikey="APIKEY")
+
+    assert stored["user"] == "bob"
+    assert isinstance(stored["token"], FakeToken)
+    assert client.username == "bob"
+    assert client.token is stored["token"]
 
 
 def test_login_requires_credentials(monkeypatch):
@@ -386,7 +405,9 @@ def test_login_requires_credentials(monkeypatch):
 
     monkeypatch.setattr(speqtrum, "get_settings", DummySettings)
 
-    assert speqtrum.SpeQtrum.login(username=None, apikey=None) is False
+    speqtrum.SpeQtrum.logout()
+    with pytest.raises(RuntimeError):
+        speqtrum.SpeQtrum(username=None, apikey=None)
 
 
 def test_logout_deletes_credentials(monkeypatch):

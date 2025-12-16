@@ -172,11 +172,8 @@ circuit.add(H(0))
 circuit.add(M(0))
 
 # Login to QaaSBackend with credentials (or use environment variables)
-# This only needs to be run once.
-SpeQtrum.login(username="YOUR_USERNAME", apikey="YOUR_APIKEY")
-
 # Instantiate QaaSBackend
-client = SpeQtrum()
+client = SpeQtrum(username="YOUR_USERNAME", apikey="YOUR_APIKEY")
 
 # Execute a pre-built circuit (see Digital Quantum Circuits section)
 # make sure to select the device (you can list available devices using ``client.list_devices()``)

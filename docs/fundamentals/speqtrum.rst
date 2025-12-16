@@ -17,25 +17,32 @@ SpeQtrum support is shipped as an optional dependency group. Install it alongsid
 Authentication
 --------------
 
-The API uses short-lived OAuth tokens that are cached in the system keyring. Call
-:meth:`SpeQtrum.login <qilisdk.speqtrum.speqtrum.SpeQtrum.login>` once and the credentials will be reused for subsequent
-sessions.
+SpeQtrum uses short-lived OAuth tokens that are cached in your system keyring and automatically refreshed while you
+use the client. Seed the cache once using whichever flow matches your setup:
+
+- Inline credentials during construction (logs in and builds the client in one step):
 
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
 
-    # Credentials can be provided explicitly…
-    logged_in = SpeQtrum.login(username="alice", apikey="MY_SECRET_KEY")
+    client = SpeQtrum(username="alice", apikey="MY_SECRET_KEY")
 
-    # …or read from the environment (QILISDK_SPEQTRUM_USERNAME / QILISDK_SPEQTRUM_APIKEY)
-    logged_in = SpeQtrum.login()
+- Environment-driven (set the variables, then call the constructor with no arguments to reuse the cached token):
 
-    if not logged_in:
-        raise RuntimeError("Authentication failed")
+.. code-block:: console
 
-    # Remove cached credentials when they are no longer needed
-    SpeQtrum.logout()
+    export QILISDK_SPEQTRUM_USERNAME=alice
+    export QILISDK_SPEQTRUM_APIKEY=MY_SECRET_KEY
+
+.. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum
+
+    client = SpeQtrum()     # later sessions reuse the cached token
+
+Client construction fails with ``RuntimeError`` if no cached credentials are found. Remove tokens from the keyring when
+they are no longer needed with :meth:`SpeQtrum.logout <qilisdk.speqtrum.speqtrum.SpeQtrum.logout>`.
 
 Client Construction
 -------------------
