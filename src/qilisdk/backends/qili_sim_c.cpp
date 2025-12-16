@@ -24,6 +24,9 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
 enum class GateType {
     H,
     X,
@@ -302,17 +305,17 @@ public:
 };
 
 // Identity matrix constant
-const SparseMatrix I = SparseMatrix({{1, 0}, {0, 1}});
+const SparseMatrix I({{1, 0}, {0, 1}});
 
 class Gate {
     /*
-    A quantum gate with type, control qubits, target qubits, and parameters.
+    A quantum gate with type, control qubits and target qubits.
     */
 private:
     GateType type;
+    SparseMatrix base_matrix;
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
-    std::vector<double> parameters;
 
     std::vector<std::tuple<int, int, std::complex<double>>> tensor_product(
         const std::vector<std::tuple<int, int, std::complex<double>>>& A,
@@ -485,90 +488,13 @@ private:
 public:
 
     // Constructor
-    Gate(const GateType& type_,
+    Gate(const SparseMatrix& base_matrix_,
          const std::vector<int>& controls_,
-         const std::vector<int>& targets_,
-         const std::vector<double>& params_)
-        : type(type_), control_qubits(controls_), target_qubits(targets_), parameters(params_) {}
-
-    SparseMatrix get_base_matrix() const {
-        /*
-        Get the base matrix representation of the gate.
-        Returns:
-            SparseMatrix: The base matrix representation of the gate.
-        */
-        double theta = 0.0;
-        double phi = 0.0;
-        double gamma = 0.0;
-        double cos_half = 0.0;
-        double sin_half = 0.0;
-        double scale = 0.0;
-        switch (type) {
-            case GateType::H:
-                return SparseMatrix({{1 / std::sqrt(2), 1 / std::sqrt(2)},
-                                     {1 / std::sqrt(2), -1 / std::sqrt(2)}});
-            case GateType::X:
-                return SparseMatrix({{0, 1},
-                                     {1, 0}});
-            case GateType::Y:
-                return SparseMatrix({{0, std::complex<double>(0, -1)},
-                                     {std::complex<double>(0, 1), 0}});
-            case GateType::Z:
-                return SparseMatrix({{1, 0},
-                                     {0, -1}});
-            case GateType::CNOT:
-                return SparseMatrix({{0, 1},
-                                     {1, 0}});
-            case GateType::RX:
-                theta = parameters[0];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, std::complex<double>(0, -sin_half)},
-                                     {std::complex<double>(0, -sin_half), cos_half}});
-            case GateType::RY:
-                theta = parameters[0];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, -sin_half},
-                                     {sin_half, cos_half}});
-            case GateType::RZ:
-                phi = parameters[0];
-                return SparseMatrix({{std::exp(std::complex<double>(0, -phi / 2)), 0},
-                                     {0, std::exp(std::complex<double>(0, phi / 2))}});
-            case GateType::U1:
-                phi = parameters[0];
-                return SparseMatrix({{1, 0},
-                                     {0, std::exp(std::complex<double>(0, phi))}});
-            case GateType::U2:
-                phi = parameters[0];
-                gamma = parameters[1];
-                scale = 1 / std::sqrt(2);
-                return SparseMatrix({{scale, -scale * std::exp(std::complex<double>(0, gamma))},
-                                     {scale * std::exp(std::complex<double>(0, phi)), scale * std::exp(std::complex<double>(0, phi + gamma))}});
-            case GateType::U3:
-                theta = parameters[0];
-                phi = parameters[1];
-                gamma = parameters[2];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, -std::exp(std::complex<double>(0, gamma)) * sin_half},
-                                     {std::exp(std::complex<double>(0, phi)) * sin_half, std::exp(std::complex<double>(0, phi + gamma)) * cos_half}});
-            case GateType::M:
-                return SparseMatrix({{1, 0},
-                                     {0, 1}});
-            default:
-                throw std::runtime_error("Unsupported gate type: " + std::to_string(static_cast<int>(type)));
-        }
+         const std::vector<int>& targets_) {
+        control_qubits = controls_;
+        target_qubits = targets_;
+        base_matrix = base_matrix_;
     }
-
-    size_t size() const {
-        /*
-        Get the size of the base gate matrix.
-        Returns:
-            int: The size of the base gate matrix.
-        */
-        return get_base_matrix().size();
-    }   
 
     SparseMatrix get_full_matrix(int num_qubits) const {
         /*
@@ -578,87 +504,80 @@ public:
         Returns:
             SparseMatrix: The full matrix representation of the gate.
         */
-        SparseMatrix base_gate = get_base_matrix();
-        SparseMatrix full_gate = base_to_full(base_gate, num_qubits, control_qubits, target_qubits);
+        SparseMatrix full_gate = base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
         return full_gate;
     }
 };
 
-class QiliSim {
+py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
+py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
+py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
+py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+
+using namespace pybind11::literals;
+
+class QiliSimC {
 public:
-    void execute_sampling(const char* functional_string) {
+    py::object execute_sampling(py::object functional) {
 
-        // Basic circuit info
-        std::istringstream iss(functional_string);
-        iss >> nshots_;
-        iss >> nqubits_;
-        int ngates;
-        iss >> ngates;
-        
-        // Fill the circuit
-        circuit_.clear();
-        for (int i = 0; i < ngates; ++i) {
-            
-            // Gate name / type
-            std::string gate_name;
-            iss >> gate_name;
-            GateType gate_type = GateType::UNKNOWN;
-            while (gate_name != "CNOT" && gate_name.size() > 1 && gate_name[0] == 'C') {
-                gate_name = gate_name.substr(1);
-            }
-            if (gate_name == "H") gate_type = GateType::H;
-            else if (gate_name == "X") gate_type = GateType::X;
-            else if (gate_name == "Y") gate_type = GateType::Y;
-            else if (gate_name == "Z") gate_type = GateType::Z;
-            else if (gate_name == "RX") gate_type = GateType::RX;
-            else if (gate_name == "RY") gate_type = GateType::RY;
-            else if (gate_name == "RZ") gate_type = GateType::RZ;
-            else if (gate_name == "U1") gate_type = GateType::U1;
-            else if (gate_name == "U2") gate_type = GateType::U2;
-            else if (gate_name == "U3") gate_type = GateType::U3;
-            else if (gate_name == "M") gate_type = GateType::M;
-            else if (gate_name == "CNOT") gate_type = GateType::CNOT;
-            else throw std::runtime_error("Unknown gate name: " + gate_name);
+        // Get info from the functional
+        int n_shots = functional.attr("nshots").cast<int>();
+        int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
 
-            // Gate info
-            int n_controls, n_targets, n_params;
-            iss >> n_controls >> n_targets >> n_params;
+        // Get the gates
+        py::list py_gates = functional.attr("circuit").attr("gates");
+        std::vector<Gate> gates;
+        for (auto py_gate : py_gates) {
+            
+            // Get the name
+            std::string gate_type_str = py_gate.attr("name").cast<std::string>();
+            
+            // Get the matrix
+            py::buffer matrix = py_gate.attr("_generate_matrix")();
+            py::buffer_info buf = matrix.request();
+            int rows = buf.shape[0];
+            int cols = buf.shape[1];
+            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+            std::vector<std::vector<std::complex<double>>> dense_matrix(rows, std::vector<std::complex<double>>(cols, 0.0));
+            for (int r = 0; r < rows; ++r) {
+                for (int c = 0; c < cols; ++c) {
+                    dense_matrix[r][c] = ptr[r * cols + c];
+                }
+            }
+            SparseMatrix base_matrix(dense_matrix);
+            if (gate_type_str == "CNOT") {
+                base_matrix = SparseMatrix({{0, 1},
+                                            {1, 0}});
+            }
 
-            // Controls
-            std::vector<int> controls(n_controls);
-            for (int j = 0; j < n_controls; ++j) {
-                iss >> controls[j];
+            // Get the controls
+            std::vector<int> controls;
+            py::list py_controls = py_gate.attr("control_qubits");
+            for (auto py_control : py_controls) {
+                controls.push_back(py_control.cast<int>());
             }
             
-            // Targets
-            std::vector<int> targets(n_targets);
-            for (int j = 0; j < n_targets; ++j) {
-                iss >> targets[j];
+            // Get the targets
+            std::vector<int> targets;
+            py::list py_targets = py_gate.attr("target_qubits");
+            for (auto py_target : py_targets) {
+                targets.push_back(py_target.cast<int>());
             }
-            
-            // Parameters
-            std::vector<double> params(n_params);
-            for (int j = 0; j < n_params; ++j) {
-                iss >> params[j];
-            }
-            
-            // Add the gate to the circuit
-            circuit_.emplace_back(gate_type, controls, targets, params);
+
+            // Add the gate
+            gates.emplace_back(base_matrix, controls, targets);
 
         }
 
         // Start with the zero state
-        int mat_size = 1 << nqubits_;
-        SparseMatrix state({std::make_tuple(0, 0, 1.0)}, mat_size, 1);
+        int dim = 1 << n_qubits;
+        std::vector<std::tuple<int, int, std::complex<double>>> state_entries = {{0, 0, 1.0}};
+        SparseMatrix state(state_entries, dim, dim);
 
-        // Apply each gate in the circuit
-        for (const auto& gate : circuit_) {
-            SparseMatrix gate_matrix = gate.get_full_matrix(nqubits_);
+        // Apply each gate
+        for (const auto& gate : gates) {
+            SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
             state = gate_matrix * state;
-            // std::cout << "State after:" << std::endl;
-            // for (const auto& entry : state.to_tuples()) {
-            //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
-            // }
         }
 
         // Get the probabilities
@@ -686,7 +605,7 @@ public:
         std::string current_bitstring = "";
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
-        for (int shot = 0; shot < nshots_; ++shot) {
+        for (int shot = 0; shot < n_shots; ++shot) {
             double random_value = distribution(generator);
             double cumulative_prob = 0.0;
             for (const auto& entry : prob_entries) {
@@ -696,7 +615,7 @@ public:
                 if (random_value <= cumulative_prob) {
                     if (binary_strings.find(state_index) == binary_strings.end()) {
                         std::string bitstring = "";
-                        for (int b = nqubits_ - 1; b >= 0; --b) {
+                        for (int b = n_qubits - 1; b >= 0; --b) {
                             bitstring += ((state_index >> b) & 1) ? '1' : '0';
                         }
                         binary_strings[state_index] = bitstring;
@@ -707,65 +626,20 @@ public:
             }
         }
 
-        // Convert the shots to a result string
-        std::ostringstream oss;
-        oss << counts.size();
-        oss << " " << nshots_;
+        // Convert counts to samples dict
+        py::dict samples;
         for (const auto& pair : counts) {
-            oss << " " << pair.first << " " << pair.second;
+            samples[py::cast(pair.first)] = py::cast(pair.second);
         }
-        result_ = oss.str();
+
+        return SamplingResult("nshots"_a=n_shots, "samples"_a=samples);
 
     }
 
-    void execute_time_evolution(const char* functional_string) {
-        result_ = std::string(functional_string) + "_time_evolved";
-    }
-
-    size_t get_result_size() const {
-        return result_.size() + 1; // include null terminator
-    }
-
-    void get_result(char* out) const {
-        memcpy(out, result_.c_str(), result_.size() + 1);
-    }
-
-private:
-    std::string result_;
-    int nshots_;
-    int nqubits_;
-    std::vector<Gate> circuit_;
 };
 
-
-extern "C" {
-
-    QiliSim* qilisim_create() {
-        return new QiliSim();
-    }
-
-    void qilisim_free(QiliSim* s) {
-        if (s == nullptr) {
-            return;
-        }
-        delete s;
-    }
-
-    void qilisim_execute_sampling(QiliSim* s, const char* functional_string) {
-        s->execute_sampling(functional_string);
-    }
-
-    void qilisim_execute_time_evolution(QiliSim* s, const char* functional_string) {
-        s->execute_time_evolution(functional_string);
-    }
-
-    size_t qilisim_get_return_size(QiliSim* s) {
-        return s->get_result_size();
-    }
-
-    void qilisim_get_return_buffer(QiliSim* s, char* buffer) {
-        s->get_result(buffer);
-    }
-
+PYBIND11_MODULE(qili_sim_c, m) {
+    py::class_<QiliSimC>(m, "QiliSimC")
+        .def(py::init<>())
+        .def("execute_sampling", &QiliSimC::execute_sampling);
 }
-
