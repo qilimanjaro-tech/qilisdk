@@ -305,17 +305,17 @@ public:
 };
 
 // Identity matrix constant
-const SparseMatrix I = SparseMatrix({{1, 0}, {0, 1}});
+const SparseMatrix I({{1, 0}, {0, 1}});
 
 class Gate {
     /*
-    A quantum gate with type, control qubits, target qubits, and parameters.
+    A quantum gate with type, control qubits and target qubits.
     */
 private:
     GateType type;
+    SparseMatrix base_matrix;
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
-    std::vector<double> parameters;
 
     std::vector<std::tuple<int, int, std::complex<double>>> tensor_product(
         const std::vector<std::tuple<int, int, std::complex<double>>>& A,
@@ -488,90 +488,13 @@ private:
 public:
 
     // Constructor
-    Gate(const GateType& type_,
+    Gate(const SparseMatrix& base_matrix_,
          const std::vector<int>& controls_,
-         const std::vector<int>& targets_,
-         const std::vector<double>& params_)
-        : type(type_), control_qubits(controls_), target_qubits(targets_), parameters(params_) {}
-
-    SparseMatrix get_base_matrix() const {
-        /*
-        Get the base matrix representation of the gate.
-        Returns:
-            SparseMatrix: The base matrix representation of the gate.
-        */
-        double theta = 0.0;
-        double phi = 0.0;
-        double gamma = 0.0;
-        double cos_half = 0.0;
-        double sin_half = 0.0;
-        double scale = 0.0;
-        switch (type) {
-            case GateType::H:
-                return SparseMatrix({{1 / std::sqrt(2), 1 / std::sqrt(2)},
-                                     {1 / std::sqrt(2), -1 / std::sqrt(2)}});
-            case GateType::X:
-                return SparseMatrix({{0, 1},
-                                     {1, 0}});
-            case GateType::Y:
-                return SparseMatrix({{0, std::complex<double>(0, -1)},
-                                     {std::complex<double>(0, 1), 0}});
-            case GateType::Z:
-                return SparseMatrix({{1, 0},
-                                     {0, -1}});
-            case GateType::CNOT:
-                return SparseMatrix({{0, 1},
-                                     {1, 0}});
-            case GateType::RX:
-                theta = parameters[0];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, std::complex<double>(0, -sin_half)},
-                                     {std::complex<double>(0, -sin_half), cos_half}});
-            case GateType::RY:
-                theta = parameters[0];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, -sin_half},
-                                     {sin_half, cos_half}});
-            case GateType::RZ:
-                phi = parameters[0];
-                return SparseMatrix({{std::exp(std::complex<double>(0, -phi / 2)), 0},
-                                     {0, std::exp(std::complex<double>(0, phi / 2))}});
-            case GateType::U1:
-                phi = parameters[0];
-                return SparseMatrix({{1, 0},
-                                     {0, std::exp(std::complex<double>(0, phi))}});
-            case GateType::U2:
-                phi = parameters[0];
-                gamma = parameters[1];
-                scale = 1 / std::sqrt(2);
-                return SparseMatrix({{scale, -scale * std::exp(std::complex<double>(0, gamma))},
-                                     {scale * std::exp(std::complex<double>(0, phi)), scale * std::exp(std::complex<double>(0, phi + gamma))}});
-            case GateType::U3:
-                theta = parameters[0];
-                phi = parameters[1];
-                gamma = parameters[2];
-                cos_half = std::cos(theta / 2);
-                sin_half = std::sin(theta / 2);
-                return SparseMatrix({{cos_half, -std::exp(std::complex<double>(0, gamma)) * sin_half},
-                                     {std::exp(std::complex<double>(0, phi)) * sin_half, std::exp(std::complex<double>(0, phi + gamma)) * cos_half}});
-            case GateType::M:
-                return SparseMatrix({{1, 0},
-                                     {0, 1}});
-            default:
-                throw std::runtime_error("Unsupported gate type: " + std::to_string(static_cast<int>(type)));
-        }
+         const std::vector<int>& targets_) {
+        control_qubits = controls_;
+        target_qubits = targets_;
+        base_matrix = base_matrix_;
     }
-
-    size_t size() const {
-        /*
-        Get the size of the base gate matrix.
-        Returns:
-            int: The size of the base gate matrix.
-        */
-        return get_base_matrix().size();
-    }   
 
     SparseMatrix get_full_matrix(int num_qubits) const {
         /*
@@ -581,8 +504,7 @@ public:
         Returns:
             SparseMatrix: The full matrix representation of the gate.
         */
-        SparseMatrix base_gate = get_base_matrix();
-        SparseMatrix full_gate = base_to_full(base_gate, num_qubits, control_qubits, target_qubits);
+        SparseMatrix full_gate = base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
         return full_gate;
     }
 };
@@ -606,43 +528,45 @@ public:
         py::list py_gates = functional.attr("circuit").attr("gates");
         std::vector<Gate> gates;
         for (auto py_gate : py_gates) {
+            
+            // Get the name
             std::string gate_type_str = py_gate.attr("name").cast<std::string>();
-            GateType gate_type;
-            if (gate_type_str == "H") {
-                gate_type = GateType::H;
-            } else if (gate_type_str == "X") {
-                gate_type = GateType::X;
-            } else if (gate_type_str == "Y") {
-                gate_type = GateType::Y;
-            } else if (gate_type_str == "Z") {
-                gate_type = GateType::Z;
-            } else if (gate_type_str == "RX") {
-                gate_type = GateType::RX;
-            } else if (gate_type_str == "RY") {
-                gate_type = GateType::RY;
-            } else if (gate_type_str == "RZ") {
-                gate_type = GateType::RZ;
-            } else if (gate_type_str == "CNOT") {
-                gate_type = GateType::CNOT;
-            } else {
-                gate_type = GateType::UNKNOWN;
+            
+            // Get the matrix
+            py::buffer matrix = py_gate.attr("_generate_matrix")();
+            py::buffer_info buf = matrix.request();
+            int rows = buf.shape[0];
+            int cols = buf.shape[1];
+            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+            std::vector<std::vector<std::complex<double>>> dense_matrix(rows, std::vector<std::complex<double>>(cols, 0.0));
+            for (int r = 0; r < rows; ++r) {
+                for (int c = 0; c < cols; ++c) {
+                    dense_matrix[r][c] = ptr[r * cols + c];
+                }
             }
+            SparseMatrix base_matrix(dense_matrix);
+            if (gate_type_str == "CNOT") {
+                base_matrix = SparseMatrix({{0, 1},
+                                            {1, 0}});
+            }
+
+            // Get the controls
             std::vector<int> controls;
             py::list py_controls = py_gate.attr("control_qubits");
             for (auto py_control : py_controls) {
                 controls.push_back(py_control.cast<int>());
             }
+            
+            // Get the targets
             std::vector<int> targets;
             py::list py_targets = py_gate.attr("target_qubits");
             for (auto py_target : py_targets) {
                 targets.push_back(py_target.cast<int>());
             }
-            std::vector<double> params;
-            py::list py_params = py_gate.attr("parameters");
-            for (auto py_param : py_params) {
-                params.push_back(py_param.cast<double>());
-            }
-            gates.emplace_back(gate_type, controls, targets, params);
+
+            // Add the gate
+            gates.emplace_back(base_matrix, controls, targets);
+
         }
 
         // Start with the zero state
