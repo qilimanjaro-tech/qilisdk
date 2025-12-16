@@ -24,6 +24,9 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
 enum class GateType {
     H,
     X,
@@ -584,81 +587,73 @@ public:
     }
 };
 
-class QiliSim {
+py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
+py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
+py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
+py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+
+using namespace pybind11::literals;
+
+class QiliSimPybindC {
 public:
-    void execute_sampling(const char* functional_string) {
+    py::object execute_sampling(py::object functional) {
 
-        // Basic circuit info
-        std::istringstream iss(functional_string);
-        iss >> nshots_;
-        iss >> nqubits_;
-        int ngates;
-        iss >> ngates;
-        
-        // Fill the circuit
-        circuit_.clear();
-        for (int i = 0; i < ngates; ++i) {
-            
-            // Gate name / type
-            std::string gate_name;
-            iss >> gate_name;
-            GateType gate_type = GateType::UNKNOWN;
-            while (gate_name != "CNOT" && gate_name.size() > 1 && gate_name[0] == 'C') {
-                gate_name = gate_name.substr(1);
-            }
-            if (gate_name == "H") gate_type = GateType::H;
-            else if (gate_name == "X") gate_type = GateType::X;
-            else if (gate_name == "Y") gate_type = GateType::Y;
-            else if (gate_name == "Z") gate_type = GateType::Z;
-            else if (gate_name == "RX") gate_type = GateType::RX;
-            else if (gate_name == "RY") gate_type = GateType::RY;
-            else if (gate_name == "RZ") gate_type = GateType::RZ;
-            else if (gate_name == "U1") gate_type = GateType::U1;
-            else if (gate_name == "U2") gate_type = GateType::U2;
-            else if (gate_name == "U3") gate_type = GateType::U3;
-            else if (gate_name == "M") gate_type = GateType::M;
-            else if (gate_name == "CNOT") gate_type = GateType::CNOT;
-            else throw std::runtime_error("Unknown gate name: " + gate_name);
+        // Get info from the functional
+        int n_shots = functional.attr("nshots").cast<int>();
+        int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
 
-            // Gate info
-            int n_controls, n_targets, n_params;
-            iss >> n_controls >> n_targets >> n_params;
-
-            // Controls
-            std::vector<int> controls(n_controls);
-            for (int j = 0; j < n_controls; ++j) {
-                iss >> controls[j];
+        // Get the gates
+        py::list py_gates = functional.attr("circuit").attr("gates");
+        std::vector<Gate> gates;
+        for (auto py_gate : py_gates) {
+            std::string gate_type_str = py_gate.attr("name").cast<std::string>();
+            GateType gate_type;
+            if (gate_type_str == "H") {
+                gate_type = GateType::H;
+            } else if (gate_type_str == "X") {
+                gate_type = GateType::X;
+            } else if (gate_type_str == "Y") {
+                gate_type = GateType::Y;
+            } else if (gate_type_str == "Z") {
+                gate_type = GateType::Z;
+            } else if (gate_type_str == "RX") {
+                gate_type = GateType::RX;
+            } else if (gate_type_str == "RY") {
+                gate_type = GateType::RY;
+            } else if (gate_type_str == "RZ") {
+                gate_type = GateType::RZ;
+            } else if (gate_type_str == "CNOT") {
+                gate_type = GateType::CNOT;
+            } else {
+                gate_type = GateType::UNKNOWN;
             }
-            
-            // Targets
-            std::vector<int> targets(n_targets);
-            for (int j = 0; j < n_targets; ++j) {
-                iss >> targets[j];
+            std::vector<int> controls;
+            py::list py_controls = py_gate.attr("control_qubits");
+            for (auto py_control : py_controls) {
+                controls.push_back(py_control.cast<int>());
             }
-            
-            // Parameters
-            std::vector<double> params(n_params);
-            for (int j = 0; j < n_params; ++j) {
-                iss >> params[j];
+            std::vector<int> targets;
+            py::list py_targets = py_gate.attr("target_qubits");
+            for (auto py_target : py_targets) {
+                targets.push_back(py_target.cast<int>());
             }
-            
-            // Add the gate to the circuit
-            circuit_.emplace_back(gate_type, controls, targets, params);
-
+            std::vector<double> params;
+            py::list py_params = py_gate.attr("parameters");
+            for (auto py_param : py_params) {
+                params.push_back(py_param.cast<double>());
+            }
+            gates.emplace_back(gate_type, controls, targets, params);
         }
 
         // Start with the zero state
-        int mat_size = 1 << nqubits_;
-        SparseMatrix state({std::make_tuple(0, 0, 1.0)}, mat_size, 1);
+        int dim = 1 << n_qubits;
+        std::vector<std::tuple<int, int, std::complex<double>>> state_entries = {{0, 0, 1.0}};
+        SparseMatrix state(state_entries, dim, dim);
 
-        // Apply each gate in the circuit
-        for (const auto& gate : circuit_) {
-            SparseMatrix gate_matrix = gate.get_full_matrix(nqubits_);
+        // Apply each gate
+        for (const auto& gate : gates) {
+            SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
             state = gate_matrix * state;
-            // std::cout << "State after:" << std::endl;
-            // for (const auto& entry : state.to_tuples()) {
-            //     std::cout << "(" << std::get<0>(entry) << ", " << std::get<1>(entry) << ") = " << std::get<2>(entry) << std::endl;
-            // }
         }
 
         // Get the probabilities
@@ -686,7 +681,7 @@ public:
         std::string current_bitstring = "";
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
-        for (int shot = 0; shot < nshots_; ++shot) {
+        for (int shot = 0; shot < n_shots; ++shot) {
             double random_value = distribution(generator);
             double cumulative_prob = 0.0;
             for (const auto& entry : prob_entries) {
@@ -696,7 +691,7 @@ public:
                 if (random_value <= cumulative_prob) {
                     if (binary_strings.find(state_index) == binary_strings.end()) {
                         std::string bitstring = "";
-                        for (int b = nqubits_ - 1; b >= 0; --b) {
+                        for (int b = n_qubits - 1; b >= 0; --b) {
                             bitstring += ((state_index >> b) & 1) ? '1' : '0';
                         }
                         binary_strings[state_index] = bitstring;
@@ -707,65 +702,20 @@ public:
             }
         }
 
-        // Convert the shots to a result string
-        std::ostringstream oss;
-        oss << counts.size();
-        oss << " " << nshots_;
+        // Convert counts to samples dict
+        py::dict samples;
         for (const auto& pair : counts) {
-            oss << " " << pair.first << " " << pair.second;
+            samples[py::cast(pair.first)] = py::cast(pair.second);
         }
-        result_ = oss.str();
+
+        return SamplingResult("nshots"_a=n_shots, "samples"_a=samples);
 
     }
 
-    void execute_time_evolution(const char* functional_string) {
-        result_ = std::string(functional_string) + "_time_evolved";
-    }
-
-    size_t get_result_size() const {
-        return result_.size() + 1; // include null terminator
-    }
-
-    void get_result(char* out) const {
-        memcpy(out, result_.c_str(), result_.size() + 1);
-    }
-
-private:
-    std::string result_;
-    int nshots_;
-    int nqubits_;
-    std::vector<Gate> circuit_;
 };
 
-
-extern "C" {
-
-    QiliSim* qilisim_create() {
-        return new QiliSim();
-    }
-
-    void qilisim_free(QiliSim* s) {
-        if (s == nullptr) {
-            return;
-        }
-        delete s;
-    }
-
-    void qilisim_execute_sampling(QiliSim* s, const char* functional_string) {
-        s->execute_sampling(functional_string);
-    }
-
-    void qilisim_execute_time_evolution(QiliSim* s, const char* functional_string) {
-        s->execute_time_evolution(functional_string);
-    }
-
-    size_t qilisim_get_return_size(QiliSim* s) {
-        return s->get_result_size();
-    }
-
-    void qilisim_get_return_buffer(QiliSim* s, char* buffer) {
-        s->get_result(buffer);
-    }
-
+PYBIND11_MODULE(qili_sim_pybind, m) {
+    py::class_<QiliSimPybindC>(m, "QiliSimPybindC")
+        .def(py::init<>())
+        .def("execute_sampling", &QiliSimPybindC::execute_sampling);
 }
-

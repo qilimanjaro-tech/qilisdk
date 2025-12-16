@@ -21,6 +21,8 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 
+from qilisdk.backends.qili_sim_pybind import QiliSimPybindC
+
 class QiliSimCpp(Backend):
     """
     Backend based that runs both digital-circuit sampling and analog
@@ -190,3 +192,29 @@ class QiliSimCpp(Backend):
             TimeEvolutionResult: The converted TimeEvolutionResult object.
         """
         return TimeEvolutionResult()
+
+class QiliSimPybind(Backend):
+    """
+    Backend based that runs both digital-circuit sampling and analog
+    time-evolution experiments using a custom c++ simulator.
+    """
+
+    def __init__(self) -> None:
+        """
+        Instantiate a new :class:`QiliSim` backend.
+        """
+        super().__init__()
+        self.qili_sim = QiliSimPybindC()
+
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+        """
+        Execute a quantum circuit and return the measurement results.
+
+        Args:
+            functional (Sampling): The Sampling function to execute.
+
+        Returns:
+            SamplingResult: A result object containing the measurement samples and computed probabilities.
+
+        """
+        return self.qili_sim.execute_sampling(functional)

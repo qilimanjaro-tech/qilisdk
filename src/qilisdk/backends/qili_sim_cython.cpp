@@ -4,6 +4,9 @@
 {
     "distutils": {
         "depends": [],
+        "extra_compile_args": [
+            "-g"
+        ],
         "language": "c++",
         "name": "qilisdk.backends.qili_sim_cython",
         "sources": [
@@ -1166,6 +1169,7 @@ static int __Pyx_init_co_variables(void) {
 #include <string.h>
 #include <string_view>
 #include <string>
+#include <complex>
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -1595,8 +1599,38 @@ static CYTHON_INLINE __pyx_t_double_complex __pyx_t_double_complex_from_parts(do
 
 /*--- Type declarations ---*/
 struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
+struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate;
+struct __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex;
+typedef struct __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex;
+struct __pyx_ctuple_int__and_double;
+typedef struct __pyx_ctuple_int__and_double __pyx_ctuple_int__and_double;
 
-/* "qilisdk/backends/qili_sim_cython.pyx":35
+/* "qilisdk/backends/qili_sim_cython.pyx":82
+ *             mat.rows_[r] += mat.rows_[r - 1]
+ * 
+ *     cdef SparseMatrix from_tuples(self, vector[tuple[int, int, complex]] entries, int nrows, int ncols):             # <<<<<<<<<<<<<<
+ *         """
+ *         Construct a sparse matrix from a list of (row, col, value) tuples.
+*/
+struct __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex {
+  int f0;
+  int f1;
+  __pyx_t_double_complex f2;
+};
+
+/* "qilisdk/backends/qili_sim_cython.pyx":508
+ *         # Get the probabilities
+ *         cdef vector[tuple[int, int, double complex]] amplitude_entries = state.to_tuples()
+ *         cdef vector[tuple[int, double]] prob_entries             # <<<<<<<<<<<<<<
+ *         cdef double total_prob = 0.0
+ *         cdef int row
+*/
+struct __pyx_ctuple_int__and_double {
+  int f0;
+  double f1;
+};
+
+/* "qilisdk/backends/qili_sim_cython.pyx":46
  * cdef double atol_ = 1e-12  # tolerance for treating values as zero
  * 
  * cdef class SparseMatrix:             # <<<<<<<<<<<<<<
@@ -1614,18 +1648,62 @@ struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix {
 };
 
 
+/* "qilisdk/backends/qili_sim_cython.pyx":186
+ *                                               [0, 1]])
+ * 
+ * cdef class Gate:             # <<<<<<<<<<<<<<
+ *     """
+ *     A quantum gate with type, control qubits, target qubits, and parameters.
+*/
+struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate {
+  PyObject_HEAD
+  struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_vtab;
+  std::string gate_type;
+  std::vector<int>  control_qubits;
+  std::vector<int>  target_qubits;
+  std::vector<double>  parameters;
+};
+
+
+
+/* "qilisdk/backends/qili_sim_cython.pyx":46
+ * cdef double atol_ = 1e-12  # tolerance for treating values as zero
+ * 
+ * cdef class SparseMatrix:             # <<<<<<<<<<<<<<
+ *     """
+ *     A simple sparse matrix representation using compressed sparse row (CSR) format.
+*/
 
 struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix {
-  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*from_dense)(std::vector<std::vector<__pyx_t_double_complex> > );
-  PyObject *(*from_tuples)(PyObject *, int, int);
-  PyObject *(*to_tuples)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*from_tuples)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , int, int);
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  (*to_tuples)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
   int (*get_width)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
-  PyObject *(*get)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int);
+  __pyx_t_double_complex (*get)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int);
   PyObject *(*insert)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int, __pyx_t_double_complex);
-  PyObject *(*get_dims)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
-  PyObject *(*mul_cpp)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
+  std::string (*get_dims)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*mul)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *);
 };
 static struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
+
+
+/* "qilisdk/backends/qili_sim_cython.pyx":186
+ *                                               [0, 1]])
+ * 
+ * cdef class Gate:             # <<<<<<<<<<<<<<
+ *     """
+ *     A quantum gate with type, control qubits, target qubits, and parameters.
+*/
+
+struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate {
+  PyObject *(*Gate)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, std::string, std::vector<int> , std::vector<int> , std::vector<double> );
+  PyObject *(*tensor_product)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , int, int);
+  int (*permute_bits)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, int, std::vector<int> );
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*base_to_full)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, std::vector<int> , std::vector<int> );
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*get_base_matrix)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *);
+  int (*size)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *);
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*get_full_matrix)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, int);
+};
+static struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_Gate;
 /* #### Code section: utility_code_proto ### */
 
 /* --- Runtime support code (head) --- */
@@ -1979,28 +2057,6 @@ static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
   #define __PYX_STD_MOVE_IF_SUPPORTED(x) x
 #endif
 
-/* GetItemInt.proto */
-#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck, unsafe_shared) :\
-    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
-               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
-#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck, unsafe_shared) :\
-    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck, int unsafe_shared);
-#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck, unsafe_shared) :\
-    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck, int unsafe_shared);
-static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
-                                                     int is_list, int wraparound, int boundscheck, int unsafe_shared);
-
 /* PyRuntimeError_Check.proto */
 #define __Pyx_PyExc_RuntimeError_Check(obj)  __Pyx_TypeCheck(obj, PyExc_RuntimeError)
 
@@ -2074,21 +2130,14 @@ static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count,
         PyObject_Format(s, f))
 #endif
 
-/* ExtTypeTest.proto */
-static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type);
-
 /* RejectKeywords.export */
 static void __Pyx_RejectKeywords(const char* function_name, PyObject *kwds);
 
 /* PyTypeError_Check.proto */
 #define __Pyx_PyExc_TypeError_Check(obj)  __Pyx_TypeCheck(obj, PyExc_TypeError)
 
-/* PyObjectFastCallMethod.proto */
-#if CYTHON_VECTORCALL && PY_VERSION_HEX >= 0x03090000
-#define __Pyx_PyObject_FastCallMethod(name, args, nargsf) PyObject_VectorcallMethod(name, args, nargsf, NULL)
-#else
-static PyObject *__Pyx_PyObject_FastCallMethod(PyObject *name, PyObject *const *args, size_t nargsf);
-#endif
+/* RaiseUnexpectedTypeError.proto */
+static int __Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj);
 
 /* PyDictVersioning.proto (used by GetModuleGlobalName) */
 #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
@@ -2137,6 +2186,32 @@ static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_ve
 static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name);
 #endif
 
+/* PyObjectFastCallMethod.proto */
+#if CYTHON_VECTORCALL && PY_VERSION_HEX >= 0x03090000
+#define __Pyx_PyObject_FastCallMethod(name, args, nargsf) PyObject_VectorcallMethod(name, args, nargsf, NULL)
+#else
+static PyObject *__Pyx_PyObject_FastCallMethod(PyObject *name, PyObject *const *args, size_t nargsf);
+#endif
+
+/* GetAttr3.proto */
+static CYTHON_INLINE PyObject *__Pyx_GetAttr3(PyObject *, PyObject *, PyObject *);
+
+/* ExtTypeTest.proto */
+static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type);
+
+/* HasAttr.proto (used by ImportImpl) */
+#if __PYX_LIMITED_VERSION_HEX >= 0x030d0000
+#define __Pyx_HasAttr(o, n)  PyObject_HasAttrWithError(o, n)
+#else
+static CYTHON_INLINE int __Pyx_HasAttr(PyObject *, PyObject *);
+#endif
+
+/* ImportImpl.export */
+static PyObject *__Pyx__Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, PyObject *moddict, int level);
+
+/* Import.proto */
+static CYTHON_INLINE PyObject *__Pyx_Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, int level);
+
 /* PyObjectVectorCallKwBuilder.proto */
 CYTHON_UNUSED static int __Pyx_VectorcallBuilder_AddArg_Check(PyObject *key, PyObject *value, PyObject *builder, PyObject **args, int n);
 #if CYTHON_VECTORCALL
@@ -2154,6 +2229,36 @@ static int __Pyx_VectorcallBuilder_AddArgStr(const char *key, PyObject *value, P
 #define __Pyx_VectorcallBuilder_AddArg(key, value, builder, args, n) PyDict_SetItem(builder, key, value)
 #define __Pyx_VectorcallBuilder_AddArgStr(key, value, builder, args, n) PyDict_SetItemString(builder, key, value)
 #endif
+
+/* ArgTypeTestFunc.export */
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
+
+/* ArgTypeTest.proto */
+#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
+    ((likely(__Pyx_IS_TYPE(obj, type) | (none_allowed && (obj == Py_None)))) ? 1 :\
+        __Pyx__ArgTypeTest(obj, type, name, exact))
+
+/* GetItemInt.proto */
+#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck, unsafe_shared) :\
+    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
+               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
+#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck, unsafe_shared) :\
+    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck, int unsafe_shared);
+#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil, unsafe_shared)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck, unsafe_shared) :\
+    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck, int unsafe_shared);
+static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
+                                                     int is_list, int wraparound, int boundscheck, int unsafe_shared);
 
 /* AllocateExtensionType.proto */
 static PyObject *__Pyx_AllocateExtensionType(PyTypeObject *t, int is_final);
@@ -2211,19 +2316,6 @@ static int __Pyx__DelItemOnTypeDict(PyTypeObject *tp, PyObject *k);
 
 /* SetupReduce.proto */
 static int __Pyx_setup_reduce(PyObject* type_obj);
-
-/* HasAttr.proto (used by ImportImpl) */
-#if __PYX_LIMITED_VERSION_HEX >= 0x030d0000
-#define __Pyx_HasAttr(o, n)  PyObject_HasAttrWithError(o, n)
-#else
-static CYTHON_INLINE int __Pyx_HasAttr(PyObject *, PyObject *);
-#endif
-
-/* ImportImpl.export */
-static PyObject *__Pyx__Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, PyObject *moddict, int level);
-
-/* Import.proto */
-static CYTHON_INLINE PyObject *__Pyx_Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, int level);
 
 /* ImportFrom.proto */
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
@@ -2361,6 +2453,13 @@ static PyObject *__Pyx_CyFunction_New(PyMethodDef *ml,
                                       PyObject *module, PyObject *globals,
                                       PyObject* code);
 
+/* GetNameInClass.proto */
+#define __Pyx_GetNameInClass(var, nmspace, name)  (var) = __Pyx__GetNameInClass(nmspace, name)
+static PyObject *__Pyx__GetNameInClass(PyObject *nmspace, PyObject *name);
+
+/* ListPack.proto */
+static PyObject *__Pyx_PyList_Pack(Py_ssize_t n, ...);
+
 /* Py3UpdateBases.proto */
 static PyObject* __Pyx_PEP560_update_bases(PyObject *bases);
 
@@ -2493,6 +2592,19 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
     #endif
 #endif
 
+/* LengthHint.proto */
+#if CYTHON_COMPILING_IN_LIMITED_API
+#define __Pyx_PyObject_LengthHint(o, defaultval)  (defaultval)
+#else
+#define __Pyx_PyObject_LengthHint(o, defaultval)  PyObject_LengthHint(o, defaultval)
+#endif
+
+/* CheckUnpickleChecksum.proto */
+static CYTHON_INLINE int __Pyx_CheckUnpickleChecksum(long checksum, long checksum1, long checksum2, long checksum3, const char *members);
+
+/* FromPy.proto */
+static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject*);
+
 /* CppExceptionConversion.proto */
 #ifndef __Pyx_CppExn2PyErr
 #include <new>
@@ -2535,25 +2647,37 @@ static void __Pyx_CppExn2PyErr() {
 }
 #endif
 
-/* FromPy.proto */
-static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject*);
-
 /* ToPy.proto */
 #define __pyx_PyComplex_FromComplex(z)\
         PyComplex_FromDoubles((double)__Pyx_CREAL(z),\
                               (double)__Pyx_CIMAG(z))
 
-/* CIntFromPy.proto */
-static CYTHON_INLINE int __Pyx_PyLong_As_int(PyObject *);
+/* ToPyCTupleUtility.proto */
+static PyObject* __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex);
+
+/* FromPyCTupleUtility.proto */
+static CYTHON_INLINE __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject *);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value);
+
+/* CIntFromPy.proto */
+static CYTHON_INLINE int __Pyx_PyLong_As_int(PyObject *);
+
+/* CIntFromPy.proto */
+static CYTHON_INLINE long __Pyx_PyLong_As_long(PyObject *);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value);
 
 /* CIntFromPy.proto */
 static CYTHON_INLINE size_t __Pyx_PyLong_As_size_t(PyObject *);
+
+/* PyObjectCallMethod1.proto */
+static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg);
+
+/* UpdateUnpickledDict.proto */
+static int __Pyx_UpdateUnpickledDict(PyObject *obj, PyObject *state, Py_ssize_t index);
 
 /* FormatTypeName.proto */
 #if CYTHON_COMPILING_IN_LIMITED_API
@@ -2571,9 +2695,6 @@ typedef const char *__Pyx_TypeName;
 #define __Pyx_PyType_GetFullyQualifiedName(tp) ((tp)->tp_name)
 #define __Pyx_DECREF_TypeName(obj)
 #endif
-
-/* CIntFromPy.proto */
-static CYTHON_INLINE long __Pyx_PyLong_As_long(PyObject *);
 
 /* FastTypeChecks.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
@@ -2661,14 +2782,20 @@ static int __Pyx_State_RemoveModule(void*);
 #define __PYX_ABI_MODULE_NAME "_cython_" CYTHON_ABI
 #define __PYX_TYPE_MODULE_PREFIX __PYX_ABI_MODULE_NAME "."
 
-static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_dense(std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_dense); /* proto*/
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(PyObject *__pyx_v_entries, int __pyx_v_nrows, int __pyx_v_ncols); /* proto*/
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto*/
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_entries, int __pyx_v_nrows, int __pyx_v_ncols); /* proto*/
+static std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto*/
 static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_width(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto*/
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_row, int __pyx_v_col); /* proto*/
+static __pyx_t_double_complex __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_row, int __pyx_v_col); /* proto*/
 static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_insert(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_row, int __pyx_v_col, __pyx_t_double_complex __pyx_v_value); /* proto*/
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto*/
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul_cpp(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_other); /* proto*/
+static std::string __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto*/
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_other); /* proto*/
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_Gate(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, std::string __pyx_v_type_, std::vector<int>  __pyx_v_controls_, std::vector<int>  __pyx_v_targets_, std::vector<double>  __pyx_v_params_); /* proto*/
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_tensor_product(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_A, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_B, CYTHON_UNUSED int __pyx_v_A_width, int __pyx_v_B_width); /* proto*/
+static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_permute_bits(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, int __pyx_v_index, std::vector<int>  __pyx_v_perm); /* proto*/
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_base_to_full(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_base_gate, int __pyx_v_num_qubits, std::vector<int>  __pyx_v_control_qubits, std::vector<int>  __pyx_v_target_qubits); /* proto*/
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_base_matrix(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self); /* proto*/
+static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_size(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self); /* proto*/
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_full_matrix(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, int __pyx_v_num_qubits); /* proto*/
 
 /* Module declarations from "libc.math" */
 
@@ -2686,11 +2813,31 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
 
 /* Module declarations from "libcpp.string" */
 
+/* Module declarations from "libcpp.complex" */
+
 /* Module declarations from "cython" */
+
+/* Module declarations from "libcpp" */
 
 /* Module declarations from "qilisdk.backends.qili_sim_cython" */
 static double __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_;
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_7qilisdk_8backends_15qili_sim_cython_I = 0;
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate__set_state(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, PyObject *); /*proto*/
+static PyObject *__pyx_convert_vector_to_py_int(std::vector<int>  const &); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(std::string const &); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(std::string const &); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(std::string const &); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(std::string const &); /*proto*/
+static std::string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(PyObject *); /*proto*/
+static PyObject *__pyx_convert_vector_to_py_double(std::vector<double>  const &); /*proto*/
+static PyObject *__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  const &); /*proto*/
 static std::pair<int,int>  __pyx_convert_pair_from_py_int__and_int(PyObject *); /*proto*/
+static PyObject *__pyx_convert_map_to_py_std_3a__3a_string____int(std::map<std::string,int>  const &); /*proto*/
+static std::vector<int>  __pyx_convert_vector_from_py_int(PyObject *); /*proto*/
+static std::vector<double>  __pyx_convert_vector_from_py_double(PyObject *); /*proto*/
+static std::vector<__pyx_t_double_complex>  __pyx_convert_vector_from_py___pyx_t_double_complex(PyObject *); /*proto*/
+static std::vector<std::vector<__pyx_t_double_complex> >  __pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___(PyObject *); /*proto*/
+static std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject *); /*proto*/
 /* #### Code section: typeinfo ### */
 /* #### Code section: before_global_var ### */
 #define __Pyx_MODULE_NAME "qilisdk.backends.qili_sim_cython"
@@ -2699,17 +2846,36 @@ int __pyx_module_is_main_qilisdk__backends__qili_sim_cython = 0;
 
 /* Implementation of "qilisdk.backends.qili_sim_cython" */
 /* #### Code section: global_var ### */
+static PyObject *__pyx_builtin_staticmethod;
 static PyObject *__pyx_builtin_print;
 static PyObject *__pyx_builtin_super;
 /* #### Code section: string_decls ### */
+static const char __pyx_k_H[] = "H";
+static const char __pyx_k_M[] = "M";
+static const char __pyx_k_X[] = "X";
+static const char __pyx_k_Y[] = "Y";
+static const char __pyx_k_Z[] = "Z";
+static const char __pyx_k_RX[] = "RX";
+static const char __pyx_k_RY[] = "RY";
+static const char __pyx_k_RZ[] = "RZ";
+static const char __pyx_k_U1[] = "U1";
+static const char __pyx_k_U2[] = "U2";
+static const char __pyx_k_U3[] = "U3";
+static const char __pyx_k__5[] = "";
+static const char __pyx_k_CNOT[] = "CNOT";
+static const char __pyx_k_control_qubits_gate_type_paramet[] = "control_qubits, gate_type, parameters, target_qubits";
 /* #### Code section: decls ### */
 static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_nrows, int __pyx_v_ncols); /* proto */
-static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2__mul__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense(std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_dense); /* proto */
 static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_4__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_6__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate___reduce_cython__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate_2__setstate_cython__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_2_execute_sampling(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_functional); /* proto */
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_2_execute_sampling(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, PyObject *__pyx_v_functional); /* proto */
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_SparseMatrix(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_Gate(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
 /* SmallCodeConfig */
@@ -2731,14 +2897,16 @@ typedef struct {
   PyObject *__pyx_empty_bytes;
   PyObject *__pyx_empty_unicode;
   PyObject *__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
+  PyObject *__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate;
   PyTypeObject *__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
+  PyTypeObject *__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
-  PyObject *__pyx_tuple[6];
-  PyObject *__pyx_codeobj_tab[4];
-  PyObject *__pyx_string_tab[83];
-  PyObject *__pyx_number_tab[10];
+  PyObject *__pyx_tuple[5];
+  PyObject *__pyx_codeobj_tab[8];
+  PyObject *__pyx_string_tab[166];
+  PyObject *__pyx_number_tab[6];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2780,98 +2948,177 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #endif
 /* #### Code section: constant_name_defines ### */
 #define __pyx_kp_u_ __pyx_string_tab[0]
-#define __pyx_kp_u_001 __pyx_string_tab[1]
-#define __pyx_kp_u_Entries_must_be_sorted_by_row_co __pyx_string_tab[2]
-#define __pyx_kp_u_Matrix_A_entries __pyx_string_tab[3]
-#define __pyx_kp_u_Matrix_B_entries __pyx_string_tab[4]
-#define __pyx_kp_u_Matrix_C_A_B_entries __pyx_string_tab[5]
-#define __pyx_kp_u_Matrix_dimensions_do_not_match_f __pyx_string_tab[6]
-#define __pyx_kp_u__2 __pyx_string_tab[7]
-#define __pyx_kp_u__3 __pyx_string_tab[8]
-#define __pyx_kp_u_disable __pyx_string_tab[9]
-#define __pyx_kp_u_enable __pyx_string_tab[10]
-#define __pyx_kp_u_gc __pyx_string_tab[11]
-#define __pyx_kp_u_isenabled __pyx_string_tab[12]
-#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[13]
-#define __pyx_kp_u_qili_sim_cython_pyx __pyx_string_tab[14]
-#define __pyx_kp_u_stringsource __pyx_string_tab[15]
-#define __pyx_n_u_A __pyx_string_tab[16]
-#define __pyx_n_u_B __pyx_string_tab[17]
-#define __pyx_n_u_Backend __pyx_string_tab[18]
-#define __pyx_n_u_C __pyx_string_tab[19]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[20]
-#define __pyx_n_u_QiliSimCython __pyx_string_tab[21]
-#define __pyx_n_u_QiliSimCython___init __pyx_string_tab[22]
-#define __pyx_n_u_QiliSimCython__execute_sampling __pyx_string_tab[23]
-#define __pyx_n_u_Sampling __pyx_string_tab[24]
-#define __pyx_n_u_SamplingResult __pyx_string_tab[25]
-#define __pyx_n_u_SparseMatrix __pyx_string_tab[26]
-#define __pyx_n_u_SparseMatrix___reduce_cython __pyx_string_tab[27]
-#define __pyx_n_u_SparseMatrix___setstate_cython __pyx_string_tab[28]
-#define __pyx_n_u_TimeEvolution __pyx_string_tab[29]
-#define __pyx_n_u_TimeEvolutionResult __pyx_string_tab[30]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[31]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[32]
-#define __pyx_n_u_doc __pyx_string_tab[33]
-#define __pyx_n_u_entriesA __pyx_string_tab[34]
-#define __pyx_n_u_entriesB __pyx_string_tab[35]
-#define __pyx_n_u_execute_sampling __pyx_string_tab[36]
-#define __pyx_n_u_func __pyx_string_tab[37]
-#define __pyx_n_u_functional __pyx_string_tab[38]
-#define __pyx_n_u_getstate __pyx_string_tab[39]
-#define __pyx_n_u_here __pyx_string_tab[40]
-#define __pyx_n_u_here2 __pyx_string_tab[41]
-#define __pyx_n_u_here3 __pyx_string_tab[42]
-#define __pyx_n_u_init __pyx_string_tab[43]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[44]
-#define __pyx_n_u_items __pyx_string_tab[45]
-#define __pyx_n_u_main __pyx_string_tab[46]
-#define __pyx_n_u_metaclass __pyx_string_tab[47]
-#define __pyx_n_u_module __pyx_string_tab[48]
-#define __pyx_n_u_mro_entries __pyx_string_tab[49]
-#define __pyx_n_u_name __pyx_string_tab[50]
-#define __pyx_n_u_ncols __pyx_string_tab[51]
-#define __pyx_n_u_nrows __pyx_string_tab[52]
-#define __pyx_n_u_nshots __pyx_string_tab[53]
-#define __pyx_n_u_pop __pyx_string_tab[54]
-#define __pyx_n_u_prepare __pyx_string_tab[55]
-#define __pyx_n_u_print __pyx_string_tab[56]
-#define __pyx_n_u_pyx_state __pyx_string_tab[57]
-#define __pyx_n_u_pyx_vtable __pyx_string_tab[58]
-#define __pyx_n_u_qilisdk_backends_backend __pyx_string_tab[59]
-#define __pyx_n_u_qilisdk_backends_qili_sim_cython __pyx_string_tab[60]
-#define __pyx_n_u_qilisdk_functionals_sampling __pyx_string_tab[61]
-#define __pyx_n_u_qilisdk_functionals_sampling_res __pyx_string_tab[62]
-#define __pyx_n_u_qilisdk_functionals_time_evoluti __pyx_string_tab[63]
-#define __pyx_n_u_qilisdk_functionals_time_evoluti_2 __pyx_string_tab[64]
-#define __pyx_n_u_qualname __pyx_string_tab[65]
-#define __pyx_n_u_reduce __pyx_string_tab[66]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[67]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[68]
-#define __pyx_n_u_return __pyx_string_tab[69]
-#define __pyx_n_u_samples __pyx_string_tab[70]
-#define __pyx_n_u_self __pyx_string_tab[71]
-#define __pyx_n_u_set_name __pyx_string_tab[72]
-#define __pyx_n_u_setdefault __pyx_string_tab[73]
-#define __pyx_n_u_setstate __pyx_string_tab[74]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[75]
-#define __pyx_n_u_super __pyx_string_tab[76]
-#define __pyx_n_u_test __pyx_string_tab[77]
-#define __pyx_n_u_values __pyx_string_tab[78]
-#define __pyx_n_u_x __pyx_string_tab[79]
-#define __pyx_kp_b_iso88591_A_Ry __pyx_string_tab[80]
-#define __pyx_kp_b_iso88591_M_Rs_WCs_Cq_Rs_WCs_Cq_az_A_az_A __pyx_string_tab[81]
-#define __pyx_kp_b_iso88591_Q __pyx_string_tab[82]
+#define __pyx_kp_u_Applying_gate __pyx_string_tab[1]
+#define __pyx_kp_u_Creating_gate_of_type __pyx_string_tab[2]
+#define __pyx_kp_u_Entries_must_be_sorted_by_row_co __pyx_string_tab[3]
+#define __pyx_kp_u_Final_statevector __pyx_string_tab[4]
+#define __pyx_kp_u_Gate_type __pyx_string_tab[5]
+#define __pyx_kp_u_Gates_loaded __pyx_string_tab[6]
+#define __pyx_kp_u_Initial_statevector __pyx_string_tab[7]
+#define __pyx_kp_u_Matrix_dimensions_do_not_match_f __pyx_string_tab[8]
+#define __pyx_kp_u_New_gate_has_type __pyx_string_tab[9]
+#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[10]
+#define __pyx_kp_u_Probabilities_do_not_sum_to_1_su __pyx_string_tab[11]
+#define __pyx_kp_u_Qubits_loaded __pyx_string_tab[12]
+#define __pyx_kp_u__2 __pyx_string_tab[13]
+#define __pyx_kp_u__3 __pyx_string_tab[14]
+#define __pyx_kp_u__4 __pyx_string_tab[15]
+#define __pyx_kp_u__6 __pyx_string_tab[16]
+#define __pyx_kp_u__7 __pyx_string_tab[17]
+#define __pyx_kp_u__8 __pyx_string_tab[18]
+#define __pyx_kp_u_add_note __pyx_string_tab[19]
+#define __pyx_kp_u_disable __pyx_string_tab[20]
+#define __pyx_kp_u_enable __pyx_string_tab[21]
+#define __pyx_kp_u_gc __pyx_string_tab[22]
+#define __pyx_kp_u_isenabled __pyx_string_tab[23]
+#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[24]
+#define __pyx_kp_u_qili_sim_cython_pyx __pyx_string_tab[25]
+#define __pyx_kp_u_stringsource __pyx_string_tab[26]
+#define __pyx_kp_u_utf_8 __pyx_string_tab[27]
+#define __pyx_n_u_Backend __pyx_string_tab[28]
+#define __pyx_n_u_False __pyx_string_tab[29]
+#define __pyx_n_u_Gate __pyx_string_tab[30]
+#define __pyx_n_u_Gate___reduce_cython __pyx_string_tab[31]
+#define __pyx_n_u_Gate___setstate_cython __pyx_string_tab[32]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[33]
+#define __pyx_n_u_QiliSimCython __pyx_string_tab[34]
+#define __pyx_n_u_QiliSimCython___init __pyx_string_tab[35]
+#define __pyx_n_u_QiliSimCython__execute_sampling __pyx_string_tab[36]
+#define __pyx_n_u_Sampling __pyx_string_tab[37]
+#define __pyx_n_u_SamplingResult __pyx_string_tab[38]
+#define __pyx_n_u_SparseMatrix __pyx_string_tab[39]
+#define __pyx_n_u_SparseMatrix___reduce_cython __pyx_string_tab[40]
+#define __pyx_n_u_SparseMatrix___setstate_cython __pyx_string_tab[41]
+#define __pyx_n_u_SparseMatrix_from_dense __pyx_string_tab[42]
+#define __pyx_n_u_TimeEvolution __pyx_string_tab[43]
+#define __pyx_n_u_TimeEvolutionResult __pyx_string_tab[44]
+#define __pyx_n_u_amp __pyx_string_tab[45]
+#define __pyx_n_u_amplitude_entries __pyx_string_tab[46]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[47]
+#define __pyx_n_u_b __pyx_string_tab[48]
+#define __pyx_n_u_bitstring __pyx_string_tab[49]
+#define __pyx_n_u_c __pyx_string_tab[50]
+#define __pyx_n_u_circuit __pyx_string_tab[51]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[52]
+#define __pyx_n_u_cmath __pyx_string_tab[53]
+#define __pyx_n_u_control_qubits __pyx_string_tab[54]
+#define __pyx_n_u_counts __pyx_string_tab[55]
+#define __pyx_n_u_cumulative_prob __pyx_string_tab[56]
+#define __pyx_n_u_dense __pyx_string_tab[57]
+#define __pyx_n_u_dict __pyx_string_tab[58]
+#define __pyx_n_u_dict_2 __pyx_string_tab[59]
+#define __pyx_n_u_doc __pyx_string_tab[60]
+#define __pyx_n_u_encode __pyx_string_tab[61]
+#define __pyx_n_u_entry __pyx_string_tab[62]
+#define __pyx_n_u_execute_sampling __pyx_string_tab[63]
+#define __pyx_n_u_exp __pyx_string_tab[64]
+#define __pyx_n_u_from_dense __pyx_string_tab[65]
+#define __pyx_n_u_func __pyx_string_tab[66]
+#define __pyx_n_u_functional __pyx_string_tab[67]
+#define __pyx_n_u_gate __pyx_string_tab[68]
+#define __pyx_n_u_gate_c __pyx_string_tab[69]
+#define __pyx_n_u_gate_matrix __pyx_string_tab[70]
+#define __pyx_n_u_gate_name __pyx_string_tab[71]
+#define __pyx_n_u_gates __pyx_string_tab[72]
+#define __pyx_n_u_getstate __pyx_string_tab[73]
+#define __pyx_n_u_here0 __pyx_string_tab[74]
+#define __pyx_n_u_here1 __pyx_string_tab[75]
+#define __pyx_n_u_here2 __pyx_string_tab[76]
+#define __pyx_n_u_here3 __pyx_string_tab[77]
+#define __pyx_n_u_imag_part __pyx_string_tab[78]
+#define __pyx_n_u_init __pyx_string_tab[79]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[80]
+#define __pyx_n_u_items __pyx_string_tab[81]
+#define __pyx_n_u_main __pyx_string_tab[82]
+#define __pyx_n_u_mat __pyx_string_tab[83]
+#define __pyx_n_u_mat_size __pyx_string_tab[84]
+#define __pyx_n_u_metaclass __pyx_string_tab[85]
+#define __pyx_n_u_module __pyx_string_tab[86]
+#define __pyx_n_u_mro_entries __pyx_string_tab[87]
+#define __pyx_n_u_name __pyx_string_tab[88]
+#define __pyx_n_u_name_2 __pyx_string_tab[89]
+#define __pyx_n_u_ncols __pyx_string_tab[90]
+#define __pyx_n_u_new __pyx_string_tab[91]
+#define __pyx_n_u_new_gate __pyx_string_tab[92]
+#define __pyx_n_u_np __pyx_string_tab[93]
+#define __pyx_n_u_nqubits __pyx_string_tab[94]
+#define __pyx_n_u_nrows __pyx_string_tab[95]
+#define __pyx_n_u_nshots __pyx_string_tab[96]
+#define __pyx_n_u_num_qubits __pyx_string_tab[97]
+#define __pyx_n_u_numpy __pyx_string_tab[98]
+#define __pyx_n_u_one_str __pyx_string_tab[99]
+#define __pyx_n_u_parameters __pyx_string_tab[100]
+#define __pyx_n_u_pop __pyx_string_tab[101]
+#define __pyx_n_u_prepare __pyx_string_tab[102]
+#define __pyx_n_u_print __pyx_string_tab[103]
+#define __pyx_n_u_prob __pyx_string_tab[104]
+#define __pyx_n_u_prob_entries __pyx_string_tab[105]
+#define __pyx_n_u_prob_entry __pyx_string_tab[106]
+#define __pyx_n_u_pyx_checksum __pyx_string_tab[107]
+#define __pyx_n_u_pyx_result __pyx_string_tab[108]
+#define __pyx_n_u_pyx_state __pyx_string_tab[109]
+#define __pyx_n_u_pyx_type __pyx_string_tab[110]
+#define __pyx_n_u_pyx_unpickle_Gate __pyx_string_tab[111]
+#define __pyx_n_u_pyx_vtable __pyx_string_tab[112]
+#define __pyx_n_u_qilisdk_backends_backend __pyx_string_tab[113]
+#define __pyx_n_u_qilisdk_backends_qili_sim_cython __pyx_string_tab[114]
+#define __pyx_n_u_qilisdk_functionals_sampling __pyx_string_tab[115]
+#define __pyx_n_u_qilisdk_functionals_sampling_res __pyx_string_tab[116]
+#define __pyx_n_u_qilisdk_functionals_time_evoluti __pyx_string_tab[117]
+#define __pyx_n_u_qilisdk_functionals_time_evoluti_2 __pyx_string_tab[118]
+#define __pyx_n_u_qualname __pyx_string_tab[119]
+#define __pyx_n_u_r __pyx_string_tab[120]
+#define __pyx_n_u_random __pyx_string_tab[121]
+#define __pyx_n_u_random_value __pyx_string_tab[122]
+#define __pyx_n_u_real_part __pyx_string_tab[123]
+#define __pyx_n_u_reduce __pyx_string_tab[124]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[125]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[126]
+#define __pyx_n_u_results __pyx_string_tab[127]
+#define __pyx_n_u_return __pyx_string_tab[128]
+#define __pyx_n_u_row __pyx_string_tab[129]
+#define __pyx_n_u_samples __pyx_string_tab[130]
+#define __pyx_n_u_self __pyx_string_tab[131]
+#define __pyx_n_u_set_name __pyx_string_tab[132]
+#define __pyx_n_u_setdefault __pyx_string_tab[133]
+#define __pyx_n_u_setstate __pyx_string_tab[134]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[135]
+#define __pyx_n_u_shot __pyx_string_tab[136]
+#define __pyx_n_u_size __pyx_string_tab[137]
+#define __pyx_n_u_state __pyx_string_tab[138]
+#define __pyx_n_u_state_entries __pyx_string_tab[139]
+#define __pyx_n_u_state_entries_init __pyx_string_tab[140]
+#define __pyx_n_u_state_entry __pyx_string_tab[141]
+#define __pyx_n_u_state_entry_init __pyx_string_tab[142]
+#define __pyx_n_u_state_index __pyx_string_tab[143]
+#define __pyx_n_u_staticmethod __pyx_string_tab[144]
+#define __pyx_n_u_super __pyx_string_tab[145]
+#define __pyx_n_u_target_qubits __pyx_string_tab[146]
+#define __pyx_n_u_test __pyx_string_tab[147]
+#define __pyx_n_u_total_prob __pyx_string_tab[148]
+#define __pyx_n_u_uniform __pyx_string_tab[149]
+#define __pyx_n_u_update __pyx_string_tab[150]
+#define __pyx_n_u_use_setstate __pyx_string_tab[151]
+#define __pyx_n_u_val __pyx_string_tab[152]
+#define __pyx_n_u_values __pyx_string_tab[153]
+#define __pyx_n_u_x __pyx_string_tab[154]
+#define __pyx_n_u_zero_str __pyx_string_tab[155]
+#define __pyx_kp_b_0 __pyx_string_tab[156]
+#define __pyx_kp_b_1 __pyx_string_tab[157]
+#define __pyx_kp_b__5 __pyx_string_tab[158]
+#define __pyx_kp_b_iso88591_6 __pyx_string_tab[159]
+#define __pyx_kp_b_iso88591_A56_AU_t5_5_E_as_U_3a_e1Baq_3auB __pyx_string_tab[160]
+#define __pyx_kp_b_iso88591_A_Ry __pyx_string_tab[161]
+#define __pyx_kp_b_iso88591_M_Qa_HJha_E_5_2Rt9AS_4t_SPQ_IWA __pyx_string_tab[162]
+#define __pyx_kp_b_iso88591_Q __pyx_string_tab[163]
+#define __pyx_kp_b_iso88591_T_l_m4q_G1F_a_vWE_Q_q_q_T_G1_T __pyx_string_tab[164]
+#define __pyx_kp_b_iso88591_q_0_kQR_4xq_7_awnA_1 __pyx_string_tab[165]
 #define __pyx_float_0_0 __pyx_number_tab[0]
 #define __pyx_float_1_0 __pyx_number_tab[1]
-#define __pyx_float_2_0 __pyx_number_tab[2]
-#define __pyx_float_3_0 __pyx_number_tab[3]
-#define __pyx_float_4_0 __pyx_number_tab[4]
-#define __pyx_float_5_0 __pyx_number_tab[5]
-#define __pyx_float_6_0 __pyx_number_tab[6]
-#define __pyx_int_0 __pyx_number_tab[7]
-#define __pyx_int_1 __pyx_number_tab[8]
-#define __pyx_int_2 __pyx_number_tab[9]
+#define __pyx_int_0 __pyx_number_tab[2]
+#define __pyx_int_neg_1 __pyx_number_tab[3]
+#define __pyx_int_1 __pyx_number_tab[4]
+#define __pyx_int_32396611 __pyx_number_tab[5]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2888,10 +3135,12 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   #endif
   Py_CLEAR(clear_module_state->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
   Py_CLEAR(clear_module_state->__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
-  for (int i=0; i<6; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<4; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<83; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
-  for (int i=0; i<10; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
+  Py_CLEAR(clear_module_state->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate);
+  Py_CLEAR(clear_module_state->__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate);
+  for (int i=0; i<5; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
+  for (int i=0; i<8; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<166; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<6; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
 Py_CLEAR(clear_module_state->__pyx_CommonTypesMetaclassType);
@@ -2916,10 +3165,12 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   Py_VISIT(traverse_module_state->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
   Py_VISIT(traverse_module_state->__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
-  for (int i=0; i<6; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<4; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<83; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
-  for (int i=0; i<10; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
+  Py_VISIT(traverse_module_state->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate);
+  Py_VISIT(traverse_module_state->__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate);
+  for (int i=0; i<5; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
+  for (int i=0; i<8; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<166; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<6; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
 Py_VISIT(traverse_module_state->__pyx_CommonTypesMetaclassType);
@@ -2932,6 +3183,826 @@ return 0;
 }
 #endif
 /* #### Code section: module_code ### */
+
+/* "vector.to_py":79
+ *     const Py_ssize_t PY_SSIZE_T_MAX
+ * 
+ * @cname("__pyx_convert_vector_to_py_int")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_vector_to_py_int(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static PyObject *__pyx_convert_vector_to_py_int(std::vector<int>  const &__pyx_v_v) {
+  Py_ssize_t __pyx_v_v_size_signed;
+  PyObject *__pyx_v_o = NULL;
+  Py_ssize_t __pyx_v_i;
+  PyObject *__pyx_v_item = 0;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  Py_ssize_t __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  Py_ssize_t __pyx_t_5;
+  int __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_to_py_int", 0);
+
+  /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py_int")
+ * cdef object __pyx_convert_vector_to_py_int(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  __pyx_t_1 = (__pyx_v_v.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "vector.to_py":82
+ * cdef object __pyx_convert_vector_to_py_int(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 82, __pyx_L1_error)
+
+    /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py_int")
+ * cdef object __pyx_convert_vector_to_py_int(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  }
+
+  /* "vector.to_py":83
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()             # <<<<<<<<<<<<<<
+ * 
+ *     o = PyList_New(v_size_signed)
+*/
+  __pyx_v_v_size_signed = ((Py_ssize_t)__pyx_v_v.size());
+
+  /* "vector.to_py":85
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+ *     o = PyList_New(v_size_signed)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Py_ssize_t i
+*/
+  __pyx_t_2 = PyList_New(__pyx_v_v_size_signed); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_o = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "vector.to_py":90
+ *     cdef object item
+ * 
+ *     for i in range(v_size_signed):             # <<<<<<<<<<<<<<
+ *         item = v[i]
+ *         Py_INCREF(item)
+*/
+  __pyx_t_3 = __pyx_v_v_size_signed;
+  __pyx_t_4 = __pyx_t_3;
+  for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
+    __pyx_v_i = __pyx_t_5;
+
+    /* "vector.to_py":91
+ * 
+ *     for i in range(v_size_signed):
+ *         item = v[i]             # <<<<<<<<<<<<<<
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+*/
+    __pyx_t_2 = __Pyx_PyLong_From_int((__pyx_v_v[__pyx_v_i])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 91, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_2);
+    __pyx_t_2 = 0;
+
+    /* "vector.to_py":92
+ *     for i in range(v_size_signed):
+ *         item = v[i]
+ *         Py_INCREF(item)             # <<<<<<<<<<<<<<
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+*/
+    Py_INCREF(__pyx_v_item);
+
+    /* "vector.to_py":93
+ *         item = v[i]
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)             # <<<<<<<<<<<<<<
+ * 
+ *     return o
+*/
+    __pyx_t_6 = __Pyx_PyList_SET_ITEM(__pyx_v_o, __pyx_v_i, __pyx_v_item); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(1, 93, __pyx_L1_error)
+  }
+
+  /* "vector.to_py":95
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+ *     return o             # <<<<<<<<<<<<<<
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_o);
+  __pyx_r = __pyx_v_o;
+  goto __pyx_L0;
+
+  /* "vector.to_py":79
+ *     const Py_ssize_t PY_SSIZE_T_MAX
+ * 
+ * @cname("__pyx_convert_vector_to_py_int")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_vector_to_py_int(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("vector.to_py.__pyx_convert_vector_to_py_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_o);
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "string.to_py":31
+ *     cdef object __Pyx_PyObject_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static CYTHON_INLINE PyObject *__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(std::string const &__pyx_v_s) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string", 0);
+
+  /* "string.to_py":33
+ * @cname("__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyObject_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  __pyx_t_1 = (__pyx_v_s.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "string.to_py":34
+ * cdef inline object __pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     return __Pyx_PyObject_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+ * cdef extern from *:
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 34, __pyx_L1_error)
+
+    /* "string.to_py":33
+ * @cname("__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyObject_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  }
+
+  /* "string.to_py":35
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     return __Pyx_PyObject_FromStringAndSize(s.data(), <Py_ssize_t> s.size())             # <<<<<<<<<<<<<<
+ * cdef extern from *:
+ *     cdef object __Pyx_PyUnicode_FromStringAndSize(const char*, size_t)
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyObject_FromStringAndSize(__pyx_v_s.data(), ((Py_ssize_t)__pyx_v_s.size())); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 35, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "string.to_py":31
+ *     cdef object __Pyx_PyObject_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyObject_string_to_py_6libcpp_6string_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "string.to_py":39
+ *     cdef object __Pyx_PyUnicode_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static CYTHON_INLINE PyObject *__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(std::string const &__pyx_v_s) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string", 0);
+
+  /* "string.to_py":41
+ * @cname("__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  __pyx_t_1 = (__pyx_v_s.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "string.to_py":42
+ * cdef inline object __pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+ * cdef extern from *:
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 42, __pyx_L1_error)
+
+    /* "string.to_py":41
+ * @cname("__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  }
+
+  /* "string.to_py":43
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), <Py_ssize_t> s.size())             # <<<<<<<<<<<<<<
+ * cdef extern from *:
+ *     cdef object __Pyx_PyBytes_FromStringAndSize(const char*, size_t)
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyUnicode_FromStringAndSize(__pyx_v_s.data(), ((Py_ssize_t)__pyx_v_s.size())); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 43, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "string.to_py":39
+ *     cdef object __Pyx_PyUnicode_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyUnicode_string_to_py_6libcpp_6string_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "string.to_py":47
+ *     cdef object __Pyx_PyBytes_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static CYTHON_INLINE PyObject *__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(std::string const &__pyx_v_s) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string", 0);
+
+  /* "string.to_py":49
+ * @cname("__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyBytes_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  __pyx_t_1 = (__pyx_v_s.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "string.to_py":50
+ * cdef inline object __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     return __Pyx_PyBytes_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+ * cdef extern from *:
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 50, __pyx_L1_error)
+
+    /* "string.to_py":49
+ * @cname("__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyBytes_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  }
+
+  /* "string.to_py":51
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     return __Pyx_PyBytes_FromStringAndSize(s.data(), <Py_ssize_t> s.size())             # <<<<<<<<<<<<<<
+ * cdef extern from *:
+ *     cdef object __Pyx_PyByteArray_FromStringAndSize(const char*, size_t)
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyBytes_FromStringAndSize(__pyx_v_s.data(), ((Py_ssize_t)__pyx_v_s.size())); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "string.to_py":47
+ *     cdef object __Pyx_PyBytes_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "string.to_py":55
+ *     cdef object __Pyx_PyByteArray_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static CYTHON_INLINE PyObject *__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(std::string const &__pyx_v_s) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string", 0);
+
+  /* "string.to_py":57
+ * @cname("__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  __pyx_t_1 = (__pyx_v_s.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "string.to_py":58
+ * cdef inline object __pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 58, __pyx_L1_error)
+
+    /* "string.to_py":57
+ * @cname("__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string")
+ * cdef inline object __pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), <Py_ssize_t> s.size())
+*/
+  }
+
+  /* "string.to_py":59
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), <Py_ssize_t> s.size())             # <<<<<<<<<<<<<<
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyByteArray_FromStringAndSize(__pyx_v_s.data(), ((Py_ssize_t)__pyx_v_s.size())); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 59, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "string.to_py":55
+ *     cdef object __Pyx_PyByteArray_FromStringAndSize(const char*, size_t)
+ * 
+ * @cname("__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef inline object __pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string(const string& s):
+ *     if s.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyByteArray_string_to_py_6libcpp_6string_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "string.from_py":12
+ *     cdef const char* __Pyx_PyObject_AsStringAndSize(object, Py_ssize_t*) except NULL
+ * 
+ * @cname("__pyx_convert_string_from_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(object o) except *:
+ *     cdef Py_ssize_t length = 0
+*/
+
+static std::string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(PyObject *__pyx_v_o) {
+  Py_ssize_t __pyx_v_length;
+  char const *__pyx_v_data;
+  std::string __pyx_r;
+  char const *__pyx_t_1;
+  std::string __pyx_t_2;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+
+  /* "string.from_py":14
+ * @cname("__pyx_convert_string_from_py_6libcpp_6string_std__in_string")
+ * cdef string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(object o) except *:
+ *     cdef Py_ssize_t length = 0             # <<<<<<<<<<<<<<
+ *     cdef const char* data = __Pyx_PyObject_AsStringAndSize(o, &length)
+ *     return string(data, <size_t> length)
+*/
+  __pyx_v_length = 0;
+
+  /* "string.from_py":15
+ * cdef string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(object o) except *:
+ *     cdef Py_ssize_t length = 0
+ *     cdef const char* data = __Pyx_PyObject_AsStringAndSize(o, &length)             # <<<<<<<<<<<<<<
+ *     return string(data, <size_t> length)
+ * 
+*/
+  __pyx_t_1 = __Pyx_PyObject_AsStringAndSize(__pyx_v_o, (&__pyx_v_length)); if (unlikely(__pyx_t_1 == ((void *)NULL))) __PYX_ERR(1, 15, __pyx_L1_error)
+  __pyx_v_data = __pyx_t_1;
+
+  /* "string.from_py":16
+ *     cdef Py_ssize_t length = 0
+ *     cdef const char* data = __Pyx_PyObject_AsStringAndSize(o, &length)
+ *     return string(data, <size_t> length)             # <<<<<<<<<<<<<<
+ * 
+*/
+  try {
+    __pyx_t_2 = std::string(__pyx_v_data, ((size_t)__pyx_v_length));
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(1, 16, __pyx_L1_error)
+  }
+  __pyx_r = __pyx_t_2;
+  goto __pyx_L0;
+
+  /* "string.from_py":12
+ *     cdef const char* __Pyx_PyObject_AsStringAndSize(object, Py_ssize_t*) except NULL
+ * 
+ * @cname("__pyx_convert_string_from_py_6libcpp_6string_std__in_string")             # <<<<<<<<<<<<<<
+ * cdef string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(object o) except *:
+ *     cdef Py_ssize_t length = 0
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("string.from_py.__pyx_convert_string_from_py_6libcpp_6string_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "vector.to_py":79
+ *     const Py_ssize_t PY_SSIZE_T_MAX
+ * 
+ * @cname("__pyx_convert_vector_to_py_double")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_vector_to_py_double(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+static PyObject *__pyx_convert_vector_to_py_double(std::vector<double>  const &__pyx_v_v) {
+  Py_ssize_t __pyx_v_v_size_signed;
+  PyObject *__pyx_v_o = NULL;
+  Py_ssize_t __pyx_v_i;
+  PyObject *__pyx_v_item = 0;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  Py_ssize_t __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  Py_ssize_t __pyx_t_5;
+  int __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_to_py_double", 0);
+
+  /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py_double")
+ * cdef object __pyx_convert_vector_to_py_double(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  __pyx_t_1 = (__pyx_v_v.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "vector.to_py":82
+ * cdef object __pyx_convert_vector_to_py_double(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 82, __pyx_L1_error)
+
+    /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py_double")
+ * cdef object __pyx_convert_vector_to_py_double(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  }
+
+  /* "vector.to_py":83
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()             # <<<<<<<<<<<<<<
+ * 
+ *     o = PyList_New(v_size_signed)
+*/
+  __pyx_v_v_size_signed = ((Py_ssize_t)__pyx_v_v.size());
+
+  /* "vector.to_py":85
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+ *     o = PyList_New(v_size_signed)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Py_ssize_t i
+*/
+  __pyx_t_2 = PyList_New(__pyx_v_v_size_signed); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_o = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "vector.to_py":90
+ *     cdef object item
+ * 
+ *     for i in range(v_size_signed):             # <<<<<<<<<<<<<<
+ *         item = v[i]
+ *         Py_INCREF(item)
+*/
+  __pyx_t_3 = __pyx_v_v_size_signed;
+  __pyx_t_4 = __pyx_t_3;
+  for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
+    __pyx_v_i = __pyx_t_5;
+
+    /* "vector.to_py":91
+ * 
+ *     for i in range(v_size_signed):
+ *         item = v[i]             # <<<<<<<<<<<<<<
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+*/
+    __pyx_t_2 = PyFloat_FromDouble((__pyx_v_v[__pyx_v_i])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 91, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_2);
+    __pyx_t_2 = 0;
+
+    /* "vector.to_py":92
+ *     for i in range(v_size_signed):
+ *         item = v[i]
+ *         Py_INCREF(item)             # <<<<<<<<<<<<<<
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+*/
+    Py_INCREF(__pyx_v_item);
+
+    /* "vector.to_py":93
+ *         item = v[i]
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)             # <<<<<<<<<<<<<<
+ * 
+ *     return o
+*/
+    __pyx_t_6 = __Pyx_PyList_SET_ITEM(__pyx_v_o, __pyx_v_i, __pyx_v_item); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(1, 93, __pyx_L1_error)
+  }
+
+  /* "vector.to_py":95
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+ *     return o             # <<<<<<<<<<<<<<
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_o);
+  __pyx_r = __pyx_v_o;
+  goto __pyx_L0;
+
+  /* "vector.to_py":79
+ *     const Py_ssize_t PY_SSIZE_T_MAX
+ * 
+ * @cname("__pyx_convert_vector_to_py_double")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_vector_to_py_double(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("vector.to_py.__pyx_convert_vector_to_py_double", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_o);
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  const &__pyx_v_v) {
+  Py_ssize_t __pyx_v_v_size_signed;
+  PyObject *__pyx_v_o = NULL;
+  Py_ssize_t __pyx_v_i;
+  PyObject *__pyx_v_item = 0;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  Py_ssize_t __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  Py_ssize_t __pyx_t_5;
+  int __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex", 0);
+
+  /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex")
+ * cdef object __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  __pyx_t_1 = (__pyx_v_v.size() > ((size_t)PY_SSIZE_T_MAX));
+  if (unlikely(__pyx_t_1)) {
+
+    /* "vector.to_py":82
+ * cdef object __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+*/
+    PyErr_NoMemory(); __PYX_ERR(1, 82, __pyx_L1_error)
+
+    /* "vector.to_py":81
+ * @cname("__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex")
+ * cdef object __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()
+*/
+  }
+
+  /* "vector.to_py":83
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+ *         raise MemoryError()
+ *     v_size_signed = <Py_ssize_t> v.size()             # <<<<<<<<<<<<<<
+ * 
+ *     o = PyList_New(v_size_signed)
+*/
+  __pyx_v_v_size_signed = ((Py_ssize_t)__pyx_v_v.size());
+
+  /* "vector.to_py":85
+ *     v_size_signed = <Py_ssize_t> v.size()
+ * 
+ *     o = PyList_New(v_size_signed)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Py_ssize_t i
+*/
+  __pyx_t_2 = PyList_New(__pyx_v_v_size_signed); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_o = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "vector.to_py":90
+ *     cdef object item
+ * 
+ *     for i in range(v_size_signed):             # <<<<<<<<<<<<<<
+ *         item = v[i]
+ *         Py_INCREF(item)
+*/
+  __pyx_t_3 = __pyx_v_v_size_signed;
+  __pyx_t_4 = __pyx_t_3;
+  for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
+    __pyx_v_i = __pyx_t_5;
+
+    /* "vector.to_py":91
+ * 
+ *     for i in range(v_size_signed):
+ *         item = v[i]             # <<<<<<<<<<<<<<
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+*/
+    __pyx_t_2 = __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex((__pyx_v_v[__pyx_v_i])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 91, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_2);
+    __pyx_t_2 = 0;
+
+    /* "vector.to_py":92
+ *     for i in range(v_size_signed):
+ *         item = v[i]
+ *         Py_INCREF(item)             # <<<<<<<<<<<<<<
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+*/
+    Py_INCREF(__pyx_v_item);
+
+    /* "vector.to_py":93
+ *         item = v[i]
+ *         Py_INCREF(item)
+ *         __Pyx_PyList_SET_ITEM(o, i, item)             # <<<<<<<<<<<<<<
+ * 
+ *     return o
+*/
+    __pyx_t_6 = __Pyx_PyList_SET_ITEM(__pyx_v_o, __pyx_v_i, __pyx_v_item); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(1, 93, __pyx_L1_error)
+  }
+
+  /* "vector.to_py":95
+ *         __Pyx_PyList_SET_ITEM(o, i, item)
+ * 
+ *     return o             # <<<<<<<<<<<<<<
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_o);
+  __pyx_r = __pyx_v_o;
+  goto __pyx_L0;
+
+  /* "vector.to_py":79
+ *     const Py_ssize_t PY_SSIZE_T_MAX
+ * 
+ * @cname("__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(const vector[X]& v):
+ *     if v.size() > <size_t> PY_SSIZE_T_MAX:
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("vector.to_py.__pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_o);
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
 
 /* "pair.from_py":190
  *         pair(T&, U&) except +
@@ -3057,7 +4128,1000 @@ static std::pair<int,int>  __pyx_convert_pair_from_py_int__and_int(PyObject *__p
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":45
+/* "map.to_py":245
+ *         const_iterator end()
+ * 
+ * @cname("__pyx_convert_map_to_py_std_3a__3a_string____int")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_map_to_py_std_3a__3a_string____int(const map[X,Y]& s):
+ *     o = {}
+*/
+
+static PyObject *__pyx_convert_map_to_py_std_3a__3a_string____int(std::map<std::string,int>  const &__pyx_v_s) {
+  PyObject *__pyx_v_o = NULL;
+  std::map<std::string,int> ::value_type const *__pyx_v_key_value;
+  std::map<std::string,int> ::const_iterator __pyx_v_iter;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_map_to_py_std_3a__3a_string____int", 0);
+
+  /* "map.to_py":247
+ * @cname("__pyx_convert_map_to_py_std_3a__3a_string____int")
+ * cdef object __pyx_convert_map_to_py_std_3a__3a_string____int(const map[X,Y]& s):
+ *     o = {}             # <<<<<<<<<<<<<<
+ *     cdef const map[X,Y].value_type *key_value
+ *     cdef map[X,Y].const_iterator iter = s.begin()
+*/
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 247, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_o = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "map.to_py":249
+ *     o = {}
+ *     cdef const map[X,Y].value_type *key_value
+ *     cdef map[X,Y].const_iterator iter = s.begin()             # <<<<<<<<<<<<<<
+ *     while iter != s.end():
+ *         key_value = &cython.operator.dereference(iter)
+*/
+  __pyx_v_iter = __pyx_v_s.begin();
+
+  /* "map.to_py":250
+ *     cdef const map[X,Y].value_type *key_value
+ *     cdef map[X,Y].const_iterator iter = s.begin()
+ *     while iter != s.end():             # <<<<<<<<<<<<<<
+ *         key_value = &cython.operator.dereference(iter)
+ *         o[key_value.first] = key_value.second
+*/
+  while (1) {
+    __pyx_t_2 = (__pyx_v_iter != __pyx_v_s.end());
+    if (!__pyx_t_2) break;
+
+    /* "map.to_py":251
+ *     cdef map[X,Y].const_iterator iter = s.begin()
+ *     while iter != s.end():
+ *         key_value = &cython.operator.dereference(iter)             # <<<<<<<<<<<<<<
+ *         o[key_value.first] = key_value.second
+ *         cython.operator.preincrement(iter)
+*/
+    __pyx_v_key_value = (&(*__pyx_v_iter));
+
+    /* "map.to_py":252
+ *     while iter != s.end():
+ *         key_value = &cython.operator.dereference(iter)
+ *         o[key_value.first] = key_value.second             # <<<<<<<<<<<<<<
+ *         cython.operator.preincrement(iter)
+ *     return o
+*/
+    __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_key_value->second); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 252, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_key_value->first); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 252, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    if (unlikely((PyDict_SetItem(__pyx_v_o, __pyx_t_3, __pyx_t_1) < 0))) __PYX_ERR(1, 252, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "map.to_py":253
+ *         key_value = &cython.operator.dereference(iter)
+ *         o[key_value.first] = key_value.second
+ *         cython.operator.preincrement(iter)             # <<<<<<<<<<<<<<
+ *     return o
+ * 
+*/
+    (void)((++__pyx_v_iter));
+  }
+
+  /* "map.to_py":254
+ *         o[key_value.first] = key_value.second
+ *         cython.operator.preincrement(iter)
+ *     return o             # <<<<<<<<<<<<<<
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_o);
+  __pyx_r = __pyx_v_o;
+  goto __pyx_L0;
+
+  /* "map.to_py":245
+ *         const_iterator end()
+ * 
+ * @cname("__pyx_convert_map_to_py_std_3a__3a_string____int")             # <<<<<<<<<<<<<<
+ * cdef object __pyx_convert_map_to_py_std_3a__3a_string____int(const map[X,Y]& s):
+ *     o = {}
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("map.to_py.__pyx_convert_map_to_py_std_3a__3a_string____int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_o);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py_int")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py_int(object o) except *:
+ * 
+*/
+
+static std::vector<int>  __pyx_convert_vector_from_py_int(PyObject *__pyx_v_o) {
+  std::vector<int>  __pyx_v_v;
+  Py_ssize_t __pyx_v_s;
+  PyObject *__pyx_v_item = NULL;
+  std::vector<int>  __pyx_r;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_from_py_int", 0);
+
+  /* "vector.from_py":55
+ * 
+ *     cdef vector[X] v
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)             # <<<<<<<<<<<<<<
+ * 
+ *     if s > 0:
+*/
+  __pyx_t_1 = __Pyx_PyObject_LengthHint(__pyx_v_o, 0); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1L))) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_v_s = __pyx_t_1;
+
+  /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  __pyx_t_2 = (__pyx_v_s > 0);
+  if (__pyx_t_2) {
+
+    /* "vector.from_py":58
+ * 
+ *     if s > 0:
+ *         v.reserve(<size_t> s)             # <<<<<<<<<<<<<<
+ * 
+ *     for item in o:
+*/
+    try {
+      __pyx_v_v.reserve(((size_t)__pyx_v_s));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 58, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  }
+
+  /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  if (likely(PyList_CheckExact(__pyx_v_o)) || PyTuple_CheckExact(__pyx_v_o)) {
+    __pyx_t_3 = __pyx_v_o; __Pyx_INCREF(__pyx_t_3);
+    __pyx_t_1 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_1 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_o); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 60, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 60, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(__pyx_t_3, __pyx_t_1, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_1;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_1));
+        #else
+        __pyx_t_5 = __Pyx_PySequence_ITEM(__pyx_t_3, __pyx_t_1);
+        #endif
+        ++__pyx_t_1;
+      }
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 60, __pyx_L1_error)
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_3);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(1, 60, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "vector.from_py":61
+ * 
+ *     for item in o:
+ *         v.push_back(<X>item)             # <<<<<<<<<<<<<<
+ * 
+ *     return v
+*/
+    __pyx_t_6 = __Pyx_PyLong_As_int(__pyx_v_item); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 61, __pyx_L1_error)
+    try {
+      __pyx_v_v.push_back(((int)__pyx_t_6));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 61, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "vector.from_py":63
+ *         v.push_back(<X>item)
+ * 
+ *     return v             # <<<<<<<<<<<<<<
+ * 
+*/
+  __pyx_r = __pyx_v_v;
+  goto __pyx_L0;
+
+  /* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py_int")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py_int(object o) except *:
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.from_py.__pyx_convert_vector_from_py_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static std::vector<double>  __pyx_convert_vector_from_py_double(PyObject *__pyx_v_o) {
+  std::vector<double>  __pyx_v_v;
+  Py_ssize_t __pyx_v_s;
+  PyObject *__pyx_v_item = NULL;
+  std::vector<double>  __pyx_r;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  double __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_from_py_double", 0);
+
+  /* "vector.from_py":55
+ * 
+ *     cdef vector[X] v
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)             # <<<<<<<<<<<<<<
+ * 
+ *     if s > 0:
+*/
+  __pyx_t_1 = __Pyx_PyObject_LengthHint(__pyx_v_o, 0); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1L))) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_v_s = __pyx_t_1;
+
+  /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  __pyx_t_2 = (__pyx_v_s > 0);
+  if (__pyx_t_2) {
+
+    /* "vector.from_py":58
+ * 
+ *     if s > 0:
+ *         v.reserve(<size_t> s)             # <<<<<<<<<<<<<<
+ * 
+ *     for item in o:
+*/
+    try {
+      __pyx_v_v.reserve(((size_t)__pyx_v_s));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 58, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  }
+
+  /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  if (likely(PyList_CheckExact(__pyx_v_o)) || PyTuple_CheckExact(__pyx_v_o)) {
+    __pyx_t_3 = __pyx_v_o; __Pyx_INCREF(__pyx_t_3);
+    __pyx_t_1 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_1 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_o); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 60, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 60, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(__pyx_t_3, __pyx_t_1, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_1;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_1));
+        #else
+        __pyx_t_5 = __Pyx_PySequence_ITEM(__pyx_t_3, __pyx_t_1);
+        #endif
+        ++__pyx_t_1;
+      }
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 60, __pyx_L1_error)
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_3);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(1, 60, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "vector.from_py":61
+ * 
+ *     for item in o:
+ *         v.push_back(<X>item)             # <<<<<<<<<<<<<<
+ * 
+ *     return v
+*/
+    __pyx_t_6 = __Pyx_PyFloat_AsDouble(__pyx_v_item); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 61, __pyx_L1_error)
+    try {
+      __pyx_v_v.push_back(((double)__pyx_t_6));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 61, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "vector.from_py":63
+ *         v.push_back(<X>item)
+ * 
+ *     return v             # <<<<<<<<<<<<<<
+ * 
+*/
+  __pyx_r = __pyx_v_v;
+  goto __pyx_L0;
+
+  /* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py_double")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py_double(object o) except *:
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.from_py.__pyx_convert_vector_from_py_double", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static std::vector<__pyx_t_double_complex>  __pyx_convert_vector_from_py___pyx_t_double_complex(PyObject *__pyx_v_o) {
+  std::vector<__pyx_t_double_complex>  __pyx_v_v;
+  Py_ssize_t __pyx_v_s;
+  PyObject *__pyx_v_item = NULL;
+  std::vector<__pyx_t_double_complex>  __pyx_r;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  __pyx_t_double_complex __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_from_py___pyx_t_double_complex", 0);
+
+  /* "vector.from_py":55
+ * 
+ *     cdef vector[X] v
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)             # <<<<<<<<<<<<<<
+ * 
+ *     if s > 0:
+*/
+  __pyx_t_1 = __Pyx_PyObject_LengthHint(__pyx_v_o, 0); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1L))) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_v_s = __pyx_t_1;
+
+  /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  __pyx_t_2 = (__pyx_v_s > 0);
+  if (__pyx_t_2) {
+
+    /* "vector.from_py":58
+ * 
+ *     if s > 0:
+ *         v.reserve(<size_t> s)             # <<<<<<<<<<<<<<
+ * 
+ *     for item in o:
+*/
+    try {
+      __pyx_v_v.reserve(((size_t)__pyx_v_s));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 58, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  }
+
+  /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  if (likely(PyList_CheckExact(__pyx_v_o)) || PyTuple_CheckExact(__pyx_v_o)) {
+    __pyx_t_3 = __pyx_v_o; __Pyx_INCREF(__pyx_t_3);
+    __pyx_t_1 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_1 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_o); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 60, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 60, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(__pyx_t_3, __pyx_t_1, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_1;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_1));
+        #else
+        __pyx_t_5 = __Pyx_PySequence_ITEM(__pyx_t_3, __pyx_t_1);
+        #endif
+        ++__pyx_t_1;
+      }
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 60, __pyx_L1_error)
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_3);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(1, 60, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "vector.from_py":61
+ * 
+ *     for item in o:
+ *         v.push_back(<X>item)             # <<<<<<<<<<<<<<
+ * 
+ *     return v
+*/
+    __pyx_t_6 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_v_item); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 61, __pyx_L1_error)
+    try {
+      __pyx_v_v.push_back(__pyx_t_double_complex_from_parts(((double)__Pyx_CREAL(__pyx_t_6)), ((double)__Pyx_CIMAG(__pyx_t_6))));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 61, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "vector.from_py":63
+ *         v.push_back(<X>item)
+ * 
+ *     return v             # <<<<<<<<<<<<<<
+ * 
+*/
+  __pyx_r = __pyx_v_v;
+  goto __pyx_L0;
+
+  /* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py___pyx_t_double_complex")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py___pyx_t_double_complex(object o) except *:
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.from_py.__pyx_convert_vector_from_py___pyx_t_double_complex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static std::vector<std::vector<__pyx_t_double_complex> >  __pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___(PyObject *__pyx_v_o) {
+  std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_v;
+  Py_ssize_t __pyx_v_s;
+  PyObject *__pyx_v_item = NULL;
+  std::vector<std::vector<__pyx_t_double_complex> >  __pyx_r;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  std::vector<__pyx_t_double_complex>  __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___", 0);
+
+  /* "vector.from_py":55
+ * 
+ *     cdef vector[X] v
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)             # <<<<<<<<<<<<<<
+ * 
+ *     if s > 0:
+*/
+  __pyx_t_1 = __Pyx_PyObject_LengthHint(__pyx_v_o, 0); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1L))) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_v_s = __pyx_t_1;
+
+  /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  __pyx_t_2 = (__pyx_v_s > 0);
+  if (__pyx_t_2) {
+
+    /* "vector.from_py":58
+ * 
+ *     if s > 0:
+ *         v.reserve(<size_t> s)             # <<<<<<<<<<<<<<
+ * 
+ *     for item in o:
+*/
+    try {
+      __pyx_v_v.reserve(((size_t)__pyx_v_s));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 58, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  }
+
+  /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  if (likely(PyList_CheckExact(__pyx_v_o)) || PyTuple_CheckExact(__pyx_v_o)) {
+    __pyx_t_3 = __pyx_v_o; __Pyx_INCREF(__pyx_t_3);
+    __pyx_t_1 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_1 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_o); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 60, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 60, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(__pyx_t_3, __pyx_t_1, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_1;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_1));
+        #else
+        __pyx_t_5 = __Pyx_PySequence_ITEM(__pyx_t_3, __pyx_t_1);
+        #endif
+        ++__pyx_t_1;
+      }
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 60, __pyx_L1_error)
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_3);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(1, 60, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "vector.from_py":61
+ * 
+ *     for item in o:
+ *         v.push_back(<X>item)             # <<<<<<<<<<<<<<
+ * 
+ *     return v
+*/
+    __pyx_t_6 = __pyx_convert_vector_from_py___pyx_t_double_complex(__pyx_v_item); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 61, __pyx_L1_error)
+    try {
+      __pyx_v_v.push_back(((std::vector<__pyx_t_double_complex> )__pyx_t_6));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 61, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "vector.from_py":63
+ *         v.push_back(<X>item)
+ * 
+ *     return v             # <<<<<<<<<<<<<<
+ * 
+*/
+  __pyx_r = __pyx_v_v;
+  goto __pyx_L0;
+
+  /* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___(object o) except *:
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.from_py.__pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject *__pyx_v_o) {
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_v;
+  Py_ssize_t __pyx_v_s;
+  PyObject *__pyx_v_item = NULL;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_r;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_t_6;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex", 0);
+
+  /* "vector.from_py":55
+ * 
+ *     cdef vector[X] v
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)             # <<<<<<<<<<<<<<
+ * 
+ *     if s > 0:
+*/
+  __pyx_t_1 = __Pyx_PyObject_LengthHint(__pyx_v_o, 0); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1L))) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_v_s = __pyx_t_1;
+
+  /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  __pyx_t_2 = (__pyx_v_s > 0);
+  if (__pyx_t_2) {
+
+    /* "vector.from_py":58
+ * 
+ *     if s > 0:
+ *         v.reserve(<size_t> s)             # <<<<<<<<<<<<<<
+ * 
+ *     for item in o:
+*/
+    try {
+      __pyx_v_v.reserve(((size_t)__pyx_v_s));
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 58, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":57
+ *     cdef Py_ssize_t s = __Pyx_PyObject_LengthHint(o, 0)
+ * 
+ *     if s > 0:             # <<<<<<<<<<<<<<
+ *         v.reserve(<size_t> s)
+ * 
+*/
+  }
+
+  /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  if (likely(PyList_CheckExact(__pyx_v_o)) || PyTuple_CheckExact(__pyx_v_o)) {
+    __pyx_t_3 = __pyx_v_o; __Pyx_INCREF(__pyx_t_3);
+    __pyx_t_1 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_1 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_o); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 60, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_4 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 60, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(__pyx_t_3, __pyx_t_1, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_1;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_3);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(1, 60, __pyx_L1_error)
+          #endif
+          if (__pyx_t_1 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_1));
+        #else
+        __pyx_t_5 = __Pyx_PySequence_ITEM(__pyx_t_3, __pyx_t_1);
+        #endif
+        ++__pyx_t_1;
+      }
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 60, __pyx_L1_error)
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_3);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(1, 60, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_item, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "vector.from_py":61
+ * 
+ *     for item in o:
+ *         v.push_back(<X>item)             # <<<<<<<<<<<<<<
+ * 
+ *     return v
+*/
+    __pyx_t_6 = __pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_item); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 61, __pyx_L1_error)
+    try {
+      __pyx_v_v.push_back(__pyx_t_6);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(1, 61, __pyx_L1_error)
+    }
+
+    /* "vector.from_py":60
+ *         v.reserve(<size_t> s)
+ * 
+ *     for item in o:             # <<<<<<<<<<<<<<
+ *         v.push_back(<X>item)
+ * 
+*/
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "vector.from_py":63
+ *         v.push_back(<X>item)
+ * 
+ *     return v             # <<<<<<<<<<<<<<
+ * 
+*/
+  __pyx_r = __pyx_v_v;
+  goto __pyx_L0;
+
+  /* "vector.from_py":51
+ *     cdef Py_ssize_t __Pyx_PyObject_LengthHint(object o, Py_ssize_t defaultval) except -1
+ * 
+ * @cname("__pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex")             # <<<<<<<<<<<<<<
+ * cdef vector[X] __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(object o) except *:
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.from_py.__pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_pretend_to_initialize(&__pyx_r);
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":56
  *     cdef vector[complex] values_
  * 
  *     def __cinit__(self, int nrows = 0, int ncols = 0):             # <<<<<<<<<<<<<<
@@ -3088,50 +5152,50 @@ static int __pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_1__cinit
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_nrows,&__pyx_mstate_global->__pyx_n_u_ncols,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_VARARGS(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 45, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 56, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 56, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 56, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__cinit__", 0) < (0)) __PYX_ERR(0, 45, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__cinit__", 0) < (0)) __PYX_ERR(0, 56, __pyx_L3_error)
     } else {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 56, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 56, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
     }
     if (values[0]) {
-      __pyx_v_nrows = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_nrows == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L3_error)
+      __pyx_v_nrows = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_nrows == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 56, __pyx_L3_error)
     } else {
       __pyx_v_nrows = ((int)0);
     }
     if (values[1]) {
-      __pyx_v_ncols = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_ncols == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L3_error)
+      __pyx_v_ncols = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_ncols == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 56, __pyx_L3_error)
     } else {
       __pyx_v_ncols = ((int)0);
     }
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 0, 2, __pyx_nargs); __PYX_ERR(0, 45, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 0, 2, __pyx_nargs); __PYX_ERR(0, 56, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3160,7 +5224,7 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":46
+  /* "qilisdk/backends/qili_sim_cython.pyx":57
  * 
  *     def __cinit__(self, int nrows = 0, int ncols = 0):
  *         self.nrows_ = nrows             # <<<<<<<<<<<<<<
@@ -3169,7 +5233,7 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
 */
   __pyx_v_self->nrows_ = __pyx_v_nrows;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":47
+  /* "qilisdk/backends/qili_sim_cython.pyx":58
  *     def __cinit__(self, int nrows = 0, int ncols = 0):
  *         self.nrows_ = nrows
  *         self.ncols_ = ncols             # <<<<<<<<<<<<<<
@@ -3178,7 +5242,7 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
 */
   __pyx_v_self->ncols_ = __pyx_v_ncols;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":48
+  /* "qilisdk/backends/qili_sim_cython.pyx":59
  *         self.nrows_ = nrows
  *         self.ncols_ = ncols
  *         self.rows_ = vector[int](nrows + 1, 0)             # <<<<<<<<<<<<<<
@@ -3189,11 +5253,11 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
     __pyx_t_1 = std::vector<int> ((__pyx_v_nrows + 1), 0);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 48, __pyx_L1_error)
+    __PYX_ERR(0, 59, __pyx_L1_error)
   }
   __pyx_v_self->rows_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_1);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":49
+  /* "qilisdk/backends/qili_sim_cython.pyx":60
  *         self.ncols_ = ncols
  *         self.rows_ = vector[int](nrows + 1, 0)
  *         self.cols_ = vector[int]()             # <<<<<<<<<<<<<<
@@ -3204,11 +5268,11 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
     __pyx_t_1 = std::vector<int> ();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 49, __pyx_L1_error)
+    __PYX_ERR(0, 60, __pyx_L1_error)
   }
   __pyx_v_self->cols_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_1);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":50
+  /* "qilisdk/backends/qili_sim_cython.pyx":61
  *         self.rows_ = vector[int](nrows + 1, 0)
  *         self.cols_ = vector[int]()
  *         self.values_ = vector[complex]()             # <<<<<<<<<<<<<<
@@ -3219,11 +5283,11 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
     __pyx_t_2 = std::vector<__pyx_t_double_complex> ();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 50, __pyx_L1_error)
+    __PYX_ERR(0, 61, __pyx_L1_error)
   }
   __pyx_v_self->values_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_2);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":45
+  /* "qilisdk/backends/qili_sim_cython.pyx":56
  *     cdef vector[complex] values_
  * 
  *     def __cinit__(self, int nrows = 0, int ncols = 0):             # <<<<<<<<<<<<<<
@@ -3241,15 +5305,101 @@ static int __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix___cinit_
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":52
+/* "qilisdk/backends/qili_sim_cython.pyx":63
  *         self.values_ = vector[complex]()
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
- *     cdef SparseMatrix from_dense(vector[vector[complex]] dense):
+ *     def from_dense(vector[vector[complex]] dense) -> SparseMatrix:
  *         """
 */
 
-static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_dense(std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_dense) {
+/* Python wrapper */
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense, "\n        Construct a sparse matrix from a dense vector of vectors.\n        ");
+static PyMethodDef __pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense = {"from_dense", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense};
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_dense;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[1] = {0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("from_dense (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_dense,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 63, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 63, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "from_dense", 0) < (0)) __PYX_ERR(0, 63, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("from_dense", 1, 1, 1, i); __PYX_ERR(0, 63, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 1)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 63, __pyx_L3_error)
+    }
+    __pyx_v_dense = __pyx_convert_vector_from_py_std_3a__3a_vector_3c___pyx_t_double_complex_3e___(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("from_dense", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 63, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.from_dense", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense(__PYX_STD_MOVE_IF_SUPPORTED(__pyx_v_dense));
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense(std::vector<std::vector<__pyx_t_double_complex> >  __pyx_v_dense) {
   struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_mat = 0;
   int __pyx_v_r;
   int __pyx_v_c;
@@ -3276,17 +5426,17 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_dense", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":57
+  /* "qilisdk/backends/qili_sim_cython.pyx":68
  *         Construct a sparse matrix from a dense vector of vectors.
  *         """
  *         cdef SparseMatrix mat = SparseMatrix(dense.size(), dense[0].size())             # <<<<<<<<<<<<<<
  *         cdef int r, c
- *         cdef complex val
+ *         cdef double complex val
 */
   __pyx_t_2 = NULL;
-  __pyx_t_3 = __Pyx_PyLong_FromSize_t(__pyx_v_dense.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyLong_FromSize_t(__pyx_v_dense.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyLong_FromSize_t((__pyx_v_dense[0]).size()); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyLong_FromSize_t((__pyx_v_dense[0]).size()); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = 1;
   {
@@ -3295,15 +5445,15 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_GOTREF((PyObject *)__pyx_t_1);
   }
   __pyx_v_mat = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":60
+  /* "qilisdk/backends/qili_sim_cython.pyx":71
  *         cdef int r, c
- *         cdef complex val
+ *         cdef double complex val
  *         for r in range(mat.nrows_):             # <<<<<<<<<<<<<<
  *             for c in range(mat.ncols_):
  *                 val = dense[r][c]
@@ -3313,8 +5463,8 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
   for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_r = __pyx_t_8;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":61
- *         cdef complex val
+    /* "qilisdk/backends/qili_sim_cython.pyx":72
+ *         cdef double complex val
  *         for r in range(mat.nrows_):
  *             for c in range(mat.ncols_):             # <<<<<<<<<<<<<<
  *                 val = dense[r][c]
@@ -3325,7 +5475,7 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
     for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
       __pyx_v_c = __pyx_t_11;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":62
+      /* "qilisdk/backends/qili_sim_cython.pyx":73
  *         for r in range(mat.nrows_):
  *             for c in range(mat.ncols_):
  *                 val = dense[r][c]             # <<<<<<<<<<<<<<
@@ -3335,17 +5485,17 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
       __pyx_t_12 = ((__pyx_v_dense[__pyx_v_r])[__pyx_v_c]);
       __pyx_v_val = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_12), __Pyx_CIMAG(__pyx_t_12));
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":63
+      /* "qilisdk/backends/qili_sim_cython.pyx":74
  *             for c in range(mat.ncols_):
  *                 val = dense[r][c]
  *                 if abs(val) > atol_:             # <<<<<<<<<<<<<<
  *                     mat.cols_.push_back(c)
  *                     mat.values_.push_back(val)
 */
-      __pyx_t_13 = (__Pyx_c_abs_double(__pyx_v_val) > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
+      __pyx_t_13 = (abs(__pyx_v_val) > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
       if (__pyx_t_13) {
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":64
+        /* "qilisdk/backends/qili_sim_cython.pyx":75
  *                 val = dense[r][c]
  *                 if abs(val) > atol_:
  *                     mat.cols_.push_back(c)             # <<<<<<<<<<<<<<
@@ -3356,10 +5506,10 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
           __pyx_v_mat->cols_.push_back(__pyx_v_c);
         } catch(...) {
           __Pyx_CppExn2PyErr();
-          __PYX_ERR(0, 64, __pyx_L1_error)
+          __PYX_ERR(0, 75, __pyx_L1_error)
         }
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":65
+        /* "qilisdk/backends/qili_sim_cython.pyx":76
  *                 if abs(val) > atol_:
  *                     mat.cols_.push_back(c)
  *                     mat.values_.push_back(val)             # <<<<<<<<<<<<<<
@@ -3370,10 +5520,10 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
           __pyx_v_mat->values_.push_back(__pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_v_val), __Pyx_CIMAG(__pyx_v_val)));
         } catch(...) {
           __Pyx_CppExn2PyErr();
-          __PYX_ERR(0, 65, __pyx_L1_error)
+          __PYX_ERR(0, 76, __pyx_L1_error)
         }
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":66
+        /* "qilisdk/backends/qili_sim_cython.pyx":77
  *                     mat.cols_.push_back(c)
  *                     mat.values_.push_back(val)
  *                     mat.rows_[r + 1] += 1             # <<<<<<<<<<<<<<
@@ -3383,7 +5533,7 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
         __pyx_t_14 = (__pyx_v_r + 1);
         (__pyx_v_mat->rows_[__pyx_t_14]) = ((__pyx_v_mat->rows_[__pyx_t_14]) + 1);
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":63
+        /* "qilisdk/backends/qili_sim_cython.pyx":74
  *             for c in range(mat.ncols_):
  *                 val = dense[r][c]
  *                 if abs(val) > atol_:             # <<<<<<<<<<<<<<
@@ -3394,57 +5544,47 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
     }
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":68
+  /* "qilisdk/backends/qili_sim_cython.pyx":79
  *                     mat.rows_[r + 1] += 1
  *         # convert counts to offsets
  *         for r in range(1, mat.nrows_ + 1):             # <<<<<<<<<<<<<<
  *             mat.rows_[r] += mat.rows_[r - 1]
- *         return mat
+ * 
 */
   __pyx_t_14 = (__pyx_v_mat->nrows_ + 1);
   __pyx_t_15 = __pyx_t_14;
   for (__pyx_t_6 = 1; __pyx_t_6 < __pyx_t_15; __pyx_t_6+=1) {
     __pyx_v_r = __pyx_t_6;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":69
+    /* "qilisdk/backends/qili_sim_cython.pyx":80
  *         # convert counts to offsets
  *         for r in range(1, mat.nrows_ + 1):
  *             mat.rows_[r] += mat.rows_[r - 1]             # <<<<<<<<<<<<<<
- *         return mat
  * 
+ *     cdef SparseMatrix from_tuples(self, vector[tuple[int, int, complex]] entries, int nrows, int ncols):
 */
     __pyx_t_7 = __pyx_v_r;
     (__pyx_v_mat->rows_[__pyx_t_7]) = ((__pyx_v_mat->rows_[__pyx_t_7]) + (__pyx_v_mat->rows_[(__pyx_v_r - 1)]));
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":70
- *         for r in range(1, mat.nrows_ + 1):
- *             mat.rows_[r] += mat.rows_[r - 1]
- *         return mat             # <<<<<<<<<<<<<<
- * 
- *     @staticmethod
-*/
-  __Pyx_XDECREF((PyObject *)__pyx_r);
-  __Pyx_INCREF((PyObject *)__pyx_v_mat);
-  __pyx_r = __pyx_v_mat;
-  goto __pyx_L0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":52
+  /* "qilisdk/backends/qili_sim_cython.pyx":63
  *         self.values_ = vector[complex]()
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
- *     cdef SparseMatrix from_dense(vector[vector[complex]] dense):
+ *     def from_dense(vector[vector[complex]] dense) -> SparseMatrix:
  *         """
 */
 
   /* function exit code */
+  __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)Py_None); __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.from_dense", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF((PyObject *)__pyx_v_mat);
   __Pyx_XGIVEREF((PyObject *)__pyx_r);
@@ -3452,15 +5592,15 @@ static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":72
- *         return mat
+/* "qilisdk/backends/qili_sim_cython.pyx":82
+ *             mat.rows_[r] += mat.rows_[r - 1]
  * 
- *     @staticmethod             # <<<<<<<<<<<<<<
- *     cdef from_tuples(list entries, int nrows, int ncols):
+ *     cdef SparseMatrix from_tuples(self, vector[tuple[int, int, complex]] entries, int nrows, int ncols):             # <<<<<<<<<<<<<<
  *         """
+ *         Construct a sparse matrix from a list of (row, col, value) tuples.
 */
 
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(PyObject *__pyx_v_entries, int __pyx_v_nrows, int __pyx_v_ncols) {
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_entries, int __pyx_v_nrows, int __pyx_v_ncols) {
   struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_mat = 0;
   int __pyx_v_currentRow;
   int __pyx_v_nnzCount;
@@ -3469,7 +5609,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
   PyObject *__pyx_v_row = NULL;
   PyObject *__pyx_v_col = NULL;
   PyObject *__pyx_v_val = NULL;
-  PyObject *__pyx_r = NULL;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -3482,9 +5622,9 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
   Py_ssize_t __pyx_t_9;
   int __pyx_t_10;
   int __pyx_t_11;
-  long __pyx_t_12;
-  int __pyx_t_13;
-  PyObject *__pyx_t_14 = NULL;
+  int __pyx_t_12;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> ::iterator __pyx_t_13;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_t_14;
   PyObject *(*__pyx_t_15)(PyObject *);
   __pyx_t_double_complex __pyx_t_16;
   int __pyx_lineno = 0;
@@ -3492,7 +5632,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_tuples", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":78
+  /* "qilisdk/backends/qili_sim_cython.pyx":87
  *         Entries must be sorted by (row, col).
  *         """
  *         cdef SparseMatrix mat = SparseMatrix(nrows, ncols)             # <<<<<<<<<<<<<<
@@ -3500,9 +5640,9 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
  *         cdef int nnzCount = 0
 */
   __pyx_t_2 = NULL;
-  __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_nrows); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_nrows); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyLong_From_int(__pyx_v_ncols); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyLong_From_int(__pyx_v_ncols); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = 1;
   {
@@ -3511,13 +5651,13 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
     __Pyx_GOTREF((PyObject *)__pyx_t_1);
   }
   __pyx_v_mat = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":79
+  /* "qilisdk/backends/qili_sim_cython.pyx":88
  *         """
  *         cdef SparseMatrix mat = SparseMatrix(nrows, ncols)
  *         cdef int currentRow = 0             # <<<<<<<<<<<<<<
@@ -3526,7 +5666,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
   __pyx_v_currentRow = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":80
+  /* "qilisdk/backends/qili_sim_cython.pyx":89
  *         cdef SparseMatrix mat = SparseMatrix(nrows, ncols)
  *         cdef int currentRow = 0
  *         cdef int nnzCount = 0             # <<<<<<<<<<<<<<
@@ -3535,7 +5675,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
   __pyx_v_nnzCount = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":81
+  /* "qilisdk/backends/qili_sim_cython.pyx":90
  *         cdef int currentRow = 0
  *         cdef int nnzCount = 0
  *         mat.rows_ = vector[int](nrows + 2, 0)             # <<<<<<<<<<<<<<
@@ -3546,11 +5686,11 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     __pyx_t_6 = std::vector<int> ((__pyx_v_nrows + 2), 0);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 81, __pyx_L1_error)
+    __PYX_ERR(0, 90, __pyx_L1_error)
   }
   __pyx_v_mat->rows_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_6);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":82
+  /* "qilisdk/backends/qili_sim_cython.pyx":91
  *         cdef int nnzCount = 0
  *         mat.rows_ = vector[int](nrows + 2, 0)
  *         mat.cols_ = vector[int]()             # <<<<<<<<<<<<<<
@@ -3561,11 +5701,11 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     __pyx_t_6 = std::vector<int> ();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 82, __pyx_L1_error)
+    __PYX_ERR(0, 91, __pyx_L1_error)
   }
   __pyx_v_mat->cols_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_6);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":83
+  /* "qilisdk/backends/qili_sim_cython.pyx":92
  *         mat.rows_ = vector[int](nrows + 2, 0)
  *         mat.cols_ = vector[int]()
  *         mat.values_ = vector[complex]()             # <<<<<<<<<<<<<<
@@ -3576,127 +5716,57 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     __pyx_t_7 = std::vector<__pyx_t_double_complex> ();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 83, __pyx_L1_error)
+    __PYX_ERR(0, 92, __pyx_L1_error)
   }
   __pyx_v_mat->values_ = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_7);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":87
+  /* "qilisdk/backends/qili_sim_cython.pyx":96
  *         # ensure entries are sorted
  *         cdef int i
  *         for i in range(1, len(entries)):             # <<<<<<<<<<<<<<
  *             if entries[i][0] < entries[i-1][0] or \
  *                (entries[i][0] == entries[i-1][0] and entries[i][1] < entries[i-1][1]):
 */
-  if (unlikely(__pyx_v_entries == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 87, __pyx_L1_error)
-  }
-  __pyx_t_8 = __Pyx_PyList_GET_SIZE(__pyx_v_entries); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_entries); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_8 = PyObject_Length(__pyx_t_1); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(0, 96, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_9 = __pyx_t_8;
   for (__pyx_t_10 = 1; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_i = __pyx_t_10;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":88
+    /* "qilisdk/backends/qili_sim_cython.pyx":97
  *         cdef int i
  *         for i in range(1, len(entries)):
  *             if entries[i][0] < entries[i-1][0] or \             # <<<<<<<<<<<<<<
  *                (entries[i][0] == entries[i-1][0] and entries[i][1] < entries[i-1][1]):
  *                 raise RuntimeError("Entries must be sorted by (row, col)")
 */
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 88, __pyx_L1_error)
-    }
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_v_i, int, 1, __Pyx_PyLong_From_int, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 88, __pyx_L1_error)
-    }
-    __pyx_t_12 = (__pyx_v_i - 1);
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_t_12, long, 1, __Pyx_PyLong_From_long, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_RichCompare(__pyx_t_4, __pyx_t_3, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_13 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_13 < 0))) __PYX_ERR(0, 88, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (!__pyx_t_13) {
+    __pyx_t_12 = ((__pyx_v_entries[__pyx_v_i]).f0 < (__pyx_v_entries[(__pyx_v_i - 1)]).f0);
+    if (!__pyx_t_12) {
     } else {
-      __pyx_t_11 = __pyx_t_13;
+      __pyx_t_11 = __pyx_t_12;
       goto __pyx_L6_bool_binop_done;
     }
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":89
+    /* "qilisdk/backends/qili_sim_cython.pyx":98
  *         for i in range(1, len(entries)):
  *             if entries[i][0] < entries[i-1][0] or \
  *                (entries[i][0] == entries[i-1][0] and entries[i][1] < entries[i-1][1]):             # <<<<<<<<<<<<<<
  *                 raise RuntimeError("Entries must be sorted by (row, col)")
  * 
 */
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 89, __pyx_L1_error)
-    }
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_v_i, int, 1, __Pyx_PyLong_From_int, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 89, __pyx_L1_error)
-    }
-    __pyx_t_12 = (__pyx_v_i - 1);
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_t_12, long, 1, __Pyx_PyLong_From_long, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_RichCompare(__pyx_t_3, __pyx_t_4, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_13 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_13 < 0))) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__pyx_t_13) {
+    __pyx_t_12 = ((__pyx_v_entries[__pyx_v_i]).f0 == (__pyx_v_entries[(__pyx_v_i - 1)]).f0);
+    if (__pyx_t_12) {
     } else {
-      __pyx_t_11 = __pyx_t_13;
+      __pyx_t_11 = __pyx_t_12;
       goto __pyx_L6_bool_binop_done;
     }
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 89, __pyx_L1_error)
-    }
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_v_i, int, 1, __Pyx_PyLong_From_int, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_1, 1, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (unlikely(__pyx_v_entries == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 89, __pyx_L1_error)
-    }
-    __pyx_t_12 = (__pyx_v_i - 1);
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_entries, __pyx_t_12, long, 1, __Pyx_PyLong_From_long, 1, 1, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 1, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_OwnStrongReference); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_RichCompare(__pyx_t_4, __pyx_t_3, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_13 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_13 < 0))) __PYX_ERR(0, 89, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_11 = __pyx_t_13;
+    __pyx_t_12 = ((__pyx_v_entries[__pyx_v_i]).f1 < (__pyx_v_entries[(__pyx_v_i - 1)]).f1);
+    __pyx_t_11 = __pyx_t_12;
     __pyx_L6_bool_binop_done:;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":88
+    /* "qilisdk/backends/qili_sim_cython.pyx":97
  *         cdef int i
  *         for i in range(1, len(entries)):
  *             if entries[i][0] < entries[i-1][0] or \             # <<<<<<<<<<<<<<
@@ -3705,27 +5775,27 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
     if (unlikely(__pyx_t_11)) {
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":90
+      /* "qilisdk/backends/qili_sim_cython.pyx":99
  *             if entries[i][0] < entries[i-1][0] or \
  *                (entries[i][0] == entries[i-1][0] and entries[i][1] < entries[i-1][1]):
  *                 raise RuntimeError("Entries must be sorted by (row, col)")             # <<<<<<<<<<<<<<
  * 
  *         for e in entries:
 */
-      __pyx_t_3 = NULL;
+      __pyx_t_4 = NULL;
       __pyx_t_5 = 1;
       {
-        PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_mstate_global->__pyx_kp_u_Entries_must_be_sorted_by_row_co};
+        PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_mstate_global->__pyx_kp_u_Entries_must_be_sorted_by_row_co};
         __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)(((PyTypeObject*)PyExc_RuntimeError)), __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 90, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
       }
       __Pyx_Raise(__pyx_t_1, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __PYX_ERR(0, 90, __pyx_L1_error)
+      __PYX_ERR(0, 99, __pyx_L1_error)
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":88
+      /* "qilisdk/backends/qili_sim_cython.pyx":97
  *         cdef int i
  *         for i in range(1, len(entries)):
  *             if entries[i][0] < entries[i-1][0] or \             # <<<<<<<<<<<<<<
@@ -3735,35 +5805,22 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     }
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":92
+  /* "qilisdk/backends/qili_sim_cython.pyx":101
  *                 raise RuntimeError("Entries must be sorted by (row, col)")
  * 
  *         for e in entries:             # <<<<<<<<<<<<<<
  *             row, col, val = e
  *             while currentRow < row:
 */
-  if (unlikely(__pyx_v_entries == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 92, __pyx_L1_error)
-  }
-  __pyx_t_1 = __pyx_v_entries; __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_8 = 0;
-  for (;;) {
-    {
-      Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_1);
-      #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 92, __pyx_L1_error)
-      #endif
-      if (__pyx_t_8 >= __pyx_temp) break;
-    }
-    __pyx_t_3 = __Pyx_PyList_GetItemRefFast(__pyx_t_1, __pyx_t_8, __Pyx_ReferenceSharing_OwnStrongReference);
-    ++__pyx_t_8;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 92, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_XDECREF_SET(__pyx_v_e, __pyx_t_3);
-    __pyx_t_3 = 0;
+  __pyx_t_13 = __pyx_v_entries.begin();
+  for (; __pyx_t_13 != __pyx_v_entries.end(); ++__pyx_t_13) {
+    __pyx_t_14 = *__pyx_t_13;
+    __pyx_t_1 = __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_14); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_XDECREF_SET(__pyx_v_e, __pyx_t_1);
+    __pyx_t_1 = 0;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":93
+    /* "qilisdk/backends/qili_sim_cython.pyx":102
  * 
  *         for e in entries:
  *             row, col, val = e             # <<<<<<<<<<<<<<
@@ -3776,65 +5833,65 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
       if (unlikely(size != 3)) {
         if (size > 3) __Pyx_RaiseTooManyValuesError(3);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 93, __pyx_L1_error)
+        __PYX_ERR(0, 102, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
-        __pyx_t_3 = PyTuple_GET_ITEM(sequence, 0);
-        __Pyx_INCREF(__pyx_t_3);
+        __pyx_t_1 = PyTuple_GET_ITEM(sequence, 0);
+        __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = PyTuple_GET_ITEM(sequence, 1);
         __Pyx_INCREF(__pyx_t_4);
-        __pyx_t_2 = PyTuple_GET_ITEM(sequence, 2);
-        __Pyx_INCREF(__pyx_t_2);
+        __pyx_t_3 = PyTuple_GET_ITEM(sequence, 2);
+        __Pyx_INCREF(__pyx_t_3);
       } else {
-        __pyx_t_3 = __Pyx_PyList_GetItemRefFast(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 93, __pyx_L1_error)
-        __Pyx_XGOTREF(__pyx_t_3);
+        __pyx_t_1 = __Pyx_PyList_GetItemRefFast(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
+        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __Pyx_XGOTREF(__pyx_t_1);
         __pyx_t_4 = __Pyx_PyList_GetItemRefFast(sequence, 1, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 102, __pyx_L1_error)
         __Pyx_XGOTREF(__pyx_t_4);
-        __pyx_t_2 = __Pyx_PyList_GetItemRefFast(sequence, 2, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
-        __Pyx_XGOTREF(__pyx_t_2);
+        __pyx_t_3 = __Pyx_PyList_GetItemRefFast(sequence, 2, __Pyx_ReferenceSharing_SharedReference);
+        if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __Pyx_XGOTREF(__pyx_t_3);
       }
       #else
-      __pyx_t_3 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 93, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_4 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 102, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_2 = __Pyx_PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_3 = __Pyx_PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
       #endif
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_14 = PyObject_GetIter(__pyx_v_e); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 93, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_14);
-      __pyx_t_15 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_14);
-      index = 0; __pyx_t_3 = __pyx_t_15(__pyx_t_14); if (unlikely(!__pyx_t_3)) goto __pyx_L11_unpacking_failed;
-      __Pyx_GOTREF(__pyx_t_3);
-      index = 1; __pyx_t_4 = __pyx_t_15(__pyx_t_14); if (unlikely(!__pyx_t_4)) goto __pyx_L11_unpacking_failed;
-      __Pyx_GOTREF(__pyx_t_4);
-      index = 2; __pyx_t_2 = __pyx_t_15(__pyx_t_14); if (unlikely(!__pyx_t_2)) goto __pyx_L11_unpacking_failed;
+      __pyx_t_2 = PyObject_GetIter(__pyx_v_e); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_15(__pyx_t_14), 3) < (0)) __PYX_ERR(0, 93, __pyx_L1_error)
+      __pyx_t_15 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_2);
+      index = 0; __pyx_t_1 = __pyx_t_15(__pyx_t_2); if (unlikely(!__pyx_t_1)) goto __pyx_L11_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_1);
+      index = 1; __pyx_t_4 = __pyx_t_15(__pyx_t_2); if (unlikely(!__pyx_t_4)) goto __pyx_L11_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_4);
+      index = 2; __pyx_t_3 = __pyx_t_15(__pyx_t_2); if (unlikely(!__pyx_t_3)) goto __pyx_L11_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_3);
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_15(__pyx_t_2), 3) < (0)) __PYX_ERR(0, 102, __pyx_L1_error)
       __pyx_t_15 = NULL;
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       goto __pyx_L12_unpacking_done;
       __pyx_L11_unpacking_failed:;
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_15 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 93, __pyx_L1_error)
+      __PYX_ERR(0, 102, __pyx_L1_error)
       __pyx_L12_unpacking_done:;
     }
-    __Pyx_XDECREF_SET(__pyx_v_row, __pyx_t_3);
-    __pyx_t_3 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_row, __pyx_t_1);
+    __pyx_t_1 = 0;
     __Pyx_XDECREF_SET(__pyx_v_col, __pyx_t_4);
     __pyx_t_4 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_val, __pyx_t_2);
-    __pyx_t_2 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_val, __pyx_t_3);
+    __pyx_t_3 = 0;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":94
+    /* "qilisdk/backends/qili_sim_cython.pyx":103
  *         for e in entries:
  *             row, col, val = e
  *             while currentRow < row:             # <<<<<<<<<<<<<<
@@ -3842,15 +5899,15 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
  *                 currentRow += 1
 */
     while (1) {
-      __pyx_t_2 = __Pyx_PyLong_From_int(__pyx_v_currentRow); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 94, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = PyObject_RichCompare(__pyx_t_2, __pyx_v_row, Py_LT); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 94, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 94, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_currentRow); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_4 = PyObject_RichCompare(__pyx_t_3, __pyx_v_row, Py_LT); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 103, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (!__pyx_t_11) break;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":95
+      /* "qilisdk/backends/qili_sim_cython.pyx":104
  *             row, col, val = e
  *             while currentRow < row:
  *                 mat.rows_[currentRow + 1] = nnzCount             # <<<<<<<<<<<<<<
@@ -3859,7 +5916,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
       (__pyx_v_mat->rows_[(__pyx_v_currentRow + 1)]) = __pyx_v_nnzCount;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":96
+      /* "qilisdk/backends/qili_sim_cython.pyx":105
  *             while currentRow < row:
  *                 mat.rows_[currentRow + 1] = nnzCount
  *                 currentRow += 1             # <<<<<<<<<<<<<<
@@ -3869,37 +5926,37 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
       __pyx_v_currentRow = (__pyx_v_currentRow + 1);
     }
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":97
+    /* "qilisdk/backends/qili_sim_cython.pyx":106
  *                 mat.rows_[currentRow + 1] = nnzCount
  *                 currentRow += 1
  *             mat.cols_.push_back(col)             # <<<<<<<<<<<<<<
  *             mat.values_.push_back(val)
  *             nnzCount += 1
 */
-    __pyx_t_10 = __Pyx_PyLong_As_int(__pyx_v_col); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyLong_As_int(__pyx_v_col); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 106, __pyx_L1_error)
     try {
       __pyx_v_mat->cols_.push_back(__pyx_t_10);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 97, __pyx_L1_error)
+      __PYX_ERR(0, 106, __pyx_L1_error)
     }
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":98
+    /* "qilisdk/backends/qili_sim_cython.pyx":107
  *                 currentRow += 1
  *             mat.cols_.push_back(col)
  *             mat.values_.push_back(val)             # <<<<<<<<<<<<<<
  *             nnzCount += 1
  * 
 */
-    __pyx_t_16 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_v_val); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_v_val); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 107, __pyx_L1_error)
     try {
       __pyx_v_mat->values_.push_back(__pyx_t_16);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 98, __pyx_L1_error)
+      __PYX_ERR(0, 107, __pyx_L1_error)
     }
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":99
+    /* "qilisdk/backends/qili_sim_cython.pyx":108
  *             mat.cols_.push_back(col)
  *             mat.values_.push_back(val)
  *             nnzCount += 1             # <<<<<<<<<<<<<<
@@ -3908,7 +5965,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
     __pyx_v_nnzCount = (__pyx_v_nnzCount + 1);
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":92
+    /* "qilisdk/backends/qili_sim_cython.pyx":101
  *                 raise RuntimeError("Entries must be sorted by (row, col)")
  * 
  *         for e in entries:             # <<<<<<<<<<<<<<
@@ -3916,9 +5973,8 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
  *             while currentRow < row:
 */
   }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":101
+  /* "qilisdk/backends/qili_sim_cython.pyx":110
  *             nnzCount += 1
  * 
  *         while currentRow <= nrows:             # <<<<<<<<<<<<<<
@@ -3929,7 +5985,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
     __pyx_t_11 = (__pyx_v_currentRow <= __pyx_v_nrows);
     if (!__pyx_t_11) break;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":102
+    /* "qilisdk/backends/qili_sim_cython.pyx":111
  * 
  *         while currentRow <= nrows:
  *             mat.rows_[currentRow + 1] = nnzCount             # <<<<<<<<<<<<<<
@@ -3938,43 +5994,32 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
 */
     (__pyx_v_mat->rows_[(__pyx_v_currentRow + 1)]) = __pyx_v_nnzCount;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":103
+    /* "qilisdk/backends/qili_sim_cython.pyx":112
  *         while currentRow <= nrows:
  *             mat.rows_[currentRow + 1] = nnzCount
  *             currentRow += 1             # <<<<<<<<<<<<<<
  * 
- *         return mat
+ *     cdef vector[tuple[int, int, complex]] to_tuples(self):
 */
     __pyx_v_currentRow = (__pyx_v_currentRow + 1);
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":105
- *             currentRow += 1
+  /* "qilisdk/backends/qili_sim_cython.pyx":82
+ *             mat.rows_[r] += mat.rows_[r - 1]
  * 
- *         return mat             # <<<<<<<<<<<<<<
- * 
- *     cdef to_tuples(self):
-*/
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF((PyObject *)__pyx_v_mat);
-  __pyx_r = ((PyObject *)__pyx_v_mat);
-  goto __pyx_L0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":72
- *         return mat
- * 
- *     @staticmethod             # <<<<<<<<<<<<<<
- *     cdef from_tuples(list entries, int nrows, int ncols):
+ *     cdef SparseMatrix from_tuples(self, vector[tuple[int, int, complex]] entries, int nrows, int ncols):             # <<<<<<<<<<<<<<
  *         """
+ *         Construct a sparse matrix from a list of (row, col, value) tuples.
 */
 
   /* function exit code */
+  __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)Py_None); __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_14);
   __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.from_tuples", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
@@ -3983,24 +6028,24 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_fro
   __Pyx_XDECREF(__pyx_v_row);
   __Pyx_XDECREF(__pyx_v_col);
   __Pyx_XDECREF(__pyx_v_val);
-  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":107
- *         return mat
+/* "qilisdk/backends/qili_sim_cython.pyx":114
+ *             currentRow += 1
  * 
- *     cdef to_tuples(self):             # <<<<<<<<<<<<<<
+ *     cdef vector[tuple[int, int, complex]] to_tuples(self):             # <<<<<<<<<<<<<<
  *         """
  *         Convert the sparse matrix to a list of (row, col, value) tuples.
 */
 
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self) {
+static std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self) {
   int __pyx_v_r;
   int __pyx_v_idx;
   PyObject *__pyx_v_entries = 0;
-  PyObject *__pyx_r = NULL;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   int __pyx_t_2;
@@ -4014,24 +6059,25 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_
   PyObject *__pyx_t_10 = NULL;
   PyObject *__pyx_t_11 = NULL;
   int __pyx_t_12;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_t_13;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_tuples", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":112
+  /* "qilisdk/backends/qili_sim_cython.pyx":119
  *         """
  *         cdef int r, idx
  *         cdef list entries = []             # <<<<<<<<<<<<<<
  *         for r in range(self.nrows_):
  *             for idx in range(self.rows_[r], self.rows_[r + 1]):
 */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_entries = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":113
+  /* "qilisdk/backends/qili_sim_cython.pyx":120
  *         cdef int r, idx
  *         cdef list entries = []
  *         for r in range(self.nrows_):             # <<<<<<<<<<<<<<
@@ -4043,7 +6089,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_r = __pyx_t_4;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":114
+    /* "qilisdk/backends/qili_sim_cython.pyx":121
  *         cdef list entries = []
  *         for r in range(self.nrows_):
  *             for idx in range(self.rows_[r], self.rows_[r + 1]):             # <<<<<<<<<<<<<<
@@ -4055,52 +6101,51 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_
     for (__pyx_t_7 = (__pyx_v_self->rows_[__pyx_v_r]); __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
       __pyx_v_idx = __pyx_t_7;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":115
+      /* "qilisdk/backends/qili_sim_cython.pyx":122
  *         for r in range(self.nrows_):
  *             for idx in range(self.rows_[r], self.rows_[r + 1]):
  *                 entries.append((r, self.cols_[idx], self.values_[idx]))             # <<<<<<<<<<<<<<
  *         return entries
  * 
 */
-      __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_r); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_r); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_8 = __Pyx_PyLong_From_int((__pyx_v_self->cols_[__pyx_v_idx])); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyLong_From_int((__pyx_v_self->cols_[__pyx_v_idx])); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __pyx_t_9 = (__pyx_v_self->values_[__pyx_v_idx]);
-      __pyx_t_10 = __pyx_PyComplex_FromComplex(__pyx_t_9); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_10 = __pyx_PyComplex_FromComplex(__pyx_t_9); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_10);
-      __pyx_t_11 = PyTuple_New(3); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_11 = PyTuple_New(3); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_GIVEREF(__pyx_t_1);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 115, __pyx_L1_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 122, __pyx_L1_error);
       __Pyx_GIVEREF(__pyx_t_8);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 115, __pyx_L1_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 122, __pyx_L1_error);
       __Pyx_GIVEREF(__pyx_t_10);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 2, __pyx_t_10) != (0)) __PYX_ERR(0, 115, __pyx_L1_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 2, __pyx_t_10) != (0)) __PYX_ERR(0, 122, __pyx_L1_error);
       __pyx_t_1 = 0;
       __pyx_t_8 = 0;
       __pyx_t_10 = 0;
-      __pyx_t_12 = __Pyx_PyList_Append(__pyx_v_entries, __pyx_t_11); if (unlikely(__pyx_t_12 == ((int)-1))) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyList_Append(__pyx_v_entries, __pyx_t_11); if (unlikely(__pyx_t_12 == ((int)-1))) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
     }
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":116
+  /* "qilisdk/backends/qili_sim_cython.pyx":123
  *             for idx in range(self.rows_[r], self.rows_[r + 1]):
  *                 entries.append((r, self.cols_[idx], self.values_[idx]))
  *         return entries             # <<<<<<<<<<<<<<
  * 
  *     cdef int get_width(self):
 */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_entries);
-  __pyx_r = __pyx_v_entries;
+  __pyx_t_13 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_entries); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_r = __pyx_t_13;
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":107
- *         return mat
+  /* "qilisdk/backends/qili_sim_cython.pyx":114
+ *             currentRow += 1
  * 
- *     cdef to_tuples(self):             # <<<<<<<<<<<<<<
+ *     cdef vector[tuple[int, int, complex]] to_tuples(self):             # <<<<<<<<<<<<<<
  *         """
  *         Convert the sparse matrix to a list of (row, col, value) tuples.
 */
@@ -4112,15 +6157,14 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_
   __Pyx_XDECREF(__pyx_t_10);
   __Pyx_XDECREF(__pyx_t_11);
   __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.to_tuples", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_entries);
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":118
+/* "qilisdk/backends/qili_sim_cython.pyx":125
  *         return entries
  * 
  *     cdef int get_width(self):             # <<<<<<<<<<<<<<
@@ -4131,17 +6175,17 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_
 static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_width(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self) {
   int __pyx_r;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":119
+  /* "qilisdk/backends/qili_sim_cython.pyx":126
  * 
  *     cdef int get_width(self):
  *         return self.ncols_             # <<<<<<<<<<<<<<
  * 
- *     cdef get(self, int row, int col):
+ *     cdef double complex get(self, int row, int col):
 */
   __pyx_r = __pyx_v_self->ncols_;
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":118
+  /* "qilisdk/backends/qili_sim_cython.pyx":125
  *         return entries
  * 
  *     cdef int get_width(self):             # <<<<<<<<<<<<<<
@@ -4154,31 +6198,25 @@ static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_width
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":121
+/* "qilisdk/backends/qili_sim_cython.pyx":128
  *         return self.ncols_
  * 
- *     cdef get(self, int row, int col):             # <<<<<<<<<<<<<<
+ *     cdef double complex get(self, int row, int col):             # <<<<<<<<<<<<<<
  *         cdef int idx
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):
 */
 
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_row, int __pyx_v_col) {
+static __pyx_t_double_complex __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, int __pyx_v_row, int __pyx_v_col) {
   int __pyx_v_idx;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
+  __pyx_t_double_complex __pyx_r;
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
   int __pyx_t_4;
   __pyx_t_double_complex __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("get", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":123
- *     cdef get(self, int row, int col):
+  /* "qilisdk/backends/qili_sim_cython.pyx":130
+ *     cdef double complex get(self, int row, int col):
  *         cdef int idx
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):             # <<<<<<<<<<<<<<
  *             if self.cols_[idx] == col:
@@ -4189,7 +6227,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get
   for (__pyx_t_3 = (__pyx_v_self->rows_[__pyx_v_row]); __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_idx = __pyx_t_3;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":124
+    /* "qilisdk/backends/qili_sim_cython.pyx":131
  *         cdef int idx
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):
  *             if self.cols_[idx] == col:             # <<<<<<<<<<<<<<
@@ -4199,22 +6237,18 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get
     __pyx_t_4 = ((__pyx_v_self->cols_[__pyx_v_idx]) == __pyx_v_col);
     if (__pyx_t_4) {
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":125
+      /* "qilisdk/backends/qili_sim_cython.pyx":132
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):
  *             if self.cols_[idx] == col:
  *                 return self.values_[idx]             # <<<<<<<<<<<<<<
  *         return 0.0
  * 
 */
-      __Pyx_XDECREF(__pyx_r);
       __pyx_t_5 = (__pyx_v_self->values_[__pyx_v_idx]);
-      __pyx_t_6 = __pyx_PyComplex_FromComplex(__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_r = __pyx_t_6;
-      __pyx_t_6 = 0;
+      __pyx_r = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_5), __Pyx_CIMAG(__pyx_t_5));
       goto __pyx_L0;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":124
+      /* "qilisdk/backends/qili_sim_cython.pyx":131
  *         cdef int idx
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):
  *             if self.cols_[idx] == col:             # <<<<<<<<<<<<<<
@@ -4224,41 +6258,33 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get
     }
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":126
+  /* "qilisdk/backends/qili_sim_cython.pyx":133
  *             if self.cols_[idx] == col:
  *                 return self.values_[idx]
  *         return 0.0             # <<<<<<<<<<<<<<
  * 
- *     cdef insert(self, int row, int col, complex value):
+ *     cdef insert(self, int row, int col, double complex value):
 */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_float_0_0);
-  __pyx_r = __pyx_mstate_global->__pyx_float_0_0;
+  __pyx_r = __pyx_t_double_complex_from_parts(0.0, 0);
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":121
+  /* "qilisdk/backends/qili_sim_cython.pyx":128
  *         return self.ncols_
  * 
- *     cdef get(self, int row, int col):             # <<<<<<<<<<<<<<
+ *     cdef double complex get(self, int row, int col):             # <<<<<<<<<<<<<<
  *         cdef int idx
  *         for idx in range(self.rows_[row], self.rows_[row + 1]):
 */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.get", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":128
+/* "qilisdk/backends/qili_sim_cython.pyx":135
  *         return 0.0
  * 
- *     cdef insert(self, int row, int col, complex value):             # <<<<<<<<<<<<<<
+ *     cdef insert(self, int row, int col, double complex value):             # <<<<<<<<<<<<<<
  *         cdef int start = self.rows_[row]
  *         cdef int end = self.rows_[row + 1]
 */
@@ -4281,17 +6307,17 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("insert", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":129
+  /* "qilisdk/backends/qili_sim_cython.pyx":136
  * 
- *     cdef insert(self, int row, int col, complex value):
+ *     cdef insert(self, int row, int col, double complex value):
  *         cdef int start = self.rows_[row]             # <<<<<<<<<<<<<<
  *         cdef int end = self.rows_[row + 1]
  *         cdef int insertPos = start
 */
   __pyx_v_start = (__pyx_v_self->rows_[__pyx_v_row]);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":130
- *     cdef insert(self, int row, int col, complex value):
+  /* "qilisdk/backends/qili_sim_cython.pyx":137
+ *     cdef insert(self, int row, int col, double complex value):
  *         cdef int start = self.rows_[row]
  *         cdef int end = self.rows_[row + 1]             # <<<<<<<<<<<<<<
  *         cdef int insertPos = start
@@ -4299,7 +6325,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
 */
   __pyx_v_end = (__pyx_v_self->rows_[(__pyx_v_row + 1)]);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":131
+  /* "qilisdk/backends/qili_sim_cython.pyx":138
  *         cdef int start = self.rows_[row]
  *         cdef int end = self.rows_[row + 1]
  *         cdef int insertPos = start             # <<<<<<<<<<<<<<
@@ -4308,7 +6334,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
 */
   __pyx_v_insertPos = __pyx_v_start;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":132
+  /* "qilisdk/backends/qili_sim_cython.pyx":139
  *         cdef int end = self.rows_[row + 1]
  *         cdef int insertPos = start
  *         while insertPos < end and self.cols_[insertPos] < col:             # <<<<<<<<<<<<<<
@@ -4327,7 +6353,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":133
+    /* "qilisdk/backends/qili_sim_cython.pyx":140
  *         cdef int insertPos = start
  *         while insertPos < end and self.cols_[insertPos] < col:
  *             insertPos += 1             # <<<<<<<<<<<<<<
@@ -4337,7 +6363,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
     __pyx_v_insertPos = (__pyx_v_insertPos + 1);
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":134
+  /* "qilisdk/backends/qili_sim_cython.pyx":141
  *         while insertPos < end and self.cols_[insertPos] < col:
  *             insertPos += 1
  *         self.cols_.insert(self.cols_.begin() + insertPos, col)             # <<<<<<<<<<<<<<
@@ -4348,10 +6374,10 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
     __pyx_v_self->cols_.insert((__pyx_v_self->cols_.begin() + __pyx_v_insertPos), __pyx_v_col);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 134, __pyx_L1_error)
+    __PYX_ERR(0, 141, __pyx_L1_error)
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":135
+  /* "qilisdk/backends/qili_sim_cython.pyx":142
  *             insertPos += 1
  *         self.cols_.insert(self.cols_.begin() + insertPos, col)
  *         self.values_.insert(self.values_.begin() + insertPos, value)             # <<<<<<<<<<<<<<
@@ -4362,10 +6388,10 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
     __pyx_v_self->values_.insert((__pyx_v_self->values_.begin() + __pyx_v_insertPos), __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_v_value), __Pyx_CIMAG(__pyx_v_value)));
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 135, __pyx_L1_error)
+    __PYX_ERR(0, 142, __pyx_L1_error)
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":137
+  /* "qilisdk/backends/qili_sim_cython.pyx":144
  *         self.values_.insert(self.values_.begin() + insertPos, value)
  * 
  *         for r in range(row + 1, self.rows_.size()):             # <<<<<<<<<<<<<<
@@ -4377,21 +6403,21 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
   for (__pyx_t_5 = (__pyx_v_row + 1); __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
     __pyx_v_r = __pyx_t_5;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":138
+    /* "qilisdk/backends/qili_sim_cython.pyx":145
  * 
  *         for r in range(row + 1, self.rows_.size()):
  *             self.rows_[r] += 1             # <<<<<<<<<<<<<<
  * 
- *     cdef get_dims(self):
+ *     cdef string get_dims(self):
 */
     __pyx_t_6 = __pyx_v_r;
     (__pyx_v_self->rows_[__pyx_t_6]) = ((__pyx_v_self->rows_[__pyx_t_6]) + 1);
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":128
+  /* "qilisdk/backends/qili_sim_cython.pyx":135
  *         return 0.0
  * 
- *     cdef insert(self, int row, int col, complex value):             # <<<<<<<<<<<<<<
+ *     cdef insert(self, int row, int col, double complex value):             # <<<<<<<<<<<<<<
  *         cdef int start = self.rows_[row]
  *         cdef int end = self.rows_[row + 1]
 */
@@ -4408,54 +6434,55 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_ins
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":140
+/* "qilisdk/backends/qili_sim_cython.pyx":147
  *             self.rows_[r] += 1
  * 
- *     cdef get_dims(self):             # <<<<<<<<<<<<<<
+ *     cdef string get_dims(self):             # <<<<<<<<<<<<<<
  *         return f"{self.nrows_}x{self.ncols_}"
  * 
 */
 
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self) {
-  PyObject *__pyx_r = NULL;
+static std::string __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self) {
+  std::string __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3[3];
   PyObject *__pyx_t_4 = NULL;
+  std::string __pyx_t_5;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_dims", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":141
+  /* "qilisdk/backends/qili_sim_cython.pyx":148
  * 
- *     cdef get_dims(self):
+ *     cdef string get_dims(self):
  *         return f"{self.nrows_}x{self.ncols_}"             # <<<<<<<<<<<<<<
  * 
- *     cdef mul_cpp(self, SparseMatrix other):
+ *     cdef SparseMatrix mul(self, SparseMatrix other):
 */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyUnicode_From_int(__pyx_v_self->nrows_, 0, ' ', 'd'); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_From_int(__pyx_v_self->nrows_, 0, ' ', 'd'); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_self->ncols_, 0, ' ', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_self->ncols_, 0, ' ', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3[0] = __pyx_t_1;
   __pyx_t_3[1] = __pyx_mstate_global->__pyx_n_u_x;
   __pyx_t_3[2] = __pyx_t_2;
   __pyx_t_4 = __Pyx_PyUnicode_Join(__pyx_t_3, 3, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 1 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2), 127);
-  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 141, __pyx_L1_error)
+  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_r = __pyx_t_4;
-  __pyx_t_4 = 0;
+  __pyx_t_5 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 148, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_r = __pyx_t_5;
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":140
+  /* "qilisdk/backends/qili_sim_cython.pyx":147
  *             self.rows_[r] += 1
  * 
- *     cdef get_dims(self):             # <<<<<<<<<<<<<<
+ *     cdef string get_dims(self):             # <<<<<<<<<<<<<<
  *         return f"{self.nrows_}x{self.ncols_}"
  * 
 */
@@ -4466,22 +6493,21 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.get_dims", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":143
+/* "qilisdk/backends/qili_sim_cython.pyx":150
  *         return f"{self.nrows_}x{self.ncols_}"
  * 
- *     cdef mul_cpp(self, SparseMatrix other):             # <<<<<<<<<<<<<<
+ *     cdef SparseMatrix mul(self, SparseMatrix other):             # <<<<<<<<<<<<<<
  *         """
  *         Multiply two sparse matrices using C++ map for accumulation.
 */
 
-static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul_cpp(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_other) {
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_other) {
   std::map<std::pair<int,int> ,__pyx_t_double_complex>  __pyx_v_entries_map;
   int __pyx_v_r;
   int __pyx_v_idxA;
@@ -4490,38 +6516,40 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
   int __pyx_v_colB;
   __pyx_t_double_complex __pyx_v_valA;
   __pyx_t_double_complex __pyx_v_valB;
+  __pyx_t_double_complex __pyx_v_prod;
   PyObject *__pyx_v_entries = 0;
   std::map<std::pair<int,int> ,__pyx_t_double_complex> ::iterator __pyx_v_it;
   std::pair<int,int>  __pyx_v_k;
   __pyx_t_double_complex __pyx_v_v;
-  PyObject *__pyx_r = NULL;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
+  std::string __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7[4];
-  size_t __pyx_t_8;
-  int __pyx_t_9;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8[4];
+  size_t __pyx_t_9;
   int __pyx_t_10;
   int __pyx_t_11;
   int __pyx_t_12;
   int __pyx_t_13;
   int __pyx_t_14;
-  __pyx_t_double_complex __pyx_t_15;
-  int __pyx_t_16;
+  int __pyx_t_15;
+  __pyx_t_double_complex __pyx_t_16;
   int __pyx_t_17;
   int __pyx_t_18;
-  std::pair<int,int>  __pyx_t_19;
-  int __pyx_t_20;
+  int __pyx_t_19;
+  std::pair<int,int>  __pyx_t_20;
+  int __pyx_t_21;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("mul_cpp", 0);
+  __Pyx_RefNannySetupContext("mul", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":147
+  /* "qilisdk/backends/qili_sim_cython.pyx":154
  *         Multiply two sparse matrices using C++ map for accumulation.
  *         """
  *         if self.ncols_ != other.nrows_:             # <<<<<<<<<<<<<<
@@ -4531,7 +6559,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
   __pyx_t_1 = (__pyx_v_self->ncols_ != __pyx_v_other->nrows_);
   if (unlikely(__pyx_t_1)) {
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":148
+    /* "qilisdk/backends/qili_sim_cython.pyx":155
  *         """
  *         if self.ncols_ != other.nrows_:
  *             raise RuntimeError(f"Matrix dimensions do not match for multiplication: {self.get_dims()} * {other.get_dims()}")             # <<<<<<<<<<<<<<
@@ -4539,39 +6567,41 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
  *         cdef int r, idxA, idxB, colA, colB
 */
     __pyx_t_3 = NULL;
-    __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_self->__pyx_vtab)->get_dims(__pyx_v_self); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_PyObject_FormatSimple(__pyx_t_4, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_self->__pyx_vtab)->get_dims(__pyx_v_self); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 155, __pyx_L1_error)
+    __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_other->__pyx_vtab)->get_dims(__pyx_v_other); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_4, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_5, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_Matrix_dimensions_do_not_match_f;
-    __pyx_t_7[1] = __pyx_t_5;
-    __pyx_t_7[2] = __pyx_mstate_global->__pyx_kp_u_;
-    __pyx_t_7[3] = __pyx_t_6;
-    __pyx_t_4 = __Pyx_PyUnicode_Join(__pyx_t_7, 4, 51 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5) + 3 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_5) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6));
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_other->__pyx_vtab)->get_dims(__pyx_v_other); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 155, __pyx_L1_error)
+    __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 155, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_7 = __Pyx_PyObject_FormatSimple(__pyx_t_5, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 155, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_8[0] = __pyx_mstate_global->__pyx_kp_u_Matrix_dimensions_do_not_match_f;
+    __pyx_t_8[1] = __pyx_t_6;
+    __pyx_t_8[2] = __pyx_mstate_global->__pyx_kp_u_;
+    __pyx_t_8[3] = __pyx_t_7;
+    __pyx_t_5 = __Pyx_PyUnicode_Join(__pyx_t_8, 4, 51 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 3 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_7), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_7));
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 155, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_8 = 1;
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_9 = 1;
     {
-      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_4};
-      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)(((PyTypeObject*)PyExc_RuntimeError)), __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)(((PyTypeObject*)PyExc_RuntimeError)), __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 155, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(0, 148, __pyx_L1_error)
+    __PYX_ERR(0, 155, __pyx_L1_error)
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":147
+    /* "qilisdk/backends/qili_sim_cython.pyx":154
  *         Multiply two sparse matrices using C++ map for accumulation.
  *         """
  *         if self.ncols_ != other.nrows_:             # <<<<<<<<<<<<<<
@@ -4580,49 +6610,31 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
 */
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":153
- *         cdef complex valA, valB
+  /* "qilisdk/backends/qili_sim_cython.pyx":161
+ *         cdef double complex prod
  * 
- *         print("here3")             # <<<<<<<<<<<<<<
- *         for r in range(self.nrows_):
- *             for idxA in range(self.rows_[r], self.rows_[r+1]):
-*/
-  __pyx_t_4 = NULL;
-  __pyx_t_8 = 1;
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_mstate_global->__pyx_n_u_here3};
-    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 153, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":154
- * 
- *         print("here3")
  *         for r in range(self.nrows_):             # <<<<<<<<<<<<<<
  *             for idxA in range(self.rows_[r], self.rows_[r+1]):
  *                 colA = self.cols_[idxA]
 */
-  __pyx_t_9 = __pyx_v_self->nrows_;
-  __pyx_t_10 = __pyx_t_9;
-  for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
-    __pyx_v_r = __pyx_t_11;
+  __pyx_t_10 = __pyx_v_self->nrows_;
+  __pyx_t_11 = __pyx_t_10;
+  for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
+    __pyx_v_r = __pyx_t_12;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":155
- *         print("here3")
+    /* "qilisdk/backends/qili_sim_cython.pyx":162
+ * 
  *         for r in range(self.nrows_):
  *             for idxA in range(self.rows_[r], self.rows_[r+1]):             # <<<<<<<<<<<<<<
  *                 colA = self.cols_[idxA]
  *                 valA = self.values_[idxA]
 */
-    __pyx_t_12 = (__pyx_v_self->rows_[(__pyx_v_r + 1)]);
-    __pyx_t_13 = __pyx_t_12;
-    for (__pyx_t_14 = (__pyx_v_self->rows_[__pyx_v_r]); __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
-      __pyx_v_idxA = __pyx_t_14;
+    __pyx_t_13 = (__pyx_v_self->rows_[(__pyx_v_r + 1)]);
+    __pyx_t_14 = __pyx_t_13;
+    for (__pyx_t_15 = (__pyx_v_self->rows_[__pyx_v_r]); __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
+      __pyx_v_idxA = __pyx_t_15;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":156
+      /* "qilisdk/backends/qili_sim_cython.pyx":163
  *         for r in range(self.nrows_):
  *             for idxA in range(self.rows_[r], self.rows_[r+1]):
  *                 colA = self.cols_[idxA]             # <<<<<<<<<<<<<<
@@ -4631,87 +6643,96 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
 */
       __pyx_v_colA = (__pyx_v_self->cols_[__pyx_v_idxA]);
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":157
+      /* "qilisdk/backends/qili_sim_cython.pyx":164
  *             for idxA in range(self.rows_[r], self.rows_[r+1]):
  *                 colA = self.cols_[idxA]
  *                 valA = self.values_[idxA]             # <<<<<<<<<<<<<<
  *                 for idxB in range(other.rows_[colA], other.rows_[colA+1]):
  *                     colB = other.cols_[idxB]
 */
-      __pyx_t_15 = (__pyx_v_self->values_[__pyx_v_idxA]);
-      __pyx_v_valA = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_15), __Pyx_CIMAG(__pyx_t_15));
+      __pyx_t_16 = (__pyx_v_self->values_[__pyx_v_idxA]);
+      __pyx_v_valA = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_16), __Pyx_CIMAG(__pyx_t_16));
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":158
+      /* "qilisdk/backends/qili_sim_cython.pyx":165
  *                 colA = self.cols_[idxA]
  *                 valA = self.values_[idxA]
  *                 for idxB in range(other.rows_[colA], other.rows_[colA+1]):             # <<<<<<<<<<<<<<
  *                     colB = other.cols_[idxB]
  *                     valB = other.values_[idxB]
 */
-      __pyx_t_16 = (__pyx_v_other->rows_[(__pyx_v_colA + 1)]);
-      __pyx_t_17 = __pyx_t_16;
-      for (__pyx_t_18 = (__pyx_v_other->rows_[__pyx_v_colA]); __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-        __pyx_v_idxB = __pyx_t_18;
+      __pyx_t_17 = (__pyx_v_other->rows_[(__pyx_v_colA + 1)]);
+      __pyx_t_18 = __pyx_t_17;
+      for (__pyx_t_19 = (__pyx_v_other->rows_[__pyx_v_colA]); __pyx_t_19 < __pyx_t_18; __pyx_t_19+=1) {
+        __pyx_v_idxB = __pyx_t_19;
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":159
+        /* "qilisdk/backends/qili_sim_cython.pyx":166
  *                 valA = self.values_[idxA]
  *                 for idxB in range(other.rows_[colA], other.rows_[colA+1]):
  *                     colB = other.cols_[idxB]             # <<<<<<<<<<<<<<
  *                     valB = other.values_[idxB]
- *                     entries_map[(r, colB)] += valA * valB
+ *                     prod = valA * valB
 */
         __pyx_v_colB = (__pyx_v_other->cols_[__pyx_v_idxB]);
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":160
+        /* "qilisdk/backends/qili_sim_cython.pyx":167
  *                 for idxB in range(other.rows_[colA], other.rows_[colA+1]):
  *                     colB = other.cols_[idxB]
  *                     valB = other.values_[idxB]             # <<<<<<<<<<<<<<
- *                     entries_map[(r, colB)] += valA * valB
- * 
+ *                     prod = valA * valB
+ *                     entries_map[(r, colB)] += prod
 */
-        __pyx_t_15 = (__pyx_v_other->values_[__pyx_v_idxB]);
-        __pyx_v_valB = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_15), __Pyx_CIMAG(__pyx_t_15));
+        __pyx_t_16 = (__pyx_v_other->values_[__pyx_v_idxB]);
+        __pyx_v_valB = __pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_16), __Pyx_CIMAG(__pyx_t_16));
 
-        /* "qilisdk/backends/qili_sim_cython.pyx":161
+        /* "qilisdk/backends/qili_sim_cython.pyx":168
  *                     colB = other.cols_[idxB]
  *                     valB = other.values_[idxB]
- *                     entries_map[(r, colB)] += valA * valB             # <<<<<<<<<<<<<<
+ *                     prod = valA * valB             # <<<<<<<<<<<<<<
+ *                     entries_map[(r, colB)] += prod
+ * 
+*/
+        __pyx_v_prod = __Pyx_c_prod_double(__pyx_v_valA, __pyx_v_valB);
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":169
+ *                     valB = other.values_[idxB]
+ *                     prod = valA * valB
+ *                     entries_map[(r, colB)] += prod             # <<<<<<<<<<<<<<
  * 
  *         cdef list entries = []
 */
-        __pyx_t_2 = __Pyx_PyLong_From_int(__pyx_v_r); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyLong_From_int(__pyx_v_r); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_4 = __Pyx_PyLong_From_int(__pyx_v_colB); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 161, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyLong_From_int(__pyx_v_colB); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 169, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_2);
-        if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 161, __pyx_L1_error);
-        __Pyx_GIVEREF(__pyx_t_4);
-        if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_4) != (0)) __PYX_ERR(0, 161, __pyx_L1_error);
+        if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 169, __pyx_L1_error);
+        __Pyx_GIVEREF(__pyx_t_5);
+        if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 169, __pyx_L1_error);
         __pyx_t_2 = 0;
-        __pyx_t_4 = 0;
-        __pyx_t_19 = __pyx_convert_pair_from_py_int__and_int(__pyx_t_3); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 161, __pyx_L1_error)
+        __pyx_t_5 = 0;
+        __pyx_t_20 = __pyx_convert_pair_from_py_int__and_int(__pyx_t_3); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 169, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_15 = (__pyx_v_entries_map[__pyx_t_19]);
-        (__pyx_v_entries_map[__pyx_t_19]) = __Pyx_c_sum_double(__pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_15), __Pyx_CIMAG(__pyx_t_15)), __Pyx_c_prod_double(__pyx_v_valA, __pyx_v_valB));
+        __pyx_t_16 = (__pyx_v_entries_map[__pyx_t_20]);
+        (__pyx_v_entries_map[__pyx_t_20]) = __Pyx_c_sum_double(__pyx_t_double_complex_from_parts(__Pyx_CREAL(__pyx_t_16), __Pyx_CIMAG(__pyx_t_16)), __pyx_v_prod);
       }
     }
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":163
- *                     entries_map[(r, colB)] += valA * valB
+  /* "qilisdk/backends/qili_sim_cython.pyx":171
+ *                     entries_map[(r, colB)] += prod
  * 
  *         cdef list entries = []             # <<<<<<<<<<<<<<
  *         cdef map[pair[int,int], complex].iterator it = entries_map.begin()
  *         while it != entries_map.end():
 */
-  __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_v_entries = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":164
+  /* "qilisdk/backends/qili_sim_cython.pyx":172
  * 
  *         cdef list entries = []
  *         cdef map[pair[int,int], complex].iterator it = entries_map.begin()             # <<<<<<<<<<<<<<
@@ -4720,7 +6741,7 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
 */
   __pyx_v_it = __pyx_v_entries_map.begin();
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":165
+  /* "qilisdk/backends/qili_sim_cython.pyx":173
  *         cdef list entries = []
  *         cdef map[pair[int,int], complex].iterator it = entries_map.begin()
  *         while it != entries_map.end():             # <<<<<<<<<<<<<<
@@ -4731,64 +6752,64 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
     __pyx_t_1 = (__pyx_v_it != __pyx_v_entries_map.end());
     if (!__pyx_t_1) break;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":166
+    /* "qilisdk/backends/qili_sim_cython.pyx":174
  *         cdef map[pair[int,int], complex].iterator it = entries_map.begin()
  *         while it != entries_map.end():
  *             k = dereference(it).first             # <<<<<<<<<<<<<<
  *             v = dereference(it).second
  *             if abs(v) > atol_:
 */
-    __pyx_t_19 = (*__pyx_v_it).first;
-    __pyx_v_k = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_19);
+    __pyx_t_20 = (*__pyx_v_it).first;
+    __pyx_v_k = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_20);
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":167
+    /* "qilisdk/backends/qili_sim_cython.pyx":175
  *         while it != entries_map.end():
  *             k = dereference(it).first
  *             v = dereference(it).second             # <<<<<<<<<<<<<<
  *             if abs(v) > atol_:
  *                 entries.append((k.first, k.second, v))
 */
-    __pyx_t_15 = (*__pyx_v_it).second;
-    __pyx_v_v = __pyx_t_15;
+    __pyx_t_16 = (*__pyx_v_it).second;
+    __pyx_v_v = __pyx_t_16;
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":168
+    /* "qilisdk/backends/qili_sim_cython.pyx":176
  *             k = dereference(it).first
  *             v = dereference(it).second
  *             if abs(v) > atol_:             # <<<<<<<<<<<<<<
  *                 entries.append((k.first, k.second, v))
  *             postincrement(it)
 */
-    __pyx_t_1 = (__Pyx_c_abs_double(__pyx_v_v) > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
+    __pyx_t_1 = (abs(__pyx_v_v) > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
     if (__pyx_t_1) {
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":169
+      /* "qilisdk/backends/qili_sim_cython.pyx":177
  *             v = dereference(it).second
  *             if abs(v) > atol_:
  *                 entries.append((k.first, k.second, v))             # <<<<<<<<<<<<<<
  *             postincrement(it)
  * 
 */
-      __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_k.first); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_k.first); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 177, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyLong_From_int(__pyx_v_k.second); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 169, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_2 = __pyx_PyComplex_FromComplex(__pyx_v_v); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyLong_From_int(__pyx_v_k.second); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_2 = __pyx_PyComplex_FromComplex(__pyx_v_v); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 169, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_7 = PyTuple_New(3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 177, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_3);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3) != (0)) __PYX_ERR(0, 169, __pyx_L1_error);
-      __Pyx_GIVEREF(__pyx_t_4);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_4) != (0)) __PYX_ERR(0, 169, __pyx_L1_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_3) != (0)) __PYX_ERR(0, 177, __pyx_L1_error);
+      __Pyx_GIVEREF(__pyx_t_5);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 177, __pyx_L1_error);
       __Pyx_GIVEREF(__pyx_t_2);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_t_2) != (0)) __PYX_ERR(0, 169, __pyx_L1_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 2, __pyx_t_2) != (0)) __PYX_ERR(0, 177, __pyx_L1_error);
       __pyx_t_3 = 0;
-      __pyx_t_4 = 0;
+      __pyx_t_5 = 0;
       __pyx_t_2 = 0;
-      __pyx_t_20 = __Pyx_PyList_Append(__pyx_v_entries, __pyx_t_6); if (unlikely(__pyx_t_20 == ((int)-1))) __PYX_ERR(0, 169, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_21 = __Pyx_PyList_Append(__pyx_v_entries, __pyx_t_7); if (unlikely(__pyx_t_21 == ((int)-1))) __PYX_ERR(0, 177, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-      /* "qilisdk/backends/qili_sim_cython.pyx":168
+      /* "qilisdk/backends/qili_sim_cython.pyx":176
  *             k = dereference(it).first
  *             v = dereference(it).second
  *             if abs(v) > atol_:             # <<<<<<<<<<<<<<
@@ -4797,34 +6818,47 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
 */
     }
 
-    /* "qilisdk/backends/qili_sim_cython.pyx":170
+    /* "qilisdk/backends/qili_sim_cython.pyx":178
  *             if abs(v) > atol_:
  *                 entries.append((k.first, k.second, v))
  *             postincrement(it)             # <<<<<<<<<<<<<<
  * 
- *         return SparseMatrix.from_tuples(entries, self.nrows_, other.ncols_)
+ *         return SparseMatrix(entries, self.nrows_, other.ncols_)
 */
     (void)((__pyx_v_it++));
   }
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":172
+  /* "qilisdk/backends/qili_sim_cython.pyx":180
  *             postincrement(it)
  * 
- *         return SparseMatrix.from_tuples(entries, self.nrows_, other.ncols_)             # <<<<<<<<<<<<<<
+ *         return SparseMatrix(entries, self.nrows_, other.ncols_)             # <<<<<<<<<<<<<<
  * 
- *     def __mul__(self, other):
+ * # Identity matrix constant
 */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_6 = __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(__pyx_v_entries, __pyx_v_self->nrows_, __pyx_v_other->ncols_); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 172, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_r = __pyx_t_6;
-  __pyx_t_6 = 0;
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_2 = NULL;
+  __pyx_t_5 = __Pyx_PyLong_From_int(__pyx_v_self->nrows_); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = __Pyx_PyLong_From_int(__pyx_v_other->ncols_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_9 = 1;
+  {
+    PyObject *__pyx_callargs[4] = {__pyx_t_2, __pyx_v_entries, __pyx_t_5, __pyx_t_3};
+    __pyx_t_7 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (4-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 180, __pyx_L1_error)
+    __Pyx_GOTREF((PyObject *)__pyx_t_7);
+  }
+  __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_7);
+  __pyx_t_7 = 0;
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":143
+  /* "qilisdk/backends/qili_sim_cython.pyx":150
  *         return f"{self.nrows_}x{self.ncols_}"
  * 
- *     cdef mul_cpp(self, SparseMatrix other):             # <<<<<<<<<<<<<<
+ *     cdef SparseMatrix mul(self, SparseMatrix other):             # <<<<<<<<<<<<<<
  *         """
  *         Multiply two sparse matrices using C++ map for accumulation.
 */
@@ -4833,80 +6867,14 @@ static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.mul_cpp", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.mul", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_entries);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "qilisdk/backends/qili_sim_cython.pyx":174
- *         return SparseMatrix.from_tuples(entries, self.nrows_, other.ncols_)
- * 
- *     def __mul__(self, other):             # <<<<<<<<<<<<<<
- *         return self.mul_cpp(other)
- * 
-*/
-
-/* Python wrapper */
-static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
-static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
-  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("__mul__ (wrapper)", 0);
-  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2__mul__(((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_self), ((PyObject *)__pyx_v_other));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2__mul__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_self, PyObject *__pyx_v_other) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("__mul__", 0);
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":175
- * 
- *     def __mul__(self, other):
- *         return self.mul_cpp(other)             # <<<<<<<<<<<<<<
- * 
- * 
-*/
-  __Pyx_XDECREF(__pyx_r);
-  if (!(likely(((__pyx_v_other) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_other, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix))))) __PYX_ERR(0, 175, __pyx_L1_error)
-  __pyx_t_1 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_self->__pyx_vtab)->mul_cpp(__pyx_v_self, ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_other)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 175, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":174
- *         return SparseMatrix.from_tuples(entries, self.nrows_, other.ncols_)
- * 
- *     def __mul__(self, other):             # <<<<<<<<<<<<<<
- *         return self.mul_cpp(other)
- * 
-*/
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.SparseMatrix.__mul__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -5115,7 +7083,3695 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_6_
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":179
+/* "qilisdk/backends/qili_sim_cython.pyx":196
+ *     cdef vector[double] parameters
+ * 
+ *     cdef Gate(self, string type_, vector[int] controls_, vector[int] targets_, vector[double] params_):             # <<<<<<<<<<<<<<
+ *         print("Creating gate of type:", type_)
+ *         self.gate_type = type_
+*/
+
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_Gate(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, std::string __pyx_v_type_, std::vector<int>  __pyx_v_controls_, std::vector<int>  __pyx_v_targets_, std::vector<double>  __pyx_v_params_) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  size_t __pyx_t_4;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("Gate", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":197
+ * 
+ *     cdef Gate(self, string type_, vector[int] controls_, vector[int] targets_, vector[double] params_):
+ *         print("Creating gate of type:", type_)             # <<<<<<<<<<<<<<
+ *         self.gate_type = type_
+ *         self.control_qubits = controls_
+*/
+  __pyx_t_2 = NULL;
+  __pyx_t_3 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_type_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 197, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = 1;
+  {
+    PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_Creating_gate_of_type, __pyx_t_3};
+    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_4, (3-__pyx_t_4) | (__pyx_t_4*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":198
+ *     cdef Gate(self, string type_, vector[int] controls_, vector[int] targets_, vector[double] params_):
+ *         print("Creating gate of type:", type_)
+ *         self.gate_type = type_             # <<<<<<<<<<<<<<
+ *         self.control_qubits = controls_
+ *         self.target_qubits = targets_
+*/
+  __pyx_v_self->gate_type = __pyx_v_type_;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":199
+ *         print("Creating gate of type:", type_)
+ *         self.gate_type = type_
+ *         self.control_qubits = controls_             # <<<<<<<<<<<<<<
+ *         self.target_qubits = targets_
+ *         self.parameters = params_
+*/
+  __pyx_v_self->control_qubits = __pyx_v_controls_;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":200
+ *         self.gate_type = type_
+ *         self.control_qubits = controls_
+ *         self.target_qubits = targets_             # <<<<<<<<<<<<<<
+ *         self.parameters = params_
+ * 
+*/
+  __pyx_v_self->target_qubits = __pyx_v_targets_;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":201
+ *         self.control_qubits = controls_
+ *         self.target_qubits = targets_
+ *         self.parameters = params_             # <<<<<<<<<<<<<<
+ * 
+ *     # ------------------------------------------------------------
+*/
+  __pyx_v_self->parameters = __pyx_v_params_;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":196
+ *     cdef vector[double] parameters
+ * 
+ *     cdef Gate(self, string type_, vector[int] controls_, vector[int] targets_, vector[double] params_):             # <<<<<<<<<<<<<<
+ *         print("Creating gate of type:", type_)
+ *         self.gate_type = type_
+*/
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.Gate", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":207
+ *     # ------------------------------------------------------------
+ * 
+ *     cdef list tensor_product(self, vector[tuple[int, int, complex]] A, vector[tuple[int, int, complex]] B, int A_width, int B_width):             # <<<<<<<<<<<<<<
+ *         """
+ *         Compute the tensor product of two sparse matrices in tuple form.
+*/
+
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_tensor_product(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_A, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_B, CYTHON_UNUSED int __pyx_v_A_width, int __pyx_v_B_width) {
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_result;
+  int __pyx_v_row;
+  int __pyx_v_col;
+  __pyx_t_double_complex __pyx_v_val;
+  PyObject *__pyx_v_ar = NULL;
+  PyObject *__pyx_v_ac = NULL;
+  __pyx_t_double_complex __pyx_v_av;
+  PyObject *__pyx_v_br = NULL;
+  PyObject *__pyx_v_bc = NULL;
+  __pyx_t_double_complex __pyx_v_bv;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_t_2;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> ::iterator __pyx_t_3;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  PyObject *(*__pyx_t_9)(PyObject *);
+  __pyx_t_double_complex __pyx_t_10;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> ::iterator __pyx_t_11;
+  int __pyx_t_12;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("tensor_product", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":211
+ *         Compute the tensor product of two sparse matrices in tuple form.
+ *         """
+ *         cdef vector[tuple[int, int, complex]] result = []             # <<<<<<<<<<<<<<
+ *         cdef int row, col
+ *         cdef double complex val
+*/
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 211, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_result = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_2);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":215
+ *         cdef double complex val
+ * 
+ *         for (ar, ac, av) in A:             # <<<<<<<<<<<<<<
+ *             for (br, bc, bv) in B:
+ *                 row = ar * B_width + br
+*/
+  __pyx_t_3 = __pyx_v_A.begin();
+  for (; __pyx_t_3 != __pyx_v_A.end(); ++__pyx_t_3) {
+    __pyx_t_4 = *__pyx_t_3;
+    __pyx_t_1 = __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 215, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
+      PyObject* sequence = __pyx_t_1;
+      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+      if (unlikely(size != 3)) {
+        if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+        __PYX_ERR(0, 215, __pyx_L1_error)
+      }
+      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+      if (likely(PyTuple_CheckExact(sequence))) {
+        __pyx_t_5 = PyTuple_GET_ITEM(sequence, 0);
+        __Pyx_INCREF(__pyx_t_5);
+        __pyx_t_6 = PyTuple_GET_ITEM(sequence, 1);
+        __Pyx_INCREF(__pyx_t_6);
+        __pyx_t_7 = PyTuple_GET_ITEM(sequence, 2);
+        __Pyx_INCREF(__pyx_t_7);
+      } else {
+        __pyx_t_5 = __Pyx_PyList_GetItemRefFast(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
+        if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 215, __pyx_L1_error)
+        __Pyx_XGOTREF(__pyx_t_5);
+        __pyx_t_6 = __Pyx_PyList_GetItemRefFast(sequence, 1, __Pyx_ReferenceSharing_SharedReference);
+        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 215, __pyx_L1_error)
+        __Pyx_XGOTREF(__pyx_t_6);
+        __pyx_t_7 = __Pyx_PyList_GetItemRefFast(sequence, 2, __Pyx_ReferenceSharing_SharedReference);
+        if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 215, __pyx_L1_error)
+        __Pyx_XGOTREF(__pyx_t_7);
+      }
+      #else
+      __pyx_t_5 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 215, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 215, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_7 = __Pyx_PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 215, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    } else {
+      Py_ssize_t index = -1;
+      __pyx_t_8 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 215, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_9 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_8);
+      index = 0; __pyx_t_5 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_5)) goto __pyx_L5_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_5);
+      index = 1; __pyx_t_6 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_6)) goto __pyx_L5_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_6);
+      index = 2; __pyx_t_7 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_7)) goto __pyx_L5_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_7);
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_8), 3) < (0)) __PYX_ERR(0, 215, __pyx_L1_error)
+      __pyx_t_9 = NULL;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      goto __pyx_L6_unpacking_done;
+      __pyx_L5_unpacking_failed:;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_t_9 = NULL;
+      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+      __PYX_ERR(0, 215, __pyx_L1_error)
+      __pyx_L6_unpacking_done:;
+    }
+    __pyx_t_10 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_7); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 215, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_ar, __pyx_t_5);
+    __pyx_t_5 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_ac, __pyx_t_6);
+    __pyx_t_6 = 0;
+    __pyx_v_av = __pyx_t_10;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":216
+ * 
+ *         for (ar, ac, av) in A:
+ *             for (br, bc, bv) in B:             # <<<<<<<<<<<<<<
+ *                 row = ar * B_width + br
+ *                 col = ac * B_width + bc
+*/
+    __pyx_t_11 = __pyx_v_B.begin();
+    for (; __pyx_t_11 != __pyx_v_B.end(); ++__pyx_t_11) {
+      __pyx_t_4 = *__pyx_t_11;
+      __pyx_t_1 = __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 216, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
+        PyObject* sequence = __pyx_t_1;
+        Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+        if (unlikely(size != 3)) {
+          if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+          else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+          __PYX_ERR(0, 216, __pyx_L1_error)
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        if (likely(PyTuple_CheckExact(sequence))) {
+          __pyx_t_7 = PyTuple_GET_ITEM(sequence, 0);
+          __Pyx_INCREF(__pyx_t_7);
+          __pyx_t_6 = PyTuple_GET_ITEM(sequence, 1);
+          __Pyx_INCREF(__pyx_t_6);
+          __pyx_t_5 = PyTuple_GET_ITEM(sequence, 2);
+          __Pyx_INCREF(__pyx_t_5);
+        } else {
+          __pyx_t_7 = __Pyx_PyList_GetItemRefFast(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
+          if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 216, __pyx_L1_error)
+          __Pyx_XGOTREF(__pyx_t_7);
+          __pyx_t_6 = __Pyx_PyList_GetItemRefFast(sequence, 1, __Pyx_ReferenceSharing_SharedReference);
+          if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 216, __pyx_L1_error)
+          __Pyx_XGOTREF(__pyx_t_6);
+          __pyx_t_5 = __Pyx_PyList_GetItemRefFast(sequence, 2, __Pyx_ReferenceSharing_SharedReference);
+          if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 216, __pyx_L1_error)
+          __Pyx_XGOTREF(__pyx_t_5);
+        }
+        #else
+        __pyx_t_7 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 216, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_7);
+        __pyx_t_6 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 216, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_5 = __Pyx_PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 216, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        #endif
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      } else {
+        Py_ssize_t index = -1;
+        __pyx_t_8 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 216, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        __pyx_t_9 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_8);
+        index = 0; __pyx_t_7 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_7)) goto __pyx_L9_unpacking_failed;
+        __Pyx_GOTREF(__pyx_t_7);
+        index = 1; __pyx_t_6 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_6)) goto __pyx_L9_unpacking_failed;
+        __Pyx_GOTREF(__pyx_t_6);
+        index = 2; __pyx_t_5 = __pyx_t_9(__pyx_t_8); if (unlikely(!__pyx_t_5)) goto __pyx_L9_unpacking_failed;
+        __Pyx_GOTREF(__pyx_t_5);
+        if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_8), 3) < (0)) __PYX_ERR(0, 216, __pyx_L1_error)
+        __pyx_t_9 = NULL;
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        goto __pyx_L10_unpacking_done;
+        __pyx_L9_unpacking_failed:;
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __pyx_t_9 = NULL;
+        if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+        __PYX_ERR(0, 216, __pyx_L1_error)
+        __pyx_L10_unpacking_done:;
+      }
+      __pyx_t_10 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 216, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_br, __pyx_t_7);
+      __pyx_t_7 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_bc, __pyx_t_6);
+      __pyx_t_6 = 0;
+      __pyx_v_bv = __pyx_t_10;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":217
+ *         for (ar, ac, av) in A:
+ *             for (br, bc, bv) in B:
+ *                 row = ar * B_width + br             # <<<<<<<<<<<<<<
+ *                 col = ac * B_width + bc
+ *                 val = av * bv
+*/
+      __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_B_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 217, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_5 = PyNumber_Multiply(__pyx_v_ar, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_1 = PyNumber_Add(__pyx_t_5, __pyx_v_br); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 217, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_12 = __Pyx_PyLong_As_int(__pyx_t_1); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 217, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_v_row = __pyx_t_12;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":218
+ *             for (br, bc, bv) in B:
+ *                 row = ar * B_width + br
+ *                 col = ac * B_width + bc             # <<<<<<<<<<<<<<
+ *                 val = av * bv
+ *                 result.push_back((row, col, val))
+*/
+      __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_B_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 218, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __pyx_t_5 = PyNumber_Multiply(__pyx_v_ac, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 218, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_1 = PyNumber_Add(__pyx_t_5, __pyx_v_bc); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 218, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_12 = __Pyx_PyLong_As_int(__pyx_t_1); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 218, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_v_col = __pyx_t_12;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":219
+ *                 row = ar * B_width + br
+ *                 col = ac * B_width + bc
+ *                 val = av * bv             # <<<<<<<<<<<<<<
+ *                 result.push_back((row, col, val))
+ * 
+*/
+      __pyx_v_val = __Pyx_c_prod_double(__pyx_v_av, __pyx_v_bv);
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":220
+ *                 col = ac * B_width + bc
+ *                 val = av * bv
+ *                 result.push_back((row, col, val))             # <<<<<<<<<<<<<<
+ * 
+ *         return result
+*/
+      __pyx_t_4.f0 = __pyx_v_row;
+      __pyx_t_4.f1 = __pyx_v_col;
+      __pyx_t_4.f2 = __pyx_v_val;
+      try {
+        __pyx_v_result.push_back(__pyx_t_4);
+      } catch(...) {
+        __Pyx_CppExn2PyErr();
+        __PYX_ERR(0, 220, __pyx_L1_error)
+      }
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":216
+ * 
+ *         for (ar, ac, av) in A:
+ *             for (br, bc, bv) in B:             # <<<<<<<<<<<<<<
+ *                 row = ar * B_width + br
+ *                 col = ac * B_width + bc
+*/
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":215
+ *         cdef double complex val
+ * 
+ *         for (ar, ac, av) in A:             # <<<<<<<<<<<<<<
+ *             for (br, bc, bv) in B:
+ *                 row = ar * B_width + br
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":222
+ *                 result.push_back((row, col, val))
+ * 
+ *         return result             # <<<<<<<<<<<<<<
+ * 
+ *     cdef int permute_bits(self, int index, vector[int] perm):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_result); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 222, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (!(likely(PyList_CheckExact(__pyx_t_1)) || __Pyx_RaiseUnexpectedTypeError("list", __pyx_t_1))) __PYX_ERR(0, 222, __pyx_L1_error)
+  __pyx_r = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":207
+ *     # ------------------------------------------------------------
+ * 
+ *     cdef list tensor_product(self, vector[tuple[int, int, complex]] A, vector[tuple[int, int, complex]] B, int A_width, int B_width):             # <<<<<<<<<<<<<<
+ *         """
+ *         Compute the tensor product of two sparse matrices in tuple form.
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.tensor_product", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_ar);
+  __Pyx_XDECREF(__pyx_v_ac);
+  __Pyx_XDECREF(__pyx_v_br);
+  __Pyx_XDECREF(__pyx_v_bc);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":224
+ *         return result
+ * 
+ *     cdef int permute_bits(self, int index, vector[int] perm):             # <<<<<<<<<<<<<<
+ *         """
+ *         Permute the bits of an index according to a permutation.
+*/
+
+static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_permute_bits(CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, int __pyx_v_index, std::vector<int>  __pyx_v_perm) {
+  int __pyx_v_n;
+  int __pyx_v_out;
+  int __pyx_v_old_q;
+  int __pyx_v_new_q;
+  int __pyx_v_old_bit;
+  int __pyx_v_new_bit;
+  int __pyx_v_bit;
+  int __pyx_r;
+  int __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":228
+ *         Permute the bits of an index according to a permutation.
+ *         """
+ *         cdef int n = perm.size()             # <<<<<<<<<<<<<<
+ *         cdef int out = 0
+ *         cdef int old_q, new_q
+*/
+  __pyx_v_n = __pyx_v_perm.size();
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":229
+ *         """
+ *         cdef int n = perm.size()
+ *         cdef int out = 0             # <<<<<<<<<<<<<<
+ *         cdef int old_q, new_q
+ *         cdef int old_bit, new_bit
+*/
+  __pyx_v_out = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":234
+ *         cdef int bit
+ * 
+ *         for old_q in range(n):             # <<<<<<<<<<<<<<
+ *             new_q = perm[old_q]
+ *             old_bit = n - 1 - old_q
+*/
+  __pyx_t_1 = __pyx_v_n;
+  __pyx_t_2 = __pyx_t_1;
+  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
+    __pyx_v_old_q = __pyx_t_3;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":235
+ * 
+ *         for old_q in range(n):
+ *             new_q = perm[old_q]             # <<<<<<<<<<<<<<
+ *             old_bit = n - 1 - old_q
+ *             new_bit = n - 1 - new_q
+*/
+    __pyx_v_new_q = (__pyx_v_perm[__pyx_v_old_q]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":236
+ *         for old_q in range(n):
+ *             new_q = perm[old_q]
+ *             old_bit = n - 1 - old_q             # <<<<<<<<<<<<<<
+ *             new_bit = n - 1 - new_q
+ *             bit = (index >> old_bit) & 1
+*/
+    __pyx_v_old_bit = ((__pyx_v_n - 1) - __pyx_v_old_q);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":237
+ *             new_q = perm[old_q]
+ *             old_bit = n - 1 - old_q
+ *             new_bit = n - 1 - new_q             # <<<<<<<<<<<<<<
+ *             bit = (index >> old_bit) & 1
+ *             out |= (bit << new_bit)
+*/
+    __pyx_v_new_bit = ((__pyx_v_n - 1) - __pyx_v_new_q);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":238
+ *             old_bit = n - 1 - old_q
+ *             new_bit = n - 1 - new_q
+ *             bit = (index >> old_bit) & 1             # <<<<<<<<<<<<<<
+ *             out |= (bit << new_bit)
+ * 
+*/
+    __pyx_v_bit = ((__pyx_v_index >> __pyx_v_old_bit) & 1);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":239
+ *             new_bit = n - 1 - new_q
+ *             bit = (index >> old_bit) & 1
+ *             out |= (bit << new_bit)             # <<<<<<<<<<<<<<
+ * 
+ *         return out
+*/
+    __pyx_v_out = (__pyx_v_out | (__pyx_v_bit << __pyx_v_new_bit));
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":241
+ *             out |= (bit << new_bit)
+ * 
+ *         return out             # <<<<<<<<<<<<<<
+ * 
+ *     cdef SparseMatrix base_to_full(self, SparseMatrix base_gate, int num_qubits, vector[int] control_qubits, vector[int] target_qubits):
+*/
+  __pyx_r = __pyx_v_out;
+  goto __pyx_L0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":224
+ *         return result
+ * 
+ *     cdef int permute_bits(self, int index, vector[int] perm):             # <<<<<<<<<<<<<<
+ *         """
+ *         Permute the bits of an index according to a permutation.
+*/
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":243
+ *         return out
+ * 
+ *     cdef SparseMatrix base_to_full(self, SparseMatrix base_gate, int num_qubits, vector[int] control_qubits, vector[int] target_qubits):             # <<<<<<<<<<<<<<
+ *         """
+ *         Expand a base gate matrix to the full register.
+*/
+
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_base_to_full(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_base_gate, int __pyx_v_num_qubits, std::vector<int>  __pyx_v_control_qubits, std::vector<int>  __pyx_v_target_qubits) {
+  int __pyx_v_min_qubit;
+  int __pyx_v_q;
+  int __pyx_v_base_gate_qubits;
+  int __pyx_v_needed_before;
+  int __pyx_v_needed_after;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_out_entries;
+  int __pyx_v_delta;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_new_entries;
+  int __pyx_v_row;
+  int __pyx_v_col;
+  __pyx_t_double_complex __pyx_v_val;
+  int __pyx_v_i;
+  CYTHON_UNUSED int __pyx_v__;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_identity_entries;
+  int __pyx_v_gate_size;
+  std::vector<int>  __pyx_v_all_qubits;
+  std::vector<int>  __pyx_v_perm;
+  int __pyx_v_tmp;
+  std::vector<int>  __pyx_v_inv_perm;
+  int __pyx_v_old_row;
+  int __pyx_v_old_col;
+  int __pyx_v_new_row;
+  int __pyx_v_new_col;
+  int __pyx_v_j;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_v_temp;
+  int __pyx_v_full_size;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  std::vector<int> ::iterator __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  Py_ssize_t __pyx_t_6;
+  Py_ssize_t __pyx_t_7;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_t_8;
+  int __pyx_t_9;
+  int __pyx_t_10;
+  std::vector<int>  __pyx_t_11;
+  Py_ssize_t __pyx_t_12;
+  Py_ssize_t __pyx_t_13;
+  int __pyx_t_14;
+  PyObject *__pyx_t_15 = NULL;
+  PyObject *__pyx_t_16 = NULL;
+  PyObject *__pyx_t_17 = NULL;
+  PyObject *__pyx_t_18 = NULL;
+  size_t __pyx_t_19;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("base_to_full", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":248
+ *         """
+ * 
+ *         cdef int min_qubit = num_qubits             # <<<<<<<<<<<<<<
+ *         cdef int q
+ * 
+*/
+  __pyx_v_min_qubit = __pyx_v_num_qubits;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":251
+ *         cdef int q
+ * 
+ *         for q in control_qubits:             # <<<<<<<<<<<<<<
+ *             if q < min_qubit:
+ *                 min_qubit = q
+*/
+  __pyx_t_1 = __pyx_v_control_qubits.begin();
+  for (; __pyx_t_1 != __pyx_v_control_qubits.end(); ++__pyx_t_1) {
+    __pyx_t_2 = *__pyx_t_1;
+    __pyx_v_q = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":252
+ * 
+ *         for q in control_qubits:
+ *             if q < min_qubit:             # <<<<<<<<<<<<<<
+ *                 min_qubit = q
+ *         for q in target_qubits:
+*/
+    __pyx_t_3 = (__pyx_v_q < __pyx_v_min_qubit);
+    if (__pyx_t_3) {
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":253
+ *         for q in control_qubits:
+ *             if q < min_qubit:
+ *                 min_qubit = q             # <<<<<<<<<<<<<<
+ *         for q in target_qubits:
+ *             if q < min_qubit:
+*/
+      __pyx_v_min_qubit = __pyx_v_q;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":252
+ * 
+ *         for q in control_qubits:
+ *             if q < min_qubit:             # <<<<<<<<<<<<<<
+ *                 min_qubit = q
+ *         for q in target_qubits:
+*/
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":251
+ *         cdef int q
+ * 
+ *         for q in control_qubits:             # <<<<<<<<<<<<<<
+ *             if q < min_qubit:
+ *                 min_qubit = q
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":254
+ *             if q < min_qubit:
+ *                 min_qubit = q
+ *         for q in target_qubits:             # <<<<<<<<<<<<<<
+ *             if q < min_qubit:
+ *                 min_qubit = q
+*/
+  __pyx_t_1 = __pyx_v_target_qubits.begin();
+  for (; __pyx_t_1 != __pyx_v_target_qubits.end(); ++__pyx_t_1) {
+    __pyx_t_2 = *__pyx_t_1;
+    __pyx_v_q = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":255
+ *                 min_qubit = q
+ *         for q in target_qubits:
+ *             if q < min_qubit:             # <<<<<<<<<<<<<<
+ *                 min_qubit = q
+ * 
+*/
+    __pyx_t_3 = (__pyx_v_q < __pyx_v_min_qubit);
+    if (__pyx_t_3) {
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":256
+ *         for q in target_qubits:
+ *             if q < min_qubit:
+ *                 min_qubit = q             # <<<<<<<<<<<<<<
+ * 
+ *         cdef int base_gate_qubits = target_qubits.size() + control_qubits.size()
+*/
+      __pyx_v_min_qubit = __pyx_v_q;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":255
+ *                 min_qubit = q
+ *         for q in target_qubits:
+ *             if q < min_qubit:             # <<<<<<<<<<<<<<
+ *                 min_qubit = q
+ * 
+*/
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":254
+ *             if q < min_qubit:
+ *                 min_qubit = q
+ *         for q in target_qubits:             # <<<<<<<<<<<<<<
+ *             if q < min_qubit:
+ *                 min_qubit = q
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":258
+ *                 min_qubit = q
+ * 
+ *         cdef int base_gate_qubits = target_qubits.size() + control_qubits.size()             # <<<<<<<<<<<<<<
+ *         cdef int needed_before = min_qubit
+ *         cdef int needed_after = num_qubits - needed_before - base_gate_qubits
+*/
+  __pyx_v_base_gate_qubits = (__pyx_v_target_qubits.size() + __pyx_v_control_qubits.size());
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":259
+ * 
+ *         cdef int base_gate_qubits = target_qubits.size() + control_qubits.size()
+ *         cdef int needed_before = min_qubit             # <<<<<<<<<<<<<<
+ *         cdef int needed_after = num_qubits - needed_before - base_gate_qubits
+ * 
+*/
+  __pyx_v_needed_before = __pyx_v_min_qubit;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":260
+ *         cdef int base_gate_qubits = target_qubits.size() + control_qubits.size()
+ *         cdef int needed_before = min_qubit
+ *         cdef int needed_after = num_qubits - needed_before - base_gate_qubits             # <<<<<<<<<<<<<<
+ * 
+ *         cdef vector[tuple[int, int, complex]] out_entries = base_gate.to_tuples()
+*/
+  __pyx_v_needed_after = ((__pyx_v_num_qubits - __pyx_v_needed_before) - __pyx_v_base_gate_qubits);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":262
+ *         cdef int needed_after = num_qubits - needed_before - base_gate_qubits
+ * 
+ *         cdef vector[tuple[int, int, complex]] out_entries = base_gate.to_tuples()             # <<<<<<<<<<<<<<
+ * 
+ *         # --- Make controlled ---
+*/
+  __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_base_gate->__pyx_vtab)->to_tuples(__pyx_v_base_gate); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 262, __pyx_L1_error)
+  __pyx_v_out_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":271
+ *         cdef int i
+ * 
+ *         for _ in control_qubits:             # <<<<<<<<<<<<<<
+ *             delta = 1 << len(target_qubits)
+ *             new_entries = []
+*/
+  __pyx_t_1 = __pyx_v_control_qubits.begin();
+  for (; __pyx_t_1 != __pyx_v_control_qubits.end(); ++__pyx_t_1) {
+    __pyx_t_2 = *__pyx_t_1;
+    __pyx_v__ = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":272
+ * 
+ *         for _ in control_qubits:
+ *             delta = 1 << len(target_qubits)             # <<<<<<<<<<<<<<
+ *             new_entries = []
+ * 
+*/
+    __pyx_t_5 = __pyx_convert_vector_to_py_int(__pyx_v_target_qubits); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_6 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 272, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_v_delta = (1 << __pyx_t_6);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":273
+ *         for _ in control_qubits:
+ *             delta = 1 << len(target_qubits)
+ *             new_entries = []             # <<<<<<<<<<<<<<
+ * 
+ *             # for (row, col, val) in out_entries:
+*/
+    __pyx_t_5 = PyList_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 273, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_4 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 273, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_v_new_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":276
+ * 
+ *             # for (row, col, val) in out_entries:
+ *             for i in range(len(out_entries)):             # <<<<<<<<<<<<<<
+ *                 row = out_entries[i][0]
+ *                 col = out_entries[i][1]
+*/
+    __pyx_t_5 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_out_entries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 276, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_6 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 276, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_7 = __pyx_t_6;
+    for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_7; __pyx_t_2+=1) {
+      __pyx_v_i = __pyx_t_2;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":277
+ *             # for (row, col, val) in out_entries:
+ *             for i in range(len(out_entries)):
+ *                 row = out_entries[i][0]             # <<<<<<<<<<<<<<
+ *                 col = out_entries[i][1]
+ *                 val = out_entries[i][2]
+*/
+      __pyx_v_row = (__pyx_v_out_entries[__pyx_v_i]).f0;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":278
+ *             for i in range(len(out_entries)):
+ *                 row = out_entries[i][0]
+ *                 col = out_entries[i][1]             # <<<<<<<<<<<<<<
+ *                 val = out_entries[i][2]
+ *                 new_entries.push_back((row + delta, col + delta, val))
+*/
+      __pyx_v_col = (__pyx_v_out_entries[__pyx_v_i]).f1;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":279
+ *                 row = out_entries[i][0]
+ *                 col = out_entries[i][1]
+ *                 val = out_entries[i][2]             # <<<<<<<<<<<<<<
+ *                 new_entries.push_back((row + delta, col + delta, val))
+ * 
+*/
+      __pyx_v_val = (__pyx_v_out_entries[__pyx_v_i]).f2;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":280
+ *                 col = out_entries[i][1]
+ *                 val = out_entries[i][2]
+ *                 new_entries.push_back((row + delta, col + delta, val))             # <<<<<<<<<<<<<<
+ * 
+ *             for i in range(delta):
+*/
+      __pyx_t_8.f0 = (__pyx_v_row + __pyx_v_delta);
+      __pyx_t_8.f1 = (__pyx_v_col + __pyx_v_delta);
+      __pyx_t_8.f2 = __pyx_v_val;
+      try {
+        __pyx_v_new_entries.push_back(__pyx_t_8);
+      } catch(...) {
+        __Pyx_CppExn2PyErr();
+        __PYX_ERR(0, 280, __pyx_L1_error)
+      }
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":282
+ *                 new_entries.push_back((row + delta, col + delta, val))
+ * 
+ *             for i in range(delta):             # <<<<<<<<<<<<<<
+ *                 new_entries.push_back((i, i, 1.0))
+ * 
+*/
+    __pyx_t_2 = __pyx_v_delta;
+    __pyx_t_9 = __pyx_t_2;
+    for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+      __pyx_v_i = __pyx_t_10;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":283
+ * 
+ *             for i in range(delta):
+ *                 new_entries.push_back((i, i, 1.0))             # <<<<<<<<<<<<<<
+ * 
+ *             out_entries = new_entries
+*/
+      __pyx_t_8.f0 = __pyx_v_i;
+      __pyx_t_8.f1 = __pyx_v_i;
+      __pyx_t_8.f2 = __pyx_t_double_complex_from_parts(1.0, 0);
+      try {
+        __pyx_v_new_entries.push_back(__pyx_t_8);
+      } catch(...) {
+        __Pyx_CppExn2PyErr();
+        __PYX_ERR(0, 283, __pyx_L1_error)
+      }
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":285
+ *                 new_entries.push_back((i, i, 1.0))
+ * 
+ *             out_entries = new_entries             # <<<<<<<<<<<<<<
+ * 
+ *         # --- Tensor with identities ---
+*/
+    __pyx_v_out_entries = __pyx_v_new_entries;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":271
+ *         cdef int i
+ * 
+ *         for _ in control_qubits:             # <<<<<<<<<<<<<<
+ *             delta = 1 << len(target_qubits)
+ *             new_entries = []
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":288
+ * 
+ *         # --- Tensor with identities ---
+ *         cdef vector[tuple[int, int, complex]] identity_entries = [(0, 0, 1.0), (1, 1, 1.0)]             # <<<<<<<<<<<<<<
+ *         cdef int gate_size = 1 << base_gate_qubits
+ * 
+*/
+  __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 288, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[0]);
+  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_mstate_global->__pyx_tuple[0]) != (0)) __PYX_ERR(0, 288, __pyx_L1_error);
+  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[1]);
+  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[1]);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_tuple[1]) != (0)) __PYX_ERR(0, 288, __pyx_L1_error);
+  __pyx_t_4 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 288, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_v_identity_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":289
+ *         # --- Tensor with identities ---
+ *         cdef vector[tuple[int, int, complex]] identity_entries = [(0, 0, 1.0), (1, 1, 1.0)]
+ *         cdef int gate_size = 1 << base_gate_qubits             # <<<<<<<<<<<<<<
+ * 
+ *         for _ in range(needed_before):
+*/
+  __pyx_v_gate_size = (1 << __pyx_v_base_gate_qubits);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":291
+ *         cdef int gate_size = 1 << base_gate_qubits
+ * 
+ *         for _ in range(needed_before):             # <<<<<<<<<<<<<<
+ *             out_entries = self.tensor_product(identity_entries,
+ *                                                out_entries,
+*/
+  __pyx_t_2 = __pyx_v_needed_before;
+  __pyx_t_9 = __pyx_t_2;
+  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+    __pyx_v__ = __pyx_t_10;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":292
+ * 
+ *         for _ in range(needed_before):
+ *             out_entries = self.tensor_product(identity_entries,             # <<<<<<<<<<<<<<
+ *                                                out_entries,
+ *                                                2,
+*/
+    __pyx_t_5 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->tensor_product(__pyx_v_self, __pyx_v_identity_entries, __pyx_v_out_entries, 2, __pyx_v_gate_size); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 292, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_4 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 292, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_v_out_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":296
+ *                                                2,
+ *                                                gate_size)
+ *             gate_size *= 2             # <<<<<<<<<<<<<<
+ * 
+ *         for _ in range(needed_after):
+*/
+    __pyx_v_gate_size = (__pyx_v_gate_size * 2);
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":298
+ *             gate_size *= 2
+ * 
+ *         for _ in range(needed_after):             # <<<<<<<<<<<<<<
+ *             out_entries = self.tensor_product(out_entries,
+ *                                                identity_entries,
+*/
+  __pyx_t_2 = __pyx_v_needed_after;
+  __pyx_t_9 = __pyx_t_2;
+  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+    __pyx_v__ = __pyx_t_10;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":299
+ * 
+ *         for _ in range(needed_after):
+ *             out_entries = self.tensor_product(out_entries,             # <<<<<<<<<<<<<<
+ *                                                identity_entries,
+ *                                                gate_size,
+*/
+    __pyx_t_5 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->tensor_product(__pyx_v_self, __pyx_v_out_entries, __pyx_v_identity_entries, __pyx_v_gate_size, 2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 299, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_4 = __pyx_convert_vector_from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 299, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_v_out_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":303
+ *                                                gate_size,
+ *                                                2)
+ *             gate_size *= 2             # <<<<<<<<<<<<<<
+ * 
+ *         # --- Permutation ---
+*/
+    __pyx_v_gate_size = (__pyx_v_gate_size * 2);
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":308
+ *         # cdef list all_qubits = control_qubits + target_qubits
+ *         cdef vector[int] all_qubits
+ *         for q in control_qubits:             # <<<<<<<<<<<<<<
+ *             all_qubits.push_back(q)
+ *         for q in target_qubits:
+*/
+  __pyx_t_1 = __pyx_v_control_qubits.begin();
+  for (; __pyx_t_1 != __pyx_v_control_qubits.end(); ++__pyx_t_1) {
+    __pyx_t_2 = *__pyx_t_1;
+    __pyx_v_q = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":309
+ *         cdef vector[int] all_qubits
+ *         for q in control_qubits:
+ *             all_qubits.push_back(q)             # <<<<<<<<<<<<<<
+ *         for q in target_qubits:
+ *             all_qubits.push_back(q)
+*/
+    try {
+      __pyx_v_all_qubits.push_back(__pyx_v_q);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(0, 309, __pyx_L1_error)
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":308
+ *         # cdef list all_qubits = control_qubits + target_qubits
+ *         cdef vector[int] all_qubits
+ *         for q in control_qubits:             # <<<<<<<<<<<<<<
+ *             all_qubits.push_back(q)
+ *         for q in target_qubits:
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":310
+ *         for q in control_qubits:
+ *             all_qubits.push_back(q)
+ *         for q in target_qubits:             # <<<<<<<<<<<<<<
+ *             all_qubits.push_back(q)
+ * 
+*/
+  __pyx_t_1 = __pyx_v_target_qubits.begin();
+  for (; __pyx_t_1 != __pyx_v_target_qubits.end(); ++__pyx_t_1) {
+    __pyx_t_2 = *__pyx_t_1;
+    __pyx_v_q = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":311
+ *             all_qubits.push_back(q)
+ *         for q in target_qubits:
+ *             all_qubits.push_back(q)             # <<<<<<<<<<<<<<
+ * 
+ *         cdef vector[int] perm = vector[int](num_qubits)
+*/
+    try {
+      __pyx_v_all_qubits.push_back(__pyx_v_q);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(0, 311, __pyx_L1_error)
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":310
+ *         for q in control_qubits:
+ *             all_qubits.push_back(q)
+ *         for q in target_qubits:             # <<<<<<<<<<<<<<
+ *             all_qubits.push_back(q)
+ * 
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":313
+ *             all_qubits.push_back(q)
+ * 
+ *         cdef vector[int] perm = vector[int](num_qubits)             # <<<<<<<<<<<<<<
+ *         for i in range(num_qubits):
+ *             perm[i] = i
+*/
+  try {
+    __pyx_t_11 = std::vector<int> (__pyx_v_num_qubits);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 313, __pyx_L1_error)
+  }
+  __pyx_v_perm = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_11);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":314
+ * 
+ *         cdef vector[int] perm = vector[int](num_qubits)
+ *         for i in range(num_qubits):             # <<<<<<<<<<<<<<
+ *             perm[i] = i
+ *         cdef int tmp
+*/
+  __pyx_t_2 = __pyx_v_num_qubits;
+  __pyx_t_9 = __pyx_t_2;
+  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+    __pyx_v_i = __pyx_t_10;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":315
+ *         cdef vector[int] perm = vector[int](num_qubits)
+ *         for i in range(num_qubits):
+ *             perm[i] = i             # <<<<<<<<<<<<<<
+ *         cdef int tmp
+ * 
+*/
+    (__pyx_v_perm[__pyx_v_i]) = __pyx_v_i;
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":318
+ *         cdef int tmp
+ * 
+ *         for i in range(len(all_qubits)):             # <<<<<<<<<<<<<<
+ *             if perm[needed_before + i] != all_qubits[i]:
+ *                 tmp = perm[needed_before + i]
+*/
+  __pyx_t_5 = __pyx_convert_vector_to_py_int(__pyx_v_all_qubits); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 318, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 318, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_7 = __pyx_t_6;
+  for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_7; __pyx_t_2+=1) {
+    __pyx_v_i = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":319
+ * 
+ *         for i in range(len(all_qubits)):
+ *             if perm[needed_before + i] != all_qubits[i]:             # <<<<<<<<<<<<<<
+ *                 tmp = perm[needed_before + i]
+ *                 perm[needed_before + i] = perm[all_qubits[i]]
+*/
+    __pyx_t_3 = ((__pyx_v_perm[(__pyx_v_needed_before + __pyx_v_i)]) != (__pyx_v_all_qubits[__pyx_v_i]));
+    if (__pyx_t_3) {
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":320
+ *         for i in range(len(all_qubits)):
+ *             if perm[needed_before + i] != all_qubits[i]:
+ *                 tmp = perm[needed_before + i]             # <<<<<<<<<<<<<<
+ *                 perm[needed_before + i] = perm[all_qubits[i]]
+ *                 perm[all_qubits[i]] = tmp
+*/
+      __pyx_v_tmp = (__pyx_v_perm[(__pyx_v_needed_before + __pyx_v_i)]);
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":321
+ *             if perm[needed_before + i] != all_qubits[i]:
+ *                 tmp = perm[needed_before + i]
+ *                 perm[needed_before + i] = perm[all_qubits[i]]             # <<<<<<<<<<<<<<
+ *                 perm[all_qubits[i]] = tmp
+ * 
+*/
+      (__pyx_v_perm[(__pyx_v_needed_before + __pyx_v_i)]) = (__pyx_v_perm[(__pyx_v_all_qubits[__pyx_v_i])]);
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":322
+ *                 tmp = perm[needed_before + i]
+ *                 perm[needed_before + i] = perm[all_qubits[i]]
+ *                 perm[all_qubits[i]] = tmp             # <<<<<<<<<<<<<<
+ * 
+ *         # invert permutation
+*/
+      (__pyx_v_perm[(__pyx_v_all_qubits[__pyx_v_i])]) = __pyx_v_tmp;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":319
+ * 
+ *         for i in range(len(all_qubits)):
+ *             if perm[needed_before + i] != all_qubits[i]:             # <<<<<<<<<<<<<<
+ *                 tmp = perm[needed_before + i]
+ *                 perm[needed_before + i] = perm[all_qubits[i]]
+*/
+    }
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":325
+ * 
+ *         # invert permutation
+ *         cdef vector[int] inv_perm = vector[int](num_qubits)             # <<<<<<<<<<<<<<
+ *         for i in range(num_qubits):
+ *             inv_perm[perm[i]] = i
+*/
+  try {
+    __pyx_t_11 = std::vector<int> (__pyx_v_num_qubits);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 325, __pyx_L1_error)
+  }
+  __pyx_v_inv_perm = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_11);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":326
+ *         # invert permutation
+ *         cdef vector[int] inv_perm = vector[int](num_qubits)
+ *         for i in range(num_qubits):             # <<<<<<<<<<<<<<
+ *             inv_perm[perm[i]] = i
+ *         perm = inv_perm
+*/
+  __pyx_t_2 = __pyx_v_num_qubits;
+  __pyx_t_9 = __pyx_t_2;
+  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+    __pyx_v_i = __pyx_t_10;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":327
+ *         cdef vector[int] inv_perm = vector[int](num_qubits)
+ *         for i in range(num_qubits):
+ *             inv_perm[perm[i]] = i             # <<<<<<<<<<<<<<
+ *         perm = inv_perm
+ * 
+*/
+    (__pyx_v_inv_perm[(__pyx_v_perm[__pyx_v_i])]) = __pyx_v_i;
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":328
+ *         for i in range(num_qubits):
+ *             inv_perm[perm[i]] = i
+ *         perm = inv_perm             # <<<<<<<<<<<<<<
+ * 
+ *         # apply permutation
+*/
+  __pyx_v_perm = __pyx_v_inv_perm;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":332
+ *         # apply permutation
+ *         cdef int old_row, old_col, new_row, new_col
+ *         for i in range(len(out_entries)):             # <<<<<<<<<<<<<<
+ *             old_row = out_entries[i][0]
+ *             old_col = out_entries[i][1]
+*/
+  __pyx_t_5 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_out_entries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 332, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 332, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_7 = __pyx_t_6;
+  for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_7; __pyx_t_2+=1) {
+    __pyx_v_i = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":333
+ *         cdef int old_row, old_col, new_row, new_col
+ *         for i in range(len(out_entries)):
+ *             old_row = out_entries[i][0]             # <<<<<<<<<<<<<<
+ *             old_col = out_entries[i][1]
+ *             val = out_entries[i][2]
+*/
+    __pyx_v_old_row = (__pyx_v_out_entries[__pyx_v_i]).f0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":334
+ *         for i in range(len(out_entries)):
+ *             old_row = out_entries[i][0]
+ *             old_col = out_entries[i][1]             # <<<<<<<<<<<<<<
+ *             val = out_entries[i][2]
+ *             new_row = self.permute_bits(old_row, perm)
+*/
+    __pyx_v_old_col = (__pyx_v_out_entries[__pyx_v_i]).f1;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":335
+ *             old_row = out_entries[i][0]
+ *             old_col = out_entries[i][1]
+ *             val = out_entries[i][2]             # <<<<<<<<<<<<<<
+ *             new_row = self.permute_bits(old_row, perm)
+ *             new_col = self.permute_bits(old_col, perm)
+*/
+    __pyx_v_val = (__pyx_v_out_entries[__pyx_v_i]).f2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":336
+ *             old_col = out_entries[i][1]
+ *             val = out_entries[i][2]
+ *             new_row = self.permute_bits(old_row, perm)             # <<<<<<<<<<<<<<
+ *             new_col = self.permute_bits(old_col, perm)
+ *             out_entries[i] = (new_row, new_col, val)
+*/
+    __pyx_t_9 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->permute_bits(__pyx_v_self, __pyx_v_old_row, __pyx_v_perm); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 336, __pyx_L1_error)
+    __pyx_v_new_row = __pyx_t_9;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":337
+ *             val = out_entries[i][2]
+ *             new_row = self.permute_bits(old_row, perm)
+ *             new_col = self.permute_bits(old_col, perm)             # <<<<<<<<<<<<<<
+ *             out_entries[i] = (new_row, new_col, val)
+ * 
+*/
+    __pyx_t_9 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->permute_bits(__pyx_v_self, __pyx_v_old_col, __pyx_v_perm); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 337, __pyx_L1_error)
+    __pyx_v_new_col = __pyx_t_9;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":338
+ *             new_row = self.permute_bits(old_row, perm)
+ *             new_col = self.permute_bits(old_col, perm)
+ *             out_entries[i] = (new_row, new_col, val)             # <<<<<<<<<<<<<<
+ * 
+ *         # sort entries
+*/
+    __pyx_t_8.f0 = __pyx_v_new_row;
+    __pyx_t_8.f1 = __pyx_v_new_col;
+    __pyx_t_8.f2 = __pyx_v_val;
+    (__pyx_v_out_entries[__pyx_v_i]) = __pyx_t_8;
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":345
+ *         cdef int j
+ *         cdef tuple[int, int, complex] temp
+ *         for i in range(len(out_entries)):             # <<<<<<<<<<<<<<
+ *             for j in range(0, len(out_entries) - i - 1):
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \
+*/
+  __pyx_t_5 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_out_entries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 345, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 345, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_7 = __pyx_t_6;
+  for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_7; __pyx_t_2+=1) {
+    __pyx_v_i = __pyx_t_2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":346
+ *         cdef tuple[int, int, complex] temp
+ *         for i in range(len(out_entries)):
+ *             for j in range(0, len(out_entries) - i - 1):             # <<<<<<<<<<<<<<
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+*/
+    __pyx_t_5 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_out_entries); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 346, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_12 = PyObject_Length(__pyx_t_5); if (unlikely(__pyx_t_12 == ((Py_ssize_t)-1))) __PYX_ERR(0, 346, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_13 = ((__pyx_t_12 - __pyx_v_i) - 1);
+    __pyx_t_12 = __pyx_t_13;
+    for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_12; __pyx_t_9+=1) {
+      __pyx_v_j = __pyx_t_9;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":347
+ *         for i in range(len(out_entries)):
+ *             for j in range(0, len(out_entries) - i - 1):
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \             # <<<<<<<<<<<<<<
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+ *                     temp = out_entries[j]
+*/
+      __pyx_t_14 = ((__pyx_v_out_entries[__pyx_v_j]).f0 > (__pyx_v_out_entries[(__pyx_v_j + 1)]).f0);
+      if (!__pyx_t_14) {
+      } else {
+        __pyx_t_3 = __pyx_t_14;
+        goto __pyx_L42_bool_binop_done;
+      }
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":348
+ *             for j in range(0, len(out_entries) - i - 1):
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):             # <<<<<<<<<<<<<<
+ *                     temp = out_entries[j]
+ *                     out_entries[j] = out_entries[j + 1]
+*/
+      __pyx_t_14 = ((__pyx_v_out_entries[__pyx_v_j]).f0 == (__pyx_v_out_entries[(__pyx_v_j + 1)]).f0);
+      if (__pyx_t_14) {
+      } else {
+        __pyx_t_3 = __pyx_t_14;
+        goto __pyx_L42_bool_binop_done;
+      }
+      __pyx_t_14 = ((__pyx_v_out_entries[__pyx_v_j]).f1 > (__pyx_v_out_entries[(__pyx_v_j + 1)]).f1);
+      __pyx_t_3 = __pyx_t_14;
+      __pyx_L42_bool_binop_done:;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":347
+ *         for i in range(len(out_entries)):
+ *             for j in range(0, len(out_entries) - i - 1):
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \             # <<<<<<<<<<<<<<
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+ *                     temp = out_entries[j]
+*/
+      if (__pyx_t_3) {
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":349
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+ *                     temp = out_entries[j]             # <<<<<<<<<<<<<<
+ *                     out_entries[j] = out_entries[j + 1]
+ *                     out_entries[j + 1] = temp
+*/
+        __pyx_v_temp = (__pyx_v_out_entries[__pyx_v_j]);
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":350
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+ *                     temp = out_entries[j]
+ *                     out_entries[j] = out_entries[j + 1]             # <<<<<<<<<<<<<<
+ *                     out_entries[j + 1] = temp
+ * 
+*/
+        (__pyx_v_out_entries[__pyx_v_j]) = (__pyx_v_out_entries[(__pyx_v_j + 1)]);
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":351
+ *                     temp = out_entries[j]
+ *                     out_entries[j] = out_entries[j + 1]
+ *                     out_entries[j + 1] = temp             # <<<<<<<<<<<<<<
+ * 
+ *         cdef int full_size = 1 << num_qubits
+*/
+        (__pyx_v_out_entries[(__pyx_v_j + 1)]) = __pyx_v_temp;
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":347
+ *         for i in range(len(out_entries)):
+ *             for j in range(0, len(out_entries) - i - 1):
+ *                 if (out_entries[j][0] > out_entries[j + 1][0]) or \             # <<<<<<<<<<<<<<
+ *                    (out_entries[j][0] == out_entries[j + 1][0] and out_entries[j][1] > out_entries[j + 1][1]):
+ *                     temp = out_entries[j]
+*/
+      }
+    }
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":353
+ *                     out_entries[j + 1] = temp
+ * 
+ *         cdef int full_size = 1 << num_qubits             # <<<<<<<<<<<<<<
+ *         return SparseMatrix(out_entries, full_size, full_size)
+ * 
+*/
+  __pyx_v_full_size = (1 << __pyx_v_num_qubits);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":354
+ * 
+ *         cdef int full_size = 1 << num_qubits
+ *         return SparseMatrix(out_entries, full_size, full_size)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef SparseMatrix get_base_matrix(self):
+*/
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_15 = NULL;
+  __pyx_t_16 = __pyx_convert_vector_to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_v_out_entries); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 354, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_16);
+  __pyx_t_17 = __Pyx_PyLong_From_int(__pyx_v_full_size); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 354, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_17);
+  __pyx_t_18 = __Pyx_PyLong_From_int(__pyx_v_full_size); if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 354, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_18);
+  __pyx_t_19 = 1;
+  {
+    PyObject *__pyx_callargs[4] = {__pyx_t_15, __pyx_t_16, __pyx_t_17, __pyx_t_18};
+    __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_19, (4-__pyx_t_19) | (__pyx_t_19*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+    __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+    __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
+    __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 354, __pyx_L1_error)
+    __Pyx_GOTREF((PyObject *)__pyx_t_5);
+  }
+  __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_5);
+  __pyx_t_5 = 0;
+  goto __pyx_L0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":243
+ *         return out
+ * 
+ *     cdef SparseMatrix base_to_full(self, SparseMatrix base_gate, int num_qubits, vector[int] control_qubits, vector[int] target_qubits):             # <<<<<<<<<<<<<<
+ *         """
+ *         Expand a base gate matrix to the full register.
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_15);
+  __Pyx_XDECREF(__pyx_t_16);
+  __Pyx_XDECREF(__pyx_t_17);
+  __Pyx_XDECREF(__pyx_t_18);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.base_to_full", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":356
+ *         return SparseMatrix(out_entries, full_size, full_size)
+ * 
+ *     cdef SparseMatrix get_base_matrix(self):             # <<<<<<<<<<<<<<
+ *         """
+ *         Return the base matrix of the gate.
+*/
+
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_base_matrix(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self) {
+  double __pyx_v_theta;
+  double __pyx_v_phi;
+  double __pyx_v_gamma;
+  double __pyx_v_cos_half;
+  double __pyx_v_sin_half;
+  double __pyx_v_scale;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  double __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  size_t __pyx_t_9;
+  __pyx_t_double_complex __pyx_t_10;
+  __pyx_t_double_complex __pyx_t_11;
+  __pyx_t_double_complex __pyx_t_12;
+  PyObject *__pyx_t_13 = NULL;
+  PyObject *__pyx_t_14 = NULL;
+  PyObject *__pyx_t_15 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_base_matrix", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":363
+ *         cdef double cos_half, sin_half, scale
+ * 
+ *         if self.gate_type == "H":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1 / sqrt(2), 1 / sqrt(2)],
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_H);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":364
+ * 
+ *         if self.gate_type == "H":
+ *             return SparseMatrix([[1 / sqrt(2), 1 / sqrt(2)],             # <<<<<<<<<<<<<<
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_3 = NULL;
+    __pyx_t_4 = sqrt(2.0);
+    if (unlikely(__pyx_t_4 == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 364, __pyx_L1_error)
+    }
+    __pyx_t_5 = PyFloat_FromDouble((1.0 / __pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 364, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_4 = sqrt(2.0);
+    if (unlikely(__pyx_t_4 == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 364, __pyx_L1_error)
+    }
+    __pyx_t_6 = PyFloat_FromDouble((1.0 / __pyx_t_4)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 364, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 364, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_5) != (0)) __PYX_ERR(0, 364, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 364, __pyx_L1_error);
+    __pyx_t_5 = 0;
+    __pyx_t_6 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":365
+ *         if self.gate_type == "H":
+ *             return SparseMatrix([[1 / sqrt(2), 1 / sqrt(2)],
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "X":
+*/
+    __pyx_t_4 = sqrt(2.0);
+    if (unlikely(__pyx_t_4 == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 365, __pyx_L1_error)
+    }
+    __pyx_t_6 = PyFloat_FromDouble((1.0 / __pyx_t_4)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 365, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_4 = sqrt(2.0);
+    if (unlikely(__pyx_t_4 == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 365, __pyx_L1_error)
+    }
+    __pyx_t_5 = PyFloat_FromDouble((-1.0 / __pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 365, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 365, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 365, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 365, __pyx_L1_error);
+    __pyx_t_6 = 0;
+    __pyx_t_5 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":364
+ * 
+ *         if self.gate_type == "H":
+ *             return SparseMatrix([[1 / sqrt(2), 1 / sqrt(2)],             # <<<<<<<<<<<<<<
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+ * 
+*/
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 364, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 364, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 364, __pyx_L1_error);
+    __pyx_t_7 = 0;
+    __pyx_t_8 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 364, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":363
+ *         cdef double cos_half, sin_half, scale
+ * 
+ *         if self.gate_type == "H":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1 / sqrt(2), 1 / sqrt(2)],
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":367
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+ * 
+ *         elif self.gate_type == "X":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_X);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":368
+ * 
+ *         elif self.gate_type == "X":
+ *             return SparseMatrix([[0, 1],             # <<<<<<<<<<<<<<
+ *                                  [1, 0]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_5 = NULL;
+    __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 368, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 368, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 368, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":369
+ *         elif self.gate_type == "X":
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "Y":
+*/
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 369, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 369, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 369, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":368
+ * 
+ *         elif self.gate_type == "X":
+ *             return SparseMatrix([[0, 1],             # <<<<<<<<<<<<<<
+ *                                  [1, 0]])
+ * 
+*/
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 368, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_3) != (0)) __PYX_ERR(0, 368, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 368, __pyx_L1_error);
+    __pyx_t_3 = 0;
+    __pyx_t_8 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_7};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 368, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":367
+ *                                  [1 / sqrt(2), -1 / sqrt(2)]])
+ * 
+ *         elif self.gate_type == "X":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":371
+ *                                  [1, 0]])
+ * 
+ *         elif self.gate_type == "Y":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, -1j],
+ *                                  [1j, 0]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_Y);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":372
+ * 
+ *         elif self.gate_type == "Y":
+ *             return SparseMatrix([[0, -1j],             # <<<<<<<<<<<<<<
+ *                                  [1j, 0]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_7 = NULL;
+    __pyx_t_10 = __Pyx_c_neg_double(__pyx_t_double_complex_from_parts(0, 1.0));
+    __pyx_t_5 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 372, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 372, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 372, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 372, __pyx_L1_error);
+    __pyx_t_5 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":373
+ *         elif self.gate_type == "Y":
+ *             return SparseMatrix([[0, -1j],
+ *                                  [1j, 0]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "Z":
+*/
+    __pyx_t_5 = PyComplex_FromDoubles(0.0, 1.0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 373, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 373, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_t_5) != (0)) __PYX_ERR(0, 373, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 373, __pyx_L1_error);
+    __pyx_t_5 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":372
+ * 
+ *         elif self.gate_type == "Y":
+ *             return SparseMatrix([[0, -1j],             # <<<<<<<<<<<<<<
+ *                                  [1j, 0]])
+ * 
+*/
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 372, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_8) != (0)) __PYX_ERR(0, 372, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 372, __pyx_L1_error);
+    __pyx_t_8 = 0;
+    __pyx_t_3 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_7, __pyx_t_5};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 372, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":371
+ *                                  [1, 0]])
+ * 
+ *         elif self.gate_type == "Y":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, -1j],
+ *                                  [1j, 0]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":375
+ *                                  [1j, 0]])
+ * 
+ *         elif self.gate_type == "Z":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, -1]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_Z);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":376
+ * 
+ *         elif self.gate_type == "Z":
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, -1]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_5 = NULL;
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 376, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 376, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 376, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":377
+ *         elif self.gate_type == "Z":
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, -1]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "CNOT":
+*/
+    __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 377, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 377, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_neg_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_neg_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_mstate_global->__pyx_int_neg_1) != (0)) __PYX_ERR(0, 377, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":376
+ * 
+ *         elif self.gate_type == "Z":
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, -1]])
+ * 
+*/
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 376, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 376, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 376, __pyx_L1_error);
+    __pyx_t_7 = 0;
+    __pyx_t_3 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_8};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 376, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":375
+ *                                  [1j, 0]])
+ * 
+ *         elif self.gate_type == "Z":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, -1]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":379
+ *                                  [0, -1]])
+ * 
+ *         elif self.gate_type == "CNOT":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_CNOT);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":380
+ * 
+ *         elif self.gate_type == "CNOT":
+ *             return SparseMatrix([[0, 1],             # <<<<<<<<<<<<<<
+ *                                  [1, 0]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_8 = NULL;
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 380, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 380, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 380, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":381
+ *         elif self.gate_type == "CNOT":
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "RX":
+*/
+    __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 381, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 381, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 381, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":380
+ * 
+ *         elif self.gate_type == "CNOT":
+ *             return SparseMatrix([[0, 1],             # <<<<<<<<<<<<<<
+ *                                  [1, 0]])
+ * 
+*/
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 380, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_5) != (0)) __PYX_ERR(0, 380, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 380, __pyx_L1_error);
+    __pyx_t_5 = 0;
+    __pyx_t_3 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_8, __pyx_t_7};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 380, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":379
+ *                                  [0, -1]])
+ * 
+ *         elif self.gate_type == "CNOT":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[0, 1],
+ *                                  [1, 0]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":383
+ *                                  [1, 0]])
+ * 
+ *         elif self.gate_type == "RX":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_RX);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":384
+ * 
+ *         elif self.gate_type == "RX":
+ *             theta = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+*/
+    __pyx_v_theta = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":385
+ *         elif self.gate_type == "RX":
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)             # <<<<<<<<<<<<<<
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -1j * sin_half],
+*/
+    __pyx_v_cos_half = cos((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":386
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[cos_half, -1j * sin_half],
+ *                                  [-1j * sin_half, cos_half]])
+*/
+    __pyx_v_sin_half = sin((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":387
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -1j * sin_half],             # <<<<<<<<<<<<<<
+ *                                  [-1j * sin_half, cos_half]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_7 = NULL;
+    __pyx_t_8 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 387, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_10 = __Pyx_c_prod_double(__Pyx_c_neg_double(__pyx_t_double_complex_from_parts(0, 1.0)), __pyx_t_double_complex_from_parts(__pyx_v_sin_half, 0));
+    __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 387, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 387, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_8) != (0)) __PYX_ERR(0, 387, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 387, __pyx_L1_error);
+    __pyx_t_8 = 0;
+    __pyx_t_3 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":388
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -1j * sin_half],
+ *                                  [-1j * sin_half, cos_half]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "RY":
+*/
+    __pyx_t_10 = __Pyx_c_prod_double(__Pyx_c_neg_double(__pyx_t_double_complex_from_parts(0, 1.0)), __pyx_t_double_complex_from_parts(__pyx_v_sin_half, 0));
+    __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 388, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_8 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 388, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_6 = PyList_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 388, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 0, __pyx_t_3) != (0)) __PYX_ERR(0, 388, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 388, __pyx_L1_error);
+    __pyx_t_3 = 0;
+    __pyx_t_8 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":387
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -1j * sin_half],             # <<<<<<<<<<<<<<
+ *                                  [-1j * sin_half, cos_half]])
+ * 
+*/
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 387, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_t_5) != (0)) __PYX_ERR(0, 387, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 387, __pyx_L1_error);
+    __pyx_t_5 = 0;
+    __pyx_t_6 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_7, __pyx_t_8};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 387, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":383
+ *                                  [1, 0]])
+ * 
+ *         elif self.gate_type == "RX":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":390
+ *                                  [-1j * sin_half, cos_half]])
+ * 
+ *         elif self.gate_type == "RY":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_RY);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":391
+ * 
+ *         elif self.gate_type == "RY":
+ *             theta = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+*/
+    __pyx_v_theta = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":392
+ *         elif self.gate_type == "RY":
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)             # <<<<<<<<<<<<<<
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -sin_half],
+*/
+    __pyx_v_cos_half = cos((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":393
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[cos_half, -sin_half],
+ *                                  [sin_half, cos_half]])
+*/
+    __pyx_v_sin_half = sin((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":394
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -sin_half],             # <<<<<<<<<<<<<<
+ *                                  [sin_half, cos_half]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_8 = NULL;
+    __pyx_t_7 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 394, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_6 = PyFloat_FromDouble((-__pyx_v_sin_half)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 394, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 394, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 394, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 394, __pyx_L1_error);
+    __pyx_t_7 = 0;
+    __pyx_t_6 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":395
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -sin_half],
+ *                                  [sin_half, cos_half]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "RZ":
+*/
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_sin_half); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 395, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 395, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 395, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 395, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_t_7) != (0)) __PYX_ERR(0, 395, __pyx_L1_error);
+    __pyx_t_6 = 0;
+    __pyx_t_7 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":394
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -sin_half],             # <<<<<<<<<<<<<<
+ *                                  [sin_half, cos_half]])
+ * 
+*/
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 394, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_5) != (0)) __PYX_ERR(0, 394, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 394, __pyx_L1_error);
+    __pyx_t_5 = 0;
+    __pyx_t_3 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_8, __pyx_t_7};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 394, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":390
+ *                                  [-1j * sin_half, cos_half]])
+ * 
+ *         elif self.gate_type == "RY":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             cos_half = cos(theta / 2)
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":397
+ *                                  [sin_half, cos_half]])
+ * 
+ *         elif self.gate_type == "RZ":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_RZ);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":398
+ * 
+ *         elif self.gate_type == "RZ":
+ *             phi = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],
+ *                                  [0, cmath.exp(1j * phi / 2)]])
+*/
+    __pyx_v_phi = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":399
+ *         elif self.gate_type == "RZ":
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],             # <<<<<<<<<<<<<<
+ *                                  [0, cmath.exp(1j * phi / 2)]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_7 = NULL;
+    __pyx_t_3 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 399, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 399, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__Pyx_c_neg_double(__pyx_t_double_complex_from_parts(0, 1.0)), __pyx_t_double_complex_from_parts(__pyx_v_phi, 0));
+    __pyx_t_11 = __pyx_t_double_complex_from_parts(2, 0);
+    if (unlikely(__Pyx_c_is_zero_double(__pyx_t_11))) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 399, __pyx_L1_error)
+    }
+    __pyx_t_12 = __Pyx_c_quot_double(__pyx_t_10, __pyx_t_11);
+    __pyx_t_5 = __pyx_PyComplex_FromComplex(__pyx_t_12); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 399, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_6);
+      assert(__pyx_t_3);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_6, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_8 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_6, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 399, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+    }
+    __pyx_t_6 = PyList_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 399, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 0, __pyx_t_8) != (0)) __PYX_ERR(0, 399, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 399, __pyx_L1_error);
+    __pyx_t_8 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":400
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],
+ *                                  [0, cmath.exp(1j * phi / 2)]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "U1":
+*/
+    __pyx_t_5 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 400, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 400, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_12 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_phi, 0));
+    __pyx_t_11 = __pyx_t_double_complex_from_parts(2, 0);
+    if (unlikely(__Pyx_c_is_zero_double(__pyx_t_11))) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 400, __pyx_L1_error)
+    }
+    __pyx_t_10 = __Pyx_c_quot_double(__pyx_t_12, __pyx_t_11);
+    __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 400, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_13))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_13);
+      assert(__pyx_t_5);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_13);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_13, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_3};
+      __pyx_t_8 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_13, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+      if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 400, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+    }
+    __pyx_t_13 = PyList_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 400, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 400, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 400, __pyx_L1_error);
+    __pyx_t_8 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":399
+ *         elif self.gate_type == "RZ":
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],             # <<<<<<<<<<<<<<
+ *                                  [0, cmath.exp(1j * phi / 2)]])
+ * 
+*/
+    __pyx_t_8 = PyList_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 399, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_GIVEREF(__pyx_t_6);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 399, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_13);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_8, 1, __pyx_t_13) != (0)) __PYX_ERR(0, 399, __pyx_L1_error);
+    __pyx_t_6 = 0;
+    __pyx_t_13 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_7, __pyx_t_8};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 399, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":397
+ *                                  [sin_half, cos_half]])
+ * 
+ *         elif self.gate_type == "RZ":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[cmath.exp(-1j * phi / 2), 0],
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":402
+ *                                  [0, cmath.exp(1j * phi / 2)]])
+ * 
+ *         elif self.gate_type == "U1":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[1, 0],
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_U1);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":403
+ * 
+ *         elif self.gate_type == "U1":
+ *             phi = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, cmath.exp(1j * phi)]])
+*/
+    __pyx_v_phi = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":404
+ *         elif self.gate_type == "U1":
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, cmath.exp(1j * phi)]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_8 = NULL;
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 404, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 404, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 404, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":405
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, cmath.exp(1j * phi)]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "U2":
+*/
+    __pyx_t_6 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 405, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 405, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_phi, 0));
+    __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 405, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_5))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
+      assert(__pyx_t_6);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_5, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_3};
+      __pyx_t_13 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_5, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 405, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_13);
+    }
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 405, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 405, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_13);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_13) != (0)) __PYX_ERR(0, 405, __pyx_L1_error);
+    __pyx_t_13 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":404
+ *         elif self.gate_type == "U1":
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, cmath.exp(1j * phi)]])
+ * 
+*/
+    __pyx_t_13 = PyList_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 404, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 404, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 404, __pyx_L1_error);
+    __pyx_t_7 = 0;
+    __pyx_t_5 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_8, __pyx_t_13};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 404, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":402
+ *                                  [0, cmath.exp(1j * phi / 2)]])
+ * 
+ *         elif self.gate_type == "U1":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             return SparseMatrix([[1, 0],
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":407
+ *                                  [0, cmath.exp(1j * phi)]])
+ * 
+ *         elif self.gate_type == "U2":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             gamma = self.parameters[1]
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_U2);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":408
+ * 
+ *         elif self.gate_type == "U2":
+ *             phi = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             gamma = self.parameters[1]
+ *             scale = 1 / sqrt(2)
+*/
+    __pyx_v_phi = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":409
+ *         elif self.gate_type == "U2":
+ *             phi = self.parameters[0]
+ *             gamma = self.parameters[1]             # <<<<<<<<<<<<<<
+ *             scale = 1 / sqrt(2)
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],
+*/
+    __pyx_v_gamma = (__pyx_v_self->parameters[1]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":410
+ *             phi = self.parameters[0]
+ *             gamma = self.parameters[1]
+ *             scale = 1 / sqrt(2)             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],
+ *                                  [scale * cmath.exp(1j * phi),
+*/
+    __pyx_t_4 = sqrt(2.0);
+    if (unlikely(__pyx_t_4 == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 410, __pyx_L1_error)
+    }
+    __pyx_v_scale = (1.0 / __pyx_t_4);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":411
+ *             gamma = self.parameters[1]
+ *             scale = 1 / sqrt(2)
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],             # <<<<<<<<<<<<<<
+ *                                  [scale * cmath.exp(1j * phi),
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_13 = NULL;
+    __pyx_t_8 = PyFloat_FromDouble(__pyx_v_scale); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_5 = PyFloat_FromDouble((-__pyx_v_scale)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_3 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_gamma, 0));
+    __pyx_t_6 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_14))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_14);
+      assert(__pyx_t_3);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_14);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_14, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_6};
+      __pyx_t_7 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_14, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 411, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+    }
+    __pyx_t_14 = PyNumber_Multiply(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_8) != (0)) __PYX_ERR(0, 411, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_14);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_7, 1, __pyx_t_14) != (0)) __PYX_ERR(0, 411, __pyx_L1_error);
+    __pyx_t_8 = 0;
+    __pyx_t_14 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":412
+ *             scale = 1 / sqrt(2)
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],
+ *                                  [scale * cmath.exp(1j * phi),             # <<<<<<<<<<<<<<
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+ * 
+*/
+    __pyx_t_14 = PyFloat_FromDouble(__pyx_v_scale); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __pyx_t_5 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_phi, 0));
+    __pyx_t_6 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_3))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+      assert(__pyx_t_5);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_3, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_6};
+      __pyx_t_8 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_3, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 412, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+    }
+    __pyx_t_3 = PyNumber_Multiply(__pyx_t_14, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":413
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],
+ *                                  [scale * cmath.exp(1j * phi),
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "U3":
+*/
+    __pyx_t_8 = PyFloat_FromDouble(__pyx_v_scale); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 413, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_6 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 413, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_15 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 413, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_15);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts((__pyx_v_phi + __pyx_v_gamma), 0));
+    __pyx_t_5 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 413, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_15))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_15);
+      assert(__pyx_t_6);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_15);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_15, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_5};
+      __pyx_t_14 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_15, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+      if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 413, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_14);
+    }
+    __pyx_t_15 = PyNumber_Multiply(__pyx_t_8, __pyx_t_14); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 413, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_15);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":412
+ *             scale = 1 / sqrt(2)
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],
+ *                                  [scale * cmath.exp(1j * phi),             # <<<<<<<<<<<<<<
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+ * 
+*/
+    __pyx_t_14 = PyList_New(2); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 0, __pyx_t_3) != (0)) __PYX_ERR(0, 412, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_15);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 1, __pyx_t_15) != (0)) __PYX_ERR(0, 412, __pyx_L1_error);
+    __pyx_t_3 = 0;
+    __pyx_t_15 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":411
+ *             gamma = self.parameters[1]
+ *             scale = 1 / sqrt(2)
+ *             return SparseMatrix([[scale, -scale * cmath.exp(1j * gamma)],             # <<<<<<<<<<<<<<
+ *                                  [scale * cmath.exp(1j * phi),
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+*/
+    __pyx_t_15 = PyList_New(2); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 411, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_15);
+    __Pyx_GIVEREF(__pyx_t_7);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 411, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_14);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 1, __pyx_t_14) != (0)) __PYX_ERR(0, 411, __pyx_L1_error);
+    __pyx_t_7 = 0;
+    __pyx_t_14 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_13, __pyx_t_15};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 411, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":407
+ *                                  [0, cmath.exp(1j * phi)]])
+ * 
+ *         elif self.gate_type == "U2":             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[0]
+ *             gamma = self.parameters[1]
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":415
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+ * 
+ *         elif self.gate_type == "U3":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             phi = self.parameters[1]
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_U3);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":416
+ * 
+ *         elif self.gate_type == "U3":
+ *             theta = self.parameters[0]             # <<<<<<<<<<<<<<
+ *             phi = self.parameters[1]
+ *             gamma = self.parameters[2]
+*/
+    __pyx_v_theta = (__pyx_v_self->parameters[0]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":417
+ *         elif self.gate_type == "U3":
+ *             theta = self.parameters[0]
+ *             phi = self.parameters[1]             # <<<<<<<<<<<<<<
+ *             gamma = self.parameters[2]
+ *             cos_half = cos(theta / 2)
+*/
+    __pyx_v_phi = (__pyx_v_self->parameters[1]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":418
+ *             theta = self.parameters[0]
+ *             phi = self.parameters[1]
+ *             gamma = self.parameters[2]             # <<<<<<<<<<<<<<
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+*/
+    __pyx_v_gamma = (__pyx_v_self->parameters[2]);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":419
+ *             phi = self.parameters[1]
+ *             gamma = self.parameters[2]
+ *             cos_half = cos(theta / 2)             # <<<<<<<<<<<<<<
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],
+*/
+    __pyx_v_cos_half = cos((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":420
+ *             gamma = self.parameters[2]
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],
+ *                                  [cmath.exp(1j * phi) * sin_half,
+*/
+    __pyx_v_sin_half = sin((__pyx_v_theta / 2.0));
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":421
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],             # <<<<<<<<<<<<<<
+ *                                  [cmath.exp(1j * phi) * sin_half,
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_15 = NULL;
+    __pyx_t_13 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __pyx_t_7 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_gamma, 0));
+    __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_8))) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_8);
+      assert(__pyx_t_7);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_8);
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_8, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_7, __pyx_t_3};
+      __pyx_t_14 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_8, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 421, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_14);
+    }
+    __pyx_t_8 = PyNumber_Negative(__pyx_t_14); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __pyx_t_14 = PyFloat_FromDouble(__pyx_v_sin_half); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __pyx_t_3 = PyNumber_Multiply(__pyx_t_8, __pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __pyx_t_14 = PyList_New(2); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __Pyx_GIVEREF(__pyx_t_13);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 0, __pyx_t_13) != (0)) __PYX_ERR(0, 421, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 421, __pyx_L1_error);
+    __pyx_t_13 = 0;
+    __pyx_t_3 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":422
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],
+ *                                  [cmath.exp(1j * phi) * sin_half,             # <<<<<<<<<<<<<<
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+ * 
+*/
+    __pyx_t_13 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts(__pyx_v_phi, 0));
+    __pyx_t_8 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_7))) {
+      __pyx_t_13 = PyMethod_GET_SELF(__pyx_t_7);
+      assert(__pyx_t_13);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_7);
+      __Pyx_INCREF(__pyx_t_13);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_7, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_13, __pyx_t_8};
+      __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_7, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 422, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+    }
+    __pyx_t_7 = PyFloat_FromDouble(__pyx_v_sin_half); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_8 = PyNumber_Multiply(__pyx_t_3, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":423
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],
+ *                                  [cmath.exp(1j * phi) * sin_half,
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])             # <<<<<<<<<<<<<<
+ * 
+ *         elif self.gate_type == "M":
+*/
+    __pyx_t_3 = NULL;
+    __Pyx_GetModuleGlobalName(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_cmath); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 423, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_exp); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 423, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+    __pyx_t_10 = __Pyx_c_prod_double(__pyx_t_double_complex_from_parts(0, 1.0), __pyx_t_double_complex_from_parts((__pyx_v_phi + __pyx_v_gamma), 0));
+    __pyx_t_13 = __pyx_PyComplex_FromComplex(__pyx_t_10); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 423, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __pyx_t_9 = 1;
+    #if CYTHON_UNPACK_METHODS
+    if (unlikely(PyMethod_Check(__pyx_t_5))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_5);
+      assert(__pyx_t_3);
+      PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(__pyx__function);
+      __Pyx_DECREF_SET(__pyx_t_5, __pyx__function);
+      __pyx_t_9 = 0;
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_t_13};
+      __pyx_t_7 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_5, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 423, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+    }
+    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_cos_half); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 423, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_13 = PyNumber_Multiply(__pyx_t_7, __pyx_t_5); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 423, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":422
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],
+ *                                  [cmath.exp(1j * phi) * sin_half,             # <<<<<<<<<<<<<<
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+ * 
+*/
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 422, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GIVEREF(__pyx_t_8);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_8) != (0)) __PYX_ERR(0, 422, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_13);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_13) != (0)) __PYX_ERR(0, 422, __pyx_L1_error);
+    __pyx_t_8 = 0;
+    __pyx_t_13 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":421
+ *             cos_half = cos(theta / 2)
+ *             sin_half = sin(theta / 2)
+ *             return SparseMatrix([[cos_half, -cmath.exp(1j * gamma) * sin_half],             # <<<<<<<<<<<<<<
+ *                                  [cmath.exp(1j * phi) * sin_half,
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+*/
+    __pyx_t_13 = PyList_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 421, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_GIVEREF(__pyx_t_14);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 0, __pyx_t_14) != (0)) __PYX_ERR(0, 421, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 421, __pyx_L1_error);
+    __pyx_t_14 = 0;
+    __pyx_t_5 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_15, __pyx_t_13};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 421, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":415
+ *                                   scale * cmath.exp(1j * (phi + gamma))]])
+ * 
+ *         elif self.gate_type == "U3":             # <<<<<<<<<<<<<<
+ *             theta = self.parameters[0]
+ *             phi = self.parameters[1]
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":425
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+ * 
+ *         elif self.gate_type == "M":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, 1]])
+*/
+  __pyx_t_1 = (__pyx_v_self->gate_type == __pyx_k_M);
+  if (__pyx_t_1) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":426
+ * 
+ *         elif self.gate_type == "M":
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, 1]])
+ * 
+*/
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_13 = NULL;
+    __pyx_t_15 = PyList_New(2); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 426, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_15);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 426, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 426, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":427
+ *         elif self.gate_type == "M":
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, 1]])             # <<<<<<<<<<<<<<
+ * 
+ *         else:
+*/
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 427, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 427, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 427, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":426
+ * 
+ *         elif self.gate_type == "M":
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, 1]])
+ * 
+*/
+    __pyx_t_14 = PyList_New(2); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 426, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_14);
+    __Pyx_GIVEREF(__pyx_t_15);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 0, __pyx_t_15) != (0)) __PYX_ERR(0, 426, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 426, __pyx_L1_error);
+    __pyx_t_15 = 0;
+    __pyx_t_5 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_13, __pyx_t_14};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 426, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":425
+ *                                   cmath.exp(1j * (phi + gamma)) * cos_half]])
+ * 
+ *         elif self.gate_type == "M":             # <<<<<<<<<<<<<<
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, 1]])
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":430
+ * 
+ *         else:
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, 1]])
+ *         #     raise RuntimeError(f"Unsupported gate type: {gate_type}")
+*/
+  /*else*/ {
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    __pyx_t_14 = NULL;
+    __pyx_t_13 = PyList_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 430, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 0, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 430, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_13, 1, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 430, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":431
+ *         else:
+ *             return SparseMatrix([[1, 0],
+ *                                  [0, 1]])             # <<<<<<<<<<<<<<
+ *         #     raise RuntimeError(f"Unsupported gate type: {gate_type}")
+ * 
+*/
+    __pyx_t_5 = PyList_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 431, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_0);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_mstate_global->__pyx_int_0) != (0)) __PYX_ERR(0, 431, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_1);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_int_1) != (0)) __PYX_ERR(0, 431, __pyx_L1_error);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":430
+ * 
+ *         else:
+ *             return SparseMatrix([[1, 0],             # <<<<<<<<<<<<<<
+ *                                  [0, 1]])
+ *         #     raise RuntimeError(f"Unsupported gate type: {gate_type}")
+*/
+    __pyx_t_15 = PyList_New(2); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 430, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_15);
+    __Pyx_GIVEREF(__pyx_t_13);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 0, __pyx_t_13) != (0)) __PYX_ERR(0, 430, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_15, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 430, __pyx_L1_error);
+    __pyx_t_13 = 0;
+    __pyx_t_5 = 0;
+    __pyx_t_9 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_14, __pyx_t_15};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
+      __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 430, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+    __pyx_t_2 = 0;
+    goto __pyx_L0;
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":356
+ *         return SparseMatrix(out_entries, full_size, full_size)
+ * 
+ *     cdef SparseMatrix get_base_matrix(self):             # <<<<<<<<<<<<<<
+ *         """
+ *         Return the base matrix of the gate.
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_13);
+  __Pyx_XDECREF(__pyx_t_14);
+  __Pyx_XDECREF(__pyx_t_15);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.get_base_matrix", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":434
+ *         #     raise RuntimeError(f"Unsupported gate type: {gate_type}")
+ * 
+ *     cdef int size(self):             # <<<<<<<<<<<<<<
+ *         return self.get_base_matrix().size()
+ * 
+*/
+
+static int __pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_size(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  size_t __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("size", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":435
+ * 
+ *     cdef int size(self):
+ *         return self.get_base_matrix().size()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef SparseMatrix get_full_matrix(self, int num_qubits):
+*/
+  __pyx_t_3 = ((PyObject *)((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->get_base_matrix(__pyx_v_self)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 435, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __pyx_t_3;
+  __Pyx_INCREF(__pyx_t_2);
+  __pyx_t_4 = 0;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
+    __pyx_t_1 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_size, __pyx_callargs+__pyx_t_4, (1-__pyx_t_4) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 435, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  }
+  __pyx_t_5 = __Pyx_PyLong_As_int(__pyx_t_1); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 435, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_5;
+  goto __pyx_L0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":434
+ *         #     raise RuntimeError(f"Unsupported gate type: {gate_type}")
+ * 
+ *     cdef int size(self):             # <<<<<<<<<<<<<<
+ *         return self.get_base_matrix().size()
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.size", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":437
+ *         return self.get_base_matrix().size()
+ * 
+ *     cdef SparseMatrix get_full_matrix(self, int num_qubits):             # <<<<<<<<<<<<<<
+ *         cdef SparseMatrix base_gate = self.get_base_matrix()
+ *         return self.base_to_full(base_gate,
+*/
+
+static struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_full_matrix(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, int __pyx_v_num_qubits) {
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_base_gate = 0;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_full_matrix", 0);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":438
+ * 
+ *     cdef SparseMatrix get_full_matrix(self, int num_qubits):
+ *         cdef SparseMatrix base_gate = self.get_base_matrix()             # <<<<<<<<<<<<<<
+ *         return self.base_to_full(base_gate,
+ *                                  num_qubits,
+*/
+  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->get_base_matrix(__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 438, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_base_gate = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":439
+ *     cdef SparseMatrix get_full_matrix(self, int num_qubits):
+ *         cdef SparseMatrix base_gate = self.get_base_matrix()
+ *         return self.base_to_full(base_gate,             # <<<<<<<<<<<<<<
+ *                                  num_qubits,
+ *                                  self.control_qubits,
+*/
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":442
+ *                                  num_qubits,
+ *                                  self.control_qubits,
+ *                                  self.target_qubits)             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self->__pyx_vtab)->base_to_full(__pyx_v_self, __pyx_v_base_gate, __pyx_v_num_qubits, __pyx_v_self->control_qubits, __pyx_v_self->target_qubits)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":437
+ *         return self.get_base_matrix().size()
+ * 
+ *     cdef SparseMatrix get_full_matrix(self, int num_qubits):             # <<<<<<<<<<<<<<
+ *         cdef SparseMatrix base_gate = self.get_base_matrix()
+ *         return self.base_to_full(base_gate,
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.get_full_matrix", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF((PyObject *)__pyx_v_base_gate);
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef tuple state
+ *     cdef object _dict
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) { __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL; }
+  const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+  if (unlikely(__pyx_kwds_len < 0)) return NULL;
+  if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__reduce_cython__", __pyx_kwds); return NULL;}
+  __pyx_r = __pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate___reduce_cython__(((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate___reduce_cython__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self) {
+  PyObject *__pyx_v_state = 0;
+  PyObject *__pyx_v__dict = 0;
+  int __pyx_v_use_setstate;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  int __pyx_t_7;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__reduce_cython__", 0);
+
+  /* "(tree fragment)":5
+ *     cdef object _dict
+ *     cdef bint use_setstate
+ *     state = (self.control_qubits, self.gate_type, self.parameters, self.target_qubits)             # <<<<<<<<<<<<<<
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None and _dict:
+*/
+  __pyx_t_1 = __pyx_convert_vector_to_py_int(__pyx_v_self->control_qubits); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_self->gate_type); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __pyx_convert_vector_to_py_double(__pyx_v_self->parameters); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __pyx_convert_vector_to_py_int(__pyx_v_self->target_qubits); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1) != (0)) __PYX_ERR(1, 5, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_2) != (0)) __PYX_ERR(1, 5, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_3);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_t_3) != (0)) __PYX_ERR(1, 5, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_4);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 3, __pyx_t_4) != (0)) __PYX_ERR(1, 5, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_t_3 = 0;
+  __pyx_t_4 = 0;
+  __pyx_v_state = ((PyObject*)__pyx_t_5);
+  __pyx_t_5 = 0;
+
+  /* "(tree fragment)":6
+ *     cdef bint use_setstate
+ *     state = (self.control_qubits, self.gate_type, self.parameters, self.target_qubits)
+ *     _dict = getattr(self, '__dict__', None)             # <<<<<<<<<<<<<<
+ *     if _dict is not None and _dict:
+ *         state += (_dict,)
+*/
+  __pyx_t_5 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_dict, Py_None); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 6, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_v__dict = __pyx_t_5;
+  __pyx_t_5 = 0;
+
+  /* "(tree fragment)":7
+ *     state = (self.control_qubits, self.gate_type, self.parameters, self.target_qubits)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None and _dict:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+*/
+  __pyx_t_7 = (__pyx_v__dict != Py_None);
+  if (__pyx_t_7) {
+  } else {
+    __pyx_t_6 = __pyx_t_7;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v__dict); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(1, 7, __pyx_L1_error)
+  __pyx_t_6 = __pyx_t_7;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_6) {
+
+    /* "(tree fragment)":8
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None and _dict:
+ *         state += (_dict,)             # <<<<<<<<<<<<<<
+ *         use_setstate = True
+ *     else:
+*/
+    __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 8, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(__pyx_v__dict);
+    __Pyx_GIVEREF(__pyx_v__dict);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v__dict) != (0)) __PYX_ERR(1, 8, __pyx_L1_error);
+    __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 8, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_4));
+    __pyx_t_4 = 0;
+
+    /* "(tree fragment)":9
+ *     if _dict is not None and _dict:
+ *         state += (_dict,)
+ *         use_setstate = True             # <<<<<<<<<<<<<<
+ *     else:
+ *         use_setstate = ('False',)
+*/
+    __pyx_v_use_setstate = 1;
+
+    /* "(tree fragment)":7
+ *     state = (self.control_qubits, self.gate_type, self.parameters, self.target_qubits)
+ *     _dict = getattr(self, '__dict__', None)
+ *     if _dict is not None and _dict:             # <<<<<<<<<<<<<<
+ *         state += (_dict,)
+ *         use_setstate = True
+*/
+    goto __pyx_L3;
+  }
+
+  /* "(tree fragment)":11
+ *         use_setstate = True
+ *     else:
+ *         use_setstate = ('False',)             # <<<<<<<<<<<<<<
+ *     if use_setstate:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state
+*/
+  /*else*/ {
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_mstate_global->__pyx_tuple[2]); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 11, __pyx_L1_error)
+    __pyx_v_use_setstate = __pyx_t_6;
+  }
+  __pyx_L3:;
+
+  /* "(tree fragment)":12
+ *     else:
+ *         use_setstate = ('False',)
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state
+ *     else:
+*/
+  if (__pyx_v_use_setstate) {
+
+    /* "(tree fragment)":13
+ *         use_setstate = ('False',)
+ *     if use_setstate:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state             # <<<<<<<<<<<<<<
+ *     else:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)
+*/
+    __Pyx_XDECREF(__pyx_r);
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_Gate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self)))) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_32396611);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_32396611);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_int_32396611) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __Pyx_INCREF(Py_None);
+    __Pyx_GIVEREF(Py_None);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, Py_None) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_4);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_5) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_state) != (0)) __PYX_ERR(1, 13, __pyx_L1_error);
+    __pyx_t_4 = 0;
+    __pyx_t_5 = 0;
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "(tree fragment)":12
+ *     else:
+ *         use_setstate = ('False',)
+ *     if use_setstate:             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state
+ *     else:
+*/
+  }
+
+  /* "(tree fragment)":15
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state
+ *     else:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)             # <<<<<<<<<<<<<<
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_Gate__set_state(self, __pyx_state)
+*/
+  /*else*/ {
+    __Pyx_XDECREF(__pyx_r);
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_Gate); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self)))) != (0)) __PYX_ERR(1, 15, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_mstate_global->__pyx_int_32396611);
+    __Pyx_GIVEREF(__pyx_mstate_global->__pyx_int_32396611);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_mstate_global->__pyx_int_32396611) != (0)) __PYX_ERR(1, 15, __pyx_L1_error);
+    __Pyx_INCREF(__pyx_v_state);
+    __Pyx_GIVEREF(__pyx_v_state);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_v_state) != (0)) __PYX_ERR(1, 15, __pyx_L1_error);
+    __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_GIVEREF(__pyx_t_3);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3) != (0)) __PYX_ERR(1, 15, __pyx_L1_error);
+    __Pyx_GIVEREF(__pyx_t_5);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_5) != (0)) __PYX_ERR(1, 15, __pyx_L1_error);
+    __pyx_t_3 = 0;
+    __pyx_t_5 = 0;
+    __pyx_r = __pyx_t_4;
+    __pyx_t_4 = 0;
+    goto __pyx_L0;
+  }
+
+  /* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef tuple state
+ *     cdef object _dict
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_state);
+  __Pyx_XDECREF(__pyx_v__dict);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":16
+ *     else:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_Gate__set_state(self, __pyx_state)
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  PyObject *__pyx_v___pyx_state = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[1] = {0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_pyx_state,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(1, 16, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(1, 16, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__setstate_cython__", 0) < (0)) __PYX_ERR(1, 16, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__setstate_cython__", 1, 1, 1, i); __PYX_ERR(1, 16, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 1)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(1, 16, __pyx_L3_error)
+    }
+    __pyx_v___pyx_state = values[0];
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__setstate_cython__", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 16, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate_2__setstate_cython__(((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v_self), __pyx_v___pyx_state);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_4Gate_2__setstate_cython__(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__setstate_cython__", 0);
+
+  /* "(tree fragment)":17
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)
+ * def __setstate_cython__(self, __pyx_state):
+ *     __pyx_unpickle_Gate__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
+*/
+  __pyx_t_1 = __pyx_v___pyx_state;
+  __Pyx_INCREF(__pyx_t_1);
+  if (!(likely(PyTuple_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None) || __Pyx_RaiseUnexpectedTypeError("tuple", __pyx_t_1))) __PYX_ERR(1, 17, __pyx_L1_error)
+  if (unlikely(__pyx_t_1 == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "cannot pass None into a C function argument that is declared 'not None'");
+    __PYX_ERR(1, 17, __pyx_L1_error)
+  }
+  __pyx_t_2 = __pyx_f_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate__set_state(__pyx_v_self, ((PyObject*)__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 17, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "(tree fragment)":16
+ *     else:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_Gate__set_state(self, __pyx_state)
+*/
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.Gate.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "qilisdk/backends/qili_sim_cython.pyx":446
  * 
  * class QiliSimCython(Backend):
  *     def __init__(self):             # <<<<<<<<<<<<<<
@@ -5162,32 +10818,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_self,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 179, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 446, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 179, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 446, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__init__", 0) < (0)) __PYX_ERR(0, 179, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__init__", 0) < (0)) __PYX_ERR(0, 446, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, i); __PYX_ERR(0, 179, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, i); __PYX_ERR(0, 446, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 179, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 446, __pyx_L3_error)
     }
     __pyx_v_self = values[0];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 179, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 446, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5222,7 +10878,7 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":180
+  /* "qilisdk/backends/qili_sim_cython.pyx":447
  * class QiliSimCython(Backend):
  *     def __init__(self):
  *         super().__init__()             # <<<<<<<<<<<<<<
@@ -5231,7 +10887,7 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython__
 */
   __pyx_t_4 = NULL;
   __pyx_t_5 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_5) { PyErr_SetString(PyExc_RuntimeError, "super(): empty __class__ cell"); __PYX_ERR(0, 180, __pyx_L1_error) }
+  if (!__pyx_t_5) { PyErr_SetString(PyExc_RuntimeError, "super(): empty __class__ cell"); __PYX_ERR(0, 447, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_5);
   __pyx_t_6 = 1;
   {
@@ -5239,7 +10895,7 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython__
     __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_super, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 447, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   }
   __pyx_t_2 = __pyx_t_3;
@@ -5250,12 +10906,12 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython__
     __pyx_t_1 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_init, __pyx_callargs+__pyx_t_6, (1-__pyx_t_6) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 447, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":179
+  /* "qilisdk/backends/qili_sim_cython.pyx":446
  * 
  * class QiliSimCython(Backend):
  *     def __init__(self):             # <<<<<<<<<<<<<<
@@ -5280,12 +10936,12 @@ static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython__
   return __pyx_r;
 }
 
-/* "qilisdk/backends/qili_sim_cython.pyx":182
+/* "qilisdk/backends/qili_sim_cython.pyx":449
  *         super().__init__()
  * 
  *     def _execute_sampling(self, functional: Sampling) -> SamplingResult:             # <<<<<<<<<<<<<<
  * 
- *         # Sparse matrix test
+ *         print("here0")
 */
 
 /* Python wrapper */
@@ -5305,7 +10961,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
   CYTHON_UNUSED PyObject *__pyx_v_self = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_functional = 0;
+  PyObject *__pyx_v_functional = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
@@ -5328,39 +10984,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_self,&__pyx_mstate_global->__pyx_n_u_functional,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 182, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 449, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 182, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 449, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 182, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 449, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_execute_sampling", 0) < (0)) __PYX_ERR(0, 182, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_execute_sampling", 0) < (0)) __PYX_ERR(0, 449, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_execute_sampling", 1, 2, 2, i); __PYX_ERR(0, 182, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_execute_sampling", 1, 2, 2, i); __PYX_ERR(0, 449, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 182, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 449, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 182, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 449, __pyx_L3_error)
     }
     __pyx_v_self = values[0];
     __pyx_v_functional = values[1];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_execute_sampling", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 182, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_execute_sampling", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 449, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5381,271 +11037,1531 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_2_execute_sampling(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_functional) {
-  PyObject *__pyx_v_entriesA = 0;
-  PyObject *__pyx_v_entriesB = 0;
-  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_A = 0;
-  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_B = 0;
-  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_C = 0;
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_2_execute_sampling(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, PyObject *__pyx_v_functional) {
+  PyObject *__pyx_v_gates = NULL;
+  std::string __pyx_v_gate_name;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_new_gate = 0;
+  PyObject *__pyx_v_gate = NULL;
+  int __pyx_v_num_qubits;
+  int __pyx_v_nshots;
+  int __pyx_v_mat_size;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_state = 0;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_state_entries_init;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_v_state_entry_init;
+  CYTHON_UNUSED struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *__pyx_v_gate_matrix = 0;
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v_gate_c = 0;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_state_entries;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_v_state_entry;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_v_amplitude_entries;
+  std::vector<__pyx_ctuple_int__and_double>  __pyx_v_prob_entries;
+  double __pyx_v_total_prob;
+  int __pyx_v_row;
+  __pyx_t_double_complex __pyx_v_amp;
+  double __pyx_v_prob;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_v_entry;
+  std::map<std::string,int>  __pyx_v_counts;
+  CYTHON_UNUSED int __pyx_v_shot;
+  int __pyx_v_state_index;
+  double __pyx_v_random_value;
+  double __pyx_v_cumulative_prob;
+  std::string __pyx_v_bitstring;
+  std::string __pyx_v_one_str;
+  std::string __pyx_v_zero_str;
+  int __pyx_v_b;
+  __pyx_ctuple_int__and_double __pyx_v_prob_entry;
+  PyObject *__pyx_v_random = NULL;
+  PyObject *__pyx_v_results = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   size_t __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
+  Py_ssize_t __pyx_t_4;
+  PyObject *(*__pyx_t_5)(PyObject *);
   PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  std::string __pyx_t_8;
+  int __pyx_t_9;
+  int __pyx_t_10;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
+  PyObject *__pyx_t_13 = NULL;
+  int __pyx_t_14;
+  int __pyx_t_15;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  __pyx_t_16;
+  std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> ::iterator __pyx_t_17;
+  __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_t_18;
+  __pyx_t_double_complex __pyx_t_19;
+  PyObject *__pyx_t_20[6];
+  __pyx_ctuple_int__and_double __pyx_t_21;
+  PyObject *__pyx_t_22[3];
+  PyObject *__pyx_t_23 = NULL;
+  int __pyx_t_24;
+  int __pyx_t_25;
+  double __pyx_t_26;
+  std::vector<__pyx_ctuple_int__and_double> ::iterator __pyx_t_27;
+  int __pyx_t_28;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_execute_sampling", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":185
+  /* "qilisdk/backends/qili_sim_cython.pyx":451
+ *     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
  * 
- *         # Sparse matrix test
- *         cdef list entriesA = [(0, 0, 1.0), (0, 2, 2.0), (1, 1, 3.0)]             # <<<<<<<<<<<<<<
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
+ *         print("here0")             # <<<<<<<<<<<<<<
+ * 
+ *         # Get the gates from the sampling
 */
-  __pyx_t_1 = PyList_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_t_2 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_mstate_global->__pyx_n_u_here0};
+    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 451, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":454
+ * 
+ *         # Get the gates from the sampling
+ *         gates = []             # <<<<<<<<<<<<<<
+ *         cdef string gate_name
+ *         cdef Gate new_gate
+*/
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_gates = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":457
+ *         cdef string gate_name
+ *         cdef Gate new_gate
+ *         for gate in functional.circuit.gates:             # <<<<<<<<<<<<<<
+ *             gate_name = gate.name.encode('utf-8')
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":
+*/
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_functional, __pyx_mstate_global->__pyx_n_u_circuit); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 457, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gates); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 457, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (likely(PyList_CheckExact(__pyx_t_2)) || PyTuple_CheckExact(__pyx_t_2)) {
+    __pyx_t_1 = __pyx_t_2; __Pyx_INCREF(__pyx_t_1);
+    __pyx_t_4 = 0;
+    __pyx_t_5 = NULL;
+  } else {
+    __pyx_t_4 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 457, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_5 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 457, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  for (;;) {
+    if (likely(!__pyx_t_5)) {
+      if (likely(PyList_CheckExact(__pyx_t_1))) {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_1);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 457, __pyx_L1_error)
+          #endif
+          if (__pyx_t_4 >= __pyx_temp) break;
+        }
+        __pyx_t_2 = __Pyx_PyList_GetItemRefFast(__pyx_t_1, __pyx_t_4, __Pyx_ReferenceSharing_OwnStrongReference);
+        ++__pyx_t_4;
+      } else {
+        {
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
+          #if !CYTHON_ASSUME_SAFE_SIZE
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 457, __pyx_L1_error)
+          #endif
+          if (__pyx_t_4 >= __pyx_temp) break;
+        }
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_2 = __Pyx_NewRef(PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_4));
+        #else
+        __pyx_t_2 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_4);
+        #endif
+        ++__pyx_t_4;
+      }
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 457, __pyx_L1_error)
+    } else {
+      __pyx_t_2 = __pyx_t_5(__pyx_t_1);
+      if (unlikely(!__pyx_t_2)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (unlikely(!__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) __PYX_ERR(0, 457, __pyx_L1_error)
+          PyErr_Clear();
+        }
+        break;
+      }
+    }
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_XDECREF_SET(__pyx_v_gate, __pyx_t_2);
+    __pyx_t_2 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":458
+ *         cdef Gate new_gate
+ *         for gate in functional.circuit.gates:
+ *             gate_name = gate.name.encode('utf-8')             # <<<<<<<<<<<<<<
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":
+ *                 gate_name = gate_name.substr(1)
+*/
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_gate, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 458, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_6 = __pyx_t_7;
+    __Pyx_INCREF(__pyx_t_6);
+    __pyx_t_3 = 0;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_mstate_global->__pyx_kp_u_utf_8};
+      __pyx_t_2 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_encode, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 458, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+    }
+    __pyx_t_8 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_t_2); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 458, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_v_gate_name = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_8);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":459
+ *         for gate in functional.circuit.gates:
+ *             gate_name = gate.name.encode('utf-8')
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":             # <<<<<<<<<<<<<<
+ *                 gate_name = gate_name.substr(1)
+ *             new_gate = Gate(gate_name, gate.control_qubits, gate.target_qubits, gate.parameters)
+*/
+    while (1) {
+      __pyx_t_10 = (__pyx_v_gate_name.size() > 1);
+      if (__pyx_t_10) {
+      } else {
+        __pyx_t_9 = __pyx_t_10;
+        goto __pyx_L7_bool_binop_done;
+      }
+      __pyx_t_10 = ((__pyx_v_gate_name[0]) == 'C');
+      if (__pyx_t_10) {
+      } else {
+        __pyx_t_9 = __pyx_t_10;
+        goto __pyx_L7_bool_binop_done;
+      }
+      __pyx_t_10 = (__pyx_v_gate_name != __pyx_k_CNOT);
+      __pyx_t_9 = __pyx_t_10;
+      __pyx_L7_bool_binop_done:;
+      if (!__pyx_t_9) break;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":460
+ *             gate_name = gate.name.encode('utf-8')
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":
+ *                 gate_name = gate_name.substr(1)             # <<<<<<<<<<<<<<
+ *             new_gate = Gate(gate_name, gate.control_qubits, gate.target_qubits, gate.parameters)
+ *             print("New gate has type:", new_gate.gate_type)
+*/
+      try {
+        __pyx_t_8 = __pyx_v_gate_name.substr(1);
+      } catch(...) {
+        __Pyx_CppExn2PyErr();
+        __PYX_ERR(0, 460, __pyx_L1_error)
+      }
+      __pyx_v_gate_name = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_8);
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":461
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":
+ *                 gate_name = gate_name.substr(1)
+ *             new_gate = Gate(gate_name, gate.control_qubits, gate.target_qubits, gate.parameters)             # <<<<<<<<<<<<<<
+ *             print("New gate has type:", new_gate.gate_type)
+ *             gates.append(new_gate)
+*/
+    __pyx_t_7 = NULL;
+    __pyx_t_6 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_gate_name); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_gate, __pyx_mstate_global->__pyx_n_u_control_qubits); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __pyx_t_12 = __Pyx_PyObject_GetAttrStr(__pyx_v_gate, __pyx_mstate_global->__pyx_n_u_target_qubits); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_12);
+    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_gate, __pyx_mstate_global->__pyx_n_u_parameters); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[5] = {__pyx_t_7, __pyx_t_6, __pyx_t_11, __pyx_t_12, __pyx_t_13};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate, __pyx_callargs+__pyx_t_3, (5-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+      __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 461, __pyx_L1_error)
+      __Pyx_GOTREF((PyObject *)__pyx_t_2);
+    }
+    __Pyx_XDECREF_SET(__pyx_v_new_gate, ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_t_2));
+    __pyx_t_2 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":462
+ *                 gate_name = gate_name.substr(1)
+ *             new_gate = Gate(gate_name, gate.control_qubits, gate.target_qubits, gate.parameters)
+ *             print("New gate has type:", new_gate.gate_type)             # <<<<<<<<<<<<<<
+ *             gates.append(new_gate)
+ * 
+*/
+    __pyx_t_13 = NULL;
+    __pyx_t_12 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_new_gate->gate_type); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 462, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_12);
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[3] = {__pyx_t_13, __pyx_mstate_global->__pyx_kp_u_New_gate_has_type, __pyx_t_12};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (3-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 462, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":463
+ *             new_gate = Gate(gate_name, gate.control_qubits, gate.target_qubits, gate.parameters)
+ *             print("New gate has type:", new_gate.gate_type)
+ *             gates.append(new_gate)             # <<<<<<<<<<<<<<
+ * 
+ *         print("Gates loaded")
+*/
+    __pyx_t_14 = __Pyx_PyList_Append(__pyx_v_gates, ((PyObject *)__pyx_v_new_gate)); if (unlikely(__pyx_t_14 == ((int)-1))) __PYX_ERR(0, 463, __pyx_L1_error)
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":457
+ *         cdef string gate_name
+ *         cdef Gate new_gate
+ *         for gate in functional.circuit.gates:             # <<<<<<<<<<<<<<
+ *             gate_name = gate.name.encode('utf-8')
+ *             while gate_name.size() > 1 and gate_name[0] == 'C' and gate_name != "CNOT":
+*/
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":465
+ *             gates.append(new_gate)
+ * 
+ *         print("Gates loaded")             # <<<<<<<<<<<<<<
+ * 
+ *         # Get the number of qubits and shots
+*/
+  __pyx_t_2 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_Gates_loaded};
+    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 465, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":468
+ * 
+ *         # Get the number of qubits and shots
+ *         cdef int num_qubits = functional.circuit.nqubits             # <<<<<<<<<<<<<<
+ *         cdef int nshots = functional.nshots
+ * 
+*/
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_functional, __pyx_mstate_global->__pyx_n_u_circuit); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 468, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_nqubits); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 468, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_15 = __Pyx_PyLong_As_int(__pyx_t_2); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 468, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_num_qubits = __pyx_t_15;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":469
+ *         # Get the number of qubits and shots
+ *         cdef int num_qubits = functional.circuit.nqubits
+ *         cdef int nshots = functional.nshots             # <<<<<<<<<<<<<<
+ * 
+ *         print("Qubits loaded")
+*/
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_functional, __pyx_mstate_global->__pyx_n_u_nshots); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 469, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_15 = __Pyx_PyLong_As_int(__pyx_t_2); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 469, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_nshots = __pyx_t_15;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":471
+ *         cdef int nshots = functional.nshots
+ * 
+ *         print("Qubits loaded")             # <<<<<<<<<<<<<<
+ * 
+ *         # Start with the zero state
+*/
+  __pyx_t_1 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_1, __pyx_mstate_global->__pyx_kp_u_Qubits_loaded};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 471, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":474
+ * 
+ *         # Start with the zero state
+ *         cdef int mat_size = 1 << num_qubits             # <<<<<<<<<<<<<<
+ *         cdef SparseMatrix state = SparseMatrix([(0, 0, 1.0)], mat_size, 1)
+ * 
+*/
+  __pyx_v_mat_size = (1 << __pyx_v_num_qubits);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":475
+ *         # Start with the zero state
+ *         cdef int mat_size = 1 << num_qubits
+ *         cdef SparseMatrix state = SparseMatrix([(0, 0, 1.0)], mat_size, 1)             # <<<<<<<<<<<<<<
+ * 
+ *         # Output the statevector
+*/
+  __pyx_t_1 = NULL;
+  __pyx_t_12 = PyList_New(1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 475, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_12);
   __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 0, __pyx_mstate_global->__pyx_tuple[0]) != (0)) __PYX_ERR(0, 185, __pyx_L1_error);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[1]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[1]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 1, __pyx_mstate_global->__pyx_tuple[1]) != (0)) __PYX_ERR(0, 185, __pyx_L1_error);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[2]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[2]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 2, __pyx_mstate_global->__pyx_tuple[2]) != (0)) __PYX_ERR(0, 185, __pyx_L1_error);
-  __pyx_v_entriesA = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":186
- *         # Sparse matrix test
- *         cdef list entriesA = [(0, 0, 1.0), (0, 2, 2.0), (1, 1, 3.0)]
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]             # <<<<<<<<<<<<<<
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)
-*/
-  __pyx_t_1 = PyList_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 186, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[3]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[3]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 0, __pyx_mstate_global->__pyx_tuple[3]) != (0)) __PYX_ERR(0, 186, __pyx_L1_error);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[4]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[4]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 1, __pyx_mstate_global->__pyx_tuple[4]) != (0)) __PYX_ERR(0, 186, __pyx_L1_error);
-  __Pyx_INCREF(__pyx_mstate_global->__pyx_tuple[5]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[5]);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 2, __pyx_mstate_global->__pyx_tuple[5]) != (0)) __PYX_ERR(0, 186, __pyx_L1_error);
-  __pyx_v_entriesB = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":187
- *         cdef list entriesA = [(0, 0, 1.0), (0, 2, 2.0), (1, 1, 3.0)]
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)             # <<<<<<<<<<<<<<
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)
- *         print("here")
-*/
-  __pyx_t_1 = __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(__pyx_v_entriesA, 2, 3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix))))) __PYX_ERR(0, 187, __pyx_L1_error)
-  __pyx_v_A = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":188
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)             # <<<<<<<<<<<<<<
- *         print("here")
- *         cdef SparseMatrix C = A * B
-*/
-  __pyx_t_1 = __pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples(__pyx_v_entriesB, 3, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 188, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix))))) __PYX_ERR(0, 188, __pyx_L1_error)
-  __pyx_v_B = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":189
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)
- *         print("here")             # <<<<<<<<<<<<<<
- *         cdef SparseMatrix C = A * B
- *         print("here2")
-*/
-  __pyx_t_2 = NULL;
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_12, 0, __pyx_mstate_global->__pyx_tuple[0]) != (0)) __PYX_ERR(0, 475, __pyx_L1_error);
+  __pyx_t_13 = __Pyx_PyLong_From_int(__pyx_v_mat_size); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 475, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_13);
   __pyx_t_3 = 1;
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_mstate_global->__pyx_n_u_here};
-    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
+    PyObject *__pyx_callargs[4] = {__pyx_t_1, __pyx_t_12, __pyx_t_13, __pyx_mstate_global->__pyx_int_1};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_callargs+__pyx_t_3, (4-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 475, __pyx_L1_error)
+    __Pyx_GOTREF((PyObject *)__pyx_t_2);
   }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_state = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+  __pyx_t_2 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":190
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)
- *         print("here")
- *         cdef SparseMatrix C = A * B             # <<<<<<<<<<<<<<
- *         print("here2")
- *         print("Matrix A entries:", A.to_tuples())
+  /* "qilisdk/backends/qili_sim_cython.pyx":478
+ * 
+ *         # Output the statevector
+ *         print("Initial statevector:")             # <<<<<<<<<<<<<<
+ *         cdef vector[tuple[int, int, complex]] state_entries_init = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry_init
 */
-  __pyx_t_1 = PyNumber_Multiply(((PyObject *)__pyx_v_A), ((PyObject *)__pyx_v_B)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix))))) __PYX_ERR(0, 190, __pyx_L1_error)
-  __pyx_v_C = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":191
- *         print("here")
- *         cdef SparseMatrix C = A * B
- *         print("here2")             # <<<<<<<<<<<<<<
- *         print("Matrix A entries:", A.to_tuples())
- *         print("Matrix B entries:", B.to_tuples())
-*/
-  __pyx_t_2 = NULL;
+  __pyx_t_13 = NULL;
   __pyx_t_3 = 1;
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_mstate_global->__pyx_n_u_here2};
-    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
+    PyObject *__pyx_callargs[2] = {__pyx_t_13, __pyx_mstate_global->__pyx_kp_u_Initial_statevector};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 478, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
   }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":192
- *         cdef SparseMatrix C = A * B
- *         print("here2")
- *         print("Matrix A entries:", A.to_tuples())             # <<<<<<<<<<<<<<
- *         print("Matrix B entries:", B.to_tuples())
- *         print("Matrix C = A * B entries:", C.to_tuples())
+  /* "qilisdk/backends/qili_sim_cython.pyx":479
+ *         # Output the statevector
+ *         print("Initial statevector:")
+ *         cdef vector[tuple[int, int, complex]] state_entries_init = state.to_tuples()             # <<<<<<<<<<<<<<
+ *         cdef tuple[int, int, complex] state_entry_init
+ *         for state_entry_init in state_entries_init:
 */
-  __pyx_t_2 = NULL;
-  __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_A->__pyx_vtab)->to_tuples(__pyx_v_A); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 192, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = 1;
-  {
-    PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_Matrix_A_entries, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (3-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_16 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_state->__pyx_vtab)->to_tuples(__pyx_v_state); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 479, __pyx_L1_error)
+  __pyx_v_state_entries_init = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_16);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":193
- *         print("here2")
- *         print("Matrix A entries:", A.to_tuples())
- *         print("Matrix B entries:", B.to_tuples())             # <<<<<<<<<<<<<<
- *         print("Matrix C = A * B entries:", C.to_tuples())
+  /* "qilisdk/backends/qili_sim_cython.pyx":481
+ *         cdef vector[tuple[int, int, complex]] state_entries_init = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry_init
+ *         for state_entry_init in state_entries_init:             # <<<<<<<<<<<<<<
+ *             print(f"({state_entry_init[0]}, {state_entry_init[1]}) = {state_entry_init[2]}")
  * 
 */
-  __pyx_t_4 = NULL;
-  __pyx_t_2 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_B->__pyx_vtab)->to_tuples(__pyx_v_B); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = 1;
-  {
-    PyObject *__pyx_callargs[3] = {__pyx_t_4, __pyx_mstate_global->__pyx_kp_u_Matrix_B_entries, __pyx_t_2};
-    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (3-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_17 = __pyx_v_state_entries_init.begin();
+  for (; __pyx_t_17 != __pyx_v_state_entries_init.end(); ++__pyx_t_17) {
+    __pyx_t_18 = *__pyx_t_17;
+    __pyx_v_state_entry_init = __pyx_t_18;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":482
+ *         cdef tuple[int, int, complex] state_entry_init
+ *         for state_entry_init in state_entries_init:
+ *             print(f"({state_entry_init[0]}, {state_entry_init[1]}) = {state_entry_init[2]}")             # <<<<<<<<<<<<<<
+ * 
+ *         print("here1")
+*/
+    __pyx_t_13 = NULL;
+    __pyx_t_12 = __Pyx_PyUnicode_From_int(__pyx_v_state_entry_init.f0, 0, ' ', 'd'); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 482, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_12);
+    __pyx_t_1 = __Pyx_PyUnicode_From_int(__pyx_v_state_entry_init.f1, 0, ' ', 'd'); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 482, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_19 = __pyx_v_state_entry_init.f2;
+    __pyx_t_11 = __pyx_PyComplex_FromComplex(__pyx_t_19); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 482, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_11, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 482, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+    __pyx_t_20[0] = __pyx_mstate_global->__pyx_kp_u__2;
+    __pyx_t_20[1] = __pyx_t_12;
+    __pyx_t_20[2] = __pyx_mstate_global->__pyx_kp_u__3;
+    __pyx_t_20[3] = __pyx_t_1;
+    __pyx_t_20[4] = __pyx_mstate_global->__pyx_kp_u__4;
+    __pyx_t_20[5] = __pyx_t_6;
+    __pyx_t_11 = __Pyx_PyUnicode_Join(__pyx_t_20, 6, 1 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_12) + 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 4 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6));
+    if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 482, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_13, __pyx_t_11};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 482, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+    }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":194
- *         print("Matrix A entries:", A.to_tuples())
- *         print("Matrix B entries:", B.to_tuples())
- *         print("Matrix C = A * B entries:", C.to_tuples())             # <<<<<<<<<<<<<<
+    /* "qilisdk/backends/qili_sim_cython.pyx":481
+ *         cdef vector[tuple[int, int, complex]] state_entries_init = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry_init
+ *         for state_entry_init in state_entries_init:             # <<<<<<<<<<<<<<
+ *             print(f"({state_entry_init[0]}, {state_entry_init[1]}) = {state_entry_init[2]}")
  * 
- *         return SamplingResult(nshots=1, samples={"001": 1})
 */
-  __pyx_t_2 = NULL;
-  __pyx_t_4 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_C->__pyx_vtab)->to_tuples(__pyx_v_C); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 194, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":484
+ *             print(f"({state_entry_init[0]}, {state_entry_init[1]}) = {state_entry_init[2]}")
+ * 
+ *         print("here1")             # <<<<<<<<<<<<<<
+ * 
+ *         # Apply each gate in the circuit
+*/
+  __pyx_t_11 = NULL;
   __pyx_t_3 = 1;
   {
-    PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_Matrix_C_A_B_entries, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (3-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
+    PyObject *__pyx_callargs[2] = {__pyx_t_11, __pyx_mstate_global->__pyx_n_u_here1};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 484, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
   }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":196
- *         print("Matrix C = A * B entries:", C.to_tuples())
+  /* "qilisdk/backends/qili_sim_cython.pyx":487
  * 
- *         return SamplingResult(nshots=1, samples={"001": 1})             # <<<<<<<<<<<<<<
+ *         # Apply each gate in the circuit
+ *         cdef SparseMatrix gate_matrix = SparseMatrix(0, 0)             # <<<<<<<<<<<<<<
+ *         cdef Gate gate_c
+ *         for gate_c in gates:
+*/
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix), __pyx_mstate_global->__pyx_tuple[3], NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 487, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_gate_matrix = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":489
+ *         cdef SparseMatrix gate_matrix = SparseMatrix(0, 0)
+ *         cdef Gate gate_c
+ *         for gate_c in gates:             # <<<<<<<<<<<<<<
+ *             print("Gate type:", gate_c.gate_type)
+ *             if gate_c.gate_type == "":
+*/
+  __pyx_t_2 = __pyx_v_gates; __Pyx_INCREF(__pyx_t_2);
+  __pyx_t_4 = 0;
+  for (;;) {
+    {
+      Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_2);
+      #if !CYTHON_ASSUME_SAFE_SIZE
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 489, __pyx_L1_error)
+      #endif
+      if (__pyx_t_4 >= __pyx_temp) break;
+    }
+    __pyx_t_11 = __Pyx_PyList_GetItemRefFast(__pyx_t_2, __pyx_t_4, __Pyx_ReferenceSharing_OwnStrongReference);
+    ++__pyx_t_4;
+    if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 489, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    if (!(likely(((__pyx_t_11) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_11, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate))))) __PYX_ERR(0, 489, __pyx_L1_error)
+    __Pyx_XDECREF_SET(__pyx_v_gate_c, ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_t_11));
+    __pyx_t_11 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":490
+ *         cdef Gate gate_c
+ *         for gate_c in gates:
+ *             print("Gate type:", gate_c.gate_type)             # <<<<<<<<<<<<<<
+ *             if gate_c.gate_type == "":
+ *                 continue
+*/
+    __pyx_t_13 = NULL;
+    __pyx_t_6 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_v_gate_c->gate_type); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 490, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[3] = {__pyx_t_13, __pyx_mstate_global->__pyx_kp_u_Gate_type, __pyx_t_6};
+      __pyx_t_11 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (3-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 490, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
+    }
+    __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":491
+ *         for gate_c in gates:
+ *             print("Gate type:", gate_c.gate_type)
+ *             if gate_c.gate_type == "":             # <<<<<<<<<<<<<<
+ *                 continue
+ *             print("Applying gate")
+*/
+    __pyx_t_9 = (__pyx_v_gate_c->gate_type == __pyx_k__5);
+    if (__pyx_t_9) {
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":492
+ *             print("Gate type:", gate_c.gate_type)
+ *             if gate_c.gate_type == "":
+ *                 continue             # <<<<<<<<<<<<<<
+ *             print("Applying gate")
+ *         #     gate_matrix = gate_c.get_full_matrix(num_qubits)
+*/
+      goto __pyx_L14_continue;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":491
+ *         for gate_c in gates:
+ *             print("Gate type:", gate_c.gate_type)
+ *             if gate_c.gate_type == "":             # <<<<<<<<<<<<<<
+ *                 continue
+ *             print("Applying gate")
+*/
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":493
+ *             if gate_c.gate_type == "":
+ *                 continue
+ *             print("Applying gate")             # <<<<<<<<<<<<<<
+ *         #     gate_matrix = gate_c.get_full_matrix(num_qubits)
+ *         #     state = gate_matrix.mul(state)
+*/
+    __pyx_t_6 = NULL;
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_mstate_global->__pyx_kp_u_Applying_gate};
+      __pyx_t_11 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 493, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
+    }
+    __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":489
+ *         cdef SparseMatrix gate_matrix = SparseMatrix(0, 0)
+ *         cdef Gate gate_c
+ *         for gate_c in gates:             # <<<<<<<<<<<<<<
+ *             print("Gate type:", gate_c.gate_type)
+ *             if gate_c.gate_type == "":
+*/
+    __pyx_L14_continue:;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":497
+ *         #     state = gate_matrix.mul(state)
+ * 
+ *         print("here2")             # <<<<<<<<<<<<<<
+ * 
+ *         # Output the statevector
+*/
+  __pyx_t_11 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_11, __pyx_mstate_global->__pyx_n_u_here2};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 497, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":500
+ * 
+ *         # Output the statevector
+ *         print("Final statevector:")             # <<<<<<<<<<<<<<
+ *         cdef vector[tuple[int, int, complex]] state_entries = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry
+*/
+  __pyx_t_11 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_11, __pyx_mstate_global->__pyx_kp_u_Final_statevector};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 500, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":501
+ *         # Output the statevector
+ *         print("Final statevector:")
+ *         cdef vector[tuple[int, int, complex]] state_entries = state.to_tuples()             # <<<<<<<<<<<<<<
+ *         cdef tuple[int, int, complex] state_entry
+ *         for state_entry in state_entries:
+*/
+  __pyx_t_16 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_state->__pyx_vtab)->to_tuples(__pyx_v_state); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_v_state_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_16);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":503
+ *         cdef vector[tuple[int, int, complex]] state_entries = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry
+ *         for state_entry in state_entries:             # <<<<<<<<<<<<<<
+ *             print(f"({state_entry[0]}, {state_entry[1]}) = {state_entry[2]}")
  * 
 */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_SamplingResult); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 196, __pyx_L1_error)
+  __pyx_t_17 = __pyx_v_state_entries.begin();
+  for (; __pyx_t_17 != __pyx_v_state_entries.end(); ++__pyx_t_17) {
+    __pyx_t_18 = *__pyx_t_17;
+    __pyx_v_state_entry = __pyx_t_18;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":504
+ *         cdef tuple[int, int, complex] state_entry
+ *         for state_entry in state_entries:
+ *             print(f"({state_entry[0]}, {state_entry[1]}) = {state_entry[2]}")             # <<<<<<<<<<<<<<
+ * 
+ *         # Get the probabilities
+*/
+    __pyx_t_11 = NULL;
+    __pyx_t_6 = __Pyx_PyUnicode_From_int(__pyx_v_state_entry.f0, 0, ' ', 'd'); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 504, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_13 = __Pyx_PyUnicode_From_int(__pyx_v_state_entry.f1, 0, ' ', 'd'); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 504, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
+    __pyx_t_19 = __pyx_v_state_entry.f2;
+    __pyx_t_1 = __pyx_PyComplex_FromComplex(__pyx_t_19); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 504, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_12 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 504, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_12);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_20[0] = __pyx_mstate_global->__pyx_kp_u__2;
+    __pyx_t_20[1] = __pyx_t_6;
+    __pyx_t_20[2] = __pyx_mstate_global->__pyx_kp_u__3;
+    __pyx_t_20[3] = __pyx_t_13;
+    __pyx_t_20[4] = __pyx_mstate_global->__pyx_kp_u__4;
+    __pyx_t_20[5] = __pyx_t_12;
+    __pyx_t_1 = __Pyx_PyUnicode_Join(__pyx_t_20, 6, 1 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_13) + 4 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_12), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_12));
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 504, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
+    __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_11, __pyx_t_1};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 504, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":503
+ *         cdef vector[tuple[int, int, complex]] state_entries = state.to_tuples()
+ *         cdef tuple[int, int, complex] state_entry
+ *         for state_entry in state_entries:             # <<<<<<<<<<<<<<
+ *             print(f"({state_entry[0]}, {state_entry[1]}) = {state_entry[2]}")
+ * 
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":507
+ * 
+ *         # Get the probabilities
+ *         cdef vector[tuple[int, int, double complex]] amplitude_entries = state.to_tuples()             # <<<<<<<<<<<<<<
+ *         cdef vector[tuple[int, double]] prob_entries
+ *         cdef double total_prob = 0.0
+*/
+  __pyx_t_16 = ((struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_v_state->__pyx_vtab)->to_tuples(__pyx_v_state); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 507, __pyx_L1_error)
+  __pyx_v_amplitude_entries = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_16);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":509
+ *         cdef vector[tuple[int, int, double complex]] amplitude_entries = state.to_tuples()
+ *         cdef vector[tuple[int, double]] prob_entries
+ *         cdef double total_prob = 0.0             # <<<<<<<<<<<<<<
+ *         cdef int row
+ *         cdef double complex amp
+*/
+  __pyx_v_total_prob = 0.0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":515
+ *         cdef double real_part, imag_part
+ *         cdef tuple[int, int, double complex] entry
+ *         for entry in amplitude_entries:             # <<<<<<<<<<<<<<
+ *             row = entry[0]
+ *             amp = entry[2]
+*/
+  __pyx_t_17 = __pyx_v_amplitude_entries.begin();
+  for (; __pyx_t_17 != __pyx_v_amplitude_entries.end(); ++__pyx_t_17) {
+    __pyx_t_18 = *__pyx_t_17;
+    __pyx_v_entry = __pyx_t_18;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":516
+ *         cdef tuple[int, int, double complex] entry
+ *         for entry in amplitude_entries:
+ *             row = entry[0]             # <<<<<<<<<<<<<<
+ *             amp = entry[2]
+ *             prob = abs(amp) ** 2
+*/
+    __pyx_v_row = __pyx_v_entry.f0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":517
+ *         for entry in amplitude_entries:
+ *             row = entry[0]
+ *             amp = entry[2]             # <<<<<<<<<<<<<<
+ *             prob = abs(amp) ** 2
+ *             if prob > atol_:
+*/
+    __pyx_v_amp = __pyx_v_entry.f2;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":518
+ *             row = entry[0]
+ *             amp = entry[2]
+ *             prob = abs(amp) ** 2             # <<<<<<<<<<<<<<
+ *             if prob > atol_:
+ *                 prob_entries.push_back((row, prob))
+*/
+    __pyx_v_prob = pow(abs(__pyx_v_amp), 2.0);
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":519
+ *             amp = entry[2]
+ *             prob = abs(amp) ** 2
+ *             if prob > atol_:             # <<<<<<<<<<<<<<
+ *                 prob_entries.push_back((row, prob))
+ *                 total_prob += prob
+*/
+    __pyx_t_9 = (__pyx_v_prob > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
+    if (__pyx_t_9) {
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":520
+ *             prob = abs(amp) ** 2
+ *             if prob > atol_:
+ *                 prob_entries.push_back((row, prob))             # <<<<<<<<<<<<<<
+ *                 total_prob += prob
+ * 
+*/
+      __pyx_t_21.f0 = __pyx_v_row;
+      __pyx_t_21.f1 = __pyx_v_prob;
+      try {
+        __pyx_v_prob_entries.push_back(__pyx_t_21);
+      } catch(...) {
+        __Pyx_CppExn2PyErr();
+        __PYX_ERR(0, 520, __pyx_L1_error)
+      }
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":521
+ *             if prob > atol_:
+ *                 prob_entries.push_back((row, prob))
+ *                 total_prob += prob             # <<<<<<<<<<<<<<
+ * 
+ *         print("here3")
+*/
+      __pyx_v_total_prob = (__pyx_v_total_prob + __pyx_v_prob);
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":519
+ *             amp = entry[2]
+ *             prob = abs(amp) ** 2
+ *             if prob > atol_:             # <<<<<<<<<<<<<<
+ *                 prob_entries.push_back((row, prob))
+ *                 total_prob += prob
+*/
+    }
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":515
+ *         cdef double real_part, imag_part
+ *         cdef tuple[int, int, double complex] entry
+ *         for entry in amplitude_entries:             # <<<<<<<<<<<<<<
+ *             row = entry[0]
+ *             amp = entry[2]
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":523
+ *                 total_prob += prob
+ * 
+ *         print("here3")             # <<<<<<<<<<<<<<
+ * 
+ *         # Make sure probabilities sum to 1
+*/
+  __pyx_t_1 = NULL;
+  __pyx_t_3 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_1, __pyx_mstate_global->__pyx_n_u_here3};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 523, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":526
+ * 
+ *         # Make sure probabilities sum to 1
+ *         if fabs(total_prob - 1.0) > atol_:             # <<<<<<<<<<<<<<
+ *             raise RuntimeError(f"Probabilities do not sum to 1 (sum = {total_prob})")
+ * 
+*/
+  __pyx_t_9 = (fabs((__pyx_v_total_prob - 1.0)) > __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_);
+  if (unlikely(__pyx_t_9)) {
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":527
+ *         # Make sure probabilities sum to 1
+ *         if fabs(total_prob - 1.0) > atol_:
+ *             raise RuntimeError(f"Probabilities do not sum to 1 (sum = {total_prob})")             # <<<<<<<<<<<<<<
+ * 
+ *         # Sample from the final state
+*/
+    __pyx_t_1 = NULL;
+    __pyx_t_11 = PyFloat_FromDouble(__pyx_v_total_prob); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 527, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __pyx_t_12 = __Pyx_PyObject_FormatSimple(__pyx_t_11, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 527, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_12);
+    __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+    __pyx_t_22[0] = __pyx_mstate_global->__pyx_kp_u_Probabilities_do_not_sum_to_1_su;
+    __pyx_t_22[1] = __pyx_t_12;
+    __pyx_t_22[2] = __pyx_mstate_global->__pyx_kp_u__6;
+    __pyx_t_11 = __Pyx_PyUnicode_Join(__pyx_t_22, 3, 37 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_12) + 1, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_12));
+    if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 527, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __pyx_t_3 = 1;
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_1, __pyx_t_11};
+      __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)(((PyTypeObject*)PyExc_RuntimeError)), __pyx_callargs+__pyx_t_3, (2-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 527, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+    }
+    __Pyx_Raise(__pyx_t_2, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __PYX_ERR(0, 527, __pyx_L1_error)
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":526
+ * 
+ *         # Make sure probabilities sum to 1
+ *         if fabs(total_prob - 1.0) > atol_:             # <<<<<<<<<<<<<<
+ *             raise RuntimeError(f"Probabilities do not sum to 1 (sum = {total_prob})")
+ * 
+*/
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":534
+ *         cdef double random_value, cumulative_prob
+ *         cdef string bitstring
+ *         cdef string one_str = "1"             # <<<<<<<<<<<<<<
+ *         cdef string zero_str = "0"
+ *         cdef int b
+*/
+  __pyx_t_8 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_mstate_global->__pyx_kp_b_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 534, __pyx_L1_error)
+  __pyx_v_one_str = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_8);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":535
+ *         cdef string bitstring
+ *         cdef string one_str = "1"
+ *         cdef string zero_str = "0"             # <<<<<<<<<<<<<<
+ *         cdef int b
+ *         cdef tuple[int, double] prob_entry
+*/
+  __pyx_t_8 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_mstate_global->__pyx_kp_b_0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 535, __pyx_L1_error)
+  __pyx_v_zero_str = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_8);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":538
+ *         cdef int b
+ *         cdef tuple[int, double] prob_entry
+ *         import random             # <<<<<<<<<<<<<<
+ *         for shot in range(nshots):
+ *             random_value = random.uniform(0.0, 1.0)
+*/
+  __pyx_t_23 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_random, 0, 0, NULL, 0); if (unlikely(!__pyx_t_23)) __PYX_ERR(0, 538, __pyx_L1_error)
+  __pyx_t_2 = __pyx_t_23;
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 196, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_mstate_global->__pyx_kp_u_001, __pyx_mstate_global->__pyx_int_1) < (0)) __PYX_ERR(0, 196, __pyx_L1_error)
+  __pyx_v_random = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":539
+ *         cdef tuple[int, double] prob_entry
+ *         import random
+ *         for shot in range(nshots):             # <<<<<<<<<<<<<<
+ *             random_value = random.uniform(0.0, 1.0)
+ *             cumulative_prob = 0.0
+*/
+  __pyx_t_15 = __pyx_v_nshots;
+  __pyx_t_24 = __pyx_t_15;
+  for (__pyx_t_25 = 0; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
+    __pyx_v_shot = __pyx_t_25;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":540
+ *         import random
+ *         for shot in range(nshots):
+ *             random_value = random.uniform(0.0, 1.0)             # <<<<<<<<<<<<<<
+ *             cumulative_prob = 0.0
+ *             for prob_entry in prob_entries:
+*/
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_random, __pyx_mstate_global->__pyx_n_u_uniform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 540, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_mstate_global->__pyx_tuple[4], NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 540, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_26 = __Pyx_PyFloat_AsDouble(__pyx_t_11); if (unlikely((__pyx_t_26 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 540, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+    __pyx_v_random_value = __pyx_t_26;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":541
+ *         for shot in range(nshots):
+ *             random_value = random.uniform(0.0, 1.0)
+ *             cumulative_prob = 0.0             # <<<<<<<<<<<<<<
+ *             for prob_entry in prob_entries:
+ *                 state_index = prob_entry[0]
+*/
+    __pyx_v_cumulative_prob = 0.0;
+
+    /* "qilisdk/backends/qili_sim_cython.pyx":542
+ *             random_value = random.uniform(0.0, 1.0)
+ *             cumulative_prob = 0.0
+ *             for prob_entry in prob_entries:             # <<<<<<<<<<<<<<
+ *                 state_index = prob_entry[0]
+ *                 prob = prob_entry[1]
+*/
+    __pyx_t_27 = __pyx_v_prob_entries.begin();
+    for (; __pyx_t_27 != __pyx_v_prob_entries.end(); ++__pyx_t_27) {
+      __pyx_t_21 = *__pyx_t_27;
+      __pyx_v_prob_entry = __pyx_t_21;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":543
+ *             cumulative_prob = 0.0
+ *             for prob_entry in prob_entries:
+ *                 state_index = prob_entry[0]             # <<<<<<<<<<<<<<
+ *                 prob = prob_entry[1]
+ *                 cumulative_prob += prob
+*/
+      __pyx_v_state_index = __pyx_v_prob_entry.f0;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":544
+ *             for prob_entry in prob_entries:
+ *                 state_index = prob_entry[0]
+ *                 prob = prob_entry[1]             # <<<<<<<<<<<<<<
+ *                 cumulative_prob += prob
+ *                 if random_value <= cumulative_prob:
+*/
+      __pyx_v_prob = __pyx_v_prob_entry.f1;
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":545
+ *                 state_index = prob_entry[0]
+ *                 prob = prob_entry[1]
+ *                 cumulative_prob += prob             # <<<<<<<<<<<<<<
+ *                 if random_value <= cumulative_prob:
+ *                     # Convert state_index to bitstring
+*/
+      __pyx_v_cumulative_prob = (__pyx_v_cumulative_prob + __pyx_v_prob);
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":546
+ *                 prob = prob_entry[1]
+ *                 cumulative_prob += prob
+ *                 if random_value <= cumulative_prob:             # <<<<<<<<<<<<<<
+ *                     # Convert state_index to bitstring
+ *                     bitstring = ""
+*/
+      __pyx_t_9 = (__pyx_v_random_value <= __pyx_v_cumulative_prob);
+      if (__pyx_t_9) {
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":548
+ *                 if random_value <= cumulative_prob:
+ *                     # Convert state_index to bitstring
+ *                     bitstring = ""             # <<<<<<<<<<<<<<
+ *                     for b in range(num_qubits - 1, -1, -1):
+ *                         if (state_index >> b) & 1:
+*/
+        __pyx_t_8 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_mstate_global->__pyx_kp_b__5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 548, __pyx_L1_error)
+        __pyx_v_bitstring = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_8);
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":549
+ *                     # Convert state_index to bitstring
+ *                     bitstring = ""
+ *                     for b in range(num_qubits - 1, -1, -1):             # <<<<<<<<<<<<<<
+ *                         if (state_index >> b) & 1:
+ *                             bitstring += one_str
+*/
+        for (__pyx_t_28 = (__pyx_v_num_qubits - 1); __pyx_t_28 > -1; __pyx_t_28-=1) {
+          __pyx_v_b = __pyx_t_28;
+
+          /* "qilisdk/backends/qili_sim_cython.pyx":550
+ *                     bitstring = ""
+ *                     for b in range(num_qubits - 1, -1, -1):
+ *                         if (state_index >> b) & 1:             # <<<<<<<<<<<<<<
+ *                             bitstring += one_str
+ *                         else:
+*/
+          __pyx_t_9 = (((__pyx_v_state_index >> __pyx_v_b) & 1) != 0);
+          if (__pyx_t_9) {
+
+            /* "qilisdk/backends/qili_sim_cython.pyx":551
+ *                     for b in range(num_qubits - 1, -1, -1):
+ *                         if (state_index >> b) & 1:
+ *                             bitstring += one_str             # <<<<<<<<<<<<<<
+ *                         else:
+ *                             bitstring += zero_str
+*/
+            __pyx_v_bitstring += __pyx_v_one_str;
+
+            /* "qilisdk/backends/qili_sim_cython.pyx":550
+ *                     bitstring = ""
+ *                     for b in range(num_qubits - 1, -1, -1):
+ *                         if (state_index >> b) & 1:             # <<<<<<<<<<<<<<
+ *                             bitstring += one_str
+ *                         else:
+*/
+            goto __pyx_L33;
+          }
+
+          /* "qilisdk/backends/qili_sim_cython.pyx":553
+ *                             bitstring += one_str
+ *                         else:
+ *                             bitstring += zero_str             # <<<<<<<<<<<<<<
+ *                     counts[bitstring] += 1
+ *                     break
+*/
+          /*else*/ {
+            __pyx_v_bitstring += __pyx_v_zero_str;
+          }
+          __pyx_L33:;
+        }
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":554
+ *                         else:
+ *                             bitstring += zero_str
+ *                     counts[bitstring] += 1             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+*/
+        __pyx_t_8 = __pyx_v_bitstring;
+        (__pyx_v_counts[__pyx_t_8]) = ((__pyx_v_counts[__pyx_t_8]) + 1);
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":555
+ *                             bitstring += zero_str
+ *                     counts[bitstring] += 1
+ *                     break             # <<<<<<<<<<<<<<
+ * 
+ *         results = SamplingResult(nshots=nshots, samples=counts)
+*/
+        goto __pyx_L29_break;
+
+        /* "qilisdk/backends/qili_sim_cython.pyx":546
+ *                 prob = prob_entry[1]
+ *                 cumulative_prob += prob
+ *                 if random_value <= cumulative_prob:             # <<<<<<<<<<<<<<
+ *                     # Convert state_index to bitstring
+ *                     bitstring = ""
+*/
+      }
+
+      /* "qilisdk/backends/qili_sim_cython.pyx":542
+ *             random_value = random.uniform(0.0, 1.0)
+ *             cumulative_prob = 0.0
+ *             for prob_entry in prob_entries:             # <<<<<<<<<<<<<<
+ *                 state_index = prob_entry[0]
+ *                 prob = prob_entry[1]
+*/
+    }
+    goto __pyx_L34_for_end;
+    __pyx_L29_break:;
+    goto __pyx_L34_for_end;
+    __pyx_L34_for_end:;
+  }
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":557
+ *                     break
+ * 
+ *         results = SamplingResult(nshots=nshots, samples=counts)             # <<<<<<<<<<<<<<
+ *         return results
+ * 
+*/
+  __pyx_t_2 = NULL;
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_SamplingResult); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 557, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_12 = __Pyx_PyLong_From_int(__pyx_v_nshots); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 557, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_12);
+  __pyx_t_13 = __pyx_convert_map_to_py_std_3a__3a_string____int(__pyx_v_counts); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 557, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_13);
   __pyx_t_3 = 1;
   #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
-    assert(__pyx_t_4);
-    PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_2);
-    __Pyx_INCREF(__pyx_t_4);
+  if (unlikely(PyMethod_Check(__pyx_t_1))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_1);
+    assert(__pyx_t_2);
+    PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_1);
+    __Pyx_INCREF(__pyx_t_2);
     __Pyx_INCREF(__pyx__function);
-    __Pyx_DECREF_SET(__pyx_t_2, __pyx__function);
+    __Pyx_DECREF_SET(__pyx_t_1, __pyx__function);
     __pyx_t_3 = 0;
   }
   #endif
   {
-    PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 2 : 0)] = {__pyx_t_4, NULL};
-    __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 196, __pyx_L1_error)
+    PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 2 : 0)] = {__pyx_t_2, NULL};
+    __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 557, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_nshots, __pyx_mstate_global->__pyx_int_1, __pyx_t_6, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 196, __pyx_L1_error)
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_samples, __pyx_t_5, __pyx_t_6, __pyx_callargs+1, 1) < (0)) __PYX_ERR(0, 196, __pyx_L1_error)
-    __pyx_t_1 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_2, __pyx_callargs+__pyx_t_3, (1-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_nshots, __pyx_t_12, __pyx_t_6, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 557, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_samples, __pyx_t_13, __pyx_t_6, __pyx_callargs+1, 1) < (0)) __PYX_ERR(0, 557, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_1, __pyx_callargs+__pyx_t_3, (1-__pyx_t_3) | (__pyx_t_3*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_6);
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 557, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
   }
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __pyx_v_results = __pyx_t_11;
+  __pyx_t_11 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":558
+ * 
+ *         results = SamplingResult(nshots=nshots, samples=counts)
+ *         return results             # <<<<<<<<<<<<<<
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_results);
+  __pyx_r = __pyx_v_results;
   goto __pyx_L0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":182
+  /* "qilisdk/backends/qili_sim_cython.pyx":449
  *         super().__init__()
  * 
  *     def _execute_sampling(self, functional: Sampling) -> SamplingResult:             # <<<<<<<<<<<<<<
  * 
- *         # Sparse matrix test
+ *         print("here0")
 */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_11);
+  __Pyx_XDECREF(__pyx_t_12);
+  __Pyx_XDECREF(__pyx_t_13);
   __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.QiliSimCython._execute_sampling", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_entriesA);
-  __Pyx_XDECREF(__pyx_v_entriesB);
-  __Pyx_XDECREF((PyObject *)__pyx_v_A);
-  __Pyx_XDECREF((PyObject *)__pyx_v_B);
-  __Pyx_XDECREF((PyObject *)__pyx_v_C);
+  __Pyx_XDECREF(__pyx_v_gates);
+  __Pyx_XDECREF((PyObject *)__pyx_v_new_gate);
+  __Pyx_XDECREF(__pyx_v_gate);
+  __Pyx_XDECREF((PyObject *)__pyx_v_state);
+  __Pyx_XDECREF((PyObject *)__pyx_v_gate_matrix);
+  __Pyx_XDECREF((PyObject *)__pyx_v_gate_c);
+  __Pyx_XDECREF(__pyx_v_random);
+  __Pyx_XDECREF(__pyx_v_results);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":4
+ *     int __Pyx_CheckUnpickleChecksum(long, long, long, long, const char*) except -1
+ *     int __Pyx_UpdateUnpickledDict(object, object, Py_ssize_t) except -1
+ * def __pyx_unpickle_Gate(__pyx_type, long __pyx_checksum, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     cdef object __pyx_result
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_1__pyx_unpickle_Gate(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_7qilisdk_8backends_15qili_sim_cython_1__pyx_unpickle_Gate = {"__pyx_unpickle_Gate", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_1__pyx_unpickle_Gate, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7qilisdk_8backends_15qili_sim_cython_1__pyx_unpickle_Gate(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  PyObject *__pyx_v___pyx_type = 0;
+  long __pyx_v___pyx_checksum;
+  PyObject *__pyx_v___pyx_state = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[3] = {0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__pyx_unpickle_Gate (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_pyx_type,&__pyx_mstate_global->__pyx_n_u_pyx_checksum,&__pyx_mstate_global->__pyx_n_u_pyx_state,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(1, 4, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(1, 4, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(1, 4, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(1, 4, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__pyx_unpickle_Gate", 0) < (0)) __PYX_ERR(1, 4, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_Gate", 1, 3, 3, i); __PYX_ERR(1, 4, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 3)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(1, 4, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(1, 4, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(1, 4, __pyx_L3_error)
+    }
+    __pyx_v___pyx_type = values[0];
+    __pyx_v___pyx_checksum = __Pyx_PyLong_As_long(values[1]); if (unlikely((__pyx_v___pyx_checksum == (long)-1) && PyErr_Occurred())) __PYX_ERR(1, 4, __pyx_L3_error)
+    __pyx_v___pyx_state = ((PyObject*)values[2]);
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_Gate", 1, 3, 3, __pyx_nargs); __PYX_ERR(1, 4, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.__pyx_unpickle_Gate", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v___pyx_state), (&PyTuple_Type), 1, "__pyx_state", 1))) __PYX_ERR(1, 4, __pyx_L1_error)
+  __pyx_r = __pyx_pf_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  goto __pyx_L7_cleaned_up;
+  __pyx_L0:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __pyx_L7_cleaned_up:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_v___pyx_result = 0;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  size_t __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_Gate", 0);
+
+  /* "(tree fragment)":6
+ * def __pyx_unpickle_Gate(__pyx_type, long __pyx_checksum, tuple __pyx_state):
+ *     cdef object __pyx_result
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')             # <<<<<<<<<<<<<<
+ *     __pyx_result = Gate.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+*/
+  __pyx_t_1 = __Pyx_CheckUnpickleChecksum(__pyx_v___pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, __pyx_k_control_qubits_gate_type_paramet); if (unlikely(__pyx_t_1 == ((int)-1))) __PYX_ERR(1, 6, __pyx_L1_error)
+
+  /* "(tree fragment)":7
+ *     cdef object __pyx_result
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+ *     __pyx_result = Gate.__new__(__pyx_type)             # <<<<<<<<<<<<<<
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+*/
+  __pyx_t_3 = ((PyObject *)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate);
+  __Pyx_INCREF(__pyx_t_3);
+  __pyx_t_4 = 0;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_v___pyx_type};
+    __pyx_t_2 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_new, __pyx_callargs+__pyx_t_4, (2-__pyx_t_4) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  __pyx_v___pyx_result = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "(tree fragment)":8
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+ *     __pyx_result = Gate.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+ *     return __pyx_result
+*/
+  __pyx_t_5 = (__pyx_v___pyx_state != ((PyObject*)Py_None));
+  if (__pyx_t_5) {
+
+    /* "(tree fragment)":9
+ *     __pyx_result = Gate.__new__(__pyx_type)
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)             # <<<<<<<<<<<<<<
+ *     return __pyx_result
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):
+*/
+    if (unlikely(__pyx_v___pyx_state == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "cannot pass None into a C function argument that is declared 'not None'");
+      __PYX_ERR(1, 9, __pyx_L1_error)
+    }
+    __pyx_t_2 = __pyx_f_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate__set_state(((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)__pyx_v___pyx_result), __pyx_v___pyx_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 9, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+    /* "(tree fragment)":8
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+ *     __pyx_result = Gate.__new__(__pyx_type)
+ *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+ *     return __pyx_result
+*/
+  }
+
+  /* "(tree fragment)":10
+ *     if __pyx_state is not None:
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+ *     return __pyx_result             # <<<<<<<<<<<<<<
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):
+ *     __pyx_result.control_qubits = __pyx_state[0]; __pyx_result.gate_type = __pyx_state[1]; __pyx_result.parameters = __pyx_state[2]; __pyx_result.target_qubits = __pyx_state[3]
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v___pyx_result);
+  __pyx_r = __pyx_v___pyx_result;
+  goto __pyx_L0;
+
+  /* "(tree fragment)":4
+ *     int __Pyx_CheckUnpickleChecksum(long, long, long, long, const char*) except -1
+ *     int __Pyx_UpdateUnpickledDict(object, object, Py_ssize_t) except -1
+ * def __pyx_unpickle_Gate(__pyx_type, long __pyx_checksum, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     cdef object __pyx_result
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.__pyx_unpickle_Gate", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v___pyx_result);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "(tree fragment)":11
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):             # <<<<<<<<<<<<<<
+ *     __pyx_result.control_qubits = __pyx_state[0]; __pyx_result.gate_type = __pyx_state[1]; __pyx_result.parameters = __pyx_state[2]; __pyx_result.target_qubits = __pyx_state[3]
+ *     __Pyx_UpdateUnpickledDict(__pyx_result, __pyx_state, 4)
+*/
+
+static PyObject *__pyx_f_7qilisdk_8backends_15qili_sim_cython___pyx_unpickle_Gate__set_state(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  std::vector<int>  __pyx_t_2;
+  std::string __pyx_t_3;
+  std::vector<double>  __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_unpickle_Gate__set_state", 0);
+
+  /* "(tree fragment)":12
+ *     return __pyx_result
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):
+ *     __pyx_result.control_qubits = __pyx_state[0]; __pyx_result.gate_type = __pyx_state[1]; __pyx_result.parameters = __pyx_state[2]; __pyx_result.target_qubits = __pyx_state[3]             # <<<<<<<<<<<<<<
+ *     __Pyx_UpdateUnpickledDict(__pyx_result, __pyx_state, 4)
+*/
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 0, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_convert_vector_from_py_int(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->control_qubits = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_2);
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 1, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = __pyx_convert_string_from_py_6libcpp_6string_std__in_string(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->gate_type = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_3);
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 2, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_4 = __pyx_convert_vector_from_py_double(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->parameters = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_4);
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 3, long, 1, __Pyx_PyLong_From_long, 0, 0, 1, 1, __Pyx_ReferenceSharing_FunctionArgument); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_convert_vector_from_py_int(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->target_qubits = __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_2);
+
+  /* "(tree fragment)":13
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):
+ *     __pyx_result.control_qubits = __pyx_state[0]; __pyx_result.gate_type = __pyx_state[1]; __pyx_result.parameters = __pyx_state[2]; __pyx_result.target_qubits = __pyx_state[3]
+ *     __Pyx_UpdateUnpickledDict(__pyx_result, __pyx_state, 4)             # <<<<<<<<<<<<<<
+*/
+  __pyx_t_5 = __Pyx_UpdateUnpickledDict(((PyObject *)__pyx_v___pyx_result), __pyx_v___pyx_state, 4); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(1, 13, __pyx_L1_error)
+
+  /* "(tree fragment)":11
+ *         __pyx_unpickle_Gate__set_state(<Gate> __pyx_result, __pyx_state)
+ *     return __pyx_result
+ * cdef __pyx_unpickle_Gate__set_state(Gate __pyx_result, __pyx_state: tuple):             # <<<<<<<<<<<<<<
+ *     __pyx_result.control_qubits = __pyx_state[0]; __pyx_result.gate_type = __pyx_state[1]; __pyx_result.parameters = __pyx_state[2]; __pyx_result.target_qubits = __pyx_state[3]
+ *     __Pyx_UpdateUnpickledDict(__pyx_result, __pyx_state, 4)
+*/
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("qilisdk.backends.qili_sim_cython.__pyx_unpickle_Gate__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -5696,43 +12612,8 @@ static void __pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_SparseMatrix(P
   #endif
 }
 
-static CYTHON_INLINE PyObject *__pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_maybe_call_slot(PyTypeObject* type, PyObject *left, PyObject *right ) {
-    binaryfunc slot;
-#if CYTHON_USE_TYPE_SLOTS
-    slot = type->tp_as_number ? type->tp_as_number->nb_multiply : NULL;
-#else
-    slot = (binaryfunc) PyType_GetSlot(type, Py_nb_multiply);
-#endif
-    return slot ? slot(left, right ) : __Pyx_NewRef(Py_NotImplemented);
-}
-static PyObject *__pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix(PyObject *left, PyObject *right ) {
-    int maybe_self_is_left, maybe_self_is_right = 0;
-    maybe_self_is_left = Py_TYPE(left) == Py_TYPE(right)
-#if CYTHON_USE_TYPE_SLOTS
-            || (Py_TYPE(left)->tp_as_number && Py_TYPE(left)->tp_as_number->nb_multiply == &__pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix)
-#endif
-            || __Pyx_TypeCheck(left, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
-    if (maybe_self_is_left) {
-        PyObject *res;
-        res = __pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3__mul__(left, right);
-        if (res != Py_NotImplemented) return res;
-        Py_DECREF(res);
-    }
-    maybe_self_is_right = Py_TYPE(left) == Py_TYPE(right)
-#if CYTHON_USE_TYPE_SLOTS
-            || (Py_TYPE(right)->tp_as_number && Py_TYPE(right)->tp_as_number->nb_multiply == &__pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix)
-#endif
-            || PyType_IsSubtype(Py_TYPE(right), __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
-    if (maybe_self_is_right) {
-        return __pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_maybe_call_slot(__Pyx_PyType_GetSlot(__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, tp_base, PyTypeObject*), left, right );
-    }
-    return __Pyx_NewRef(Py_NotImplemented);
-}
-
-
-
 static PyMethodDef __pyx_methods_7qilisdk_8backends_15qili_sim_cython_SparseMatrix[] = {
-  {"__mul__", (PyCFunction)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3__mul__, METH_O|METH_COEXIST, 0},
+  {"from_dense", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_2from_dense},
   {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_5__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_7__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
@@ -5740,7 +12621,6 @@ static PyMethodDef __pyx_methods_7qilisdk_8backends_15qili_sim_cython_SparseMatr
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_slots[] = {
   {Py_tp_dealloc, (void *)__pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_SparseMatrix},
-  {Py_nb_multiply, (void *)__pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix},
   {Py_tp_doc, (void *)PyDoc_STR("\n    A simple sparse matrix representation using compressed sparse row (CSR) format.\n    ")},
   {Py_tp_methods, (void *)__pyx_methods_7qilisdk_8backends_15qili_sim_cython_SparseMatrix},
   {Py_tp_new, (void *)__pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_SparseMatrix},
@@ -5755,45 +12635,6 @@ static PyType_Spec __pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_
 };
 #else
 
-static PyNumberMethods __pyx_tp_as_number_SparseMatrix = {
-  0, /*nb_add*/
-  0, /*nb_subtract*/
-  __pyx_nb_multiply_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, /*nb_multiply*/
-  0, /*nb_remainder*/
-  0, /*nb_divmod*/
-  0, /*nb_power*/
-  0, /*nb_negative*/
-  0, /*nb_positive*/
-  0, /*nb_absolute*/
-  0, /*nb_bool*/
-  0, /*nb_invert*/
-  0, /*nb_lshift*/
-  0, /*nb_rshift*/
-  0, /*nb_and*/
-  0, /*nb_xor*/
-  0, /*nb_or*/
-  0, /*nb_int*/
-  0, /*nb_long (reserved)*/
-  0, /*nb_float*/
-  0, /*nb_inplace_add*/
-  0, /*nb_inplace_subtract*/
-  0, /*nb_inplace_multiply*/
-  0, /*nb_inplace_remainder*/
-  0, /*nb_inplace_power*/
-  0, /*nb_inplace_lshift*/
-  0, /*nb_inplace_rshift*/
-  0, /*nb_inplace_and*/
-  0, /*nb_inplace_xor*/
-  0, /*nb_inplace_or*/
-  0, /*nb_floor_divide*/
-  0, /*nb_true_divide*/
-  0, /*nb_inplace_floor_divide*/
-  0, /*nb_inplace_true_divide*/
-  0, /*nb_index*/
-  0, /*nb_matrix_multiply*/
-  0, /*nb_inplace_matrix_multiply*/
-};
-
 static PyTypeObject __pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix = {
   PyVarObject_HEAD_INIT(0, 0)
   "qilisdk.backends.qili_sim_cython.""SparseMatrix", /*tp_name*/
@@ -5805,7 +12646,7 @@ static PyTypeObject __pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix
   0, /*tp_setattr*/
   0, /*tp_as_async*/
   0, /*tp_repr*/
-  &__pyx_tp_as_number_SparseMatrix, /*tp_as_number*/
+  0, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
   0, /*tp_hash*/
@@ -5866,6 +12707,143 @@ static PyTypeObject __pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix
   #endif
 };
 #endif
+static struct __pyx_vtabstruct_7qilisdk_8backends_15qili_sim_cython_Gate __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate;
+
+static PyObject *__pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_Gate(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *p;
+  PyObject *o;
+  o = __Pyx_AllocateExtensionType(t, 0);
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)o);
+  p->__pyx_vtab = __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_Gate;
+  __Pyx_default_placement_construct(&(p->gate_type));
+  __Pyx_default_placement_construct(&(p->control_qubits));
+  __Pyx_default_placement_construct(&(p->target_qubits));
+  __Pyx_default_placement_construct(&(p->parameters));
+  return o;
+}
+
+static void __pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_Gate(PyObject *o) {
+  struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *p = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *)o;
+  #if CYTHON_USE_TP_FINALIZE
+  if (unlikely(__Pyx_PyObject_GetSlot(o, tp_finalize, destructor)) && (!PyType_IS_GC(Py_TYPE(o)) || !__Pyx_PyObject_GC_IsFinalized(o))) {
+    if (__Pyx_PyObject_GetSlot(o, tp_dealloc, destructor) == __pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_Gate) {
+      if (PyObject_CallFinalizerFromDealloc(o)) return;
+    }
+  }
+  #endif
+  __Pyx_call_destructor(p->gate_type);
+  __Pyx_call_destructor(p->control_qubits);
+  __Pyx_call_destructor(p->target_qubits);
+  __Pyx_call_destructor(p->parameters);
+  PyTypeObject *tp = Py_TYPE(o);
+  #if CYTHON_USE_TYPE_SLOTS
+  (*tp->tp_free)(o);
+  #else
+  {
+    freefunc tp_free = (freefunc)PyType_GetSlot(tp, Py_tp_free);
+    if (tp_free) tp_free(o);
+  }
+  #endif
+  #if CYTHON_USE_TYPE_SPECS
+  Py_DECREF(tp);
+  #endif
+}
+
+static PyMethodDef __pyx_methods_7qilisdk_8backends_15qili_sim_cython_Gate[] = {
+  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {0, 0, 0, 0}
+};
+#if CYTHON_USE_TYPE_SPECS
+static PyType_Slot __pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate_slots[] = {
+  {Py_tp_dealloc, (void *)__pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_Gate},
+  {Py_tp_doc, (void *)PyDoc_STR("\n    A quantum gate with type, control qubits, target qubits, and parameters.\n    ")},
+  {Py_tp_methods, (void *)__pyx_methods_7qilisdk_8backends_15qili_sim_cython_Gate},
+  {Py_tp_new, (void *)__pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_Gate},
+  {0, 0},
+};
+static PyType_Spec __pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate_spec = {
+  "qilisdk.backends.qili_sim_cython.Gate",
+  sizeof(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate),
+  0,
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE,
+  __pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate_slots,
+};
+#else
+
+static PyTypeObject __pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "qilisdk.backends.qili_sim_cython.""Gate", /*tp_name*/
+  sizeof(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_7qilisdk_8backends_15qili_sim_cython_Gate, /*tp_dealloc*/
+  0, /*tp_vectorcall_offset*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  0, /*tp_as_async*/
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  PyDoc_STR("\n    A quantum gate with type, control qubits, target qubits, and parameters.\n    "), /*tp_doc*/
+  0, /*tp_traverse*/
+  0, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  __pyx_methods_7qilisdk_8backends_15qili_sim_cython_Gate, /*tp_methods*/
+  0, /*tp_members*/
+  0, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  #if !CYTHON_USE_TYPE_SPECS
+  0, /*tp_dictoffset*/
+  #endif
+  0, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_7qilisdk_8backends_15qili_sim_cython_Gate, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if CYTHON_USE_TP_FINALIZE
+  0, /*tp_finalize*/
+  #else
+  NULL, /*tp_finalize*/
+  #endif
+  #if !CYTHON_COMPILING_IN_PYPY || PYPY_VERSION_NUM >= 0x07030800
+  0, /*tp_vectorcall*/
+  #endif
+  #if __PYX_NEED_TP_PRINT_SLOT == 1
+  0, /*tp_print*/
+  #endif
+  #if PY_VERSION_HEX >= 0x030C0000
+  0, /*tp_watched*/
+  #endif
+  #if PY_VERSION_HEX >= 0x030d00A4
+  0, /*tp_versions_used*/
+  #endif
+  #if CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX >= 0x03090000 && PY_VERSION_HEX < 0x030a0000
+  0, /*tp_pypy_flags*/
+  #endif
+};
+#endif
 
 static PyMethodDef __pyx_methods[] = {
   {0, 0, 0, 0}
@@ -5890,6 +12868,7 @@ static int __Pyx_modinit_global_init_code(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __Pyx_RefNannySetupContext("__Pyx_modinit_global_init_code", 0);
   /*--- Global init code ---*/
+  __pyx_v_7qilisdk_8backends_15qili_sim_cython_I = ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)Py_None); Py_INCREF(Py_None);
   __Pyx_RefNannyFinishContext();
   return 0;
 }
@@ -5921,24 +12900,23 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
   __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_SparseMatrix = &__pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.from_dense = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(std::vector<std::vector<__pyx_t_double_complex> > ))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_dense;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.from_tuples = (PyObject *(*)(PyObject *, int, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.to_tuples = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.from_tuples = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , int, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_from_tuples;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.to_tuples = (std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex>  (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_to_tuples;
   __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.get_width = (int (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_width;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.get = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.get = (__pyx_t_double_complex (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get;
   __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.insert = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, int, __pyx_t_double_complex))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_insert;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.get_dims = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims;
-  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.mul_cpp = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul_cpp;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.get_dims = (std::string (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_get_dims;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_SparseMatrix.mul = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_mul;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix)) __PYX_ERR(0, 35, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_spec, __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix)) __PYX_ERR(0, 46, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix_spec, __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
   #else
   __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix = &__pyx_type_7qilisdk_8backends_15qili_sim_cython_SparseMatrix;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
   #endif
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
@@ -5948,10 +12926,41 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
     __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix->tp_getattro = PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
-  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_SparseMatrix, (PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_SparseMatrix, (PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_Gate = &__pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.Gate = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, std::string, std::vector<int> , std::vector<int> , std::vector<double> ))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_Gate;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.tensor_product = (PyObject *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , std::vector<__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex> , int, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_tensor_product;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.permute_bits = (int (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, int, std::vector<int> ))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_permute_bits;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.base_to_full = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *, int, std::vector<int> , std::vector<int> ))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_base_to_full;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.get_base_matrix = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_base_matrix;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.size = (int (*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_size;
+  __pyx_vtable_7qilisdk_8backends_15qili_sim_cython_Gate.get_full_matrix = (struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *(*)(struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_Gate *, int))__pyx_f_7qilisdk_8backends_15qili_sim_cython_4Gate_get_full_matrix;
+  #if CYTHON_USE_TYPE_SPECS
+  __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate_spec, __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  #else
+  __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate = &__pyx_type_7qilisdk_8backends_15qili_sim_cython_Gate;
+  #endif
+  #if !CYTHON_COMPILING_IN_LIMITED_API
+  #endif
+  #if !CYTHON_USE_TYPE_SPECS
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  #endif
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate);
+  #endif
+  #if !CYTHON_COMPILING_IN_LIMITED_API
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate->tp_dictoffset && __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate->tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate->tp_getattro = PyObject_GenericGetAttr;
+  }
+  #endif
+  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate, __pyx_vtabptr_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_Gate, (PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate) < (0)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -6169,9 +13178,10 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_qili_sim_cython(PyObject *__pyx_py
   Py_ssize_t __pyx_t_3;
   PyObject *__pyx_t_4 = NULL;
   PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
+  size_t __pyx_t_6;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -6235,7 +13245,7 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   stringtab_initialized = 1;
   if (__Pyx_InitGlobals() < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   if (__pyx_module_is_main_qilisdk__backends__qili_sim_cython) {
-    if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_n_u_main) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_name_2, __pyx_mstate_global->__pyx_n_u_main) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -6258,7 +13268,7 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":17
+  /* "qilisdk/backends/qili_sim_cython.pyx":18
  * # limitations under the License.
  * 
  * from qilisdk.backends.backend import Backend             # <<<<<<<<<<<<<<
@@ -6267,36 +13277,12 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Backend};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_backends_backend, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_backends_backend, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Backend};
-    __pyx_t_3 = 0; {
-      __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_imported_names[__pyx_t_3], __pyx_t_4) < (0)) __PYX_ERR(0, 17, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "qilisdk/backends/qili_sim_cython.pyx":18
- * 
- * from qilisdk.backends.backend import Backend
- * from qilisdk.functionals.sampling_result import SamplingResult             # <<<<<<<<<<<<<<
- * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
- * from qilisdk.functionals.sampling import Sampling
-*/
-  {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_SamplingResult};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_sampling_res, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
-  }
-  __pyx_t_2 = __pyx_t_1;
-  __Pyx_GOTREF(__pyx_t_2);
-  {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_SamplingResult};
     __pyx_t_3 = 0; {
       __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 18, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
@@ -6307,20 +13293,20 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "qilisdk/backends/qili_sim_cython.pyx":19
+ * 
  * from qilisdk.backends.backend import Backend
- * from qilisdk.functionals.sampling_result import SamplingResult
- * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult             # <<<<<<<<<<<<<<
+ * from qilisdk.functionals.sampling_result import SamplingResult             # <<<<<<<<<<<<<<
+ * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
  * from qilisdk.functionals.sampling import Sampling
- * from qilisdk.functionals.time_evolution import TimeEvolution
 */
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolutionResult};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_time_evoluti, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_SamplingResult};
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_sampling_res, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolutionResult};
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_SamplingResult};
     __pyx_t_3 = 0; {
       __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 19, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
@@ -6331,20 +13317,20 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "qilisdk/backends/qili_sim_cython.pyx":20
+ * from qilisdk.backends.backend import Backend
  * from qilisdk.functionals.sampling_result import SamplingResult
- * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
- * from qilisdk.functionals.sampling import Sampling             # <<<<<<<<<<<<<<
+ * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult             # <<<<<<<<<<<<<<
+ * from qilisdk.functionals.sampling import Sampling
  * from qilisdk.functionals.time_evolution import TimeEvolution
- * 
 */
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Sampling};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_sampling, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 20, __pyx_L1_error)
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolutionResult};
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_time_evoluti, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 20, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Sampling};
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolutionResult};
     __pyx_t_3 = 0; {
       __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 20, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
@@ -6355,20 +13341,20 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "qilisdk/backends/qili_sim_cython.pyx":21
+ * from qilisdk.functionals.sampling_result import SamplingResult
  * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
- * from qilisdk.functionals.sampling import Sampling
- * from qilisdk.functionals.time_evolution import TimeEvolution             # <<<<<<<<<<<<<<
- * 
+ * from qilisdk.functionals.sampling import Sampling             # <<<<<<<<<<<<<<
+ * from qilisdk.functionals.time_evolution import TimeEvolution
  * 
 */
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolution};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_time_evoluti_2, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Sampling};
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_sampling, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
   {
-    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolution};
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Sampling};
     __pyx_t_3 = 0; {
       __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 21, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
@@ -6378,8 +13364,58 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":33
- * import cython
+  /* "qilisdk/backends/qili_sim_cython.pyx":22
+ * from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+ * from qilisdk.functionals.sampling import Sampling
+ * from qilisdk.functionals.time_evolution import TimeEvolution             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+  {
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolution};
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_qilisdk_functionals_time_evoluti_2, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  }
+  __pyx_t_2 = __pyx_t_1;
+  __Pyx_GOTREF(__pyx_t_2);
+  {
+    PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_TimeEvolution};
+    __pyx_t_3 = 0; {
+      __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_imported_names[__pyx_t_3], __pyx_t_4) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":38
+ * from libcpp.map cimport map
+ * from libcpp cimport bool
+ * import numpy as np             # <<<<<<<<<<<<<<
+ * import cmath
+ * 
+*/
+  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_numpy, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_2 = __pyx_t_1;
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_np, __pyx_t_2) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":39
+ * from libcpp cimport bool
+ * import numpy as np
+ * import cmath             # <<<<<<<<<<<<<<
+ * 
+ * cdef extern from "<complex>":
+*/
+  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_cmath, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_2 = __pyx_t_1;
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_cmath, __pyx_t_2) < (0)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":44
+ *     double abs(double complex)
  * 
  * cdef double atol_ = 1e-12  # tolerance for treating values as zero             # <<<<<<<<<<<<<<
  * 
@@ -6387,18 +13423,52 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
 */
   __pyx_v_7qilisdk_8backends_15qili_sim_cython_atol_ = 1e-12;
 
+  /* "qilisdk/backends/qili_sim_cython.pyx":63
+ *         self.values_ = vector[complex]()
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def from_dense(vector[vector[complex]] dense) -> SparseMatrix:
+ *         """
+*/
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_SparseMatrix) < (0)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_3from_dense, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_SparseMatrix_from_dense, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  #endif
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_mstate_global->__pyx_n_u_from_dense, __pyx_t_4) < (0)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_2 = NULL;
+  __Pyx_GetNameInClass(__pyx_t_5, (PyObject*)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_mstate_global->__pyx_n_u_from_dense); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_t_5};
+    __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_staticmethod, __pyx_callargs+__pyx_t_6, (2-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+  }
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix, __pyx_mstate_global->__pyx_n_u_from_dense, __pyx_t_4) < (0)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
   /* "(tree fragment)":1
  * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
  *     raise TypeError, "no default __reduce__ due to non-trivial __cinit__"
  * def __setstate_cython__(self, __pyx_state):
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_5__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_SparseMatrix___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_5__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_SparseMatrix___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "(tree fragment)":3
  * def __reduce_cython__(self):
@@ -6406,105 +13476,195 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     raise TypeError, "no default __reduce__ due to non-trivial __cinit__"
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_7__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_SparseMatrix___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_12SparseMatrix_7__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_SparseMatrix___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 3, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":178
+  /* "qilisdk/backends/qili_sim_cython.pyx":183
+ * 
+ * # Identity matrix constant
+ * cdef SparseMatrix I = SparseMatrix.from_dense([[1, 0],             # <<<<<<<<<<<<<<
+ *                                               [0, 1]])
+ * 
+*/
+  __pyx_t_5 = ((PyObject *)__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix);
+  __Pyx_INCREF(__pyx_t_5);
+  __pyx_t_2 = __Pyx_PyList_Pack(2, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_int_0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":184
+ * # Identity matrix constant
+ * cdef SparseMatrix I = SparseMatrix.from_dense([[1, 0],
+ *                                               [0, 1]])             # <<<<<<<<<<<<<<
+ * 
+ * cdef class Gate:
+*/
+  __pyx_t_7 = __Pyx_PyList_Pack(2, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 184, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":183
+ * 
+ * # Identity matrix constant
+ * cdef SparseMatrix I = SparseMatrix.from_dense([[1, 0],             # <<<<<<<<<<<<<<
+ *                                               [0, 1]])
+ * 
+*/
+  __pyx_t_8 = __Pyx_PyList_Pack(2, __pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+  __pyx_t_6 = 0;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_8};
+    __pyx_t_4 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_from_dense, __pyx_callargs+__pyx_t_6, (2-__pyx_t_6) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+  }
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_SparseMatrix))))) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_XGOTREF((PyObject *)__pyx_v_7qilisdk_8backends_15qili_sim_cython_I);
+  __Pyx_DECREF_SET(__pyx_v_7qilisdk_8backends_15qili_sim_cython_I, ((struct __pyx_obj_7qilisdk_8backends_15qili_sim_cython_SparseMatrix *)__pyx_t_4));
+  __Pyx_GIVEREF(__pyx_t_4);
+  __pyx_t_4 = 0;
+
+  /* "(tree fragment)":1
+ * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
+ *     cdef tuple state
+ *     cdef object _dict
+*/
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_4Gate_1__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_Gate___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  #endif
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "(tree fragment)":16
+ *     else:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, state)
+ * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
+ *     __pyx_unpickle_Gate__set_state(self, __pyx_state)
+*/
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_4Gate_3__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_Gate___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  #endif
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_7qilisdk_8backends_15qili_sim_cython_Gate, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":445
  * 
  * 
  * class QiliSimCython(Backend):             # <<<<<<<<<<<<<<
  *     def __init__(self):
  *         super().__init__()
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_Backend); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_Backend); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 445, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_Py3MetaclassPrepare(__pyx_t_5, __pyx_t_2, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_mstate_global->__pyx_n_u_QiliSimCython, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, (PyObject *) NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  if (__pyx_t_2 != __pyx_t_4) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_6, "__orig_bases__", __pyx_t_4) < 0))) __PYX_ERR(0, 178, __pyx_L1_error)
-  }
+  __pyx_t_8 = PyTuple_Pack(1, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyList_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PEP560_update_bases(__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 445, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_CalculateMetaclass(NULL, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_7 = __Pyx_Py3MetaclassPrepare(__pyx_t_5, __pyx_t_4, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_mstate_global->__pyx_n_u_QiliSimCython, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, (PyObject *) NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  if (__pyx_t_4 != __pyx_t_8) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_7, "__orig_bases__", __pyx_t_8) < 0))) __PYX_ERR(0, 445, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __pyx_t_8 = PyList_New(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":179
+  /* "qilisdk/backends/qili_sim_cython.pyx":446
  * 
  * class QiliSimCython(Backend):
  *     def __init__(self):             # <<<<<<<<<<<<<<
  *         super().__init__()
  * 
 */
-  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_1__init__, 0, __pyx_mstate_global->__pyx_n_u_QiliSimCython___init, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 179, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_1__init__, 0, __pyx_mstate_global->__pyx_n_u_QiliSimCython___init, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[5])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 446, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_7);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  PyList_Append(__pyx_t_4, __pyx_t_7);
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_init, __pyx_t_7) < (0)) __PYX_ERR(0, 179, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+  PyList_Append(__pyx_t_8, __pyx_t_2);
+  if (__Pyx_SetNameInClass(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_init, __pyx_t_2) < (0)) __PYX_ERR(0, 446, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":182
+  /* "qilisdk/backends/qili_sim_cython.pyx":449
  *         super().__init__()
  * 
  *     def _execute_sampling(self, functional: Sampling) -> SamplingResult:             # <<<<<<<<<<<<<<
  * 
- *         # Sparse matrix test
+ *         print("here0")
 */
-  __pyx_t_7 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_functional, __pyx_mstate_global->__pyx_n_u_Sampling) < (0)) __PYX_ERR(0, 182, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_SamplingResult) < (0)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __pyx_t_8 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_3_execute_sampling, 0, __pyx_mstate_global->__pyx_n_u_QiliSimCython__execute_sampling, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 449, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_functional, __pyx_mstate_global->__pyx_n_u_Sampling) < (0)) __PYX_ERR(0, 449, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_SamplingResult) < (0)) __PYX_ERR(0, 449, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_13QiliSimCython_3_execute_sampling, 0, __pyx_mstate_global->__pyx_n_u_QiliSimCython__execute_sampling, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[6])); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 449, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_9);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_8);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_9);
   #endif
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_8, __pyx_t_7);
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_execute_sampling, __pyx_t_8) < (0)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_9, __pyx_t_2);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_execute_sampling, __pyx_t_9) < (0)) __PYX_ERR(0, 449, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":178
+  /* "qilisdk/backends/qili_sim_cython.pyx":445
  * 
  * 
  * class QiliSimCython(Backend):             # <<<<<<<<<<<<<<
  *     def __init__(self):
  *         super().__init__()
 */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_t_2, __pyx_t_6, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_t_4, __pyx_t_7, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_9);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_8);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_9);
   #endif
-  if (__Pyx_CyFunction_InitClassCell(__pyx_t_4, __pyx_t_8) < (0)) __PYX_ERR(0, 178, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_t_8) < (0)) __PYX_ERR(0, 178, __pyx_L1_error)
+  if (__Pyx_CyFunction_InitClassCell(__pyx_t_8, __pyx_t_9) < (0)) __PYX_ERR(0, 445, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_QiliSimCython, __pyx_t_9) < (0)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "(tree fragment)":4
+ *     int __Pyx_CheckUnpickleChecksum(long, long, long, long, const char*) except -1
+ *     int __Pyx_UpdateUnpickledDict(object, object, Py_ssize_t) except -1
+ * def __pyx_unpickle_Gate(__pyx_type, long __pyx_checksum, tuple __pyx_state):             # <<<<<<<<<<<<<<
+ *     cdef object __pyx_result
+ *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x1ee5543, 0x2ba533e, 0xb1c92ff, b'control_qubits, gate_type, parameters, target_qubits')
+*/
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7qilisdk_8backends_15qili_sim_cython_1__pyx_unpickle_Gate, 0, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_Gate, NULL, __pyx_mstate_global->__pyx_n_u_qilisdk_backends_qili_sim_cython, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[7])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  #endif
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_Gate, __pyx_t_4) < (0)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "qilisdk/backends/qili_sim_cython.pyx":1
  * # cython: language_level=3             # <<<<<<<<<<<<<<
  * # distutils: language = c++
- * # Copyright 2025 Qilimanjaro Quantum Tech
+ * # distutils: extra_compile_args = -g
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_test, __pyx_t_2) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_test, __pyx_t_4) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -6513,9 +13673,9 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
   if (__pyx_m) {
     if (__pyx_mstate->__pyx_d && stringtab_initialized) {
       __Pyx_AddTraceback("init qilisdk.backends.qili_sim_cython", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -6547,8 +13707,9 @@ __Pyx_RefNannySetupContext("PyInit_qili_sim_cython", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 153, __pyx_L1_error)
-  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_super); if (!__pyx_builtin_super) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(0, 63, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 197, __pyx_L1_error)
+  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_super); if (!__pyx_builtin_super) __PYX_ERR(0, 447, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -6568,43 +13729,56 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":185
+  /* "qilisdk/backends/qili_sim_cython.pyx":288
  * 
- *         # Sparse matrix test
- *         cdef list entriesA = [(0, 0, 1.0), (0, 2, 2.0), (1, 1, 3.0)]             # <<<<<<<<<<<<<<
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
+ *         # --- Tensor with identities ---
+ *         cdef vector[tuple[int, int, complex]] identity_entries = [(0, 0, 1.0), (1, 1, 1.0)]             # <<<<<<<<<<<<<<
+ *         cdef int gate_size = 1 << base_gate_qubits
+ * 
 */
-  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_float_1_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_float_1_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 288, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
-  __pyx_mstate_global->__pyx_tuple[1] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_2, __pyx_mstate_global->__pyx_float_2_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[1])) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[1] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_float_1_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[1])) __PYX_ERR(0, 288, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[1]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[1]);
-  __pyx_mstate_global->__pyx_tuple[2] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_float_3_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[2])) __PYX_ERR(0, 185, __pyx_L1_error)
+
+  /* "(tree fragment)":11
+ *         use_setstate = True
+ *     else:
+ *         use_setstate = ('False',)             # <<<<<<<<<<<<<<
+ *     if use_setstate:
+ *         return __pyx_unpickle_Gate, (type(self), 0x1ee5543, None), state
+*/
+  __pyx_mstate_global->__pyx_tuple[2] = PyTuple_Pack(1, __pyx_mstate_global->__pyx_n_u_False); if (unlikely(!__pyx_mstate_global->__pyx_tuple[2])) __PYX_ERR(1, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[2]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[2]);
 
-  /* "qilisdk/backends/qili_sim_cython.pyx":186
- *         # Sparse matrix test
- *         cdef list entriesA = [(0, 0, 1.0), (0, 2, 2.0), (1, 1, 3.0)]
- *         cdef list entriesB = [(0, 1, 4.0), (1, 1, 6.0), (2, 0, 5.0)]             # <<<<<<<<<<<<<<
- *         cdef SparseMatrix A = SparseMatrix.from_tuples(entriesA, 2, 3)
- *         cdef SparseMatrix B = SparseMatrix.from_tuples(entriesB, 3, 2)
+  /* "qilisdk/backends/qili_sim_cython.pyx":487
+ * 
+ *         # Apply each gate in the circuit
+ *         cdef SparseMatrix gate_matrix = SparseMatrix(0, 0)             # <<<<<<<<<<<<<<
+ *         cdef Gate gate_c
+ *         for gate_c in gates:
 */
-  __pyx_mstate_global->__pyx_tuple[3] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_float_4_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[3])) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[3] = PyTuple_Pack(2, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_int_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[3])) __PYX_ERR(0, 487, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[3]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[3]);
-  __pyx_mstate_global->__pyx_tuple[4] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_int_1, __pyx_mstate_global->__pyx_float_6_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[4])) __PYX_ERR(0, 186, __pyx_L1_error)
+
+  /* "qilisdk/backends/qili_sim_cython.pyx":540
+ *         import random
+ *         for shot in range(nshots):
+ *             random_value = random.uniform(0.0, 1.0)             # <<<<<<<<<<<<<<
+ *             cumulative_prob = 0.0
+ *             for prob_entry in prob_entries:
+*/
+  __pyx_mstate_global->__pyx_tuple[4] = PyTuple_Pack(2, __pyx_mstate_global->__pyx_float_0_0, __pyx_mstate_global->__pyx_float_1_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[4])) __PYX_ERR(0, 540, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[4]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[4]);
-  __pyx_mstate_global->__pyx_tuple[5] = PyTuple_Pack(3, __pyx_mstate_global->__pyx_int_2, __pyx_mstate_global->__pyx_int_0, __pyx_mstate_global->__pyx_float_5_0); if (unlikely(!__pyx_mstate_global->__pyx_tuple[5])) __PYX_ERR(0, 186, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[5]);
-  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[5]);
   #if CYTHON_IMMORTAL_CONSTANTS
   {
     PyObject **table = __pyx_mstate->__pyx_tuple;
-    for (Py_ssize_t i=0; i<6; ++i) {
+    for (Py_ssize_t i=0; i<5; ++i) {
       #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
       Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
       #else
@@ -6624,34 +13798,34 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{3},{3},{36},{17},{17},{25},{51},{1},{1},{7},{6},{2},{9},{50},{19},{14},{1},{1},{7},{1},{20},{13},{22},{31},{8},{14},{12},{30},{32},{13},{19},{18},{18},{7},{8},{8},{17},{8},{10},{12},{4},{5},{5},{8},{13},{5},{8},{13},{10},{15},{8},{5},{5},{6},{3},{11},{5},{11},{14},{24},{32},{28},{35},{41},{34},{12},{10},{17},{13},{6},{7},{4},{12},{10},{12},{19},{5},{8},{6},{1},{11},{163},{9}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (769 bytes) */
-const char* const cstring = "BZh91AY&SY\345U\035w\000\000\031\177\377\365s\250\203h\377x\027\276\023|\200\277\357\377\361@@@@@@@@@\000@@@\000@\000@\002\2475\266\002\214\022\246\224\324\362\236\210\304\306Hi\232\200h\017P\320\r\032\032\000\364\2153I\341\252\r\004!\205'\241\036\221\3524\000\000\000\000\000\000\000\003\206\206M44\310\320\323# \310\310\320\310\014M\0314\001\223#\020\302E\001\021\264\202\236\222~\211\265\036\204\320\324d\364j2\r\030\020\006C\321\352\236\201\253\300\177e\375\216i\230\261L@\2435:\202\234RRS\006P\254\222_\275\016\357G4\205\004\2123\332\034y\321\333\320\276bv6\363\310\210.\210Y!\252\205\222v\345\271\001\033\211`JyJ\210\024\"\211\371L\305\331\312Q_Yy`z'\307\314\344o\313~<>\345c\224\355\371\2614\023\374\271T\224x\227\313z\035;\016v\271=\324\214\210\236\365\330\272\270\335\030\r\004e\000X}2\241 \035\306\231\2046U\207\361\023\312v'T \317\223\201\231\3063\330\266\3271\331\312\367\341L\001\250\311R\237\265 \213\n\261\027\350\204\206\033\305\240M\302\221\312\360\335\221\251\332\372u0\3705~a\002\270<\353\250\241\374\212S\304%\270\004[\326U\251($\026\253=\246\372\207*\352\267i\240\252\203\033\027\251\t\006\0024m\007\3478&\253\234JAe\\\254\013\352\203\311.*H$\341(\312-\300\206X\220\341!:!\356\357\020\215o\243\307he\314\263\363;\366t-\344\260\265\263\0254\346\2635\262X#\337\243#3\310\326\026D\243\003\203\257/\366y\320a\221\034o\247\024\277\005\360\003\225T\352/8x\260\313!\213$L\320r\021s\225h)\350Y\356\002b\222/\332\341\257hl\273\205\020\233\024\005DV\251B\001\024a\256\004\223^b\t;\344PD\3308\220F3\255\336\030A\024\n\241Z\362\375\0174)M\320\026\2157\316\260\354\3517\302\273U[\032m\211\275]\352\026\245!\2201\266\265\242\3301WI\331i\274\373m\244\227AkK\010\033\364\326\331\035QT\002\014\ncq\323\007\222\245\022\025\200\204)9\354\207HY\r`+e24\nf@toW{j\230\3325/f\350\204\\\371\016\371\2276\256h\3664\232\034i\223c\214Q\226-\031\215U\307\264\203\256L\243\014\021\223S+d\260\335rY\361G'\000\257s\253|\014\332'v\271bD\270-\247\210\261\031\222\027Y\2711\254\234}P\3502\266\216)3\237\234\177""\306\317\353\373\027\324r}\311\244\314\331\221\307\n\371,\022\030N5\227\242)\3167\212sX\307Hhj\351.\031\311\207F\013.>\244g\245\025'*\326\265\263\374]\311\024\341BC\225Tu\334";
-    PyObject *data = __Pyx_DecompressString(cstring, 769, 2);
+    const struct { const unsigned int length: 10; } index[] = {{3},{13},{22},{36},{18},{10},{12},{20},{51},{18},{179},{37},{13},{1},{2},{4},{1},{1},{1},{8},{7},{6},{2},{9},{50},{19},{14},{5},{7},{5},{4},{22},{24},{20},{13},{22},{31},{8},{14},{12},{30},{32},{23},{13},{19},{3},{17},{18},{1},{9},{1},{7},{18},{5},{14},{6},{15},{5},{8},{5},{7},{6},{5},{17},{3},{10},{8},{10},{4},{6},{11},{9},{5},{12},{5},{5},{5},{5},{9},{8},{13},{5},{8},{3},{8},{13},{10},{15},{4},{8},{5},{7},{8},{2},{7},{5},{6},{10},{5},{7},{10},{3},{11},{5},{4},{12},{10},{14},{12},{11},{10},{19},{14},{24},{32},{28},{35},{41},{34},{12},{1},{6},{12},{9},{10},{17},{13},{7},{6},{3},{7},{4},{12},{10},{12},{19},{4},{4},{5},{13},{18},{11},{16},{11},{12},{5},{13},{8},{10},{7},{6},{12},{3},{6},{1},{8},{1},{1},{0},{11},{161},{11},{674},{9},{104},{55}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1852 bytes) */
+const char* const cstring = "BZh91AY&SY\221r\002\021\000\000\230\377\377\377\377\377\337\377\377\177\377\377\377\377\370\277\377\377\364@@@@@@@@@@@@@\000@\000`\006|\314!\212R)\024\220W\316\014\032\251\355\023T\362&i\245\032h\360j6F\202\231\000\375Sjf\232CG\244\323M\006M4\r\006\217P<\2322\231\345M\232\223\324\362\202Q\004d\30514Li\023\322\236F\246\232=O(i\352\003j\000\000\000\000\000\000\000\036\2404\020`\000\230\000\t\202`\000\000\000\000\230\004\300C\000\000F\000\000\002SD\021\251\242i\221\242\017Q\222d\332L\021\223@4\000\0324\000\000\000\000\000=!\345\036\221\006\000\t\200\000\230&\000\000\000\000\t\200L\0040\000\004`\000\000CT\246M2b\003\021\246\200\3044`\206&#M\000\311\240d\3101\240CL\215\031\0314\000\032.\253`\207FD\351\275\261\267{\037\321\275\327\221.\301\275\275\nEbR\234\243\177}\022\244\323)\377\314\334\013\202\326\315\212.\354\263\026\330gkY\000\204\204\222\022\t\265\367\214\325Ql{\341X!,p\202\244\340\307\"\211[\023U\220\037\264\212RB\r\035\0304J\302\331\017\006\354j\264/{\035\t@\0274\033k.\240\231eC.\374\34199\033TQ\r)J\014s\304\021\022\250q\204\234D8\214\265\254:\225\266\tW\253rW\300\216\377\221\370o\247\\\327\257/\017\006\035b\025\036\302\370\350\307H\213\314_\334\230D\222\215\220v\004\224\205\226P\217\226p\254\202B\307e\272t\206nc\202\212!\022\207kE* &y\351 h\203\254\212\352\242M\204\216y\r3\t1#\352\204/O\037\2275U2\227\267\322ZL\254\351\2073\200\304\216`\332\204\002\021\010E\rdH\022\013mF\004\307J@t\325\265\214\250n\337\257\351I\361\217$\032\321\226z\265vQ\226Z^\252\266\021\226oO\002r\206N\177k\215vZg\025\234\271\025v\251$\234xQ\245\224\342d\266rD\304\221\033\247\321\335\177\233\030\364\325Ye(\302\313\031>\213$\322\245\205\201\2362t>'Zh\253\227\336v\307u\265\333`\nd\306\346\354s.\320\275\34598\355\234\317\261\307\362\234\374\2445\222\373\247<fR\333\257/\374#\363\255p\374\233_\347\3722\314\240S6x`\214\262D\014\273y\016\244p\336q\376B\243\361\3459Vn\205\324\337\215\316\332\350d\253\212,a=\265)\024\305\022\246\022\276C&\200\352A\274\222b\374&dD\204]'hMgv\346m\367\320I\335\202o\204""\006<\225\202\242a.Au5'2\262K\005\266\267Q{7}j\217\372\244D\234\026u7\301P\335:\250\304&\372s\n\032\274Lj<Y\025CMhj\306\241\240\375\031*\262w\0015\352\024l\246\232\325\322\366\227\362\302\343\034p\332\345\033\235\010\205\270;\315\335\323@\334V\307\311mn)-\235;\362ci\302sJ\330\031\007nGF\251\tf\376\205+\323[\320\205\354\264\207|\370\\\273r\303\n\201\350H-s\n\001\235\346\204\270\232u3#>L\252\332\252\310\202\330\014\234\2111Y\r'\313qr\332\304\366F\240cmh\342\nci\222Q\002\340\231X\252\254\207\250\204\214\311\240m\315I)cb>\214\250\352\360\020\313!\223\254K\030\356%\037G>\252UQ6\3076\240}Ic\204z\220~\021\0140v\032X\264\032\326\246E\265ZUt\225R11\265\212+\024\035Xd?\211\214J\257v\316\236\243\2329\362\251\257\016v|\203\002V\211\270\265\24475\312\371Qg\210l\265\311zgS\362=O\302L6\301\267\215\215\2719\235\367xFXCe\357[\200\r\355\234)\220\373\373r\302K\216~5\275\311\332eh^\242\274\322\243\031R!5e\232\252eb;\004\273[\035\225\006\n\310\222D\221V\203_s1&\211\316\354s&\372\212\344\273\244\267\006lu\355\030x\252\032\031\224\265\304\027\242\346&\201\310\005Zs\346Q\222(:}\032\327\332\t\026\004$\357\035W`\272\350\305\027k\257\002\265\245\235\206I\222q\335\213\033\010\277\205H\206+\025q\331\353{\224\0231D\334\264W^\215\303\255o\2776LZ\344b\313\225\2109B\267\234y\211-\005\215\205\342\210\354\334\\7\215z\360\003\n\212Y5\351\t\204\2236\273\275st\261\212\rK\211.z\270\276\224\304\306}G\317\312\r\006m{\002\\\354o~d\315\232X\367lq\241\363\252\364\035\231-\035\033\350I\235t\316I\313\355\016\203\027\303cwX\365~:\244\301w\256\326\375Z\030\017^f\334\034\006\336-\r0\232\003\225\022\222\244\336w\252\225o\025\236^\221\323\220EE\251\301\236\352\336\345E\310\312\327\023\240\016m\252)t.\256\032R\2212cP\320\0306|SF\265\230\327E\020\225\346\010\236\233a,\243\241`\240\2716(\332\201\325\346\335\0367b\t\215\241\371\272\362\303\214-l{$\361\313\225\241%\232!\336\264.\334{\347J\000E+G!\003\031\312D\023W\321\314\251\212\352\016\211g\006\254\226\311\205I\010\025\354Br\340r\375\211\230\341@\310\353Th\204\026\252""\037\033\245v6\034HVk%\253\310\347t\036\376\2263\246\341\260&\265\310u\327\356\273\010\212\255Q0\037\274%w\322\272\331,\035\003\231\345\003\245\230\313'GhB\350\216K\233qq\315\235\220\213l\3304\24542\0356\255\306l\234\316;<\371\232t\021\245\3145\240\031\245\270\004w\252\230\205W\327\370z-\261\2749i\035>\264{\001\202\005H\220\000\3106NDH\362\003\330\271\231v\0202\312 \2100d7*\037\360u\361\033\001\tw\226Kj\235\265b\335*\234}8!\341\305\246\014`a,\320\235\375K\006\022\256\033\r\353\372\014\230\373zUp\324\317\263\310S\233x\326-\360\005\r:\343{\316!\256\033O\321\355(w\n\221\323\\\332\264\210\217\264\345\201\342\307z\352fY\335\330>v|\027\372\275C\021r\225\366L\026\007\1773\206uQ\245\000\237\203\361=\2701\255\256?\316\rK\264#O\304d}\222\232\254\267\336\342\r\r\364\211\315\001:\277\217j\263;\225LUqZ\233.\001(\033\217\346\360\372u\365\230\305\271b\3078T\217\335]\3560\377\266l\330\373<\027I\177\005\007f\356\370i\306\271\360\312\364\261{\324\347s&\214]\007Ix\006\361P\337\016\366r\342Cb\203J5of\316/\357\274\326\325\310\2142x\261\226O,\235x\255!\311\211\324rg\035\303\325N\347\211\326\353\222\212\315\322\234'\241\010\252i\352\316s]k\266-\331\211\326\302H\024\326/\022r\377\305\334\221N\024$$\\\200\204@";
+    PyObject *data = __Pyx_DecompressString(cstring, 1852, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (643 bytes) */
-const char* const cstring = "x\332\215S=o\023A\020%(B\016R@(\005\025\321\242\024@\022\254\004\272\210\017\331&M\244 l#Q\216\326{c{\225\273\335\363\315\2369S\240\224.)]\272\274\322\245\313\374\204\224.\371\t\374\004\346|\266\223\330\026\302\322\355\316\307;\317\314\233wb_\034\035\035\237\032\027i$\021\304\344D\003\005\331\310\241'\032=\3612\262\337\017\205\262\376\253s\311\230D\224\004\346\340\223Y\240\274\034\250\210\367\214\332_Mx:@C\332\032\022\236\025\306:\021H\247\332\242i#\256\354;\035\372ZI\307\200\023Q\374\350i\222\r\037\321dgKi\312-\317X\341aS2^\000D\350\305\n\001\204\027\243p\331\237\232\327\\\253\253\245\317Y\245\215v\000\035\355k \035\200\352\271\2665\305\260\227\274#F\231\026\3318R\370\241T.Ku\201\306\253\000|\351%\374|\322\312\301gL\\\r\233U~\275\256\203\312\364\345;N\021 \257\260\024\305\004U\354\020H\006<\222i\325\227\356\032\022\267_\017eD\230ss\333..\306\312\373\005X\312\022:r\322\335\344\2772\261\247]\353\307\031ww\234\274\222\244\236Q\332\026\225\215,\207\r\222\3426\220\233\007\027I\205\r\236\036\300\263\n`\266\262\322\354.\257\314\002\320\214\215\312\317\254\202\364\001Z\363\206\240\215\021f\317\233\354x;\247\0074\301\242\266v\030\020@ \271:\377\002tR\371\222h\352X/\366qjEv\336K\346\032\031p\330\260\016\311\260\"\311P\333:\nm\010\020F\310\364`fh\303\305x\2730\353&3\273.SM.\002\362.\212\215|\32347V\342Kj\231\347o\346\245\342\234\213\177\345x\207\031\365\353 \2167\0048_\321\377\003\241\023K?g\342F\371+bY\0040\311L\027Gf\332\023\022\241\337\234\252gF'[\263/\351\226\246`\215\276(\0161\002pH\214\354J?FJ.K\223\302v\277\326\357\r6\2567\017\323\363\361\223?\017\356m\355\016j\003\032\356\r\277\245\225\224F/\306;\343\312\2703)<[\037\336O\017Gr\364\343j\347\252\264\344l\367\253}9)\354\016\032\303\373\303\347\013\237\257\353G{\303\343\341Y\272\336;H\217\323\263\221\374]x\334\3779\250\016Z\303z\2725z:\336\270\334\230l>\354\037\374\252\376\005S\224\366X";
-    PyObject *data = __Pyx_DecompressString(cstring, 643, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (1733 bytes) */
+const char* const cstring = "x\332\215U\317s\023G\026\216\202\310*A1\026\230\330\225\260\241\005q\300\211Q!0l\226\004v\205\261\035\310\206\265l\023\330\335CWk\246%\r\236\351\226\246{d\211\332\203\217:\316\261\217s\234\243\216:\352\310q\216s\324\237\300\237\220\3273\222\220\355\324\326VI\255\327\277\336\373\336\367\276\327B\337\241J\253e\367,\326@\r\"\351\246K\211\234N\020\257#\331k\321\207[L\272\026\025\310\361\204D5\212\004w%5Q\255\207n\271\374h\035\031\334^\333\266\030\261\221\220p\257C\r\311\335\207;\332Er_[\002\331\234\230\324|\306,i\235:\371+\001\377]dZ\016e\302\342L \223#\306%r\2104\232\250\316]\010mK\253e[\006\300\343\354!zA\217R\214M\"\322 /\270\016\327$\022m\366d\2233d\201\033j[5\352\3029\273\007\021]\313\220\324\325\207\030\332\335\332\275\275\361\303\006\"\314D.}\003@\004\022^\315\260\211\020\000\026R\257y\026\304d\211wQB\317\352\250\307=\304(d.9j\301\271\371\013\262I\031\022Tj\003\335$\014\340'P1\\\007BoBv.\004\261:T\337\336&\266\240\245]\227\327H\315\262\201\021:\313Yx\216>QF\267\264\365\010U\275\232%\247\354\335ZGk\260\266V\372\0331M\014\307\251i\tR\263)ezl\030\226H-\223q\310\276N\2006\204\261KM\317\240\030#\323K\3023\316n\003\033\035]\010\214\r\013j\202q\033\200`a9\330H\370+\265z\335\2374g\254!\270\347\032\364\261'\353\267\177xB\214C\312\314$\001]W\375-\315\"\244W1\236\254\002\037I\235g\353\030\357\366\272\360}\n\225\300/hW\356\321z\025\342\356[NZ\265\023\023\360\220B;\265J\273\324\360\300\253 \016H\2025\366O\375\356Q\001y\357\267\210+h\252\255y\373,\332S\273gP\237\330\257\273\334\301&\010\225\036\200^\267:\334\366t\235OLR\000\200&\001$=\223b\232\366\020\021=fX\274dp\227\303QFEM\2277\241\3310,\327\360,i@\016\0242\307\322%\006\255\001\341\0064B\323\340\340\202\333\270\235\010\302\340\036\203\321\203\306 ZU\270\005bJ`aljv\247?&70D7\270I5\206\336\031\366h\267\365!'\214\353\0363\322QgBl\335e\215\204\215dt\022\026\022\223\021'\331\021\0307\246\224\341&u\351\035=\224\365pW\017\367,\20740p(\247\365\304\226\3003\006,I\035p\341\020\310X\273\207\017\310\360-\370r\250$I\177i\3418\334\364l""\232X.\237\322\211\023\020\263\021\036\"\275D\217\322A\203c-\226\022\306\340\251\022L49\230\2363a\021\254V\217\003\333P\001\000\010^\340\201\020-\336\302\300'\205\025\252\r\213I\315\256\376N\003\317\354\036\034\000I\033Mj\034B\303\24637\251\177jOx\321\246~IR\313c-\3138\204tvf\233\035\251\3736mCa\036\226ji\243\211\251qf\375T\277N\367?TN\224\246%\376_{\023\260\177tD\202\2461\235\212\372\377?\010\344\022;-\211\353\302\003\313\235t\304\035b{ \010bO\3240}\227\316t\344l\201v\361$\256p\251\364\334\244\212\0329\205W\327\256'\315:\251>X\223\027o\256\205\361\037\264s\242\001\020X\262\232nM\252zb\222h\365\303Jo\316\234\333\262\230I\273\332\264\014\020O\223\233\302kQW\022\027Zb\"2\214u\030\030\341/\301N\372\324c\026\374\2519^\313\004\027\036t\335\024#\020\224p$\272o)\250\034Ty\247|\234\211\263\327\203b\360 ,\034W\342\373\017\336\347>\372\264\030\344\303J\370r\260:\220\303\373\243\314\350\322\350\376\273\314\373O>\372\364\363\376\226\177\305'\276P\3058\277\350\237\367_\252\242\272\247H\274\370\205OUY=QD\265\343\305\313\376=8\344\351i\274\264\354w\324\277\203v\230\321fW\275\r\013a1]\255\252Z\360q\360m\230\031\347\3623\3077\324\353`/h\307\371\213\375\216_\365\353jSu\202jP\013?\016\213\0000\367y\177\257\337S\231(\273\036\376:,\214a^\355\023\215\255\340O \376\354?W\315\200\304\371\025\225U[\301r\230\t\013q\376\222\277\246\356\007\347\202\273\340]\206\177\035T\006\373\303s\303\215\241\034=|\267\037\355V\343\305\253\352Y\360\n\362\256\306\371e_B6\277\0042\372\376\247\341\323\350\357\273\321\356At\3602\316\027\374Bt\351V\230\033d\264\275\2542j\036\3025\365&\331\312}\251\276\013*s\033\177\006*\214\240\020\347\256\007\353!\t\335\301\345\301\346\340h\370&euA\037\213s\233\300\362g\321\336>\260\021\345Q\220D(\3707\374j\364\305\267\001\t\274\260\022\335~4\254\016\033\243j\264\375[\364\333\253\350\325\353\271\030ka>I*a\363\271O\322\353\245\340\023M\205&\363?\220}9^,\244\033E]\350\205\351\345\t\204\307C\ntT\265\207\177\252\362\014\200\177\030\024\202U\250\341\205Ay\2603,\017\177\031\265S\350""\3173\357\256\274{\023\275\376\3278W\014\n\357\363\232\377g~U\323\275\352\267Uf\316\230\212bS%\305\365\374'\200\021H\177\016\265=\017\244/~\255\310\\:\371\376F\277\355_Pw\325\313\340zP\321\216\326\025\211\256m\217\310\250\375~A\223\r\200\257\2516\034\206\234\000\361\317\376\226*ha~\245\036\004+ \263\325\020\"\201W-\325\005-\322\257\241>Z\014\213\313\376[\310\250\030/\336\320\214\\\366\037ij\306K\232\364\245\025u\036B\026\203\037\303\332 ;x:\314\304+W\325?\302s\341=X\310\304W\327\302\302X\017\361\322\227 \376\307\332\2702\316]\002\2463\240\265\334 \0077r\027\373m\335X\237\365\277\367\253\307\031\240\372\374B\377 *\\\017\276\t\354\3017\003g\2641j\307\331|\177\307/\373\333j\035J\224\375\323q\247\377\nRXR\325\030\334\025\343\334\262\337\036\347V\200;\330k\203\317\350\342jp\000y\335\034|5\334\031\225\307'W*\307\231q\026\370\210\320\235\301\205\341\217\243\303\250\272\027g/\373\033\320t\355 q\362_\377/\300ON\253\351(d\303J\234\275\320/\377\016\026\366\226\221";
+    PyObject *data = __Pyx_DecompressString(cstring, 1733, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (1264 bytes) */
-const char* const bytes = " * 001Entries must be sorted by (row, col)Matrix A entries:Matrix B entries:Matrix C = A * B entries:Matrix dimensions do not match for multiplication: .?disableenablegcisenabledno default __reduce__ due to non-trivial __cinit__qili_sim_cython.pyx<stringsource>ABBackendC__Pyx_PyDict_NextRefQiliSimCythonQiliSimCython.__init__QiliSimCython._execute_samplingSamplingSamplingResultSparseMatrixSparseMatrix.__reduce_cython__SparseMatrix.__setstate_cython__TimeEvolutionTimeEvolutionResultasyncio.coroutinescline_in_traceback__doc__entriesAentriesB_execute_sampling__func__functional__getstate__herehere2here3__init___is_coroutineitems__main____metaclass____module____mro_entries____name__ncolsnrowsnshotspop__prepare__print__pyx_state__pyx_vtable__qilisdk.backends.backendqilisdk.backends.qili_sim_cythonqilisdk.functionals.samplingqilisdk.functionals.sampling_resultqilisdk.functionals.time_evolution_resultqilisdk.functionals.time_evolution__qualname____reduce____reduce_cython____reduce_ex__returnsamplesself__set_name__setdefault__setstate____setstate_cython__super__test__valuesx\200A\330\010\r\210R\210y\230\001\320\004,\250M\270\021\360\006\000\t\036\230R\230s\240#\240W\250C\250s\260'\270\023\270C\270q\330\010\035\230R\230s\240#\240W\250C\250s\260'\270\023\270C\270q\330\010*\250,\260a\260z\300\023\300A\330\010*\250,\260a\260z\300\023\300A\330\010\r\210Q\210a\330\010\036\230b\240\002\240!\330\010\r\210Q\210a\330\010\r\210Q\320\016#\2401\240J\250a\330\010\r\210Q\320\016#\2401\240J\250a\330\010\r\210Q\320\016+\2501\250J\260a\340\010\017\210~\230Q\230g\240S\250\t\260\027\270\001\200\001\330\004\n\210+\220Q";
+    #else /* compression: none (2981 bytes) */
+const char* const bytes = " * Applying gateCreating gate of type:Entries must be sorted by (row, col)Final statevector:Gate type:Gates loadedInitial statevector:Matrix dimensions do not match for multiplication: New gate has type:Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.Probabilities do not sum to 1 (sum = Qubits loaded(, ) = ).?add_notedisableenablegcisenabledno default __reduce__ due to non-trivial __cinit__qili_sim_cython.pyx<stringsource>utf-8BackendFalseGateGate.__reduce_cython__Gate.__setstate_cython____Pyx_PyDict_NextRefQiliSimCythonQiliSimCython.__init__QiliSimCython._execute_samplingSamplingSamplingResultSparseMatrixSparseMatrix.__reduce_cython__SparseMatrix.__setstate_cython__SparseMatrix.from_denseTimeEvolutionTimeEvolutionResultampamplitude_entriesasyncio.coroutinesbbitstringccircuitcline_in_tracebackcmathcontrol_qubitscountscumulative_probdense__dict___dict__doc__encodeentry_execute_samplingexpfrom_dense__func__functionalgategate_cgate_matrixgate_namegates__getstate__here0here1here2here3imag_part__init___is_coroutineitems__main__matmat_size__metaclass____module____mro_entries__name__name__ncols__new__new_gatenpnqubitsnrowsnshotsnum_qubitsnumpyone_strparameterspop__prepare__printprobprob_entriesprob_entry__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_Gate__pyx_vtable__qilisdk.backends.backendqilisdk.backends.qili_sim_cythonqilisdk.functionals.samplingqilisdk.functionals.sampling_resultqilisdk.functionals.time_evolution_resultqilisdk.functionals.time_evolution__qualname__rrandomrandom_valuereal_part__reduce____reduce_cython____reduce_ex__resultsreturnrowsamplesself__set_name__setdefault__setstate____setstate_cython__shotsizestatestate_entriesstate_entries_initstate_entrystate_entry_initstate_indexstaticmethodsupertarget_qubits__test__total_probuniformupdateuse_setstatevalvaluesxzero_str01\200\001\330\004\"\240!\2406\250\021\200A""\33056\360\010\000\t!\240\014\250A\250U\260%\260t\2705\300\001\300\022\3005\310\001\360\006\000\t\r\210E\220\025\220a\220s\230!\330\014\020\220\005\220U\230!\2303\230a\330\020\026\220e\2301\230B\230a\230q\330\020\023\2203\220a\220u\230B\230a\330\024\027\220v\230Z\240q\250\001\330\024\027\220x\230z\250\021\250!\330\024\027\220v\230Q\230b\240\002\240&\250\001\340\010\014\210E\220\025\220a\220s\230#\230X\240R\240q\330\014\017\210v\220Q\220f\230C\230v\240Q\240b\250\002\250!\200A\330\010\r\210R\210y\230\001\320\004,\250M\270\021\340\010\r\210Q\210a\360\006\000\t\021\220\001\360\006\000\t\r\210H\220J\230h\240a\330\014\030\230\004\230E\240\027\250\001\250\021\330\014\022\220)\2305\240\003\2402\240R\240t\2509\260A\260S\270\003\2704\270t\300:\310S\320PQ\330\020\034\230I\240W\250A\250Q\330\014\027\220t\2301\230K\240t\320+<\270D\320@P\320PT\320TU\330\014\021\220\021\320\022(\250\010\260\001\330\014\021\220\027\230\001\230\021\340\010\r\210Q\210a\360\006\000\t\037\230j\250\010\260\001\330\010\032\230*\240A\340\010\r\210Q\210a\360\006\000\t\035\230B\230c\240\021\330\010\"\240,\250a\250r\260\023\260C\260w\270j\310\001\360\006\000\t\016\210Q\210a\330\010C\3005\310\n\320RS\340\010\014\320\014 \240\001\330\014\021\220\021\220#\220Q\320\026&\240a\240u\250A\320-=\270Q\270g\300Q\320FV\320VW\320WX\340\010\r\210Q\210a\360\006\000\t)\250\014\260A\260S\270\001\340\010\014\210J\220a\330\014\021\220\021\220.\240\006\240a\330\014\017\210v\220[\240\003\2401\330\020\021\330\014\021\220\021\220!\360\010\000\t\016\210Q\210a\360\006\000\t\016\210Q\210a\330\010>\270e\300:\310Q\340\010\014\210O\2301\330\014\021\220\021\220#\220Q\220k\240\021\240%\240q\250\013\2601\260G\2701\270K\300q\310\001\360\006\000\tJ\001\310\025\310j\320XY\340\010!\240\021\360\014\000\t\r\210I\220Q\330\014\022\220%\220q\230\001\330\014\022\220%\220q\230\001\330\014\023\2203\220a\220u\230C\230q\330\014\017\210u\220B\220a\330\020\034\230J\240b\250\005\250Q\330\020\036\230a\340\010\r\210Q\210a\360\006\000\t\014\2104\210q\220\013""\2302\230U\240\"\240A\330\014\022\220,\230a\320\037F\300a\300q\360\016\000\t\037\230a\330\010\037\230q\360\006\000\020\021\330\010\014\210H\220E\230\021\230!\330\014\033\2306\240\030\250\021\250%\250q\330\014\036\230a\330\014\020\220\016\230a\330\020\036\230j\250\001\250\021\330\020\027\220z\240\021\240!\330\020#\2401\330\020\023\220=\240\003\2401\340\024 \240\001\330\024\030\230\005\230U\240!\240;\250b\260\004\260D\270\001\330\030\034\230L\250\003\2503\250b\260\001\330\034)\250\021\340\034)\250\021\330\024\032\230!\230>\250\021\330\024\025\340\010\022\220.\240\001\240\027\250\010\260\010\270\001\330\010\017\210q\200\001\330\004\n\210+\220Q\200\001\360\010\000\005\016\210T\320\021\"\240$\240l\260$\260m\3004\300q\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\017%\240T\250\021\250'\260\033\270G\3001\340\010\017\320\017%\240T\250\021\250'\260\033\270A\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\2204\220x\230q\240\001\330\004\007\200|\2207\230!\330\010&\240a\240w\250n\270A\330\004\013\2101";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 80; i++) {
+    for (int i = 0; i < 156; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 16) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 28) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -6659,7 +13833,7 @@ const char* const bytes = " * 001Entries must be sorted by (row, col)Matrix A en
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 80; i < 83; i++) {
+    for (int i = 156; i < 166; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -6670,15 +13844,15 @@ const char* const bytes = " * 001Entries must be sorted by (row, col)Matrix A en
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 83; i++) {
+    for (Py_ssize_t i = 0; i < 166; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 80;
-      for (Py_ssize_t i=0; i<3; ++i) {
+      PyObject **table = stringtab + 156;
+      for (Py_ssize_t i=0; i<10; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
         #else
@@ -6690,24 +13864,25 @@ const char* const bytes = " * 001Entries must be sorted by (row, col)Matrix A en
   }
   {
     PyObject **numbertab = __pyx_mstate->__pyx_number_tab;
-    double const c_constants[] = {0.0,1.0,2.0,3.0,4.0,5.0,6.0};
-    for (int i = 0; i < 7; i++) {
+    double const c_constants[] = {0.0,1.0};
+    for (int i = 0; i < 2; i++) {
       numbertab[i] = PyFloat_FromDouble(c_constants[i]);
       if (unlikely(!numbertab[i])) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   {
-    PyObject **numbertab = __pyx_mstate->__pyx_number_tab + 7;
-    int8_t const cint_constants_1[] = {0,1,2};
-    for (int i = 0; i < 3; i++) {
-      numbertab[i] = PyLong_FromLong(cint_constants_1[i - 0]);
+    PyObject **numbertab = __pyx_mstate->__pyx_number_tab + 2;
+    int8_t const cint_constants_1[] = {0,-1,1};
+    int32_t const cint_constants_4[] = {32396611L};
+    for (int i = 0; i < 4; i++) {
+      numbertab[i] = PyLong_FromLong((i < 3 ? cint_constants_1[i - 0] : cint_constants_4[i - 3]));
       if (unlikely(!numbertab[i])) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #if CYTHON_IMMORTAL_CONSTANTS
   {
     PyObject **table = __pyx_mstate->__pyx_number_tab;
-    for (Py_ssize_t i=0; i<10; ++i) {
+    for (Py_ssize_t i=0; i<6; ++i) {
       #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
       Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
       #else
@@ -6725,9 +13900,9 @@ typedef struct {
     unsigned int argcount : 2;
     unsigned int num_posonly_args : 1;
     unsigned int num_kwonly_args : 1;
-    unsigned int nlocals : 3;
+    unsigned int nlocals : 6;
     unsigned int flags : 10;
-    unsigned int first_line : 8;
+    unsigned int first_line : 9;
 } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
 static PyObject* __Pyx_PyCode_New(
@@ -6744,24 +13919,44 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 63};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_dense, __pyx_mstate->__pyx_n_u_mat, __pyx_mstate->__pyx_n_u_r, __pyx_mstate->__pyx_n_u_c, __pyx_mstate->__pyx_n_u_val};
+    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_qili_sim_cython_pyx, __pyx_mstate->__pyx_n_u_from_dense, __pyx_mstate->__pyx_kp_b_iso88591_A56_AU_t5_5_E_as_U_3a_e1Baq_3auB, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+  }
+  {
     const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_mstate->__pyx_kp_b_iso88591_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_mstate->__pyx_kp_b_iso88591_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_pyx_state};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_mstate->__pyx_kp_b_iso88591_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_mstate->__pyx_kp_b_iso88591_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 179};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_state, __pyx_mstate->__pyx_n_u_dict_2, __pyx_mstate->__pyx_n_u_use_setstate};
+    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_mstate->__pyx_kp_b_iso88591_T_l_m4q_G1F_a_vWE_Q_q_q_T_G1_T, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 16};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_pyx_state};
+    __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_mstate->__pyx_kp_b_iso88591_6, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 446};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_qili_sim_cython_pyx, __pyx_mstate->__pyx_n_u_init, __pyx_mstate->__pyx_kp_b_iso88591_A_Ry, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[5] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_qili_sim_cython_pyx, __pyx_mstate->__pyx_n_u_init, __pyx_mstate->__pyx_kp_b_iso88591_A_Ry, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[5])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 7, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 182};
-    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_functional, __pyx_mstate->__pyx_n_u_entriesA, __pyx_mstate->__pyx_n_u_entriesB, __pyx_mstate->__pyx_n_u_A, __pyx_mstate->__pyx_n_u_B, __pyx_mstate->__pyx_n_u_C};
-    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_qili_sim_cython_pyx, __pyx_mstate->__pyx_n_u_execute_sampling, __pyx_mstate->__pyx_kp_b_iso88591_M_Rs_WCs_Cq_Rs_WCs_Cq_az_A_az_A, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 37, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 449};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_functional, __pyx_mstate->__pyx_n_u_gates, __pyx_mstate->__pyx_n_u_gate_name, __pyx_mstate->__pyx_n_u_new_gate, __pyx_mstate->__pyx_n_u_gate, __pyx_mstate->__pyx_n_u_num_qubits, __pyx_mstate->__pyx_n_u_nshots, __pyx_mstate->__pyx_n_u_mat_size, __pyx_mstate->__pyx_n_u_state, __pyx_mstate->__pyx_n_u_state_entries_init, __pyx_mstate->__pyx_n_u_state_entry_init, __pyx_mstate->__pyx_n_u_gate_matrix, __pyx_mstate->__pyx_n_u_gate_c, __pyx_mstate->__pyx_n_u_state_entries, __pyx_mstate->__pyx_n_u_state_entry, __pyx_mstate->__pyx_n_u_amplitude_entries, __pyx_mstate->__pyx_n_u_prob_entries, __pyx_mstate->__pyx_n_u_total_prob, __pyx_mstate->__pyx_n_u_row, __pyx_mstate->__pyx_n_u_amp, __pyx_mstate->__pyx_n_u_prob, __pyx_mstate->__pyx_n_u_real_part, __pyx_mstate->__pyx_n_u_imag_part, __pyx_mstate->__pyx_n_u_entry, __pyx_mstate->__pyx_n_u_counts, __pyx_mstate->__pyx_n_u_shot, __pyx_mstate->__pyx_n_u_state_index, __pyx_mstate->__pyx_n_u_random_value, __pyx_mstate->__pyx_n_u_cumulative_prob, __pyx_mstate->__pyx_n_u_bitstring, __pyx_mstate->__pyx_n_u_one_str, __pyx_mstate->__pyx_n_u_zero_str, __pyx_mstate->__pyx_n_u_b, __pyx_mstate->__pyx_n_u_prob_entry, __pyx_mstate->__pyx_n_u_random, __pyx_mstate->__pyx_n_u_results};
+    __pyx_mstate_global->__pyx_codeobj_tab[6] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_qili_sim_cython_pyx, __pyx_mstate->__pyx_n_u_execute_sampling, __pyx_mstate->__pyx_kp_b_iso88591_M_Qa_HJha_E_5_2Rt9AS_4t_SPQ_IWA, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[6])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 4};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_pyx_type, __pyx_mstate->__pyx_n_u_pyx_checksum, __pyx_mstate->__pyx_n_u_pyx_state, __pyx_mstate->__pyx_n_u_pyx_result};
+    __pyx_mstate_global->__pyx_codeobj_tab[7] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_pyx_unpickle_Gate, __pyx_mstate->__pyx_kp_b_iso88591_q_0_kQR_4xq_7_awnA_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[7])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -8056,109 +15251,6 @@ static void __Pyx_RaiseArgtupleInvalid(
                  (num_expected == 1) ? "" : "s", num_found);
 }
 
-/* GetItemInt */
-static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
-    PyObject *r;
-    if (unlikely(!j)) return NULL;
-    r = PyObject_GetItem(o, j);
-    Py_DECREF(j);
-    return r;
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck, int unsafe_shared) {
-    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
-#if CYTHON_ASSUME_SAFE_SIZE
-    Py_ssize_t wrapped_i = i;
-    if (wraparound & unlikely(i < 0)) {
-        wrapped_i += PyList_GET_SIZE(o);
-    }
-    if ((CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS || !CYTHON_ASSUME_SAFE_MACROS)) {
-        return __Pyx_PyList_GetItemRefFast(o, wrapped_i, unsafe_shared);
-    } else
-    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyList_GET_SIZE(o)))) {
-        return __Pyx_NewRef(PyList_GET_ITEM(o, wrapped_i));
-    }
-    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
-#else
-    (void)wraparound;
-    (void)boundscheck;
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck, int unsafe_shared) {
-    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
-#if CYTHON_ASSUME_SAFE_SIZE && CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    Py_ssize_t wrapped_i = i;
-    if (wraparound & unlikely(i < 0)) {
-        wrapped_i += PyTuple_GET_SIZE(o);
-    }
-    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyTuple_GET_SIZE(o)))) {
-        return __Pyx_NewRef(PyTuple_GET_ITEM(o, wrapped_i));
-    }
-    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
-#else
-    (void)wraparound;
-    (void)boundscheck;
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
-                                                     int wraparound, int boundscheck, int unsafe_shared) {
-    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
-#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
-        if ((CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS)) {
-            return __Pyx_PyList_GetItemRefFast(o, n, unsafe_shared);
-        } else if ((!boundscheck) || (likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o))))) {
-            return __Pyx_NewRef(PyList_GET_ITEM(o, n));
-        }
-    } else
-    #if !CYTHON_AVOID_BORROWED_REFS
-    if (PyTuple_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
-        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyTuple_GET_SIZE(o)))) {
-            return __Pyx_NewRef(PyTuple_GET_ITEM(o, n));
-        }
-    } else
-    #endif
-#endif
-#if CYTHON_USE_TYPE_SLOTS && !CYTHON_COMPILING_IN_PYPY
-    {
-        PyMappingMethods *mm = Py_TYPE(o)->tp_as_mapping;
-        PySequenceMethods *sm = Py_TYPE(o)->tp_as_sequence;
-        if (!is_list && mm && mm->mp_subscript) {
-            PyObject *r, *key = PyLong_FromSsize_t(i);
-            if (unlikely(!key)) return NULL;
-            r = mm->mp_subscript(o, key);
-            Py_DECREF(key);
-            return r;
-        }
-        if (is_list || likely(sm && sm->sq_item)) {
-            if (wraparound && unlikely(i < 0) && likely(sm->sq_length)) {
-                Py_ssize_t l = sm->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return NULL;
-                    PyErr_Clear();
-                }
-            }
-            return sm->sq_item(o, i);
-        }
-    }
-#else
-    if (is_list || !PyMapping_Check(o)) {
-        return PySequence_GetItem(o, i);
-    }
-#endif
-    (void)wraparound;
-    (void)boundscheck;
-    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
-}
-
 /* RaiseException */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause) {
     PyObject* owned_instance = NULL;
@@ -8589,26 +15681,6 @@ bad:
 #endif
 }
 
-/* ExtTypeTest */
-static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type) {
-    __Pyx_TypeName obj_type_name;
-    __Pyx_TypeName type_name;
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    if (likely(__Pyx_TypeCheck(obj, type)))
-        return 1;
-    obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
-    type_name = __Pyx_PyType_GetFullyQualifiedName(type);
-    PyErr_Format(PyExc_TypeError,
-                 "Cannot convert " __Pyx_FMT_TYPENAME " to " __Pyx_FMT_TYPENAME,
-                 obj_type_name, type_name);
-    __Pyx_DECREF_TypeName(obj_type_name);
-    __Pyx_DECREF_TypeName(type_name);
-    return 0;
-}
-
 /* RejectKeywords */
 static void __Pyx_RejectKeywords(const char* function_name, PyObject *kwds) {
     PyObject *key = NULL;
@@ -8636,18 +15708,16 @@ static void __Pyx_RejectKeywords(const char* function_name, PyObject *kwds) {
     }
 }
 
-/* PyObjectFastCallMethod */
-#if !CYTHON_VECTORCALL || PY_VERSION_HEX < 0x03090000
-static PyObject *__Pyx_PyObject_FastCallMethod(PyObject *name, PyObject *const *args, size_t nargsf) {
-    PyObject *result;
-    PyObject *attr = PyObject_GetAttr(args[0], name);
-    if (unlikely(!attr))
-        return NULL;
-    result = __Pyx_PyObject_FastCall(attr, args+1, nargsf - 1);
-    Py_DECREF(attr);
-    return result;
+/* RaiseUnexpectedTypeError */
+static int
+__Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj)
+{
+    __Pyx_TypeName obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    PyErr_Format(PyExc_TypeError, "Expected %s, got " __Pyx_FMT_TYPENAME,
+                 expected, obj_type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    return 0;
 }
-#endif
 
 /* PyDictVersioning (used by GetModuleGlobalName) */
 #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
@@ -8711,6 +15781,209 @@ static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name)
     return __Pyx_GetBuiltinName(name);
 }
 
+/* PyObjectFastCallMethod */
+#if !CYTHON_VECTORCALL || PY_VERSION_HEX < 0x03090000
+static PyObject *__Pyx_PyObject_FastCallMethod(PyObject *name, PyObject *const *args, size_t nargsf) {
+    PyObject *result;
+    PyObject *attr = PyObject_GetAttr(args[0], name);
+    if (unlikely(!attr))
+        return NULL;
+    result = __Pyx_PyObject_FastCall(attr, args+1, nargsf - 1);
+    Py_DECREF(attr);
+    return result;
+}
+#endif
+
+/* GetAttr3 */
+#if __PYX_LIMITED_VERSION_HEX < 0x030d0000
+static PyObject *__Pyx_GetAttr3Default(PyObject *d) {
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    if (unlikely(!__Pyx_PyErr_ExceptionMatches(PyExc_AttributeError)))
+        return NULL;
+    __Pyx_PyErr_Clear();
+    Py_INCREF(d);
+    return d;
+}
+#endif
+static CYTHON_INLINE PyObject *__Pyx_GetAttr3(PyObject *o, PyObject *n, PyObject *d) {
+    PyObject *r;
+#if __PYX_LIMITED_VERSION_HEX >= 0x030d0000
+    int res = PyObject_GetOptionalAttr(o, n, &r);
+    return (res != 0) ? r : __Pyx_NewRef(d);
+#else
+  #if CYTHON_USE_TYPE_SLOTS
+    if (likely(PyUnicode_Check(n))) {
+        r = __Pyx_PyObject_GetAttrStrNoError(o, n);
+        if (unlikely(!r) && likely(!PyErr_Occurred())) {
+            r = __Pyx_NewRef(d);
+        }
+        return r;
+    }
+  #endif
+    r = PyObject_GetAttr(o, n);
+    return (likely(r)) ? r : __Pyx_GetAttr3Default(d);
+#endif
+}
+
+/* ExtTypeTest */
+static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type) {
+    __Pyx_TypeName obj_type_name;
+    __Pyx_TypeName type_name;
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
+    }
+    if (likely(__Pyx_TypeCheck(obj, type)))
+        return 1;
+    obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    type_name = __Pyx_PyType_GetFullyQualifiedName(type);
+    PyErr_Format(PyExc_TypeError,
+                 "Cannot convert " __Pyx_FMT_TYPENAME " to " __Pyx_FMT_TYPENAME,
+                 obj_type_name, type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    __Pyx_DECREF_TypeName(type_name);
+    return 0;
+}
+
+/* HasAttr (used by ImportImpl) */
+#if __PYX_LIMITED_VERSION_HEX < 0x030d0000
+static CYTHON_INLINE int __Pyx_HasAttr(PyObject *o, PyObject *n) {
+    PyObject *r;
+    if (unlikely(!PyUnicode_Check(n))) {
+        PyErr_SetString(PyExc_TypeError,
+                        "hasattr(): attribute name must be string");
+        return -1;
+    }
+    r = __Pyx_PyObject_GetAttrStrNoError(o, n);
+    if (!r) {
+        return (unlikely(PyErr_Occurred())) ? -1 : 0;
+    } else {
+        Py_DECREF(r);
+        return 1;
+    }
+}
+#endif
+
+/* ImportImpl (used by Import) */
+static int __Pyx__Import_GetModule(PyObject *qualname, PyObject **module) {
+    PyObject *imported_module = PyImport_GetModule(qualname);
+    if (unlikely(!imported_module)) {
+        *module = NULL;
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+    *module = imported_module;
+    return 1;
+}
+static int __Pyx__Import_Lookup(PyObject *qualname, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject **module) {
+    PyObject *imported_module;
+    PyObject *top_level_package_name;
+    Py_ssize_t i;
+    int status, module_found;
+    Py_ssize_t dot_index;
+    module_found = __Pyx__Import_GetModule(qualname, &imported_module);
+    if (unlikely(!module_found || module_found == -1)) {
+        *module = NULL;
+        return module_found;
+    }
+    if (imported_names) {
+        for (i = 0; i < len_imported_names; i++) {
+            PyObject *imported_name = imported_names[i];
+#if __PYX_LIMITED_VERSION_HEX < 0x030d0000
+            int has_imported_attribute = PyObject_HasAttr(imported_module, imported_name);
+#else
+            int has_imported_attribute = PyObject_HasAttrWithError(imported_module, imported_name);
+            if (unlikely(has_imported_attribute == -1)) goto error;
+#endif
+            if (!has_imported_attribute) {
+                goto not_found;
+            }
+        }
+        *module = imported_module;
+        return 1;
+    }
+    dot_index = PyUnicode_FindChar(qualname, '.', 0, PY_SSIZE_T_MAX, 1);
+    if (dot_index == -1) {
+        *module = imported_module;
+        return 1;
+    }
+    if (unlikely(dot_index == -2)) goto error;
+    top_level_package_name = PyUnicode_Substring(qualname, 0, dot_index);
+    if (unlikely(!top_level_package_name)) goto error;
+    Py_DECREF(imported_module);
+    status = __Pyx__Import_GetModule(top_level_package_name, module);
+    Py_DECREF(top_level_package_name);
+    return status;
+error:
+    Py_DECREF(imported_module);
+    *module = NULL;
+    return -1;
+not_found:
+    Py_DECREF(imported_module);
+    *module = NULL;
+    return 0;
+}
+static PyObject *__Pyx__Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, PyObject *moddict, int level) {
+    PyObject *module = 0;
+    PyObject *empty_dict = 0;
+    PyObject *from_list = 0;
+    int module_found;
+    if (!qualname) {
+        qualname = name;
+    }
+    module_found = __Pyx__Import_Lookup(qualname, imported_names, len_imported_names, &module);
+    if (likely(module_found == 1)) {
+        return module;
+    } else if (unlikely(module_found == -1)) {
+        return NULL;
+    }
+    empty_dict = PyDict_New();
+    if (unlikely(!empty_dict))
+        goto bad;
+    if (imported_names) {
+#if CYTHON_COMPILING_IN_CPYTHON
+        from_list = __Pyx_PyList_FromArray(imported_names, len_imported_names);
+        if (unlikely(!from_list))
+            goto bad;
+#else
+        from_list = PyList_New(len_imported_names);
+        if (unlikely(!from_list)) goto bad;
+        for (Py_ssize_t i=0; i<len_imported_names; ++i) {
+            if (PyList_SetItem(from_list, i, __Pyx_NewRef(imported_names[i])) < 0) goto bad;
+        }
+#endif
+    }
+    if (level == -1) {
+        const char* package_sep = strchr(__Pyx_MODULE_NAME, '.');
+        if (package_sep != (0)) {
+            module = PyImport_ImportModuleLevelObject(
+                name, moddict, empty_dict, from_list, 1);
+            if (unlikely(!module)) {
+                if (unlikely(!PyErr_ExceptionMatches(PyExc_ImportError)))
+                    goto bad;
+                PyErr_Clear();
+            }
+        }
+        level = 0;
+    }
+    if (!module) {
+        module = PyImport_ImportModuleLevelObject(
+            name, moddict, empty_dict, from_list, level);
+    }
+bad:
+    Py_XDECREF(from_list);
+    Py_XDECREF(empty_dict);
+    return module;
+}
+
+/* Import */
+static PyObject *__Pyx_Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, int level) {
+    return __Pyx__Import(name, imported_names, len_imported_names, qualname, __pyx_mstate_global->__pyx_d, level);
+}
+
 /* PyObjectVectorCallKwBuilder */
 #if CYTHON_VECTORCALL
 static int __Pyx_VectorcallBuilder_AddArg(PyObject *key, PyObject *value, PyObject *builder, PyObject **args, int n) {
@@ -8742,6 +16015,157 @@ CYTHON_UNUSED static int __Pyx_VectorcallBuilder_AddArg_Check(PyObject *key, PyO
     return PyDict_SetItem(builder, key, value);
 }
 #endif
+
+/* ArgTypeTestFunc (used by ArgTypeTest) */
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
+{
+    __Pyx_TypeName type_name;
+    __Pyx_TypeName obj_type_name;
+    PyObject *extra_info = __pyx_mstate_global->__pyx_empty_unicode;
+    int from_annotation_subclass = 0;
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
+    }
+    else if (!exact) {
+        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
+    } else if (exact == 2) {
+        if (__Pyx_TypeCheck(obj, type)) {
+            from_annotation_subclass = 1;
+            extra_info = __pyx_mstate_global->__pyx_kp_u_Note_that_Cython_is_deliberately;
+        }
+    }
+    type_name = __Pyx_PyType_GetFullyQualifiedName(type);
+    obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    PyErr_Format(PyExc_TypeError,
+        "Argument '%.200s' has incorrect type (expected " __Pyx_FMT_TYPENAME
+        ", got " __Pyx_FMT_TYPENAME ")"
+#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
+        "%s%U"
+#endif
+        , name, type_name, obj_type_name
+#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
+        , (from_annotation_subclass ? ". " : ""), extra_info
+#endif
+        );
+#if __PYX_LIMITED_VERSION_HEX >= 0x030C0000
+    if (exact == 2 && from_annotation_subclass) {
+        PyObject *res;
+        PyObject *vargs[2];
+        vargs[0] = PyErr_GetRaisedException();
+        vargs[1] = extra_info;
+        res = PyObject_VectorcallMethod(__pyx_mstate_global->__pyx_kp_u_add_note, vargs, 2, NULL);
+        Py_XDECREF(res);
+        PyErr_SetRaisedException(vargs[0]);
+    }
+#endif
+    __Pyx_DECREF_TypeName(type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    return 0;
+}
+
+/* GetItemInt */
+static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
+    PyObject *r;
+    if (unlikely(!j)) return NULL;
+    r = PyObject_GetItem(o, j);
+    Py_DECREF(j);
+    return r;
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck, int unsafe_shared) {
+    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
+#if CYTHON_ASSUME_SAFE_SIZE
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyList_GET_SIZE(o);
+    }
+    if ((CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS || !CYTHON_ASSUME_SAFE_MACROS)) {
+        return __Pyx_PyList_GetItemRefFast(o, wrapped_i, unsafe_shared);
+    } else
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyList_GET_SIZE(o)))) {
+        return __Pyx_NewRef(PyList_GET_ITEM(o, wrapped_i));
+    }
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+#else
+    (void)wraparound;
+    (void)boundscheck;
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck, int unsafe_shared) {
+    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
+#if CYTHON_ASSUME_SAFE_SIZE && CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyTuple_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyTuple_GET_SIZE(o)))) {
+        return __Pyx_NewRef(PyTuple_GET_ITEM(o, wrapped_i));
+    }
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+#else
+    (void)wraparound;
+    (void)boundscheck;
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
+                                                     int wraparound, int boundscheck, int unsafe_shared) {
+    CYTHON_MAYBE_UNUSED_VAR(unsafe_shared);
+#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
+        if ((CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS)) {
+            return __Pyx_PyList_GetItemRefFast(o, n, unsafe_shared);
+        } else if ((!boundscheck) || (likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o))))) {
+            return __Pyx_NewRef(PyList_GET_ITEM(o, n));
+        }
+    } else
+    #if !CYTHON_AVOID_BORROWED_REFS
+    if (PyTuple_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
+        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyTuple_GET_SIZE(o)))) {
+            return __Pyx_NewRef(PyTuple_GET_ITEM(o, n));
+        }
+    } else
+    #endif
+#endif
+#if CYTHON_USE_TYPE_SLOTS && !CYTHON_COMPILING_IN_PYPY
+    {
+        PyMappingMethods *mm = Py_TYPE(o)->tp_as_mapping;
+        PySequenceMethods *sm = Py_TYPE(o)->tp_as_sequence;
+        if (!is_list && mm && mm->mp_subscript) {
+            PyObject *r, *key = PyLong_FromSsize_t(i);
+            if (unlikely(!key)) return NULL;
+            r = mm->mp_subscript(o, key);
+            Py_DECREF(key);
+            return r;
+        }
+        if (is_list || likely(sm && sm->sq_item)) {
+            if (wraparound && unlikely(i < 0) && likely(sm->sq_length)) {
+                Py_ssize_t l = sm->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return NULL;
+                    PyErr_Clear();
+                }
+            }
+            return sm->sq_item(o, i);
+        }
+    }
+#else
+    if (is_list || !PyMapping_Check(o)) {
+        return PySequence_GetItem(o, i);
+    }
+#endif
+    (void)wraparound;
+    (void)boundscheck;
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+}
 
 /* AllocateExtensionType */
 static PyObject *__Pyx_AllocateExtensionType(PyTypeObject *t, int is_final) {
@@ -9366,7 +16790,7 @@ static int __Pyx__DelItemOnTypeDict(PyTypeObject *tp, PyObject *k) {
 static int __Pyx_setup_reduce_is_named(PyObject* meth, PyObject* name) {
   int ret;
   PyObject *name_attr;
-  name_attr = __Pyx_PyObject_GetAttrStrNoError(meth, __pyx_mstate_global->__pyx_n_u_name);
+  name_attr = __Pyx_PyObject_GetAttrStrNoError(meth, __pyx_mstate_global->__pyx_n_u_name_2);
   if (likely(name_attr)) {
       ret = PyObject_RichCompareBool(name_attr, name, Py_EQ);
   } else {
@@ -9471,144 +16895,6 @@ __PYX_GOOD:
     return ret;
 }
 
-/* HasAttr (used by ImportImpl) */
-#if __PYX_LIMITED_VERSION_HEX < 0x030d0000
-static CYTHON_INLINE int __Pyx_HasAttr(PyObject *o, PyObject *n) {
-    PyObject *r;
-    if (unlikely(!PyUnicode_Check(n))) {
-        PyErr_SetString(PyExc_TypeError,
-                        "hasattr(): attribute name must be string");
-        return -1;
-    }
-    r = __Pyx_PyObject_GetAttrStrNoError(o, n);
-    if (!r) {
-        return (unlikely(PyErr_Occurred())) ? -1 : 0;
-    } else {
-        Py_DECREF(r);
-        return 1;
-    }
-}
-#endif
-
-/* ImportImpl (used by Import) */
-static int __Pyx__Import_GetModule(PyObject *qualname, PyObject **module) {
-    PyObject *imported_module = PyImport_GetModule(qualname);
-    if (unlikely(!imported_module)) {
-        *module = NULL;
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-    *module = imported_module;
-    return 1;
-}
-static int __Pyx__Import_Lookup(PyObject *qualname, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject **module) {
-    PyObject *imported_module;
-    PyObject *top_level_package_name;
-    Py_ssize_t i;
-    int status, module_found;
-    Py_ssize_t dot_index;
-    module_found = __Pyx__Import_GetModule(qualname, &imported_module);
-    if (unlikely(!module_found || module_found == -1)) {
-        *module = NULL;
-        return module_found;
-    }
-    if (imported_names) {
-        for (i = 0; i < len_imported_names; i++) {
-            PyObject *imported_name = imported_names[i];
-#if __PYX_LIMITED_VERSION_HEX < 0x030d0000
-            int has_imported_attribute = PyObject_HasAttr(imported_module, imported_name);
-#else
-            int has_imported_attribute = PyObject_HasAttrWithError(imported_module, imported_name);
-            if (unlikely(has_imported_attribute == -1)) goto error;
-#endif
-            if (!has_imported_attribute) {
-                goto not_found;
-            }
-        }
-        *module = imported_module;
-        return 1;
-    }
-    dot_index = PyUnicode_FindChar(qualname, '.', 0, PY_SSIZE_T_MAX, 1);
-    if (dot_index == -1) {
-        *module = imported_module;
-        return 1;
-    }
-    if (unlikely(dot_index == -2)) goto error;
-    top_level_package_name = PyUnicode_Substring(qualname, 0, dot_index);
-    if (unlikely(!top_level_package_name)) goto error;
-    Py_DECREF(imported_module);
-    status = __Pyx__Import_GetModule(top_level_package_name, module);
-    Py_DECREF(top_level_package_name);
-    return status;
-error:
-    Py_DECREF(imported_module);
-    *module = NULL;
-    return -1;
-not_found:
-    Py_DECREF(imported_module);
-    *module = NULL;
-    return 0;
-}
-static PyObject *__Pyx__Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, PyObject *moddict, int level) {
-    PyObject *module = 0;
-    PyObject *empty_dict = 0;
-    PyObject *from_list = 0;
-    int module_found;
-    if (!qualname) {
-        qualname = name;
-    }
-    module_found = __Pyx__Import_Lookup(qualname, imported_names, len_imported_names, &module);
-    if (likely(module_found == 1)) {
-        return module;
-    } else if (unlikely(module_found == -1)) {
-        return NULL;
-    }
-    empty_dict = PyDict_New();
-    if (unlikely(!empty_dict))
-        goto bad;
-    if (imported_names) {
-#if CYTHON_COMPILING_IN_CPYTHON
-        from_list = __Pyx_PyList_FromArray(imported_names, len_imported_names);
-        if (unlikely(!from_list))
-            goto bad;
-#else
-        from_list = PyList_New(len_imported_names);
-        if (unlikely(!from_list)) goto bad;
-        for (Py_ssize_t i=0; i<len_imported_names; ++i) {
-            if (PyList_SetItem(from_list, i, __Pyx_NewRef(imported_names[i])) < 0) goto bad;
-        }
-#endif
-    }
-    if (level == -1) {
-        const char* package_sep = strchr(__Pyx_MODULE_NAME, '.');
-        if (package_sep != (0)) {
-            module = PyImport_ImportModuleLevelObject(
-                name, moddict, empty_dict, from_list, 1);
-            if (unlikely(!module)) {
-                if (unlikely(!PyErr_ExceptionMatches(PyExc_ImportError)))
-                    goto bad;
-                PyErr_Clear();
-            }
-        }
-        level = 0;
-    }
-    if (!module) {
-        module = PyImport_ImportModuleLevelObject(
-            name, moddict, empty_dict, from_list, level);
-    }
-bad:
-    Py_XDECREF(from_list);
-    Py_XDECREF(empty_dict);
-    return module;
-}
-
-/* Import */
-static PyObject *__Pyx_Import(PyObject *name, PyObject *const *imported_names, Py_ssize_t len_imported_names, PyObject *qualname, int level) {
-    return __Pyx__Import(name, imported_names, len_imported_names, qualname, __pyx_mstate_global->__pyx_d, level);
-}
-
 /* ImportFrom */
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
     PyObject* value = __Pyx_PyObject_GetAttrStr(module, name);
@@ -9622,7 +16908,7 @@ static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
         if (unlikely(!module_name_str)) { goto modbad; }
         module_name = PyUnicode_FromString(module_name_str);
         if (unlikely(!module_name)) { goto modbad; }
-        module_dot = PyUnicode_Concat(module_name, __pyx_mstate_global->__pyx_kp_u__2);
+        module_dot = PyUnicode_Concat(module_name, __pyx_mstate_global->__pyx_kp_u__7);
         if (unlikely(!module_dot)) { goto modbad; }
         full_name = PyUnicode_Concat(module_dot, name);
         if (unlikely(!full_name)) { goto modbad; }
@@ -11028,6 +18314,48 @@ static PyObject *__Pyx_CyFunction_New(PyMethodDef *ml, int flags, PyObject* qual
     return op;
 }
 
+/* GetNameInClass */
+static PyObject *__Pyx__GetNameInClass(PyObject *nmspace, PyObject *name) {
+    PyObject *result;
+    PyObject *dict;
+    assert(PyType_Check(nmspace));
+#if CYTHON_USE_TYPE_SLOTS
+    dict = ((PyTypeObject*)nmspace)->tp_dict;
+    Py_XINCREF(dict);
+#else
+    dict = PyObject_GetAttr(nmspace, __pyx_mstate_global->__pyx_n_u_dict);
+#endif
+    if (likely(dict)) {
+        result = PyObject_GetItem(dict, name);
+        Py_DECREF(dict);
+        if (result) {
+            return result;
+        }
+    }
+    PyErr_Clear();
+    __Pyx_GetModuleGlobalNameUncached(result, name);
+    return result;
+}
+
+/* ListPack */
+static PyObject *__Pyx_PyList_Pack(Py_ssize_t n, ...) {
+    va_list va;
+    PyObject *l = PyList_New(n);
+    va_start(va, n);
+    if (unlikely(!l)) goto end;
+    for (Py_ssize_t i=0; i<n; ++i) {
+        PyObject *arg = va_arg(va, PyObject*);
+        Py_INCREF(arg);
+        if (__Pyx_PyList_SET_ITEM(l, i, arg) != (0)) {
+            Py_CLEAR(l);
+            goto end;
+        }
+    }
+    end:
+    va_end(va);
+    return l;
+}
+
 /* Py3UpdateBases */
 static PyObject*
 __Pyx_PEP560_update_bases(PyObject *bases)
@@ -11748,6 +19076,36 @@ bad:
         return (target_type) value;\
     }
 
+/* CheckUnpickleChecksum */
+static void __Pyx_RaiseUnpickleChecksumError(long checksum, long checksum1, long checksum2, long checksum3, const char *members) {
+    PyObject *pickle_module = PyImport_ImportModule("pickle");
+    if (unlikely(!pickle_module)) return;
+    PyObject *pickle_error = PyObject_GetAttrString(pickle_module, "PickleError");
+    Py_DECREF(pickle_module);
+    if (unlikely(!pickle_error)) return;
+    if (checksum2 == checksum1) {
+        PyErr_Format(pickle_error, "Incompatible checksums (0x%x vs (0x%x) = (%s))",
+            checksum, checksum1, members);
+    } else if (checksum3 == checksum2) {
+        PyErr_Format(pickle_error, "Incompatible checksums (0x%x vs (0x%x, 0x%x) = (%s))",
+            checksum, checksum1, checksum2, members);
+    } else {
+        PyErr_Format(pickle_error, "Incompatible checksums (0x%x vs (0x%x, 0x%x, 0x%x) = (%s))",
+            checksum, checksum1, checksum2, checksum3, members);
+    }
+    Py_DECREF(pickle_error);
+}
+static int __Pyx_CheckUnpickleChecksum(long checksum, long checksum1, long checksum2, long checksum3, const char *members) {
+    int found = 0;
+    found |= checksum1 == checksum;
+    found |= checksum2 == checksum;
+    found |= checksum3 == checksum;
+    if (likely(found))
+        return 0;
+    __Pyx_RaiseUnpickleChecksumError(checksum, checksum1, checksum2, checksum3, members);
+    return -1;
+}
+
 /* FromPy */
 static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject* o) {
 #if CYTHON_COMPILING_IN_LIMITED_API
@@ -11771,6 +19129,176 @@ static __pyx_t_double_complex __Pyx_PyComplex_As___pyx_t_double_complex(PyObject
                (double)cval.real,
                (double)cval.imag);
 #endif
+}
+
+/* ToPyCTupleUtility */
+static PyObject* __pyx_convert__to_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(__pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex value) {
+    PyObject* items[3] = { 0, 0, 0 };
+    PyObject* result = NULL;
+        items[0] = __Pyx_PyLong_From_int(value.f0);
+        if (unlikely(!items[0])) goto bad;
+        items[1] = __Pyx_PyLong_From_int(value.f1);
+        if (unlikely(!items[1])) goto bad;
+        items[2] = __pyx_PyComplex_FromComplex(value.f2);
+        if (unlikely(!items[2])) goto bad;
+    result = PyTuple_New(3);
+    if (unlikely(!result)) goto bad;
+    for (Py_ssize_t i=0; i<3; ++i) {
+        PyObject *item = items[i];
+        items[i] = NULL;
+        #if !CYTHON_ASSUME_SAFE_MACROS
+        if (unlikely(PyTuple_SetItem(result, i, item) < 0)) goto bad;
+        #else
+        PyTuple_SET_ITEM(result, i, item);
+        #endif
+    }
+    return result;
+bad:
+    Py_XDECREF(result);
+    for (Py_ssize_t i=2; i >= 0; --i) {
+        Py_XDECREF(items[i]);
+    }
+    return NULL;
+}
+
+/* FromPyCTupleUtility */
+#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE && !CYTHON_AVOID_BORROWED_REFS
+static void __Pyx_tuple___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject * o, __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex *result) {
+        result->f0 = __Pyx_PyLong_As_int(PyTuple_GET_ITEM(o, 0));
+        if ((result->f0 == (int)-1) && PyErr_Occurred()) goto bad;
+        result->f1 = __Pyx_PyLong_As_int(PyTuple_GET_ITEM(o, 1));
+        if ((result->f1 == (int)-1) && PyErr_Occurred()) goto bad;
+        result->f2 = __Pyx_PyComplex_As___pyx_t_double_complex(PyTuple_GET_ITEM(o, 2));
+        if (PyErr_Occurred()) goto bad;
+    return;
+bad:
+    return;
+}
+static void __Pyx_list___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject * o, __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex *result) {
+        result->f0 = __Pyx_PyLong_As_int(PyList_GET_ITEM(o, 0));
+        if ((result->f0 == (int)-1) && PyErr_Occurred()) goto bad;
+        result->f1 = __Pyx_PyLong_As_int(PyList_GET_ITEM(o, 1));
+        if ((result->f1 == (int)-1) && PyErr_Occurred()) goto bad;
+        result->f2 = __Pyx_PyComplex_As___pyx_t_double_complex(PyList_GET_ITEM(o, 2));
+        if (PyErr_Occurred()) goto bad;
+    return;
+bad:
+    return;
+}
+#endif
+static void __Pyx_seq___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject * o, __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex *result) {
+    if (unlikely(!PySequence_Check(o))) {
+        __Pyx_TypeName o_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(o));
+        PyErr_Format(PyExc_TypeError,
+                     "Expected a sequence of size %zd, got " __Pyx_FMT_TYPENAME, (Py_ssize_t) 3, o_type_name);
+        __Pyx_DECREF_TypeName(o_type_name);
+        goto bad;
+    } else if (unlikely(PySequence_Length(o) != 3)) {
+        PyErr_Format(PyExc_TypeError,
+                     "Expected a sequence of size %zd, got size %zd", (Py_ssize_t) 3, PySequence_Length(o));
+        goto bad;
+    }
+    {
+        PyObject *item;
+        item = __Pyx_PySequence_ITEM(o, 0);  if (unlikely(!item)) goto bad;
+        result->f0 = __Pyx_PyLong_As_int(item);
+        Py_DECREF(item);
+        if ((result->f0 == (int)-1) && PyErr_Occurred()) goto bad;
+        item = __Pyx_PySequence_ITEM(o, 1);  if (unlikely(!item)) goto bad;
+        result->f1 = __Pyx_PyLong_As_int(item);
+        Py_DECREF(item);
+        if ((result->f1 == (int)-1) && PyErr_Occurred()) goto bad;
+        item = __Pyx_PySequence_ITEM(o, 2);  if (unlikely(!item)) goto bad;
+        result->f2 = __Pyx_PyComplex_As___pyx_t_double_complex(item);
+        Py_DECREF(item);
+        if (PyErr_Occurred()) goto bad;
+    }
+    return;
+bad:
+    return;
+}
+static CYTHON_INLINE __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex __pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(PyObject * o) {
+    __pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex result;
+    #if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE && !CYTHON_AVOID_BORROWED_REFS
+    if (likely(PyTuple_Check(o) && PyTuple_GET_SIZE(o) == 3)) {
+        __Pyx_tuple___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(o, &result);
+    } else if (likely(PyList_Check(o) && PyList_GET_SIZE(o) == 3)) {
+        __Pyx_list___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(o, &result);
+    } else
+    #endif
+    {
+        __Pyx_seq___pyx_convert__from_py___pyx_ctuple_int__and_int__and___dunderpyx_t_double_complex(o, &result);
+    }
+    return result;
+}
+
+/* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const int neg_one = (int) -1, const_zero = (int) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(int) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(int) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(int) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(int),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(int));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
 }
 
 /* CIntFromPy */
@@ -12023,73 +19551,254 @@ raise_neg_overflow:
     return (int) -1;
 }
 
-/* CIntToPy */
-static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value) {
+/* CIntFromPy */
+static CYTHON_INLINE long __Pyx_PyLong_As_long(PyObject *x) {
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
-    const int neg_one = (int) -1, const_zero = (int) 0;
+    const long neg_one = (long) -1, const_zero = (long) 0;
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic pop
 #endif
     const int is_unsigned = neg_one > const_zero;
+    if (unlikely(!PyLong_Check(x))) {
+        long val;
+        PyObject *tmp = __Pyx_PyNumber_Long(x);
+        if (!tmp) return (long) -1;
+        val = __Pyx_PyLong_As_long(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
     if (is_unsigned) {
-        if (sizeof(int) < sizeof(long)) {
-            return PyLong_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#if !CYTHON_COMPILING_IN_PYPY
-        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#if CYTHON_USE_PYLONG_INTERNALS
+        if (unlikely(__Pyx_PyLong_IsNeg(x))) {
+            goto raise_neg_overflow;
+        } else if (__Pyx_PyLong_IsCompact(x)) {
+            __PYX_VERIFY_RETURN_INT(long, __Pyx_compact_upylong, __Pyx_PyLong_CompactValueUnsigned(x))
+        } else {
+            const digit* digits = __Pyx_PyLong_Digits(x);
+            assert(__Pyx_PyLong_DigitCount(x) > 1);
+            switch (__Pyx_PyLong_DigitCount(x)) {
+                case 2:
+                    if ((8 * sizeof(long) > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) >= 2 * PyLong_SHIFT)) {
+                            return (long) (((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if ((8 * sizeof(long) > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) >= 3 * PyLong_SHIFT)) {
+                            return (long) (((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if ((8 * sizeof(long) > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) >= 4 * PyLong_SHIFT)) {
+                            return (long) (((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
+                        }
+                    }
+                    break;
+            }
+        }
 #endif
+#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x030C00A7
+        if (unlikely(Py_SIZE(x) < 0)) {
+            goto raise_neg_overflow;
+        }
+#else
+        {
+            int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+            if (unlikely(result < 0))
+                return (long) -1;
+            if (unlikely(result == 1))
+                goto raise_neg_overflow;
+        }
+#endif
+        if ((sizeof(long) <= sizeof(unsigned long))) {
+            __PYX_VERIFY_RETURN_INT_EXC(long, unsigned long, PyLong_AsUnsignedLong(x))
+        } else if ((sizeof(long) <= sizeof(unsigned PY_LONG_LONG))) {
+            __PYX_VERIFY_RETURN_INT_EXC(long, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
         }
     } else {
-        if (sizeof(int) <= sizeof(long)) {
-            return PyLong_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#if CYTHON_USE_PYLONG_INTERNALS
+        if (__Pyx_PyLong_IsCompact(x)) {
+            __PYX_VERIFY_RETURN_INT(long, __Pyx_compact_pylong, __Pyx_PyLong_CompactValue(x))
+        } else {
+            const digit* digits = __Pyx_PyLong_Digits(x);
+            assert(__Pyx_PyLong_DigitCount(x) > 1);
+            switch (__Pyx_PyLong_SignedDigitCount(x)) {
+                case -2:
+                    if ((8 * sizeof(long) - 1 > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
+                            return (long) (((long)-1)*(((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if ((8 * sizeof(long) > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
+                            return (long) ((((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
+                            return (long) (((long)-1)*(((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if ((8 * sizeof(long) > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
+                            return (long) ((((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 4 * PyLong_SHIFT)) {
+                            return (long) (((long)-1)*(((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if ((8 * sizeof(long) > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(long) - 1 > 4 * PyLong_SHIFT)) {
+                            return (long) ((((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
+                        }
+                    }
+                    break;
+            }
+        }
+#endif
+        if ((sizeof(long) <= sizeof(long))) {
+            __PYX_VERIFY_RETURN_INT_EXC(long, long, PyLong_AsLong(x))
+        } else if ((sizeof(long) <= sizeof(PY_LONG_LONG))) {
+            __PYX_VERIFY_RETURN_INT_EXC(long, PY_LONG_LONG, PyLong_AsLongLong(x))
         }
     }
     {
-        unsigned char *bytes = (unsigned char *)&value;
-#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
-        if (is_unsigned) {
-            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        long val;
+        int ret = -1;
+#if PY_VERSION_HEX >= 0x030d00A6 && !CYTHON_COMPILING_IN_LIMITED_API
+        Py_ssize_t bytes_copied = PyLong_AsNativeBytes(
+            x, &val, sizeof(val), Py_ASNATIVEBYTES_NATIVE_ENDIAN | (is_unsigned ? Py_ASNATIVEBYTES_UNSIGNED_BUFFER | Py_ASNATIVEBYTES_REJECT_NEGATIVE : 0));
+        if (unlikely(bytes_copied == -1)) {
+        } else if (unlikely(bytes_copied > (Py_ssize_t) sizeof(val))) {
+            goto raise_overflow;
         } else {
-            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+            ret = 0;
         }
-#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
+#elif PY_VERSION_HEX < 0x030d0000 && !(CYTHON_COMPILING_IN_PYPY || CYTHON_COMPILING_IN_LIMITED_API) || defined(_PyLong_AsByteArray)
+        int one = 1; int is_little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&val;
+        ret = _PyLong_AsByteArray((PyLongObject *)x,
+                                    bytes, sizeof(val),
+                                    is_little, !is_unsigned);
 #else
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        PyObject *from_bytes, *result = NULL, *kwds = NULL;
-        PyObject *py_bytes = NULL, *order_str = NULL;
-        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
-        if (!from_bytes) return NULL;
-        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(int));
-        if (!py_bytes) goto limited_bad;
-        order_str = PyUnicode_FromString(little ? "little" : "big");
-        if (!order_str) goto limited_bad;
-        {
-            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
-            if (!is_unsigned) {
-                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
-                if (!kwds) goto limited_bad;
-                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
-            }
-            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        PyObject *v;
+        PyObject *stepval = NULL, *mask = NULL, *shift = NULL;
+        int bits, remaining_bits, is_negative = 0;
+        int chunk_size = (sizeof(long) < 8) ? 30 : 62;
+        if (likely(PyLong_CheckExact(x))) {
+            v = __Pyx_NewRef(x);
+        } else {
+            v = PyNumber_Long(x);
+            if (unlikely(!v)) return (long) -1;
+            assert(PyLong_CheckExact(v));
         }
-        limited_bad:
-        Py_XDECREF(kwds);
-        Py_XDECREF(order_str);
-        Py_XDECREF(py_bytes);
-        Py_XDECREF(from_bytes);
-        return result;
+        {
+            int result = PyObject_RichCompareBool(v, Py_False, Py_LT);
+            if (unlikely(result < 0)) {
+                Py_DECREF(v);
+                return (long) -1;
+            }
+            is_negative = result == 1;
+        }
+        if (is_unsigned && unlikely(is_negative)) {
+            Py_DECREF(v);
+            goto raise_neg_overflow;
+        } else if (is_negative) {
+            stepval = PyNumber_Invert(v);
+            Py_DECREF(v);
+            if (unlikely(!stepval))
+                return (long) -1;
+        } else {
+            stepval = v;
+        }
+        v = NULL;
+        val = (long) 0;
+        mask = PyLong_FromLong((1L << chunk_size) - 1); if (unlikely(!mask)) goto done;
+        shift = PyLong_FromLong(chunk_size); if (unlikely(!shift)) goto done;
+        for (bits = 0; bits < (int) sizeof(long) * 8 - chunk_size; bits += chunk_size) {
+            PyObject *tmp, *digit;
+            long idigit;
+            digit = PyNumber_And(stepval, mask);
+            if (unlikely(!digit)) goto done;
+            idigit = PyLong_AsLong(digit);
+            Py_DECREF(digit);
+            if (unlikely(idigit < 0)) goto done;
+            val |= ((long) idigit) << bits;
+            tmp = PyNumber_Rshift(stepval, shift);
+            if (unlikely(!tmp)) goto done;
+            Py_DECREF(stepval); stepval = tmp;
+        }
+        Py_DECREF(shift); shift = NULL;
+        Py_DECREF(mask); mask = NULL;
+        {
+            long idigit = PyLong_AsLong(stepval);
+            if (unlikely(idigit < 0)) goto done;
+            remaining_bits = ((int) sizeof(long) * 8) - bits - (is_unsigned ? 0 : 1);
+            if (unlikely(idigit >= (1L << remaining_bits)))
+                goto raise_overflow;
+            val |= ((long) idigit) << bits;
+        }
+        if (!is_unsigned) {
+            if (unlikely(val & (((long) 1) << (sizeof(long) * 8 - 1))))
+                goto raise_overflow;
+            if (is_negative)
+                val = ~val;
+        }
+        ret = 0;
+    done:
+        Py_XDECREF(shift);
+        Py_XDECREF(mask);
+        Py_XDECREF(stepval);
 #endif
+        if (unlikely(ret))
+            return (long) -1;
+        return val;
     }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to long");
+    return (long) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to long");
+    return (long) -1;
 }
 
 /* CIntToPy */
@@ -12411,6 +20120,83 @@ raise_neg_overflow:
     return (size_t) -1;
 }
 
+/* PyObjectCallMethod1 */
+#if !(CYTHON_VECTORCALL && (__PYX_LIMITED_VERSION_HEX >= 0x030C0000 || (!CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x03090000)))
+static PyObject* __Pyx__PyObject_CallMethod1(PyObject* method, PyObject* arg) {
+    PyObject *result = __Pyx_PyObject_CallOneArg(method, arg);
+    Py_DECREF(method);
+    return result;
+}
+#endif
+static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg) {
+#if CYTHON_VECTORCALL && (__PYX_LIMITED_VERSION_HEX >= 0x030C0000 || (!CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x03090000))
+    PyObject *args[2] = {obj, arg};
+    (void) __Pyx_PyObject_CallOneArg;
+    (void) __Pyx_PyObject_Call2Args;
+    return PyObject_VectorcallMethod(method_name, args, 2 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+#else
+    PyObject *method = NULL, *result;
+    int is_method = __Pyx_PyObject_GetMethod(obj, method_name, &method);
+    if (likely(is_method)) {
+        result = __Pyx_PyObject_Call2Args(method, obj, arg);
+        Py_DECREF(method);
+        return result;
+    }
+    if (unlikely(!method)) return NULL;
+    return __Pyx__PyObject_CallMethod1(method, arg);
+#endif
+}
+
+/* UpdateUnpickledDict */
+static int __Pyx__UpdateUnpickledDict(PyObject *obj, PyObject *state, Py_ssize_t index) {
+    PyObject *state_dict = __Pyx_PySequence_ITEM(state, index);
+    if (unlikely(!state_dict)) {
+        return -1;
+    }
+    int non_empty = PyObject_IsTrue(state_dict);
+    if (non_empty == 0) {
+        Py_DECREF(state_dict);
+        return 0;
+    } else if (unlikely(non_empty == -1)) {
+        return -1;
+    }
+    PyObject *dict;
+    #if CYTHON_COMPILING_IN_LIMITED_API && __PYX_LIMITED_VERSION_HEX < 0x030A0000
+    dict = PyObject_GetAttrString(obj, "__dict__");
+    #else
+    dict = PyObject_GenericGetDict(obj, NULL);
+    #endif
+    if (unlikely(!dict)) {
+        Py_DECREF(state_dict);
+        return -1;
+    }
+    int result;
+    if (likely(PyDict_CheckExact(dict))) {
+        result = PyDict_Update(dict, state_dict);
+    } else {
+        PyObject *obj_result = __Pyx_PyObject_CallMethod1(dict, __pyx_mstate_global->__pyx_n_u_update, state_dict);
+        if (likely(obj_result)) {
+            Py_DECREF(obj_result);
+            result = 0;
+        } else {
+            result = -1;
+        }
+    }
+    Py_DECREF(state_dict);
+    Py_DECREF(dict);
+    return result;
+}
+static int __Pyx_UpdateUnpickledDict(PyObject *obj, PyObject *state, Py_ssize_t index) {
+    Py_ssize_t state_size = __Pyx_PyTuple_GET_SIZE(state);
+    #if !CYTHON_ASSUME_SAFE_SIZE
+    if (unlikely(state_size == -1)) return -1;
+    #endif
+    if (state_size <= index) {
+        return 0;
+    }
+    return __Pyx__UpdateUnpickledDict(obj, state, index);
+}
+
 /* FormatTypeName */
 #if CYTHON_COMPILING_IN_LIMITED_API && __PYX_LIMITED_VERSION_HEX < 0x030d0000
 static __Pyx_TypeName
@@ -12444,261 +20230,11 @@ __Pyx_PyType_GetFullyQualifiedName(PyTypeObject* tp)
         result = name;
         name = NULL;
     } else {
-        result = __Pyx_NewRef(__pyx_mstate_global->__pyx_kp_u__3);
+        result = __Pyx_NewRef(__pyx_mstate_global->__pyx_kp_u__8);
     }
     goto done;
 }
 #endif
-
-/* CIntFromPy */
-static CYTHON_INLINE long __Pyx_PyLong_As_long(PyObject *x) {
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#endif
-    const long neg_one = (long) -1, const_zero = (long) 0;
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic pop
-#endif
-    const int is_unsigned = neg_one > const_zero;
-    if (unlikely(!PyLong_Check(x))) {
-        long val;
-        PyObject *tmp = __Pyx_PyNumber_Long(x);
-        if (!tmp) return (long) -1;
-        val = __Pyx_PyLong_As_long(tmp);
-        Py_DECREF(tmp);
-        return val;
-    }
-    if (is_unsigned) {
-#if CYTHON_USE_PYLONG_INTERNALS
-        if (unlikely(__Pyx_PyLong_IsNeg(x))) {
-            goto raise_neg_overflow;
-        } else if (__Pyx_PyLong_IsCompact(x)) {
-            __PYX_VERIFY_RETURN_INT(long, __Pyx_compact_upylong, __Pyx_PyLong_CompactValueUnsigned(x))
-        } else {
-            const digit* digits = __Pyx_PyLong_Digits(x);
-            assert(__Pyx_PyLong_DigitCount(x) > 1);
-            switch (__Pyx_PyLong_DigitCount(x)) {
-                case 2:
-                    if ((8 * sizeof(long) > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) >= 2 * PyLong_SHIFT)) {
-                            return (long) (((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-                case 3:
-                    if ((8 * sizeof(long) > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) >= 3 * PyLong_SHIFT)) {
-                            return (long) (((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-                case 4:
-                    if ((8 * sizeof(long) > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) >= 4 * PyLong_SHIFT)) {
-                            return (long) (((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0]));
-                        }
-                    }
-                    break;
-            }
-        }
-#endif
-#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x030C00A7
-        if (unlikely(Py_SIZE(x) < 0)) {
-            goto raise_neg_overflow;
-        }
-#else
-        {
-            int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
-            if (unlikely(result < 0))
-                return (long) -1;
-            if (unlikely(result == 1))
-                goto raise_neg_overflow;
-        }
-#endif
-        if ((sizeof(long) <= sizeof(unsigned long))) {
-            __PYX_VERIFY_RETURN_INT_EXC(long, unsigned long, PyLong_AsUnsignedLong(x))
-        } else if ((sizeof(long) <= sizeof(unsigned PY_LONG_LONG))) {
-            __PYX_VERIFY_RETURN_INT_EXC(long, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
-        }
-    } else {
-#if CYTHON_USE_PYLONG_INTERNALS
-        if (__Pyx_PyLong_IsCompact(x)) {
-            __PYX_VERIFY_RETURN_INT(long, __Pyx_compact_pylong, __Pyx_PyLong_CompactValue(x))
-        } else {
-            const digit* digits = __Pyx_PyLong_Digits(x);
-            assert(__Pyx_PyLong_DigitCount(x) > 1);
-            switch (__Pyx_PyLong_SignedDigitCount(x)) {
-                case -2:
-                    if ((8 * sizeof(long) - 1 > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
-                            return (long) (((long)-1)*(((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 2:
-                    if ((8 * sizeof(long) > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
-                            return (long) ((((((long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case -3:
-                    if ((8 * sizeof(long) - 1 > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
-                            return (long) (((long)-1)*(((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 3:
-                    if ((8 * sizeof(long) > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
-                            return (long) ((((((((long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case -4:
-                    if ((8 * sizeof(long) - 1 > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 4 * PyLong_SHIFT)) {
-                            return (long) (((long)-1)*(((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-                case 4:
-                    if ((8 * sizeof(long) > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(long) - 1 > 4 * PyLong_SHIFT)) {
-                            return (long) ((((((((((long)digits[3]) << PyLong_SHIFT) | (long)digits[2]) << PyLong_SHIFT) | (long)digits[1]) << PyLong_SHIFT) | (long)digits[0])));
-                        }
-                    }
-                    break;
-            }
-        }
-#endif
-        if ((sizeof(long) <= sizeof(long))) {
-            __PYX_VERIFY_RETURN_INT_EXC(long, long, PyLong_AsLong(x))
-        } else if ((sizeof(long) <= sizeof(PY_LONG_LONG))) {
-            __PYX_VERIFY_RETURN_INT_EXC(long, PY_LONG_LONG, PyLong_AsLongLong(x))
-        }
-    }
-    {
-        long val;
-        int ret = -1;
-#if PY_VERSION_HEX >= 0x030d00A6 && !CYTHON_COMPILING_IN_LIMITED_API
-        Py_ssize_t bytes_copied = PyLong_AsNativeBytes(
-            x, &val, sizeof(val), Py_ASNATIVEBYTES_NATIVE_ENDIAN | (is_unsigned ? Py_ASNATIVEBYTES_UNSIGNED_BUFFER | Py_ASNATIVEBYTES_REJECT_NEGATIVE : 0));
-        if (unlikely(bytes_copied == -1)) {
-        } else if (unlikely(bytes_copied > (Py_ssize_t) sizeof(val))) {
-            goto raise_overflow;
-        } else {
-            ret = 0;
-        }
-#elif PY_VERSION_HEX < 0x030d0000 && !(CYTHON_COMPILING_IN_PYPY || CYTHON_COMPILING_IN_LIMITED_API) || defined(_PyLong_AsByteArray)
-        int one = 1; int is_little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&val;
-        ret = _PyLong_AsByteArray((PyLongObject *)x,
-                                    bytes, sizeof(val),
-                                    is_little, !is_unsigned);
-#else
-        PyObject *v;
-        PyObject *stepval = NULL, *mask = NULL, *shift = NULL;
-        int bits, remaining_bits, is_negative = 0;
-        int chunk_size = (sizeof(long) < 8) ? 30 : 62;
-        if (likely(PyLong_CheckExact(x))) {
-            v = __Pyx_NewRef(x);
-        } else {
-            v = PyNumber_Long(x);
-            if (unlikely(!v)) return (long) -1;
-            assert(PyLong_CheckExact(v));
-        }
-        {
-            int result = PyObject_RichCompareBool(v, Py_False, Py_LT);
-            if (unlikely(result < 0)) {
-                Py_DECREF(v);
-                return (long) -1;
-            }
-            is_negative = result == 1;
-        }
-        if (is_unsigned && unlikely(is_negative)) {
-            Py_DECREF(v);
-            goto raise_neg_overflow;
-        } else if (is_negative) {
-            stepval = PyNumber_Invert(v);
-            Py_DECREF(v);
-            if (unlikely(!stepval))
-                return (long) -1;
-        } else {
-            stepval = v;
-        }
-        v = NULL;
-        val = (long) 0;
-        mask = PyLong_FromLong((1L << chunk_size) - 1); if (unlikely(!mask)) goto done;
-        shift = PyLong_FromLong(chunk_size); if (unlikely(!shift)) goto done;
-        for (bits = 0; bits < (int) sizeof(long) * 8 - chunk_size; bits += chunk_size) {
-            PyObject *tmp, *digit;
-            long idigit;
-            digit = PyNumber_And(stepval, mask);
-            if (unlikely(!digit)) goto done;
-            idigit = PyLong_AsLong(digit);
-            Py_DECREF(digit);
-            if (unlikely(idigit < 0)) goto done;
-            val |= ((long) idigit) << bits;
-            tmp = PyNumber_Rshift(stepval, shift);
-            if (unlikely(!tmp)) goto done;
-            Py_DECREF(stepval); stepval = tmp;
-        }
-        Py_DECREF(shift); shift = NULL;
-        Py_DECREF(mask); mask = NULL;
-        {
-            long idigit = PyLong_AsLong(stepval);
-            if (unlikely(idigit < 0)) goto done;
-            remaining_bits = ((int) sizeof(long) * 8) - bits - (is_unsigned ? 0 : 1);
-            if (unlikely(idigit >= (1L << remaining_bits)))
-                goto raise_overflow;
-            val |= ((long) idigit) << bits;
-        }
-        if (!is_unsigned) {
-            if (unlikely(val & (((long) 1) << (sizeof(long) * 8 - 1))))
-                goto raise_overflow;
-            if (is_negative)
-                val = ~val;
-        }
-        ret = 0;
-    done:
-        Py_XDECREF(shift);
-        Py_XDECREF(mask);
-        Py_XDECREF(stepval);
-#endif
-        if (unlikely(ret))
-            return (long) -1;
-        return val;
-    }
-raise_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "value too large to convert to long");
-    return (long) -1;
-raise_neg_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "can't convert negative value to long");
-    return (long) -1;
-}
 
 /* FastTypeChecks */
 #if CYTHON_COMPILING_IN_CPYTHON
