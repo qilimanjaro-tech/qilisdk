@@ -46,4 +46,24 @@ class QiliSim(Backend):
             SamplingResult: A result object containing the measurement samples and computed probabilities.
 
         """
-        return self.qili_sim.execute_sampling(functional)
+        logger.info("Executing Sampling with {} shots", functional.nshots)
+        result = self.qili_sim.execute_sampling(functional)
+        logger.success("Sampling finished")
+        return result
+
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        """
+        Computes the time evolution under of an initial state under the given schedule.
+
+        Args:
+            functional (TimeEvolution): The TimeEvolution functional to execute.
+
+        Returns:
+            TimeEvolutionResult: The results of the evolution.
+
+        """
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        result = self.qili_sim.execute_time_evolution(functional)
+        logger.success("TimeEvolution finished")
+        return result
+
