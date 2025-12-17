@@ -390,24 +390,42 @@
 </span><span id="line-62">        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;urn:qilimanjaro.tech:public-api:beren&quot;</span><span class="p">,</span>
 </span><span id="line-63">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Audience claim expected in the JWT used for authentication. [env: QILISDK_SPEQTRUM_AUDIENCE]&quot;</span><span class="p">,</span>
 </span><span id="line-64">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="QiliSDKSettings.atol">
+<a class="viewcode-back" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.atol">[docs]</a>
+</span><span id="line-65">    <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-66">        <span class="n">default</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+</span><span id="line-67">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Numerical tolerance below which values are considered zero. [env: QILISDK_ATOL]&quot;</span><span class="p">,</span>
+</span><span id="line-68">        <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-69">        <span class="n">lt</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="line-70">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="QiliSDKSettings.rtol">
+<a class="viewcode-back" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.rtol">[docs]</a>
+</span><span id="line-71">    <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-72">        <span class="n">default</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span>
+</span><span id="line-73">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Numerical relative tolerance below which values are considered zero. [env: QILISDK_RTOL]&quot;</span><span class="p">,</span>
+</span><span id="line-74">        <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-75">        <span class="n">lt</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="line-76">    <span class="p">)</span></div>
 </div>
 
-</span><span id="line-65">
-</span><span id="line-66">
-</span><span id="line-67"><span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-77">
+</span><span id="line-78">
+</span><span id="line-79"><span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <div class="viewcode-block" id="get_settings">
 <a class="viewcode-back" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.get_settings">[docs]</a>
-</span><span id="line-68"><span class="k">def</span><span class="w"> </span><span class="nf">get_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">QiliSDKSettings</span><span class="p">:</span>
-</span><span id="line-69"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-70"><span class="sd">    Returns a singleton instance of QiliSDKSettings.</span>
-</span><span id="line-71">
-</span><span id="line-72"><span class="sd">    This function caches the parsed environment-based settings to avoid</span>
-</span><span id="line-73"><span class="sd">    redundant re-parsing across the application lifecycle.</span>
-</span><span id="line-74">
-</span><span id="line-75"><span class="sd">    Returns:</span>
-</span><span id="line-76"><span class="sd">        QiliSDKSettings: The cached configuration object populated from environment variables.</span>
-</span><span id="line-77"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-78">    <span class="k">return</span> <span class="n">QiliSDKSettings</span><span class="p">()</span></div>
+</span><span id="line-80"><span class="k">def</span><span class="w"> </span><span class="nf">get_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">QiliSDKSettings</span><span class="p">:</span>
+</span><span id="line-81"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-82"><span class="sd">    Returns a singleton instance of QiliSDKSettings.</span>
+</span><span id="line-83">
+</span><span id="line-84"><span class="sd">    This function caches the parsed environment-based settings to avoid</span>
+</span><span id="line-85"><span class="sd">    redundant re-parsing across the application lifecycle.</span>
+</span><span id="line-86">
+</span><span id="line-87"><span class="sd">    Returns:</span>
+</span><span id="line-88"><span class="sd">        QiliSDKSettings: The cached configuration object populated from environment variables.</span>
+</span><span id="line-89"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-90">    <span class="k">return</span> <span class="n">QiliSDKSettings</span><span class="p">()</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

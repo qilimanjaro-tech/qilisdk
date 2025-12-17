@@ -409,13 +409,13 @@ optimization loops.</p></li>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">Y</span>
 </span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
-</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span><span class="p">,</span> <span class="n">CudaBackend</span>
-</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolution</span>
-</span><span id="line-6">
-</span><span id="line-7"><span class="c1"># Define total time and timestep</span>
-</span><span id="line-8"><span class="n">T</span> <span class="o">=</span> <span class="mf">10.0</span>
-</span><span id="line-9"><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.1</span>
-</span><span id="line-10"><span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span> <span class="o">+</span> <span class="n">dt</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">T</span> <span class="o">/</span> <span class="n">dt</span><span class="p">))</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.interpolator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolation</span>
+</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackend</span><span class="p">,</span> <span class="n">CudaBackend</span>
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeEvolution</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Define total time and timestep</span>
+</span><span id="line-9"><span class="n">T</span> <span class="o">=</span> <span class="mf">10.0</span>
+</span><span id="line-10"><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.5</span>
 </span><span id="line-11"><span class="n">nqubits</span> <span class="o">=</span> <span class="mi">1</span>
 </span><span id="line-12">
 </span><span id="line-13"><span class="c1"># Define Hamiltonians</span>
@@ -423,30 +423,32 @@ optimization loops.</p></li>
 </span><span id="line-15"><span class="n">Hz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span>
 </span><span id="line-16">
 </span><span id="line-17"><span class="c1"># Build a time‑dependent schedule</span>
-</span><span id="line-18"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
-</span><span id="line-19">
-</span><span id="line-20"><span class="c1"># Add hx with a time‐dependent coefficient function</span>
-</span><span id="line-21"><span class="n">schedule</span><span class="o">.</span><span class="n">add_hamiltonian</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"hx"</span><span class="p">,</span> <span class="n">hamiltonian</span><span class="o">=</span><span class="n">Hx</span><span class="p">,</span> <span class="n">schedule</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">)</span>
-</span><span id="line-22">
-</span><span id="line-23"><span class="c1"># Add hz similarly</span>
-</span><span id="line-24"><span class="n">schedule</span><span class="o">.</span><span class="n">add_hamiltonian</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"hz"</span><span class="p">,</span> <span class="n">hamiltonian</span><span class="o">=</span><span class="n">Hz</span><span class="p">,</span> <span class="n">schedule</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">steps</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">)</span>
-</span><span id="line-25">
-</span><span id="line-26"><span class="c1"># Prepare an equal superposition initial state</span>
-</span><span id="line-27"><span class="n">initial_state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([(</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)])</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
-</span><span id="line-28">
-</span><span id="line-29"><span class="c1"># Create the TimeEvolution functional</span>
-</span><span id="line-30"><span class="n">time_evolution</span> <span class="o">=</span> <span class="n">TimeEvolution</span><span class="p">(</span>
-</span><span id="line-31">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
-</span><span id="line-32">    <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
-</span><span id="line-33">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span>
-</span><span id="line-34">    <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-</span><span id="line-35">    <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="line-36"><span class="p">)</span>
-</span><span id="line-37">
-</span><span id="line-38"><span class="c1"># Execute on Qutip backend and inspect results</span>
-</span><span id="line-39"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
-</span><span id="line-40"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
-</span><span id="line-41"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span><span id="line-18"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-19">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="n">Hx</span><span class="p">,</span> <span class="s2">"problem"</span><span class="p">:</span> <span class="n">Hz</span><span class="p">},</span>
+</span><span id="line-20">    <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-21">        <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">},</span>
+</span><span id="line-22">        <span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">},</span>
+</span><span id="line-23">    <span class="p">},</span>
+</span><span id="line-24">    <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">interpolation</span><span class="o">=</span><span class="n">Interpolation</span><span class="o">.</span><span class="n">LINEAR</span><span class="p">,</span>
+</span><span id="line-26"><span class="p">)</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="c1"># Prepare an equal superposition initial state</span>
+</span><span id="line-29"><span class="n">initial_state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([(</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)])</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="c1"># Create the TimeEvolution functional</span>
+</span><span id="line-32"><span class="n">time_evolution</span> <span class="o">=</span> <span class="n">TimeEvolution</span><span class="p">(</span>
+</span><span id="line-33">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+</span><span id="line-34">    <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
+</span><span id="line-35">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span>
+</span><span id="line-36">    <span class="n">nshots</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="line-37">    <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="line-38"><span class="p">)</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="c1"># Execute on Qutip backend and inspect results</span>
+</span><span id="line-41"><span class="n">backend</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="p">()</span>
+</span><span id="line-42"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">time_evolution</span><span class="p">)</span>
+</span><span id="line-43"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong></p>

@@ -308,216 +308,458 @@
 </span><span id="line-14"><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
 </span><span id="line-15"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Type</span>
 </span><span id="line-16">
-</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">CZ</span><span class="p">,</span> <span class="n">U1</span><span class="p">,</span> <span class="n">U2</span><span class="p">,</span> <span class="n">U3</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
-</span><span id="line-20">
+</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">pi</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">PauliX</span>
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Term</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">CZ</span><span class="p">,</span> <span class="n">RX</span><span class="p">,</span> <span class="n">RZ</span><span class="p">,</span> <span class="n">U1</span><span class="p">,</span> <span class="n">U2</span><span class="p">,</span> <span class="n">U3</span><span class="p">,</span> <span class="n">BasicGate</span><span class="p">,</span> <span class="n">H</span>
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-24">
 <div class="viewcode-block" id="Connectivity">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.Connectivity">[docs]</a>
-</span><span id="line-21"><span class="n">Connectivity</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;circular&quot;</span><span class="p">,</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span></div>
+</span><span id="line-25"><span class="n">Connectivity</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;circular&quot;</span><span class="p">,</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span></div>
 
 <div class="viewcode-block" id="Structure">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.Structure">[docs]</a>
-</span><span id="line-22"><span class="n">Structure</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;grouped&quot;</span><span class="p">,</span> <span class="s2">&quot;interposed&quot;</span><span class="p">]</span></div>
+</span><span id="line-26"><span class="n">Structure</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;grouped&quot;</span><span class="p">,</span> <span class="s2">&quot;interposed&quot;</span><span class="p">]</span></div>
 
-</span><span id="line-23">
-</span><span id="line-24">
+</span><span id="line-27">
+</span><span id="line-28">
 <div class="viewcode-block" id="Ansatz">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.Ansatz">[docs]</a>
-</span><span id="line-25"><span class="k">class</span><span class="w"> </span><span class="nc">Ansatz</span><span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-</span><span id="line-26"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract template for parameterised digital circuits.&quot;&quot;&quot;</span>
-</span><span id="line-27">
-</span><span id="line-28">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-29"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-30"><span class="sd">        Args:</span>
-</span><span id="line-31"><span class="sd">            nqubits (int): Number of logical qubits in the circuit.</span>
-</span><span id="line-32"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-33">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">nqubits</span><span class="p">)</span></div>
+</span><span id="line-29"><span class="k">class</span><span class="w"> </span><span class="nc">Ansatz</span><span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-30"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract template for parameterised digital circuits.&quot;&quot;&quot;</span>
+</span><span id="line-31">
+</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-33"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-34"><span class="sd">        Args:</span>
+</span><span id="line-35"><span class="sd">            nqubits (int): Number of logical qubits in the circuit.</span>
+</span><span id="line-36"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-37">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">nqubits</span><span class="p">)</span></div>
 
-</span><span id="line-34">
-</span><span id="line-35">
-</span><span id="line-36"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-38">
+</span><span id="line-39">
+</span><span id="line-40"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz">[docs]</a>
-</span><span id="line-37"><span class="k">class</span><span class="w"> </span><span class="nc">HardwareEfficientAnsatz</span><span class="p">(</span><span class="n">Ansatz</span><span class="p">):</span>
-</span><span id="line-38"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-39"><span class="sd">    Hardware-efficient ansatz with `(layers + 1)` single-qubit blocks and ``layers``</span>
-</span><span id="line-40"><span class="sd">    entangling blocks.</span>
-</span><span id="line-41">
-</span><span id="line-42"><span class="sd">    Example:</span>
-</span><span id="line-43"><span class="sd">        .. code-block:: python</span>
-</span><span id="line-44">
-</span><span id="line-45"><span class="sd">            from qilisdk.digital.ansatz import HardwareEfficientAnsatz</span>
-</span><span id="line-46"><span class="sd">            from qilisdk.digital.gates import U3, CNOT</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">            ansatz = HardwareEfficientAnsatz(</span>
-</span><span id="line-49"><span class="sd">                nqubits=4,</span>
-</span><span id="line-50"><span class="sd">                layers=3,</span>
-</span><span id="line-51"><span class="sd">                connectivity=&quot;linear&quot;,</span>
-</span><span id="line-52"><span class="sd">                structure=&quot;grouped&quot;,</span>
-</span><span id="line-53"><span class="sd">                one_qubit_gate=U3,</span>
-</span><span id="line-54"><span class="sd">                two_qubit_gate=CNOT,</span>
-</span><span id="line-55"><span class="sd">            )</span>
-</span><span id="line-56"><span class="sd">            ansatz.draw()</span>
-</span><span id="line-57">
-</span><span id="line-58"><span class="sd">    Notes:</span>
-</span><span id="line-59"><span class="sd">        ``structure=&quot;grouped&quot;`` applies full single-qubit layers followed by entanglers,</span>
-</span><span id="line-60"><span class="sd">        while ``structure=&quot;interposed&quot;`` alternates single-qubit updates with entanglers</span>
-</span><span id="line-61"><span class="sd">        per qubit. No measurements are added automatically.</span>
-</span><span id="line-62"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-63">
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-65">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-66">        <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-67">        <span class="n">layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="line-68">        <span class="n">connectivity</span><span class="p">:</span> <span class="n">Connectivity</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
-</span><span id="line-69">        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span> <span class="o">=</span> <span class="s2">&quot;grouped&quot;</span><span class="p">,</span>
-</span><span id="line-70">        <span class="n">one_qubit_gate</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]</span> <span class="o">=</span> <span class="n">U1</span><span class="p">,</span>
-</span><span id="line-71">        <span class="n">two_qubit_gate</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]</span> <span class="o">=</span> <span class="n">CZ</span><span class="p">,</span>
-</span><span id="line-72">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-73"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-74"><span class="sd">        Args:</span>
-</span><span id="line-75"><span class="sd">            nqubits (int): Number of qubits in the circuit.</span>
-</span><span id="line-76"><span class="sd">            layers (int, optional): Number of entangling layers. Defaults to 1.</span>
-</span><span id="line-77"><span class="sd">            connectivity (Connectivity, optional): Topology used for two-qubit gates.</span>
-</span><span id="line-78"><span class="sd">                Accepts ``&quot;linear&quot;``, ``&quot;circular&quot;``, ``&quot;full&quot;``, or an explicit list of edges.</span>
-</span><span id="line-79"><span class="sd">                Defaults to ``&quot;linear&quot;``.</span>
-</span><span id="line-80"><span class="sd">            structure (Structure, optional): Layout of single- and two-qubit gates within each layer.</span>
-</span><span id="line-81"><span class="sd">                ``&quot;grouped&quot;`` applies all single-qubit gates before the entangler block; ``&quot;interposed&quot;``</span>
-</span><span id="line-82"><span class="sd">                interleaves them per qubit. Defaults to ``&quot;grouped&quot;``.</span>
-</span><span id="line-83"><span class="sd">            one_qubit_gate (Type[U1 | U2 | U3], optional): Parameterised single-qubit gate class. Defaults to :class:`U1`.</span>
-</span><span id="line-84"><span class="sd">            two_qubit_gate (Type[CZ | CNOT], optional): Entangling gate class. Defaults to :class:`CZ`.</span>
-</span><span id="line-85">
-</span><span id="line-86"><span class="sd">        Raises:</span>
-</span><span id="line-87"><span class="sd">            ValueError: If ``layers`` is negative or the connectivity definition is invalid.</span>
-</span><span id="line-88"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-89">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-90">
-</span><span id="line-91">        <span class="k">if</span> <span class="n">layers</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-92">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;layers must be &gt;= 0&quot;</span><span class="p">)</span>
-</span><span id="line-93">
-</span><span id="line-94">        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span>
-</span><span id="line-95">        <span class="bp">self</span><span class="o">.</span><span class="n">_connectivity</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize_connectivity</span><span class="p">(</span><span class="n">connectivity</span><span class="p">))</span>
-</span><span id="line-96">        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span><span class="p">:</span> <span class="n">Structure</span> <span class="o">=</span> <span class="s2">&quot;grouped&quot;</span> <span class="k">if</span> <span class="n">structure</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;grouped&quot;</span> <span class="k">else</span> <span class="s2">&quot;interposed&quot;</span>
-</span><span id="line-97">        <span class="bp">self</span><span class="o">.</span><span class="n">_one_qubit_gate</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]</span> <span class="o">=</span> <span class="n">one_qubit_gate</span>
-</span><span id="line-98">        <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_gate</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]</span> <span class="o">=</span> <span class="n">two_qubit_gate</span>
-</span><span id="line-99">
-</span><span id="line-100">        <span class="bp">self</span><span class="o">.</span><span class="n">_build_circuit</span><span class="p">()</span>
-</span><span id="line-101">
-</span><span id="line-102">    <span class="nd">@property</span>
+</span><span id="line-41"><span class="k">class</span><span class="w"> </span><span class="nc">HardwareEfficientAnsatz</span><span class="p">(</span><span class="n">Ansatz</span><span class="p">):</span>
+</span><span id="line-42"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-43"><span class="sd">    Hardware-efficient ansatz with `(layers + 1)` single-qubit blocks and ``layers``</span>
+</span><span id="line-44"><span class="sd">    entangling blocks.</span>
+</span><span id="line-45">
+</span><span id="line-46"><span class="sd">    Example:</span>
+</span><span id="line-47"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="sd">            from qilisdk.digital.ansatz import HardwareEfficientAnsatz</span>
+</span><span id="line-50"><span class="sd">            from qilisdk.digital.gates import U3, CNOT</span>
+</span><span id="line-51">
+</span><span id="line-52"><span class="sd">            ansatz = HardwareEfficientAnsatz(</span>
+</span><span id="line-53"><span class="sd">                nqubits=4,</span>
+</span><span id="line-54"><span class="sd">                layers=3,</span>
+</span><span id="line-55"><span class="sd">                connectivity=&quot;linear&quot;,</span>
+</span><span id="line-56"><span class="sd">                structure=&quot;grouped&quot;,</span>
+</span><span id="line-57"><span class="sd">                one_qubit_gate=U3,</span>
+</span><span id="line-58"><span class="sd">                two_qubit_gate=CNOT,</span>
+</span><span id="line-59"><span class="sd">            )</span>
+</span><span id="line-60"><span class="sd">            ansatz.draw()</span>
+</span><span id="line-61">
+</span><span id="line-62"><span class="sd">    Notes:</span>
+</span><span id="line-63"><span class="sd">        ``structure=&quot;grouped&quot;`` applies full single-qubit layers followed by entanglers,</span>
+</span><span id="line-64"><span class="sd">        while ``structure=&quot;interposed&quot;`` alternates single-qubit updates with entanglers</span>
+</span><span id="line-65"><span class="sd">        per qubit. No measurements are added automatically.</span>
+</span><span id="line-66"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-67">
+</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-69">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-70">        <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-71">        <span class="n">layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="line-72">        <span class="n">connectivity</span><span class="p">:</span> <span class="n">Connectivity</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+</span><span id="line-73">        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span> <span class="o">=</span> <span class="s2">&quot;grouped&quot;</span><span class="p">,</span>
+</span><span id="line-74">        <span class="n">one_qubit_gate</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]</span> <span class="o">=</span> <span class="n">U1</span><span class="p">,</span>
+</span><span id="line-75">        <span class="n">two_qubit_gate</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]</span> <span class="o">=</span> <span class="n">CZ</span><span class="p">,</span>
+</span><span id="line-76">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-77"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-78"><span class="sd">        Args:</span>
+</span><span id="line-79"><span class="sd">            nqubits (int): Number of qubits in the circuit.</span>
+</span><span id="line-80"><span class="sd">            layers (int, optional): Number of entangling layers. Defaults to 1.</span>
+</span><span id="line-81"><span class="sd">            connectivity (Connectivity, optional): Topology used for two-qubit gates.</span>
+</span><span id="line-82"><span class="sd">                Accepts ``&quot;linear&quot;``, ``&quot;circular&quot;``, ``&quot;full&quot;``, or an explicit list of tuples defining the edges.</span>
+</span><span id="line-83"><span class="sd">                Defaults to ``&quot;linear&quot;``.</span>
+</span><span id="line-84"><span class="sd">            structure (Structure, optional): Layout of single- and two-qubit gates within each layer.</span>
+</span><span id="line-85"><span class="sd">                ``&quot;grouped&quot;`` applies all single-qubit gates before the entangler block; ``&quot;interposed&quot;``</span>
+</span><span id="line-86"><span class="sd">                interleaves them per qubit. Defaults to ``&quot;grouped&quot;``.</span>
+</span><span id="line-87"><span class="sd">            one_qubit_gate (Type[U1 | U2 | U3], optional): Parameterised single-qubit gate class. Defaults to :class:`U1`.</span>
+</span><span id="line-88"><span class="sd">            two_qubit_gate (Type[CZ | CNOT], optional): Entangling gate class. Defaults to :class:`CZ`.</span>
+</span><span id="line-89">
+</span><span id="line-90"><span class="sd">        Raises:</span>
+</span><span id="line-91"><span class="sd">            ValueError: If ``layers`` is negative or the connectivity definition is invalid.</span>
+</span><span id="line-92"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-93">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-94">
+</span><span id="line-95">        <span class="k">if</span> <span class="n">layers</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-96">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;layers must be &gt;= 0&quot;</span><span class="p">)</span>
+</span><span id="line-97">
+</span><span id="line-98">        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span>
+</span><span id="line-99">        <span class="bp">self</span><span class="o">.</span><span class="n">_connectivity</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize_connectivity</span><span class="p">(</span><span class="n">connectivity</span><span class="p">))</span>
+</span><span id="line-100">        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span><span class="p">:</span> <span class="n">Structure</span> <span class="o">=</span> <span class="s2">&quot;grouped&quot;</span> <span class="k">if</span> <span class="n">structure</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;grouped&quot;</span> <span class="k">else</span> <span class="s2">&quot;interposed&quot;</span>
+</span><span id="line-101">        <span class="bp">self</span><span class="o">.</span><span class="n">_one_qubit_gate</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]</span> <span class="o">=</span> <span class="n">one_qubit_gate</span>
+</span><span id="line-102">        <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_gate</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]</span> <span class="o">=</span> <span class="n">two_qubit_gate</span>
+</span><span id="line-103">
+</span><span id="line-104">        <span class="bp">self</span><span class="o">.</span><span class="n">_build_circuit</span><span class="p">()</span>
+</span><span id="line-105">
+</span><span id="line-106">    <span class="nd">@property</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz.layers">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.layers">[docs]</a>
-</span><span id="line-103">    <span class="k">def</span><span class="w"> </span><span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-104"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of entangling layers.&quot;&quot;&quot;</span>
-</span><span id="line-105">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span></div>
+</span><span id="line-107">    <span class="k">def</span><span class="w"> </span><span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-108"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of entangling layers.&quot;&quot;&quot;</span>
+</span><span id="line-109">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span></div>
 
-</span><span id="line-106">
-</span><span id="line-107">    <span class="nd">@property</span>
+</span><span id="line-110">
+</span><span id="line-111">    <span class="nd">@property</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz.connectivity">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.connectivity">[docs]</a>
-</span><span id="line-108">    <span class="k">def</span><span class="w"> </span><span class="nf">connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
-</span><span id="line-109"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Entangling edges as an immutable tuple of (control, target) pairs.&quot;&quot;&quot;</span>
-</span><span id="line-110">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connectivity</span></div>
+</span><span id="line-112">    <span class="k">def</span><span class="w"> </span><span class="nf">connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
+</span><span id="line-113"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Entangling edges as an immutable tuple of (control, target) pairs.&quot;&quot;&quot;</span>
+</span><span id="line-114">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connectivity</span></div>
 
-</span><span id="line-111">
-</span><span id="line-112">    <span class="nd">@property</span>
+</span><span id="line-115">
+</span><span id="line-116">    <span class="nd">@property</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz.structure">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.structure">[docs]</a>
-</span><span id="line-113">    <span class="k">def</span><span class="w"> </span><span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
-</span><span id="line-114"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Declared structure (&#39;grouped&#39; or &#39;interposed&#39;).&quot;&quot;&quot;</span>
-</span><span id="line-115">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span></div>
+</span><span id="line-117">    <span class="k">def</span><span class="w"> </span><span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
+</span><span id="line-118"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Declared structure (&#39;grouped&#39; or &#39;interposed&#39;).&quot;&quot;&quot;</span>
+</span><span id="line-119">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span></div>
 
-</span><span id="line-116">
-</span><span id="line-117">    <span class="nd">@property</span>
+</span><span id="line-120">
+</span><span id="line-121">    <span class="nd">@property</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz.one_qubit_gate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.one_qubit_gate">[docs]</a>
-</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">one_qubit_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]:</span>
-</span><span id="line-119"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Single-qubit gate class used for parameterized layers (U1, U2, or U3).&quot;&quot;&quot;</span>
-</span><span id="line-120">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_one_qubit_gate</span></div>
+</span><span id="line-122">    <span class="k">def</span><span class="w"> </span><span class="nf">one_qubit_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">U1</span> <span class="o">|</span> <span class="n">U2</span> <span class="o">|</span> <span class="n">U3</span><span class="p">]:</span>
+</span><span id="line-123"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Single-qubit gate class used for parameterized layers (U1, U2, or U3).&quot;&quot;&quot;</span>
+</span><span id="line-124">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_one_qubit_gate</span></div>
 
-</span><span id="line-121">
-</span><span id="line-122">    <span class="nd">@property</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="nd">@property</span>
 <div class="viewcode-block" id="HardwareEfficientAnsatz.two_qubit_gate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.two_qubit_gate">[docs]</a>
-</span><span id="line-123">    <span class="k">def</span><span class="w"> </span><span class="nf">two_qubit_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
-</span><span id="line-124"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Two-qubit entangling gate class (CZ or CNOT).&quot;&quot;&quot;</span>
-</span><span id="line-125">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_gate</span></div>
+</span><span id="line-127">    <span class="k">def</span><span class="w"> </span><span class="nf">two_qubit_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">CZ</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
+</span><span id="line-128"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Two-qubit entangling gate class (CZ or CNOT).&quot;&quot;&quot;</span>
+</span><span id="line-129">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_gate</span></div>
 
-</span><span id="line-126">
-</span><span id="line-127">    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connectivity</span><span class="p">:</span> <span class="n">Connectivity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-</span><span id="line-128"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-129"><span class="sd">        Returns:</span>
-</span><span id="line-130"><span class="sd">            list[tuple[int, int]]: a validated list of entangling edges derived from ``connectivity``.</span>
-</span><span id="line-131">
-</span><span id="line-132"><span class="sd">        Raises:</span>
-</span><span id="line-133"><span class="sd">            ValueError: If ``connectivity`` is invalid.</span>
-</span><span id="line-134"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-135">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connectivity</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="line-136">            <span class="n">edges</span> <span class="o">=</span> <span class="n">connectivity</span>
-</span><span id="line-137">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-138">            <span class="n">kind</span> <span class="o">=</span> <span class="n">connectivity</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-</span><span id="line-139">            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;full&quot;</span><span class="p">:</span>
-</span><span id="line-140">                <span class="n">edges</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)]</span>
-</span><span id="line-141">            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;circular&quot;</span><span class="p">:</span>
-</span><span id="line-142">                <span class="n">edges</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="line-143">                    <span class="p">[]</span>
-</span><span id="line-144">                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&lt;</span> <span class="mi">2</span>  <span class="c1"># noqa: PLR2004</span>
-</span><span id="line-145">                    <span class="k">else</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
-</span><span id="line-146">                <span class="p">)</span>
-</span><span id="line-147">            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
-</span><span id="line-148">                <span class="n">edges</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-</span><span id="line-149">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-150">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized connectivity: </span><span class="si">{</span><span class="n">connectivity</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-151">
-</span><span id="line-152">        <span class="c1"># basic validation</span>
-</span><span id="line-153">        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
-</span><span id="line-154">            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
-</span><span id="line-155">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Edge </span><span class="si">{</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2"> out of range for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span><span class="p">)</span>
-</span><span id="line-156">            <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
-</span><span id="line-157">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Self-edge </span><span class="si">{</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2"> is not allowed.&quot;</span><span class="p">)</span>
-</span><span id="line-158">        <span class="k">return</span> <span class="n">edges</span>
-</span><span id="line-159">
-</span><span id="line-160">    <span class="k">def</span><span class="w"> </span><span class="nf">_parameter_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-161"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield dictionaries initialised for each parameterised single-qubit gate in build order.&quot;&quot;&quot;</span>
-</span><span id="line-162">        <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)</span>
-</span><span id="line-163">        <span class="n">blocks</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-164">
-</span><span id="line-165">        <span class="n">zero</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-</span><span id="line-166">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">blocks</span><span class="p">):</span>
-</span><span id="line-167">            <span class="c1"># fresh dict each time</span>
-</span><span id="line-168">            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">zero</span><span class="p">)</span>
-</span><span id="line-169">
-</span><span id="line-170">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_single_qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-171"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply one parameterised single-qubit gate to ``qubit`` using the next parameter block.&quot;&quot;&quot;</span>
-</span><span id="line-172">        <span class="n">params</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
-</span><span id="line-173">        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
-</span><span id="line-174">
-</span><span id="line-175">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_single_qubit_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-176"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a parameterised gate to every qubit using successive parameter blocks.&quot;&quot;&quot;</span>
-</span><span id="line-177">        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
-</span><span id="line-178">            <span class="n">params</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
-</span><span id="line-179">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
-</span><span id="line-180">
-</span><span id="line-181">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_entanglers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-182"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Append the entangling block across all connectivity edges.&quot;&quot;&quot;</span>
-</span><span id="line-183">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">connectivity</span><span class="p">:</span>
-</span><span id="line-184">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">two_qubit_gate</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
-</span><span id="line-185">
-</span><span id="line-186">    <span class="k">def</span><span class="w"> </span><span class="nf">_build_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-187"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the circuit according to the current structure and connectivity settings.&quot;&quot;&quot;</span>
-</span><span id="line-188">        <span class="c1"># Parameter iterator covering all single-qubit blocks, in order</span>
-</span><span id="line-189">        <span class="n">parameter_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameter_blocks</span><span class="p">())</span>
-</span><span id="line-190">
-</span><span id="line-191">        <span class="c1"># For each remaining layer: U -&gt; E</span>
-</span><span id="line-192">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">==</span> <span class="s2">&quot;grouped&quot;</span><span class="p">:</span>
-</span><span id="line-193">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
-</span><span id="line-194">                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_single_qubit_block</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
-</span><span id="line-195">                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_entanglers</span><span class="p">()</span>
-</span><span id="line-196">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-130">
+</span><span id="line-131">    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connectivity</span><span class="p">:</span> <span class="n">Connectivity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+</span><span id="line-132"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-133"><span class="sd">        Returns:</span>
+</span><span id="line-134"><span class="sd">            list[tuple[int, int]]: a validated list of entangling edges derived from ``connectivity``.</span>
+</span><span id="line-135">
+</span><span id="line-136"><span class="sd">        Raises:</span>
+</span><span id="line-137"><span class="sd">            ValueError: If ``connectivity`` is invalid.</span>
+</span><span id="line-138"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-139">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">connectivity</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="line-140">            <span class="n">edges</span> <span class="o">=</span> <span class="n">connectivity</span>
+</span><span id="line-141">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-142">            <span class="n">kind</span> <span class="o">=</span> <span class="n">connectivity</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</span><span id="line-143">            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;full&quot;</span><span class="p">:</span>
+</span><span id="line-144">                <span class="n">edges</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)]</span>
+</span><span id="line-145">            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;circular&quot;</span><span class="p">:</span>
+</span><span id="line-146">                <span class="n">edges</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-147">                    <span class="p">[]</span>
+</span><span id="line-148">                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&lt;</span> <span class="mi">2</span>  <span class="c1"># noqa: PLR2004</span>
+</span><span id="line-149">                    <span class="k">else</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+</span><span id="line-150">                <span class="p">)</span>
+</span><span id="line-151">            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
+</span><span id="line-152">                <span class="n">edges</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+</span><span id="line-153">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-154">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized connectivity: </span><span class="si">{</span><span class="n">connectivity</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-155">
+</span><span id="line-156">        <span class="c1"># basic validation</span>
+</span><span id="line-157">        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+</span><span id="line-158">            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
+</span><span id="line-159">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Edge </span><span class="si">{</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2"> out of range for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span><span class="p">)</span>
+</span><span id="line-160">            <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+</span><span id="line-161">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Self-edge </span><span class="si">{</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2"> is not allowed.&quot;</span><span class="p">)</span>
+</span><span id="line-162">        <span class="k">return</span> <span class="n">edges</span>
+</span><span id="line-163">
+</span><span id="line-164">    <span class="k">def</span><span class="w"> </span><span class="nf">_parameter_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-165"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield dictionaries initialised for each parameterised single-qubit gate in build order.&quot;&quot;&quot;</span>
+</span><span id="line-166">        <span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)</span>
+</span><span id="line-167">        <span class="n">blocks</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-168">
+</span><span id="line-169">        <span class="n">zero</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-170">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">blocks</span><span class="p">):</span>
+</span><span id="line-171">            <span class="c1"># fresh dict each time</span>
+</span><span id="line-172">            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">zero</span><span class="p">)</span>
+</span><span id="line-173">
+</span><span id="line-174">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_single_qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-175"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply one parameterised single-qubit gate to ``qubit`` using the next parameter block.&quot;&quot;&quot;</span>
+</span><span id="line-176">        <span class="n">params</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
+</span><span id="line-177">        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
+</span><span id="line-178">
+</span><span id="line-179">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_single_qubit_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-180"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a parameterised gate to every qubit using successive parameter blocks.&quot;&quot;&quot;</span>
+</span><span id="line-181">        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
+</span><span id="line-182">            <span class="n">params</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
+</span><span id="line-183">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">one_qubit_gate</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
+</span><span id="line-184">
+</span><span id="line-185">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_entanglers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-186"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Append the entangling block across all connectivity edges.&quot;&quot;&quot;</span>
+</span><span id="line-187">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">connectivity</span><span class="p">:</span>
+</span><span id="line-188">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">two_qubit_gate</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+</span><span id="line-189">
+</span><span id="line-190">    <span class="k">def</span><span class="w"> </span><span class="nf">_build_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-191"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the circuit according to the current structure and connectivity settings.&quot;&quot;&quot;</span>
+</span><span id="line-192">        <span class="c1"># Parameter iterator covering all single-qubit blocks, in order</span>
+</span><span id="line-193">        <span class="n">parameter_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameter_blocks</span><span class="p">())</span>
+</span><span id="line-194">
+</span><span id="line-195">        <span class="c1"># For each remaining layer: U -&gt; E</span>
+</span><span id="line-196">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">==</span> <span class="s2">&quot;grouped&quot;</span><span class="p">:</span>
 </span><span id="line-197">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
-</span><span id="line-198">                <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
-</span><span id="line-199">                    <span class="bp">self</span><span class="o">.</span><span class="n">_apply_single_qubit</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">)</span>
-</span><span id="line-200">                    <span class="bp">self</span><span class="o">.</span><span class="n">_apply_entanglers</span><span class="p">()</span></div>
+</span><span id="line-198">                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_single_qubit_block</span><span class="p">(</span><span class="n">parameter_iterator</span><span class="p">)</span>
+</span><span id="line-199">                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_entanglers</span><span class="p">()</span>
+</span><span id="line-200">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-201">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+</span><span id="line-202">                <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
+</span><span id="line-203">                    <span class="bp">self</span><span class="o">.</span><span class="n">_apply_single_qubit</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">parameter_iterator</span><span class="p">)</span>
+</span><span id="line-204">                    <span class="bp">self</span><span class="o">.</span><span class="n">_apply_entanglers</span><span class="p">()</span></div>
+
+</span><span id="line-205">
+</span><span id="line-206">
+</span><span id="line-207"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="QAOA">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA">[docs]</a>
+</span><span id="line-208"><span class="k">class</span><span class="w"> </span><span class="nc">QAOA</span><span class="p">(</span><span class="n">Ansatz</span><span class="p">):</span>
+</span><span id="line-209"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-210"><span class="sd">    Quantum Approximate Optimization Algorithm (QAOA) ansatz.</span>
+</span><span id="line-211">
+</span><span id="line-212"><span class="sd">    This ansatz alternates between applying a problem Hamiltonian and a mixer Hamiltonian,</span>
+</span><span id="line-213"><span class="sd">    parameterized by angles gamma and alpha, respectively.</span>
+</span><span id="line-214">
+</span><span id="line-215"><span class="sd">    By default, the mixer Hamiltonian is chosen to be a transverse field (X gates on all qubits).</span>
+</span><span id="line-216">
+</span><span id="line-217"><span class="sd">    Example:</span>
+</span><span id="line-218"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-219">
+</span><span id="line-220"><span class="sd">            from qilisdk.digital.ansatz import QAOA</span>
+</span><span id="line-221">
+</span><span id="line-222"><span class="sd">            ansatz = QAOA(</span>
+</span><span id="line-223"><span class="sd">                nqubits=4,</span>
+</span><span id="line-224"><span class="sd">                hamiltonian=your_problem_hamiltonian,</span>
+</span><span id="line-225"><span class="sd">                layers=3,</span>
+</span><span id="line-226"><span class="sd">                mixer_type=None,</span>
+</span><span id="line-227"><span class="sd">                trotter_steps=1,</span>
+</span><span id="line-228"><span class="sd">            )</span>
+</span><span id="line-229"><span class="sd">            ansatz.draw()</span>
+</span><span id="line-230">
+</span><span id="line-231"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-232">
+</span><span id="line-233">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-234">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-235">        <span class="n">problem_hamiltonian</span><span class="p">:</span> <span class="n">Hamiltonian</span><span class="p">,</span>
+</span><span id="line-236">        <span class="n">layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="line-237">        <span class="n">mixer_hamiltonian</span><span class="p">:</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-238">        <span class="n">trotter_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="line-239">        <span class="n">problem_params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-240">        <span class="n">mixer_params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-241">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-242"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-243"><span class="sd">        Args:</span>
+</span><span id="line-244"><span class="sd">            problem_hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.</span>
+</span><span id="line-245"><span class="sd">            layers (int, optional): Number of QAOA layers. Defaults to 1.</span>
+</span><span id="line-246"><span class="sd">            mixer_hamiltonian (Hamiltonian, optional): The mixer Hamiltonian. Defaults to X mixer.</span>
+</span><span id="line-247"><span class="sd">            trotter_steps (int, optional): Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.</span>
+</span><span id="line-248"><span class="sd">            problem_params (list[float], optional): Initial parameter values for the problem Hamiltonian evolution angles. Defaults to all zeros.</span>
+</span><span id="line-249"><span class="sd">            mixer_params (list[float], optional): Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to all zeros.</span>
+</span><span id="line-250">
+</span><span id="line-251"><span class="sd">        Raises:</span>
+</span><span id="line-252"><span class="sd">            ValueError: If ``layers`` is not positive.</span>
+</span><span id="line-253"><span class="sd">            ValueError: If ``problem_hamiltonian`` has no qubits.</span>
+</span><span id="line-254"><span class="sd">            ValueError: If ``mixer_hamiltonian`` has no qubits.</span>
+</span><span id="line-255"><span class="sd">            ValueError: If ``trotter_steps`` is not positive.</span>
+</span><span id="line-256"><span class="sd">            ValueError: If ``problem_hamiltonian`` and ``mixer_hamiltonian`` have different number of qubits.</span>
+</span><span id="line-257"><span class="sd">            ValueError: If the length of ``problem_params`` does not match ``layers``.</span>
+</span><span id="line-258"><span class="sd">            ValueError: If the length of ``mixer_params`` does not match ``layers``.</span>
+</span><span id="line-259"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-260">
+</span><span id="line-261">        <span class="n">nqubits</span> <span class="o">=</span> <span class="n">problem_hamiltonian</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-262">
+</span><span id="line-263">        <span class="k">if</span> <span class="n">layers</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-264">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;layers must be &gt;= 1&quot;</span><span class="p">)</span>
+</span><span id="line-265">
+</span><span id="line-266">        <span class="k">if</span> <span class="n">problem_hamiltonian</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-267">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;problem hamiltonian must have at least one qubit&quot;</span><span class="p">)</span>
+</span><span id="line-268">
+</span><span id="line-269">        <span class="c1"># If no mixer, default to X mixer</span>
+</span><span id="line-270">        <span class="k">if</span> <span class="n">mixer_hamiltonian</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-271">            <span class="n">mixer_hamiltonian</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="p">({(</span><span class="n">PauliX</span><span class="p">(</span><span class="n">q</span><span class="p">),):</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)})</span>
+</span><span id="line-272">
+</span><span id="line-273">        <span class="k">if</span> <span class="n">mixer_hamiltonian</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-274">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;mixer hamiltonian must have at least one qubit&quot;</span><span class="p">)</span>
+</span><span id="line-275">
+</span><span id="line-276">        <span class="k">if</span> <span class="n">trotter_steps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-277">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;trotter_steps must be &gt;= 1&quot;</span><span class="p">)</span>
+</span><span id="line-278">
+</span><span id="line-279">        <span class="k">if</span> <span class="n">problem_hamiltonian</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">mixer_hamiltonian</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-280">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;qubits in problem_hamiltonian and mixer_hamiltonian must match&quot;</span><span class="p">)</span>
+</span><span id="line-281">
+</span><span id="line-282">        <span class="k">if</span> <span class="n">problem_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-283">            <span class="n">problem_params</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">layers</span>
+</span><span id="line-284">        <span class="k">if</span> <span class="n">mixer_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-285">            <span class="n">mixer_params</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">layers</span>
+</span><span id="line-286">
+</span><span id="line-287">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem_params</span><span class="p">)</span> <span class="o">!=</span> <span class="n">layers</span><span class="p">:</span>
+</span><span id="line-288">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;length of problem_params must match number of layers&quot;</span><span class="p">)</span>
+</span><span id="line-289">
+</span><span id="line-290">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mixer_params</span><span class="p">)</span> <span class="o">!=</span> <span class="n">layers</span><span class="p">:</span>
+</span><span id="line-291">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;length of mixer_params must match number of layers&quot;</span><span class="p">)</span>
+</span><span id="line-292">
+</span><span id="line-293">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-294">
+</span><span id="line-295">        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span>
+</span><span id="line-296">        <span class="bp">self</span><span class="o">.</span><span class="n">_problem_hamiltonian</span> <span class="o">=</span> <span class="n">problem_hamiltonian</span>
+</span><span id="line-297">        <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_hamiltonian</span> <span class="o">=</span> <span class="n">mixer_hamiltonian</span>
+</span><span id="line-298">        <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">trotter_steps</span><span class="p">)</span>
+</span><span id="line-299">        <span class="bp">self</span><span class="o">.</span><span class="n">_problem_params</span> <span class="o">=</span> <span class="n">problem_params</span>
+</span><span id="line-300">        <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_params</span> <span class="o">=</span> <span class="n">mixer_params</span>
+</span><span id="line-301">
+</span><span id="line-302">        <span class="bp">self</span><span class="o">.</span><span class="n">_build_circuit</span><span class="p">()</span>
+</span><span id="line-303">
+</span><span id="line-304">    <span class="nd">@property</span>
+<div class="viewcode-block" id="QAOA.layers">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.layers">[docs]</a>
+</span><span id="line-305">    <span class="k">def</span><span class="w"> </span><span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-306"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of entangling layers.&quot;&quot;&quot;</span>
+</span><span id="line-307">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span></div>
+
+</span><span id="line-308">
+</span><span id="line-309">    <span class="nd">@property</span>
+<div class="viewcode-block" id="QAOA.problem_hamiltonian">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.problem_hamiltonian">[docs]</a>
+</span><span id="line-310">    <span class="k">def</span><span class="w"> </span><span class="nf">problem_hamiltonian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-311"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The problem Hamiltonian encoding the cost function.&quot;&quot;&quot;</span>
+</span><span id="line-312">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_hamiltonian</span></div>
+
+</span><span id="line-313">
+</span><span id="line-314">    <span class="nd">@property</span>
+<div class="viewcode-block" id="QAOA.mixer_hamiltonian">
+<a class="viewcode-back" href="../../../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian">[docs]</a>
+</span><span id="line-315">    <span class="k">def</span><span class="w"> </span><span class="nf">mixer_hamiltonian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-316"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The mixer Hamiltonian used.&quot;&quot;&quot;</span>
+</span><span id="line-317">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_hamiltonian</span></div>
+
+</span><span id="line-318">
+</span><span id="line-319">    <span class="nd">@staticmethod</span>
+</span><span id="line-320">    <span class="k">def</span><span class="w"> </span><span class="nf">_pauli_evolution</span><span class="p">(</span>
+</span><span id="line-321">            <span class="n">term</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+</span><span id="line-322">            <span class="n">coeff</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-323">            <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-324">            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
+</span><span id="line-325"><span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-326"><span class="sd">            An iterator of parameterized gates performing the evolution of a given Pauli string.</span>
+</span><span id="line-327">
+</span><span id="line-328"><span class="sd">            Args:</span>
+</span><span id="line-329"><span class="sd">                term (tuple[PauliOperator, ...]): The Pauli string to evolve under.</span>
+</span><span id="line-330"><span class="sd">                coeff (complex | Term | Parameter): The coefficient of the Pauli string.</span>
+</span><span id="line-331"><span class="sd">                time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).</span>
+</span><span id="line-332">
+</span><span id="line-333"><span class="sd">            Yields:</span>
+</span><span id="line-334"><span class="sd">                Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.</span>
+</span><span id="line-335"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-336">
+</span><span id="line-337">            <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span> <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span> <span class="k">if</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">]</span>
+</span><span id="line-338">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-339">                <span class="k">return</span>
+</span><span id="line-340">
+</span><span id="line-341">            <span class="c1"># Move everything to Z basis</span>
+</span><span id="line-342">            <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
+</span><span id="line-343">                <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
+</span><span id="line-344">                <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-345">                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="line-346">                    <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</span><span id="line-347">                <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="line-348">                    <span class="n">gate_val</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+</span><span id="line-349">                    <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
+</span><span id="line-350">
+</span><span id="line-351">            <span class="c1"># Apply CNOT ladder</span>
+</span><span id="line-352">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+</span><span id="line-353">                <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-354">
+</span><span id="line-355">            <span class="c1"># Apply RZ rotation on last qubit</span>
+</span><span id="line-356">            <span class="n">last_qubit</span> <span class="o">=</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</span><span id="line-357">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coeff</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-358">                <span class="n">coeff</span> <span class="o">=</span> <span class="n">coeff</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-359">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-360">                <span class="n">time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-361">            <span class="k">yield</span> <span class="n">RZ</span><span class="p">(</span><span class="n">last_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">coeff</span> <span class="o">*</span> <span class="n">time</span><span class="p">))</span>
+</span><span id="line-362">
+</span><span id="line-363">            <span class="c1"># Undo CNOT ladder</span>
+</span><span id="line-364">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+</span><span id="line-365">                <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-366">
+</span><span id="line-367">            <span class="c1"># Move back from Z basis</span>
+</span><span id="line-368">            <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
+</span><span id="line-369">                <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
+</span><span id="line-370">                <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-371">                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="line-372">                    <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</span><span id="line-373">                <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="line-374">                    <span class="n">gate_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+</span><span id="line-375">                    <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
+</span><span id="line-376">
+</span><span id="line-377">    <span class="k">def</span><span class="w"> </span><span class="nf">_trotter_evolution</span><span class="p">(</span>
+</span><span id="line-378">            <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-379">            <span class="n">commuting_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]],</span>
+</span><span id="line-380">            <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-381">            <span class="n">trotter_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-382">        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
+</span><span id="line-383"><span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-384"><span class="sd">            An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.</span>
+</span><span id="line-385">
+</span><span id="line-386"><span class="sd">            Args:</span>
+</span><span id="line-387"><span class="sd">                commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.</span>
+</span><span id="line-388"><span class="sd">                time (complex | Term | Parameter): The evolution time parameter.</span>
+</span><span id="line-389"><span class="sd">                trotter_steps (int): Number of Trotter steps.</span>
+</span><span id="line-390">
+</span><span id="line-391"><span class="sd">            Yields:</span>
+</span><span id="line-392"><span class="sd">                Iterator[BasicGate]: Gates implementing the Trotterized evolution.</span>
+</span><span id="line-393"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-394">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">trotter_steps</span><span class="p">):</span>
+</span><span id="line-395">                <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">commuting_parts</span><span class="p">:</span>
+</span><span id="line-396">                    <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">part</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-397">                        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pauli_evolution</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="o">/</span> <span class="n">trotter_steps</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+</span><span id="line-398">                            <span class="k">yield</span> <span class="n">gate</span>
+</span><span id="line-399">
+</span><span id="line-400">    <span class="k">def</span><span class="w"> </span><span class="nf">_build_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-401"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the circuit according to the Hamiltonian and mixer settings.&quot;&quot;&quot;</span>
+</span><span id="line-402">
+</span><span id="line-403">        <span class="c1"># Split the hamiltonians into commuting parts</span>
+</span><span id="line-404">        <span class="n">commuting_parts_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_hamiltonian</span><span class="o">.</span><span class="n">get_commuting_partitions</span><span class="p">()</span>
+</span><span id="line-405">        <span class="n">commuting_parts_mixer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixer_hamiltonian</span><span class="o">.</span><span class="n">get_commuting_partitions</span><span class="p">()</span>
+</span><span id="line-406">
+</span><span id="line-407">        <span class="c1"># If either contains non-commuting terms, set the trotter steps</span>
+</span><span id="line-408">        <span class="n">trotter_steps_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_steps</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">commuting_parts_problem</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+</span><span id="line-409">        <span class="n">trotter_steps_mixer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_steps</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">commuting_parts_mixer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+</span><span id="line-410">
+</span><span id="line-411">        <span class="c1"># Start with all |+&gt; states</span>
+</span><span id="line-412">        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">):</span>
+</span><span id="line-413">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+</span><span id="line-414">
+</span><span id="line-415">        <span class="c1"># Build the layers</span>
+</span><span id="line-416">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+</span><span id="line-417">
+</span><span id="line-418">            <span class="c1"># Initial parameter values</span>
+</span><span id="line-419">            <span class="n">initial_val_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-420">            <span class="n">initial_val_mixer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-421">
+</span><span id="line-422">            <span class="c1"># Apply problem Hamiltonian</span>
+</span><span id="line-423">            <span class="n">gamma_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_problem</span><span class="p">)</span>
+</span><span id="line-424">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_problem</span><span class="p">,</span> <span class="n">gamma_param</span><span class="p">,</span> <span class="n">trotter_steps_problem</span><span class="p">):</span>
+</span><span id="line-425">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-426">
+</span><span id="line-427">            <span class="c1"># Apply mixer Hamiltonian</span>
+</span><span id="line-428">            <span class="n">alpha_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;alpha_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_mixer</span><span class="p">)</span>
+</span><span id="line-429">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_mixer</span><span class="p">,</span> <span class="n">alpha_param</span><span class="p">,</span> <span class="n">trotter_steps_mixer</span><span class="p">):</span>
+</span><span id="line-430">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

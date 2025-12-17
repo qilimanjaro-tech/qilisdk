@@ -824,10 +824,10 @@
 </li>
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.add_time_point">add_time_point() (Interpolator method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Adjoint">Adjoint (class in qilisdk.digital.gates)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.adjoint">adjoint() (BasicGate method)</a>
 
       <ul style="list-style-type:none">
@@ -843,6 +843,8 @@
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.anticommutator">anticommutator() (Hamiltonian method)</a>
 </li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.arithmetic_precision">arithmetic_precision (QiliSDKSettings attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.atol">atol (QiliSDKSettings attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.axes">axes (MatplotlibCircuitRenderer property)</a>
 </li>
@@ -1055,7 +1057,7 @@
       </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.delete_credentials">delete_credentials() (in module qilisdk.speqtrum.keyring)</a>
 </li>
-      <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dense">dense (QTensor property)</a>
+      <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dense">dense() (QTensor method)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.description">description (Device attribute)</a>
 
@@ -1235,7 +1237,7 @@
 </li>
       <li><a href="code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_state">final_state (TimeEvolutionResult property)</a>
 </li>
-      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_coefficeints">fixed_coefficeints (Interpolator property)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_coefficients">fixed_coefficients (Interpolator property)</a>
 </li>
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.fixed_items">fixed_items() (Interpolator method)</a>
 </li>
@@ -1330,6 +1332,8 @@
 </li>
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.get_coefficient_expression">get_coefficient_expression() (Interpolator method)</a>
 </li>
+      <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.get_commuting_partitions">get_commuting_partitions() (Hamiltonian method)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj">get_compact_qobj() (QutipI method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.get_constant">get_constant() (Term method)</a>
@@ -1364,6 +1368,8 @@
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_bounds">(TimeEvolution method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.get_parameter_names">get_parameter_names() (Circuit method)</a>
 
       <ul style="list-style-type:none">
@@ -1378,8 +1384,6 @@
         <li><a href="code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution.get_parameter_names">(TimeEvolution method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.get_parameter_values">get_parameter_values() (Circuit method)</a>
 
       <ul style="list-style-type:none">
@@ -1588,7 +1592,11 @@
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.layer_sep">layer_sep (CircuitStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.HardwareEfficientAnsatz.layers">layers (HardwareEfficientAnsatz property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.layers">(QAOA property)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.layout">layout (CircuitStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_fontsize">legend_fontsize (ScheduleStyle attribute)</a>
@@ -1705,6 +1713,8 @@
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MIN_INT">MIN_INT (in module qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.ObjectiveSense.MINIMIZE">MINIMIZE (ObjectiveSense attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian">mixer_hamiltonian (QAOA property)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model">Model (class in qilisdk.core.model)</a>
 </li>
@@ -2210,6 +2220,8 @@
 </li>
       <li><a href="code/api/qilisdk/functionals/sampling_result/index.html#qilisdk.functionals.sampling_result.SamplingResult.probabilities">probabilities (SamplingResult property)</a>
 </li>
+      <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA.problem_hamiltonian">problem_hamiltonian (QAOA property)</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.ptrace">ptrace() (QTensor method)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.PULSE">PULSE (JobType attribute)</a>
@@ -2225,6 +2237,8 @@
   <h2 id="Q">Q</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.QAOA">QAOA (class in qilisdk.digital.ansatz)</a>
+</li>
       <li>
     qilisdk
 
@@ -2761,6 +2775,8 @@
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint.rhs">(Constraint property)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.rtol">rtol (QiliSDKSettings attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/circuit_transpiler_pass/index.html#qilisdk.digital.circuit_transpiler_passes.circuit_transpiler_pass.CircuitTranspilerPass.run">run() (CircuitTranspilerPass method)</a>
 
       <ul style="list-style-type:none">
@@ -3103,14 +3119,14 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.title_fontsize">title_fontsize (ScheduleStyle attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.tlist">tlist (Interpolator property)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.tlist">(Schedule property)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BaseVariable.to_binary">to_binary() (BaseVariable method)</a>
 
       <ul style="list-style-type:none">
@@ -3169,6 +3185,12 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.token_type">token_type (Token attribute)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BaseVariable.TOL">TOL (BaseVariable attribute)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.TOL">(Term attribute)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolator.total_time">total_time (Interpolator property)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.TPauliOperator">TPauliOperator (in module qilisdk.backends.cuda_backend)</a>

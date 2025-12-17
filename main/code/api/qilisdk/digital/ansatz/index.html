@@ -260,6 +260,9 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.digital.ansatz.HardwareEfficientAnsatz" title="qilisdk.digital.ansatz.HardwareEfficientAnsatz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HardwareEfficientAnsatz</span></code></a></p></td>
 <td><p>Hardware-efficient ansatz with <cite>(layers + 1)</cite> single-qubit blocks and <code class="docutils literal notranslate"><span class="pre">layers</span></code></p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.digital.ansatz.QAOA" title="qilisdk.digital.ansatz.QAOA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QAOA</span></code></a></p></td>
+<td><p>Quantum Approximate Optimization Algorithm (QAOA) ansatz.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -315,7 +318,7 @@ per qubit. No measurements are added automatically.</p>
 <li><p><strong>nqubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of qubits in the circuit.</p></li>
 <li><p><strong>layers</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>optional</em>) – Number of entangling layers. Defaults to 1.</p></li>
 <li><p><strong>connectivity</strong> (<a class="reference internal" href="#qilisdk.digital.ansatz.Connectivity" title="qilisdk.digital.ansatz.Connectivity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connectivity</span></code></a>, <em>optional</em>) – Topology used for two-qubit gates.
-Accepts <code class="docutils literal notranslate"><span class="pre">"linear"</span></code>, <code class="docutils literal notranslate"><span class="pre">"circular"</span></code>, <code class="docutils literal notranslate"><span class="pre">"full"</span></code>, or an explicit list of edges.
+Accepts <code class="docutils literal notranslate"><span class="pre">"linear"</span></code>, <code class="docutils literal notranslate"><span class="pre">"circular"</span></code>, <code class="docutils literal notranslate"><span class="pre">"full"</span></code>, or an explicit list of tuples defining the edges.
 Defaults to <code class="docutils literal notranslate"><span class="pre">"linear"</span></code>.</p></li>
 <li><p><strong>structure</strong> (<a class="reference internal" href="#qilisdk.digital.ansatz.Structure" title="qilisdk.digital.ansatz.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>, <em>optional</em>) – Layout of single- and two-qubit gates within each layer.
 <code class="docutils literal notranslate"><span class="pre">"grouped"</span></code> applies all single-qubit gates before the entangler block; <code class="docutils literal notranslate"><span class="pre">"interposed"</span></code>
@@ -354,6 +357,66 @@ interleaves them per qubit. Defaults to <code class="docutils literal notranslat
 <dd><p>Two-qubit entangling gate class (CZ or CNOT).</p>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.digital.ansatz.QAOA">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QAOA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem_hamiltonian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixer_hamiltonian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trotter_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixer_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/ansatz.html#QAOA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.ansatz.QAOA" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.ansatz.QAOA'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qilisdk.digital.ansatz.Ansatz" title="qilisdk.digital.ansatz.Ansatz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Ansatz</span></code></a></p>
+<p>Quantum Approximate Optimization Algorithm (QAOA) ansatz.</p>
+<p>This ansatz alternates between applying a problem Hamiltonian and a mixer Hamiltonian,
+parameterized by angles gamma and alpha, respectively.</p>
+<p>By default, the mixer Hamiltonian is chosen to be a transverse field (X gates on all qubits).</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.ansatz</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAOA</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">ansatz</span> <span class="o">=</span> <span class="n">QAOA</span><span class="p">(</span>
+</span><span id="line-4">    <span class="n">nqubits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="line-5">    <span class="n">hamiltonian</span><span class="o">=</span><span class="n">your_problem_hamiltonian</span><span class="p">,</span>
+</span><span id="line-6">    <span class="n">layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+</span><span id="line-7">    <span class="n">mixer_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="line-8">    <span class="n">trotter_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="line-9"><span class="p">)</span>
+</span><span id="line-10"><span class="n">ansatz</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem_hamiltonian</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code>) – The problem Hamiltonian encoding the cost function.</p></li>
+<li><p><strong>layers</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>optional</em>) – Number of QAOA layers. Defaults to 1.</p></li>
+<li><p><strong>mixer_hamiltonian</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code>, <em>optional</em>) – The mixer Hamiltonian. Defaults to X mixer.</p></li>
+<li><p><strong>trotter_steps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>optional</em>) – Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.</p></li>
+<li><p><strong>problem_params</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>, <em>optional</em>) – Initial parameter values for the problem Hamiltonian evolution angles. Defaults to all zeros.</p></li>
+<li><p><strong>mixer_params</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]</span></code>, <em>optional</em>) – Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to all zeros.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">layers</span></code> is not positive.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">problem_hamiltonian</span></code> has no qubits.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">mixer_hamiltonian</span></code> has no qubits.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">trotter_steps</span></code> is not positive.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">problem_hamiltonian</span></code> and <code class="docutils literal notranslate"><span class="pre">mixer_hamiltonian</span></code> have different number of qubits.</p></li>
+<li><p><strong>ValueError</strong> – If the length of <code class="docutils literal notranslate"><span class="pre">problem_params</span></code> does not match <code class="docutils literal notranslate"><span class="pre">layers</span></code>.</p></li>
+<li><p><strong>ValueError</strong> – If the length of <code class="docutils literal notranslate"><span class="pre">mixer_params</span></code> does not match <code class="docutils literal notranslate"><span class="pre">layers</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.digital.ansatz.QAOA.layers">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">layers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/digital/ansatz.html#QAOA.layers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.ansatz.QAOA.layers" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.ansatz.QAOA.layers'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Number of entangling layers.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.digital.ansatz.QAOA.problem_hamiltonian">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">problem_hamiltonian</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a></em><a class="reference internal" href="../../../../../_modules/qilisdk/digital/ansatz.html#QAOA.problem_hamiltonian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.ansatz.QAOA.problem_hamiltonian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.ansatz.QAOA.problem_hamiltonian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>The problem Hamiltonian encoding the cost function.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="qilisdk.digital.ansatz.QAOA.mixer_hamiltonian">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mixer_hamiltonian</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><span class="pre">qilisdk.analog.hamiltonian.Hamiltonian</span></a></em><a class="reference internal" href="../../../../../_modules/qilisdk/digital/ansatz.html#QAOA.mixer_hamiltonian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>The mixer Hamiltonian used.</p>
+</dd></dl>
+</dd></dl>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -388,6 +451,12 @@ interleaves them per qubit. Defaults to <code class="docutils literal notranslat
 <li><a :data-current="activeSection === '#qilisdk.digital.ansatz.HardwareEfficientAnsatz.structure'" class="reference internal" href="#qilisdk.digital.ansatz.HardwareEfficientAnsatz.structure"><code class="docutils literal notranslate"><span class="pre">HardwareEfficientAnsatz.structure</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.ansatz.HardwareEfficientAnsatz.one_qubit_gate'" class="reference internal" href="#qilisdk.digital.ansatz.HardwareEfficientAnsatz.one_qubit_gate"><code class="docutils literal notranslate"><span class="pre">HardwareEfficientAnsatz.one_qubit_gate</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.ansatz.HardwareEfficientAnsatz.two_qubit_gate'" class="reference internal" href="#qilisdk.digital.ansatz.HardwareEfficientAnsatz.two_qubit_gate"><code class="docutils literal notranslate"><span class="pre">HardwareEfficientAnsatz.two_qubit_gate</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#qilisdk.digital.ansatz.QAOA'" class="reference internal" href="#qilisdk.digital.ansatz.QAOA"><code class="docutils literal notranslate"><span class="pre">QAOA</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.digital.ansatz.QAOA.layers'" class="reference internal" href="#qilisdk.digital.ansatz.QAOA.layers"><code class="docutils literal notranslate"><span class="pre">QAOA.layers</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.ansatz.QAOA.problem_hamiltonian'" class="reference internal" href="#qilisdk.digital.ansatz.QAOA.problem_hamiltonian"><code class="docutils literal notranslate"><span class="pre">QAOA.problem_hamiltonian</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian'" class="reference internal" href="#qilisdk.digital.ansatz.QAOA.mixer_hamiltonian"><code class="docutils literal notranslate"><span class="pre">QAOA.mixer_hamiltonian</span></code></a></li>
 </ul>
 </li>
 </ul>
