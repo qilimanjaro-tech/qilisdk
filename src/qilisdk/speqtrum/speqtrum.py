@@ -278,8 +278,7 @@ class SpeQtrum:
             :class:`SpeQtrum` constructions require no explicit credentials.
         """
         logger.debug("Initializing SpeQtrum client")
-        if username is not None or apikey is not None:
-            self.login(username=username, apikey=apikey)
+        self._login(username=username, apikey=apikey)
         credentials = load_credentials()
         if credentials is None:
             logger.error("No credentials found. Please provide the Username and Api key.")
@@ -303,7 +302,7 @@ class SpeQtrum:
             event_hooks={"response": [_ensure_ok]},
         )
 
-    def login(
+    def _login(
         self,
         username: str | None = None,
         apikey: str | None = None,
@@ -324,12 +323,12 @@ class SpeQtrum:
             :class:`SpeQtrum` constructions require no explicit credentials.
         """
         # Use provided parameters or fall back to environment variables via Settings()
+        get_settings.cache_clear()
         settings = get_settings()
         username = username or settings.speqtrum_username
         apikey = apikey or settings.speqtrum_apikey
 
         if not username or not apikey:
-            logger.error("Login called without credentials.")
             return False
 
         # Send login request to QaaS
