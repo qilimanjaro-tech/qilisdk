@@ -400,42 +400,6 @@ public:
         return 0.0;
     }
 
-    // std::complex<double>& insert(int row, int col, std::complex<double> value) {
-    //     /*
-    //     Insert a non-zero value into the sparse matrix, maintaining sorted order.
-    //     Args:
-    //         row (int): The row index.
-    //         col (int): The column index.
-    //         value (std::complex<double>): The value to insert.
-    //     Returns:
-    //         std::complex<double>&: Reference to the inserted value.
-    //     */
-        
-    //     // Find the position to insert
-    //     int start = rows_[row];
-    //     int end = rows_[row + 1];
-    //     int insertPos = start;
-    //     while (insertPos < end && cols_[insertPos] < col) {
-    //         insertPos++;
-    //     }
-    //     if (insertPos < end && cols_[insertPos] == col) {
-    //         // Already exists, just update
-    //         values_[insertPos] = value;
-    //         return values_[insertPos];
-    //     }
-    //     cols_.insert(cols_.begin() + insertPos, col);
-    //     values_.insert(values_.begin() + insertPos, value);
-
-    //     // Update row offsets
-    //     for (size_t r = row + 1; r < rows_.size(); ++r) {
-    //         rows_[r]++;
-    //     }
-    //     rows_[row + 1]++;
-
-    //     return values_[insertPos];
-        
-    // }
-
     std::complex<double> dot(const SparseMatrix& other) const {
         /*
         Compute the Frobenius inner product with another sparse matrix.
@@ -642,8 +606,6 @@ private:
     SparseMatrix base_matrix;
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
-
-    
 
     int permute_bits(int index, const std::vector<int>& perm) const {
         /*
@@ -1039,23 +1001,24 @@ public:
 
     }
 
-    py::object execute_time_evolution(py::object functional) {
+    py::object execute_time_evolution(py::object functional, py::object Hs, py::object coeffs, py::object steps, int arnoldi_dim=10) {
         /*
         Execute a time evolution functional using a Krylov subspace method.
         Args:
             functional (py::object): The TimeEvolution functional to execute.
+            Hs (py::object): A list of Hamiltonians for time-dependent Hamiltonians.
+            coeffs (py::object): A list of coefficients for the Hamiltonians at each time step.
+            steps (py::object): A list of time steps at which to evaluate the evolution.
+            arnoldi_dim (int): The dimension of the Krylov subspace to use.
         Returns:
             TimeEvolutionResult: The results of the evolution.
         */
 
-        // Get info from the functional
-        double dt = functional.attr("schedule").attr("dt").cast<double>();
-        int m = 10;  // Arnoldi dimension, should later be made configurable
-        
-        // Get the list of Hamiltonians
+        // Get the list of Hamiltonians and parameters
         std::vector<SparseMatrix> hamiltonians;
-        py::list py_hamiltonians = functional.attr("schedule").attr("hamiltonians").attr("values")();
-        for (auto hamiltonian : py_hamiltonians) {
+        for (auto& hamiltonian : Hs) {
+
+            // Get the Hamiltonian matrix
             py::buffer matrix = hamiltonian.attr("to_matrix")().attr("toarray")();
             py::buffer_info buf = matrix.request();
             int rows = buf.shape[0];
@@ -1072,27 +1035,29 @@ public:
             }
             SparseMatrix H(entries, rows, cols);
             hamiltonians.push_back(H);
+
         }
 
-        // For now just use the first Hamiltonian, later to be time-dependent TODO
-        SparseMatrix currentH = hamiltonians[0];
+        // Get the parameters
+        std::vector<std::vector<double>> parameters_list;
+        for (auto& param_set : coeffs) {
+            std::vector<double> param_vector;
+            for (auto& param : param_set) {
+                param_vector.push_back(param.cast<double>());
+            }
+            parameters_list.push_back(param_vector);
+        }
 
-        // Form the Lindblad superoperator
-        // for now just unitary evolution TODO
-        int dim = currentH.get_height();
+        // Get the time step
+        std::vector<double> step_list;
+        for (auto step : steps) {
+            step_list.push_back(step.cast<double>());
+        }
+
+        // Dimensions of everything
+        int dim = hamiltonians[0].get_height();
         int dim_rho = dim * dim;
-        std::vector<std::tuple<int, int, std::complex<double>>> H_entries = currentH.to_tuples();
-        std::vector<std::tuple<int, int, std::complex<double>>> iden_entries;
-        for (int i = 0; i < dim; ++i) {
-            iden_entries.emplace_back(i, i, 1.0);
-        }
-        SparseMatrix iden(iden_entries, dim, dim);
-        SparseMatrix H_iden = tensor_product(currentH, iden);
-        SparseMatrix iden_H = tensor_product(iden, currentH);
-        SparseMatrix L(dim_rho, dim_rho);
-        L.add_scaled(H_iden, std::complex<double>(0, -1));
-        L.add_scaled(iden_H, std::complex<double>(0, 1));
-        
+
         // Get the initial state
         SparseMatrix rho0;
         py::buffer init_state = functional.attr("initial_state").attr("dense")();
@@ -1130,26 +1095,59 @@ public:
             rho0_vec_entries.emplace_back(vec_index, 0, val);
         }
         rho0 = SparseMatrix(rho0_vec_entries, dim_rho, 1);
+        SparseMatrix rho_t = rho0;
 
-        // Run the Arnoldi iteration to build the Krylov basis
-        // After this, we have L approximated in the Krylov basis as H
-        // and the basis vectors in V
-        std::vector<SparseMatrix> V;
-        SparseMatrix H;
-        arnoldi(L, rho0, m, V, H);
-
-        // Compute the action of the matrix exponential
-        // i.e. estimating exp(-i*L*dt) * rho0 via exp(-i*H*dt) * e1
-        SparseMatrix y = exp_mat_action(H, dt);
-
-        // Reconstruct the final density matrix using the basis vectors
-        // SparseMatrix rho_t = V * y;
-        SparseMatrix rho_t(rho0.get_height(), rho0.get_width());
-        for (int j = 0; j < int(V.size()); ++j) {
-            std::complex<double> coeff = y.get(j, 0);
-            if (std::abs(coeff) > atol_) {
-                rho_t.add_scaled(V[j], coeff);
+        // For each time step
+        for (int step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            
+            // Determine the time step size
+            double dt = step_list[step_ind];
+            if (step_ind > 0) {
+                dt = step_list[step_ind] - step_list[step_ind - 1];
             }
+
+            // For now just use the first Hamiltonian, later to be time-dependent TODO
+            SparseMatrix currentH(dim, dim);
+            for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+                currentH.add_scaled(hamiltonians[h_ind], parameters_list[h_ind][step_ind]);
+            }
+
+            // Form the Lindblad superoperator
+            // for now just unitary evolution TODO
+            std::vector<std::tuple<int, int, std::complex<double>>> H_entries = currentH.to_tuples();
+            std::vector<std::tuple<int, int, std::complex<double>>> iden_entries;
+            for (int i = 0; i < dim; ++i) {
+                iden_entries.emplace_back(i, i, 1.0);
+            }
+            SparseMatrix iden(iden_entries, dim, dim);
+            SparseMatrix H_iden = tensor_product(currentH, iden);
+            SparseMatrix iden_H = tensor_product(iden, currentH);
+            SparseMatrix L(dim_rho, dim_rho);
+            L.add_scaled(H_iden, std::complex<double>(0, -1));
+            L.add_scaled(iden_H, std::complex<double>(0, 1));
+            
+            // Run the Arnoldi iteration to build the Krylov basis
+            // After this, we have L approximated in the Krylov basis as H
+            // and the basis vectors in V
+            std::vector<SparseMatrix> V;
+            SparseMatrix H;
+            arnoldi(L, rho_t, arnoldi_dim, V, H);
+
+            // Compute the action of the matrix exponential
+            // i.e. estimating exp(-i*L*dt) * rho0 via exp(-i*H*dt) * e1
+            SparseMatrix y = exp_mat_action(H, dt);
+
+            // Reconstruct the final density matrix using the basis vectors
+            // SparseMatrix rho_t = V * y;
+            SparseMatrix rho_t_new(rho0.get_height(), rho0.get_width());
+            for (int j = 0; j < int(V.size()); ++j) {
+                std::complex<double> coeff = y.get(j, 0);
+                if (std::abs(coeff) > atol_) {
+                    rho_t_new.add_scaled(V[j], coeff);
+                }
+            }
+            rho_t = rho_t_new;
+
         }
 
         return TimeEvolutionResult();

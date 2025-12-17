@@ -18,6 +18,7 @@ from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
+import numpy as np
 
 # Import the C++ pybind11 wrapper
 from qilisdk.backends.qili_sim_c import QiliSimC
@@ -63,7 +64,18 @@ class QiliSim(Backend):
 
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        result = self.qili_sim.execute_time_evolution(functional)
+        
+        # Get the Hamiltonians and their parameters from the schedule per timestep
+        steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
+        tlist = np.array(functional.schedule.tlist)
+        steps = np.union1d(steps, tlist)
+        steps = list(np.sort(steps))
+        Hs = [functional.schedule.hamiltonians[h] for h in functional.schedule.hamiltonians]
+        coeffs = [[functional.schedule.coefficients[h][t] for t in tlist] for h in functional.schedule.hamiltonians]
+
+        arnoldi_dim = 10  # Can be made configurable later
+
+        result = self.qili_sim.execute_time_evolution(functional, Hs, coeffs, steps, arnoldi_dim)
         logger.success("TimeEvolution finished")
         return result
 
