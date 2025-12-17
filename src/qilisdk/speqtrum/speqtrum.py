@@ -323,7 +323,6 @@ class SpeQtrum:
             :class:`SpeQtrum` constructions require no explicit credentials.
         """
         # Use provided parameters or fall back to environment variables via Settings()
-        get_settings.cache_clear()
         settings = get_settings()
         username = username or settings.speqtrum_username
         apikey = apikey or settings.speqtrum_apikey
