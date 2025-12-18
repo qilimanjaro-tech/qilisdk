@@ -78,9 +78,7 @@ class _OptionalDependencyStub:
         self.__qualname__ = symbol_name
 
     def _raise(self) -> NoReturn:
-        message = (
-            f"Using {self._symbol_name} requires installing the '{self._feature_name}' optional feature: `pip install qilisdk[{self._feature_name}]`\n"
-        )
+        message = f"Using {self._symbol_name} requires installing the '{self._feature_name}' optional feature: `pip install qilisdk[{self._feature_name}]`\n"
         if self._import_error is None:
             raise OptionalDependencyError(message)
         detail = f"{type(self._import_error).__name__}: {self._import_error}"

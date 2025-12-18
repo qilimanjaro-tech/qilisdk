@@ -318,84 +318,84 @@ class QAOA(Ansatz):
 
     @staticmethod
     def _pauli_evolution(
-            term: tuple[PauliOperator, ...],
-            coeff: complex | Term | Parameter,
-            time: complex | Term | Parameter,
-            ) -> Iterator[BasicGate | CNOT]:
-            """
-            An iterator of parameterized gates performing the evolution of a given Pauli string.
+        term: tuple[PauliOperator, ...],
+        coeff: complex | Term | Parameter,
+        time: complex | Term | Parameter,
+    ) -> Iterator[BasicGate | CNOT]:
+        """
+        An iterator of parameterized gates performing the evolution of a given Pauli string.
 
-            Args:
-                term (tuple[PauliOperator, ...]): The Pauli string to evolve under.
-                coeff (complex | Term | Parameter): The coefficient of the Pauli string.
-                time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).
+        Args:
+            term (tuple[PauliOperator, ...]): The Pauli string to evolve under.
+            coeff (complex | Term | Parameter): The coefficient of the Pauli string.
+            time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).
 
-            Yields:
-                Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.
-            """
+        Yields:
+            Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.
+        """
 
-            qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
-            if len(qubit_indices) == 0:
-                return
+        qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
+        if len(qubit_indices) == 0:
+            return
 
-            # Move everything to Z basis
-            for pauli in term:
-                q = pauli.qubit
-                name = pauli.name
-                if name == "X":
-                    yield H(q)
-                elif name == "Y":
-                    gate_val = pi / 2
-                    yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
+        # Move everything to Z basis
+        for pauli in term:
+            q = pauli.qubit
+            name = pauli.name
+            if name == "X":
+                yield H(q)
+            elif name == "Y":
+                gate_val = pi / 2
+                yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
 
-            # Apply CNOT ladder
-            for i in range(len(qubit_indices) - 1):
-                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+        # Apply CNOT ladder
+        for i in range(len(qubit_indices) - 1):
+            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
 
-            # Apply RZ rotation on last qubit
-            last_qubit = qubit_indices[-1]
-            if isinstance(coeff, complex):
-                coeff = coeff.real
-            if isinstance(time, complex):
-                time = time.real
-            yield RZ(last_qubit, phi=(2 * coeff * time))
+        # Apply RZ rotation on last qubit
+        last_qubit = qubit_indices[-1]
+        if isinstance(coeff, complex):
+            coeff = coeff.real
+        if isinstance(time, complex):
+            time = time.real
+        yield RZ(last_qubit, phi=(2 * coeff * time))
 
-            # Undo CNOT ladder
-            for i in reversed(range(len(qubit_indices) - 1)):
-                yield CNOT(qubit_indices[i], qubit_indices[i + 1])
+        # Undo CNOT ladder
+        for i in reversed(range(len(qubit_indices) - 1)):
+            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
 
-            # Move back from Z basis
-            for pauli in term:
-                q = pauli.qubit
-                name = pauli.name
-                if name == "X":
-                    yield H(q)
-                elif name == "Y":
-                    gate_val = -pi / 2
-                    yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
+        # Move back from Z basis
+        for pauli in term:
+            q = pauli.qubit
+            name = pauli.name
+            if name == "X":
+                yield H(q)
+            elif name == "Y":
+                gate_val = -pi / 2
+                yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
 
     def _trotter_evolution(
-            self,
-            commuting_parts: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]],
-            time: complex | Term | Parameter,
-            trotter_steps: int,
-        ) -> Iterator[BasicGate | CNOT]:
-            """
-            An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
+        self,
+        commuting_parts: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]],
+        time: complex | Term | Parameter,
+        trotter_steps: int,
+    ) -> Iterator[BasicGate | CNOT]:
+        """
+        An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
 
-            Args:
-                commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
-                time (complex | Term | Parameter): The evolution time parameter.
-                trotter_steps (int): Number of Trotter steps.
+        Args:
+            commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
+            time (complex | Term | Parameter): The evolution time parameter.
+            trotter_steps (int): Number of Trotter steps.
 
-            Yields:
-                Iterator[BasicGate]: Gates implementing the Trotterized evolution.
-            """
-            for _ in range(trotter_steps):
-                for part in commuting_parts:
-                    for term, coeff in part.items():
-                        for gate in self._pauli_evolution(term, coeff / trotter_steps, time):
-                            yield gate
+        Yields:
+            Iterator[BasicGate]: Gates implementing the Trotterized evolution.
+        """
+        for _ in range(trotter_steps):
+            for part in commuting_parts:
+                for term, coeff in part.items():
+                    for gate in self._pauli_evolution(term, coeff / trotter_steps, time):
+                        yield gate
 
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
@@ -414,7 +414,6 @@ class QAOA(Ansatz):
 
         # Build the layers
         for i in range(self.layers):
-
             # Initial parameter values
             initial_val_problem = self._problem_params[i]
             initial_val_mixer = self._mixer_params[i]
