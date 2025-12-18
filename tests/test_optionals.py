@@ -7,7 +7,9 @@ from qilisdk._optionals import OptionalDependencyError, OptionalFeature, Symbol,
 
 def test_optional_stub_raises_on_call() -> None:
     feature = OptionalFeature(
-        name="speqtrum", dependencies=["definitely-not-installed-dist-xyz"], symbols=[Symbol(path="unused", name="SpeQtrum")],
+        name="speqtrum",
+        dependencies=["definitely-not-installed-dist-xyz"],
+        symbols=[Symbol(path="unused", name="SpeQtrum")],
     )
 
     imported = import_optional_dependencies(feature)
