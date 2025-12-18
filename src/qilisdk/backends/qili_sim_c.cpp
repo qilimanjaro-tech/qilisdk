@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 namespace py = pybind11;
 
 enum class GateType {
@@ -165,20 +166,40 @@ public:
         *this = SparseMatrix(entries, nrows_, ncols_);
     }
 
-    SparseMatrix dagger() const {
+    std::complex<double> trace() const {
         /*
-        Compute the conjugate transpose of the sparse matrix.
+        Compute the trace of the sparse matrix.
         Returns:
-            SparseMatrix: The conjugate transpose.
+            std::complex<double>: The trace.
         */
+        std::complex<double> sum = 0.0;
+        for (int r = 0; r < nrows_; ++r) {
+            for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+                if (cols_[idx] == r) {
+                    sum += values_[idx];
+                }
+            }
+        }
+        return sum;
+    }
+
+    SparseMatrix transpose() const {
+        /*
+        Compute the transpose of the sparse matrix.
+        Returns:
+            SparseMatrix: The transpose.
+        */
+        
+        // Swap the row and column indices
         std::vector<std::tuple<int, int, std::complex<double>>> entries;
         for (int r = 0; r < nrows_; ++r) {
             for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
                 int c = cols_[idx];
-                std::complex<double> val = std::conj(values_[idx]);
+                std::complex<double> val = values_[idx];
                 entries.emplace_back(c, r, val);
             }
         }
+
         // Sort entries by (row, col)
         std::sort(entries.begin(), entries.end(),
                   [](const std::tuple<int, int, std::complex<double>>& a,
@@ -189,8 +210,43 @@ public:
                           return std::get<1>(a) < std::get<1>(b);
                       }
                   });
+
         SparseMatrix result(entries, ncols_, nrows_);
         return result;
+
+    }
+
+    SparseMatrix dagger() const {
+        /*
+        Compute the conjugate transpose of the sparse matrix.
+        Returns:
+            SparseMatrix: The conjugate transpose.
+        */
+        
+        // Swap the row and column indices and conjugate the values
+        std::vector<std::tuple<int, int, std::complex<double>>> entries;
+        for (int r = 0; r < nrows_; ++r) {
+            for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+                int c = cols_[idx];
+                std::complex<double> val = std::conj(values_[idx]);
+                entries.emplace_back(c, r, val);
+            }
+        }
+
+        // Sort entries by (row, col)
+        std::sort(entries.begin(), entries.end(),
+                  [](const std::tuple<int, int, std::complex<double>>& a,
+                     const std::tuple<int, int, std::complex<double>>& b) {
+                      if (std::get<0>(a) != std::get<0>(b)) {
+                          return std::get<0>(a) < std::get<0>(b);
+                      } else {
+                          return std::get<1>(a) < std::get<1>(b);
+                      }
+                  });
+        
+        SparseMatrix result(entries, ncols_, nrows_);
+        return result;
+
     }
 
     std::vector<std::complex<double>>::const_iterator begin() const {
@@ -354,12 +410,28 @@ public:
         }
         cols_.insert(cols_.begin() + insert_pos, col);
         values_.insert(values_.begin() + insert_pos, 0.0);
-        for (size_t r = row + 1; r < rows_.size(); ++r) {
+        for (size_t r = row + 1; r < nrows_ + 1; ++r) {
             rows_[r]++;
         }
-        rows_[rows_.size() - 1] = values_.size();
         return values_[insert_pos];
 
+    }
+
+    std::vector<std::vector<std::complex<double>>> to_dense() const {
+        /*
+        Convert the sparse matrix to a dense 2D vector.
+        Returns:
+            std::vector<std::vector<std::complex<double>>>: The dense matrix.
+        */
+        std::vector<std::vector<std::complex<double>>> dense(nrows_, std::vector<std::complex<double>>(ncols_, 0.0));
+        for (int r = 0; r < nrows_; ++r) {
+            for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+                int c = cols_[idx];
+                std::complex<double> val = values_[idx];
+                dense[r][c] = val;
+            }
+        }
+        return dense;
     }
 
     // Output operator
@@ -373,9 +445,9 @@ public:
         Returns:
             std::ostream&: The output stream.
         */
-        for (int r = 0; r < matrix.nrows_; ++r) {
-            for (int c = 0; c < matrix.ncols_; ++c) {
-                std::complex<double> val = matrix.get(r, c);
+        std::vector<std::vector<std::complex<double>>> dense = matrix.to_dense();
+        for (const auto& row : dense) {
+            for (const auto& val : row) {
                 os << val << " ";
             }
             os << std::endl;
@@ -773,6 +845,8 @@ py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("
 py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
 py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
 py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+py::object numpy_array = py::module_::import("numpy").attr("array");
+py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 
 // Needed for _a literals
 using namespace pybind11::literals;
@@ -780,9 +854,10 @@ using namespace pybind11::literals;
 class QiliSimC {
 private:
 
-    // TODO
-    SparseMatrix exp_mat_action(const SparseMatrix& H,
-                                double dt) const {
+    SparseMatrix exp_mat_action_taylor(const SparseMatrix& H,
+                                double dt,
+                                int num_terms_taylor = 20
+                            ) const {
         /*
         Compute the action of the matrix exponential exp(-i*H*dt) on the first basis vector e1.
         For now this just does a simple Taylor expansion.
@@ -799,10 +874,9 @@ private:
         SparseMatrix term(m, 1);
         y.at(0, 0) = 1.0;
         term.at(0, 0) = 1.0;
-        const int max_terms = 20;
 
         // Taylor expansion
-        for (int k = 1; k < max_terms; ++k) {
+        for (int k = 1; k < num_terms_taylor; ++k) {
             SparseMatrix next(m, 1);
             for (int i = 0; i < m; ++i) {
                 for (int j = 0; j < m; ++j) {
@@ -817,7 +891,6 @@ private:
 
     }
 
-    // TODO
     void arnoldi(const SparseMatrix& L,
                  const SparseMatrix& v0,
                  int m,
@@ -850,7 +923,7 @@ private:
         for (int j = 0; j < m; ++j) {
 
             // Apply the Lindbladian to the previous vector
-            SparseMatrix w = L * V[j];
+            SparseMatrix w = L * V[j]; // PROFILE
 
             // Orthogonalize against previous vectors
             for (int i = 0; i <= j; ++i) {
@@ -1001,7 +1074,12 @@ public:
 
     }
 
-    py::object execute_time_evolution(py::object functional, py::object Hs, py::object coeffs, py::object steps, int arnoldi_dim=10) {
+    py::object execute_time_evolution(py::object initial_state, 
+                                      py::object Hs, 
+                                      py::object coeffs, 
+                                      py::object steps, 
+                                      py::object observables, 
+                                      int arnoldi_dim=10) {
         /*
         Execute a time evolution functional using a Krylov subspace method.
         Args:
@@ -1014,12 +1092,13 @@ public:
             TimeEvolutionResult: The results of the evolution.
         */
 
-        // Get the list of Hamiltonians and parameters
+        // Params
+        int num_terms_taylor = 20;
+
+        // Get the Hamiltonian matrices
         std::vector<SparseMatrix> hamiltonians;
         for (auto& hamiltonian : Hs) {
-
-            // Get the Hamiltonian matrix
-            py::buffer matrix = hamiltonian.attr("to_matrix")().attr("toarray")();
+            py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
             int rows = buf.shape[0];
             int cols = buf.shape[1];
@@ -1035,8 +1114,31 @@ public:
             }
             SparseMatrix H(entries, rows, cols);
             hamiltonians.push_back(H);
-
         }
+
+        // Get the observable operators
+        std::vector<SparseMatrix> observable_matrices;
+        for (auto obs : observables) {
+            py::buffer matrix = numpy_array(obs.attr("dense")(), py::dtype("complex128"));
+            py::buffer_info buf = matrix.request();
+            int rows = buf.shape[0];
+            int cols = buf.shape[1];
+            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+            std::vector<std::tuple<int, int, std::complex<double>>> entries;
+            for (int r = 0; r < rows; ++r) {
+                for (int c = 0; c < cols; ++c) {
+                    std::complex<double> val = ptr[r * cols + c];
+                    if (std::abs(val) > atol_) {
+                        entries.emplace_back(r, c, val);
+                    }
+                }
+            }
+            SparseMatrix O(entries, rows, cols);
+            observable_matrices.push_back(O);
+        }
+
+        // Get the jump operators TODO
+        bool has_jumps = false;
 
         // Get the parameters
         std::vector<std::vector<double>> parameters_list;
@@ -1054,48 +1156,62 @@ public:
             step_list.push_back(step.cast<double>());
         }
 
+        // Make sure the parameters match the steps
+        for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+            if (parameters_list[h_ind].size() != step_list.size()) {
+                throw std::runtime_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) +
+                                         " does not match number of time steps.");
+            }
+        }
+
         // Dimensions of everything
         int dim = hamiltonians[0].get_height();
         int dim_rho = dim * dim;
 
         // Get the initial state
-        SparseMatrix rho0;
-        py::buffer init_state = functional.attr("initial_state").attr("dense")();
+        SparseMatrix rho_0;
+        py::buffer init_state = numpy_array(initial_state.attr("dense")(), py::dtype("complex128"));
         py::buffer_info buf = init_state.request();
+        if (buf.ndim != 2) {
+            throw std::runtime_error("Initial state must be a 2D array.");
+        }
         int rows = buf.shape[0];
         int cols = buf.shape[1];
         auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-        std::vector<std::tuple<int, int, std::complex<double>>> rho0_entries;
+        std::vector<std::tuple<int, int, std::complex<double>>> rho_0_entries;
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
                 std::complex<double> val = ptr[r * cols + c];
                 if (std::abs(val) > atol_) {
-                    rho0_entries.emplace_back(r, c, val);
+                    rho_0_entries.emplace_back(r, c, val);
                 }
             }
         }
-        rho0 = SparseMatrix(rho0_entries, rows, cols);
+        rho_0 = SparseMatrix(rho_0_entries, rows, cols);
 
         // It's a statevector, make it a density matrix
-        if (rho0.get_height() == 1) {
-            rho0 = rho0.dagger() * rho0;
+        bool input_was_vector = false;
+        if (rho_0.get_height() == 1) {
+            rho_0 = rho_0.dagger() * rho_0;
+            input_was_vector = true;
 
         // It's a column vector, make it a density matrix
-        } else if (rho0.get_width() == 1) {
-            rho0 = rho0 * rho0.dagger();
+        } else if (rho_0.get_width() == 1) {
+            rho_0 = rho_0 * rho_0.dagger();
+            input_was_vector = true;
         }
 
-        // Vectorize rho0
-        std::vector<std::tuple<int, int, std::complex<double>>> rho0_vec_entries;
-        for (const auto& entry : rho0.to_tuples()) {
+        // Vectorize rho_0
+        std::vector<std::tuple<int, int, std::complex<double>>> rho_0_vec_entries;
+        for (const auto& entry : rho_0.to_tuples()) {
             int r = std::get<0>(entry);
             int c = std::get<1>(entry);
             std::complex<double> val = std::get<2>(entry);
-            int vec_index = r * rho0.get_width() + c;
-            rho0_vec_entries.emplace_back(vec_index, 0, val);
+            int vec_index = r * rho_0.get_width() + c;
+            rho_0_vec_entries.emplace_back(vec_index, 0, val);
         }
-        rho0 = SparseMatrix(rho0_vec_entries, dim_rho, 1);
-        SparseMatrix rho_t = rho0;
+        rho_0 = SparseMatrix(rho_0_vec_entries, dim_rho, 1);
+        SparseMatrix rho_t = rho_0;
 
         // For each time step
         for (int step_ind = 0; step_ind < step_list.size(); ++step_ind) {
@@ -1106,7 +1222,7 @@ public:
                 dt = step_list[step_ind] - step_list[step_ind - 1];
             }
 
-            // For now just use the first Hamiltonian, later to be time-dependent TODO
+            // Get the current Hamiltonian
             SparseMatrix currentH(dim, dim);
             for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
                 currentH.add_scaled(hamiltonians[h_ind], parameters_list[h_ind][step_ind]);
@@ -1121,11 +1237,11 @@ public:
             }
             SparseMatrix iden(iden_entries, dim, dim);
             SparseMatrix H_iden = tensor_product(currentH, iden);
-            SparseMatrix iden_H = tensor_product(iden, currentH);
+            SparseMatrix iden_H_T = tensor_product(iden, currentH.transpose());
             SparseMatrix L(dim_rho, dim_rho);
-            L.add_scaled(H_iden, std::complex<double>(0, -1));
-            L.add_scaled(iden_H, std::complex<double>(0, 1));
-            
+            L.add_scaled(H_iden, std::complex<double>(0, -1)); // PROFILE
+            L.add_scaled(iden_H_T, std::complex<double>(0, 1)); // PROFILE
+
             // Run the Arnoldi iteration to build the Krylov basis
             // After this, we have L approximated in the Krylov basis as H
             // and the basis vectors in V
@@ -1134,12 +1250,12 @@ public:
             arnoldi(L, rho_t, arnoldi_dim, V, H);
 
             // Compute the action of the matrix exponential
-            // i.e. estimating exp(-i*L*dt) * rho0 via exp(-i*H*dt) * e1
-            SparseMatrix y = exp_mat_action(H, dt);
+            // i.e. estimating exp(-i*L*dt) * rho_0 via exp(-i*H*dt) * e1
+            SparseMatrix y = exp_mat_action_taylor(H, dt, num_terms_taylor);
 
             // Reconstruct the final density matrix using the basis vectors
             // SparseMatrix rho_t = V * y;
-            SparseMatrix rho_t_new(rho0.get_height(), rho0.get_width());
+            SparseMatrix rho_t_new(rho_0.get_height(), rho_0.get_width());
             for (int j = 0; j < int(V.size()); ++j) {
                 std::complex<double> coeff = y.get(j, 0);
                 if (std::abs(coeff) > atol_) {
@@ -1150,7 +1266,74 @@ public:
 
         }
 
-        return TimeEvolutionResult();
+        // Devectorize rho_t
+        std::vector<std::tuple<int, int, std::complex<double>>> rho_t_entries;
+        for (const auto& entry : rho_t.to_tuples()) {
+            int vec_index = std::get<0>(entry);
+            std::complex<double> val = std::get<2>(entry);
+            int r = vec_index / dim;
+            int c = vec_index % dim;
+            rho_t_entries.emplace_back(r, c, val);
+        }
+        rho_t = SparseMatrix(rho_t_entries, dim, dim);
+
+        // Apply the operators using the Born rule TODO 
+        std::vector<std::complex<double>> expectation_values;
+        for (const auto& O : observable_matrices) {
+            expectation_values.push_back((O * rho_t).trace());
+        }
+
+        // If they gave a state vector and we have unitary dynamics, return a state vector
+        if (input_was_vector && !has_jumps) {
+
+            // Find a non-zero diagonal element
+            int non_zero_row = -1;
+            for (int r = 0; r < rho_t.get_height(); ++r) {
+                std::complex<double> val = rho_t.get(r, r);
+                if (std::abs(val) > atol_) {
+                    non_zero_row = r;
+                    break;
+                }
+            }
+            if (non_zero_row == -1) {
+                throw std::runtime_error("Final density matrix has no non-zero diagonal elements.");
+            }
+
+            // Extract the corresponding state vector
+            std::vector<std::tuple<int, int, std::complex<double>>> state_vec_entries;
+            for (int c = 0; c < rho_t.get_width(); ++c) {
+                std::complex<double> val = rho_t.get(non_zero_row, c);
+                if (std::abs(val) > atol_) {
+                    state_vec_entries.emplace_back(c, 0, val);
+                }
+            }
+            SparseMatrix final_state_vec(state_vec_entries, rho_t.get_width(), 1);
+            final_state_vec /= final_state_vec.norm();
+            rho_t = final_state_vec;
+
+        }
+
+        // Create NumPy array
+        std::vector<std::vector<std::complex<double>>> rho_dense = rho_t.to_dense();
+        size_t rows_size = rho_t.get_height();
+        size_t cols_size = rho_t.get_width();
+        py::array_t<std::complex<double>> rho_numpy({rows_size, cols_size});
+        auto rho_numpy_buf = rho_numpy.mutable_unchecked<2>();
+        for (size_t i = 0; i < rows_size; ++i) {
+            for (size_t j = 0; j < cols_size; ++j) {
+                rho_numpy_buf(i, j) = rho_dense[i][j];
+            }
+        }
+
+        // Convert expectation values to NumPy array
+        py::ssize_t num_expect = expectation_values.size();
+        py::array_t<std::complex<double>> expect_numpy({num_expect});
+        auto expect_numpy_buf = expect_numpy.mutable_unchecked<1>();
+        for (size_t i = 0; i < expectation_values.size(); ++i) {
+            expect_numpy_buf(i) = expectation_values[i];
+        }
+
+        return TimeEvolutionResult("final_state"_a=QTensor(rho_numpy), "final_expected_values"_a=expect_numpy);
 
     }
 
