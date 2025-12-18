@@ -1,4 +1,12 @@
 import numpy as np
+import pytest
+
+pytest.importorskip(
+    "openfermion",
+    reason="OpenFermion integration tests require the 'openfermion' optional dependency",
+    exc_type=ImportError,
+)
+
 from openfermion.hamiltonians import jellium_model
 from openfermion.transforms import fourier_transform, jordan_wigner
 from openfermion.utils import Grid

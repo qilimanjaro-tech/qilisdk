@@ -13,8 +13,16 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import Any
 
-import httpx
 import pytest
+
+pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
+pytest.importorskip(
+    "keyring",
+    reason="SpeQtrum tests require the 'speqtrum' optional dependency",
+    exc_type=ImportError,
+)
+
+import httpx
 
 import qilisdk.speqtrum.speqtrum as speqtrum
 from qilisdk.functionals.sampling_result import SamplingResult
