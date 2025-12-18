@@ -13,10 +13,10 @@ def test_optional_stub_raises_on_call() -> None:
     )
 
     imported = import_optional_dependencies(feature)
-    SpeQtrum = imported.symbols["SpeQtrum"]
+    symbol = imported.symbols["SpeQtrum"]
 
     with pytest.raises(OptionalDependencyError) as excinfo:
-        SpeQtrum()
+        symbol()
 
     assert "Using SpeQtrum requires installing the 'speqtrum' optional feature" in str(excinfo.value)
     assert "pip install qilisdk[speqtrum]" in str(excinfo.value)
@@ -30,10 +30,10 @@ def test_optional_stub_raises_on_attribute_call() -> None:
     )
 
     imported = import_optional_dependencies(feature)
-    SpeQtrum = imported.symbols["SpeQtrum"]
+    symbol = imported.symbols["SpeQtrum"]
 
     with pytest.raises(OptionalDependencyError) as excinfo:
-        SpeQtrum.login()
+        symbol.login()
 
     assert "Using SpeQtrum.login requires installing the 'speqtrum' optional feature" in str(excinfo.value)
     assert "pip install qilisdk[speqtrum]" in str(excinfo.value)
