@@ -790,6 +790,205 @@ private:
         return counts;
     }
 
+    SparseMatrix get_vector_from_density_matrix(SparseMatrix& rho_t) {
+        /*
+        Extract a state vector from a density matrix by finding a non-zero diagonal element.
+        Args:
+            rho_t (SparseMatrix): The density matrix.
+        Returns:
+            SparseMatrix: The extracted state vector.
+        Raises:
+            std::runtime_error: If the density matrix has no non-zero diagonal elements.
+        */
+
+        // Find a non-zero diagonal element
+        int non_zero_row = -1;
+        for (int r = 0; r < rho_t.rows(); ++r) {
+            std::complex<double> val = rho_t.coeff(r, r);
+            if (std::abs(val) > atol_) {
+                non_zero_row = r;
+                break;
+            }
+        }
+        if (non_zero_row == -1) {
+            throw std::runtime_error("Final density matrix has no non-zero diagonal elements.");
+        }
+
+        // Extract the corresponding state vector
+        Triplets state_vec_entries;
+        for (int c = 0; c < rho_t.cols(); ++c) {
+            std::complex<double> val = rho_t.coeff(non_zero_row, c);
+            if (std::abs(val) > atol_) {
+                state_vec_entries.emplace_back(Triplet(c, 0, val));
+            }
+        }
+        SparseMatrix final_state_vec(rho_t.cols(), 1);
+        final_state_vec.setFromTriplets(state_vec_entries.begin(), state_vec_entries.end());
+        final_state_vec /= final_state_vec.norm();
+
+        return final_state_vec;
+
+    }
+
+    SparseMatrix iter_arnoldi(const SparseMatrix& rho_0,
+                             double dt,
+                             const SparseMatrix& currentH,
+                             const std::vector<SparseMatrix>& jump_operators,
+                             int arnoldi_dim,
+                             int num_substeps) {
+        /*
+        Perform time evolution using the Arnoldi iteration.
+        Args:
+            rho_0 (SparseMatrix): The initial density matrix, which should be vectorized.
+            dt (double): The total time step.
+            currentH (SparseMatrix): The current Hamiltonian.
+            jump_operators (std::vector<SparseMatrix>): The list of jump operators.
+            arnoldi_dim (int): Dimension of the Krylov subspace.
+            num_substeps (int): Number of substeps to divide the time step into.
+        Returns:
+            SparseMatrix: The evolved density matrix after time dt.
+        Raises:
+            std::runtime_error: If arnoldi_dim is non-positive.
+            std::runtime_error: If num_substeps is non-positive.
+            std::runtime_error: If currentH is not square.
+            std::runtime_error: If rho_0 is not vectorized as a column vector.
+            std::runtime_error: If Hamiltonian and initial density matrix dimensions do not match.
+            std::runtime_error: If any jump operator dimension does not match Hamiltonian dimension.
+
+        */
+    
+        // Sanity checks
+        if (arnoldi_dim <= 0) {
+            throw std::runtime_error("Arnoldi dimension must be positive.");
+        }
+        if (num_substeps <= 0) {
+            throw std::runtime_error("Number of substeps must be positive.");
+        }
+        if (currentH.rows() != currentH.cols()) {
+            throw std::runtime_error("Hamiltonian must be square.");
+        }
+        if (rho_0.cols() != 1) {
+            throw std::runtime_error("Initial density matrix must be vectorized as a column vector.");
+        }
+        int dim = currentH.rows();
+        if (rho_0.rows() != dim * dim) {
+            throw std::runtime_error("Initial density matrix dimension does not match Hamiltonian dimension.");
+        }
+        for (const auto& J : jump_operators) {
+            if (J.rows() != dim || J.cols() != dim) {
+                throw std::runtime_error("Jump operator dimension does not match Hamiltonian dimension.");
+            }
+        }
+
+        // Initialize the density matrix
+        SparseMatrix rho_t = rho_0;
+
+        // Form the Lindblad superoperator
+        SparseMatrix L = create_superoperator(currentH, jump_operators);
+
+        // Divide into smaller timesteps 
+        for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
+
+            // Run the Arnoldi iteration to build the Krylov basis
+            // After this, we have L approximated in the Krylov basis as H
+            // and the basis vectors in V
+            std::vector<SparseMatrix> V;
+            SparseMatrix H;
+            arnoldi(L, rho_t, arnoldi_dim, V, H);
+            int krylov_dim = V.size()-1;
+            H.conservativeResize(krylov_dim, krylov_dim);
+            V.resize(krylov_dim);
+
+            // If everything is zero then we're in an eigenstate and need to skip until we aren't
+            if (V.size() <= 1) {
+                continue;
+            }
+
+            // Compute the action of the matrix exponential
+            SparseMatrix e1(krylov_dim, 1);
+            e1.coeffRef(0, 0) = 1;
+            SparseMatrix y = exp_mat_action(H, dt, e1);
+
+            // Reconstruct the final density matrix using the basis vectors
+            SparseMatrix rho_t_new(rho_0.rows(), rho_0.cols());
+            for (int j = 0; j < int(V.size()); ++j) {
+                rho_t_new += V[j] * y.coeff(j, 0);
+            }
+            rho_t = rho_t_new;
+
+            // Normalize the vectorized density matrix
+            std::complex<double> tr = 0;
+            for (int i = 0; i < dim; ++i) {
+                int vec_index = i * dim + i;
+                tr += rho_t.coeff(vec_index, 0);
+            }
+            rho_t /= tr;
+
+        }
+
+        return rho_t;
+
+    }
+
+    SparseMatrix iter_direct(const SparseMatrix& rho_0,
+                             double dt,
+                             const SparseMatrix& currentH,
+                             const std::vector<SparseMatrix>& jump_operators,
+                             int num_substeps) {
+        /*
+        Perform direct time evolution using matrix exponentiation.
+        Args:
+            rho_0 (SparseMatrix): The initial density matrix, which should be vectorized.
+            dt (double): The total time step.
+            currentH (SparseMatrix): The current Hamiltonian.
+            jump_operators (std::vector<SparseMatrix>): The list of jump operators.
+            num_substeps (int): Number of substeps to divide the time step into.
+        Returns:
+            SparseMatrix: The evolved density matrix after time dt.
+        Raises:
+            std::runtime_error: If num_substeps is non-positive.
+            std::runtime_error: If currentH is not square.
+            std::runtime_error: If rho_0 is not vectorized as a column vector.
+            std::runtime_error: If Hamiltonian and initial density matrix dimensions do not match.
+            std::runtime_error: If any jump operator dimension does not match Hamiltonian dimension.
+
+        */
+    
+        // Sanity checks
+        if (num_substeps <= 0) {
+            throw std::runtime_error("Number of substeps must be positive.");
+        }
+        if (currentH.rows() != currentH.cols()) {
+            throw std::runtime_error("Hamiltonian must be square.");
+        }
+        if (rho_0.cols() != 1) {
+            throw std::runtime_error("Initial density matrix must be vectorized as a column vector.");
+        }
+        int dim = currentH.rows();
+        if (rho_0.rows() != dim * dim) {
+            throw std::runtime_error("Initial density matrix dimension does not match Hamiltonian dimension.");
+        }
+        for (const auto& J : jump_operators) {
+            if (J.rows() != dim || J.cols() != dim) {
+                throw std::runtime_error("Jump operator dimension does not match Hamiltonian dimension.");
+            }
+        }
+    
+        // Initialize the density matrix
+        SparseMatrix rho_t = rho_0; 
+        
+        // Form the full superoperator
+        SparseMatrix L = create_superoperator(currentH, jump_operators);
+
+        // Prepare for substeps
+        double sub_dt = dt / static_cast<double>(num_substeps);
+        for (int step = 0; step < num_substeps; ++step) {
+            rho_t = exp_mat_action(L, sub_dt, rho_t);
+        }
+        return rho_t;
+
+    }
+
 public:
 
     py::object execute_sampling(py::object functional) {
@@ -804,6 +1003,14 @@ public:
         // Get info from the functional
         int n_shots = functional.attr("nshots").cast<int>();
         int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
+
+        // Sanity checks
+        if (n_qubits <= 0) {
+            throw std::runtime_error("Number of qubits must be positive.");
+        }
+        if (n_shots <= 0) {
+            throw std::runtime_error("Number of shots must be positive.");
+        }
 
         // Get the gates
         std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
@@ -876,13 +1083,17 @@ public:
                     - "arnoldi_dim" (int): Dimension of the Krylov subspace (default 10).
                     - "method" (str): The time evolution method to use (i.e. how is exp(L*dt) applied):
                         - "direct": Direct matrix exponentiation.
-                        - "krylov": Use the Krylov subspace and then exponentiate directly. (default)
+                        - "arnoldi": Use the Arnoldi iteration to get the Krylov subspace and then exponentiate. (default)
                         - "integrator": Use an integrator method (e.g. Runge-Kutta).
                     - "num_substeps" (int): Number of substeps to divide each time step into (default 10).
                     - "monte_carlo" (bool): Whether to use the Monte Carlo wavefunction method (default False).
                     - "return_state" (bool): Whether to return the final state after evolution (default True).
         Returns:
             TimeEvolutionResult: The results of the evolution.
+        Raises:
+            std::runtime_error: If no Hamiltonians are provided.
+            std::runtime_error: If no time steps are provided.
+            std::runtime_error: If number of parameters for any Hamiltonian does not match number of time steps.
         */
 
         // Parse the info from the python objects
@@ -902,7 +1113,7 @@ public:
         if (solver_params.contains("num_substeps")) {
             num_substeps = solver_params["num_substeps"].cast<int>();
         }
-        std::string method = "krylov";
+        std::string method = "arnoldi";
         if (solver_params.contains("method")) {
             method = solver_params["method"].cast<std::string>();
         }
@@ -915,7 +1126,13 @@ public:
             use_monte_carlo = solver_params["monte_carlo"].cast<bool>();
         }
 
-        // Make sure the parameters match the steps
+        // Sanity checks
+        if (hamiltonians.size() == 0) {
+            throw std::runtime_error("At least one Hamiltonian must be provided.");
+        }
+        if (step_list.size() == 0) {
+            throw std::runtime_error("At least one time step must be provided.");
+        }
         for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
             if (parameters_list[h_ind].size() != step_list.size()) {
                 throw std::runtime_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) +
@@ -925,7 +1142,6 @@ public:
 
         // Dimensions of everything
         int dim = hamiltonians[0].rows();
-        int dim_rho = dim * dim;
 
         // It's a statevector or column vector, make it a density matrix
         bool input_was_vector = false;
@@ -949,104 +1165,36 @@ public:
             for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
                 currentH += hamiltonians[h_ind] * parameters_list[h_ind][step_ind];
             }
-            
-            // Form the Lindblad superoperator
-            SparseMatrix L = create_superoperator(currentH, jump_operators);
 
-            // Divide into smaller timesteps 
-            for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
+            // Determine the time step
+            double dt = step_list[step_ind];
+            if (step_ind > 0) {
+                dt = (step_list[step_ind] - step_list[step_ind - 1]);
+            }
 
-                // Determine the time step size
-                double dt = step_list[step_ind] / num_substeps;
-                if (step_ind > 0) {
-                    dt = (step_list[step_ind] - step_list[step_ind - 1]) / num_substeps;
+            // Perform the iteration depending on the method TODO
+            if (use_monte_carlo) {
+                if (method == "integrator") {
+                    // rho_t = iter_monte_carlo_integrator(rho_t, dt, currentH, jump_operators, num_substeps);
+                } else if (method == "direct") {
+                    // rho_t = iter_monte_carlo_direct(rho_t, dt, currentH, jump_operators, num_substeps);
+                } else if (method == "arnoldi") {
+                    // rho_t = iter_monte_carlo_arnoldi(rho_t, dt, currentH, jump_operators, arnoldi_dim, num_substeps);
                 }
-
-                if (method == "direct") {
-
-                    // Directly exponentiate the Lindblad superoperator
-                    rho_t = exp_mat_action(L, dt, rho_t);
-
-                } else if (method == "krylov") {
-
-                    // Run the Arnoldi iteration to build the Krylov basis
-                    // After this, we have L approximated in the Krylov basis as H
-                    // and the basis vectors in V
-                    std::vector<SparseMatrix> V;
-                    SparseMatrix H;
-                    arnoldi(L, rho_t, arnoldi_dim, V, H);
-                    int krylov_dim = V.size()-1;
-                    H.conservativeResize(krylov_dim, krylov_dim);
-                    V.resize(krylov_dim);
-
-                    // If everything is zero then we're in an eigenstate and need to skip until we aren't
-                    if (V.size() <= 1) {
-                        // std::cout << "Krylov basis dimension is 0, skipping time step " << step_ind << std::endl;
-                        continue;
-                    }
-
-                    // Compute the action of the matrix exponential
-                    // i.e. estimating exp(L*dt) * rho_0 via exp(H*dt) * e1
-                    // where H is the smaller Hessenberg matrix and e1 is the first basis vector
-                    SparseMatrix e1(krylov_dim, 1);
-                    e1.coeffRef(0, 0) = 1;
-                    SparseMatrix y = exp_mat_action(H, dt, e1);
-
-                    // Reconstruct the final density matrix using the basis vectors
-                    SparseMatrix rho_t_new(rho_0.rows(), rho_0.cols());
-                    for (int j = 0; j < int(V.size()); ++j) {
-                        rho_t_new += V[j] * y.coeff(j, 0);
-                    }
-                    rho_t = rho_t_new;
-
-                    // std::cout << "Time step " << step_ind << " (dt = " << dt << "):" << std::endl;
-                    // std::cout << "Linblad superoperator L:" << std::endl;
-                    // std::cout << DenseMatrix(L) << std::endl;
-                    // std::cout << "Arnoldi Hessenberg matrix H:" << std::endl;
-                    // std::cout << DenseMatrix(H) << std::endl;
-                    // std::cout << "Krylov basis vectors V:" << std::endl;
-                    // for (int v_ind = 0; v_ind < V.size(); ++v_ind) {
-                    //     std::cout << "V[" << v_ind << "]:" << std::endl;
-                    //     std::cout << DenseMatrix(V[v_ind]).transpose() << std::endl;
-                    // }
-                    // std::cout << "Exponential action result y:" << std::endl;
-                    // std::cout << DenseMatrix(y) << std::endl;
-
-                } else {
-                    throw std::runtime_error("Time evolution method " + method + " not recognized.");
+            } else {
+                if (method == "integrator") {
+                    // rho_t = iter_integrator(rho_t, dt, currentH, jump_operators, num_substeps);
+                } else if (method == "direct") {
+                    rho_t = iter_direct(rho_t, dt, currentH, jump_operators, num_substeps);
+                } else if (method == "arnoldi") {
+                    rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, arnoldi_dim, num_substeps);
                 }
-
-                // Normalize the vectorized density matrix
-                std::complex<double> tr = 0;
-                for (int i = 0; i < dim; ++i) {
-                    int vec_index = i * dim + i;
-                    tr += rho_t.coeff(vec_index, 0);
-                }
-                rho_t /= tr;
-
-                // Devectorized rho_t for debugging TODO
-                // std::cout << "Density matrix after normalization at step " << step_ind << ":" << std::endl;
-                // std::cout << DenseMatrix(devectorize(rho_t)) << std::endl;
-
             }
 
         }
 
         // Devectorize rho_t
         rho_t = devectorize(rho_t);
-
-        // Ensure it's positive and normalized
-        DenseMatrix rho_dense_ = DenseMatrix(rho_t);
-        Eigen::SelfAdjointEigenSolver<DenseMatrix> es(rho_dense_);
-        DenseMatrix D = es.eigenvalues().cwiseMax(0).asDiagonal();
-        DenseMatrix V = es.eigenvectors();
-        DenseMatrix rho_pos = V * D * V.adjoint();
-        rho_t = rho_pos.sparseView();
-        std::complex<double> tr = trace(rho_t);
-        rho_t /= tr;
-    
-        // std::cout << "Final density matrix after enforcing positivity and normalization:" << std::endl;
-        // std::cout << DenseMatrix(rho_t) << std::endl;
 
         // Apply the operators using the Born rule
         std::vector<std::complex<double>> expectation_values;
@@ -1056,36 +1204,10 @@ public:
 
         // If they gave a state vector and we have unitary dynamics, return a state vector
         if (input_was_vector && jump_operators.size() == 0) {
-
-            // Find a non-zero diagonal element
-            int non_zero_row = -1;
-            for (int r = 0; r < rho_t.rows(); ++r) {
-                std::complex<double> val = rho_t.coeff(r, r);
-                if (std::abs(val) > atol_) {
-                    non_zero_row = r;
-                    break;
-                }
-            }
-            if (non_zero_row == -1) {
-                throw std::runtime_error("Final density matrix has no non-zero diagonal elements.");
-            }
-
-            // Extract the corresponding state vector
-            Triplets state_vec_entries;
-            for (int c = 0; c < rho_t.cols(); ++c) {
-                std::complex<double> val = rho_t.coeff(non_zero_row, c);
-                if (std::abs(val) > atol_) {
-                    state_vec_entries.emplace_back(Triplet(c, 0, val));
-                }
-            }
-            SparseMatrix final_state_vec(rho_t.cols(), 1);
-            final_state_vec.setFromTriplets(state_vec_entries.begin(), state_vec_entries.end());
-            final_state_vec /= final_state_vec.norm();
-            rho_t = final_state_vec;
-
+            rho_t = get_vector_from_density_matrix(rho_t);
         }
 
-        // Convert things to numpy arrays via helper
+        // Convert things to numpy arrays
         py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);
         py::array_t<std::complex<double>> expect_numpy = to_numpy(expectation_values);
 
