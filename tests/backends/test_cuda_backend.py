@@ -3,6 +3,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+pytest.importorskip(
+    "cudaq",
+    reason="CUDA backend tests require the 'cuda' optional dependency",
+    exc_type=ImportError,
+)
+
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.core.model import Model

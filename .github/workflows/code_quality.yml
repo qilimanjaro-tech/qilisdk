@@ -48,5 +48,8 @@ jobs:
       - name: Ruff
         run: uv run ruff check --output-format=github .
 
+      - name: Format
+        run: uv run ruff format --diff --output-format=github .
+
       - name: Mypy
         run: uv run mypy src --ignore-missing-imports

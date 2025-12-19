@@ -15,7 +15,7 @@
 import importlib
 import importlib.metadata
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, NoReturn
 
 
 class OptionalDependencyError(ImportError):
@@ -63,6 +63,43 @@ class ImportedFeature:
     symbols: dict[str, Any | Callable]
 
 
+class _OptionalDependencyStub:
+    """Callable proxy that raises OptionalDependencyError for missing extras.
+
+    It also intercepts attribute access so expressions like ``SpeQtrum.login()``
+    raise an informative OptionalDependencyError rather than AttributeError.
+    """
+
+    def __init__(self, *, symbol_name: str, feature_name: str, import_error: Exception | None = None) -> None:
+        self._symbol_name = symbol_name
+        self._feature_name = feature_name
+        self._import_error = import_error
+        self.__name__ = symbol_name
+        self.__qualname__ = symbol_name
+
+    def _raise(self) -> NoReturn:
+        message = f"Using {self._symbol_name} requires installing the '{self._feature_name}' optional feature: `pip install qilisdk[{self._feature_name}]`\n"
+        if self._import_error is None:
+            raise OptionalDependencyError(message)
+        detail = f"{type(self._import_error).__name__}: {self._import_error}"
+        raise OptionalDependencyError(message + f"Import failed with: {detail}\n") from self._import_error
+
+    def __call__(self, *_: Any, **__: Any) -> NoReturn:
+        self._raise()
+
+    def __getattr__(self, name: str) -> "_OptionalDependencyStub":
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+        return _OptionalDependencyStub(
+            symbol_name=f"{self._symbol_name}.{name}",
+            feature_name=self._feature_name,
+            import_error=self._import_error,
+        )
+
+    def __repr__(self) -> str:
+        return f"<missing optional dependency: {self._symbol_name} (extra '{self._feature_name}')>"
+
+
 def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     """Tries to import a submodule at `feature.import_path` along with the required
     distributions. If successful, returns a dict mapping each symbol to the
@@ -81,23 +118,20 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
         except importlib.metadata.PackageNotFoundError:
             missing.append(dist)
 
+    def make_stub(symbol_name: str, *, import_error: Exception | None = None) -> _OptionalDependencyStub:
+        return _OptionalDependencyStub(symbol_name=symbol_name, feature_name=feature.name, import_error=import_error)
+
     if missing:
         # Build stubs that raise a helpful error
-        def make_stub(symbol_name: str) -> Callable:
-            def _stub(*args: Any, **kwargs: Any) -> None:
-                raise OptionalDependencyError(
-                    f"Using {symbol_name} requires installing the '{feature.name}' optional feature: `pip install qilisdk[{feature.name}]`\n"
-                )
-
-            _stub.__name__ = symbol_name
-            return _stub
-
-        stubs = {symbol.name: make_stub(symbol.name) for symbol in feature.symbols}
+        stubs: dict[str, Any] = {symbol.name: make_stub(symbol.name) for symbol in feature.symbols}
         return ImportedFeature(name=feature.name, symbols=stubs)
 
     # All dependencies are present => import the real module
     symbols = {}
     for symbol in feature.symbols:
-        module = importlib.import_module(symbol.path)
-        symbols[symbol.name] = getattr(module, symbol.name)
+        try:
+            module = importlib.import_module(symbol.path)
+            symbols[symbol.name] = getattr(module, symbol.name)
+        except Exception as exc:  # noqa: BLE001
+            symbols[symbol.name] = make_stub(symbol.name, import_error=exc)
     return ImportedFeature(name=feature.name, symbols=symbols)
