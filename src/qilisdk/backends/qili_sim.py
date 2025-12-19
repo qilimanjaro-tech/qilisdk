@@ -31,13 +31,15 @@ class QiliSim(Backend):
     time-evolution experiments using a custom C++ simulator.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **solver_params):
         """
         Instantiate a new :class:`QiliSim` backend.
         """
         super().__init__()
         self.qili_sim = QiliSimC()
-
+        self.solver_params = {}
+        for key in solver_params:
+            self.solver_params[key] = solver_params[key]
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
@@ -77,6 +79,9 @@ class QiliSim(Backend):
         Hs = [functional.schedule.hamiltonians[h] for h in functional.schedule.hamiltonians]
         coeffs = [[functional.schedule.coefficients[h][t] for t in steps] for h in functional.schedule.hamiltonians]
 
+        # Jump operators TODO
+        jump_operators = []
+
         # Get the observables
         observables = []
         identity = QTensor(PauliI(0).matrix)
@@ -105,11 +110,14 @@ class QiliSim(Backend):
             if aux_obs is not None:
                 observables.append(aux_obs)
 
-        # Set the Arnoldi dimension for the Krylov subspace method
-        arnoldi_dim = 20
-        
         # Execute the time evolution
-        result = self.qili_sim.execute_time_evolution(functional.initial_state, Hs, coeffs, steps, observables, arnoldi_dim)
+        result = self.qili_sim.execute_time_evolution(functional.initial_state, 
+                                                      Hs, 
+                                                      coeffs, 
+                                                      steps, 
+                                                      observables, 
+                                                      jump_operators, 
+                                                      self.solver_params)
 
         logger.success("TimeEvolution finished")
         return result
