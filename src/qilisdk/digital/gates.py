@@ -746,32 +746,32 @@ class T(BasicGate):
 
 
 def _process_param(
-                name: str,
-                value: float | Parameter | Term,
-                params_to_init: dict[str, Parameter],
-                terms_to_init: dict[str, Term],
-                ) -> None:
-            """
-            Process a parameter value and update the params_to_init and terms_to_init dictionaries.
-            Args:
-                name (str): The name of the parameter.
-                value (float | Parameter | Term): The value of the parameter.
-                params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.
-                terms_to_init (dict[str, Term]): The dictionary to initialize terms.
-            Raises:
-                ValueError: If a Term is provided that contains Variables instead of Parameters.
-            """
-            if isinstance(value, Parameter):
-                params_to_init[name] = value
-            elif isinstance(value, Term):
-                if not value.is_parameterized_term() and len(value.variables()) > 0:
-                    raise ValueError(f"RX gate Term '{name}' must contain a Parameter and not Variables.")
-                for param in value.variables():
-                    if isinstance(param, Parameter):
-                        params_to_init[param.label] = param
-                terms_to_init[name] = value
-            else:
-                params_to_init[name] = Parameter(name, value)
+    name: str,
+    value: float | Parameter | Term,
+    params_to_init: dict[str, Parameter],
+    terms_to_init: dict[str, Term],
+) -> None:
+    """
+    Process a parameter value and update the params_to_init and terms_to_init dictionaries.
+    Args:
+        name (str): The name of the parameter.
+        value (float | Parameter | Term): The value of the parameter.
+        params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.
+        terms_to_init (dict[str, Term]): The dictionary to initialize terms.
+    Raises:
+        ValueError: If a Term is provided that contains Variables instead of Parameters.
+    """
+    if isinstance(value, Parameter):
+        params_to_init[name] = value
+    elif isinstance(value, Term):
+        if not value.is_parameterized_term() and len(value.variables()) > 0:
+            raise ValueError(f"RX gate Term '{name}' must contain a Parameter and not Variables.")
+        for param in value.variables():
+            if isinstance(param, Parameter):
+                params_to_init[param.label] = param
+        terms_to_init[name] = value
+    else:
+        params_to_init[name] = Parameter(name, value)
 
 
 @yaml.register_class
