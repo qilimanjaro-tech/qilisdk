@@ -40,9 +40,22 @@ jobs:
         working-directory: docs
         run: uv run make multiversion
 
-      - name: Redirect root to main
+      - name: Redirect root to latest release tag
         run: |
-          echo '<!doctype html><meta http-equiv="refresh" content="0; url=main/">' > docs/_build/html/index.html
+          latest_tag="${{ github.event.release.tag_name }}"
+          if [ -z "$latest_tag" ]; then
+            latest_tag="$(git tag --sort=-version:refname | head -n 1)"
+          fi
+          if [ -z "$latest_tag" ]; then
+            echo "No tag found to redirect to" >&2
+            exit 1
+          fi
+          if [ ! -d "docs/_build/html/${latest_tag}" ]; then
+            echo "Built docs for tag ${latest_tag} not found" >&2
+            ls docs/_build/html
+            exit 1
+          fi
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/html/index.html
 
       - name: Deploy to GitHub Pages
         env:

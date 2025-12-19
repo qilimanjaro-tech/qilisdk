@@ -32,6 +32,7 @@ class Circuit(Parameterizable):
         Args:
             nqubits (int): The number of qubits in the circuit.
         """
+        super(Circuit, self).__init__()
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
@@ -149,7 +150,7 @@ class Circuit(Parameterizable):
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
             for label, parameter in gate.parameters.items():
-                if label == parameter.label:
+                if label == parameter.label and label in gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
                 else:
                     parameter_label = parameter.label

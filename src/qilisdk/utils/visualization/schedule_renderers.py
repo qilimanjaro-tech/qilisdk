@@ -29,7 +29,13 @@ from qilisdk.utils.visualization.style import ScheduleStyle
 class MatplotlibScheduleRenderer:
     """Render a Schedule using matplotlib, with theme support."""
 
-    def __init__(self, schedule: Schedule, ax: plt.Axes | None = None, *, style: ScheduleStyle | None = None) -> None:
+    def __init__(
+        self,
+        schedule: Schedule,
+        ax: plt.Axes | None = None,
+        *,
+        style: ScheduleStyle | None = None,
+    ) -> None:
         self.schedule = schedule
         self.style = style or ScheduleStyle()
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
@@ -54,16 +60,11 @@ class MatplotlibScheduleRenderer:
         if hasattr(ax, "figure"):
             self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
-        T = self.schedule.T
-        dt = self.schedule.dt
         hamiltonians = self.schedule.hamiltonians
-        times = [i * dt for i in range(int(T / dt))]
+        times = self.schedule.tlist
         for h in hamiltonians:
-            plots[h] = []
-        for _t in range(int(T / dt)):
-            t = _t * dt
-            for h in hamiltonians:
-                plots[h].append(self.schedule.get_coefficient(t, h))
+            coef = self.schedule.coefficients[h]
+            plots[h] = [coef[float(t)] for t in times]
 
         # Generate gradient colors between primary and accent
         def hex_to_rgb(hex_color: str) -> tuple[int, ...]:
@@ -162,5 +163,5 @@ class MatplotlibScheduleRenderer:
         Returns:
             A newly created Matplotlib Axes.
         """
-        _, ax = plt.subplots(figsize=style.figsize, dpi=style.dpi, facecolor=style.theme.background)
+        _, ax = plt.subplots(figsize=style.figsize, dpi=dpi or style.dpi, facecolor=style.theme.background)
         return ax

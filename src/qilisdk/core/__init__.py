@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .interpolator import Interpolation, Interpolator
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
 from .variables import (
@@ -22,6 +23,7 @@ from .variables import (
     LT,
     NEQ,
     BinaryVariable,
+    Domain,
     Equal,
     GreaterThan,
     GreaterThanOrEqual,
@@ -30,6 +32,7 @@ from .variables import (
     NotEqual,
     Parameter,
     SpinVariable,
+    Term,
     Variable,
 )
 
@@ -42,9 +45,12 @@ __all__ = [
     "NEQ",
     "BinaryVariable",
     "Constraint",
+    "Domain",
     "Equal",
     "GreaterThan",
     "GreaterThanOrEqual",
+    "Interpolation",
+    "Interpolator",
     "LessThan",
     "LessThanOrEqual",
     "Model",
@@ -54,6 +60,7 @@ __all__ = [
     "Parameter",
     "QTensor",
     "SpinVariable",
+    "Term",
     "Variable",
     "basis_state",
     "bra",

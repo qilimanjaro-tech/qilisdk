@@ -31,6 +31,7 @@ from qilisdk.core.variables import (
     BinaryVariable,
     Bitwise,
     ComparisonTerm,
+    Cos,
     Domain,
     DomainWall,
     Equal,
@@ -38,10 +39,13 @@ from qilisdk.core.variables import (
     GreaterThanOrEqual,
     LessThan,
     LessThanOrEqual,
+    MathematicalMap,
     NotEqual,
+    Number,
     OneHot,
     Operation,
     Parameter,
+    Sin,
     SpinVariable,
     Term,
     Variable,
@@ -1099,3 +1103,78 @@ def test_parameter_value():
         match=r"The provided domain \(INTEGER\) is incompatible with the current parameter value \(0.5\)",
     ):
         p.update_variable(Domain.INTEGER, (0, 10))
+
+
+class DummyMap(MathematicalMap):
+    """Apply a sine map to a parameter or term."""
+
+    MATH_SYMBOL = "dummy_map"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:
+        return value
+
+    def __copy__(self) -> "DummyMap":
+        return DummyMap(super().__copy__())
+
+
+def test_mathematical_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    dummy_map = DummyMap(b)
+    assert str(dummy_map) == "dummy_map[b]"
+    assert dummy_map.evaluate({b: 0}) == 0
+
+    dummy_map = DummyMap(p)
+    assert str(dummy_map) == "dummy_map[p]"
+    assert dummy_map.evaluate({}) == 1
+
+    dummy_map = DummyMap(term)
+    assert str(dummy_map) == f"dummy_map[({term})]"
+    assert dummy_map.evaluate({b: 1}) == 3
+
+    with pytest.raises(TypeError):
+        DummyMap(1)
+
+    assert isinstance(copy(dummy_map), DummyMap)
+
+
+def test_sin_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    sin_map = Sin(b)
+    assert str(sin_map) == "sin[b]"
+    assert sin_map.evaluate({b: 0}) == np.sin(0)
+
+    sin_map = Sin(p)
+    assert str(sin_map) == "sin[p]"
+    assert sin_map.evaluate({}) == np.sin(1)
+
+    sin_map = Sin(term)
+    assert str(sin_map) == f"sin[({term})]"
+    assert sin_map.evaluate({b: 1}) == np.sin(3)
+
+    assert isinstance(copy(sin_map), Sin)
+
+
+def test_cos_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    cos_map = Cos(b)
+    assert str(cos_map) == "cos[b]"
+    assert cos_map.evaluate({b: 0}) == np.cos(0)
+
+    cos_map = Cos(p)
+    assert str(cos_map) == "cos[p]"
+    assert cos_map.evaluate({}) == np.cos(1)
+
+    cos_map = Cos(term)
+    assert str(cos_map) == f"cos[({term})]"
+    assert cos_map.evaluate({b: 1}) == np.cos(3)
+
+    assert isinstance(copy(cos_map), Cos)

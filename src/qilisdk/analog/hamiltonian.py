@@ -27,6 +27,7 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.variables import BaseVariable, Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -256,6 +257,7 @@ class Hamiltonian(Parameterizable):
         Raises:
             ValueError: If the provided coefficients include generic variables instead of parameters.
         """
+        super(Hamiltonian, self).__init__()
         self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
         self._parameters: dict[str, Parameter] = {}
         if elements:
@@ -295,77 +297,9 @@ class Hamiltonian(Parameterizable):
         }
 
     @property
-    def nparameters(self) -> int:
-        """Return the number of unique symbolic parameters contained in the Hamiltonian."""
-        return len(self._parameters)
-
-    @property
     def parameters(self) -> dict[str, Parameter]:
         """Return a mapping from parameter labels to their corresponding parameter objects."""
         return self._parameters
-
-    def get_parameter_values(self) -> list[float]:
-        """Return the current numeric values of the Hamiltonian parameters."""
-        return [param.value for param in self._parameters.values()]
-
-    def get_parameter_names(self) -> list[str]:
-        """Return the ordered list of parameter labels defined in the Hamiltonian."""
-        return list(self._parameters.keys())
-
-    def get_parameters(self) -> dict[str, float]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items()}
-
-    def set_parameter_values(self, values: list[float]) -> None:
-        """
-        Update the numerical values of the Hamiltonian parameters.
-
-        Args:
-            values (list[float]): New values ordered according to ``get_parameter_names()``.
-
-        Raises:
-            ValueError: If the number of provided values does not match ``nparameters``.
-        """
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but Hamiltonian has {self.nparameters} parameters.")
-        for i, parameter in enumerate(self._parameters.values()):
-            parameter.set_value(values[i])
-
-    def set_parameters(self, parameter_dict: dict[str, float]) -> None:
-        """
-        Update a subset of parameters by label.
-
-        Args:
-            parameter_dict (dict[str, float]): Mapping from parameter labels to new numerical values.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label, param in parameter_dict.items():
-            if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this hamiltonian.")
-            self._parameters[label].set_value(param)
-
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the lower and upper bounds currently associated with each parameter."""
-        return {k: v.bounds for k, v in self._parameters.items()}
-
-    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """
-        Update parameter bounds.
-
-        Args:
-            ranges (dict[str, tuple[float, float]]): Mapping from parameter labels to ``(lower, upper)`` bounds.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label, bound in ranges.items():
-            if label not in self._parameters:
-                raise ValueError(
-                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
-                )
-            self._parameters[label].set_bounds(bound[0], bound[1])
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
@@ -572,15 +506,75 @@ class Hamiltonian(Parameterizable):
 
         return " ".join(parts)
 
+    def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+        """
+        Split the Hamiltonian into a list of partitions, each containing commuting terms.
+
+        For now this is a greedy algorithm, but a smarter graph-coloring approach could be used later.
+
+        Returns:
+            list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+                A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
+        """
+        partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
+
+        def _terms_commute(term1: tuple[PauliOperator, ...], term2: tuple[PauliOperator, ...]) -> bool:
+            """
+            Check if two Pauli terms commute.
+
+            Args:
+                term1 (tuple[PauliOperator, ...]): The first Pauli term.
+                term2 (tuple[PauliOperator, ...]): The second Pauli term.
+
+            Returns:
+                bool: True if the terms commute, False otherwise.
+
+            """
+
+            # Create a mapping from qubit index to operator for both terms
+            op_map1 = {op.qubit: op.name for op in term1}
+            op_map2 = {op.qubit: op.name for op in term2}
+
+            # Check each qubit for non-commuting operators
+            qubits = set(op_map1.keys()).union(op_map2.keys())
+            commutes = True
+            for qubit in qubits:
+                op1 = op_map1.get(qubit, "I")
+                op2 = op_map2.get(qubit, "I")
+
+                # Non-commuting pair found
+                if op1 not in {"I", op2} and op2 != "I":
+                    commutes = False
+                    break
+
+            return commutes
+
+        # Check each term with each partition
+        for term, coeff in self.elements.items():
+            placed = False
+            for partition in partitions:
+                # Check if the term commutes with all terms in the current partition
+                if all(_terms_commute(term, other_term) for other_term in partition):
+                    # If so, add it to this partition
+                    partition[term] = coeff
+                    placed = True
+                    break
+
+            # Otherwise create a new partition for this term
+            if not placed:
+                partitions.append({term: coeff})
+
+        return partitions
+
     @classmethod
-    def from_qtensor(cls, tensor: QTensor, tol: float = 1e-10, prune: float = 1e-12) -> Hamiltonian:
+    def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
         returning a qilisdk.analog.Hamiltonian.
 
         Args:
-            tol (float): Hermiticity check tolerance.
-            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise.
+            tol (float): Hermiticity check tolerance. Defaults to global zero tolerance setting.
+            prune (float): Drop coefficients whose absolute value satisfies ``abs(c) < prune`` to reduce numerical noise. Defaults to global zero tolerance setting.
 
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
@@ -588,7 +582,12 @@ class Hamiltonian(Parameterizable):
         Raises
             ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
         """
-        A = np.asarray(tensor.dense)
+        if tol is None:
+            tol = get_settings().atol
+        if prune is None:
+            prune = get_settings().atol
+
+        A = np.asarray(tensor.dense())
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
@@ -616,7 +615,7 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense
+            P_dense = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
             c = norm * np.trace(A @ P_dense)
@@ -629,7 +628,7 @@ class Hamiltonian(Parameterizable):
                 H += c * op
 
         # Optional: verify round-trip (use a slightly looser atol to tolerate pruning)
-        if not np.allclose(H.to_qtensor(n).dense, A, atol=max(10 * prune, 1e-9)):
+        if not np.allclose(H.to_qtensor(n).dense(), A, atol=max(10 * prune, 1e-9)):
             # If this triggers, consider lowering `prune` or raising `tol`.
             raise ValueError("Pauli expansion failed round-trip check; try adjusting tolerances.")
 
@@ -936,7 +935,7 @@ class Hamiltonian(Parameterizable):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 return
             # Add the scalar to (I(0),)
             self._elements[PauliI(0),] += other
@@ -961,7 +960,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 return
             self._elements[PauliI(0),] -= other
         elif isinstance(other, (Term, Parameter)):
@@ -982,7 +981,7 @@ class Hamiltonian(Parameterizable):
     def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
         if isinstance(other, (int, float, complex)):
             # 0 short-circuit
-            if other == 0:
+            if abs(other) < get_settings().atol:
                 # everything becomes 0
                 self._elements.clear()
                 return None
@@ -1046,6 +1045,6 @@ class Hamiltonian(Parameterizable):
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
             raise InvalidHamiltonianOperation("Division by operators is not supported")
-        if other == 0:
+        if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")
         self._mul_inplace(1 / other)

@@ -17,39 +17,39 @@ Simple Gates
 
 Use these constructors to apply standard single- and two-qubit operations:
 
-- ``X(qubit: int)``  
+- :class:`X(qubit: int)<qilisdk.digital.gates.X>`
   Pauli X (bit-flip) on the specified qubit.  
-- ``Y(qubit: int)``  
+- :class:`Y(qubit: int)<qilisdk.digital.gates.Y>`
   Pauli Y (bit-and-phase-flip).  
-- ``Z(qubit: int)``  
+- :class:`Z(qubit: int)<qilisdk.digital.gates.Z>`
   Pauli Z (phase-flip).  
-- ``H(qubit: int)``  
+- :class:`H(qubit: int)<qilisdk.digital.gates.H>`
   Hadamard: creates superposition.  
-- ``I(qubit: int)``  
+- :class:`I(qubit: int)<qilisdk.digital.gates.I>`
   Identity gate: leaves the qubit unchanged.  
-- ``S(qubit: int)``  
+- :class:`S(qubit: int)<qilisdk.digital.gates.S>`
   Phase gate (π/2 rotation about Z).  
-- ``T(qubit: int)``  
+- :class:`T(qubit: int)<qilisdk.digital.gates.T>`
   T gate (π/4 rotation about Z).  
-- ``RX(qubit: int, theta: float)``  
+- :class:`RX(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RX>`
   Rotation by angle `theta` around X.  
-- ``RY(qubit: int, theta: float)``  
+- :class:`RY(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RY>`
   Rotation by angle `theta` around Y.  
-- ``RZ(qubit: int, phi: float)``  
+- :class:`RZ(qubit: int, phi: float | Parameter | Term)<qilisdk.digital.gates.RZ>`
   Rotation by angle `phi` around Z.  
-- ``U1(qubit: int, *, phi: float)``  
+- :class:`U1(qubit: int, *, phi: float | Parameter | Term)<qilisdk.digital.gates.U1>`
   Phase shift equivalent to RZ plus global phase.  
-- ``U2(qubit: int, *, phi: float, gamma: float)``
+- :class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U2>`
   π/2 Y-rotation sandwiched by Z-rotations.
-- ``U3(qubit: int, *, theta: float, phi: float, gamma: float)``
+- :class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U3>`
   General single-qubit unitary: RZ-RY-RZ decomposition.
-- ``SWAP(a: int, b: int)``  
+- :class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>`
   Exchanges the states of qubits ``a`` and ``b``.
-- ``CNOT(control: int, target: int)``
+- :class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>`
   Controlled-X: flips target if control is |1⟩.
-- ``CZ(control: int, target: int)``
+- :class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>`
   Controlled-Z: applies Z on target if control is |1⟩.
-- ``M(*qubits: int)``  
+- :class:`M(*qubits: int)<qilisdk.digital.gates.M>`
   Measures the listed qubits in the computational basis.
 
 Controlled Gates
@@ -62,6 +62,17 @@ Any basic gate can be turned into a controlled gate using the :class:`~qilisdk.d
     from qilisdk.digital.gates import Controlled, Y
 
     controlled_y = Controlled(0, basic_gate=Y(1))
+    multiple_controlled_y = Controlled(0, 1, basic_gate=Y(2))
+
+Or alternatively, you can use the :meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method on any gate instance:
+
+.. code-block:: python
+
+    from qilisdk.digital.gates import Y
+
+    controlled_y = Y(1).controlled(0)
+    multiple_controlled_y = Y(2).controlled(0, 1)
+
 
 Adjoint Gates
 ^^^^^^^^^^^^^
@@ -121,7 +132,7 @@ Circuits can include parameterized gates. Adding them is similar to regular gate
 
     circuit.add(RX(0, theta=np.pi))
 
-You can retrieve the current parameter:
+You can retrieve the current parameter using:
 
 .. code-block:: python
 
@@ -135,7 +146,7 @@ You can retrieve the current parameter:
     Initial Parameters: {'RX(0)_theta_0': 3.141592653589793}
 
 
-You can also retrieve the current parameter values only:
+You can also retrieve a list containing only the current parameter values:
 
 .. code-block:: python
 
@@ -149,7 +160,7 @@ You can also retrieve the current parameter values only:
     Initial parameter values: [3.141592653589793]
 
 
-To update parameter by key:
+To update parameters by their keys:
 
 .. code-block:: python
 
@@ -157,7 +168,7 @@ To update parameter by key:
 
 
 
-To update parameter by value:
+To update all parameters with new values:
 
 .. code-block:: python
 
@@ -170,7 +181,10 @@ To update parameter by value:
 Visualization
 -------------
 
-Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matplotlib. By default, the renderer applies the library's built-in styling (including the bundled default font if available). You can **bypass all defaults** by passing a custom :class:`~qilisdk.utils.visualization.CircuitStyle`, which confines styling to the specific call without modifying global Matplotlib settings.
+Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit with Matplotlib. 
+By default, the renderer applies the library's built-in styling (including the bundled default font if available). 
+You can **bypass all defaults** by passing a custom :class:`~qilisdk.utils.visualization.style.CircuitStyle`, which 
+confines styling to the specific call without modifying global Matplotlib settings.
 
 .. code-block:: python
 
@@ -201,11 +215,11 @@ Saving to a file
     # Save as SVG (use .png, .pdf, etc. as needed)
     circuit.draw(filepath="my_circuit.svg")
 
-Custom styling with :class:`~qilisdk.utils.visualization.CircuitStyle`
+Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to ``draw`` overrides the library defaults for this call.
-You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible changing the patameter **layout** to *"normal"* (default) or *"compact"* respectively.
+Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to :meth:`~qilisdk.digital.circuit.Circuit.draw` overrides the library defaults for this call.
+You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible by changing the parameter **layout** to *"normal"* (default) or *"compact"* respectively.
 
 .. code-block:: python
 
@@ -299,12 +313,15 @@ HardwareEfficientAnsatz
 
 - **layers**: Number of repeating layers of gates.
 - **connectivity**:
-  - ``Circular``: Qubits form a ring.
-  - ``Linear``: Qubits are connected linearly.
-  - ``Full``: All-to-all connectivity.
+
+  - ``circular``: Qubits form a ring.
+  - ``linear``: Qubits are connected linearly.
+  - ``full``: All-to-all connectivity.
+  - Or a list of tuples explicitly specifying the connectivity.
 - **one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, :class:`~qilisdk.digital.gates.U3`).
 - **two_qubit_gate**: Choose the two-qubit interaction type (e.g., :class:`~qilisdk.digital.gates.CNOT`, :class:`~qilisdk.digital.gates.CZ`).
 - **structure**:
+
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
   - ``interposed``: Interleaves single and two-qubit gates.
 
@@ -325,9 +342,10 @@ HardwareEfficientAnsatz
         two_qubit_gate=CNOT, 
         structure="Interposed"
     )
+    ansatz.draw()
 
   
-This ansatz can be then used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
+This ansatz can then be used as a circuit. For example, we can execute this ansatz using QuTiP backend (need to be installed separately):
 
 
 .. code-block:: python 
@@ -339,6 +357,63 @@ This ansatz can be then used as a circuit. For example, we can execute this ansa
 
     backend.execute(Sampling(ansatz))
 
+QAOA
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the alternating time evolution of a 
+problem Hamiltonian and a mixer Hamiltonian [1]_. 
+By initializing the circuit as the ground state of the mixer Hamiltonian (often simply the uniform superposition) and then 
+applying the alternating evolution scaled by parameters :math:`\gamma_i` and :math:`\alpha_i`, the idea is that at a certain set of 
+parameters the ansatz should approximate the evolution from the ground state of the mixer Hamiltonian to the ground state of the problem Hamiltonian, 
+as per the quantum adiabatic theorem. By treating this parameterized circuit as an ansatz for a variational quantum algorithm, we can optimize
+to try to minimize the expectation value of the problem Hamiltonian and thus solve the encoded optimization problem.
+
+.. [1] Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. "A quantum approximate optimization algorithm." arXiv preprint `arXiv:1411.4028 <https://arxiv.org/abs/1411.4028>`_ (2014).
+
+Configuration options:
+
+- **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
+- **layers**: Number of repeating layers of gates. Each layer applies two evolutions: one for the problem Hamiltonian and one for the mixer Hamiltonian.
+- **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
+- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contains non-commuting terms.
+- **problem_params**: Initial parameter values for the problem Hamiltonian evolution angles. Defaults to 0.0 for all layers.
+- **mixer_params**: Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to 0.0 for all layers.
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.digital import QAOA, Z
+
+    problem_hamiltonian = Z(0) * Z(1) + Z(2)
+    ansatz = QAOA(
+        problem_hamiltonian=problem_hamiltonian,
+        layers=2,
+        mixer_hamiltonian=None,
+        trotter_steps=1
+        problem_params=[0.5, 1.0],
+        mixer_params=[0.25, 0.75]
+    )
+    ansatz.draw()
+
+As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as per any QiliSDK circuit. 
+Or, to instead perform variational optimization over the parameters to minimize the 
+expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </fundamentals/functionals>` for more details):
+
+.. code-block:: python 
+
+    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+
+    vqa = VariationalProgram(functional=Sampling(ansatz), 
+                             optimizer=SciPyOptimizer(method="powell", tol=1e-7), 
+                             cost_function=ObservableCostFunction(problem_hamiltonian))
+
+    print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
+    backend = QutipBackend()
+    result = backend.execute(vqa)
+    print("VQA Result:", result)
 
 Parameter Utilities
 -------------------

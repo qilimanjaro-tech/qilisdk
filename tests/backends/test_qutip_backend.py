@@ -4,6 +4,13 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
+pytest.importorskip(
+    "qutip_qip",
+    reason="QuTiP backend tests require the 'qutip' optional dependency",
+    exc_type=ImportError,
+)
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
@@ -139,6 +146,34 @@ def test_controlled_handler(gate_instance):
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
+def test_multi_controlled_handler(gate_instance):
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=10)
+    controlled_gate = Controlled(7, 8, 9, basic_gate=gate_instance)
+    circuit.add(controlled_gate)
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+    expected_targets = set(controlled_gate.target_qubits).union(set(controlled_gate.control_qubits))
+
+    assert any(g.name.startswith(controlled_gate.name) for g in qutip_circuit.gates)
+    assert any(set(g.targets) == expected_targets for g in qutip_circuit.gates)
+
+
+def test_multi_controlled_execution():
+    # Create two Xs then a multi-controlled X (Toffoli) gate
+    # Expect roughly all shots to be '111'
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    circuit.add(X(1))
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    result = backend.execute(Sampling(circuit=circuit, nshots=100))
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "111" in samples
+    assert samples["111"] == 100
+
+
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_handlers(gate_instance):
     backend = QutipBackend()
     circuit = Circuit(nqubits=10)
@@ -153,8 +188,8 @@ def test_constant_hamiltonian():
     schedule = Schedule(
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
-        T=10,
-        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+        total_time=10,
+        coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]
@@ -170,7 +205,7 @@ def test_constant_hamiltonian():
     # Intermediate states should replicate constant behavior
     assert res.intermediate_states is not None
     for state in res.intermediate_states:
-        psi = state.dense.flatten()
+        psi = state.dense().flatten()
         assert pytest.approx(abs(psi[0]) ** 2, rel=1e-6) == 1.0
 
 
@@ -179,16 +214,13 @@ def test_time_dependent_hamiltonian():
     dt = 1
     T = 1000
 
-    steps = np.linspace(0, T, int(T / dt))
-
     schedule = Schedule(
-        T,
-        dt,
+        dt=dt,
         hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
-        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
-    psi0 = (ket(0) + ket(1)).unit()
+    psi0 = (ket(0) - ket(1)).unit()
     obs = [
         pauli_z(0),  # measure z
     ]
@@ -199,24 +231,21 @@ def test_time_dependent_hamiltonian():
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
-    assert pytest.approx(expect_z, rel=1e-2) == 1.0
+    assert pytest.approx(expect_z, rel=1e-2) == -1.0
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():
-    dt = 1
-    T = 5000
-    # steps = int(T / dt) - 1
+    dt = 0.01
+    T = 50
 
-    steps = np.linspace(0, T, int(T / dt))
     h1 = pauli_x(0) + pauli_x(1) + pauli_x(2)
     h2 = -1 * pauli_z(0) - 1 * pauli_z(1) - 2 * pauli_z(2) + 3 * pauli_z(0) * pauli_z(1)
 
     # Create a schedule for the time evolution
     schedule = Schedule(
-        T,
-        dt,
+        dt=dt,
         hamiltonians={"h1": h1, "h2": h2},
-        schedule={t: {"h1": 1 - steps[t] / T, "h2": steps[t] / T} for t in range(len(steps))},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
     psi0 = (ket(0) + ket(1)).unit()

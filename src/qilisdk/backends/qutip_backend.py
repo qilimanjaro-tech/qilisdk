@@ -172,20 +172,21 @@ class QutipBackend(Backend):
             ValueError: if the initial state provided is invalid.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        tlist = np.linspace(0, functional.schedule.T, int(functional.schedule.T / functional.schedule.dt))
+        steps = functional.schedule.tlist
 
         qutip_hamiltonians = []
         for hamiltonian in functional.schedule.hamiltonians.values():
             qutip_hamiltonians.append(
                 Qobj(
-                    hamiltonian.to_matrix().toarray(), dims=[[2 for _ in range(hamiltonian.nqubits)] for _ in range(2)]
+                    hamiltonian.to_qtensor(total_nqubits=functional.schedule.nqubits).dense(),
+                    dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)],
                 )
             )
 
         H_t = [
             [
                 qutip_hamiltonians[i],
-                np.array([functional.schedule.get_coefficient(t, h) for t in tlist]),
+                np.array([functional.schedule.coefficients[h][t] for t in steps]),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
@@ -200,7 +201,7 @@ class QutipBackend(Backend):
             logger.error("Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
-        qutip_init_state = Qobj(functional.initial_state.dense, dims=state_dim)
+        qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
 
@@ -229,14 +230,14 @@ class QutipBackend(Backend):
                 raise ValueError(f"unsupported observable type of {obs.__class__}")
             if aux_obs is not None:
                 qutip_obs.append(
-                    Qobj(aux_obs.dense, dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
+                    Qobj(aux_obs.dense(), dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
                 )
 
         results = mesolve(
             H=H_t,
             e_ops=qutip_obs,
             rho0=qutip_init_state,
-            tlist=tlist,
+            tlist=steps,
             options={
                 "store_states": functional.store_intermediate_results,
                 "store_final_state": True,
@@ -313,12 +314,7 @@ class QutipBackend(Backend):
         For non-native controlled gates we construct the block-matrix explicitly, mirroring
         the approach recommended in the QuTiP QIP documentation for custom controlled rotations.
 
-        Raises:
-            UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
-        if len(gate.control_qubits) != 1:
-            logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
-            raise UnsupportedGateError
 
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
