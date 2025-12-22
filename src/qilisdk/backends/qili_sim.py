@@ -34,6 +34,20 @@ class QiliSim(Backend):
     def __init__(self, **solver_params):
         """
         Instantiate a new :class:`QiliSim` backend.
+        Args:
+            solver_params: Optional keyword arguments to configure the
+                time-evolution solver. Supported parameters are:
+
+                - `method` (str): The solver method to use. Options are
+                  'direct' (default), 'arnoldi' and 'integrate'.
+                - `arnoldi_dim` (int): The dimension of the Arnoldi
+                  subspace to use for the 'arnoldi' method (default: 10).
+                - `num_arnoldi_substeps` (int): The number of substeps to use
+                    when using the Arnoldi method (default: 1).
+                - `monte_carlo` (bool): Whether to use Monte Carlo wave
+                    function method for open systems (default: False).
+                
+
         """
         super().__init__()
         self.qili_sim = QiliSimC()
@@ -73,7 +87,6 @@ class QiliSim(Backend):
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
         tlist = np.array(functional.schedule.tlist)
         steps = np.union1d(steps, tlist)
-        steps = list(np.sort(steps))
 
         # Get the Hamiltonians and their parameters from the schedule per timestep
         Hs = [functional.schedule.hamiltonians[h] for h in functional.schedule.hamiltonians]
@@ -117,6 +130,7 @@ class QiliSim(Backend):
                                                       steps, 
                                                       observables, 
                                                       jump_operators, 
+                                                      functional.store_intermediate_results,
                                                       self.solver_params)
 
         logger.success("TimeEvolution finished")
