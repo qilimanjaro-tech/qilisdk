@@ -912,16 +912,16 @@ private:
 
     }
 
-    void lindblad_rhs(SparseMatrix& drho,
-                      const SparseMatrix& rho,
+    void lindblad_rhs(DenseMatrix& drho,
+                      const DenseMatrix& rho,
                       const SparseMatrix& H,
                       const std::vector<SparseMatrix>& jumps,
                       bool is_unitary_on_statevector) {
         /*
         Compute the right-hand side of the Lindblad master equation.
         Args:
-            drho (SparseMatrix&): The output derivative of the density matrix.
-            rho (SparseMatrix): The current density matrix. 
+            drho (DenseMatrix&): The output derivative of the density matrix.
+            rho (DenseMatrix): The current density matrix. 
             H (SparseMatrix): The Hamiltonian.
             jumps (std::vector<SparseMatrix>): The list of jump operators.
             is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
@@ -930,15 +930,15 @@ private:
         if (is_unitary_on_statevector) {
             drho = -I * H * rho;
         } else {
-            SparseMatrix temp = H * rho;
+            SparseMatrix temp = (H * rho).sparseView();
             drho = -I * temp;
-            temp = rho * H;
+            temp = (rho * H).sparseView();
             drho += I * temp;
             for (const auto& J : jumps) {
                 SparseMatrix Jdag = J.adjoint();
                 SparseMatrix JdagJ = Jdag * J;
-                SparseMatrix JdagJ_rho = JdagJ * rho;
-                SparseMatrix rho_JdagJ = rho * JdagJ;
+                SparseMatrix JdagJ_rho = (JdagJ * rho).sparseView();
+                SparseMatrix rho_JdagJ = (rho * JdagJ).sparseView();
                 drho += J * rho * Jdag;
                 drho -= 0.5 * (JdagJ_rho + rho_JdagJ);
             }
@@ -991,12 +991,12 @@ private:
         int rho_cols = rho_0.cols();
 
         // Standard RK4 loop
-        SparseMatrix rho = rho_0;
-        SparseMatrix k1(rho_rows, rho_cols);
-        SparseMatrix k2(rho_rows, rho_cols);
-        SparseMatrix k3(rho_rows, rho_cols);
-        SparseMatrix k4(rho_rows, rho_cols);
-        SparseMatrix rho_tmp(rho_rows, rho_cols);
+        DenseMatrix rho = rho_0;
+        DenseMatrix k1(rho_rows, rho_cols);
+        DenseMatrix k2(rho_rows, rho_cols);
+        DenseMatrix k3(rho_rows, rho_cols);
+        DenseMatrix k4(rho_rows, rho_cols);
+        DenseMatrix rho_tmp(rho_rows, rho_cols);
         double dt_sub = dt / static_cast<double>(num_substeps);
         for (int step = 0; step < num_substeps; ++step) {
             lindblad_rhs(k1, rho, currentH, jump_operators, is_unitary_on_statevector);
@@ -1020,12 +1020,14 @@ private:
             } else {
                 std::complex<double> tr = 0;
                 for (int i = 0; i < dim; ++i) {
-                    tr += rho.coeff(i, i);
+                    // tr += rho.coeff(i, i);
+                    tr += rho(i, i);
                 }
                 rho /= tr;
             }
         }
-        return rho;
+        // return rho;
+        return rho.sparseView();
 
     }
 
@@ -1086,15 +1088,15 @@ private:
 
         // Need to vectorize the density matrix if we're going to use the superoperator
         SparseMatrix rho_t;
-        if (is_unitary || is_unitary_on_statevector) {
-            rho_t = rho_0;
-        } else {
+        if (!is_unitary && !is_unitary_on_statevector) {
             rho_t = vectorize(rho_0);
+        } else {
+            rho_t = rho_0;
         }
         
         // Vars for the Arnoldi iteration
         std::vector<SparseMatrix> V;
-        SparseMatrix H;
+        SparseMatrix A;
         int subspace_dim;
         
         // Form the Lindblad superoperator if needed
@@ -1103,24 +1105,24 @@ private:
             L = create_superoperator(currentH, jump_operators);
         }
 
-        // Divide into smaller timesteps
+        // Divide into smaller timesteps if requested
         double dt_sub = dt / static_cast<double>(num_substeps);
         for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
 
             // Run the Arnoldi iteration to build the basis
-            // After this, we have L approximated in the basis as H
+            // After this, we have our operator approximated in the basis as A
             // and the basis vectors in V
             if (is_unitary_on_statevector) {
-                arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, H);
+                arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A);
                 subspace_dim = V.size()-1;
             } else if (!is_unitary) {
-                arnoldi(L, rho_t, arnoldi_dim, V, H);
+                arnoldi(L, rho_t, arnoldi_dim, V, A);
                 subspace_dim = V.size()-1;
             } else {
-                arnoldi_mat(currentH, rho_t, arnoldi_dim, V, H);
+                arnoldi_mat(currentH, rho_t, arnoldi_dim, V, A);
                 subspace_dim = V.size();
             }
-            H.conservativeResize(subspace_dim, subspace_dim);
+            A.conservativeResize(subspace_dim, subspace_dim);
             V.resize(subspace_dim);
 
             // If everything is zero then we're probably in an eigenstate and need to skip until we aren't
@@ -1131,7 +1133,7 @@ private:
             // Compute the action of the matrix exponential
             SparseMatrix e1(subspace_dim, 1);
             e1.coeffRef(0, 0) = 1;
-            SparseMatrix y = exp_mat_action(H, dt_sub, e1);
+            SparseMatrix y = exp_mat_action(A, dt_sub, e1);
 
             // Reconstruct the final density matrix using the basis vectors
             SparseMatrix rho_t_new(rho_t.rows(), rho_t.cols());
@@ -1319,13 +1321,13 @@ public:
             jumps (py::object): A list of jump operators for the Lindblad equation.
             store_intermediate_results (bool): Whether to store results at each time step (default False).
             params (py::dict): Additional parameters for the method:
-                    - "arnoldi_dim" (int): Dimension of the subspace (default 10).
+                    - "arnoldi_dim" (int): Dimension of the subspace (default 5).
                     - "method" (str): The time evolution method to use (i.e. how is exp(L*dt) applied):
                         - "direct": Direct matrix exponentiation.
                         - "arnoldi": Use the Arnoldi iteration to get the subspace and then exponentiate. (default)
                         - "integrate": Use an integrator method (e.g. Runge-Kutta).
                     - "num_arnoldi_substeps" (int): Number of substeps to divide each time step into (default 1).
-                    - "num_integrate_substeps" (int): Number of substeps for the integrate method (default 100).
+                    - "num_integrate_substeps" (int): Number of substeps for the integrate method (default 1).
                     - "monte_carlo" (bool): Whether to use the Monte Carlo wavefunction method (default False).
         Returns:
             TimeEvolutionResult: The results of the evolution.
@@ -1333,6 +1335,7 @@ public:
             std::runtime_error: If no Hamiltonians are provided.
             std::runtime_error: If no time steps are provided.
             std::runtime_error: If number of parameters for any Hamiltonian does not match number of time steps.
+            std::runtime_error: If an unknown time evolution method is specified.
         */
 
         // Parse the info from the python objects
@@ -1344,15 +1347,15 @@ public:
         SparseMatrix rho_0 = parse_initial_state(initial_state);
         
         // Get parameters
-        int arnoldi_dim = 10;
+        int arnoldi_dim = 5;
         if (solver_params.contains("arnoldi_dim")) {
             arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
         }
-        int num_arnoldi_substeps = 10;
+        int num_arnoldi_substeps = 1;
         if (solver_params.contains("num_arnoldi_substeps")) {
             num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
         }
-        int num_integrate_substeps = 10;
+        int num_integrate_substeps = 1;
         if (solver_params.contains("num_integrate_substeps")) {
             num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
         }

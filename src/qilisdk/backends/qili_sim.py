@@ -41,11 +41,14 @@ class QiliSim(Backend):
                 - `method` (str): The solver method to use. Options are
                   'direct' (default), 'arnoldi' and 'integrate'.
                 - `arnoldi_dim` (int): The dimension of the Arnoldi
-                  subspace to use for the 'arnoldi' method (default: 10).
+                  subspace to use for the 'arnoldi' method (default: 5).
                 - `num_arnoldi_substeps` (int): The number of substeps to use
                     when using the Arnoldi method (default: 1).
+                - `num_integrate_substeps` (int): The number of substeps to use
+                    when using the Integrate method (default: 1).
                 - `monte_carlo` (bool): Whether to use Monte Carlo wave
                     function method for open systems (default: False).
+                - `num_threads` (int): Number of threads to use for parallelization (default: 1).
                 
 
         """
