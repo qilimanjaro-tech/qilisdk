@@ -90,7 +90,6 @@ private:
     Triplets tensor_product(
                 Triplets& A,
                 Triplets& B,
-                int A_width,
                 int B_width
             ) const {
         /*
@@ -98,7 +97,6 @@ private:
         Args:
             A (Triplets&): First matrix entries.
             B (Triplets&): Second matrix entries.
-            A_width (int): Width of the first matrix (assumed square).
             B_width (int): Width of the second matrix (assumed square).
         Returns:
             Triplets: The tensor product entries.
@@ -183,11 +181,11 @@ private:
         Triplets identity_entries = {Triplet(0, 0, 1.0), Triplet(1, 1, 1.0)};
         int gate_size = 1 << (target_qubits.size() + control_qubits.size());
         for (int i = 0; i < needed_before; ++i) {
-            out_entries = tensor_product(identity_entries, out_entries, 2, gate_size);
+            out_entries = tensor_product(identity_entries, out_entries, gate_size);
             gate_size *= 2;
         }
         for (int i = 0; i < needed_after; ++i) {
-            out_entries = tensor_product(out_entries, identity_entries, gate_size, 2);
+            out_entries = tensor_product(out_entries, identity_entries, 2);
             gate_size *= 2;
         }
 
@@ -204,7 +202,7 @@ private:
         for (int q = 0; q < num_qubits; ++q) {
             perm[q] = q;
         }
-        for (int i = 0; i < all_qubits.size(); ++i) {
+        for (int i = 0; i < int(all_qubits.size()); ++i) {
             if (perm[needed_before + i] != all_qubits[i]) {
                 std::swap(perm[needed_before + i], perm[all_qubits[i]]);
             }
@@ -217,7 +215,7 @@ private:
         perm = inv_perm;
 
         // Apply the permutation
-        for (int i=0; i<out_entries.size(); ++i) {
+        for (size_t i=0; i<out_entries.size(); ++i) {
             int old_row = out_entries[i].row();
             int old_col = out_entries[i].col();
             int new_row = permute_bits(old_row, perm);
@@ -279,7 +277,7 @@ py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor")
 // Needed for _a literals
 using namespace pybind11::literals;
 
-class QiliSimC {
+class QiliSimCpp {
 private:
 
     SparseMatrix exp_mat_action(const SparseMatrix& H,
@@ -320,15 +318,13 @@ private:
                              const SparseMatrix& v2) const {
         /*
         Compute the dot product between two sparse matrices treated as vectors.
+        Note that the first vector is conjugated.
         Args:
             v1 (SparseMatrix): The first vector.
             v2 (SparseMatrix): The second vector.
         Returns:
             std::complex<double>: The dot product result.
         */
-        if (v1.rows() != v2.rows() || v1.cols() != v2.cols()) {
-            throw std::runtime_error("Vectors must have the same dimensions for dot product.");
-        }
         return v1.conjugate().cwiseProduct(v2).sum();
     }
 
@@ -348,7 +344,6 @@ private:
         */
 
         // Set up the outputs
-        int n = v0.rows();
         V.clear();
         H = SparseMatrix(m + 1, m);
 
@@ -582,7 +577,7 @@ private:
         py::buffer init_state = numpy_array(initial_state.attr("dense")(), py::dtype("complex128"));
         py::buffer_info buf = init_state.request();
         if (buf.ndim != 2) {
-            throw std::runtime_error("Initial state must be a 2D array.");
+            throw py::value_error("Initial state must be a 2D array.");
         }
         int rows = buf.shape[0];
         int cols = buf.shape[1];
@@ -610,7 +605,7 @@ private:
             std::complex<double>: The trace of the matrix.
         */
         if (matrix.rows() != matrix.cols()) {
-            throw std::runtime_error("Matrix must be square to compute trace.");
+            throw py::value_error("Matrix must be square to compute trace.");
         }
         std::complex<double> tr = 0.0;
         for (int i = 0; i < matrix.rows(); ++i) {
@@ -733,25 +728,27 @@ private:
         return np_array;
     }
 
-    py::array_t<std::complex<double>> to_numpy(const std::vector<std::complex<double>>& vec) {
+    template<typename T>
+    py::array_t<T> to_numpy(const std::vector<T>& vec) {
         /*
         Convert a vector of complex numbers to a NumPy array.
         Args:
-            vec (std::vector<std::complex<double>>): The input vector.
+            vec (std::vector<T>): The input vector.
         Returns:
-            py::array_t<std::complex<double>>: The corresponding NumPy array.
+            py::array_t<T>: The corresponding NumPy array.
         */
         int size = vec.size();
-        py::array_t<std::complex<double>> np_array({size});
+        py::array_t<T> np_array({size});
         py::buffer_info buf = np_array.request();
-        auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+        auto ptr = static_cast<T*>(buf.ptr);
         for (int i = 0; i < size; ++i) {
             ptr[i] = vec[i];
         }
         return np_array;
     }
 
-    py::array_t<std::complex<double>> to_numpy(const std::vector<std::vector<std::complex<double>>>& vecs) {
+    template<typename T>
+    py::array_t<T> to_numpy(const std::vector<std::vector<T>>& vecs) {
         /*
         Convert a vector of vectors of complex numbers to a 2D NumPy array.
         Args:
@@ -761,9 +758,9 @@ private:
         */
         int rows = vecs.size();
         int cols = vecs[0].size();
-        py::array_t<std::complex<double>> np_array({rows, cols});
+        py::array_t<T> np_array({rows, cols});
         py::buffer_info buf = np_array.request();
-        auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+        auto ptr = static_cast<T*>(buf.ptr);
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
                 ptr[r * cols + c] = vecs[r][c];
@@ -893,7 +890,7 @@ private:
             }
         }
         if (non_zero_row == -1) {
-            throw std::runtime_error("Final density matrix has no non-zero diagonal elements.");
+            throw py::value_error("Final density matrix has no non-zero diagonal elements.");
         }
 
         // Extract the corresponding state vector
@@ -972,18 +969,18 @@ private:
 
         // Sanity checks
         if (currentH.rows() != currentH.cols()) {
-            throw std::runtime_error("Hamiltonian must be square.");
+            throw py::value_error("Hamiltonian must be square.");
         }
         if (rho_0.rows() != rho_0.cols() && !is_unitary_on_statevector) {
-            throw std::runtime_error("Initial density matrix must be square.");
+            throw py::value_error("Initial density matrix must be square.");
         }
         int dim = currentH.rows();
         if (rho_0.rows() != dim) {
-            throw std::runtime_error("Dimension mismatch.");
+            throw py::value_error("Dimension mismatch.");
         }
         for (const auto& J : jump_operators) {
             if (J.rows() != dim || J.cols() != dim) {
-                throw std::runtime_error("Jump operator dimension mismatch.");
+                throw py::value_error("Jump operator dimension mismatch.");
             }
         }
 
@@ -1062,24 +1059,24 @@ private:
     
         // Sanity checks
         if (arnoldi_dim <= 0) {
-            throw std::runtime_error("Arnoldi dimension must be positive.");
+            throw py::value_error("Arnoldi dimension must be positive.");
         }
         if (num_substeps <= 0) {
-            throw std::runtime_error("Number of substeps must be positive.");
+            throw py::value_error("Number of substeps must be positive.");
         }
         if (currentH.rows() != currentH.cols()) {
-            throw std::runtime_error("Hamiltonian must be square.");
+            throw py::value_error("Hamiltonian must be square.");
         }
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
-            throw std::runtime_error("Initial density matrix must be square.");
+            throw py::value_error("Initial density matrix must be square.");
         }
         int dim = currentH.rows();
         if (rho_0.rows() != dim) {
-            throw std::runtime_error("Initial density matrix dimension does not match Hamiltonian dimension.");
+            throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
         for (const auto& J : jump_operators) {
             if (J.rows() != dim || J.cols() != dim) {
-                throw std::runtime_error("Jump operator dimension does not match Hamiltonian dimension.");
+                throw py::value_error("Jump operator dimension does not match Hamiltonian dimension.");
             }
         }
 
@@ -1114,7 +1111,7 @@ private:
             // and the basis vectors in V
             if (is_unitary_on_statevector) {
                 arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A);
-                subspace_dim = V.size()-1;
+                subspace_dim = V.size();
             } else if (!is_unitary) {
                 arnoldi(L, rho_t, arnoldi_dim, V, A);
                 subspace_dim = V.size()-1;
@@ -1126,7 +1123,7 @@ private:
             V.resize(subspace_dim);
 
             // If everything is zero then we're probably in an eigenstate and need to skip until we aren't
-            if (V.size() <= 1) {
+            if (subspace_dim == 0) {
                 continue;
             }
 
@@ -1193,18 +1190,18 @@ private:
     
         // Sanity checks
         if (currentH.rows() != currentH.cols()) {
-            throw std::runtime_error("Hamiltonian must be square.");
+            throw py::value_error("Hamiltonian must be square.");
         }
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
-            throw std::runtime_error("Initial density matrix must be square.");
+            throw py::value_error("Initial density matrix must be square.");
         }
         int dim = currentH.rows();
         if (rho_0.rows() != dim) {
-            throw std::runtime_error("Initial density matrix dimension does not match Hamiltonian dimension.");
+            throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
         for (const auto& J : jump_operators) {
             if (J.rows() != dim || J.cols() != dim) {
-                throw std::runtime_error("Jump operator dimension does not match Hamiltonian dimension.");
+                throw py::value_error("Jump operator dimension does not match Hamiltonian dimension.");
             }
         }
 
@@ -1246,10 +1243,10 @@ public:
 
         // Sanity checks
         if (n_qubits <= 0) {
-            throw std::runtime_error("Number of qubits must be positive.");
+            throw py::value_error("Number of qubits must be positive.");
         }
         if (n_shots <= 0) {
-            throw std::runtime_error("Number of shots must be positive.");
+            throw py::value_error("Number of shots must be positive.");
         }
 
         // Get the gates
@@ -1285,7 +1282,7 @@ public:
 
         // Make sure probabilities sum to 1
         if (std::abs(total_prob - 1.0) > atol_) {
-            throw std::runtime_error("Probabilities do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
+            throw py::value_error("Probabilities do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
         }
 
         // Sample from these probabilities
@@ -1308,8 +1305,8 @@ public:
                                       py::object steps, 
                                       py::object observables, 
                                       py::object jumps,
-                                      bool store_intermediate_results=false,
-                                      py::dict solver_params={}) {
+                                      bool store_intermediate_results,
+                                      py::dict solver_params) {
         /*
         Execute a time evolution functional.
         Args:
@@ -1319,16 +1316,8 @@ public:
             steps (py::object): A list of time steps at which to evaluate the evolution.
             observables (py::object): A list of observables to measure at each time step.
             jumps (py::object): A list of jump operators for the Lindblad equation.
-            store_intermediate_results (bool): Whether to store results at each time step (default False).
-            params (py::dict): Additional parameters for the method:
-                    - "arnoldi_dim" (int): Dimension of the subspace (default 5).
-                    - "method" (str): The time evolution method to use (i.e. how is exp(L*dt) applied):
-                        - "direct": Direct matrix exponentiation.
-                        - "arnoldi": Use the Arnoldi iteration to get the subspace and then exponentiate. (default)
-                        - "integrate": Use an integrator method (e.g. Runge-Kutta).
-                    - "num_arnoldi_substeps" (int): Number of substeps to divide each time step into (default 1).
-                    - "num_integrate_substeps" (int): Number of substeps for the integrate method (default 1).
-                    - "monte_carlo" (bool): Whether to use the Monte Carlo wavefunction method (default False).
+            store_intermediate_results (bool): Whether to store results at each time step.
+            params (py::dict): Additional parameters for the method. See the Python wrapper for details.
         Returns:
             TimeEvolutionResult: The results of the evolution.
         Raises:
@@ -1347,7 +1336,7 @@ public:
         SparseMatrix rho_0 = parse_initial_state(initial_state);
         
         // Get parameters
-        int arnoldi_dim = 5;
+        int arnoldi_dim = 10;
         if (solver_params.contains("arnoldi_dim")) {
             arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
         }
@@ -1359,9 +1348,9 @@ public:
         if (solver_params.contains("num_integrate_substeps")) {
             num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
         }
-        std::string method = "direct";
-        if (solver_params.contains("method")) {
-            method = solver_params["method"].cast<std::string>();
+        std::string method = "integrate";
+        if (solver_params.contains("evolution_method")) {
+            method = solver_params["evolution_method"].cast<std::string>();
         }
         bool use_monte_carlo = false;
         if (solver_params.contains("monte_carlo")) {
@@ -1370,24 +1359,34 @@ public:
 
         // Sanity checks
         if (hamiltonians.size() == 0) {
-            throw std::runtime_error("At least one Hamiltonian must be provided.");
+            throw py::value_error("At least one Hamiltonian must be provided");
         }
         if (step_list.size() == 0) {
-            throw std::runtime_error("At least one time step must be provided.");
+            throw py::value_error("At least one time step must be provided");
         }
-        for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
             if (parameters_list[h_ind].size() != step_list.size()) {
-                throw std::runtime_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) +
-                                         " does not match number of time steps.");
+                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) +
+                                         " does not match number of time steps");
             }
         }
         if (method != "direct" && method != "arnoldi" && method != "integrate") {
-            throw std::runtime_error("Unknown time evolution method: " + method);
+            throw py::value_error("Unknown time evolution method: " + method);
+        }
+        if (arnoldi_dim <= 0) {
+            throw py::value_error("arnoldi_dim must be a positive integer");
+        }
+        if (num_arnoldi_substeps <= 0) {
+            throw py::value_error("num_arnoldi_substeps must be a positive integer");
+        }
+        if (num_integrate_substeps <= 0) {
+            throw py::value_error("num_integrate_substeps must be a positive integer");
         }
 
         // Dimensions of everything
         int dim = hamiltonians[0].rows();
 
+        // Determine if the input was a state vector
         bool input_was_vector = false;
         if (rho_0.rows() == 1 || rho_0.cols() == 1) {
             input_was_vector = true;
@@ -1414,11 +1413,11 @@ public:
         std::vector<SparseMatrix> intermediate_rhos;
 
         // For each time step
-        for (int step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
             
             // Get the current Hamiltonian
             SparseMatrix currentH(dim, dim);
-            for (int h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+            for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
                 currentH += hamiltonians[h_ind] * parameters_list[h_ind][step_ind];
             }
 
@@ -1428,23 +1427,13 @@ public:
                 dt = (step_list[step_ind] - step_list[step_ind - 1]);
             }
 
-            // Perform the iteration depending on the method TODO
-            if (use_monte_carlo) {
-                if (method == "integrate") {
-                    // rho_t = iter_monte_carlo_integrate(rho_t, dt, currentH, jump_operators, num_integrate_substeps);
-                } else if (method == "direct") {
-                    // rho_t = iter_monte_carlo_direct(rho_t, dt, currentH, jump_operators);
-                } else if (method == "arnoldi") {
-                    // rho_t = iter_monte_carlo_arnoldi(rho_t, dt, currentH, jump_operators, arnoldi_dim, num_arnoldi_substeps);
-                }
-            } else {
-                if (method == "integrate") {
-                    rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, num_integrate_substeps, is_unitary_on_statevector);
-                } else if (method == "direct") {
-                    rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
-                } else if (method == "arnoldi") {
-                    rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, arnoldi_dim, num_arnoldi_substeps, is_unitary_on_statevector);
-                }
+            // Perform the iteration depending on the method TODO monte carlo
+            if (method == "integrate") {
+                rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, num_integrate_substeps, is_unitary_on_statevector);
+            } else if (method == "direct") {
+                rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+            } else if (method == "arnoldi") {
+                rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, arnoldi_dim, num_arnoldi_substeps, is_unitary_on_statevector);
             }
 
             // If we should store intermediates, do it here
@@ -1455,25 +1444,25 @@ public:
         }
 
         // Apply the operators using the Born rule
-        std::vector<std::complex<double>> expectation_values;
+        std::vector<double> expectation_values;
         for (const auto& O : observable_matrices) {
             if (is_unitary_on_statevector) {
-                expectation_values.push_back(dot(rho_t, O * rho_t));
+                expectation_values.push_back(std::real(dot(rho_t, O * rho_t)));
             } else {
-                expectation_values.push_back(dot(O, rho_t));
+                expectation_values.push_back(std::real(dot(O, rho_t)));
             }
         }
 
         // If we have intermediates, process them too
-        std::vector<std::vector<std::complex<double>>> intermediate_expectation_values;
+        std::vector<std::vector<double>> intermediate_expectation_values;
         if (store_intermediate_results) {
             for (const auto& rho_intermediate : intermediate_rhos) {
-                std::vector<std::complex<double>> step_expectation_values;
+                std::vector<double> step_expectation_values;
                 for (const auto& O : observable_matrices) {
                     if (is_unitary_on_statevector) {
-                        step_expectation_values.push_back(dot(rho_intermediate, O * rho_intermediate));
+                        step_expectation_values.push_back(std::real(dot(rho_intermediate, O * rho_intermediate)));
                     } else {
-                        step_expectation_values.push_back(dot(O, rho_intermediate));
+                        step_expectation_values.push_back(std::real(dot(O, rho_intermediate)));
                     }
                 }
                 intermediate_expectation_values.push_back(step_expectation_values);
@@ -1482,17 +1471,18 @@ public:
 
         // Convert things to numpy arrays
         py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);
-        py::array_t<std::complex<double>> expect_numpy = to_numpy(expectation_values);
+        py::array_t<double> expect_numpy = to_numpy(expectation_values);
 
         // Also convert intermediates if needed
         py::list intermediate_rho_numpy;
+        py::array_t<double> intermediate_expect_numpy;
         if (store_intermediate_results) {
             for (const auto& rho_intermediate : intermediate_rhos) {
                 py::array_t<std::complex<double>> rho_step_numpy = to_numpy(rho_intermediate);
-                intermediate_rho_numpy.append(rho_step_numpy);
+                intermediate_rho_numpy.append(QTensor(rho_step_numpy));
             }
+            intermediate_expect_numpy = to_numpy(intermediate_expectation_values);
         }
-        py::array_t<std::complex<double>> intermediate_expect_numpy = to_numpy(intermediate_expectation_values);
 
         // Return a TimeEvolutionResult with these
         return TimeEvolutionResult("final_state"_a=QTensor(rho_numpy), 
@@ -1504,9 +1494,9 @@ public:
 
 };
 
-PYBIND11_MODULE(qili_sim_c, m) {
-    py::class_<QiliSimC>(m, "QiliSimC")
+PYBIND11_MODULE(qilisim_module, m) {
+    py::class_<QiliSimCpp>(m, "QiliSimCpp")
         .def(py::init<>())
-        .def("execute_sampling", &QiliSimC::execute_sampling)
-        .def("execute_time_evolution", &QiliSimC::execute_time_evolution);
+        .def("execute_sampling", &QiliSimCpp::execute_sampling)
+        .def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
 }

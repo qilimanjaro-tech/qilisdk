@@ -23,7 +23,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 import numpy as np
 
 # Import the C++ pybind11 wrapper
-from qilisdk.backends.qili_sim_c import QiliSimC
+from qilisim_module import QiliSimCpp
 
 class QiliSim(Backend):
     """
@@ -33,30 +33,25 @@ class QiliSim(Backend):
 
     def __init__(self, **solver_params):
         """
-        Instantiate a new :class:`QiliSim` backend.
-        Args:
-            solver_params: Optional keyword arguments to configure the
-                time-evolution solver. Supported parameters are:
+        Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
+        implemented in C++, using pybind11 for bindings.
 
-                - `method` (str): The solver method to use. Options are
-                  'direct' (default), 'arnoldi' and 'integrate'.
-                - `arnoldi_dim` (int): The dimension of the Arnoldi
-                  subspace to use for the 'arnoldi' method (default: 5).
-                - `num_arnoldi_substeps` (int): The number of substeps to use
-                    when using the Arnoldi method (default: 1).
-                - `num_integrate_substeps` (int): The number of substeps to use
-                    when using the Integrate method (default: 1).
-                - `monte_carlo` (bool): Whether to use Monte Carlo wave
-                    function method for open systems (default: False).
-                - `num_threads` (int): Number of threads to use for parallelization (default: 1).
-                
+        Args:
+            solver_params: Optional keyword arguments to configure the time-evolution solver. Supported parameters are:
+
+                - `evolution_method` (str): The solver method to use. Options are direct', 'arnoldi' and 'integrate' (default).
+                - `arnoldi_dim` (int): The dimension of the Arnoldi subspace to use for the 'arnoldi' method (default: 10).
+                - `num_arnoldi_substeps` (int): The number of substeps to use when using the Arnoldi method (default: 1).
+                - `num_integrate_substeps` (int): The number of substeps to use when using the Integrate method (default: 1).
+                - `monte_carlo` (bool): Whether to use Monte Carlo wave function method for open systems (default: False).
 
         """
         super().__init__()
-        self.qili_sim = QiliSimC()
+        self.qili_sim = QiliSimCpp()
         self.solver_params = {}
         for key in solver_params:
             self.solver_params[key] = solver_params[key]
+
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.

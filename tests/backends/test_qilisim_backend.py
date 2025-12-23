@@ -13,8 +13,7 @@ from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, Adjoint, BasicGate, Controlled
+from qilisdk.digital.gates import CNOT, Controlled
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -22,7 +21,7 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-from qilisdk.backends.qili_sim import QiliSim
+from qilisdk.backends.qilisim import QiliSim
 
 
 @pytest.fixture
@@ -143,7 +142,7 @@ def test_constant_hamiltonian():
 simulation_types = ["direct", "arnoldi", "integrate"]
 
 @pytest.mark.parametrize("method", simulation_types)
-def test_time_dependent_hamiltonian_direct(method):
+def test_time_dependent_hamiltonian(method):
     o = 1.0
     dt = 0.1
     T = 100
@@ -161,12 +160,26 @@ def test_time_dependent_hamiltonian_direct(method):
 
     backend = QiliSim(method=method)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    print(res)
 
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
     assert pytest.approx(expect_z, rel=1e-2) == -1.0
 
+def test_qilisim_params():
+    with pytest.raises(ValueError, match="Unknown time evolution method: something-else"):
+        backend = QiliSim(method="something-else")
+        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+    with pytest.raises(ValueError, match="num_arnoldi_substeps must be a positive integer"):
+        backend = QiliSim(num_arnoldi_substeps=-1)
+        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+    with pytest.raises(ValueError, match="num_integrate_substeps must be a positive integer"):
+        backend = QiliSim(num_integrate_substeps=-1)
+        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+    with pytest.raises(ValueError, match="arnoldi_dim must be a positive integer"):
+        backend = QiliSim(arnoldi_dim=0)
+        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
 
 def test_time_dependent_hamiltonian_with_3_qubits():
     dt = 0.01
