@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
+
 import numpy as np
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Parameter, RealNumber
+from qilisdk.core.variables import Domain, Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
-from .gates import Gate
+from .gates import CNOT, RX, RY, RZ, U1, U2, U3, BasicGate, Gate, H, S, T, X, Y, Z
 
 
 @yaml.register_class
@@ -178,21 +180,54 @@ class Circuit(Parameterizable):
         if filepath:
             renderer.save(filepath)
 
-    def randomize(self, single_qubit_gates: set[Gate], two_qubit_gates: set[Gate], ngates: int) -> None:
+    def randomize(self, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int) -> None:
         """
         Generate a random quantum circuit from a given set of gates.
 
         Args:
-            set[Gate]: A set of gates to choose from when constructing the circuit.
+            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.
+            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.
             ngates (int): The number of gates to include in the circuit.
 
         """
-        import random
-        gate_list = list(single_qubit_gates) + list(two_qubit_gates)
+        gate_list: list[type[BasicGate]] = list(single_qubit_gates) + list(two_qubit_gates)
         for _ in range(ngates):
             gate_class = random.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
-            n_qubits = self.nqubits
-            qubits = random.sample(range(n_qubits), gate_nqubits)
-            gate = gate_class(*qubits)
-            self.add(gate)
+            qubits = tuple(random.sample(range(self.nqubits), gate_nqubits))
+            params = {}
+            if gate_class.PARAMETER_NAMES:
+                for param_name in gate_class.PARAMETER_NAMES:
+                    val = random.uniform(-np.pi, np.pi)
+                    params[param_name] = Parameter(label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val))
+
+            # If you're reading this and thinking "why don't we just do self.add(gate_class(*qubits, **params))"?
+            # It's because mypy gets angry about it, since then we don't know which class we're instantiating.
+            if gate_class == CNOT:
+                self.add(CNOT(control=qubits[0], target=qubits[1]))
+            elif gate_class == X:
+                self.add(X(qubits[0]))
+            elif gate_class == Y:
+                self.add(Y(qubits[0]))
+            elif gate_class == Z:
+                self.add(Z(qubits[0]))
+            elif gate_class == H:
+                self.add(H(qubits[0]))
+            elif gate_class == T:
+                self.add(T(qubits[0]))
+            elif gate_class == S:
+                self.add(S(qubits[0]))
+            elif gate_class == RX:
+                self.add(RX(qubits[0], **params))
+            elif gate_class == RY:
+                self.add(RY(qubits[0], **params))
+            elif gate_class == RZ:
+                self.add(RZ(qubits[0], **params))
+            elif gate_class == U1:
+                self.add(U1(qubits[0], **params))
+            elif gate_class == U2:
+                self.add(U2(qubits[0], **params))
+            elif gate_class == U3:
+                self.add(U3(qubits[0], **params))
+            else:
+                continue

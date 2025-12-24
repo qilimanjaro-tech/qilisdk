@@ -31,15 +31,12 @@ if (EIGEN3_FOUND AND pybind11_FOUND)
     # Set compile options
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "Using GCC/Clang specific compile options")
-        # target_compile_options(qilisim_module PRIVATE -shared -fPIC)
-        # target_compile_options(qilisim_module PRIVATE -O3)
         target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_features(qilisim_module PRIVATE cxx_std_17)
     endif()
 
     # Link libraries and include directories
-    # target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
-    target_include_directories(qilisim_module PRIVATE ${EIGEN3_INCLUDE_DIRS})
+    target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
     target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
     if (OpenMP_CXX_FOUND)
         message(STATUS "Found OpenMP, enabling")

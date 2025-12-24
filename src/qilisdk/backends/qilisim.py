@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
-from loguru import logger
-from qilisdk.backends.backend import Backend
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.core.qtensor import QTensor, tensor_prod
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
-import numpy as np
 
-# Import the C++ pybind11 wrapper
+from typing import TYPE_CHECKING
+
+import numpy as np
+from loguru import logger
 from qilisim_module import QiliSimCpp
+
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
+from qilisdk.backends.backend import Backend
+from qilisdk.core.qtensor import QTensor, tensor_prod
+
+if TYPE_CHECKING:
+    from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals.sampling_result import SamplingResult
+    from qilisdk.functionals.time_evolution import TimeEvolution
+    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+
 
 class QiliSim(Backend):
     """
@@ -31,7 +36,7 @@ class QiliSim(Backend):
     time-evolution experiments using a custom C++ simulator.
     """
 
-    def __init__(self, **solver_params):
+    def __init__(self, solver_params: dict = {}) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
         implemented in C++, using pybind11 for bindings.
@@ -48,9 +53,7 @@ class QiliSim(Backend):
         """
         super().__init__()
         self.qili_sim = QiliSimCpp()
-        self.solver_params = {}
-        for key in solver_params:
-            self.solver_params[key] = solver_params[key]
+        self.solver_params = solver_params
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
@@ -78,9 +81,12 @@ class QiliSim(Backend):
         Returns:
             TimeEvolutionResult: The results of the evolution.
 
+        Raises:
+            ValueError: If an observable type is unsupported.
+
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        
+
         # Get the time steps
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
         tlist = np.array(functional.schedule.tlist)
@@ -91,7 +97,7 @@ class QiliSim(Backend):
         coeffs = [[functional.schedule.coefficients[h][t] for t in steps] for h in functional.schedule.hamiltonians]
 
         # Jump operators TODO
-        jump_operators = []
+        jump_operators: list[QTensor] = []
 
         # Get the observables
         observables = []
@@ -122,15 +128,14 @@ class QiliSim(Backend):
                 observables.append(aux_obs)
 
         # Execute the time evolution
-        result = self.qili_sim.execute_time_evolution(functional.initial_state, 
-                                                      Hs, 
-                                                      coeffs, 
-                                                      steps, 
-                                                      observables, 
-                                                      jump_operators, 
+        result = self.qili_sim.execute_time_evolution(functional.initial_state,
+                                                      Hs,
+                                                      coeffs,
+                                                      steps,
+                                                      observables,
+                                                      jump_operators,
                                                       functional.store_intermediate_results,
                                                       self.solver_params)
 
         logger.success("TimeEvolution finished")
         return result
-

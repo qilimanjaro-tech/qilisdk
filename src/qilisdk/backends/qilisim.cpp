@@ -317,13 +317,27 @@ private:
     std::complex<double> dot(const SparseMatrix& v1,
                              const SparseMatrix& v2) const {
         /*
-        Compute the dot product between two sparse matrices treated as vectors.
-        Note that the first vector is conjugated.
+        Compute the inner product between two sparse matrices.
+        Note that the first matrix is conjugated.
         Args:
-            v1 (SparseMatrix): The first vector.
-            v2 (SparseMatrix): The second vector.
+            v1 (SparseMatrix): The first matrix.
+            v2 (SparseMatrix): The second matrix.
         Returns:
-            std::complex<double>: The dot product result.
+            std::complex<double>: The inner product result.
+        */
+        return v1.conjugate().cwiseProduct(v2).sum();
+    }
+
+    std::complex<double> dot(const DenseMatrix& v1,
+                             const DenseMatrix& v2) const {
+        /*
+        Compute the inner product between two dense matrices.
+        Note that the first matrix is conjugated.
+        Args:
+            v1 (DenseMatrix): The first matrix.
+            v2 (DenseMatrix): The second matrix.
+        Returns:
+            std::complex<double>: The inner product result.
         */
         return v1.conjugate().cwiseProduct(v2).sum();
     }
@@ -1412,13 +1426,26 @@ public:
         SparseMatrix rho_t = rho_0;
         std::vector<SparseMatrix> intermediate_rhos;
 
+        // Precalculate the sparsity pattern of the combined Hamiltonians
+        SparseMatrix combinedH(dim, dim);
+        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+            combinedH += hamiltonians[h_ind];
+        }
+        combinedH.makeCompressed();
+        combinedH *= 0.0;
+
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
             
             // Get the current Hamiltonian
-            SparseMatrix currentH(dim, dim);
-            for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-                currentH += hamiltonians[h_ind] * parameters_list[h_ind][step_ind];
+            SparseMatrix currentH = combinedH;
+            for (size_t h = 0; h < hamiltonians.size(); ++h) {
+                double c = parameters_list[h][step_ind];
+                for (int k = 0; k < hamiltonians[h].outerSize(); ++k) {
+                    for (SparseMatrix::InnerIterator it(hamiltonians[h], k); it; ++it) {
+                        currentH.coeffRef(it.row(), it.col()) += c * it.value();
+                    }
+                }
             }
 
             // Determine the time step
@@ -1460,7 +1487,8 @@ public:
                 std::vector<double> step_expectation_values;
                 for (const auto& O : observable_matrices) {
                     if (is_unitary_on_statevector) {
-                        step_expectation_values.push_back(std::real(dot(rho_intermediate, O * rho_intermediate)));
+                        DenseMatrix rho_dense(rho_intermediate);
+                        step_expectation_values.push_back(std::real(dot(rho_dense, O * rho_dense)));
                     } else {
                         step_expectation_values.push_back(std::real(dot(O, rho_intermediate)));
                     }
