@@ -885,7 +885,7 @@ private:
 
     SparseMatrix get_vector_from_density_matrix(SparseMatrix& rho_t) {
         /*
-        Extract a state vector from a density matrix by finding a non-zero diagonal element.
+        Extract a state vector from a pure density matrix by finding a non-zero diagonal element.
         Args:
             rho_t (SparseMatrix): The density matrix.
         Returns:
@@ -1312,6 +1312,100 @@ public:
 
     }
 
+    // Sample from a density matrix
+    SparseMatrix sample_from_density_matrix(const SparseMatrix& rho,
+                                        int n_trajectories) {
+
+        /*
+        Get statevector samples from a density matrix, using the eigendecomposition.
+        Args:
+            rho (SparseMatrix): The input density matrix.
+            n_trajectories (int): Number of trajectories.
+        Returns:
+            SparseMatrix: A matrix who's columns are the sampled statevectors.
+        */
+
+        // Eigendecompose the density matrix
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> es(rho);
+        DenseMatrix evals = es.eigenvalues();
+        DenseMatrix evecs = es.eigenvectors();
+        std::vector<std::tuple<int, double>> prob_entries;
+        double total_prob = 0.0;
+        for (int i = 0; i < evals.size(); ++i) {
+            double prob = evals(i).real();
+            if (prob > atol_) {
+                prob_entries.emplace_back(i, prob);
+                total_prob += prob;
+            }
+        }
+
+        // Make sure probabilities sum to 1
+        if (std::abs(total_prob - 1.0) > atol_) {
+            throw py::value_error("Probabilities from state do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
+        }
+
+        // Sample from these probabilities
+        int n_qubits = static_cast<int>(std::log2(rho.rows()));
+        std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_trajectories);
+
+        // Construct the sampled states matrix
+        int dim = 1 << n_qubits;
+        Triplets new_mat_entries;
+        int traj_index = 0;
+        for (const auto& pair : counts) {
+            
+            // Get the eigenvector corresponding to this bitstring
+            std::string bitstring = pair.first;
+            int count = pair.second;
+            int eigenvec_index = std::stoi(bitstring, nullptr, 2);
+            SparseMatrix state_vec = evecs.col(eigenvec_index).sparseView();
+
+            // Normalize the state vector
+            double norm = std::sqrt(state_vec.squaredNorm());
+            if (norm > atol_) {
+                state_vec /= norm;
+            }
+            
+            // Add this state vector count times to the new matrix
+            for (int i=0; i<count; ++i) {
+                for (int k=0; k<state_vec.outerSize(); ++k) {
+                    for (SparseMatrix::InnerIterator it(state_vec, k); it; ++it) {
+                        int row = it.row();
+                        std::complex<double> val = it.value();
+                        new_mat_entries.emplace_back(Triplet(row, traj_index, val));
+                    }
+                }
+                traj_index++;
+            }
+
+        }
+
+        // Form the matrix from the triplets
+        SparseMatrix sampled_states(dim, traj_index);
+        sampled_states.setFromTriplets(new_mat_entries.begin(), new_mat_entries.end());
+
+        return sampled_states;
+
+    }
+
+    // Convert a matrix containing trajectories as columns to a density matrix
+    SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories) {
+        /*
+        Convert a matrix containing statevector trajectories as columns to a density matrix.
+        If we have N trajectories |psi_i>, the density matrix is given by
+        rho = 1/N sum_i |psi_i><psi_i|. Or, in matrix form, if the trajectories are columns of a matrix T,
+        rho = 1/N T T^dagger.
+        Args:
+            trajectories (SparseMatrix): The input matrix with statevectors as columns.
+        Returns:
+            SparseMatrix: The corresponding density matrix.
+        */
+        SparseMatrix rho = trajectories * trajectories.adjoint();
+        rho /= static_cast<double>(trajectories.cols());
+        rho /= trace(rho);
+        return rho;
+    }
+
     // Execute time evolution
     py::object execute_time_evolution(py::object initial_state, 
                                       py::object Hs, 
@@ -1366,9 +1460,13 @@ public:
         if (solver_params.contains("evolution_method")) {
             method = solver_params["evolution_method"].cast<std::string>();
         }
-        bool use_monte_carlo = false;
+        bool monte_carlo = false;
         if (solver_params.contains("monte_carlo")) {
-            use_monte_carlo = solver_params["monte_carlo"].cast<bool>();
+            monte_carlo = solver_params["monte_carlo"].cast<bool>();
+        }
+        int num_monte_carlo_trajectories = 100;
+        if (solver_params.contains("num_monte_carlo_trajectories")) {
+            num_monte_carlo_trajectories = solver_params["num_monte_carlo_trajectories"].cast<int>();
         }
 
         // Sanity checks
@@ -1396,9 +1494,15 @@ public:
         if (num_integrate_substeps <= 0) {
             throw py::value_error("num_integrate_substeps must be a positive integer");
         }
+        if (num_monte_carlo_trajectories <= 0) {
+            throw py::value_error("num_monte_carlo_trajectories must be a positive integer");
+        }
 
         // Dimensions of everything
         int dim = hamiltonians[0].rows();
+
+        // Check if we have unitary dynamics
+        bool is_unitary_dynamics = (jump_operators.size() == 0);
 
         // Determine if the input was a state vector
         bool input_was_vector = false;
@@ -1408,8 +1512,32 @@ public:
         if (rho_0.rows() == 1 && rho_0.cols() > 1) {
             rho_0 = rho_0.adjoint();
         }
-        bool is_unitary_dynamics = (jump_operators.size() == 0);
+        
+        // Determine if should treat it as unitary evolution on a statevector
+        // Note that this can change if the input was a density matrix but is actually pure
+        // Or similarly if we use monte-carlo, we treat it as statevector evolution
         bool is_unitary_on_statevector = is_unitary_dynamics && input_was_vector;
+
+        // If we have unitary dynamics and the input was a pure state, convert to state vector
+        bool input_was_pure = false;
+        if (is_unitary_dynamics && !input_was_vector) {
+            double trace_rho2 = 0.0;
+            for (int k=0; k<rho_0.outerSize(); ++k) {
+                for (SparseMatrix::InnerIterator it1(rho_0, k); it1; ++it1) {
+                    trace_rho2 += std::pow(std::abs(it1.value()), 2);
+                }
+            }
+            if (std::abs(trace_rho2 - 1.0) < atol_) {
+                input_was_pure = true;
+                rho_0 = get_vector_from_density_matrix(rho_0);
+                is_unitary_on_statevector = true;
+            }
+        }
+
+        // If we were told to do monte carlo, but we already have unitary dynamics, don't bother
+        if (is_unitary_on_statevector) {
+            monte_carlo = false;
+        }
 
         // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
         if (!is_unitary_dynamics && input_was_vector) {
@@ -1420,6 +1548,13 @@ public:
                 rho_0 = rho_0 * rho_0.adjoint();
                 input_was_vector = true;
             }
+        }
+
+        // If monte carlo, sample from rho_0 to get initial states
+        // Then rho should be a collection of state vectors as columns
+        if (monte_carlo) {
+            rho_0 = sample_from_density_matrix(rho_0, num_monte_carlo_trajectories);
+            is_unitary_on_statevector = true;
         }
 
         // Init rho_0
@@ -1454,7 +1589,7 @@ public:
                 dt = (step_list[step_ind] - step_list[step_ind - 1]);
             }
 
-            // Perform the iteration depending on the method TODO monte carlo
+            // Perform the iteration depending on the method
             if (method == "integrate") {
                 rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, num_integrate_substeps, is_unitary_on_statevector);
             } else if (method == "direct") {
@@ -1465,15 +1600,24 @@ public:
 
             // If we should store intermediates, do it here
             if (store_intermediate_results) {
-                intermediate_rhos.push_back(rho_t);
+                if (monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
             }
 
+        }
+
+        // If we have statevector/s but we should return a density matrix
+        if (monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+            rho_t = trajectories_to_density_matrix(rho_t);
         }
 
         // Apply the operators using the Born rule
         std::vector<double> expectation_values;
         for (const auto& O : observable_matrices) {
-            if (is_unitary_on_statevector) {
+            if (rho_t.cols() == 1) {
                 expectation_values.push_back(std::real(dot(rho_t, O * rho_t)));
             } else {
                 expectation_values.push_back(std::real(dot(O, rho_t)));
@@ -1486,7 +1630,7 @@ public:
             for (const auto& rho_intermediate : intermediate_rhos) {
                 std::vector<double> step_expectation_values;
                 for (const auto& O : observable_matrices) {
-                    if (is_unitary_on_statevector) {
+                    if (rho_intermediate.cols() == 1) {
                         DenseMatrix rho_dense(rho_intermediate);
                         step_expectation_values.push_back(std::real(dot(rho_dense, O * rho_dense)));
                     } else {

@@ -157,32 +157,95 @@ def test_time_dependent_hamiltonian(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim({"method": method})
+    backend = QiliSim(evolution_method=method)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
+    assert res.final_state.is_ket()
     assert pytest.approx(expect_z, rel=1e-2) == -1.0
+
+@pytest.mark.parametrize("method", simulation_types)
+def test_time_dependent_hamiltonian_density_mat(method):
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    psi0 = psi0.to_density_matrix()
+    obs = [
+        pauli_z(0),  # measure z
+    ]
+
+    backend = QiliSim(evolution_method=method)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    print(res)
+    expect_z = res.final_expected_values[0]
+    assert res.final_state.shape == (2, 2)
+    assert pytest.approx(expect_z, rel=1e-2) == -1.0
+
+@pytest.mark.parametrize("method", simulation_types)
+def test_monte_carlo_time_evolution(method):
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = ((ket(0) - ket(1)).unit()).to_density_matrix()
+    psi1 = ket(1).to_density_matrix()
+    mix = 0.2
+    psi0 = ((1 - mix) * psi0 + mix * psi1).unit()
+    obs = [
+        pauli_z(0),  # measure z
+    ]
+
+    backend = QiliSim(evolution_method=method, monte_carlo=True)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    expect_z = res.final_expected_values[0]
+    assert res.final_state.shape == (2, 2)
+    assert pytest.approx(expect_z, rel=1e-2) == -0.8
 
 
 def test_qilisim_params():
 
-    backend = QiliSim({"evolution_method": "something-else"})
+    backend = QiliSim(evolution_method="something-else")
     with pytest.raises(ValueError, match="Unknown time evolution method: something-else"):
         backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
 
-    backend = QiliSim({"num_arnoldi_substeps": -1})
+    backend = QiliSim(num_arnoldi_substeps=-1)
     with pytest.raises(ValueError, match="num_arnoldi_substeps must be a positive integer"):
         backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
 
-    backend = QiliSim({"num_integrate_substeps": -1})
+    backend = QiliSim(num_integrate_substeps=-1)
     with pytest.raises(ValueError, match="num_integrate_substeps must be a positive integer"):
         backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
 
-    backend = QiliSim({"arnoldi_dim": 0})
+    backend = QiliSim(arnoldi_dim=0)
     with pytest.raises(ValueError, match="arnoldi_dim must be a positive integer"):
         backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+
+    backend = QiliSim(num_monte_carlo_trajectories=0)
+    with pytest.raises(ValueError, match="num_monte_carlo_trajectories must be a positive integer"):
+        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():

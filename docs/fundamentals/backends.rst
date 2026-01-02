@@ -247,7 +247,7 @@ QiliSim Backend
 ----------------
 
 The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing 
-efficient execution of both digital and analog quantum functionals.
+efficient simulation of both digital and analog quantum functionals.
 It is designed for ease of use and does not require any special hardware or dependencies.
 
 **Initialization**
@@ -256,7 +256,7 @@ It is designed for ease of use and does not require any special hardware or depe
 
     from qilisdk.backends import QiliSim
 
-    backend = QiliSim(**params)
+    backend = QiliSim()
 
 **Capabilities**
 
@@ -271,6 +271,7 @@ It is designed for ease of use and does not require any special hardware or depe
 - ``num_arnoldi_substeps`` (int, optional): Number of substeps for the Arnoldi method per timestep. Default is 1.
 - ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 1.
 - ``monte_carlo`` (bool, optional): Whether to use the Monte Carlo wavefunction method. Default is False.
+- ``num_monte_carlo_trajectories`` (int, optional): Number of trajectories to simulate when using the Monte Carlo method. Default is 100.
 
 **Example**
 

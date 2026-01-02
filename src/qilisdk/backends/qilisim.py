@@ -36,24 +36,37 @@ class QiliSim(Backend):
     time-evolution experiments using a custom C++ simulator.
     """
 
-    def __init__(self, solver_params: dict = {}) -> None:
+    def __init__(self,
+                 evolution_method: str = "integrate",
+                 arnoldi_dim: int = 10,
+                 num_arnoldi_substeps: int = 1,
+                 num_integrate_substeps: int = 1,
+                 monte_carlo: bool = False,
+                 num_monte_carlo_trajectories: int = 100,
+                 ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
         implemented in C++, using pybind11 for bindings.
 
         Args:
-            solver_params: Optional keyword arguments to configure the time-evolution solver. Supported parameters are:
-
-                - `evolution_method` (str): The solver method to use. Options are direct', 'arnoldi' and 'integrate' (default).
-                - `arnoldi_dim` (int): The dimension of the Arnoldi subspace to use for the 'arnoldi' method (default: 10).
-                - `num_arnoldi_substeps` (int): The number of substeps to use when using the Arnoldi method (default: 1).
-                - `num_integrate_substeps` (int): The number of substeps to use when using the Integrate method (default: 1).
-                - `monte_carlo` (bool): Whether to use Monte Carlo wave function method for open systems (default: False).
+            evolution_method (str): The solver method to use. Options are 'direct', 'arnoldi' and 'integrate'.
+            arnoldi_dim (int): The dimension of the Arnoldi subspace to use for the 'arnoldi' method.
+            num_arnoldi_substeps (int): The number of substeps to use when using the Arnoldi method.
+            num_integrate_substeps (int): The number of substeps to use when using the Integrate method.
+            monte_carlo (bool): Whether to use the Monte Carlo method for open systems.
+            num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
 
         """
         super().__init__()
         self.qili_sim = QiliSimCpp()
-        self.solver_params = solver_params
+        self.solver_params = {
+            "evolution_method": evolution_method,
+            "arnoldi_dim": arnoldi_dim,
+            "num_arnoldi_substeps": num_arnoldi_substeps,
+            "num_integrate_substeps": num_integrate_substeps,
+            "monte_carlo": monte_carlo,
+            "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
+        }
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
@@ -85,9 +98,9 @@ class QiliSim(Backend):
             ValueError: If an observable type is unsupported.
 
         """
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
 
         # Get the time steps
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
         tlist = np.array(functional.schedule.tlist)
         steps = np.union1d(steps, tlist)

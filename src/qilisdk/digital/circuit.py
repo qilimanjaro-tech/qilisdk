@@ -202,7 +202,7 @@ class Circuit(Parameterizable):
                     params[param_name] = Parameter(label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val))
 
             # If you're reading this and thinking "why don't we just do self.add(gate_class(*qubits, **params))"?
-            # It's because mypy gets angry about it, since then we don't know which class we're instantiating.
+            # It's because mypy gets angry about it, since then we don't know the type of the variable at runtime.
             if gate_class == CNOT:
                 self.add(CNOT(control=qubits[0], target=qubits[1]))
             elif gate_class == X:
