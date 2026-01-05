@@ -4,6 +4,13 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
+pytest.importorskip(
+    "qutip_qip",
+    reason="QuTiP backend tests require the 'qutip' optional dependency",
+    exc_type=ImportError,
+)
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
@@ -182,7 +189,7 @@ def test_constant_hamiltonian():
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
         total_time=10,
-        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+        coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]

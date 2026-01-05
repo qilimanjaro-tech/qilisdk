@@ -15,7 +15,9 @@ from __future__ import annotations
 
 from copy import copy
 from itertools import chain
-from typing import Any, Mapping, overload
+from typing import Mapping, overload
+
+from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
@@ -71,7 +73,6 @@ class Schedule(Parameterizable):
         dt: float = 0.1,
         total_time: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         """Create a Schedule that assigns time-dependent coefficients to Hamiltonians.
 
@@ -81,7 +82,6 @@ class Schedule(Parameterizable):
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
             total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
-            **kwargs: Passed to :class:`Interpolator` construction when coefficients are provided as dictionaries.
 
         Raises:
             ValueError: if the coefficients reference an undefined hamiltonian.
@@ -118,7 +118,7 @@ class Schedule(Parameterizable):
             if isinstance(coeff, Interpolator):
                 self._coefficients[ham] = coeff
             elif isinstance(coeff, dict):
-                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt), **kwargs)
+                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt))
 
             for p_name, p_value in self._coefficients[ham].parameters.items():
                 self._parameters[p_name] = p_value
@@ -147,25 +147,23 @@ class Schedule(Parameterizable):
     @property
     def T(self) -> float:
         """Total annealing time of the schedule."""
-        return max(self.tlist)
+        if self._max_time is not None:
+            return self._get_value(self._max_time)
+        max_t = self._get_coefficients_max_time()
+        return self._get_value(max_t)
 
     @property
     def tlist(self) -> list[float]:
-        _tlist: set[float] = set()
+        T = self.T
+        return list(linspace(0, T, int(T // self.dt), dtype=float))
+
+    def _get_coefficients_max_time(self) -> float:
         if len(self._hamiltonians) == 0:
-            tlist = [0.0]
-        else:
-            for ham in self._hamiltonians:
-                _tlist.update(self._coefficients[ham].fixed_tlist)
-            tlist = list(_tlist)
-        if self._max_time is not None:
-            max_t = max(tlist) or 1
-            max_t = max_t if max_t != 0 else 1
-            T = self._get_value(self._max_time)
-            tlist = [t * T / max_t for t in tlist]
-            if T not in tlist:
-                tlist.append(T)
-        return sorted(tlist)
+            return 0
+        _tlist: set[float] = set()
+        for ham in self._hamiltonians:
+            _tlist.update(self._coefficients[ham].fixed_tlist)
+        return max(_tlist)
 
     @property
     def dt(self) -> float:
@@ -282,12 +280,11 @@ class Schedule(Parameterizable):
         hamiltonian: Hamiltonian,
         coefficients: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
-        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs)
+        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt))
 
         for p_name, p_value in self._coefficients[label].parameters.items():
             self._parameters[p_name] = p_value
@@ -309,7 +306,6 @@ class Schedule(Parameterizable):
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: TimeDict,
-        **kwargs: Any,
     ) -> None: ...
 
     @overload
@@ -318,7 +314,6 @@ class Schedule(Parameterizable):
         label: str,
         hamiltonian: Hamiltonian,
         coefficients: Interpolator,
-        **kwargs: Any,
     ) -> None: ...
 
     def add_hamiltonian(
@@ -327,7 +322,6 @@ class Schedule(Parameterizable):
         hamiltonian: Hamiltonian,
         coefficients: Interpolator | TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if not isinstance(hamiltonian, Hamiltonian):
             raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
@@ -335,7 +329,7 @@ class Schedule(Parameterizable):
         if isinstance(coefficients, Interpolator):
             self._add_hamiltonian_from_interpolator(label, hamiltonian, coefficients)
         elif isinstance(coefficients, dict):
-            self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, interpolation, **kwargs)
+            self._add_hamiltonian_from_dict(label, hamiltonian, coefficients, interpolation)
         else:
             raise ValueError("Unsupported type of coefficient.")
         if self._max_time is not None:
@@ -346,11 +340,10 @@ class Schedule(Parameterizable):
         label: str,
         new_coefficients: TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = Interpolator(
-                new_coefficients, interpolation, nsamples=int(1 / self.dt), **kwargs
+                new_coefficients, interpolation, nsamples=int(1 / self.dt)
             )  # TODO (ameer): allow for partial updates of the coefficients
 
             for p_name, p_value in self._coefficients[label].parameters.items():
@@ -370,7 +363,6 @@ class Schedule(Parameterizable):
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None: ...
 
     @overload
@@ -379,7 +371,6 @@ class Schedule(Parameterizable):
         label: str,
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: Interpolator | None = None,
-        **kwargs: Any,
     ) -> None: ...
 
     def update_hamiltonian(
@@ -388,7 +379,6 @@ class Schedule(Parameterizable):
         new_hamiltonian: Hamiltonian | None = None,
         new_coefficients: Interpolator | TimeDict | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
-        **kwargs: Any,
     ) -> None:
         if label not in self._hamiltonians:
             raise ValueError(f"Can't update unknown hamiltonian {label}. Did you mean `add_hamiltonian`?")
@@ -400,7 +390,7 @@ class Schedule(Parameterizable):
             if isinstance(new_coefficients, Interpolator):
                 self._update_hamiltonian_from_interpolator(label, new_coefficients)
             elif isinstance(new_coefficients, dict):
-                self._update_hamiltonian_from_dict(label, new_coefficients, interpolation, **kwargs)
+                self._update_hamiltonian_from_dict(label, new_coefficients, interpolation)
             else:
                 raise ValueError("Unsupported type of coefficient.")
 
