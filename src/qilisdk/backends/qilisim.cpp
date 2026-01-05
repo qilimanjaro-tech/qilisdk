@@ -58,6 +58,7 @@ class Gate {
     A quantum gate with type, control qubits and target qubits.
     */
 private:
+    std::string gate_type;
     SparseMatrix base_matrix;
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
@@ -207,7 +208,8 @@ private:
                 std::swap(perm[needed_before + i], perm[all_qubits[i]]);
             }
         }
-        // invert the perm
+
+        // Invert the perm
         std::vector<int> inv_perm(num_qubits);
         for (int q = 0; q < num_qubits; ++q) {
             inv_perm[perm[q]] = q;
@@ -245,12 +247,45 @@ private:
 public:
 
     // Constructor
-    Gate(const SparseMatrix& base_matrix_,
+    Gate(const std::string& gate_type_,
+         const SparseMatrix& base_matrix_,
          const std::vector<int>& controls_,
          const std::vector<int>& targets_) {
+        gate_type = gate_type_;
         control_qubits = controls_;
         target_qubits = targets_;
         base_matrix = base_matrix_;
+    }
+
+    std::string get_name() const {
+        /*
+        Get the name of the gate, prefixed by c's for each control qubit.
+        Returns:
+            std::string: The gate name.
+        */
+        std::string control_string = "";
+        for (int i = 0; i < int(control_qubits.size()); ++i) {
+            control_string += "c";
+        }
+        return control_string + gate_type;
+    }
+
+    std::string get_id() const {
+        /*
+        Get a unique identifier for the gate based on its type and qubits.
+        Returns:
+            std::string: The gate identifier.
+        */
+        std::ostringstream oss;
+        oss << get_name() << "_c_";
+        for (const auto& q : control_qubits) {
+            oss << q << "_";
+        }
+        oss << "t_";
+        for (const auto& q : target_qubits) {
+            oss << q << "_";
+        }
+        return oss.str();
     }
 
     SparseMatrix get_full_matrix(int num_qubits) const {
@@ -261,9 +296,9 @@ public:
         Returns:
             SparseMatrix: The full matrix representation of the gate.
         */
-        SparseMatrix full_gate = base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
-        return full_gate;
+        return base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
     }
+
 };
 
 // Get the Python functional classes
@@ -836,7 +871,7 @@ private:
             }
 
             // Add the gate
-            gates.emplace_back(base_matrix, controls, targets);
+            gates.emplace_back(gate_type_str, base_matrix, controls, targets);
 
         }
         return gates;
@@ -891,7 +926,7 @@ private:
         Returns:
             SparseMatrix: The extracted state vector.
         Raises:
-            std::runtime_error: If the density matrix has no non-zero diagonal elements.
+            py::value_error: If the density matrix has no non-zero diagonal elements.
         */
 
         // Find a non-zero diagonal element
@@ -974,11 +1009,11 @@ private:
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
         Raises:
-            std::runtime_error: If num_substeps is non-positive.
-            std::runtime_error: If currentH is not square.
-            std::runtime_error: If rho_0 is not square.
-            std::runtime_error: If Hamiltonian and initial density matrix dimensions do not match.
-            std::runtime_error: If any jump operator dimension does not match Hamiltonian dimension.
+            py::value_error: If num_substeps is non-positive.
+            py::value_error: If currentH is not square.
+            py::value_error: If rho_0 is not square.
+            py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
+            py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
         */
 
         // Sanity checks
@@ -1062,12 +1097,12 @@ private:
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
         Raises:
-            std::runtime_error: If arnoldi_dim is non-positive.
-            std::runtime_error: If num_substeps is non-positive.
-            std::runtime_error: If currentH is not square.
-            std::runtime_error: If rho_0 is not square.
-            std::runtime_error: If Hamiltonian and initial density matrix dimensions do not match.
-            std::runtime_error: If any jump operator dimension does not match Hamiltonian dimension.
+            py::value_error: If arnoldi_dim is non-positive.
+            py::value_error: If num_substeps is non-positive.
+            py::value_error: If currentH is not square.
+            py::value_error: If rho_0 is not square.
+            py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
+            py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
 
         */
     
@@ -1195,10 +1230,10 @@ private:
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
         Raises:
-            std::runtime_error: If currentH is not square.
-            std::runtime_error: If rho_0 is not square.
-            std::runtime_error: If Hamiltonian and initial density matrix dimensions do not match.
-            std::runtime_error: If any jump operator dimension does not match Hamiltonian dimension.
+            py::value_error: If currentH is not square.
+            py::value_error: If rho_0 is not square.
+            py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
+            py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
 
         */
     
@@ -1242,55 +1277,99 @@ private:
 
 public:
 
-    py::object execute_sampling(py::object functional) {
+    py::object execute_sampling(py::object functional, py::dict solver_params) {
         /*
         Execute a sampling functional using a simple statevector simulator.
         Args:
             functional (py::object): The Sampling functional to execute.
+            solver_params (py::dict): Solver parameters, including 'max_cache_size'.
         Returns:
             SamplingResult: A result object containing the measurement samples and computed probabilities.
+        Raises:
+            py::value_error: If nqubits is non-positive.
+            py::value_error: If shots is non-positive.
         */
 
         // Get info from the functional
         int n_shots = functional.attr("nshots").cast<int>();
         int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
 
-        // Sanity checks
-        if (n_qubits <= 0) {
-            throw py::value_error("Number of qubits must be positive.");
-        }
-        if (n_shots <= 0) {
-            throw py::value_error("Number of shots must be positive.");
+        // Get parameters
+        int max_cache_size = 100;
+        if (solver_params.contains("max_cache_size")) {
+            max_cache_size = solver_params["max_cache_size"].cast<int>();
         }
 
-        // Get the gates
+        // Sanity checks
+        if (n_qubits <= 0) {
+            throw py::value_error("shots must be positive.");
+        }
+        if (n_shots <= 0) {
+            throw py::value_error("nqubits must be positive.");
+        }
+
+        // Get the gate
         std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
 
         // Start with the zero state
         int dim = 1 << n_qubits;
-        Triplets state_entries;
-        state_entries.emplace_back(0, 0, 1.0);
-        SparseMatrix state(dim, 1);
-        state.setFromTriplets(state_entries.begin(), state_entries.end());
+        DenseMatrix state = DenseMatrix::Zero(dim, 1);
+        state(0, 0) = 1.0;
 
-        // Apply each gate
+        // Determine the start/end use of each gate
+        std::map<std::string, std::pair<int, int>> gate_first_last_use;
+        for (int i = 0; i < int(gates.size()); ++i) {
+            std::string gate_id = gates[i].get_id();
+            if (gate_first_last_use.find(gate_id) == gate_first_last_use.end()) {
+                gate_first_last_use[gate_id] = std::make_pair(i, i);
+            } else {
+                gate_first_last_use[gate_id].second = i;
+            }
+        }
+
+        // Apply each gate (partial cache)
+        SparseMatrix gate_matrix;
+        std::map<std::string, SparseMatrix> gate_cache;
+        std::string gate_id = "";
+        int gate_count = 0;
         for (const auto& gate : gates) {
-            SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
+            gate_id = gate.get_id();
+
+            // If we already have it in the cache, use it
+            if (gate_cache.find(gate_id) != gate_cache.end()) {
+                gate_matrix = gate_cache[gate_id];
+
+            // If it will be used again later and we have space, cache it
+            } else if (gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < max_cache_size) {
+                gate_cache[gate_id] = gate.get_full_matrix(n_qubits);
+                gate_matrix = gate_cache[gate_id];
+
+            // Otherwise just generate it on the fly
+            } else {
+                gate_matrix = gate.get_full_matrix(n_qubits);
+
+            }
+
+            // Apply the gate (Sparse-Dense multiplication, OpenMP parallel if enabled)
             state = gate_matrix * state;
+
+            // Clear the gate from the cache if this was its last use
+            if (gate_first_last_use[gate_id].second == gate_count) {
+                gate_cache.erase(gate_id);
+            }
+            gate_count++;
+
         }
 
         // Get the probabilities
         std::vector<std::tuple<int, double>> prob_entries;
         double total_prob = 0.0;
-        for (int k=0; k<state.outerSize(); ++k) {
-            for (SparseMatrix::InnerIterator it(state, k); it; ++it) {
-                int row = it.row();
-                std::complex<double> amp = it.value();
-                double prob = std::norm(amp);
-                if (prob > atol_) {
-                    prob_entries.emplace_back(row, prob);
-                    total_prob += prob;
-                }
+        for (int row = 0; row < state.rows(); ++row) {
+            std::complex<double> amp = state(row, 0);
+            double prob = std::norm(amp);
+            if (prob > atol_) {
+                prob_entries.emplace_back(row, prob);
+                total_prob += prob;
             }
         }
 
@@ -1429,10 +1508,10 @@ public:
         Returns:
             TimeEvolutionResult: The results of the evolution.
         Raises:
-            std::runtime_error: If no Hamiltonians are provided.
-            std::runtime_error: If no time steps are provided.
-            std::runtime_error: If number of parameters for any Hamiltonian does not match number of time steps.
-            std::runtime_error: If an unknown time evolution method is specified.
+            py::value_error: If no Hamiltonians are provided.
+            py::value_error: If no time steps are provided.
+            py::value_error: If number of parameters for any Hamiltonian does not match number of time steps.
+            py::value_error: If an unknown time evolution method is specified.
         */
 
         // Parse the info from the python objects
@@ -1519,7 +1598,6 @@ public:
         bool is_unitary_on_statevector = is_unitary_dynamics && input_was_vector;
 
         // If we have unitary dynamics and the input was a pure state, convert to state vector
-        bool input_was_pure = false;
         if (is_unitary_dynamics && !input_was_vector) {
             double trace_rho2 = 0.0;
             for (int k=0; k<rho_0.outerSize(); ++k) {
@@ -1528,7 +1606,6 @@ public:
                 }
             }
             if (std::abs(trace_rho2 - 1.0) < atol_) {
-                input_was_pure = true;
                 rho_0 = get_vector_from_density_matrix(rho_0);
                 is_unitary_on_statevector = true;
             }

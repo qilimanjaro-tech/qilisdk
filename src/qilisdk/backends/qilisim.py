@@ -43,6 +43,7 @@ class QiliSim(Backend):
                  num_integrate_substeps: int = 1,
                  monte_carlo: bool = False,
                  num_monte_carlo_trajectories: int = 100,
+                 max_cache_size: int = 100,
                  ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -55,6 +56,7 @@ class QiliSim(Backend):
             num_integrate_substeps (int): The number of substeps to use when using the Integrate method.
             monte_carlo (bool): Whether to use the Monte Carlo method for open systems.
             num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
+            max_cache_size (int): The maximum size of the internal cache for gate caching.
 
         """
         super().__init__()
@@ -66,6 +68,7 @@ class QiliSim(Backend):
             "num_integrate_substeps": num_integrate_substeps,
             "monte_carlo": monte_carlo,
             "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
+            "max_cache_size": max_cache_size,
         }
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
@@ -80,7 +83,7 @@ class QiliSim(Backend):
 
         """
         logger.info("Executing Sampling with {} shots", functional.nshots)
-        result = self.qili_sim.execute_sampling(functional)
+        result = self.qili_sim.execute_sampling(functional, self.solver_params)
         logger.success("Sampling finished")
         return result
 
