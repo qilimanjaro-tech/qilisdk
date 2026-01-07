@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: noqa: ANN001, ANN201 DOC201, S403
+# ruff: noqa: ANN001, ANN201 DOC201
 
-import base64
 import types
 from collections import defaultdict
 
 import numpy as np
-from dill import dumps, loads
 from pydantic import BaseModel
 from ruamel.yaml import YAML
+from ruamel.yaml.constructor import BaseConstructor
+from ruamel.yaml.nodes import Node
+from ruamel.yaml.representer import BaseRepresenter
 from scipy import sparse
 
 
@@ -103,31 +104,6 @@ def defaultdict_constructor(constructor, node):
     return dd
 
 
-def function_representer(representer, data):
-    """Represent a non-lambda function by serializing it."""
-    serialized_function = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!function", serialized_function)
-
-
-def function_constructor(constructor, node):
-    """Reconstruct a function from the serialized data."""
-    serialized_function = base64.b64decode(node.value)
-    return loads(serialized_function)  # noqa: S301
-
-
-def lambda_representer(representer, data):
-    """Represent a lambda function by serializing its code."""
-    serialized_lambda = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!lambda", serialized_lambda)
-
-
-def lambda_constructor(constructor, node):
-    """Reconstruct a lambda function from the serialized data."""
-    # Decode the base64-encoded string and load the lambda function
-    serialized_lambda = base64.b64decode(node.value)
-    return loads(serialized_lambda)  # noqa: S301
-
-
 def pydantic_model_representer(representer, data):
     """Representer for Pydantic Models."""
     value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
@@ -187,8 +163,38 @@ def type_constructor(constructor, node):
     return getattr(mod, qualname)
 
 
+class QiliYAML(YAML):
+    def register_class(self, cls):
+        """
+        register a class for dumping/loading
+        - if it has attribute yaml_tag use that to register, else use class name
+        - if it has methods to_yaml/from_yaml use those to dump/load else dump attributes
+          as mapping
+        """
+        tag = getattr(cls, 'yaml_tag', '!' + cls.__module__ + "." + cls.__name__)
+        try:
+            self.representer.add_representer(cls, cls.to_yaml)
+        except AttributeError:
+
+            def t_y(representer: BaseRepresenter, data: object | types.FunctionType) -> Node:
+                return representer.represent_yaml_object(
+                    tag, data, cls, flow_style=representer.default_flow_style,
+                )
+
+            self.representer.add_representer(cls, t_y)
+        try:
+            self.constructor.add_constructor(tag, cls.from_yaml)
+        except AttributeError:
+
+            def f_y(constructor: BaseConstructor, node: Node) -> object | types.FunctionType:
+                return constructor.construct_yaml_object(node, cls)
+
+            self.constructor.add_constructor(tag, f_y)
+        return cls
+
+
 # Create YAML handler and register all custom types
-yaml = YAML(typ="unsafe")
+yaml = QiliYAML(typ="unsafe")
 
 # SciPy CSR
 yaml.representer.add_representer(sparse.csr_matrix, csr_representer)
@@ -205,12 +211,6 @@ yaml.constructor.add_constructor("!defaultdict", defaultdict_constructor)
 # NumPy arrays
 yaml.representer.add_representer(np.ndarray, ndarray_representer)
 yaml.constructor.add_constructor("!ndarray", ndarray_constructor)
-
-# Python functions and lambdas
-yaml.representer.add_representer(types.FunctionType, function_representer)
-yaml.constructor.add_constructor("!function", function_constructor)
-yaml.representer.add_representer(types.LambdaType, lambda_representer)
-yaml.constructor.add_constructor("!lambda", lambda_constructor)
 
 # Pydantic models
 yaml.representer.add_representer(BaseModel, pydantic_model_representer)
