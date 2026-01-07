@@ -11,16 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import annotations
 
-from qilisdk.yaml import yaml
+from .analog_noise import DissipationNoise
+from .digital_noise import KrausNoise
+from .noise_models import NoiseModel, NoiseType
 
-@yaml.register_class
-class NoiseModel():
-    """Class representing a noise model, combining many NoiseBase instances."""
-    pass
-
-@yaml.register_class
-class NoiseBase():
-    """Abstract base class for noise models."""
-    pass
+__all__ = ["DissipationNoise", "KrausNoise", "NoiseModel", "NoiseType"]
