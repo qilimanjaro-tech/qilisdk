@@ -35,15 +35,16 @@ class QiliSim(Backend):
     time-evolution experiments using a custom C++ simulator.
     """
 
-    def __init__(self,
-                 evolution_method: str = "integrate",
-                 arnoldi_dim: int = 10,
-                 num_arnoldi_substeps: int = 1,
-                 num_integrate_substeps: int = 1,
-                 monte_carlo: bool = False,
-                 num_monte_carlo_trajectories: int = 100,
-                 max_cache_size: int = 100,
-                 ) -> None:
+    def __init__(
+        self,
+        evolution_method: str = "integrate",
+        arnoldi_dim: int = 10,
+        num_arnoldi_substeps: int = 1,
+        num_integrate_substeps: int = 1,
+        monte_carlo: bool = False,
+        num_monte_carlo_trajectories: int = 100,
+        max_cache_size: int = 100,
+    ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
         implemented in C++, using pybind11 for bindings.
@@ -157,14 +158,16 @@ class QiliSim(Backend):
                 observables.append(aux_obs)
 
         # Execute the time evolution
-        result = self.qili_sim.execute_time_evolution(functional.initial_state,
-                                                      Hs,
-                                                      coeffs,
-                                                      steps,
-                                                      observables,
-                                                      jump_operators,
-                                                      functional.store_intermediate_results,
-                                                      self.solver_params)
+        result = self.qili_sim.execute_time_evolution(
+            functional.initial_state,
+            Hs,
+            coeffs,
+            steps,
+            observables,
+            jump_operators,
+            functional.store_intermediate_results,
+            self.solver_params,
+        )
 
         logger.success("TimeEvolution finished")
         return result

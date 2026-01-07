@@ -225,7 +225,6 @@ def test_monte_carlo_time_evolution(method):
 
 
 def test_qilisim_params():
-
     with pytest.raises(ValueError, match="Unknown time evolution method: something-else"):
         QiliSim(evolution_method="something-else")
 

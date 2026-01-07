@@ -180,7 +180,9 @@ class Circuit(Parameterizable):
         if filepath:
             renderer.save(filepath)
 
-    def randomize(self, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int) -> None:
+    def randomize(
+        self, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
+    ) -> None:
         """
         Generate a random quantum circuit from a given set of gates.
 
@@ -199,7 +201,9 @@ class Circuit(Parameterizable):
             if gate_class.PARAMETER_NAMES:
                 for param_name in gate_class.PARAMETER_NAMES:
                     val = random.uniform(-np.pi, np.pi)
-                    params[param_name] = Parameter(label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val))
+                    params[param_name] = Parameter(
+                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
+                    )
 
             # If you're reading this and thinking "why don't we just do self.add(gate_class(*qubits, **params))"?
             # It's because mypy gets angry about it, since then we don't know the type of the variable at runtime.
