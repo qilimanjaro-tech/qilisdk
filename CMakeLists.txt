@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # The CMake option to enable QiliSim backend
 # To enable/disable QiliSim backend or to choose build type, use:
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Release
@@ -47,6 +49,15 @@ if(DEFINED qilisim AND qilisim STREQUAL "ON")
         if (OpenMP_CXX_FOUND)
             message(STATUS "[QiliSim] Using OpenMP")
             target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
+        endif()
+
+        # Enable if you want to run clang-tidy on the code
+        if(DEFINED clang-tidy AND clang-tidy STREQUAL "ON")
+            message(STATUS "[QiliSim] Enabling clang-tidy")
+            set_target_properties(qilisim_module PROPERTIES
+                CXX_CLANG_TIDY
+                "clang-tidy;-header-filter=.;-checks='*';-warnings-as-errors='*'"
+            )
         endif()
 
         # Compile

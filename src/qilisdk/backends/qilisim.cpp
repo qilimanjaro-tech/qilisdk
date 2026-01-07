@@ -53,6 +53,21 @@ const SparseMatrix I = []() {
     return I_mat;
 }();
 
+void err_func() {
+    /*
+    Designed to contain errors detected by clang-tidy
+    */
+    std::string str1 = "Testing";
+    std::string str2 = std::move(str1);
+    std::cout << str1 << str2;
+    #define BUFLEN 42
+    char buf[BUFLEN];
+    memset(buf, 0, sizeof(BUFLEN)); 
+    try {
+    } catch(const std::exception&) {
+    }
+}
+
 class Gate {
     /*
     A quantum gate with type, control qubits and target qubits.
@@ -734,8 +749,8 @@ private:
         iden.setFromTriplets(iden_entries.begin(), iden_entries.end());
         
         // The contribution from the Hamiltonian
-        SparseMatrix H_iden = Eigen::KroneckerProductSparse(currentH, iden);
-        SparseMatrix iden_H_T = Eigen::KroneckerProductSparse(iden, currentH.transpose());
+        SparseMatrix H_iden = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(currentH, iden);
+        SparseMatrix iden_H_T = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(iden, currentH.transpose());
         L += H_iden * std::complex<double>(0, -1);
         L += iden_H_T * std::complex<double>(0, 1);
 
@@ -744,9 +759,9 @@ private:
             SparseMatrix L_k_dag = L_k.adjoint();
             SparseMatrix L_k_L_k_dag = L_k_dag * L_k;
 
-            SparseMatrix term1 = Eigen::KroneckerProductSparse(L_k, L_k.conjugate());
-            SparseMatrix term2 = Eigen::KroneckerProductSparse(L_k_L_k_dag, iden) * 0.5;
-            SparseMatrix term3 = Eigen::KroneckerProductSparse(iden, L_k_L_k_dag.transpose()) * 0.5;
+            SparseMatrix term1 = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(L_k, L_k.conjugate());
+            SparseMatrix term2 = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(L_k_L_k_dag, iden) * 0.5;
+            SparseMatrix term3 = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(iden, L_k_L_k_dag.transpose()) * 0.5;
 
             L += term1;
             L -= term2;
