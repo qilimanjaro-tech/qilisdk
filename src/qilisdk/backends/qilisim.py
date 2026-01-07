@@ -57,8 +57,25 @@ class QiliSim(Backend):
             monte_carlo (bool): Whether to use the Monte Carlo method for open systems.
             num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
             max_cache_size (int): The maximum size of the internal cache for gate caching.
+        Raises:
+            ValueError: If any of the parameters are invalid.
 
         """
+        
+
+        # Sanity checks on params
+        # Note that these are also in the C++ code, so update there as well if changed here for consistency
+        if evolution_method not in ["direct", "arnoldi", "integrate"]:
+            raise ValueError(f"Unknown time evolution method: {evolution_method}")
+        if arnoldi_dim <= 0:
+            raise ValueError("arnoldi_dim must be a positive integer")
+        if num_arnoldi_substeps <= 0:
+            raise ValueError("num_arnoldi_substeps must be a positive integer")
+        if num_integrate_substeps <= 0:
+            raise ValueError("num_integrate_substeps must be a positive integer")
+        if num_monte_carlo_trajectories <= 0:
+            raise ValueError("num_monte_carlo_trajectories must be a positive integer")
+        
         super().__init__()
         self.qili_sim = QiliSimCpp()
         self.solver_params = {
@@ -104,9 +121,7 @@ class QiliSim(Backend):
 
         # Get the time steps
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        steps = np.linspace(0, functional.schedule.T, int(functional.schedule.T // functional.schedule.dt))
-        tlist = np.array(functional.schedule.tlist)
-        steps = np.union1d(steps, tlist)
+        steps = functional.schedule.tlist
 
         # Get the Hamiltonians and their parameters from the schedule per timestep
         Hs = [functional.schedule.hamiltonians[h] for h in functional.schedule.hamiltonians]

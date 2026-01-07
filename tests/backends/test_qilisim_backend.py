@@ -117,7 +117,7 @@ def test_constant_hamiltonian():
         hamiltonians={"hz": x * pauli_z(0)},
         dt=1,
         total_time=10,
-        schedule={i: {"hz": 1.0} for i in range(int(1.0 / 0.1))},
+        coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]
@@ -127,14 +127,13 @@ def test_constant_hamiltonian():
     )
 
     assert isinstance(res, TimeEvolutionResult)
-
-    assert pytest.approx(res.final_expected_values, rel=1e-6) == 1.0
+    assert np.isclose(res.final_expected_values[0], 1.0, rtol=1e-6)
 
     # Intermediate states should replicate constant behavior
     assert res.intermediate_states is not None
     for state in res.intermediate_states:
         psi = state.dense().flatten()
-        assert pytest.approx(abs(psi[0]) ** 2, rel=1e-6) == 1.0
+        assert np.isclose(abs(psi[0]) ** 2, 1.0, rtol=1e-6)
 
 
 simulation_types = ["direct", "arnoldi", "integrate"]
@@ -164,7 +163,7 @@ def test_time_dependent_hamiltonian(method):
 
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
-    assert pytest.approx(expect_z, rel=1e-2) == -1.0
+    assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
 @pytest.mark.parametrize("method", simulation_types)
@@ -192,7 +191,7 @@ def test_time_dependent_hamiltonian_density_mat(method):
 
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
-    assert pytest.approx(expect_z, rel=1e-2) == -1.0
+    assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
 @pytest.mark.parametrize("method", simulation_types)
@@ -222,31 +221,25 @@ def test_monte_carlo_time_evolution(method):
 
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
-    assert pytest.approx(expect_z, rel=1e-2) == -0.8
+    assert np.isclose(expect_z, -0.8, rtol=1e-2)
 
 
 def test_qilisim_params():
 
-    backend = QiliSim(evolution_method="something-else")
     with pytest.raises(ValueError, match="Unknown time evolution method: something-else"):
-        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+        backend = QiliSim(evolution_method="something-else")
 
-    backend = QiliSim(num_arnoldi_substeps=-1)
     with pytest.raises(ValueError, match="num_arnoldi_substeps must be a positive integer"):
-        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+        backend = QiliSim(num_arnoldi_substeps=-1)
 
-    backend = QiliSim(num_integrate_substeps=-1)
-    with pytest.raises(ValueError, match="num_integrate_substeps must be a positive integer"):
-        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
-
-    backend = QiliSim(arnoldi_dim=0)
     with pytest.raises(ValueError, match="arnoldi_dim must be a positive integer"):
-        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
+        backend = QiliSim(arnoldi_dim=0)
+        
+    with pytest.raises(ValueError, match="num_integrate_substeps must be a positive integer"):
+        backend = QiliSim(num_integrate_substeps=-5)
 
-    backend = QiliSim(num_monte_carlo_trajectories=0)
     with pytest.raises(ValueError, match="num_monte_carlo_trajectories must be a positive integer"):
-        backend.execute(TimeEvolution(schedule=Schedule(dt=0.1, hamiltonians={"h1": pauli_x(0)}), initial_state=ket(0), observables=[]))
-
+        backend = QiliSim(num_monte_carlo_trajectories=0)
 
 def test_time_dependent_hamiltonian_with_3_qubits():
     dt = 0.01
@@ -271,9 +264,9 @@ def test_time_dependent_hamiltonian_with_3_qubits():
         TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False)
     )
 
-    assert pytest.approx(res.final_expected_values[0], rel=1e-2) == -1.0
-    assert pytest.approx(res.final_expected_values[1], rel=1e-2) == -1.0
-    assert pytest.approx(res.final_expected_values[2], rel=1e-2) == -1.0
+    assert np.isclose(res.final_expected_values[0], -1.0, rtol=1e-2)
+    assert np.isclose(res.final_expected_values[1], -1.0, rtol=1e-2)
+    assert np.isclose(res.final_expected_values[2], -1.0, rtol=1e-2)
 
 
 ###################
