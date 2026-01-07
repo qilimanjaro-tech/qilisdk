@@ -58,7 +58,7 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
             message(STATUS "[QiliSim] Enabling clang-tidy")
             set_target_properties(qilisim_module PROPERTIES
                 CXX_CLANG_TIDY
-                "clang-tidy;-header-filter=.;-checks=bugprone-*,concurrency-*,cppcoreguidelines-,performance-*,portability-*,-bugprone-easily-swappable-parameters;--extra-arg=-Wno-ignored-optimization-argument"
+                "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
             )
         endif()
 

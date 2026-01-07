@@ -250,11 +250,15 @@ public:
     Gate(const std::string& gate_type_,
          const SparseMatrix& base_matrix_,
          const std::vector<int>& controls_,
-         const std::vector<int>& targets_) {
-        gate_type = gate_type_;
-        control_qubits = controls_;
-        target_qubits = targets_;
-        base_matrix = base_matrix_;
+         const std::vector<int>& targets_) :         
+            gate_type(gate_type_),
+            base_matrix(base_matrix_),
+            control_qubits(controls_),
+            target_qubits(targets_) {
+        // gate_type = gate_type_;
+        // control_qubits = controls_;
+        // target_qubits = targets_;
+        // base_matrix = base_matrix_;
     }
 
     std::string get_name() const {
@@ -302,12 +306,12 @@ public:
 };
 
 // Get the Python functional classes
-py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
-py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
-py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
-py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
-py::object numpy_array = py::module_::import("numpy").attr("array");
-py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
+const py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
+const py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
+const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
+const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+const py::object numpy_array = py::module_::import("numpy").attr("array");
+const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 
 // Needed for _a literals
 using namespace pybind11::literals;
@@ -1144,7 +1148,7 @@ private:
         // Vars for the Arnoldi iteration
         std::vector<SparseMatrix> V;
         SparseMatrix A;
-        int subspace_dim;
+        int subspace_dim = 0;
         
         // Form the Lindblad superoperator if needed
         SparseMatrix L;
