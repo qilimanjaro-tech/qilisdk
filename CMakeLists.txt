@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 # The CMake option to enable QiliSim backend
 # To enable/disable QiliSim backend or to choose build type, use:
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Release
