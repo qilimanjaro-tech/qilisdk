@@ -16,23 +16,25 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
     find_package(OpenMP)
 
     # Fetch Eigen if not found (it's a header only library)
-    find_package(Eigen3 REQUIRED)
-    if (NOT EIGEN3_FOUND)
+    find_package(Eigen3 QUIET)
+    if (NOT Eigen3_FOUND)
         message(STATUS "[QiliSim] Eigen3 not found, fetching...")
+        set(BUILD_TESTING OFF)
+        set(EIGEN_BUILD_TESTING OFF)
+        set(EIGEN_BUILD_PKGCONFIG OFF)
+        set(EIGEN_BUILD_DOC OFF)
         include(FetchContent)
         FetchContent_Declare(
             eigen
             GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
             GIT_TAG 3.4.0
             GIT_SHALLOW TRUE
-            GIT_PROGRESS TRUE
         )
         FetchContent_MakeAvailable(eigen)
-        find_package(Eigen3 REQUIRED)
     endif()
 
     # If we have the core dependencies, build the C++ backend
-    if (EIGEN3_FOUND AND pybind11_FOUND)
+    if (Eigen3_FOUND AND pybind11_FOUND)
         message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
         pybind11_add_module(qilisim_module src/qilisdk/backends/qilisim.cpp)
 

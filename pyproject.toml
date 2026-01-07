@@ -111,6 +111,7 @@ exclude = [
 
 [tool.scikit-build]
 cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
+# cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON", "-DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF", "-DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF", "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF"]
 cmake.build-type = "Release"
 cmake.define.qilisim = "ON"
 

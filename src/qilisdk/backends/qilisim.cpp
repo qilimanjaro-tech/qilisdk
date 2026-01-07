@@ -1036,6 +1036,7 @@ private:
         int rho_rows = int(rho_0.rows());
         int rho_cols = int(rho_0.cols());
 
+
         // Standard RK4 loop
         DenseMatrix rho = rho_0;
         DenseMatrix k1(rho_rows, rho_cols);
