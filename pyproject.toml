@@ -113,7 +113,6 @@ exclude = [
 cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
 cmake.build-type = "Release"
 cmake.define.qilisim = "ON"
-cmake.define.clang-tidy = "OFF"
 
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]

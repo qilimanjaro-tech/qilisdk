@@ -4,8 +4,10 @@ project(qilisdk LANGUAGES CXX)
 # The CMake option to enable QiliSim backend
 # To enable/disable QiliSim backend or to choose build type, use:
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Release
-if(DEFINED qilisim AND qilisim STREQUAL "ON")
+if (DEFINED qilisim AND qilisim STREQUAL "ON")
     message(STATUS "[QiliSim] QiliSim backend enabled, preparing to build")
+    message(STATUS "[QiliSim] Build type: ${CMAKE_BUILD_TYPE}")
+    message(STATUS "[QiliSim] Verbose: ${CMAKE_VERBOSE_MAKEFILE}")
 
     # pybind should already be installed via the dependencies
     find_package(pybind11 REQUIRED)
@@ -14,7 +16,7 @@ if(DEFINED qilisim AND qilisim STREQUAL "ON")
     find_package(OpenMP)
 
     # Fetch Eigen if not found (it's a header only library)
-    find_package(Eigen3 REQUIRED QUIET)
+    find_package(Eigen3 REQUIRED)
     if (NOT EIGEN3_FOUND)
         message(STATUS "[QiliSim] Eigen3 not found, fetching...")
         include(FetchContent)
@@ -50,11 +52,11 @@ if(DEFINED qilisim AND qilisim STREQUAL "ON")
         endif()
 
         # Enable if you want to run clang-tidy on the code
-        if(DEFINED clang-tidy AND clang-tidy STREQUAL "ON")
+        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
             message(STATUS "[QiliSim] Enabling clang-tidy")
             set_target_properties(qilisim_module PROPERTIES
                 CXX_CLANG_TIDY
-                "clang-tidy;-header-filter=.;-checks='*';-warnings-as-errors='*'"
+                "clang-tidy;-header-filter=.;-checks=bugprone-*,concurrency-*,cppcoreguidelines-,performance-*,portability-*,-bugprone-easily-swappable-parameters;--extra-arg=-Wno-ignored-optimization-argument"
             )
         endif()
 

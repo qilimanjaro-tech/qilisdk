@@ -53,21 +53,6 @@ const SparseMatrix I = []() {
     return I_mat;
 }();
 
-void err_func() {
-    /*
-    Designed to contain errors detected by clang-tidy
-    */
-    std::string str1 = "Testing";
-    std::string str2 = std::move(str1);
-    std::cout << str1 << str2;
-    #define BUFLEN 42
-    char buf[BUFLEN];
-    memset(buf, 0, sizeof(BUFLEN)); 
-    try {
-    } catch(const std::exception&) {
-    }
-}
-
 class Gate {
     /*
     A quantum gate with type, control qubits and target qubits.
@@ -91,7 +76,7 @@ private:
         Returns:
             int: The permuted index.
         */
-        int n = perm.size();
+        int n = int(perm.size());
         int out = 0;
         for (int old_q = 0; old_q < n; old_q++) {
             int new_q = perm[old_q];
@@ -155,7 +140,7 @@ private:
         for (int q : target_qubits) {
             if (q < min_qubit) min_qubit = q;
         }
-        int base_gate_qubits = target_qubits.size() + control_qubits.size();
+        int base_gate_qubits = int(target_qubits.size()) + int(control_qubits.size());
         int needed_before = min_qubit;
         int needed_after = num_qubits - needed_before - base_gate_qubits;
 
@@ -163,8 +148,8 @@ private:
         Triplets out_entries;
         for (int k=0; k<base_gate.outerSize(); ++k) {
             for (SparseMatrix::InnerIterator it(base_gate, k); it; ++it) {
-                int row = it.row();
-                int col = it.col();
+                int row = int(it.row());
+                int col = int(it.col());
                 std::complex<double> val = it.value();
                 out_entries.emplace_back(Triplet(row, col, val));
             }
@@ -176,14 +161,14 @@ private:
         // 0 1 0 0
         // 0 0 G G
         // 0 0 G G
-        int base_gate_actual_qubits = std::log2(base_gate.cols());
+        int base_gate_actual_qubits = std::ceil(std::log2(base_gate.cols()));
         int missing_controls = base_gate_actual_qubits - base_gate_qubits;
         for (int i = 0; i < missing_controls; ++i) {
             int delta = 1 << (target_qubits.size());
             Triplets new_entries;
             for (const auto& entry : out_entries) {
-                int row = entry.row();
-                int col = entry.col();
+                int row = int(entry.row());
+                int col = int(entry.col());
                 std::complex<double> val = entry.value();
                 new_entries.emplace_back(Triplet(row + delta, col + delta, val));
             }
@@ -207,8 +192,8 @@ private:
 
         // Get a list of all qubits involved
         std::vector<int> all_qubits;
-        for (auto q : control_qubits) all_qubits.push_back(q);
-        for (auto q : target_qubits) all_qubits.push_back(q);
+        all_qubits.insert(all_qubits.end(), control_qubits.begin(), control_qubits.end());
+        all_qubits.insert(all_qubits.end(), target_qubits.begin(), target_qubits.end());
 
         // Determine the permutation to map qubits to their correct positions
         // perm is initially 0 1 2
@@ -503,7 +488,7 @@ private:
         }
     }
 
-    std::vector<SparseMatrix> parse_hamiltonians(py::object Hs) {
+    std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs) {
         /*
         Extract Hamiltonian matrices from a list of QTensor objects.
         Args:
@@ -515,8 +500,8 @@ private:
         for (auto& hamiltonian : Hs) {
             py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            int rows = buf.shape[0];
-            int cols = buf.shape[1];
+            int rows = int(buf.shape[0]);
+            int cols = int(buf.shape[1]);
             auto ptr = static_cast<std::complex<double>*>(buf.ptr);
             Triplets entries;
             for (int r = 0; r < rows; ++r) {
@@ -534,7 +519,7 @@ private:
         return hamiltonians;
     }
 
-    std::vector<SparseMatrix> parse_jump_operators(py::object jumps) {
+    std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps) {
         /*
         Extract jump operator matrices from a list of QTensor objects.
         Args:
@@ -546,8 +531,8 @@ private:
         for (auto jump : jumps) {
             py::buffer matrix = numpy_array(jump.attr("dense")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            int rows = buf.shape[0];
-            int cols = buf.shape[1];
+            int rows = int(buf.shape[0]);
+            int cols = int(buf.shape[1]);
             auto ptr = static_cast<std::complex<double>*>(buf.ptr);
             Triplets entries;
             for (int r = 0; r < rows; ++r) {
@@ -565,7 +550,7 @@ private:
         return jump_matrices;
     }
 
-    std::vector<SparseMatrix> parse_observables(py::object observables) {
+    std::vector<SparseMatrix> parse_observables(const py::object& observables) {
         /*
         Extract observable matrices from a list of QTensor objects.
         Args:
@@ -577,8 +562,8 @@ private:
         for (auto obs : observables) {
             py::buffer matrix = numpy_array(obs.attr("dense")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            int rows = buf.shape[0];
-            int cols = buf.shape[1];
+            int rows = int(buf.shape[0]);
+            int cols = int(buf.shape[1]);
             auto ptr = static_cast<std::complex<double>*>(buf.ptr);
             Triplets entries;
             for (int r = 0; r < rows; ++r) {
@@ -596,7 +581,7 @@ private:
         return observable_matrices;
     }
 
-    std::vector<std::vector<double>> parse_parameters(py::object coeffs) {
+    std::vector<std::vector<double>> parse_parameters(const py::object& coeffs) {
         /*
         Extract parameter lists from a list of coefficient objects.
         Args:
@@ -615,7 +600,7 @@ private:
         return parameters_list;
     }
 
-    std::vector<double> parse_time_steps(py::object steps) {
+    std::vector<double> parse_time_steps(const py::object& steps) {
         /*
         Extract time steps from a list of step objects.
         Args:
@@ -630,7 +615,7 @@ private:
         return step_list;
     }
 
-    SparseMatrix parse_initial_state(py::object initial_state) {
+    SparseMatrix parse_initial_state(const py::object& initial_state) {
         /*
         Extract the initial state from a QTensor object.
         Args:
@@ -643,8 +628,8 @@ private:
         if (buf.ndim != 2) {
             throw py::value_error("Initial state must be a 2D array.");
         }
-        int rows = buf.shape[0];
-        int cols = buf.shape[1];
+        int rows = int(buf.shape[0]);
+        int cols = int(buf.shape[1]);
         auto ptr = static_cast<std::complex<double>*>(buf.ptr);
         Triplets rho_0_entries;
         for (int r = 0; r < rows; ++r) {
@@ -660,7 +645,7 @@ private:
         return rho_0;
     }
 
-    std::complex<double> trace(SparseMatrix& matrix) {
+    std::complex<double> trace(const SparseMatrix& matrix) {
         /*
         Compute the trace of a square matrix.
         Args:
@@ -686,8 +671,8 @@ private:
         Returns:
             SparseMatrix: The vectorized matrix as a column vector.
         */
-        int rows = matrix.rows();
-        int cols = matrix.cols();
+        int rows = int(matrix.rows());
+        int cols = int(matrix.cols());
         Triplets vec_entries;
         for (int c = 0; c < cols; ++c) {
             for (int r = 0; r < rows; ++r) {
@@ -697,7 +682,7 @@ private:
                 }
             }
         }
-        SparseMatrix vec_matrix(rows * cols, 1);
+        SparseMatrix vec_matrix(long(rows * cols), 1);
         vec_matrix.setFromTriplets(vec_entries.begin(), vec_entries.end());
         return vec_matrix;
     }
@@ -736,7 +721,7 @@ private:
         */
 
         // The superoperator dimension
-        int dim = currentH.rows();
+        int dim = int(currentH.rows());
         int dim_rho = dim * dim;
         SparseMatrix L(dim_rho, dim_rho);
 
@@ -779,8 +764,8 @@ private:
         Returns:
             py::array_t<std::complex<double>>: The corresponding NumPy array.
         */
-        int rows = matrix.rows();
-        int cols = matrix.cols();
+        int rows = int(matrix.rows());
+        int cols = int(matrix.cols());
         py::array_t<std::complex<double>> np_array({rows, cols});
         py::buffer_info buf = np_array.request();
         auto ptr = static_cast<std::complex<double>*>(buf.ptr);
@@ -833,7 +818,7 @@ private:
         return np_array;
     }
 
-    std::vector<Gate> parse_gates(py::object circuit) {
+    std::vector<Gate> parse_gates(const py::object& circuit) {
         /*
         Extract gates from a circuit object.
         Args:
@@ -856,8 +841,8 @@ private:
             // Get the matrix
             py::buffer matrix = py_gate.attr("_generate_matrix")();
             py::buffer_info buf = matrix.request();
-            int rows = buf.shape[0];
-            int cols = buf.shape[1];
+            int rows = int(buf.shape[0]);
+            int cols = int(buf.shape[1]);
             auto ptr = static_cast<std::complex<double>*>(buf.ptr);
             Triplets entries;
             for (int r = 0; r < rows; ++r) {
@@ -1038,7 +1023,7 @@ private:
         if (rho_0.rows() != rho_0.cols() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = currentH.rows();
+        int dim = int(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Dimension mismatch.");
         }
@@ -1048,8 +1033,8 @@ private:
             }
         }
 
-        int rho_rows = rho_0.rows();
-        int rho_cols = rho_0.cols();
+        int rho_rows = int(rho_0.rows());
+        int rho_cols = int(rho_0.cols());
 
         // Standard RK4 loop
         DenseMatrix rho = rho_0;
@@ -1134,7 +1119,7 @@ private:
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = currentH.rows();
+        int dim = int(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
@@ -1175,13 +1160,13 @@ private:
             // and the basis vectors in V
             if (is_unitary_on_statevector) {
                 arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A);
-                subspace_dim = V.size();
+                subspace_dim = int(V.size());
             } else if (!is_unitary) {
                 arnoldi(L, rho_t, arnoldi_dim, V, A);
-                subspace_dim = V.size()-1;
+                subspace_dim = int(V.size())-1;
             } else {
                 arnoldi_mat(currentH, rho_t, arnoldi_dim, V, A);
-                subspace_dim = V.size();
+                subspace_dim = int(V.size());
             }
             A.conservativeResize(subspace_dim, subspace_dim);
             V.resize(subspace_dim);
@@ -1259,7 +1244,7 @@ private:
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = currentH.rows();
+        int dim = int(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
@@ -1292,7 +1277,7 @@ private:
 
 public:
 
-    py::object execute_sampling(py::object functional, py::dict solver_params) {
+    py::object execute_sampling(const py::object& functional, const py::dict& solver_params) {
         /*
         Execute a sampling functional using a simple statevector simulator.
         Args:
@@ -1464,7 +1449,7 @@ public:
             for (int i=0; i<count; ++i) {
                 for (int k=0; k<state_vec.outerSize(); ++k) {
                     for (SparseMatrix::InnerIterator it(state_vec, k); it; ++it) {
-                        int row = it.row();
+                        int row = int(it.row());
                         std::complex<double> val = it.value();
                         new_mat_entries.emplace_back(Triplet(row, traj_index, val));
                     }
@@ -1501,14 +1486,14 @@ public:
     }
 
     // Execute time evolution
-    py::object execute_time_evolution(py::object initial_state, 
-                                      py::object Hs, 
-                                      py::object coeffs, 
-                                      py::object steps, 
-                                      py::object observables, 
-                                      py::object jumps,
+    py::object execute_time_evolution(const py::object& initial_state, 
+                                      const py::object& Hs, 
+                                      const py::object& coeffs, 
+                                      const py::object& steps, 
+                                      const py::object& observables, 
+                                      const py::object& jumps,
                                       bool store_intermediate_results,
-                                      py::dict solver_params) {
+                                      const py::dict& solver_params) {
         /*
         Execute a time evolution functional.
         Args:
@@ -1593,7 +1578,7 @@ public:
         }
 
         // Dimensions of everything
-        int dim = hamiltonians[0].rows();
+        int dim = int(hamiltonians[0].rows());
 
         // Check if we have unitary dynamics
         bool is_unitary_dynamics = (jump_operators.size() == 0);
