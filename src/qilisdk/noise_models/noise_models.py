@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ class NoiseType(Enum):
 class NoiseBase(ABC):
     """Generic Noise Class"""
 
-    @abstractmethod
     @property
+    @abstractmethod
     def noise_type(self) -> NoiseType: ...
 
 

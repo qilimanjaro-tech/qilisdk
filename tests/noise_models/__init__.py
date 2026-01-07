@@ -11,25 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from .noise_models import NoiseBase, NoiseType
-
-if TYPE_CHECKING:
-    from qilisdk.core.qtensor import QTensor
-
-
-class DissipationNoise(NoiseBase):
-
-    def __init__(self, jump_operators: list[QTensor]) -> None:
-        self._jump_operators: list[QTensor] = jump_operators or []
-
-    @property
-    def noise_type(self) -> NoiseType:
-        return NoiseType.ANALOG
-
-    @property
-    def jump_operators(self) -> list[QTensor]:
-        return self._jump_operators
