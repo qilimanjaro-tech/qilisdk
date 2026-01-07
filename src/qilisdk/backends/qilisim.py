@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 from loguru import logger
 from qilisim_module import QiliSimCpp
 
@@ -61,11 +60,10 @@ class QiliSim(Backend):
             ValueError: If any of the parameters are invalid.
 
         """
-        
 
         # Sanity checks on params
         # Note that these are also in the C++ code, so update there as well if changed here for consistency
-        if evolution_method not in ["direct", "arnoldi", "integrate"]:
+        if evolution_method not in {"direct", "arnoldi", "integrate"}:
             raise ValueError(f"Unknown time evolution method: {evolution_method}")
         if arnoldi_dim <= 0:
             raise ValueError("arnoldi_dim must be a positive integer")
@@ -75,7 +73,7 @@ class QiliSim(Backend):
             raise ValueError("num_integrate_substeps must be a positive integer")
         if num_monte_carlo_trajectories <= 0:
             raise ValueError("num_monte_carlo_trajectories must be a positive integer")
-        
+
         super().__init__()
         self.qili_sim = QiliSimCpp()
         self.solver_params = {

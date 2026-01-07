@@ -227,19 +227,20 @@ def test_monte_carlo_time_evolution(method):
 def test_qilisim_params():
 
     with pytest.raises(ValueError, match="Unknown time evolution method: something-else"):
-        backend = QiliSim(evolution_method="something-else")
+        QiliSim(evolution_method="something-else")
 
     with pytest.raises(ValueError, match="num_arnoldi_substeps must be a positive integer"):
-        backend = QiliSim(num_arnoldi_substeps=-1)
+        QiliSim(num_arnoldi_substeps=-1)
 
     with pytest.raises(ValueError, match="arnoldi_dim must be a positive integer"):
-        backend = QiliSim(arnoldi_dim=0)
-        
+        QiliSim(arnoldi_dim=0)
+
     with pytest.raises(ValueError, match="num_integrate_substeps must be a positive integer"):
-        backend = QiliSim(num_integrate_substeps=-5)
+        QiliSim(num_integrate_substeps=-5)
 
     with pytest.raises(ValueError, match="num_monte_carlo_trajectories must be a positive integer"):
-        backend = QiliSim(num_monte_carlo_trajectories=0)
+        QiliSim(num_monte_carlo_trajectories=0)
+
 
 def test_time_dependent_hamiltonian_with_3_qubits():
     dt = 0.01
@@ -335,9 +336,8 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     backend = QiliSim()
     output = backend.execute(parameterized_program)
 
-    # The dummy_cost_function returns 0.7 regardless of input.
-    assert output.optimal_cost == 0.2
-    assert cost_function.compute_cost(output.optimal_execution_results) == 8.0
+    assert np.isclose(output.optimal_cost, 0.2)
+    assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0)
 
 
 def test_real_example():
