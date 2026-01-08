@@ -36,6 +36,7 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 if TYPE_CHECKING:
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
+    from qilisdk.noise_models.noise_model import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -102,7 +103,7 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -159,7 +160,9 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(
+        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
+    ) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
