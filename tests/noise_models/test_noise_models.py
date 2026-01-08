@@ -28,7 +28,7 @@ class DummyNoise(NoiseBase):
 
 
 def test_noise_base_is_abstract():
-    with pytest.raises(TypeError):  # noqa: PT011
+    with pytest.raises(TypeError):
         NoiseBase()
 
 
