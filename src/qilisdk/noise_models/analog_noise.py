@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
 
 class DissipationNoise(NoiseBase):
-
     def __init__(self, jump_operators: list[QTensor]) -> None:
         self._jump_operators: list[QTensor] = jump_operators or []
 

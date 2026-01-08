@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 
 
 class KrausNoise(NoiseBase):
-
     def __init__(
         self,
         kraus_operators: list[QTensor],

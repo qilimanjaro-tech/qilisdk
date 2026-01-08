@@ -17,7 +17,6 @@ from .noise_model import NoiseBase, NoiseType
 
 
 class ParameterNoise(NoiseBase):
-
     def __init__(self, affected_parameters: list[str] | None = None, noise_std: float = 0.1) -> None:
         self._affected_parameters: list[str] = affected_parameters or []
         self._noise_std = noise_std
