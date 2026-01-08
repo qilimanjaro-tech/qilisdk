@@ -42,8 +42,11 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      - name: Install qilisdk
-        run: uv sync --group dev --all-extras
+      - name: Build QiliSDK
+        run: uv build --wheel
+
+      - name: Install QiliSDK
+        run: uv pip install dist/*.whl
 
       - name: Run tests
         run: uv run pytest tests
