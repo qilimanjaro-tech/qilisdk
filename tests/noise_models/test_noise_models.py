@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import pytest
 
 from qilisdk.noise_models.analog_noise import DissipationNoise
@@ -54,7 +55,7 @@ def test_parameter_noise_properties():
     noise = ParameterNoise(affected_parameters=["theta", "phi"], noise_std=0.25)
     assert noise.noise_type == NoiseType.PARAMETER
     assert noise.affected_parameters == ["theta", "phi"]
-    assert noise.noise_std == 0.25
+    assert np.isclose(noise.noise_std, 0.25)
 
 
 def test_dissipation_noise_properties():
