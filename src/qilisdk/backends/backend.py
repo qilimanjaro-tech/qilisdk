@@ -27,36 +27,41 @@ if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.noise_models.noise_model import NoiseModel
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class Backend(ABC):
     def __init__(self) -> None:
-        self._handlers: dict[type[Functional], Callable[[Functional], FunctionalResult]] = {
-            Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
-            TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
-            VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
+        self._handlers: dict[type[Functional], Callable[[Functional, NoiseModel | None], FunctionalResult]] = {
+            Sampling: lambda f, noise_model: self._execute_sampling(cast("Sampling", f), noise_model),
+            TimeEvolution: lambda f, noise_model: self._execute_time_evolution(cast("TimeEvolution", f), noise_model),
+            VariationalProgram: lambda f, noise_model: self._execute_variational_program(
+                cast("VariationalProgram", f), noise_model
+            ),
         }
 
     @overload
-    def execute(self, functional: Sampling) -> SamplingResult: ...
+    def execute(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult: ...
 
     @overload
-    def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
-
-    @overload
-    def execute(self, functional: VariationalProgram[Sampling]) -> VariationalProgramResult[SamplingResult]: ...
+    def execute(self, functional: TimeEvolution, noise_model: NoiseModel | None = None) -> TimeEvolutionResult: ...
 
     @overload
     def execute(
-        self, functional: VariationalProgram[TimeEvolution]
+        self, functional: VariationalProgram[Sampling], noise_model: NoiseModel | None = None
+    ) -> VariationalProgramResult[SamplingResult]: ...
+
+    @overload
+    def execute(
+        self, functional: VariationalProgram[TimeEvolution], noise_model: NoiseModel | None = None
     ) -> VariationalProgramResult[TimeEvolutionResult]: ...
 
     @overload
-    def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
+    def execute(self, functional: PrimitiveFunctional[TResult], noise_model: NoiseModel | None = None) -> TResult: ...
 
-    def execute(self, functional: Functional) -> FunctionalResult:
+    def execute(self, functional: Functional, noise_model: NoiseModel | None = None) -> FunctionalResult:
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -64,16 +69,18 @@ class Backend(ABC):
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
-        return handler(functional)
+        return handler(functional, noise_model)
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(
+        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
+    ) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_variational_program(
-        self, functional: VariationalProgram[PrimitiveFunctional[TResult]]
+        self, functional: VariationalProgram[PrimitiveFunctional[TResult]], noise_model: NoiseModel | None = None
     ) -> VariationalProgramResult[TResult]:
         """Optimize a Parameterized Program (:class:`~qilisdk.functionals.variational_program.VariationalProgram`)
             and returns the optimal parameters and results.

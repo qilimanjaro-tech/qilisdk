@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
+    from qilisdk.noise_models.noise_model import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -132,7 +133,7 @@ class CudaBackend(Backend):
             cudaq.set_target("tensornet-mps")
             logger.debug("Using cudaq's 'tensornet-mps' backend")
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
@@ -156,7 +157,9 @@ class CudaBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(
+        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
+    ) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
