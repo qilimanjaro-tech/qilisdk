@@ -34,7 +34,7 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
     endif()
 
     # If we have the core dependencies, build the C++ backend
-    if (Eigen3_FOUND AND pybind11_FOUND)
+    if ((Eigen3_FOUND OR eigen_FOUND) AND pybind11_FOUND)
         message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
         pybind11_add_module(qilisim_module src/qilisdk/backends/qilisim.cpp)
 
@@ -64,6 +64,10 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
 
         # Compile
         install(TARGETS qilisim_module DESTINATION .)
+        
+    else()
+        message(WARNING "[QiliSim] Missing dependencies, cannot build QiliSim backend")
+        message(WARNING "[QiliSim] Eigen3 found: ${Eigen3_FOUND}, eigen found: ${eigen_FOUND}, pybind11 found: ${pybind11_FOUND}")
 
     endif()
 
