@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.noise_models.noise_model import NoiseModel
 
 
 class QiliSim(Backend):
@@ -96,7 +97,7 @@ class QiliSim(Backend):
             "num_threads": num_threads,
         }
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -112,7 +113,9 @@ class QiliSim(Backend):
         logger.success("Sampling finished")
         return result
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(
+        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
+    ) -> TimeEvolutionResult:
         """
         Computes the time evolution under of an initial state under the given schedule.
 
