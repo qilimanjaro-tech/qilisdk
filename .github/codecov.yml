@@ -6,11 +6,11 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 1%
+        threshold: 10%
     patch:
       default:
-        target: auto
-        threshold: 1%
+        target: 100%
+        threshold: 0%
 
 comment:
   require_changes: true
