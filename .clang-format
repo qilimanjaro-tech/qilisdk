@@ -83,6 +83,10 @@ IfMacros:
   - KJ_IF_MAYBE
 IncludeBlocks:   Preserve
 IncludeCategories:
+  - Regex:           '^<Eigen/.*>'
+    Priority:        2
+    SortPriority:    1
+    CaseSensitive:   true
   - Regex:           '^<ext/.*\.h>'
     Priority:        2
     SortPriority:    0
@@ -171,7 +175,7 @@ ReflowComments:  true
 RemoveBracesLLVM: false
 SeparateDefinitionBlocks: Leave
 ShortNamespaceLines: 1
-SortIncludes:    CaseSensitive
+SortIncludes: true
 SortJavaStaticImport: Before
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false

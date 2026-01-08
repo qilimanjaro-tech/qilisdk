@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -44,6 +45,7 @@ class QiliSim(Backend):
         monte_carlo: bool = False,
         num_monte_carlo_trajectories: int = 100,
         max_cache_size: int = 100,
+        num_threads: int = 0,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -57,6 +59,7 @@ class QiliSim(Backend):
             monte_carlo (bool): Whether to use the Monte Carlo method for open systems.
             num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
             max_cache_size (int): The maximum size of the internal cache for gate caching.
+            num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
         Raises:
             ValueError: If any of the parameters are invalid.
 
@@ -75,6 +78,11 @@ class QiliSim(Backend):
         if num_monte_carlo_trajectories <= 0:
             raise ValueError("num_monte_carlo_trajectories must be a positive integer")
 
+        # Set number of threads if non-positive
+        if num_threads <= 0:
+            num_threads = os.cpu_count() or 1
+
+        # Initialize the backend and the class vars
         super().__init__()
         self.qili_sim = QiliSimCpp()
         self.solver_params = {
@@ -85,6 +93,7 @@ class QiliSim(Backend):
             "monte_carlo": monte_carlo,
             "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
             "max_cache_size": max_cache_size,
+            "num_threads": num_threads,
         }
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
