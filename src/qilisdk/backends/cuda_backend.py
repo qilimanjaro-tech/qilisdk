@@ -30,6 +30,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.noise_models.digital_noise import KrausNoise
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -153,7 +154,29 @@ class CudaBackend(Backend):
                     raise UnsupportedGateError
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
-        cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+        print(kernel())
+
+        if noise_model is not None:
+            noise = cudaq.NoiseModel()
+            for noise_pass in noise_model.noise_passes:
+                if isinstance(noise_pass, KrausNoise):
+                    ops_as_np = [np.array(op.dense(), dtype=np.complex128) for op in noise_pass.kraus_operators]
+                    kraus_channel = cudaq.KrausChannel(ops_as_np)
+                    affected_gates = noise_pass.affected_gates
+                    affected_qubits = noise_pass.affected_qubits
+                    if len(affected_gates) == 0:
+                        for gate_obj in self._basic_gate_handlers:
+                            if gate_obj not in {U1, U2, SWAP}:
+                                affected_gates.append(gate_obj)
+                    if len(affected_qubits) == 0:
+                        affected_qubits = list(range(functional.circuit.nqubits))
+                    for gate_obj in affected_gates:
+                        gate_name = gate_obj.__name__
+                        gate_name = gate_name.lower()
+                        noise.add_channel(gate_name, affected_qubits, kraus_channel)
+            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=noise)
+        else:
+            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 

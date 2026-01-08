@@ -14,7 +14,18 @@
 
 from .analog_noise import DissipationNoise
 from .common_noise import ParameterNoise
-from .digital_noise import KrausNoise
+from .digital_noise import AmplitudeDampingNoise, BitFlipNoise, DephasingNoise, DepolarizingNoise, KrausNoise
 from .noise_model import NoiseModel, NoiseType
 
-__all__ = ["DissipationNoise", "KrausNoise", "NoiseModel", "NoiseType", "ParameterNoise"]
+__all__ = [
+    "AmplitudeDampingNoise",
+    "BitFlipNoise",
+    "DephasingNoise",
+    "DepolarizingNoise",
+    "DissipationNoise",
+    "KrausNoise",
+    "NoiseModel",
+    "NoiseType",
+    "PhaseFlipNoise",
+    "ParameterNoise",
+]
