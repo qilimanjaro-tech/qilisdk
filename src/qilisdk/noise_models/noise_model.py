@@ -42,7 +42,7 @@ class NoiseModel:
     def noise_passes(self) -> list[NoiseBase]:
         return self._noise_passes
 
-    def noise_model_type(self) -> list[NoiseType]:
+    def noise_model_types(self) -> list[NoiseType]:
         return list({noise.noise_type for noise in self._noise_passes})
 
     def add(self, noise: NoiseBase) -> None:

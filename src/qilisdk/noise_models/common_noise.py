@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from .noise_models import NoiseBase, NoiseType
+from .noise_model import NoiseBase, NoiseType
 
 
 class ParameterNoise(NoiseBase):

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .noise_models import NoiseBase, NoiseType
+from .noise_model import NoiseBase, NoiseType
 
 if TYPE_CHECKING:
     from qilisdk.core.qtensor import QTensor

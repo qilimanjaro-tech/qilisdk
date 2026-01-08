@@ -18,7 +18,7 @@ import pytest
 from qilisdk.noise_models.analog_noise import DissipationNoise
 from qilisdk.noise_models.common_noise import ParameterNoise
 from qilisdk.noise_models.digital_noise import KrausNoise
-from qilisdk.noise_models.noise_models import NoiseBase, NoiseModel, NoiseType
+from qilisdk.noise_models.noise_model import NoiseBase, NoiseModel, NoiseType
 
 
 class DummyNoise(NoiseBase):
@@ -35,7 +35,7 @@ def test_noise_base_is_abstract():
 def test_noise_model_defaults():
     model = NoiseModel()
     assert model.noise_passes == []
-    assert model.noise_model_type() == []
+    assert model.noise_model_types() == []
 
 
 def test_noise_model_add_and_types():
@@ -43,12 +43,12 @@ def test_noise_model_add_and_types():
     noise = DummyNoise()
     model.add(noise)
     assert model.noise_passes == [noise]
-    assert model.noise_model_type() == [NoiseType.DIGITAL]
+    assert model.noise_model_types() == [NoiseType.DIGITAL]
 
 
 def test_noise_model_type_unique():
     model = NoiseModel([ParameterNoise(), ParameterNoise()])
-    assert set(model.noise_model_type()) == {NoiseType.PARAMETER}
+    assert set(model.noise_model_types()) == {NoiseType.PARAMETER}
 
 
 def test_parameter_noise_properties():

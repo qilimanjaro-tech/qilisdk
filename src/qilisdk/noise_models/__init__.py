@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from .analog_noise import DissipationNoise
+from .common_noise import ParameterNoise
 from .digital_noise import KrausNoise
-from .noise_models import NoiseModel, NoiseType
+from .noise_model import NoiseModel, NoiseType
 
-__all__ = ["DissipationNoise", "KrausNoise", "NoiseModel", "NoiseType"]
+__all__ = ["DissipationNoise", "KrausNoise", "NoiseModel", "NoiseType", "ParameterNoise"]
