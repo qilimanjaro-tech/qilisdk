@@ -33,44 +33,37 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
         FetchContent_MakeAvailable(eigen)
     endif()
 
-    # If we have the core dependencies, build the C++ backend
-    if ((Eigen3_FOUND OR eigen_FOUND) AND pybind11_FOUND)
-        message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
-        pybind11_add_module(qilisim_module src/qilisdk/backends/qilisim.cpp)
+    # Assuming we have the core dependencies, prep the C++ backend
+    message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
+    pybind11_add_module(qilisim_module src/qilisdk/backends/qilisim.cpp)
 
-        # Set compile options
-        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-            message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
-            target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
-            target_compile_features(qilisim_module PRIVATE cxx_std_17)
-        endif()
-
-        # Link libraries and include directories
-        target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
-        target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
-        if (OpenMP_CXX_FOUND)
-            message(STATUS "[QiliSim] Using OpenMP")
-            target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
-        endif()
-
-        # Enable if you want to run clang-tidy on the code
-        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-            message(STATUS "[QiliSim] Enabling clang-tidy")
-            set_target_properties(qilisim_module PROPERTIES
-                CXX_CLANG_TIDY
-                "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
-            )
-        endif()
-
-        # Compile
-        install(TARGETS qilisim_module DESTINATION .)
-        
-    else()
-        message(WARNING "[QiliSim] Missing dependencies, cannot build QiliSim backend")
-        message(WARNING "[QiliSim] Eigen3 found: ${Eigen3_FOUND}, eigen found: ${eigen_FOUND}, pybind11 found: ${pybind11_FOUND}")
-
+    # Set compile options
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
+        target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_features(qilisim_module PRIVATE cxx_std_17)
     endif()
 
+    # Link libraries and include directories
+    target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
+    target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
+    if (OpenMP_CXX_FOUND)
+        message(STATUS "[QiliSim] Using OpenMP")
+        target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+
+    # Enable if you want to run clang-tidy on the code
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "[QiliSim] Enabling clang-tidy")
+        set_target_properties(qilisim_module PROPERTIES
+            CXX_CLANG_TIDY
+            "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
+        )
+    endif()
+
+    # Compile
+    install(TARGETS qilisim_module DESTINATION .)
+        
 else()
     message(STATUS "[QiliSim] QiliSim backend not enabled, skipping build")
 
