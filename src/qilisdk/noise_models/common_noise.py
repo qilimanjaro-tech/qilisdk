@@ -22,6 +22,7 @@ class ParameterNoise(NoiseBase):
     """
     Noise model that affects specific parameters.
     """
+
     def __init__(self, affected_parameters: list[str] | None = None, noise_std: float = 0.1) -> None:
         """
         Initialize a parameter noise model.

@@ -29,6 +29,7 @@ class KrausNoise(NoiseBase):
     """
     Generic noise model represented by Kraus operators
     """
+
     def __init__(
         self,
         kraus_operators: list[QTensor],
@@ -107,6 +108,7 @@ class DigitalBitFlipNoise(KrausNoise):
     """
     Noise model representing a bit flip channel.
     """
+
     def __init__(
         self,
         probability: float,
@@ -143,6 +145,7 @@ class DigitalDepolarizingNoise(KrausNoise):
     """
     Noise model representing a depolarizing channel.
     """
+
     def __init__(
         self,
         probability: float,
@@ -181,6 +184,7 @@ class DigitalDephasingNoise(KrausNoise):
     """
     Noise model representing a dephasing channel.
     """
+
     def __init__(
         self,
         probability: float,
@@ -217,6 +221,7 @@ class DigitalAmplitudeDampingNoise(KrausNoise):
     """
     Noise model representing an amplitude damping channel.
     """
+
     def __init__(
         self,
         gamma: float,

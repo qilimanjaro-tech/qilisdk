@@ -23,6 +23,7 @@ class NoiseType(Enum):
     """
     Enum for different types of noise models.
     """
+
     DIGITAL = "Digital Noise"
     ANALOG = "Analog Noise"
     PARAMETER = "Parameter Noise"
@@ -43,6 +44,7 @@ class NoiseModel:
     """
     Composite Noise Model consisting of multiple noise passes.
     """
+
     def __init__(self, noise_passes: list[NoiseBase] | None = None) -> None:
         """
         Initialize a composite noise model consisting of multiple noise passes.
@@ -56,12 +58,18 @@ class NoiseModel:
     def noise_passes(self) -> list[NoiseBase]:
         """
         Returns the list of noise passes in the composite noise model.
+
+        Returns:
+            list[NoiseBase]: The list of noise passes.
         """
         return self._noise_passes
 
     def noise_model_types(self) -> list[NoiseType]:
         """
         Returns a list of unique noise types present in the composite noise model.
+
+        Returns:
+            list[NoiseType]: The list of unique noise types.
         """
         return list({noise.noise_type for noise in self._noise_passes})
 

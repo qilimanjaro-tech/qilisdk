@@ -98,7 +98,7 @@ class AnalogAmplitudeDampingNoise(DissipationNoise):
     def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
         """
         Analog amplitude damping noise model using jump operators.
-        
+
         Args:
             gamma (float): Amplitude damping rate.
             affected_qubits (list[int]): List of qubit indices the noise affects.

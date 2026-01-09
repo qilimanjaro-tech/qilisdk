@@ -373,7 +373,6 @@ def test_analog_dephasing_cuda():
 
 
 def test_parameter_noise_analog_all_cuda():
-    np.random.Generator = np.random.default_rng(42)
     random.seed(42)
 
     # Define the time evolution
@@ -413,7 +412,6 @@ def test_parameter_noise_analog_all_cuda():
 
 
 def test_parameter_noise_analog_named_cuda():
-    np.random.Generator = np.random.default_rng(42)
     random.seed(42)
 
     # Define the time evolution
@@ -453,7 +451,6 @@ def test_parameter_noise_analog_named_cuda():
 
 
 def test_parameter_noise_analog_no_named_cuda():
-    np.random.Generator = np.random.default_rng(42)
     random.seed(42)
 
     # Define the time evolution
@@ -493,7 +490,6 @@ def test_parameter_noise_analog_no_named_cuda():
 
 
 def test_parameter_noise_digital_cuda():
-    np.random.Generator = np.random.default_rng(42)
     random.seed(42)
 
     # Define the random circuit and sampler
