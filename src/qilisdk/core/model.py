@@ -83,7 +83,7 @@ class ObjectiveSense(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the ObjectiveSense.
         """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")
+        return representer.represent_scalar("!qilisdk.ObjectiveSense", f"{node.value}")
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:

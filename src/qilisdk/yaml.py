@@ -201,7 +201,7 @@ def deque_constructor(constructor, node):
 class QiliYAML(YAML):
     def register_class(self, cls):
         if not getattr(cls, "yaml_tag", None):
-            cls.yaml_tag = f"!{cls.__module__}.{cls.__qualname__}"
+            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}"
         return super().register_class(cls)
 
 
