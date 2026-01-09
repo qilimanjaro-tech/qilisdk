@@ -2,6 +2,7 @@
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
+[![Code Coverage](https://codecov.io/gh/qilimanjaro-tech/qilisdk/graph/badge.svg?token=iUMp8nKCqJ)](https://codecov.io/gh/qilimanjaro-tech/qilisdk)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
 [![Docs](https://img.shields.io/badge/docs-0.1.7-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/0.1.7/index.html)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819871.svg)](https://doi.org/10.5281/zenodo.17819871)
