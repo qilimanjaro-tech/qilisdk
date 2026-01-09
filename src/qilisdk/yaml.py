@@ -16,7 +16,7 @@
 
 import base64
 import types
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import numpy as np
 from dill import dumps, loads
@@ -187,8 +187,31 @@ def type_constructor(constructor, node):
     return getattr(mod, qualname)
 
 
+def deque_representer(representer, data):
+    """Representer for deque"""
+    return representer.represent_sequence("!deque", list(data))
+
+
+def deque_constructor(constructor, node):
+    """Constructor for ndarray"""
+    return deque(constructor.construct_sequence(node))
+
+
 # Create YAML handler and register all custom types
-yaml = YAML(typ="unsafe")
+class QiliYAML(YAML):
+    def register_class(self, cls=None, *, shared: bool = False):
+        if cls is None:
+
+            def decorator(target_cls):  # noqa: ANN202
+                return self.register_class(target_cls, shared=shared)
+
+            return decorator
+        if not getattr(cls, "yaml_tag", None):
+            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        return super().register_class(cls)
+
+
+yaml = QiliYAML(typ="unsafe")
 
 # SciPy CSR
 yaml.representer.add_representer(sparse.csr_matrix, csr_representer)
@@ -227,3 +250,7 @@ yaml.constructor.add_constructor("!tuple", tuple_constructor)
 # Built-in type
 yaml.representer.add_multi_representer(type, type_representer)
 yaml.constructor.add_constructor("!type", type_constructor)
+
+# Built-in deque
+yaml.representer.add_representer(deque, deque_representer)
+yaml.constructor.add_constructor("!deque", deque_constructor)
