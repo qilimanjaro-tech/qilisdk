@@ -23,28 +23,42 @@ if TYPE_CHECKING:
 
 
 class KrausNoise(NoiseBase):
+    """Digital noise described by Kraus operators with optional targeting."""
+
     def __init__(
         self,
         kraus_operators: list[QTensor],
         affected_qubits: list[int] | None = None,
         affected_gates: list[type[Gate]] | None = None,
     ) -> None:
+        """
+        Args:
+            kraus_operators (list[QTensor]): Kraus operators defining the channel.
+            affected_qubits (list[int] | None, optional): Qubit indices to apply the noise to.
+                Defaults to None.
+            affected_gates (list[type[Gate]] | None, optional): Gate types the noise should target.
+                Defaults to None.
+        """
         self._kraus_operators: list[QTensor] = kraus_operators or []
         self._affected_qubits: list[int] = affected_qubits or []
         self._affected_gates: list[type[Gate]] = affected_gates or []
 
     @property
     def noise_type(self) -> NoiseType:
+        """Return the digital noise category."""
         return NoiseType.DIGITAL
 
     @property
     def kraus_operators(self) -> list[QTensor]:
+        """Return the Kraus operators defining the channel."""
         return self._kraus_operators
 
     @property
     def affected_qubits(self) -> list[int]:
+        """Return the target qubit indices for the noise."""
         return self._affected_qubits
 
     @property
     def affected_gates(self) -> list[type[Gate]]:
+        """Return the gate types targeted by the noise."""
         return self._affected_gates

@@ -20,6 +20,8 @@ from qilisdk.yaml import yaml
 
 
 class NoiseType(Enum):
+    """Enumeration of supported noise model categories."""
+
     DIGITAL = "Digital Noise"
     ANALOG = "Analog Noise"
     PARAMETER = "Parameter Noise"
@@ -27,23 +29,34 @@ class NoiseType(Enum):
 
 @yaml.register_class
 class NoiseBase(ABC):
-    """Generic Noise Class"""
+    """Base class for all noise model definitions."""
 
     @property
     @abstractmethod
-    def noise_type(self) -> NoiseType: ...
+    def noise_type(self) -> NoiseType:
+        """Return the noise category for the concrete noise model."""
 
 
 class NoiseModel:
+    """Container for grouping noise passes into a single noise model."""
+
     def __init__(self, noise_passes: list[NoiseBase] | None = None) -> None:
+        """
+        Args:
+            noise_passes (list[NoiseBase] | None, optional): Noise passes composing the model.
+                Defaults to None.
+        """
         self._noise_passes: list[NoiseBase] = noise_passes or []
 
     @property
     def noise_passes(self) -> list[NoiseBase]:
+        """Return the list of noise passes registered in the model."""
         return self._noise_passes
 
     def noise_model_types(self) -> list[NoiseType]:
+        """Return the unique noise categories present in the model."""
         return list({noise.noise_type for noise in self._noise_passes})
 
     def add(self, noise: NoiseBase) -> None:
+        """Append a noise pass to the model."""
         self._noise_passes.append(noise)

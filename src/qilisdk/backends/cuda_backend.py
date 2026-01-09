@@ -134,6 +134,18 @@ class CudaBackend(Backend):
             logger.debug("Using cudaq's 'tensornet-mps' backend")
 
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+        """Execute a sampling functional using the CUDA backend.
+
+        Args:
+            functional (Sampling): The Sampling functional to execute.
+            noise_model (NoiseModel | None, optional): Noise model to apply. Defaults to None.
+
+        Returns:
+            SamplingResult: Measurement samples from the simulated circuit.
+
+        Raises:
+            UnsupportedGateError: If a gate in the circuit is not supported by this backend.
+        """
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
@@ -160,6 +172,18 @@ class CudaBackend(Backend):
     def _execute_time_evolution(
         self, functional: TimeEvolution, noise_model: NoiseModel | None = None
     ) -> TimeEvolutionResult:
+        """Execute a time-evolution functional using the CUDA backend.
+
+        Args:
+            functional (TimeEvolution): The TimeEvolution functional to execute.
+            noise_model (NoiseModel | None, optional): Noise model to apply. Defaults to None.
+
+        Returns:
+            TimeEvolutionResult: The results of the time evolution.
+
+        Raises:
+            ValueError: if an observable in the TimeEvolution Functional is not in the correct format.
+        """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 

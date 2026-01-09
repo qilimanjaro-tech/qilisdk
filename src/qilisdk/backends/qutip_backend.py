@@ -107,15 +107,16 @@ class QutipBackend(Backend):
         """
         Execute a quantum circuit and return the measurement results.
 
-        This method applies the selected simulation method, translates the circuit's gates into
-        CUDA operations via their respective handlers, runs the simulation, and returns the result
-        as a QutipDigitalResult.
+        This method translates the circuit's gates into QuTiP operations via their respective
+        handlers, runs the simulation, and returns the sampled bitstrings.
 
         Args:
             functional (Sampling): The Sampling function to execute.
+            noise_model (NoiseModel | None, optional): Noise model to apply. Defaults to None.
+                Currently ignored by this backend.
 
         Returns:
-            DigitalResult: A result object containing the measurement samples and computed probabilities.
+            SamplingResult: A result object containing the measurement samples and computed probabilities.
 
         """
         logger.info("Executing Sampling (shots={})", functional.nshots)
@@ -163,10 +164,11 @@ class QutipBackend(Backend):
     def _execute_time_evolution(
         self, functional: TimeEvolution, noise_model: NoiseModel | None = None
     ) -> TimeEvolutionResult:
-        """computes the time evolution under of an initial state under the given schedule.
+        """Compute the time evolution of an initial state under the given schedule.
 
         Args:
             functional (TimeEvolution): The TimeEvolution functional to execute.
+            noise_model (NoiseModel | None, optional): Noise model to apply. Defaults to None.
 
         Returns:
             TimeEvolutionResult: The results of the evolution.
