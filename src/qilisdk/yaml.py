@@ -188,7 +188,14 @@ def type_constructor(constructor, node):
 
 
 # Create YAML handler and register all custom types
-yaml = YAML(typ="unsafe")
+class QiliYAML(YAML):
+    def register_class(self, cls):
+        if not getattr(cls, "yaml_tag", None):
+            cls.yaml_tag = f"!{cls.__module__}.{cls.__qualname__}"
+        return super().register_class(cls)
+
+
+yaml = QiliYAML(typ="unsafe")
 
 # SciPy CSR
 yaml.representer.add_representer(sparse.csr_matrix, csr_representer)

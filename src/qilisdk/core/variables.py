@@ -228,7 +228,7 @@ class Domain(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the Domain.
         """
-        return representer.represent_scalar("!Domain", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> Domain:
@@ -257,7 +257,7 @@ class Operation(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the Operation.
         """
-        return representer.represent_scalar("!Operation", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> Operation:
@@ -287,7 +287,7 @@ class ComparisonOperation(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the ComparisonOperation.
         """
-        return representer.represent_scalar("!ComparisonOperation", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ComparisonOperation:
