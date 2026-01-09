@@ -206,7 +206,7 @@ class QiliYAML(YAML):
                 return self.register_class(target_cls, shared=shared)
 
             return decorator
-        if not getattr(cls, "yaml_tag", None):
+        if not cls.__dict__.get("yaml_tag", None):
             cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
         return super().register_class(cls)
 
