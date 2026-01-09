@@ -26,6 +26,9 @@ if TYPE_CHECKING:
 
 
 class KrausNoise(NoiseBase):
+    """
+    Generic noise model represented by Kraus operators
+    """
     def __init__(
         self,
         kraus_operators: list[QTensor],
@@ -38,10 +41,12 @@ class KrausNoise(NoiseBase):
             - if the Kraus operators are the same size as the system, they act on the whole system
             - if the Kraus operators are smaller than the full size, they act on all qubits individually
         If the list of affected gates is empty, the noise affects all gates.
+
         Args:
             kraus_operators (list[QTensor]): List of Kraus operators defining the noise channel.
             affected_qubits (list[int] | None): List of qubit indices the noise affects.
             affected_gates (list[type[Gate]] | None): List of gate types the noise affects.
+
         Raises:
             ValueError: If the Kraus operators do not satisfy the completeness relation.
             ValueError: If the kraus_operators list is empty.
@@ -99,6 +104,9 @@ class KrausNoise(NoiseBase):
 
 
 class DigitalBitFlipNoise(KrausNoise):
+    """
+    Noise model representing a bit flip channel.
+    """
     def __init__(
         self,
         probability: float,
@@ -108,10 +116,12 @@ class DigitalBitFlipNoise(KrausNoise):
         """
         Initialize a Bit Flip noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of undergoing a bit flip (X gate).
+
         Args:
             probability (float): Probability of a bit flip occurring (0 <= p <= 1).
             affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
             affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
+
         Raises:
             ValueError: If probability is not in the range [0, 1].
         """
@@ -130,6 +140,9 @@ class DigitalBitFlipNoise(KrausNoise):
 
 
 class DigitalDepolarizingNoise(KrausNoise):
+    """
+    Noise model representing a depolarizing channel.
+    """
     def __init__(
         self,
         probability: float,
@@ -139,10 +152,12 @@ class DigitalDepolarizingNoise(KrausNoise):
         """
         Initialize a Depolarizing noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of being replaced by the maximally mixed state.
+
         Args:
             probability (float): Probability of depolarization occurring (0 <= p <= 1).
             affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
             affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
+
         Raises:
             ValueError: If probability is not in the range [0, 1].
         """
@@ -163,6 +178,9 @@ class DigitalDepolarizingNoise(KrausNoise):
 
 
 class DigitalDephasingNoise(KrausNoise):
+    """
+    Noise model representing a dephasing channel.
+    """
     def __init__(
         self,
         probability: float,
@@ -172,10 +190,12 @@ class DigitalDephasingNoise(KrausNoise):
         """
         Initialize a Dephasing noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of undergoing dephasing.
+
         Args:
             probability (float): Probability of dephasing occurring (0 <= p <= 1).
             affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
             affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
+
         Raises:
             ValueError: If probability is not in the range [0, 1].
         """
@@ -194,6 +214,9 @@ class DigitalDephasingNoise(KrausNoise):
 
 
 class DigitalAmplitudeDampingNoise(KrausNoise):
+    """
+    Noise model representing an amplitude damping channel.
+    """
     def __init__(
         self,
         gamma: float,
@@ -203,10 +226,12 @@ class DigitalAmplitudeDampingNoise(KrausNoise):
         """
         Initialize an Amplitude Damping noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of losing energy to the environment.
+
         Args:
             gamma (float): Probability of amplitude damping occurring (0 <= gamma <= 1).
             affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
             affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
+
         Raises:
             ValueError: If gamma is not in the range [0, 1].
         """

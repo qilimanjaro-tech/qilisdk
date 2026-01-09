@@ -20,6 +20,9 @@ from qilisdk.yaml import yaml
 
 
 class NoiseType(Enum):
+    """
+    Enum for different types of noise models.
+    """
     DIGITAL = "Digital Noise"
     ANALOG = "Analog Noise"
     PARAMETER = "Parameter Noise"
@@ -27,7 +30,9 @@ class NoiseType(Enum):
 
 @yaml.register_class
 class NoiseBase(ABC):
-    """Generic Noise Class"""
+    """
+    Generic Noise Class
+    """
 
     @property
     @abstractmethod
@@ -35,15 +40,36 @@ class NoiseBase(ABC):
 
 
 class NoiseModel:
+    """
+    Composite Noise Model consisting of multiple noise passes.
+    """
     def __init__(self, noise_passes: list[NoiseBase] | None = None) -> None:
+        """
+        Initialize a composite noise model consisting of multiple noise passes.
+
+        Args:
+            noise_passes (list[NoiseBase] | None): List of noise passes to include in the model.
+        """
         self._noise_passes: list[NoiseBase] = noise_passes or []
 
     @property
     def noise_passes(self) -> list[NoiseBase]:
+        """
+        Returns the list of noise passes in the composite noise model.
+        """
         return self._noise_passes
 
     def noise_model_types(self) -> list[NoiseType]:
+        """
+        Returns a list of unique noise types present in the composite noise model.
+        """
         return list({noise.noise_type for noise in self._noise_passes})
 
     def add(self, noise: NoiseBase) -> None:
+        """
+        Adds a new noise pass to the composite noise model.
+
+        Args:
+            noise (NoiseBase): The noise pass to add.
+        """
         self._noise_passes.append(noise)

@@ -30,10 +30,12 @@ class DissipationNoise(NoiseBase):
         If the list of affected qubits is empty:
             - if the jump operators are the same size as the system, they act on the whole system
             - if the jump operators are smaller than the full size, they act on all qubits individually
+
         Args:
             jump_operators (list[QTensor]): List of jump operators defining the noise channel.
             affected_qubits (list[int]): List of qubit indices the noise affects.
             rate (float | None): Optional scaling factor for the jump operators. If None, no scaling is applied.
+
         Raises:
             ValueError: If any affected qubit index is invalid.
         """
@@ -66,6 +68,7 @@ class AnalogDepolarizingNoise(DissipationNoise):
     def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
         """
         Analog depolarizing noise model using jump operators.
+
         Args:
             gamma (float): Depolarizing rate.
             affected_qubits (list[int]): List of qubit indices the noise affects.
@@ -82,6 +85,7 @@ class AnalogDephasingNoise(DissipationNoise):
     def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
         """
         Analog dephasing noise model using jump operators.
+
         Args:
             gamma (float): Dephasing rate.
             affected_qubits (list[int]): List of qubit indices the noise affects.
@@ -94,6 +98,7 @@ class AnalogAmplitudeDampingNoise(DissipationNoise):
     def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
         """
         Analog amplitude damping noise model using jump operators.
+        
         Args:
             gamma (float): Amplitude damping rate.
             affected_qubits (list[int]): List of qubit indices the noise affects.
