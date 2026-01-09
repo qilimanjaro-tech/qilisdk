@@ -1197,7 +1197,7 @@ class Variable(BaseVariable):
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
 
-@yaml.register_class
+@yaml.register_class(shared=True)
 class Parameter(BaseVariable):
     """
     Symbolic scalar used to parametrize expressions while remaining differentiable.
