@@ -13,11 +13,21 @@
 # limitations under the License.
 from __future__ import annotations
 
+import random
+
 from .noise_model import NoiseBase, NoiseType
 
 
 class ParameterNoise(NoiseBase):
     def __init__(self, affected_parameters: list[str] | None = None, noise_std: float = 0.1) -> None:
+        """
+        Initialize a parameter noise model.
+        This model represents noise that affects specific parameters in any quantum object (be it gates, Hamiltonians, etc.).
+        If no affected parameters are specified, the noise affects all parameters.
+        Args:
+            affected_parameters (list[str] | None): List of parameter names the noise affects.
+            noise_std (float): Standard deviation of the noise to be applied to the parameters.
+        """
         self._affected_parameters: list[str] = affected_parameters or []
         self._noise_std = noise_std
 
@@ -32,3 +42,14 @@ class ParameterNoise(NoiseBase):
     @property
     def noise_std(self) -> float:
         return self._noise_std
+
+    def apply(self, param_value: float) -> float:
+        """
+        Apply parameter noise to a given parameter value.
+        Args:
+            param_value (float): The original parameter value.
+        Returns:
+            float: The parameter value after applying noise.
+        """
+        param_with_noise = random.gauss(param_value, self._noise_std)
+        return param_with_noise

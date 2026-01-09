@@ -18,7 +18,15 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
+from cudaq import (
+    ElementaryOperator,
+    OperatorSum,
+    ScalarOperator,
+    State,
+    evolve,
+    operators,
+    spin,
+)
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
@@ -30,13 +38,14 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.noise_models import NoiseModel, ParameterNoise
+from qilisdk.noise_models.analog_noise import DissipationNoise
 from qilisdk.noise_models.digital_noise import KrausNoise
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
-    from qilisdk.noise_models.noise_model import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -140,6 +149,22 @@ class CudaBackend(Backend):
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
+        # Apply parameter noise if present
+        if noise_model is not None:
+            for noise_pass in noise_model.noise_passes:
+                if isinstance(noise_pass, ParameterNoise):
+                    vals = functional.circuit.get_parameter_values()
+                    names = functional.circuit.get_parameter_names()
+                    for i in range(len(vals)):
+                        matches = len(noise_pass.affected_parameters) == 0
+                        for name in noise_pass.affected_parameters:
+                            if name in names[i]:
+                                matches = True
+                        if matches:
+                            noisy_param = noise_pass.apply(vals[i])
+                            vals[i] = noisy_param
+                    functional.circuit.set_parameter_values(vals)
+
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         for gate in transpiled_circuit.gates:
             if isinstance(gate, Controlled):
@@ -153,8 +178,6 @@ class CudaBackend(Backend):
                 if handler is None:
                     raise UnsupportedGateError
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
-
-        print(kernel())
 
         if noise_model is not None:
             noise = cudaq.NoiseModel()
@@ -186,6 +209,22 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
+        # Apply parameter noise if present
+        if noise_model is not None:
+            for noise_pass in noise_model.noise_passes:
+                if isinstance(noise_pass, ParameterNoise):
+                    vals = functional.schedule.get_parameter_values()
+                    names = functional.schedule.get_parameter_names()
+                    for i in range(len(vals)):
+                        matches = len(noise_pass.affected_parameters) == 0
+                        for name in noise_pass.affected_parameters:
+                            if name in names[i]:
+                                matches = True
+                        if matches:
+                            noisy_param = noise_pass.apply(vals[i])
+                            vals[i] = noisy_param
+                    functional.schedule.set_parameter_values(vals)
+
         steps = functional.schedule.tlist
 
         cuda_schedule = CudaSchedule(steps, ["t"])
@@ -211,13 +250,41 @@ class CudaBackend(Backend):
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
         logger.trace("Observables compiled for evolution")
 
+        ops_numpy = []
+        jump_operators = []
+        ind = 0
+        if noise_model is not None:
+            for noise_pass in noise_model.noise_passes:
+                if isinstance(noise_pass, DissipationNoise):
+                    for op in noise_pass.jump_operators:
+                        id = f"jump_op_{ind}"
+                        ops_numpy.append(np.array(op.dense(), dtype=np.complex128))
+                        operators.define(
+                            id=id,
+                            expected_dimensions=[ops_numpy[-1].shape[0]],
+                            create=lambda op_np=ops_numpy[-1]: op_np,
+                            override=True,
+                        )
+                        for qubit in noise_pass.affected_qubits:
+                            jump_operators.append(operators.instantiate(id, degrees=qubit))
+                        ind += 1
+
+        # Remove any constant term from the Hamiltonian
+        # (this causes an error if we use jump operators and does nothing normally)
+        # error is "Empty product operator"
+        new_ham = spin.i(0)
+        for el in cuda_hamiltonian:
+            if not el.is_identity():
+                new_ham += el
+        cuda_hamiltonian = new_ham
+
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
             initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
             observables=cuda_observables,
-            collapse_operators=[],
+            collapse_operators=jump_operators,
             store_intermediate_results=functional.store_intermediate_results,
         )
 
