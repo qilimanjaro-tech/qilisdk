@@ -16,7 +16,7 @@
 
 import base64
 import types
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import numpy as np
 from dill import dumps, loads
@@ -187,6 +187,16 @@ def type_constructor(constructor, node):
     return getattr(mod, qualname)
 
 
+def deque_representer(representer, data):
+    """Representer for deque"""
+    return representer.represent_sequence("!deque", list(data))
+
+
+def deque_constructor(constructor, node):
+    """Constructor for ndarray"""
+    return deque(constructor.construct_sequence(node))
+
+
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
     def register_class(self, cls):
@@ -234,3 +244,7 @@ yaml.constructor.add_constructor("!tuple", tuple_constructor)
 # Built-in type
 yaml.representer.add_multi_representer(type, type_representer)
 yaml.constructor.add_constructor("!type", type_constructor)
+
+# Built-in deque
+yaml.representer.add_representer(deque, deque_representer)
+yaml.constructor.add_constructor("!deque", deque_constructor)
