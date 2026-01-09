@@ -199,9 +199,15 @@ def deque_constructor(constructor, node):
 
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
-    def register_class(self, cls):
+    def register_class(self, cls=None, *, shared: bool = False):
+        if cls is None:
+
+            def decorator(target_cls):  # noqa: ANN202
+                return self.register_class(target_cls, shared=shared)
+
+            return decorator
         if not getattr(cls, "yaml_tag", None):
-            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}"
+            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
         return super().register_class(cls)
 
 

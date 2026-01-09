@@ -167,7 +167,7 @@ def _assert_real(value: Number) -> RealNumber:
     raise ValueError(f"Only Real values are allowed but {_value} was provided.")
 
 
-@yaml.register_class
+@yaml.register_class(shared=True)
 class Domain(str, Enum):
     INTEGER = "Integer Domain"
     POSITIVE_INTEGER = "Positive Integer Domain"
@@ -228,7 +228,7 @@ class Domain(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the Domain.
         """
-        return representer.represent_scalar("!qilisdk.Domain", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> Domain:
@@ -257,7 +257,7 @@ class Operation(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the Operation.
         """
-        return representer.represent_scalar("!qilisdk.Operation", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> Operation:
@@ -287,7 +287,7 @@ class ComparisonOperation(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the ComparisonOperation.
         """
-        return representer.represent_scalar("!qilisdk.ComparisonOperation", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ComparisonOperation:
