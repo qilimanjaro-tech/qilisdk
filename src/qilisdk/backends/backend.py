@@ -72,11 +72,13 @@ class Backend(ABC):
         return handler(functional, noise_model)
 
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+        """Execute a sampling functional using the backend implementation."""
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
     def _execute_time_evolution(
         self, functional: TimeEvolution, noise_model: NoiseModel | None = None
     ) -> TimeEvolutionResult:
+        """Execute a time-evolution functional using the backend implementation."""
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_variational_program(
@@ -87,6 +89,7 @@ class Backend(ABC):
 
         Args:
             functional (VariationalProgram): The variational program to be optimized.
+            noise_model (NoiseModel | None, optional): Noise model to apply. Defaults to None.
 
         Returns:
             ParameterizedProgramResults: The final optimizer and functional results.

@@ -22,13 +22,21 @@ if TYPE_CHECKING:
 
 
 class DissipationNoise(NoiseBase):
+    """Analog noise defined by a set of dissipation jump operators."""
+
     def __init__(self, jump_operators: list[QTensor]) -> None:
+        """
+        Args:
+            jump_operators (list[QTensor]): Jump operators defining the dissipation channel.
+        """
         self._jump_operators: list[QTensor] = jump_operators or []
 
     @property
     def noise_type(self) -> NoiseType:
+        """Return the analog noise category."""
         return NoiseType.ANALOG
 
     @property
     def jump_operators(self) -> list[QTensor]:
+        """Return the jump operators defining the dissipation channel."""
         return self._jump_operators
