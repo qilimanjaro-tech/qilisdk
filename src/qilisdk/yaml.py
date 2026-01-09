@@ -20,9 +20,9 @@ from collections import defaultdict
 import numpy as np
 from pydantic import BaseModel
 from ruamel.yaml import YAML
-from ruamel.yaml.constructor import BaseConstructor
+from ruamel.yaml.constructor import Constructor
 from ruamel.yaml.nodes import Node
-from ruamel.yaml.representer import BaseRepresenter
+from ruamel.yaml.representer import Representer
 from scipy import sparse
 
 
@@ -171,12 +171,13 @@ class QiliYAML(YAML):
         - if it has methods to_yaml/from_yaml use those to dump/load else dump attributes
           as mapping
         """
-        tag = getattr(cls, 'yaml_tag', '!' + cls.__module__ + "." + cls.__name__)
+        library, _, _ = cls.__module__.partition(".")
+        tag = getattr(cls, 'yaml_tag', '!' + library + "." + cls.__name__)
         try:
             self.representer.add_representer(cls, cls.to_yaml)
         except AttributeError:
 
-            def t_y(representer: BaseRepresenter, data: object | types.FunctionType) -> Node:
+            def t_y(representer: Representer, data: object | types.FunctionType) -> Node:
                 return representer.represent_yaml_object(
                     tag, data, cls, flow_style=representer.default_flow_style,
                 )
@@ -186,7 +187,7 @@ class QiliYAML(YAML):
             self.constructor.add_constructor(tag, cls.from_yaml)
         except AttributeError:
 
-            def f_y(constructor: BaseConstructor, node: Node) -> object | types.FunctionType:
+            def f_y(constructor: Constructor, node: Node) -> object | types.FunctionType:
                 return constructor.construct_yaml_object(node, cls)
 
             self.constructor.add_constructor(tag, f_y)
