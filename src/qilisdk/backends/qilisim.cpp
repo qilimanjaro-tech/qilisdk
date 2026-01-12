@@ -840,7 +840,46 @@ class QiliSimCpp {
             // Add the gate
             gates.emplace_back(gate_type_str, base_matrix, controls, targets);
         }
+
         return gates;
+
+    }
+
+    std::vector<bool> parse_measurements(const py::object& circuit) {
+        /*
+        Extract measurement qubit information from a circuit object.
+        Args:
+            circuit (py::object): The circuit object.
+            n_qubits (int): The total number of qubits.
+        Returns:
+            std::vector<bool>: A vector indicating which qubits are measured.
+        */
+        int n_qubits = circuit.attr("nqubits").cast<int>();
+        std::vector<bool> qubits_to_measure(n_qubits, false);
+        py::list py_gates = circuit.attr("gates");
+        bool any_measurements = false;
+        for (auto py_gate : py_gates) {
+            // Get the name
+            std::string gate_type_str = py_gate.attr("name").cast<std::string>();
+
+            // If it's a measurement, mark the qubits
+            if (gate_type_str == "M") {
+                py::list py_targets = py_gate.attr("target_qubits");
+                for (auto py_target : py_targets) {
+                    int target = py_target.cast<int>();
+                    qubits_to_measure[target] = true;
+                    any_measurements = true;
+                }
+            }
+        }
+
+        // If we found no measurements, measure all
+        if (!any_measurements) {
+            qubits_to_measure = std::vector<bool>(n_qubits, true);
+        }
+
+        return qubits_to_measure;
+
     }
 
     std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots) {
@@ -893,27 +932,27 @@ class QiliSimCpp {
         */
 
         // Find a non-zero diagonal element
-        int non_zero_row = -1;
+        int non_zero_col = -1;
         for (int r = 0; r < rho_t.rows(); ++r) {
             std::complex<double> val = rho_t.coeff(r, r);
             if (std::abs(val) > atol_) {
-                non_zero_row = r;
+                non_zero_col = r;
                 break;
             }
         }
-        if (non_zero_row == -1) {
+        if (non_zero_col == -1) {
             throw py::value_error("Final density matrix has no non-zero diagonal elements.");
         }
 
         // Extract the corresponding state vector
         Triplets state_vec_entries;
-        for (int c = 0; c < rho_t.cols(); ++c) {
-            std::complex<double> val = rho_t.coeff(non_zero_row, c);
+        for (int r = 0; r < rho_t.rows(); ++r) {
+            std::complex<double> val = rho_t.coeff(r, non_zero_col);
             if (std::abs(val) > atol_) {
-                state_vec_entries.emplace_back(Triplet(c, 0, val));
+                state_vec_entries.emplace_back(Triplet(r, 0, val));
             }
         }
-        SparseMatrix final_state_vec(rho_t.cols(), 1);
+        SparseMatrix final_state_vec(rho_t.rows(), 1);
         final_state_vec.setFromTriplets(state_vec_entries.begin(), state_vec_entries.end());
         final_state_vec /= final_state_vec.norm();
 
@@ -941,8 +980,8 @@ class QiliSimCpp {
             for (const auto& J : jumps) {
                 SparseMatrix Jdag = J.adjoint();
                 SparseMatrix JdagJ = Jdag * J;
-                SparseMatrix JdagJ_rho = (JdagJ * rho).sparseView();
-                SparseMatrix rho_JdagJ = (rho * JdagJ).sparseView();
+                DenseMatrix JdagJ_rho = JdagJ * rho;
+                DenseMatrix rho_JdagJ = rho * JdagJ;
                 drho += J * rho * Jdag;
                 drho -= 0.5 * (JdagJ_rho + rho_JdagJ);
             }
@@ -964,7 +1003,7 @@ class QiliSimCpp {
         Raises:
             py::value_error: If num_substeps is non-positive.
             py::value_error: If currentH is not square.
-            py::value_error: If rho_0 is not square.
+            py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
             py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
             py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
         */
@@ -1019,13 +1058,11 @@ class QiliSimCpp {
             } else {
                 std::complex<double> tr = 0;
                 for (int i = 0; i < dim; ++i) {
-                    // tr += rho.coeff(i, i);
                     tr += rho(i, i);
                 }
                 rho /= tr;
             }
         }
-        // return rho;
         return rho.sparseView();
     }
 
@@ -1254,14 +1291,17 @@ class QiliSimCpp {
 
         // Sanity checks
         if (n_qubits <= 0) {
-            throw py::value_error("shots must be positive.");
+            throw py::value_error("nqubits must be positive.");
         }
         if (n_shots <= 0) {
-            throw py::value_error("nqubits must be positive.");
+            throw py::value_error("nshots must be positive.");
         }
 
         // Get the gate
         std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
+
+        // Determine which qubits to measure TODO
+        std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
         // Start with the zero state
         int dim = 1 << n_qubits;
@@ -1324,12 +1364,27 @@ class QiliSimCpp {
         }
 
         // Make sure probabilities sum to 1
-        if (std::abs(total_prob - 1.0) > atol_) {
+        const double probability_tolerance = 1e-5;
+        if (std::abs(total_prob - 1.0) > probability_tolerance) {
             throw py::value_error("Probabilities do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
         }
 
         // Sample from these probabilities
         std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_shots);
+
+        // Only keep measured qubits in the counts
+        std::map<std::string, int> filtered_counts;
+        for (const auto& pair : counts) {
+            std::string bitstring = pair.first;
+            std::string filtered_bitstring = "";
+            for (int i = 0; i < n_qubits; ++i) {
+                if (qubits_to_measure[i]) {
+                    filtered_bitstring += bitstring[i];
+                }
+            }
+            filtered_counts[filtered_bitstring] += pair.second;
+        }
+        counts = filtered_counts;
 
         // Convert counts to samples dict
         py::dict samples;
@@ -1508,6 +1563,9 @@ class QiliSimCpp {
         }
         if (step_list.size() == 0) {
             throw py::value_error("At least one time step must be provided");
+        }
+        if (hamiltonians.size() != parameters_list.size()) {
+            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
         }
         for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
             if (parameters_list[h_ind].size() != step_list.size()) {

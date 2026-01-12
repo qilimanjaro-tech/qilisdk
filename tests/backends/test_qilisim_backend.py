@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import X as pauli_x
+from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qilisim import QiliSim
@@ -111,6 +112,18 @@ def test_multi_controlled_execution():
     assert samples["111"] == 100
 
 
+def test_measurement_gates():
+    backend = QiliSim()
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(M(0))
+    result = backend.execute(Sampling(circuit=circuit, nshots=50))
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "1" in samples
+    assert samples["1"] == 50
+
+
 def test_constant_hamiltonian():
     x = 2.0
     schedule = Schedule(
@@ -164,6 +177,33 @@ def test_time_dependent_hamiltonian(method):
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
+
+
+@pytest.mark.parametrize("method", simulation_types)
+def test_time_dependent_hamiltonian_imaginary(method):
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_y(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        pauli_y(0),  # measure y
+    ]
+
+    backend = QiliSim(evolution_method=method)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    expect_y = res.final_expected_values[0]
+    assert res.final_state.is_ket()
+    assert np.isclose(expect_y, -1.0, rtol=1e-2)
 
 
 @pytest.mark.parametrize("method", simulation_types)

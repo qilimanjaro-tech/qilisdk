@@ -4,6 +4,7 @@ project(qilisdk LANGUAGES CXX)
 # The CMake option to enable QiliSim backend
 # To enable/disable QiliSim backend or to choose build type, use:
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Release
+#   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Debug
 if (DEFINED qilisim AND qilisim STREQUAL "ON")
     message(STATUS "[QiliSim] QiliSim backend enabled, preparing to build")
     message(STATUS "[QiliSim] Build type: ${CMAKE_BUILD_TYPE}")

@@ -147,15 +147,22 @@ class QiliSim(Backend):
         for obs in functional.observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
+                # for i in range(functional.schedule.nqubits):
+                #     if aux_obs is None:
+                #         aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
+                #     else:
+                #         aux_obs = (
+                #             tensor_prod([aux_obs, identity])
+                #             if i != obs.qubit
+                #             else tensor_prod([aux_obs, QTensor(obs.matrix)])
+                #         )
+                obs_to_tensor = []
                 for i in range(functional.schedule.nqubits):
-                    if aux_obs is None:
-                        aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
+                    if i != obs.qubit:
+                        obs_to_tensor.append(identity)
                     else:
-                        aux_obs = (
-                            tensor_prod([aux_obs, identity])
-                            if i != obs.qubit
-                            else tensor_prod([aux_obs, QTensor(obs.matrix)])
-                        )
+                        obs_to_tensor.append(QTensor(obs.matrix))
+                aux_obs = tensor_prod(obs_to_tensor)
             elif isinstance(obs, Hamiltonian):
                 aux_obs = QTensor(obs.to_matrix())
                 if obs.nqubits < functional.schedule.nqubits:
@@ -168,6 +175,8 @@ class QiliSim(Backend):
                 raise ValueError(f"unsupported observable type of {obs.__class__}")
             if aux_obs is not None:
                 observables.append(aux_obs)
+
+        # TODO(luke): move all the above into the C++ code
 
         # Execute the time evolution
         result = self.qili_sim.execute_time_evolution(

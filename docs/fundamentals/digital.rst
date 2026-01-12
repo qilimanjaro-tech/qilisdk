@@ -122,7 +122,7 @@ Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit
 
 **Generating Random Circuits**
 
-You can also generate a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.randomize` method:
+You can also initialize a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:
 
 .. code-block:: python
 
