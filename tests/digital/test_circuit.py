@@ -203,19 +203,23 @@ def test_user_provides_custom_parameter():
     )
 
 
-def test_randomize_circuit():
+def test_random_circuit():
     """
-    Test the randomize method to ensure it adds the correct number of gates
+    Test the random circuit initializaton to ensure it adds the correct number of gates
     and only uses the provided gate sets.
     """
     single_qubit_gates = {X, RX}
     two_qubit_gates = {CNOT}
     nqubits = 3
-    ngates = 10
+    ngates = 30
 
-    c = Circuit(nqubits=nqubits)
     random.seed(42)  # Set seed for reproducibility
-    c.randomize(single_qubit_gates=single_qubit_gates, two_qubit_gates=two_qubit_gates, ngates=ngates)
+    c = Circuit.random(
+        nqubits=nqubits,
+        single_qubit_gates=single_qubit_gates,
+        two_qubit_gates=two_qubit_gates,
+        ngates=ngates,
+    )
 
     # Check that the circuit has the correct number of gates
     assert len(c.gates) == ngates
@@ -228,6 +232,10 @@ def test_randomize_circuit():
             assert type(gate) in two_qubit_gates
         else:
             pytest.fail("Gate with invalid number of qubits added to circuit.")
+
+    # Make sure there are no duplicate gates next to each other
+    for i in range(1, len(c.gates)):
+        assert type(c.gates[i]) != type(c.gates[i - 1]) or c.gates[i].qubits != c.gates[i - 1].qubits
 
     # Check that all target qubits are within range
     for gate in c.gates:

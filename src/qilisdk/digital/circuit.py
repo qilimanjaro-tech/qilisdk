@@ -180,23 +180,35 @@ class Circuit(Parameterizable):
         if filepath:
             renderer.save(filepath)
 
-    def randomize(
-        self, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
-    ) -> None:
+    @classmethod
+    def random(
+        cls,
+        nqubits: int, 
+        single_qubit_gates: set[type[BasicGate]], 
+        two_qubit_gates: set[type[BasicGate]], 
+        ngates: int
+    ) -> "Circuit":
         """
         Generate a random quantum circuit from a given set of gates.
 
         Args:
+            nqubits (int): The number of qubits in the circuit.
             single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.
             two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.
             ngates (int): The number of gates to include in the circuit.
 
+        Returns:
+            Circuit: A randomly generated quantum circuit.
+
         """
+        new_circuit = cls(nqubits)
         gate_list: list[type[BasicGate]] = list(single_qubit_gates) + list(two_qubit_gates)
+        prev_gate_type = None
+        prev_qubits = None
         for _ in range(ngates):
             gate_class = random.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
-            qubits = tuple(random.sample(range(self.nqubits), gate_nqubits))
+            qubits = tuple(random.sample(range(nqubits), gate_nqubits))
             params = {}
             if gate_class.PARAMETER_NAMES:
                 for param_name in gate_class.PARAMETER_NAMES:
@@ -205,33 +217,53 @@ class Circuit(Parameterizable):
                         label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
                     )
 
-            # If you're reading this and thinking "why don't we just do self.add(gate_class(*qubits, **params))"?
-            # It's because mypy gets angry about it, since then we don't know the type of the variable at runtime.
+            # Avoid adding the same gate on the same qubits consecutively
+            if gate_class == prev_gate_type and qubits == prev_qubits:
+                
+                # If we only have one qubit, skip it
+                if nqubits == 1:
+                    continue 
+
+                # If the gate list does not include all qubits, change the first to be a different qubit
+                elif len(gate_list) < nqubits:
+                    new_qubit = random.choice([q for q in range(nqubits) if q != qubits[0]])
+                    qubits = (new_qubit,) + qubits[1:]
+
+                # Otherwise, flip the order of the qubits
+                else:
+                    qubits = tuple(reversed(qubits))
+
+            prev_gate_type = gate_class
+            prev_qubits = qubits
+
+            # Needed to explicitly handle each gate type to satisfy mypy type checking.
             if gate_class == CNOT:
-                self.add(CNOT(control=qubits[0], target=qubits[1]))
+                new_circuit.add(CNOT(control=qubits[0], target=qubits[1]))
             elif gate_class == X:
-                self.add(X(qubits[0]))
+                new_circuit.add(X(qubits[0]))
             elif gate_class == Y:
-                self.add(Y(qubits[0]))
+                new_circuit.add(Y(qubits[0]))
             elif gate_class == Z:
-                self.add(Z(qubits[0]))
+                new_circuit.add(Z(qubits[0]))
             elif gate_class == H:
-                self.add(H(qubits[0]))
+                new_circuit.add(H(qubits[0]))
             elif gate_class == T:
-                self.add(T(qubits[0]))
+                new_circuit.add(T(qubits[0]))
             elif gate_class == S:
-                self.add(S(qubits[0]))
+                new_circuit.add(S(qubits[0]))
             elif gate_class == RX:
-                self.add(RX(qubits[0], **params))
+                new_circuit.add(RX(qubits[0], **params))
             elif gate_class == RY:
-                self.add(RY(qubits[0], **params))
+                new_circuit.add(RY(qubits[0], **params))
             elif gate_class == RZ:
-                self.add(RZ(qubits[0], **params))
+                new_circuit.add(RZ(qubits[0], **params))
             elif gate_class == U1:
-                self.add(U1(qubits[0], **params))
+                new_circuit.add(U1(qubits[0], **params))
             elif gate_class == U2:
-                self.add(U2(qubits[0], **params))
+                new_circuit.add(U2(qubits[0], **params))
             elif gate_class == U3:
-                self.add(U3(qubits[0], **params))
+                new_circuit.add(U3(qubits[0], **params))
             else:
                 continue
+
+        return new_circuit

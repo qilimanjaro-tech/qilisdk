@@ -42,17 +42,20 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      - name: Create the environment
-        run: uv venv --clear
+      - name: Install qilisdk
+        run: uv sync --group dev --all-extras
 
-      - name: Activate the environment
-        run: source .venv/bin/activate
+      # - name: Create the environment
+      #   run: uv venv --clear
 
-      - name: Build QiliSDK
-        run: uv build --wheel
+      # - name: Activate the environment
+      #   run: source .venv/bin/activate
 
-      - name: Install QiliSDK
-        run: uv pip install dist/*.whl
+      # - name: Build QiliSDK
+      #   run: uv build --wheel
+
+      # - name: Install QiliSDK
+      #   run: uv pip install dist/*.whl
 
       - name: Run tests
         run: uv run pytest tests
