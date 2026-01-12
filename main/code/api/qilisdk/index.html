@@ -161,6 +161,13 @@
 <li class="toctree-l4"><a class="reference internal" href="functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="noise_models/index.html">qilisdk.noise_models<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -246,6 +253,7 @@
 <li class="toctree-l1"><a class="reference internal" href="digital/index.html">qilisdk.digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiments/index.html">qilisdk.experiments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="functionals/index.html">qilisdk.functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise_models/index.html">qilisdk.noise_models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optimizers/index.html">qilisdk.optimizers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="speqtrum/index.html">qilisdk.speqtrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/index.html">qilisdk.utils</a></li>

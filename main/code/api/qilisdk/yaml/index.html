@@ -160,6 +160,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise_models/index.html">qilisdk.noise_models<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -245,6 +252,16 @@
 </tbody>
 </table>
 </section>
+<section id="classes">
+<h2>Classes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#classes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#classes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.QiliYAML" title="qilisdk.yaml.QiliYAML"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QiliYAML</span></code></a></p></td>
+<td><p>typ: 'rt'/None -&gt; RoundTripLoader/RoundTripDumper,  (default)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="functions">
 <h2>Functions<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functions" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#functions'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <table class="autosummary longtable docutils align-default">
@@ -308,6 +325,12 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.yaml.type_constructor" title="qilisdk.yaml.type_constructor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">type_constructor</span></code></a>(constructor, node)</p></td>
 <td><p>Reconstruct a class/type from its import path.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.deque_representer" title="qilisdk.yaml.deque_representer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deque_representer</span></code></a>(representer, data)</p></td>
+<td><p>Representer for deque</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.yaml.deque_constructor" title="qilisdk.yaml.deque_constructor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deque_constructor</span></code></a>(constructor, node)</p></td>
+<td><p>Constructor for ndarray</p></td>
 </tr>
 </tbody>
 </table>
@@ -414,6 +437,44 @@ E.g. datetime.datetime → ‘datetime.datetime’</p>
 <span class="sig-name descname"><span class="pre">type_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#type_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.type_constructor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.type_constructor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Reconstruct a class/type from its import path.</p>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.yaml.deque_representer">
+<span class="sig-name descname"><span class="pre">deque_representer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">representer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#deque_representer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.deque_representer" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.deque_representer'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Representer for deque</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="qilisdk.yaml.deque_constructor">
+<span class="sig-name descname"><span class="pre">deque_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#deque_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.deque_constructor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.deque_constructor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Constructor for ndarray</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="qilisdk.yaml.QiliYAML">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QiliYAML</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Text</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Text</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plug_ins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#QiliYAML"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.QiliYAML" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.QiliYAML'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">ruamel.yaml.YAML</span></code></p>
+<dl>
+<dt>typ: ‘rt’/None -&gt; RoundTripLoader/RoundTripDumper,  (default)</dt><dd><p>‘safe’    -&gt; SafeLoader/SafeDumper,
+‘unsafe’  -&gt; normal/unsafe Loader/Dumper (pending deprecation)
+‘full’    -&gt; full Dumper only, including python built-ins that are</p>
+<blockquote>
+<div><p>potentially unsafe to load</p>
+</div></blockquote>
+<p>‘base’    -&gt; baseloader</p>
+</dd>
+</dl>
+<p>pure: if True only use Python modules
+input/output: needed to work as context manager
+plug_ins: a list of plug-in files</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.yaml.QiliYAML.register_class">
+<span class="sig-name descname"><span class="pre">register_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#QiliYAML.register_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.QiliYAML.register_class" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.QiliYAML.register_class'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>register a class for dumping/loading
+- if it has attribute yaml_tag use that to register, else use class name
+- if it has methods to_yaml/from_yaml use those to dump/load else dump attributes</p>
+<blockquote>
+<div><p>as mapping</p>
+</div></blockquote>
+</dd></dl>
+</dd></dl>
 <dl class="py data">
 <dt class="sig sig-object py" id="qilisdk.yaml.yaml">
 <span class="sig-name descname"><span class="pre">yaml</span></span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#yaml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.yaml" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.yaml'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
@@ -433,6 +494,7 @@ E.g. datetime.datetime → ‘datetime.datetime’</p>
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
 <li><a :data-current="activeSection === '#attributes'" class="reference internal" href="#attributes">Attributes</a></li>
+<li><a :data-current="activeSection === '#classes'" class="reference internal" href="#classes">Classes</a></li>
 <li><a :data-current="activeSection === '#functions'" class="reference internal" href="#functions">Functions</a></li>
 <li><a :data-current="activeSection === '#module-contents'" class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a :data-current="activeSection === '#qilisdk.yaml.csr_representer'" class="reference internal" href="#qilisdk.yaml.csr_representer"><code class="docutils literal notranslate"><span class="pre">csr_representer()</span></code></a></li>
@@ -455,6 +517,12 @@ E.g. datetime.datetime → ‘datetime.datetime’</p>
 <li><a :data-current="activeSection === '#qilisdk.yaml.tuple_constructor'" class="reference internal" href="#qilisdk.yaml.tuple_constructor"><code class="docutils literal notranslate"><span class="pre">tuple_constructor()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.yaml.type_representer'" class="reference internal" href="#qilisdk.yaml.type_representer"><code class="docutils literal notranslate"><span class="pre">type_representer()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.yaml.type_constructor'" class="reference internal" href="#qilisdk.yaml.type_constructor"><code class="docutils literal notranslate"><span class="pre">type_constructor()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.yaml.deque_representer'" class="reference internal" href="#qilisdk.yaml.deque_representer"><code class="docutils literal notranslate"><span class="pre">deque_representer()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.yaml.deque_constructor'" class="reference internal" href="#qilisdk.yaml.deque_constructor"><code class="docutils literal notranslate"><span class="pre">deque_constructor()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.yaml.QiliYAML'" class="reference internal" href="#qilisdk.yaml.QiliYAML"><code class="docutils literal notranslate"><span class="pre">QiliYAML</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.yaml.QiliYAML.register_class'" class="reference internal" href="#qilisdk.yaml.QiliYAML.register_class"><code class="docutils literal notranslate"><span class="pre">QiliYAML.register_class()</span></code></a></li>
+</ul>
+</li>
 <li><a :data-current="activeSection === '#qilisdk.yaml.yaml'" class="reference internal" href="#qilisdk.yaml.yaml"><code class="docutils literal notranslate"><span class="pre">yaml</span></code></a></li>
 </ul>
 </li>

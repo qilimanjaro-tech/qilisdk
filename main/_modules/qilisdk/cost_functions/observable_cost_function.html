@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -378,35 +385,37 @@
 </span><span id="line-79">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
 </span><span id="line-80">                <span class="s2">&quot;can&#39;t compute cost using Observables from time evolution results when the state is not provided.&quot;</span>
 </span><span id="line-81">            <span class="p">)</span>
-</span><span id="line-82">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
-</span><span id="line-83">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-84">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-85">        <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-86">
-</span><span id="line-87">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-88"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-89"><span class="sd">        Estimate the observable expectation value using measured bitstring probabilities.</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="sd">        Returns:</span>
-</span><span id="line-92"><span class="sd">            Number: the expectation value of ``observable`` estimated from sampled bitstrings.</span>
-</span><span id="line-93">
-</span><span id="line-94"><span class="sd">        Raises:</span>
-</span><span id="line-95"><span class="sd">            ValueError: If the number of qubits in the observable does not match the sample size</span>
-</span><span id="line-96"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-97">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="line-98">        <span class="n">nqubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-99">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">():</span>
-</span><span id="line-100">            <span class="n">state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
-</span><span id="line-101">            <span class="k">if</span> <span class="n">nqubits</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-102">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-103">                    <span class="sa">f</span><span class="s2">&quot;The samples provided have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
-</span><span id="line-104">                <span class="p">)</span>
-</span><span id="line-105">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
-</span><span id="line-106">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="n">prob</span>
-</span><span id="line-107">
-</span><span id="line-108">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-109">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-110">        <span class="k">return</span> <span class="n">total_cost</span></div>
+</span><span id="line-82">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span>
+</span><span id="line-83">            <span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">)</span>
+</span><span id="line-84">        <span class="p">)</span>
+</span><span id="line-85">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-86">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-87">        <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-88">
+</span><span id="line-89">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">SamplingResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-90"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-91"><span class="sd">        Estimate the observable expectation value using measured bitstring probabilities.</span>
+</span><span id="line-92">
+</span><span id="line-93"><span class="sd">        Returns:</span>
+</span><span id="line-94"><span class="sd">            Number: the expectation value of ``observable`` estimated from sampled bitstrings.</span>
+</span><span id="line-95">
+</span><span id="line-96"><span class="sd">        Raises:</span>
+</span><span id="line-97"><span class="sd">            ValueError: If the number of qubits in the observable does not match the sample size</span>
+</span><span id="line-98"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-99">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-100">        <span class="n">nqubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-101">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">():</span>
+</span><span id="line-102">            <span class="n">state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
+</span><span id="line-103">            <span class="k">if</span> <span class="n">nqubits</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-104">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-105">                    <span class="sa">f</span><span class="s2">&quot;The samples provided have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
+</span><span id="line-106">                <span class="p">)</span>
+</span><span id="line-107">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
+</span><span id="line-108">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="n">prob</span>
+</span><span id="line-109">
+</span><span id="line-110">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-111">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-112">        <span class="k">return</span> <span class="n">total_cost</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

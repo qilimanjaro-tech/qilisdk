@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -396,7 +403,7 @@
 </span><span id="line-83"><span class="sd">        Returns:</span>
 </span><span id="line-84"><span class="sd">            ScalarNode: The YAML scalar node representing the ObjectiveSense.</span>
 </span><span id="line-85"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-86">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="s2">&quot;!ObjectiveSense&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-86">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span></div>
 
 </span><span id="line-87">
 </span><span id="line-88">    <span class="nd">@classmethod</span>

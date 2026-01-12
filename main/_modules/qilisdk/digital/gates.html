@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -1253,32 +1260,32 @@
 </span><span id="line-746">
 </span><span id="line-747">
 </span><span id="line-748"><span class="k">def</span><span class="w"> </span><span class="nf">_process_param</span><span class="p">(</span>
-</span><span id="line-749">                <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-750">                <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
-</span><span id="line-751">                <span class="n">params_to_init</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">],</span>
-</span><span id="line-752">                <span class="n">terms_to_init</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Term</span><span class="p">],</span>
-</span><span id="line-753">                <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-754"><span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-755"><span class="sd">            Process a parameter value and update the params_to_init and terms_to_init dictionaries.</span>
-</span><span id="line-756"><span class="sd">            Args:</span>
-</span><span id="line-757"><span class="sd">                name (str): The name of the parameter.</span>
-</span><span id="line-758"><span class="sd">                value (float | Parameter | Term): The value of the parameter.</span>
-</span><span id="line-759"><span class="sd">                params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.</span>
-</span><span id="line-760"><span class="sd">                terms_to_init (dict[str, Term]): The dictionary to initialize terms.</span>
-</span><span id="line-761"><span class="sd">            Raises:</span>
-</span><span id="line-762"><span class="sd">                ValueError: If a Term is provided that contains Variables instead of Parameters.</span>
-</span><span id="line-763"><span class="sd">            &quot;&quot;&quot;</span>
-</span><span id="line-764">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
-</span><span id="line-765">                <span class="n">params_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-</span><span id="line-766">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-767">                <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-768">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RX gate Term &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must contain a Parameter and not Variables.&quot;</span><span class="p">)</span>
-</span><span id="line-769">                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">variables</span><span class="p">():</span>
-</span><span id="line-770">                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
-</span><span id="line-771">                        <span class="n">params_to_init</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
-</span><span id="line-772">                <span class="n">terms_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-</span><span id="line-773">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-774">                <span class="n">params_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="line-749">    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-750">    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Parameter</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
+</span><span id="line-751">    <span class="n">params_to_init</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">],</span>
+</span><span id="line-752">    <span class="n">terms_to_init</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Term</span><span class="p">],</span>
+</span><span id="line-753"><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-754"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-755"><span class="sd">    Process a parameter value and update the params_to_init and terms_to_init dictionaries.</span>
+</span><span id="line-756"><span class="sd">    Args:</span>
+</span><span id="line-757"><span class="sd">        name (str): The name of the parameter.</span>
+</span><span id="line-758"><span class="sd">        value (float | Parameter | Term): The value of the parameter.</span>
+</span><span id="line-759"><span class="sd">        params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.</span>
+</span><span id="line-760"><span class="sd">        terms_to_init (dict[str, Term]): The dictionary to initialize terms.</span>
+</span><span id="line-761"><span class="sd">    Raises:</span>
+</span><span id="line-762"><span class="sd">        ValueError: If a Term is provided that contains Variables instead of Parameters.</span>
+</span><span id="line-763"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-764">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+</span><span id="line-765">        <span class="n">params_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+</span><span id="line-766">    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-767">        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">variables</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-768">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RX gate Term &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must contain a Parameter and not Variables.&quot;</span><span class="p">)</span>
+</span><span id="line-769">        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">variables</span><span class="p">():</span>
+</span><span id="line-770">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+</span><span id="line-771">                <span class="n">params_to_init</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+</span><span id="line-772">        <span class="n">terms_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+</span><span id="line-773">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-774">        <span class="n">params_to_init</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </span><span id="line-775">
 </span><span id="line-776">
 </span><span id="line-777"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>

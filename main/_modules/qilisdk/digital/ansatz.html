@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -650,84 +657,84 @@
 </span><span id="line-318">
 </span><span id="line-319">    <span class="nd">@staticmethod</span>
 </span><span id="line-320">    <span class="k">def</span><span class="w"> </span><span class="nf">_pauli_evolution</span><span class="p">(</span>
-</span><span id="line-321">            <span class="n">term</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
-</span><span id="line-322">            <span class="n">coeff</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
-</span><span id="line-323">            <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
-</span><span id="line-324">            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
-</span><span id="line-325"><span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-326"><span class="sd">            An iterator of parameterized gates performing the evolution of a given Pauli string.</span>
+</span><span id="line-321">        <span class="n">term</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+</span><span id="line-322">        <span class="n">coeff</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-323">        <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-324">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
+</span><span id="line-325"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-326"><span class="sd">        An iterator of parameterized gates performing the evolution of a given Pauli string.</span>
 </span><span id="line-327">
-</span><span id="line-328"><span class="sd">            Args:</span>
-</span><span id="line-329"><span class="sd">                term (tuple[PauliOperator, ...]): The Pauli string to evolve under.</span>
-</span><span id="line-330"><span class="sd">                coeff (complex | Term | Parameter): The coefficient of the Pauli string.</span>
-</span><span id="line-331"><span class="sd">                time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).</span>
+</span><span id="line-328"><span class="sd">        Args:</span>
+</span><span id="line-329"><span class="sd">            term (tuple[PauliOperator, ...]): The Pauli string to evolve under.</span>
+</span><span id="line-330"><span class="sd">            coeff (complex | Term | Parameter): The coefficient of the Pauli string.</span>
+</span><span id="line-331"><span class="sd">            time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).</span>
 </span><span id="line-332">
-</span><span id="line-333"><span class="sd">            Yields:</span>
-</span><span id="line-334"><span class="sd">                Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.</span>
-</span><span id="line-335"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-333"><span class="sd">        Yields:</span>
+</span><span id="line-334"><span class="sd">            Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.</span>
+</span><span id="line-335"><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="line-336">
-</span><span id="line-337">            <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span> <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span> <span class="k">if</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">]</span>
-</span><span id="line-338">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-339">                <span class="k">return</span>
+</span><span id="line-337">        <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span> <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span> <span class="k">if</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">]</span>
+</span><span id="line-338">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-339">            <span class="k">return</span>
 </span><span id="line-340">
-</span><span id="line-341">            <span class="c1"># Move everything to Z basis</span>
-</span><span id="line-342">            <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
-</span><span id="line-343">                <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
-</span><span id="line-344">                <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
-</span><span id="line-345">                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
-</span><span id="line-346">                    <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-</span><span id="line-347">                <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
-</span><span id="line-348">                    <span class="n">gate_val</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
-</span><span id="line-349">                    <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
+</span><span id="line-341">        <span class="c1"># Move everything to Z basis</span>
+</span><span id="line-342">        <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
+</span><span id="line-343">            <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
+</span><span id="line-344">            <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-345">            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="line-346">                <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</span><span id="line-347">            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="line-348">                <span class="n">gate_val</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+</span><span id="line-349">                <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
 </span><span id="line-350">
-</span><span id="line-351">            <span class="c1"># Apply CNOT ladder</span>
-</span><span id="line-352">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-</span><span id="line-353">                <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-351">        <span class="c1"># Apply CNOT ladder</span>
+</span><span id="line-352">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+</span><span id="line-353">            <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 </span><span id="line-354">
-</span><span id="line-355">            <span class="c1"># Apply RZ rotation on last qubit</span>
-</span><span id="line-356">            <span class="n">last_qubit</span> <span class="o">=</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-</span><span id="line-357">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coeff</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
-</span><span id="line-358">                <span class="n">coeff</span> <span class="o">=</span> <span class="n">coeff</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-359">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
-</span><span id="line-360">                <span class="n">time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-361">            <span class="k">yield</span> <span class="n">RZ</span><span class="p">(</span><span class="n">last_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">coeff</span> <span class="o">*</span> <span class="n">time</span><span class="p">))</span>
+</span><span id="line-355">        <span class="c1"># Apply RZ rotation on last qubit</span>
+</span><span id="line-356">        <span class="n">last_qubit</span> <span class="o">=</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</span><span id="line-357">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coeff</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-358">            <span class="n">coeff</span> <span class="o">=</span> <span class="n">coeff</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-359">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-360">            <span class="n">time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-361">        <span class="k">yield</span> <span class="n">RZ</span><span class="p">(</span><span class="n">last_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">coeff</span> <span class="o">*</span> <span class="n">time</span><span class="p">))</span>
 </span><span id="line-362">
-</span><span id="line-363">            <span class="c1"># Undo CNOT ladder</span>
-</span><span id="line-364">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
-</span><span id="line-365">                <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-363">        <span class="c1"># Undo CNOT ladder</span>
+</span><span id="line-364">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+</span><span id="line-365">            <span class="k">yield</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">qubit_indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 </span><span id="line-366">
-</span><span id="line-367">            <span class="c1"># Move back from Z basis</span>
-</span><span id="line-368">            <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
-</span><span id="line-369">                <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
-</span><span id="line-370">                <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
-</span><span id="line-371">                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
-</span><span id="line-372">                    <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-</span><span id="line-373">                <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
-</span><span id="line-374">                    <span class="n">gate_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
-</span><span id="line-375">                    <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
+</span><span id="line-367">        <span class="c1"># Move back from Z basis</span>
+</span><span id="line-368">        <span class="k">for</span> <span class="n">pauli</span> <span class="ow">in</span> <span class="n">term</span><span class="p">:</span>
+</span><span id="line-369">            <span class="n">q</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">qubit</span>
+</span><span id="line-370">            <span class="n">name</span> <span class="o">=</span> <span class="n">pauli</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-371">            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="line-372">                <span class="k">yield</span> <span class="n">H</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</span><span id="line-373">            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="line-374">                <span class="n">gate_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+</span><span id="line-375">                <span class="k">yield</span> <span class="n">RX</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;fixed_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gate_val</span><span class="p">),</span> <span class="n">gate_val</span><span class="p">,</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="p">(</span><span class="n">gate_val</span><span class="p">,</span> <span class="n">gate_val</span><span class="p">)))</span>
 </span><span id="line-376">
 </span><span id="line-377">    <span class="k">def</span><span class="w"> </span><span class="nf">_trotter_evolution</span><span class="p">(</span>
-</span><span id="line-378">            <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-379">            <span class="n">commuting_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]],</span>
-</span><span id="line-380">            <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
-</span><span id="line-381">            <span class="n">trotter_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-382">        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
-</span><span id="line-383"><span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-384"><span class="sd">            An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.</span>
+</span><span id="line-378">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-379">        <span class="n">commuting_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]],</span>
+</span><span id="line-380">        <span class="n">time</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">,</span>
+</span><span id="line-381">        <span class="n">trotter_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-382">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BasicGate</span> <span class="o">|</span> <span class="n">CNOT</span><span class="p">]:</span>
+</span><span id="line-383"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-384"><span class="sd">        An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.</span>
 </span><span id="line-385">
-</span><span id="line-386"><span class="sd">            Args:</span>
-</span><span id="line-387"><span class="sd">                commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.</span>
-</span><span id="line-388"><span class="sd">                time (complex | Term | Parameter): The evolution time parameter.</span>
-</span><span id="line-389"><span class="sd">                trotter_steps (int): Number of Trotter steps.</span>
+</span><span id="line-386"><span class="sd">        Args:</span>
+</span><span id="line-387"><span class="sd">            commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.</span>
+</span><span id="line-388"><span class="sd">            time (complex | Term | Parameter): The evolution time parameter.</span>
+</span><span id="line-389"><span class="sd">            trotter_steps (int): Number of Trotter steps.</span>
 </span><span id="line-390">
-</span><span id="line-391"><span class="sd">            Yields:</span>
-</span><span id="line-392"><span class="sd">                Iterator[BasicGate]: Gates implementing the Trotterized evolution.</span>
-</span><span id="line-393"><span class="sd">            &quot;&quot;&quot;</span>
-</span><span id="line-394">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">trotter_steps</span><span class="p">):</span>
-</span><span id="line-395">                <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">commuting_parts</span><span class="p">:</span>
-</span><span id="line-396">                    <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">part</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-397">                        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pauli_evolution</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="o">/</span> <span class="n">trotter_steps</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
-</span><span id="line-398">                            <span class="k">yield</span> <span class="n">gate</span>
+</span><span id="line-391"><span class="sd">        Yields:</span>
+</span><span id="line-392"><span class="sd">            Iterator[BasicGate]: Gates implementing the Trotterized evolution.</span>
+</span><span id="line-393"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-394">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">trotter_steps</span><span class="p">):</span>
+</span><span id="line-395">            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">commuting_parts</span><span class="p">:</span>
+</span><span id="line-396">                <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">part</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-397">                    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pauli_evolution</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="o">/</span> <span class="n">trotter_steps</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+</span><span id="line-398">                        <span class="k">yield</span> <span class="n">gate</span>
 </span><span id="line-399">
 </span><span id="line-400">    <span class="k">def</span><span class="w"> </span><span class="nf">_build_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-401"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the circuit according to the Hamiltonian and mixer settings.&quot;&quot;&quot;</span>
@@ -746,20 +753,19 @@
 </span><span id="line-414">
 </span><span id="line-415">        <span class="c1"># Build the layers</span>
 </span><span id="line-416">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
-</span><span id="line-417">
-</span><span id="line-418">            <span class="c1"># Initial parameter values</span>
-</span><span id="line-419">            <span class="n">initial_val_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-</span><span id="line-420">            <span class="n">initial_val_mixer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-</span><span id="line-421">
-</span><span id="line-422">            <span class="c1"># Apply problem Hamiltonian</span>
-</span><span id="line-423">            <span class="n">gamma_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_problem</span><span class="p">)</span>
-</span><span id="line-424">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_problem</span><span class="p">,</span> <span class="n">gamma_param</span><span class="p">,</span> <span class="n">trotter_steps_problem</span><span class="p">):</span>
-</span><span id="line-425">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-426">
-</span><span id="line-427">            <span class="c1"># Apply mixer Hamiltonian</span>
-</span><span id="line-428">            <span class="n">alpha_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;alpha_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_mixer</span><span class="p">)</span>
-</span><span id="line-429">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_mixer</span><span class="p">,</span> <span class="n">alpha_param</span><span class="p">,</span> <span class="n">trotter_steps_mixer</span><span class="p">):</span>
-</span><span id="line-430">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span></div>
+</span><span id="line-417">            <span class="c1"># Initial parameter values</span>
+</span><span id="line-418">            <span class="n">initial_val_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-419">            <span class="n">initial_val_mixer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixer_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-420">
+</span><span id="line-421">            <span class="c1"># Apply problem Hamiltonian</span>
+</span><span id="line-422">            <span class="n">gamma_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;gamma_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_problem</span><span class="p">)</span>
+</span><span id="line-423">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_problem</span><span class="p">,</span> <span class="n">gamma_param</span><span class="p">,</span> <span class="n">trotter_steps_problem</span><span class="p">):</span>
+</span><span id="line-424">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-425">
+</span><span id="line-426">            <span class="c1"># Apply mixer Hamiltonian</span>
+</span><span id="line-427">            <span class="n">alpha_param</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;alpha_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">initial_val_mixer</span><span class="p">)</span>
+</span><span id="line-428">            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trotter_evolution</span><span class="p">(</span><span class="n">commuting_parts_mixer</span><span class="p">,</span> <span class="n">alpha_param</span><span class="p">,</span> <span class="n">trotter_steps_mixer</span><span class="p">):</span>
+</span><span id="line-429">                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

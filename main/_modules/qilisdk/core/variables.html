@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -518,7 +525,7 @@
 </span><span id="line-167">    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only Real values are allowed but </span><span class="si">{</span><span class="n">_value</span><span class="si">}</span><span class="s2"> was provided.&quot;</span><span class="p">)</span>
 </span><span id="line-168">
 </span><span id="line-169">
-</span><span id="line-170"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-170"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <div class="viewcode-block" id="Domain">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain">[docs]</a>
 </span><span id="line-171"><span class="k">class</span><span class="w"> </span><span class="nc">Domain</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
@@ -607,7 +614,7 @@
 </span><span id="line-228"><span class="sd">        Returns:</span>
 </span><span id="line-229"><span class="sd">            ScalarNode: The YAML scalar node representing the Domain.</span>
 </span><span id="line-230"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-231">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="s2">&quot;!Domain&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-231">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span></div>
 
 </span><span id="line-232">
 </span><span id="line-233">    <span class="nd">@classmethod</span>
@@ -660,7 +667,7 @@
 </span><span id="line-257"><span class="sd">        Returns:</span>
 </span><span id="line-258"><span class="sd">            ScalarNode: The YAML scalar node representing the Operation.</span>
 </span><span id="line-259"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-260">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="s2">&quot;!Operation&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-260">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span></div>
 
 </span><span id="line-261">
 </span><span id="line-262">    <span class="nd">@classmethod</span>
@@ -717,7 +724,7 @@
 </span><span id="line-287"><span class="sd">        Returns:</span>
 </span><span id="line-288"><span class="sd">            ScalarNode: The YAML scalar node representing the ComparisonOperation.</span>
 </span><span id="line-289"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-290">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="s2">&quot;!ComparisonOperation&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-290">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span></div>
 
 </span><span id="line-291">
 </span><span id="line-292">    <span class="nd">@classmethod</span>
@@ -1818,7 +1825,7 @@
 
 </span><span id="line-1198">
 </span><span id="line-1199">
-</span><span id="line-1200"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-1200"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <div class="viewcode-block" id="Parameter">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter">[docs]</a>
 </span><span id="line-1201"><span class="k">class</span><span class="w"> </span><span class="nc">Parameter</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>

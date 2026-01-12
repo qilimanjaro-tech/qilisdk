@@ -192,6 +192,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
@@ -310,7 +317,7 @@
 </span><span id="line-16">
 </span><span id="line-17"><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
 </span><span id="line-20">
 </span><span id="line-21"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">dill</span><span class="w"> </span><span class="kn">import</span> <span class="n">dumps</span><span class="p">,</span> <span class="n">loads</span>
@@ -541,49 +548,88 @@
 
 </span><span id="line-188">
 </span><span id="line-189">
-</span><span id="line-190"><span class="c1"># Create YAML handler and register all custom types</span>
+<div class="viewcode-block" id="deque_representer">
+<a class="viewcode-back" href="../../code/api/qilisdk/yaml/index.html#qilisdk.yaml.deque_representer">[docs]</a>
+</span><span id="line-190"><span class="k">def</span><span class="w"> </span><span class="nf">deque_representer</span><span class="p">(</span><span class="n">representer</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+</span><span id="line-191"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Representer for deque&quot;&quot;&quot;</span>
+</span><span id="line-192">    <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_sequence</span><span class="p">(</span><span class="s2">&quot;!deque&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+</span><span id="line-193">
+</span><span id="line-194">
+<div class="viewcode-block" id="deque_constructor">
+<a class="viewcode-back" href="../../code/api/qilisdk/yaml/index.html#qilisdk.yaml.deque_constructor">[docs]</a>
+</span><span id="line-195"><span class="k">def</span><span class="w"> </span><span class="nf">deque_constructor</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span id="line-196"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Constructor for ndarray&quot;&quot;&quot;</span>
+</span><span id="line-197">    <span class="k">return</span> <span class="n">deque</span><span class="p">(</span><span class="n">constructor</span><span class="o">.</span><span class="n">construct_sequence</span><span class="p">(</span><span class="n">node</span><span class="p">))</span></div>
+
+</span><span id="line-198">
+</span><span id="line-199">
+</span><span id="line-200"><span class="c1"># Create YAML handler and register all custom types</span>
+<div class="viewcode-block" id="QiliYAML">
+<a class="viewcode-back" href="../../code/api/qilisdk/yaml/index.html#qilisdk.yaml.QiliYAML">[docs]</a>
+</span><span id="line-201"><span class="k">class</span><span class="w"> </span><span class="nc">QiliYAML</span><span class="p">(</span><span class="n">YAML</span><span class="p">):</span>
+<div class="viewcode-block" id="QiliYAML.register_class">
+<a class="viewcode-back" href="../../code/api/qilisdk/yaml/index.html#qilisdk.yaml.QiliYAML.register_class">[docs]</a>
+</span><span id="line-202">    <span class="k">def</span><span class="w"> </span><span class="nf">register_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">shared</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="line-203">        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-204">
+</span><span id="line-205">            <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">target_cls</span><span class="p">):</span>  <span class="c1"># noqa: ANN202</span>
+</span><span id="line-206">                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="n">target_cls</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="n">shared</span><span class="p">)</span>
+</span><span id="line-207">
+</span><span id="line-208">            <span class="k">return</span> <span class="n">decorator</span>
+</span><span id="line-209">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;yaml_tag&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="line-210">            <span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;!</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;!</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-211">        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span></div>
+</div>
+
+</span><span id="line-212">
+</span><span id="line-213">
 <div class="viewcode-block" id="yaml">
 <a class="viewcode-back" href="../../code/api/qilisdk/yaml/index.html#qilisdk.yaml.yaml">[docs]</a>
-</span><span id="line-191"><span class="n">yaml</span> <span class="o">=</span> <span class="n">YAML</span><span class="p">(</span><span class="n">typ</span><span class="o">=</span><span class="s2">&quot;unsafe&quot;</span><span class="p">)</span></div>
+</span><span id="line-214"><span class="n">yaml</span> <span class="o">=</span> <span class="n">QiliYAML</span><span class="p">(</span><span class="n">typ</span><span class="o">=</span><span class="s2">&quot;unsafe&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-192">
-</span><span id="line-193"><span class="c1"># SciPy CSR</span>
-</span><span id="line-194"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">csr_representer</span><span class="p">)</span>
-</span><span id="line-195"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!csr_matrix&quot;</span><span class="p">,</span> <span class="n">csr_constructor</span><span class="p">)</span>
-</span><span id="line-196">
-</span><span id="line-197"><span class="c1"># NumPy scalars</span>
-</span><span id="line-198"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span> <span class="n">np_scalar_representer</span><span class="p">)</span>
-</span><span id="line-199"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!np_scalar&quot;</span><span class="p">,</span> <span class="n">np_scalar_constructor</span><span class="p">)</span>
-</span><span id="line-200">
-</span><span id="line-201"><span class="c1"># defaultdict</span>
-</span><span id="line-202"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">,</span> <span class="n">defaultdict_representer</span><span class="p">)</span>
-</span><span id="line-203"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!defaultdict&quot;</span><span class="p">,</span> <span class="n">defaultdict_constructor</span><span class="p">)</span>
-</span><span id="line-204">
-</span><span id="line-205"><span class="c1"># NumPy arrays</span>
-</span><span id="line-206"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray_representer</span><span class="p">)</span>
-</span><span id="line-207"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!ndarray&quot;</span><span class="p">,</span> <span class="n">ndarray_constructor</span><span class="p">)</span>
-</span><span id="line-208">
-</span><span id="line-209"><span class="c1"># Python functions and lambdas</span>
-</span><span id="line-210"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">,</span> <span class="n">function_representer</span><span class="p">)</span>
-</span><span id="line-211"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!function&quot;</span><span class="p">,</span> <span class="n">function_constructor</span><span class="p">)</span>
-</span><span id="line-212"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">LambdaType</span><span class="p">,</span> <span class="n">lambda_representer</span><span class="p">)</span>
-</span><span id="line-213"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!lambda&quot;</span><span class="p">,</span> <span class="n">lambda_constructor</span><span class="p">)</span>
-</span><span id="line-214">
-</span><span id="line-215"><span class="c1"># Pydantic models</span>
-</span><span id="line-216"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">pydantic_model_representer</span><span class="p">)</span>
-</span><span id="line-217"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!PydanticModel&quot;</span><span class="p">,</span> <span class="n">pydantic_model_constructor</span><span class="p">)</span>
-</span><span id="line-218">
-</span><span id="line-219"><span class="c1"># Built-in complex numbers</span>
-</span><span id="line-220"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="nb">complex</span><span class="p">,</span> <span class="n">complex_representer</span><span class="p">)</span>
-</span><span id="line-221"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!complex&quot;</span><span class="p">,</span> <span class="n">complex_constructor</span><span class="p">)</span>
-</span><span id="line-222">
-</span><span id="line-223"><span class="c1"># Built-in tuples</span>
-</span><span id="line-224"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">tuple_representer</span><span class="p">)</span>
-</span><span id="line-225"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!tuple&quot;</span><span class="p">,</span> <span class="n">tuple_constructor</span><span class="p">)</span>
-</span><span id="line-226">
-</span><span id="line-227"><span class="c1"># Built-in type</span>
-</span><span id="line-228"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">type_representer</span><span class="p">)</span>
-</span><span id="line-229"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!type&quot;</span><span class="p">,</span> <span class="n">type_constructor</span><span class="p">)</span>
+</span><span id="line-215">
+</span><span id="line-216"><span class="c1"># SciPy CSR</span>
+</span><span id="line-217"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">csr_representer</span><span class="p">)</span>
+</span><span id="line-218"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!csr_matrix&quot;</span><span class="p">,</span> <span class="n">csr_constructor</span><span class="p">)</span>
+</span><span id="line-219">
+</span><span id="line-220"><span class="c1"># NumPy scalars</span>
+</span><span id="line-221"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span> <span class="n">np_scalar_representer</span><span class="p">)</span>
+</span><span id="line-222"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!np_scalar&quot;</span><span class="p">,</span> <span class="n">np_scalar_constructor</span><span class="p">)</span>
+</span><span id="line-223">
+</span><span id="line-224"><span class="c1"># defaultdict</span>
+</span><span id="line-225"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">,</span> <span class="n">defaultdict_representer</span><span class="p">)</span>
+</span><span id="line-226"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!defaultdict&quot;</span><span class="p">,</span> <span class="n">defaultdict_constructor</span><span class="p">)</span>
+</span><span id="line-227">
+</span><span id="line-228"><span class="c1"># NumPy arrays</span>
+</span><span id="line-229"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray_representer</span><span class="p">)</span>
+</span><span id="line-230"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!ndarray&quot;</span><span class="p">,</span> <span class="n">ndarray_constructor</span><span class="p">)</span>
+</span><span id="line-231">
+</span><span id="line-232"><span class="c1"># Python functions and lambdas</span>
+</span><span id="line-233"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">,</span> <span class="n">function_representer</span><span class="p">)</span>
+</span><span id="line-234"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!function&quot;</span><span class="p">,</span> <span class="n">function_constructor</span><span class="p">)</span>
+</span><span id="line-235"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">LambdaType</span><span class="p">,</span> <span class="n">lambda_representer</span><span class="p">)</span>
+</span><span id="line-236"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!lambda&quot;</span><span class="p">,</span> <span class="n">lambda_constructor</span><span class="p">)</span>
+</span><span id="line-237">
+</span><span id="line-238"><span class="c1"># Pydantic models</span>
+</span><span id="line-239"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">pydantic_model_representer</span><span class="p">)</span>
+</span><span id="line-240"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!PydanticModel&quot;</span><span class="p">,</span> <span class="n">pydantic_model_constructor</span><span class="p">)</span>
+</span><span id="line-241">
+</span><span id="line-242"><span class="c1"># Built-in complex numbers</span>
+</span><span id="line-243"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="nb">complex</span><span class="p">,</span> <span class="n">complex_representer</span><span class="p">)</span>
+</span><span id="line-244"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!complex&quot;</span><span class="p">,</span> <span class="n">complex_constructor</span><span class="p">)</span>
+</span><span id="line-245">
+</span><span id="line-246"><span class="c1"># Built-in tuples</span>
+</span><span id="line-247"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">tuple_representer</span><span class="p">)</span>
+</span><span id="line-248"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!tuple&quot;</span><span class="p">,</span> <span class="n">tuple_constructor</span><span class="p">)</span>
+</span><span id="line-249">
+</span><span id="line-250"><span class="c1"># Built-in type</span>
+</span><span id="line-251"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">type_representer</span><span class="p">)</span>
+</span><span id="line-252"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!type&quot;</span><span class="p">,</span> <span class="n">type_constructor</span><span class="p">)</span>
+</span><span id="line-253">
+</span><span id="line-254"><span class="c1"># Built-in deque</span>
+</span><span id="line-255"><span class="n">yaml</span><span class="o">.</span><span class="n">representer</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">deque</span><span class="p">,</span> <span class="n">deque_representer</span><span class="p">)</span>
+</span><span id="line-256"><span class="n">yaml</span><span class="o">.</span><span class="n">constructor</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="s2">&quot;!deque&quot;</span><span class="p">,</span> <span class="n">deque_constructor</span><span class="p">)</span>
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>
