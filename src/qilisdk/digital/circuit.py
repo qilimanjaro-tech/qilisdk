@@ -182,11 +182,7 @@ class Circuit(Parameterizable):
 
     @classmethod
     def random(
-        cls,
-        nqubits: int, 
-        single_qubit_gates: set[type[BasicGate]], 
-        two_qubit_gates: set[type[BasicGate]], 
-        ngates: int
+        cls, nqubits: int, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
     ) -> "Circuit":
         """
         Generate a random quantum circuit from a given set of gates.
@@ -219,15 +215,15 @@ class Circuit(Parameterizable):
 
             # Avoid adding the same gate on the same qubits consecutively
             if gate_class == prev_gate_type and qubits == prev_qubits:
-                
                 # If we only have one qubit, skip it
                 if nqubits == 1:
-                    continue 
+                    continue
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
-                elif len(qubits) < nqubits:
-                    new_qubit = random.choice([q for q in range(nqubits) if q != qubits[0]])
-                    qubits = (new_qubit,) + qubits[1:]
+                if len(qubits) < nqubits:
+                    possible_new_qubits = [q for q in range(nqubits) if q not in qubits]
+                    new_qubit = random.choice(possible_new_qubits)
+                    qubits = (new_qubit, *qubits[1:])
 
                 # Otherwise, flip the order of the qubits
                 else:

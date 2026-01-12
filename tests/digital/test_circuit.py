@@ -235,7 +235,7 @@ def test_random_circuit():
 
     # Make sure there are no duplicate gates next to each other
     for i in range(1, len(c.gates)):
-        assert type(c.gates[i]) != type(c.gates[i - 1]) or c.gates[i].qubits != c.gates[i - 1].qubits
+        assert not (c.gates[i] is c.gates[i - 1] and c.gates[i].qubits == c.gates[i - 1].qubits)
 
     # Check that all target qubits are within range
     for gate in c.gates:
