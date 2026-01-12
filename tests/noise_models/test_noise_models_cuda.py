@@ -30,12 +30,12 @@ from qilisdk.noise_models import (
     AnalogAmplitudeDampingNoise,
     AnalogDephasingNoise,
     AnalogDepolarizingNoise,
+    AnalogNoise,
     DigitalAmplitudeDampingNoise,
     DigitalBitFlipNoise,
     DigitalDephasingNoise,
     DigitalDepolarizingNoise,
-    DissipationNoise,
-    KrausNoise,
+    DigitalNoise,
     NoiseModel,
     ParameterNoise,
 )
@@ -151,7 +151,7 @@ def test_kraus_noise_singe_qubit_cuda():
 
     # Define a simple noise model
     nm = NoiseModel()
-    nm.add(KrausNoise(kraus_operators=kraus_ops, affected_qubits=[1], affected_gates=[]))
+    nm.add(DigitalNoise(kraus_operators=kraus_ops, affected_qubits=[1], affected_gates=[]))
 
     # Execute with CUDA backend
     backend_cuda = CudaBackend()
@@ -179,7 +179,7 @@ def test_kraus_noise_two_qubit_cuda():
 
     # Define a simple noise model
     nm = NoiseModel()
-    nm.add(KrausNoise(kraus_operators=kraus_ops, affected_qubits=[0, 1], affected_gates=[X]))
+    nm.add(DigitalNoise(kraus_operators=kraus_ops, affected_qubits=[0, 1], affected_gates=[X]))
 
     # Execute with CUDA backend
     backend_cuda = CudaBackend()
@@ -254,7 +254,7 @@ def test_analog_dissapation_cuda():
     noise_model = NoiseModel()
     gamma = 0.1
     noise_model.add(
-        DissipationNoise(jump_operators=[(gamma) ** 0.5 * QTensor(np.array([[0, 1], [0, 0]]))], affected_qubits=[0])
+        AnalogNoise(jump_operators=[(gamma) ** 0.5 * QTensor(np.array([[0, 1], [0, 0]]))], affected_qubits=[0])
     )
 
     # Execute with the backend

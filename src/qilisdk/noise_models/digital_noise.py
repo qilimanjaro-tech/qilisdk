@@ -13,29 +13,22 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
+from qilisdk.analog.hamiltonian import PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.core.qtensor import QTensor
+from qilisdk.yaml import yaml
 
-from .noise_model import NoiseBase, NoiseType
-
-if TYPE_CHECKING:
-    from qilisdk.digital.gates import Gate
+from .noise_model import DigitalNoise
 
 
-class KrausNoise(NoiseBase):
+@yaml.register_class
+class KrausChannelNoise(DigitalNoise):
     """
     Generic noise model represented by Kraus operators
     """
 
-    def __init__(
-        self,
-        kraus_operators: list[QTensor],
-        affected_qubits: list[int] | None = None,
-        affected_gates: list[type[Gate]] | None = None,
-    ) -> None:
+    def __init__(self, kraus_operators: list[QTensor]) -> None:
         """
         Initialize a Kraus noise model.
         If the list of affected qubits is empty:
@@ -45,8 +38,6 @@ class KrausNoise(NoiseBase):
 
         Args:
             kraus_operators (list[QTensor]): List of Kraus operators defining the noise channel.
-            affected_qubits (list[int] | None): List of qubit indices the noise affects.
-            affected_gates (list[type[Gate]] | None): List of gate types the noise affects.
 
         Raises:
             ValueError: If the Kraus operators do not satisfy the completeness relation.
@@ -56,8 +47,6 @@ class KrausNoise(NoiseBase):
         """
 
         self._kraus_operators: list[QTensor] = kraus_operators or []
-        self._affected_qubits: list[int] = affected_qubits or []
-        self._affected_gates: list[type[Gate]] = affected_gates or []
 
         # Validate kraus operators
         if not self._kraus_operators:
@@ -67,62 +56,119 @@ class KrausNoise(NoiseBase):
             if K.shape[0] != dim or K.shape[1] != dim:
                 raise ValueError("All Kraus operators must have the same dimensions.")
         identity = sum(K.adjoint() @ K for K in self._kraus_operators)
-        if type(identity) is QTensor and not np.allclose(identity.dense(), np.eye(dim)):
+        if isinstance(identity, QTensor) and not np.allclose(identity.dense(), np.eye(dim)):
             raise ValueError("Kraus operators do not satisfy the completeness relation.")
 
-        # Make sure the affected qubits are all valid
-        for q in self._affected_qubits:
-            if q < 0:
-                raise ValueError(f"Invalid qubit index: {q}")
-
-    @property
-    def noise_type(self) -> NoiseType:
+    def get_kraus_operators(self) -> list[QTensor]:
         """
-        Returns the type of noise.
-        """
-        return NoiseType.DIGITAL
-
-    @property
-    def kraus_operators(self) -> list[QTensor]:
-        """
-        Returns the list of Kraus operators defining the noise channel.
+        Returns:
+            list[QTensor] : the list of Kraus operators defining the noise channel.
         """
         return self._kraus_operators
 
-    @property
-    def affected_qubits(self) -> list[int]:
-        """
-        Returns the list of qubit indices the noise affects.
-        """
-        return self._affected_qubits
 
-    @property
-    def affected_gates(self) -> list[type[Gate]]:
-        """
-        Returns the list of gate types the noise affects.
-        """
-        return self._affected_gates
-
-
-class DigitalBitFlipNoise(KrausNoise):
+@yaml.register_class
+class PauliChannelNoise(DigitalNoise):
     """
-    Noise model representing a bit flip channel.
+    Pauli noise channel defined by probabilities over Pauli strings.
     """
 
     def __init__(
         self,
-        probability: float,
-        affected_qubits: list[int] | None = None,
-        affected_gates: list[type[Gate]] | None = None,
+        pauli_probabilities: dict[tuple[PauliOperator], float],
+        num_qubits: int | None = None,
     ) -> None:
+        """
+        Initialize a Pauli noise channel.
+
+        Args:
+            pauli_probabilities (dict[tuple[PauliOperator, ...], float]): Mapping of Pauli strings
+                to their probabilities. Each Pauli string is a tuple of single-qubit Pauli operators.
+            num_qubits (int | None): Total number of qubits. If None, inferred from the strings.
+
+        Raises:
+            ValueError: If probabilities are invalid or qubit indices are inconsistent.
+        """
+
+        if not pauli_probabilities:
+            raise ValueError("Pauli probabilities cannot be empty.")
+
+        for probability in pauli_probabilities.values():
+            if probability < 0:
+                raise ValueError("Pauli probabilities must be non-negative.")
+
+        inferred_max = None
+        for term in pauli_probabilities:
+            for op in term:
+                inferred_max = op.qubit if inferred_max is None else max(inferred_max, op.qubit)
+
+        if num_qubits is None:
+            if inferred_max is None:
+                raise ValueError("num_qubits is required when no Pauli operators are provided.")
+            num_qubits = inferred_max + 1
+
+        if num_qubits <= 0:
+            raise ValueError("num_qubits must be positive.")
+
+        for term in pauli_probabilities:
+            seen_qubits: set[int] = set()
+            for op in term:
+                if op.qubit in seen_qubits:
+                    raise ValueError(f"Duplicate Pauli operators for qubit {op.qubit}.")
+                if op.qubit < 0 or op.qubit >= num_qubits:
+                    raise ValueError(f"Invalid qubit index: {op.qubit}")
+                seen_qubits.add(op.qubit)
+
+        total_probability = sum(pauli_probabilities.values())
+        if not np.isclose(total_probability, 1.0):
+            raise ValueError("Pauli probabilities must sum to 1.")
+
+        self._pauli_probabilities = dict(pauli_probabilities)
+        self._num_qubits = num_qubits
+        self._kraus_operators: list[QTensor] | None = None
+
+    @property
+    def pauli_probabilities(self) -> dict[tuple[PauliOperator], float]:
+        return dict(self._pauli_probabilities)
+
+    def get_kraus_operators(self) -> list[QTensor]:
+        """
+        Returns:
+            list[QTensor]: Kraus operators for the Pauli channel.
+        """
+        if self._kraus_operators is None:
+            identity = PauliI(0).matrix
+            kraus_ops: list[QTensor] = []
+            for term, probability in self._pauli_probabilities.items():
+                if np.isclose(probability, 0.0):
+                    continue
+                op_by_qubit = {op.qubit: op for op in term}
+                full_matrix = None
+                for q in range(self._num_qubits):
+                    op = op_by_qubit.get(q)
+                    factor = op.matrix if op is not None else identity
+                    full_matrix = factor if full_matrix is None else np.kron(full_matrix, factor)
+                if full_matrix is None:
+                    full_matrix = np.array([[1.0]])
+                kraus_ops.append(QTensor(np.sqrt(probability) * full_matrix))
+            self._kraus_operators = kraus_ops
+
+        return list(self._kraus_operators)
+
+
+@yaml.register_class
+class DigitalBitFlipNoise(PauliChannelNoise):
+    """
+    Noise model representing a bit flip channel.
+    """
+
+    def __init__(self, probability: float) -> None:
         """
         Initialize a Bit Flip noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of undergoing a bit flip (X gate).
 
         Args:
             probability (float): Probability of a bit flip occurring (0 <= p <= 1).
-            affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
-            affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
 
         Raises:
             ValueError: If probability is not in the range [0, 1].
@@ -130,36 +176,27 @@ class DigitalBitFlipNoise(KrausNoise):
         if not (0.0 <= probability <= 1.0):
             raise ValueError("The probability must be in the range [0, 1].")
 
-        K0 = np.sqrt(1 - probability) * np.array([[1, 0], [0, 1]])
-        K1 = np.sqrt(probability) * np.array([[0, 1], [1, 0]])
-        kraus_operators = [K0, K1]
+        pauli_probabilities = {
+            (PauliI(0),): 1.0 - probability,
+            (PauliX(0),): probability,
+        }
 
-        super().__init__(
-            kraus_operators=[QTensor(K) for K in kraus_operators],
-            affected_qubits=affected_qubits,
-            affected_gates=affected_gates,
-        )
+        super().__init__(pauli_probabilities=pauli_probabilities, num_qubits=1)
 
 
-class DigitalDepolarizingNoise(KrausNoise):
+@yaml.register_class
+class DigitalDepolarizingNoise(PauliChannelNoise):
     """
     Noise model representing a depolarizing channel.
     """
 
-    def __init__(
-        self,
-        probability: float,
-        affected_qubits: list[int] | None = None,
-        affected_gates: list[type[Gate]] | None = None,
-    ) -> None:
+    def __init__(self, probability: float) -> None:
         """
         Initialize a Depolarizing noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of being replaced by the maximally mixed state.
 
         Args:
             probability (float): Probability of depolarization occurring (0 <= p <= 1).
-            affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
-            affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
 
         Raises:
             ValueError: If probability is not in the range [0, 1].
@@ -167,38 +204,29 @@ class DigitalDepolarizingNoise(KrausNoise):
         if not (0.0 <= probability <= 1.0):
             raise ValueError("The probability must be in the range [0, 1].")
 
-        K0 = np.sqrt(1 - 3 * probability / 4) * np.array([[1, 0], [0, 1]])
-        K1 = np.sqrt(probability / 4) * np.array([[0, 1], [1, 0]])
-        K2 = np.sqrt(probability / 4) * np.array([[0, -1j], [1j, 0]])
-        K3 = np.sqrt(probability / 4) * np.array([[1, 0], [0, -1]])
-        kraus_operators = [K0, K1, K2, K3]
+        pauli_probabilities = {
+            (PauliI(0),): 1.0 - 3.0 * probability / 4.0,
+            (PauliX(0),): probability / 4.0,
+            (PauliY(0),): probability / 4.0,
+            (PauliZ(0),): probability / 4.0,
+        }
 
-        super().__init__(
-            kraus_operators=[QTensor(K) for K in kraus_operators],
-            affected_qubits=affected_qubits,
-            affected_gates=affected_gates,
-        )
+        super().__init__(pauli_probabilities=pauli_probabilities, num_qubits=1)
 
 
-class DigitalDephasingNoise(KrausNoise):
+@yaml.register_class
+class DigitalDephasingNoise(PauliChannelNoise):
     """
     Noise model representing a dephasing channel.
     """
 
-    def __init__(
-        self,
-        probability: float,
-        affected_qubits: list[int] | None = None,
-        affected_gates: list[type[Gate]] | None = None,
-    ) -> None:
+    def __init__(self, probability: float) -> None:
         """
         Initialize a Dephasing noise model.
         This model represents a quantum noise channel where each qubit has a certain probability of undergoing dephasing.
 
         Args:
             probability (float): Probability of dephasing occurring (0 <= p <= 1).
-            affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
-            affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
 
         Raises:
             ValueError: If probability is not in the range [0, 1].
@@ -206,18 +234,19 @@ class DigitalDephasingNoise(KrausNoise):
         if not (0.0 <= probability <= 1.0):
             raise ValueError("The probability must be in the range [0, 1].")
 
-        K0 = np.sqrt(1 - probability) * np.array([[1, 0], [0, 1]])
-        K1 = np.sqrt(probability) * np.array([[1, 0], [0, -1]])
-        kraus_operators = [K0, K1]
+        pauli_probabilities = {
+            (PauliI(0),): 1.0 - probability,
+            (PauliZ(0),): probability,
+        }
 
         super().__init__(
-            kraus_operators=[QTensor(K) for K in kraus_operators],
-            affected_qubits=affected_qubits,
-            affected_gates=affected_gates,
+            pauli_probabilities=pauli_probabilities,
+            num_qubits=1,
         )
 
 
-class DigitalAmplitudeDampingNoise(KrausNoise):
+@yaml.register_class
+class DigitalAmplitudeDampingNoise(KrausChannelNoise):
     """
     Noise model representing an amplitude damping channel.
     """
@@ -225,8 +254,6 @@ class DigitalAmplitudeDampingNoise(KrausNoise):
     def __init__(
         self,
         gamma: float,
-        affected_qubits: list[int] | None = None,
-        affected_gates: list[type[Gate]] | None = None,
     ) -> None:
         """
         Initialize an Amplitude Damping noise model.
@@ -234,8 +261,6 @@ class DigitalAmplitudeDampingNoise(KrausNoise):
 
         Args:
             gamma (float): Probability of amplitude damping occurring (0 <= gamma <= 1).
-            affected_qubits (list[int] | None): List of qubit indices the noise affects. If None, affects all qubits.
-            affected_gates (list[type[Gate]] | None): List of gate types the noise affects. If None, affects all gates.
 
         Raises:
             ValueError: If gamma is not in the range [0, 1].
@@ -247,8 +272,4 @@ class DigitalAmplitudeDampingNoise(KrausNoise):
         K1 = np.array([[0, np.sqrt(gamma)], [0, 0]])
         kraus_operators = [K0, K1]
 
-        super().__init__(
-            kraus_operators=[QTensor(K) for K in kraus_operators],
-            affected_qubits=affected_qubits,
-            affected_gates=affected_gates,
-        )
+        super().__init__(kraus_operators=[QTensor(K) for K in kraus_operators])

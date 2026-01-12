@@ -18,15 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import (
-    ElementaryOperator,
-    OperatorSum,
-    ScalarOperator,
-    State,
-    evolve,
-    operators,
-    spin,
-)
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
@@ -39,8 +31,8 @@ from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGa
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise_models import NoiseModel, ParameterNoise
-from qilisdk.noise_models.analog_noise import DissipationNoise
-from qilisdk.noise_models.digital_noise import KrausNoise
+from qilisdk.noise_models.analog_noise import AnalogNoise
+from qilisdk.noise_models.digital_noise import DigitalNoise
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -182,7 +174,7 @@ class CudaBackend(Backend):
         if noise_model is not None:
             noise = cudaq.NoiseModel()
             for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, KrausNoise):
+                if isinstance(noise_pass, DigitalNoise):
                     ops_as_np = [np.array(op.dense(), dtype=np.complex128) for op in noise_pass.kraus_operators]
                     kraus_channel = cudaq.KrausChannel(ops_as_np)
                     affected_gates = noise_pass.affected_gates
@@ -255,7 +247,7 @@ class CudaBackend(Backend):
         ind = 0
         if noise_model is not None:
             for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, DissipationNoise):
+                if isinstance(noise_pass, AnalogNoise):
                     for op in noise_pass.jump_operators:
                         id = f"jump_op_{ind}"
                         ops_numpy.append(np.array(op.dense(), dtype=np.complex128))

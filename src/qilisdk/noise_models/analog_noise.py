@@ -13,17 +13,22 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from qilisdk.core.qtensor import QTensor
+from qilisdk.yaml import yaml
 
-from .noise_model import NoiseBase, NoiseType
+from .noise_model import AnalogNoise
+
+if TYPE_CHECKING:
+    from qilisdk.analog.hamiltonian import Hamiltonian
 
 
-class DissipationNoise(NoiseBase):
-    def __init__(
-        self, jump_operators: list[QTensor], affected_qubits: list[int] = [], rate: float | None = None
-    ) -> None:
+@yaml.register_class
+class DissipativeNoise(AnalogNoise):
+    def __init__(self, jump_operators: list[QTensor | Hamiltonian], rate: float | None = None) -> None:
         """
         Initialize a dissipation noise model.
         This is defined by a set of jump operators (as per the Lindblad master equation).
@@ -33,75 +38,56 @@ class DissipationNoise(NoiseBase):
 
         Args:
             jump_operators (list[QTensor]): List of jump operators defining the noise channel.
-            affected_qubits (list[int]): List of qubit indices the noise affects.
             rate (float | None): Optional scaling factor for the jump operators. If None, no scaling is applied.
-
-        Raises:
-            ValueError: If any affected qubit index is invalid.
         """
         self._jump_operators = jump_operators
-        self._affected_qubits = affected_qubits
 
         # Apply the rate
         if rate is not None:
             self._jump_operators = [op * rate for op in self._jump_operators]
 
-        # Validate affected qubits
-        for q in self._affected_qubits:
-            if q < 0:
-                raise ValueError(f"Invalid qubit index: {q}")
-
-    @property
-    def noise_type(self) -> NoiseType:
-        return NoiseType.ANALOG
-
-    @property
-    def jump_operators(self) -> list[QTensor]:
+    def get_jump_operators(self) -> list[QTensor | Hamiltonian]:
         return self._jump_operators
 
-    @property
-    def affected_qubits(self) -> list[int]:
-        return self._affected_qubits
 
-
-class AnalogDepolarizingNoise(DissipationNoise):
-    def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
+@yaml.register_class
+class AnalogDepolarizingNoise(DissipativeNoise):
+    def __init__(self, gamma: float) -> None:
         """
         Analog depolarizing noise model using jump operators.
 
         Args:
             gamma (float): Depolarizing rate.
-            affected_qubits (list[int]): List of qubit indices the noise affects.
         """
         jump_operators = [
             (gamma / 4) ** 0.5 * QTensor(np.array([[0, 1], [1, 0]])),  # X
             (gamma / 4) ** 0.5 * QTensor(np.array([[0, -1j], [1j, 0]])),  # Y
             (gamma / 4) ** 0.5 * QTensor(np.array([[1, 0], [0, -1]])),  # Z
         ]
-        super().__init__(jump_operators=jump_operators, affected_qubits=affected_qubits)
+        super().__init__(jump_operators=jump_operators)
 
 
-class AnalogDephasingNoise(DissipationNoise):
-    def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
+@yaml.register_class
+class AnalogDephasingNoise(DissipativeNoise):
+    def __init__(self, gamma: float) -> None:
         """
         Analog dephasing noise model using jump operators.
 
         Args:
             gamma (float): Dephasing rate.
-            affected_qubits (list[int]): List of qubit indices the noise affects.
         """
         op = (gamma / 2) ** 0.5 * QTensor(np.array([[1, 0], [0, -1]]))  # Z
-        super().__init__(jump_operators=[op], affected_qubits=affected_qubits)
+        super().__init__(jump_operators=[op])
 
 
-class AnalogAmplitudeDampingNoise(DissipationNoise):
-    def __init__(self, gamma: float, affected_qubits: list[int]) -> None:
+@yaml.register_class
+class AnalogAmplitudeDampingNoise(DissipativeNoise):
+    def __init__(self, gamma: float) -> None:
         """
         Analog amplitude damping noise model using jump operators.
 
         Args:
             gamma (float): Amplitude damping rate.
-            affected_qubits (list[int]): List of qubit indices the noise affects.
         """
         op = (gamma) ** 0.5 * QTensor(np.array([[0, 1], [0, 0]]))  # Lowering operator
-        super().__init__(jump_operators=[op], affected_qubits=affected_qubits)
+        super().__init__(jump_operators=[op])

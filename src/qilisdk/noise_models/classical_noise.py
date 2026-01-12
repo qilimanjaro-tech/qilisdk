@@ -13,12 +13,13 @@
 # limitations under the License.
 from __future__ import annotations
 
-import random
+from qilisdk.yaml import yaml
 
-from .noise_model import NoiseBase, NoiseType
+from .noise_model import ClassicalNoise
 
 
-class ParameterNoise(NoiseBase):
+@yaml.register_class
+class ParameterNoise(ClassicalNoise):
     """
     Noise model that affects specific parameters.
     """
@@ -37,26 +38,9 @@ class ParameterNoise(NoiseBase):
         self._noise_std = noise_std
 
     @property
-    def noise_type(self) -> NoiseType:
-        return NoiseType.PARAMETER
-
-    @property
     def affected_parameters(self) -> list[str]:
         return self._affected_parameters
 
     @property
     def noise_std(self) -> float:
         return self._noise_std
-
-    def apply(self, param_value: float) -> float:
-        """
-        Apply parameter noise to a given parameter value.
-
-        Args:
-            param_value (float): The original parameter value.
-
-        Returns:
-            float: The parameter value after applying noise.
-        """
-        param_with_noise = random.gauss(param_value, self._noise_std)
-        return param_with_noise

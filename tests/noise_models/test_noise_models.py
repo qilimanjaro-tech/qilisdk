@@ -20,20 +20,23 @@ from qilisdk.noise_models.analog_noise import (
     AnalogAmplitudeDampingNoise,
     AnalogDephasingNoise,
     AnalogDepolarizingNoise,
-    DissipationNoise,
+    AnalogNoise,
 )
-from qilisdk.noise_models.common_noise import ParameterNoise
+from qilisdk.noise_models.classical_noise import ParameterNoise
 from qilisdk.noise_models.digital_noise import (
     DigitalAmplitudeDampingNoise,
     DigitalBitFlipNoise,
     DigitalDephasingNoise,
     DigitalDepolarizingNoise,
-    KrausNoise,
+    DigitalNoise,
 )
-from qilisdk.noise_models.noise_model import NoiseBase, NoiseModel, NoiseType
+from qilisdk.noise_models.noise_model import NoiseModel, NoisePass, NoiseType
 
 
-class DummyNoise(NoiseBase):
+class DummyNoise(NoisePass):
+    def __init__(self) -> None:
+        super().__init__()
+
     @property
     def noise_type(self) -> NoiseType:
         return NoiseType.DIGITAL
@@ -41,7 +44,7 @@ class DummyNoise(NoiseBase):
 
 def test_noise_base_is_abstract():
     with pytest.raises(TypeError):
-        NoiseBase()
+        NoisePass()
 
 
 def test_noise_model_defaults():
@@ -93,7 +96,7 @@ def test_invalid_kraus_operators():
     K1 = np.array([[1, 0], [0, 1]])
     kraus_ops = [QTensor(K0), QTensor(K1)]
     with pytest.raises(ValueError, match=r"Kraus operators do not satisfy the completeness relation."):
-        KrausNoise(kraus_operators=kraus_ops, affected_qubits=[0], affected_gates=[])
+        DigitalNoise(kraus_operators=kraus_ops, affected_qubits=[0], affected_gates=[])
 
 
 def test_digital_dephasing_noise_properties():
@@ -124,7 +127,7 @@ def test_kraus_noise_properties():
     K0 = np.sqrt(0.7) * np.array([[1, 0], [0, 1]])
     K1 = np.sqrt(0.3) * np.array([[0, 1], [1, 0]])
     kraus_ops = [QTensor(K0), QTensor(K1)]
-    noise = KrausNoise(kraus_operators=kraus_ops, affected_qubits=[0], affected_gates=[])
+    noise = DigitalNoise(kraus_operators=kraus_ops, affected_qubits=[0], affected_gates=[])
     assert noise.noise_type == NoiseType.DIGITAL
     assert noise.kraus_operators == kraus_ops
     assert noise.affected_qubits == [0]
@@ -133,13 +136,13 @@ def test_kraus_noise_properties():
 
 def test_dissipation_noise_invalid_qubit():
     with pytest.raises(ValueError, match="Invalid qubit index: -1"):
-        DissipationNoise(jump_operators=[], affected_qubits=[-1])
+        AnalogNoise(jump_operators=[], affected_qubits=[-1])
 
 
 def test_dissipation_noise_properties():
     jump_ops = [QTensor(np.array([[0, 1], [0, 0]])), QTensor(np.array([[0, 0], [1, 0]]))]
     affected_qubits = [0, 1]
-    noise = DissipationNoise(jump_operators=jump_ops, affected_qubits=affected_qubits)
+    noise = AnalogNoise(jump_operators=jump_ops, affected_qubits=affected_qubits)
     assert noise.noise_type == NoiseType.ANALOG
     assert noise.jump_operators == jump_ops
     assert noise.affected_qubits == affected_qubits

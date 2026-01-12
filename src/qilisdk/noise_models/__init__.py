@@ -12,28 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .analog_noise import AnalogAmplitudeDampingNoise, AnalogDephasingNoise, AnalogDepolarizingNoise, DissipationNoise
-from .common_noise import ParameterNoise
+from .analog_noise import (
+    AnalogAmplitudeDampingNoise,
+    AnalogDephasingNoise,
+    AnalogDepolarizingNoise,
+    AnalogNoise,
+    DissipativeNoise,
+)
+from .classical_noise import ParameterNoise
 from .digital_noise import (
     DigitalAmplitudeDampingNoise,
     DigitalBitFlipNoise,
     DigitalDephasingNoise,
     DigitalDepolarizingNoise,
-    KrausNoise,
+    DigitalNoise,
+    PauliChannelNoise,
 )
-from .noise_model import NoiseModel, NoiseType
+from .noise_model import NoiseModel
 
 __all__ = [
     "AnalogAmplitudeDampingNoise",
     "AnalogDephasingNoise",
     "AnalogDepolarizingNoise",
+    "AnalogNoise",
     "DigitalAmplitudeDampingNoise",
     "DigitalBitFlipNoise",
     "DigitalDephasingNoise",
     "DigitalDepolarizingNoise",
-    "DissipationNoise",
-    "KrausNoise",
+    "DigitalNoise",
+    "DissipativeNoise",
     "NoiseModel",
-    "NoiseType",
     "ParameterNoise",
+    "PauliChannelNoise",
 ]
