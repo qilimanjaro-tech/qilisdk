@@ -126,13 +126,12 @@ You can also generate a random circuit with a specified number of gates using th
 
 .. code-block:: python
 
-    from qilisdk.digital import Circuit, H, X, CNOT
-
-    circuit = Circuit(nqubits=3)
-    circuit.randomize(
-        single_qubit_gates={H, X},
-        two_qubit_gates={CNOT},
-        ngates=10
+    from qilisdk.digital import Circuit, X, H, CNOT
+    c = Circuit.random(
+        nqubits=3,
+        single_qubit_gates=[X, H],
+        two_qubit_gates=[CNOT],
+        ngates=10,
     )
     circuit.draw()
 

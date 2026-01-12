@@ -45,17 +45,5 @@ jobs:
       - name: Install qilisdk
         run: uv sync --group dev --all-extras
 
-      # - name: Create the environment
-      #   run: uv venv --clear
-
-      # - name: Activate the environment
-      #   run: source .venv/bin/activate
-
-      # - name: Build QiliSDK
-      #   run: uv build --wheel
-
-      # - name: Install QiliSDK
-      #   run: uv pip install dist/*.whl
-
       - name: Run tests
         run: uv run pytest tests

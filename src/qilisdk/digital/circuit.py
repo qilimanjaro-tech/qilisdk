@@ -225,7 +225,7 @@ class Circuit(Parameterizable):
                     continue 
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
-                elif len(gate_list) < nqubits:
+                elif len(qubits) < nqubits:
                     new_qubit = random.choice([q for q in range(nqubits) if q != qubits[0]])
                     qubits = (new_qubit,) + qubits[1:]
 
@@ -233,6 +233,7 @@ class Circuit(Parameterizable):
                 else:
                     qubits = tuple(reversed(qubits))
 
+            # Update previous gate info
             prev_gate_type = gate_class
             prev_qubits = qubits
 
