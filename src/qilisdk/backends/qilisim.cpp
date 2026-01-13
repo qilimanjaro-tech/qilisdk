@@ -314,6 +314,8 @@ const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampl
 const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
 const py::object numpy_array = py::module_::import("numpy").attr("array");
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
+const py::object Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
+const py::object PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
 
 // Needed for _a literals
 using namespace pybind11::literals;
@@ -475,6 +477,35 @@ class QiliSimCpp {
         }
     }
 
+    SparseMatrix from_numpy(const py::buffer& matrix_buffer) {
+        /*
+        Convert a numpy array buffer to a SparseMatrix.
+        Args:
+            matrix_buffer (py::buffer): The numpy array buffer.
+        Returns:
+            SparseMatrix: The converted sparse matrix.
+        */
+        py::buffer_info buf = matrix_buffer.request();
+        if (buf.ndim != 2) {
+            throw py::value_error("Input array must be 2D.");
+        }
+        int rows = int(buf.shape[0]);
+        int cols = int(buf.shape[1]);
+        auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+        Triplets entries;
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                std::complex<double> val = ptr[r * cols + c];
+                if (std::abs(val) > atol_) {
+                    entries.emplace_back(Triplet(r, c, val));
+                }
+            }
+        }
+        SparseMatrix mat(rows, cols);
+        mat.setFromTriplets(entries.begin(), entries.end());
+        return mat;
+    }
+
     std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs) {
         /*
         Extract Hamiltonian matrices from a list of QTensor objects.
@@ -487,20 +518,7 @@ class QiliSimCpp {
         for (auto& hamiltonian : Hs) {
             py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            int rows = int(buf.shape[0]);
-            int cols = int(buf.shape[1]);
-            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-            Triplets entries;
-            for (int r = 0; r < rows; ++r) {
-                for (int c = 0; c < cols; ++c) {
-                    std::complex<double> val = ptr[r * cols + c];
-                    if (std::abs(val) > atol_) {
-                        entries.emplace_back(Triplet(r, c, val));
-                    }
-                }
-            }
-            SparseMatrix H(rows, cols);
-            H.setFromTriplets(entries.begin(), entries.end());
+            SparseMatrix H = from_numpy(matrix);
             hamiltonians.push_back(H);
         }
         return hamiltonians;
@@ -518,52 +536,72 @@ class QiliSimCpp {
         for (auto jump : jumps) {
             py::buffer matrix = numpy_array(jump.attr("dense")(), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            int rows = int(buf.shape[0]);
-            int cols = int(buf.shape[1]);
-            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-            Triplets entries;
-            for (int r = 0; r < rows; ++r) {
-                for (int c = 0; c < cols; ++c) {
-                    std::complex<double> val = ptr[r * cols + c];
-                    if (std::abs(val) > atol_) {
-                        entries.emplace_back(Triplet(r, c, val));
-                    }
-                }
-            }
-            SparseMatrix J(rows, cols);
-            J.setFromTriplets(entries.begin(), entries.end());
+            SparseMatrix J = from_numpy(matrix);
             jump_matrices.push_back(J);
         }
         return jump_matrices;
     }
 
-    std::vector<SparseMatrix> parse_observables(const py::object& observables) {
+    std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits) {
         /*
         Extract observable matrices from a list of QTensor objects.
         Args:
             observables (py::object): A list of QTensor observables.
+            nqubits (long): The total number of qubits.
         Returns:
             std::vector<SparseMatrix>: The list of observable sparse matrices.
         */
         std::vector<SparseMatrix> observable_matrices;
         for (auto obs : observables) {
-            py::buffer matrix = numpy_array(obs.attr("dense")(), py::dtype("complex128"));
-            py::buffer_info buf = matrix.request();
-            int rows = int(buf.shape[0]);
-            int cols = int(buf.shape[1]);
-            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-            Triplets entries;
-            for (int r = 0; r < rows; ++r) {
-                for (int c = 0; c < cols; ++c) {
-                    std::complex<double> val = ptr[r * cols + c];
-                    if (std::abs(val) > atol_) {
-                        entries.emplace_back(Triplet(r, c, val));
+
+            // Depending on the type of observable given
+            if (py::isinstance(obs, Hamiltonian)) {
+
+                // Get the matrix
+                py::buffer matrix = numpy_array(obs.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
+                py::buffer_info buf = matrix.request();
+                SparseMatrix O = from_numpy(matrix);
+
+                // Expand to full qubit count if needed
+                int obs_qubits = obs.attr("nqubits").cast<int>();
+                SparseMatrix O_global = O;
+                for (long q = obs_qubits; q < nqubits; ++q) {
+                    O_global = Eigen::kroneckerProduct(O_global, I).eval();
+                }
+                observable_matrices.push_back(O_global);
+
+            } else if (py::isinstance(obs, PauliOperator)) {
+                
+                // Get the matrix
+                py::buffer matrix = numpy_array(obs.attr("matrix"), py::dtype("complex128"));
+                py::buffer_info buf = matrix.request();
+                SparseMatrix O = from_numpy(matrix);
+
+                // Expand to full qubit count
+                int obs_qubit = obs.attr("qubit").cast<int>();
+                SparseMatrix O_global(1, 1);
+                O_global.coeffRef(0, 0) = 1.0;
+                O_global.makeCompressed();
+                for (long q = 0; q < nqubits; ++q) {
+                    if (q != obs_qubit) {
+                        O_global = Eigen::kroneckerProduct(O_global, I).eval();
+                    } else {
+                        O_global = Eigen::kroneckerProduct(O_global, O).eval();
                     }
                 }
+                observable_matrices.push_back(O_global);
+
+            } else if (py::isinstance(obs, QTensor)) {
+                py::buffer matrix = numpy_array(obs.attr("dense")(), py::dtype("complex128"));
+                py::buffer_info buf = matrix.request();
+                SparseMatrix O = from_numpy(matrix);
+                observable_matrices.push_back(O);
+
+            } else {
+                throw py::value_error("Observable type not recognized.");
+
             }
-            SparseMatrix O(rows, cols);
-            O.setFromTriplets(entries.begin(), entries.end());
-            observable_matrices.push_back(O);
+
         }
         return observable_matrices;
     }
@@ -707,8 +745,6 @@ class QiliSimCpp {
             SparseMatrix: The Lindblad superoperator.
         */
 
-        // TODO checu
-
         // The superoperator dimension
         long dim = long(currentH.rows());
         long dim_rho = dim * dim;
@@ -723,10 +759,10 @@ class QiliSimCpp {
         iden.setFromTriplets(iden_entries.begin(), iden_entries.end());
 
         // The contribution from the Hamiltonian
-        SparseMatrix H_iden = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(currentH, iden);
-        SparseMatrix iden_H_T = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(iden, currentH.transpose());
-        L += H_iden * std::complex<double>(0, -1);
-        L += iden_H_T * std::complex<double>(0, 1);
+        SparseMatrix iden_H = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(iden, currentH);
+        SparseMatrix H_T_iden = Eigen::KroneckerProductSparse<SparseMatrix, SparseMatrix>(currentH.transpose(), iden);
+        L += iden_H * std::complex<double>(0, -1);
+        L += H_T_iden * std::complex<double>(0, 1);
 
         // The contribution from the jump operators
         for (const auto& L_k : jump_operators) {
@@ -1215,8 +1251,8 @@ class QiliSimCpp {
                 continue;
             } else if (!is_unitary_on_statevector) {
                 std::complex<double> tr = 0;
-                for (int i = 0; i < dim; ++i) {
-                    int vec_index = i * dim + i;
+                for (long i = 0; i < dim; ++i) {
+                    long vec_index = i * dim + i;
                     tr += rho_t.coeff(vec_index, 0);
                 }
                 rho_t /= tr;
@@ -1549,7 +1585,11 @@ class QiliSimCpp {
 
         // Parse the info from the python objects
         std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(Hs);
-        std::vector<SparseMatrix> observable_matrices = parse_observables(observables);
+        if (hamiltonians.size() == 0) {
+            throw py::value_error("At least one Hamiltonian must be provided");
+        }
+        int nqubits = static_cast<int>(std::log2(hamiltonians[0].rows()));
+        std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits);
         std::vector<std::vector<double>> parameters_list = parse_parameters(coeffs);
         std::vector<SparseMatrix> jump_operators = parse_jump_operators(jumps);
         std::vector<double> step_list = parse_time_steps(steps);
@@ -1592,9 +1632,6 @@ class QiliSimCpp {
         Eigen::setNbThreads(num_threads);
 
         // Sanity checks
-        if (hamiltonians.size() == 0) {
-            throw py::value_error("At least one Hamiltonian must be provided");
-        }
         if (step_list.size() == 0) {
             throw py::value_error("At least one time step must be provided");
         }

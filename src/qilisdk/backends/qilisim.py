@@ -142,30 +142,31 @@ class QiliSim(Backend):
         jump_operators: list[QTensor] = []
 
         # Get the observables
-        observables = []
-        identity = QTensor(PauliI(0).matrix)
-        for obs in functional.observables:
-            aux_obs = None
-            if isinstance(obs, PauliOperator):
-                obs_to_tensor = []
-                for i in range(functional.schedule.nqubits):
-                    if i != obs.qubit:
-                        obs_to_tensor.append(identity)
-                    else:
-                        obs_to_tensor.append(QTensor(obs.matrix))
-                aux_obs = tensor_prod(obs_to_tensor)
-            elif isinstance(obs, Hamiltonian):
-                aux_obs = QTensor(obs.to_matrix())
-                if obs.nqubits < functional.schedule.nqubits:
-                    for _ in range(functional.schedule.nqubits - obs.nqubits):
-                        aux_obs = tensor_prod([aux_obs, identity])
-            elif isinstance(obs, QTensor):
-                aux_obs = obs
-            else:
-                logger.error("Unsupported observable type {}", obs.__class__.__name__)
-                raise ValueError(f"unsupported observable type of {obs.__class__}")
-            if aux_obs is not None:
-                observables.append(aux_obs)
+        observables = functional.observables
+        # observables = []
+        # identity = QTensor(PauliI(0).matrix)
+        # for obs in functional.observables:
+        #     aux_obs = None
+        #     if isinstance(obs, PauliOperator):
+        #         obs_to_tensor = []
+        #         for i in range(functional.schedule.nqubits):
+        #             if i != obs.qubit:
+        #                 obs_to_tensor.append(identity)
+        #             else:
+        #                 obs_to_tensor.append(QTensor(obs.matrix))
+        #         aux_obs = tensor_prod(obs_to_tensor)
+        #     elif isinstance(obs, Hamiltonian):
+        #         aux_obs = QTensor(obs.to_matrix())
+        #         if obs.nqubits < functional.schedule.nqubits:
+        #             for _ in range(functional.schedule.nqubits - obs.nqubits):
+        #                 aux_obs = tensor_prod([aux_obs, identity])
+        #     elif isinstance(obs, QTensor):
+        #         aux_obs = obs
+        #     else:
+        #         logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        #         raise ValueError(f"unsupported observable type of {obs.__class__}")
+        #     if aux_obs is not None:
+        #         observables.append(aux_obs)
 
         # TODO(luke): move all the above into the C++ code
 

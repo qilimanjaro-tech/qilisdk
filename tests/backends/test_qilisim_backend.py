@@ -174,7 +174,7 @@ simulation_types = ["direct", "arnoldi", "integrate"]
 @pytest.mark.parametrize("method", simulation_types)
 def test_time_dependent_hamiltonian(method):
     o = 1.0
-    dt = 0.1
+    dt = 0.5
     T = 100
 
     schedule = Schedule(
@@ -200,7 +200,7 @@ def test_time_dependent_hamiltonian(method):
 
 def test_time_dependent_hamiltonian_qtensor_observable():
     o = 1.0
-    dt = 0.1
+    dt = 0.5
     T = 100
 
     schedule = Schedule(
@@ -226,16 +226,17 @@ def test_time_dependent_hamiltonian_qtensor_observable():
 
 def test_time_dependent_hamiltonian_pauli_observable():
     o = 1.0
-    dt = 0.1
+    dt = 0.5
     T = 100
 
     schedule = Schedule(
         dt=dt,
-        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        hamiltonians={"h1": o * (pauli_x(0) + pauli_x(1)), "h2": o * (pauli_z(0) + pauli_z(1))},
         coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
     )
 
     psi0 = (ket(0) - ket(1)).unit()
+    psi0 = tensor_prod([psi0, ket(0)]).unit()
     obs = [
         pauli_z_pauli(0),
     ]
@@ -252,7 +253,7 @@ def test_time_dependent_hamiltonian_pauli_observable():
 
 def test_time_dependent_hamiltonian_bad_observable():
     o = 1.0
-    dt = 0.1
+    dt = 0.5
     T = 100
 
     schedule = Schedule(
@@ -267,14 +268,14 @@ def test_time_dependent_hamiltonian_bad_observable():
     ]
 
     backend = QiliSim()
-    with pytest.raises(ValueError, match="unsupported observable type of <class 'float'>"):
+    with pytest.raises(ValueError, match="Observable type not recognized."):
         backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
 
 @pytest.mark.parametrize("method", simulation_types)
 def test_time_dependent_hamiltonian_imaginary(method):
     o = 1.0
-    dt = 0.1
+    dt = 0.5
     T = 100
 
     schedule = Schedule(
@@ -284,6 +285,7 @@ def test_time_dependent_hamiltonian_imaginary(method):
     )
 
     psi0 = (ket(0) - ket(1)).unit()
+    psi0 = psi0.to_density_matrix()
     obs = [
         pauli_y(0),  # measure y
     ]
@@ -294,8 +296,45 @@ def test_time_dependent_hamiltonian_imaginary(method):
     assert isinstance(res, TimeEvolutionResult)
 
     expect_y = res.final_expected_values[0]
-    assert res.final_state.is_ket()
+    assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_y, -1.0, rtol=1e-2)
+
+    # check that it's hermitian
+    final_rho = res.final_state.dense()
+    assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
+
+@pytest.mark.parametrize("method", simulation_types)
+def test_row_vec_ordering(method):
+
+    o = 1.0
+    dt = 0.5
+    T = 100
+
+    coeff = (1+1j) / np.sqrt(2)
+    hamiltonian = coeff * pauli_x(0) + np.conj(coeff) * pauli_y(0)
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": hamiltonian},
+        coefficients={"h1": {(0, T): 1}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    psi0 = psi0.to_density_matrix()
+    obs = [
+        pauli_y(0),  # measure y
+    ]
+
+    backend = QiliSim(evolution_method=method)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    assert res.final_state.shape == (2, 2)
+
+    # check that it's hermitian
+    final_rho = res.final_state.dense()
+    assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
 @pytest.mark.parametrize("method", simulation_types)
@@ -324,6 +363,10 @@ def test_time_dependent_hamiltonian_density_mat(method):
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
+    
+    # check that it's hermitian
+    final_rho = res.final_state.dense()
+    assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
 @pytest.mark.parametrize("method", simulation_types)
