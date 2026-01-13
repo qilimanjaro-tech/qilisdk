@@ -147,15 +147,6 @@ class QiliSim(Backend):
         for obs in functional.observables:
             aux_obs = None
             if isinstance(obs, PauliOperator):
-                # for i in range(functional.schedule.nqubits):
-                #     if aux_obs is None:
-                #         aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
-                #     else:
-                #         aux_obs = (
-                #             tensor_prod([aux_obs, identity])
-                #             if i != obs.qubit
-                #             else tensor_prod([aux_obs, QTensor(obs.matrix)])
-                #         )
                 obs_to_tensor = []
                 for i in range(functional.schedule.nqubits):
                     if i != obs.qubit:

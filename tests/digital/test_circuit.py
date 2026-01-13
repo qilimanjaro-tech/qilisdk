@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from qilisdk.core import Parameter
-from qilisdk.digital import CNOT, RX, RZ, Circuit, X
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
 
 
@@ -204,7 +204,7 @@ def test_user_provides_custom_parameter():
 
 
 def test_random_circuit():
-    single_qubit_gates = {X, RX}
+    single_qubit_gates = {X, RX, S, RY, U1, U2, U3}
     two_qubit_gates = {CNOT}
     nqubits = 3
     ngates = 30

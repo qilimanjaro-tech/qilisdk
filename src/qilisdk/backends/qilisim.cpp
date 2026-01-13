@@ -707,6 +707,8 @@ class QiliSimCpp {
             SparseMatrix: The Lindblad superoperator.
         */
 
+        // TODO checu
+
         // The superoperator dimension
         long dim = long(currentH.rows());
         long dim_rho = dim * dim;
@@ -740,6 +742,7 @@ class QiliSimCpp {
             L -= term3;
         }
         return L;
+
     }
 
     py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) {
@@ -1328,7 +1331,7 @@ class QiliSimCpp {
         // Get the gate
         std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
 
-        // Determine which qubits to measure TODO
+        // Determine which qubits to measure
         std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
         // Start with the zero state

@@ -4,13 +4,14 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import PauliZ as pauli_z_pauli
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
-from qilisdk.core.qtensor import ket, tensor_prod
+from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
@@ -195,6 +196,79 @@ def test_time_dependent_hamiltonian(method):
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
+
+
+def test_time_dependent_hamiltonian_qtensor_observable():
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        QTensor(pauli_z(0).to_matrix()),  # measure z as QTensor
+    ]
+
+    backend = QiliSim()
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    expect_z = res.final_expected_values[0]
+    assert res.final_state.is_ket()
+    assert np.isclose(expect_z, -1.0, rtol=1e-2)
+
+
+def test_time_dependent_hamiltonian_pauli_observable():
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        pauli_z_pauli(0),
+    ]
+
+    backend = QiliSim()
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+
+    expect_z = res.final_expected_values[0]
+    assert res.final_state.is_ket()
+    assert np.isclose(expect_z, -1.0, rtol=1e-2)
+
+
+def test_time_dependent_hamiltonian_bad_observable():
+    o = 1.0
+    dt = 0.1
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        3.5,  # invalid observable
+    ]
+
+    backend = QiliSim()
+    with pytest.raises(ValueError, match="unsupported observable type of <class 'float'>"):
+        backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
 
 @pytest.mark.parametrize("method", simulation_types)
