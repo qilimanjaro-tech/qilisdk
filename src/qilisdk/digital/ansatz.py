@@ -14,12 +14,12 @@
 from abc import ABC
 from typing import Iterator, Literal, Type
 
-from numpy import pi
-
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator, PauliX
-from qilisdk.core.variables import Domain, Parameter, Term
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX
+from qilisdk.analog.schedule import Schedule
+from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, RX, RZ, U1, U2, U3, BasicGate, H
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, H
+from qilisdk.utils.trotterization import trotter_evolution
 from qilisdk.yaml import yaml
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
@@ -205,6 +205,22 @@ class HardwareEfficientAnsatz(Ansatz):
 
 
 @yaml.register_class
+class TrotterizedTimeEvolution(Ansatz):
+    def __init__(
+        self,
+        schedule: Schedule,
+        trotter_steps: int = 1,
+    ) -> None:
+        super().__init__(schedule.nqubits)
+
+        for hamiltonian in schedule:
+            for gate in trotter_evolution(
+                hamiltonian.get_commuting_partitions(), schedule.dt, trotter_steps=trotter_steps
+            ):
+                self.add(gate)
+
+
+@yaml.register_class
 class QAOA(Ansatz):
     """
     Quantum Approximate Optimization Algorithm (QAOA) ansatz.
@@ -316,87 +332,6 @@ class QAOA(Ansatz):
         """The mixer Hamiltonian used."""
         return self._mixer_hamiltonian
 
-    @staticmethod
-    def _pauli_evolution(
-        term: tuple[PauliOperator, ...],
-        coeff: complex | Term | Parameter,
-        time: complex | Term | Parameter,
-    ) -> Iterator[BasicGate | CNOT]:
-        """
-        An iterator of parameterized gates performing the evolution of a given Pauli string.
-
-        Args:
-            term (tuple[PauliOperator, ...]): The Pauli string to evolve under.
-            coeff (complex | Term | Parameter): The coefficient of the Pauli string.
-            time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).
-
-        Yields:
-            Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.
-        """
-
-        qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
-        if len(qubit_indices) == 0:
-            return
-
-        # Move everything to Z basis
-        for pauli in term:
-            q = pauli.qubit
-            name = pauli.name
-            if name == "X":
-                yield H(q)
-            elif name == "Y":
-                gate_val = pi / 2
-                yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
-
-        # Apply CNOT ladder
-        for i in range(len(qubit_indices) - 1):
-            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
-
-        # Apply RZ rotation on last qubit
-        last_qubit = qubit_indices[-1]
-        if isinstance(coeff, complex):
-            coeff = coeff.real
-        if isinstance(time, complex):
-            time = time.real
-        yield RZ(last_qubit, phi=(2 * coeff * time))
-
-        # Undo CNOT ladder
-        for i in reversed(range(len(qubit_indices) - 1)):
-            yield CNOT(qubit_indices[i], qubit_indices[i + 1])
-
-        # Move back from Z basis
-        for pauli in term:
-            q = pauli.qubit
-            name = pauli.name
-            if name == "X":
-                yield H(q)
-            elif name == "Y":
-                gate_val = -pi / 2
-                yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
-
-    def _trotter_evolution(
-        self,
-        commuting_parts: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]],
-        time: complex | Term | Parameter,
-        trotter_steps: int,
-    ) -> Iterator[BasicGate | CNOT]:
-        """
-        An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
-
-        Args:
-            commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
-            time (complex | Term | Parameter): The evolution time parameter.
-            trotter_steps (int): Number of Trotter steps.
-
-        Yields:
-            Iterator[BasicGate]: Gates implementing the Trotterized evolution.
-        """
-        for _ in range(trotter_steps):
-            for part in commuting_parts:
-                for term, coeff in part.items():
-                    for gate in self._pauli_evolution(term, coeff / trotter_steps, time):
-                        yield gate
-
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
 
@@ -420,10 +355,10 @@ class QAOA(Ansatz):
 
             # Apply problem Hamiltonian
             gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
-            for gate in self._trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
+            for gate in trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
                 self.add(gate)
 
             # Apply mixer Hamiltonian
             alpha_param = Parameter("alpha_" + str(i), initial_val_mixer)
-            for gate in self._trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
+            for gate in trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
                 self.add(gate)
