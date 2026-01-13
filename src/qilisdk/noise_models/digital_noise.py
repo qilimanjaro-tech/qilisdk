@@ -59,6 +59,10 @@ class KrausChannelNoise(DigitalNoise):
         if isinstance(identity, QTensor) and not np.allclose(identity.dense(), np.eye(dim)):
             raise ValueError("Kraus operators do not satisfy the completeness relation.")
 
+    @property
+    def name(self) -> str:
+        return "Kraus Channel Noise"
+
     def get_kraus_operators(self) -> list[QTensor]:
         """
         Returns:
@@ -131,6 +135,10 @@ class PauliChannelNoise(DigitalNoise):
     def pauli_probabilities(self) -> dict[tuple[PauliOperator], float]:
         return dict(self._pauli_probabilities)
 
+    @property
+    def name(self) -> str:
+        return "Pauli Channel Noise"
+
     def get_kraus_operators(self) -> list[QTensor]:
         """
         Returns:
@@ -183,6 +191,10 @@ class DigitalBitFlipNoise(PauliChannelNoise):
 
         super().__init__(pauli_probabilities=pauli_probabilities, num_qubits=1)
 
+    @property
+    def name(self) -> str:
+        return "Digital Bit-flip Noise"
+
 
 @yaml.register_class
 class DigitalDepolarizingNoise(PauliChannelNoise):
@@ -212,6 +224,10 @@ class DigitalDepolarizingNoise(PauliChannelNoise):
         }
 
         super().__init__(pauli_probabilities=pauli_probabilities, num_qubits=1)
+
+    @property
+    def name(self) -> str:
+        return "Digital Depolarizing Noise"
 
 
 @yaml.register_class
@@ -244,6 +260,10 @@ class DigitalDephasingNoise(PauliChannelNoise):
             num_qubits=1,
         )
 
+    @property
+    def name(self) -> str:
+        return "Digital Dephasing Noise"
+
 
 @yaml.register_class
 class DigitalAmplitudeDampingNoise(KrausChannelNoise):
@@ -273,3 +293,7 @@ class DigitalAmplitudeDampingNoise(KrausChannelNoise):
         kraus_operators = [K0, K1]
 
         super().__init__(kraus_operators=[QTensor(K) for K in kraus_operators])
+
+    @property
+    def name(self) -> str:
+        return "Digital Amplitude Damping Noise"

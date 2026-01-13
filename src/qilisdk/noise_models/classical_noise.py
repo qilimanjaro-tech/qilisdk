@@ -24,23 +24,26 @@ class ParameterNoise(ClassicalNoise):
     Noise model that affects specific parameters.
     """
 
-    def __init__(self, affected_parameters: list[str] | None = None, noise_std: float = 0.1) -> None:
+    def __init__(self, noise_std: float = 0.1) -> None:
         """
         Initialize a parameter noise model.
         This model represents noise that affects specific parameters in any quantum object (be it gates, Hamiltonians, etc.).
         If no affected parameters are specified, the noise affects all parameters.
 
         Args:
-            affected_parameters (list[str] | None): List of parameter names the noise affects.
             noise_std (float): Standard deviation of the noise to be applied to the parameters.
-        """
-        self._affected_parameters: list[str] = affected_parameters or []
-        self._noise_std = noise_std
 
-    @property
-    def affected_parameters(self) -> list[str]:
-        return self._affected_parameters
+        Raises:
+            ValueError: If the noise is negative.
+        """
+        if noise_std < 0:
+            raise ValueError("Noise Can't be negative.")
+        self._noise_std = noise_std
 
     @property
     def noise_std(self) -> float:
         return self._noise_std
+
+    @property
+    def name(self) -> str:
+        return "Parameter Noise"

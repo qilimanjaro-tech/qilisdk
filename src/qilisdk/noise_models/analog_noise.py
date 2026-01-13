@@ -46,6 +46,10 @@ class DissipativeNoise(AnalogNoise):
         if rate is not None:
             self._jump_operators = [op * rate for op in self._jump_operators]
 
+    @property
+    def name(self) -> str:
+        return "Dissipative Noise"
+
     def get_jump_operators(self) -> list[QTensor | Hamiltonian]:
         return self._jump_operators
 
@@ -66,6 +70,10 @@ class AnalogDepolarizingNoise(DissipativeNoise):
         ]
         super().__init__(jump_operators=jump_operators)
 
+    @property
+    def name(self) -> str:
+        return "Analog Depolarizing Noise"
+
 
 @yaml.register_class
 class AnalogDephasingNoise(DissipativeNoise):
@@ -79,6 +87,10 @@ class AnalogDephasingNoise(DissipativeNoise):
         op = (gamma / 2) ** 0.5 * QTensor(np.array([[1, 0], [0, -1]]))  # Z
         super().__init__(jump_operators=[op])
 
+    @property
+    def name(self) -> str:
+        return "Analog Dephasing Noise"
+
 
 @yaml.register_class
 class AnalogAmplitudeDampingNoise(DissipativeNoise):
@@ -91,3 +103,7 @@ class AnalogAmplitudeDampingNoise(DissipativeNoise):
         """
         op = (gamma) ** 0.5 * QTensor(np.array([[0, 1], [0, 0]]))  # Lowering operator
         super().__init__(jump_operators=[op])
+
+    @property
+    def name(self) -> str:
+        return "Analog Amplitude Damping Noise"

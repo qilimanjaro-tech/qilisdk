@@ -14,22 +14,23 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import overload
+from typing import TYPE_CHECKING, overload
 
-from qilisdk.digital.gates import Gate
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.digital.gates import Gate
 
 
 @yaml.register_class
 class NoisePass(ABC):
     """
-    Generic Noise Class.
+    Abstract base class for all noise passes.
     """
 
+    @property
     @abstractmethod
-    def __init__(self) -> None:
-        # Keep NoisePass abstract without forcing a noise_type implementation.
-        super().__init__()
+    def name(self) -> str: ...
 
 
 @yaml.register_class
@@ -108,7 +109,7 @@ class ClassicalNoiseInformation(NoiseInformation):
 @yaml.register_class
 class NoiseModel:
     """
-    Composite Noise Model consisting of multiple noise passes.
+    Composite noise model consisting of multiple noise passes and their scope metadata.
     """
 
     def __init__(self) -> None:
@@ -116,10 +117,13 @@ class NoiseModel:
 
     def get_noise_passes(self, qubit: int | None = None) -> list[NoisePass]:
         """
-        Returns the list of noise passes in the composite noise model.
+        Return noise passes in the composite model.
+
+        Args:
+            qubit (int | None): If provided, return only digital/analog noises affecting that qubit.
 
         Returns:
-            list[NoiseBase]: The list of noise passes.
+            list[NoisePass]: The list of noise passes.
         """
         if qubit is None:
             return [noise.noise_pass for noise in self._noise_passes_information]
@@ -133,10 +137,13 @@ class NoiseModel:
 
     def get_noise_information(self, qubit: int | None = None) -> list[NoiseInformation]:
         """
-        Returns the list of noise passes in the composite noise model.
+        Return noise information entries in the composite model.
+
+        Args:
+            qubit (int | None): If provided, return only digital/analog noise info affecting that qubit.
 
         Returns:
-            list[NoiseBase]: The list of noise passes.
+            list[NoiseInformation]: The list of noise information entries.
         """
         if qubit is None:
             return self._noise_passes_information
@@ -177,10 +184,16 @@ class NoiseModel:
         affected_parameters: list[str] | None = None,
     ) -> None:
         """
-        Adds a new noise pass to the composite noise model.
+        Add a new noise pass to the composite noise model.
 
         Args:
-            noise (NoiseBase): The noise pass to add.
+            noise (NoisePass): The noise pass to add.
+            affected_qubits (list[int] | None): Target qubits for digital/analog noise.
+            affected_gates (list[type[Gate]] | None): Target gate types for digital noise.
+            affected_parameters (list[str] | None): Target parameters for classical noise.
+
+        Raises:
+            TypeError: If the noise type provided is not supported.
         """
         if isinstance(noise, DigitalNoise):
             self._add_digital_noise(noise, affected_qubits=affected_qubits, affected_gates=affected_gates)
@@ -188,6 +201,8 @@ class NoiseModel:
             self._add_analog_noise(noise, affected_qubits=affected_qubits)
         elif isinstance(noise, ClassicalNoise):
             self._add_classical_noise(noise, affected_parameters=affected_parameters)
+        else:
+            raise TypeError("Unsupported Noise Type")
 
     def _add_digital_noise(
         self,
