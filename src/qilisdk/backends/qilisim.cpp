@@ -23,6 +23,8 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -680,7 +682,7 @@ class QiliSimCpp {
         Returns:
             SparseMatrix: The devectorized square matrix.
         */
-        int dim = static_cast<int>(std::sqrt(vec_matrix.rows()));
+        long dim = static_cast<long>(std::sqrt(vec_matrix.rows()));
         Triplets mat_entries;
         for (int c = 0; c < dim; ++c) {
             for (int r = 0; r < dim; ++r) {
@@ -706,8 +708,8 @@ class QiliSimCpp {
         */
 
         // The superoperator dimension
-        int dim = int(currentH.rows());
-        int dim_rho = dim * dim;
+        long dim = long(currentH.rows());
+        long dim_rho = dim * dim;
         SparseMatrix L(dim_rho, dim_rho);
 
         // The identity
@@ -1041,7 +1043,7 @@ class QiliSimCpp {
         if (rho_0.rows() != rho_0.cols() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = int(currentH.rows());
+        long dim = long(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Dimension mismatch.");
         }
@@ -1134,7 +1136,7 @@ class QiliSimCpp {
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = int(currentH.rows());
+        long dim = long(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
@@ -1252,7 +1254,7 @@ class QiliSimCpp {
         if (rho_0.cols() != rho_0.rows() && !is_unitary_on_statevector) {
             throw py::value_error("Initial density matrix must be square.");
         }
-        int dim = int(currentH.rows());
+        long dim = long(currentH.rows());
         if (rho_0.rows() != dim) {
             throw py::value_error("Initial density matrix dimension does not match Hamiltonian dimension.");
         }
@@ -1330,7 +1332,7 @@ class QiliSimCpp {
         std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
         // Start with the zero state
-        int dim = 1 << n_qubits;
+        long dim = 1L << n_qubits;
         DenseMatrix state = DenseMatrix::Zero(dim, 1);
         state(0, 0) = 1.0;
 
@@ -1390,9 +1392,12 @@ class QiliSimCpp {
         }
 
         // Make sure probabilities sum to 1
-        const double probability_tolerance = 1e-5;
-        if (std::abs(total_prob - 1.0) > probability_tolerance) {
-            throw py::value_error("Probabilities do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
+        // const double probability_tolerance = 1e-5;
+        // if (std::abs(total_prob - 1.0) > probability_tolerance) {
+        if (std::abs(total_prob - 1.0) > atol_) {
+            std::stringstream ss;
+            ss << std::setprecision(10) << total_prob;
+            throw py::value_error("Probabilities do not sum to 1 (sum = " + ss.str() + ")");
         }
 
         // Sample from these probabilities
@@ -1456,7 +1461,7 @@ class QiliSimCpp {
         std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_trajectories);
 
         // Construct the sampled states matrix
-        int dim = 1 << n_qubits;
+        long dim = 1L << n_qubits;
         Triplets new_mat_entries;
         int traj_index = 0;
         for (const auto& pair : counts) {

@@ -196,28 +196,36 @@ class Circuit(Parameterizable):
         Returns:
             Circuit: A randomly generated quantum circuit.
 
+        Raises:
+            ValueError: If it is not possible to generate a full random circuit with the provided parameters
+
         """
+
+        # If we only have one gate and one qubit, throw an error
+        if nqubits == 1 and len(single_qubit_gates) == 1:
+            raise ValueError("Cannot generate a full random circuit with only one qubit and one gate.")
+
+        # Make sure we have given gates
+        if len(single_qubit_gates) == 0 and len(two_qubit_gates) == 0:
+            raise ValueError("At least one gate must be provided to generate a random circuit.")
+
         new_circuit = cls(nqubits)
-        gate_list: list[type[BasicGate]] = list(single_qubit_gates) + list(two_qubit_gates)
+        gate_list: list[type[BasicGate]] = list(single_qubit_gates)
+        if nqubits > 1:
+            gate_list.extend(list(two_qubit_gates))
         prev_gate_type = None
         prev_qubits = None
         for _ in range(ngates):
             gate_class = random.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
             qubits = tuple(random.sample(range(nqubits), gate_nqubits))
-            params = {}
-            if gate_class.PARAMETER_NAMES:
-                for param_name in gate_class.PARAMETER_NAMES:
-                    val = random.uniform(-np.pi, np.pi)
-                    params[param_name] = Parameter(
-                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
-                    )
 
             # Avoid adding the same gate on the same qubits consecutively
             if gate_class == prev_gate_type and qubits == prev_qubits:
-                # If we only have one qubit, skip it
+                # If we only have one qubit, pick a different gate
                 if nqubits == 1:
-                    continue
+                    possible_new_gates = [g for g in single_qubit_gates if g != gate_class]
+                    gate_class = random.choice(possible_new_gates)
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
                 if len(qubits) < nqubits:
@@ -232,6 +240,15 @@ class Circuit(Parameterizable):
             # Update previous gate info
             prev_gate_type = gate_class
             prev_qubits = qubits
+
+            # Generate random parameters if needed
+            params = {}
+            if gate_class.PARAMETER_NAMES:
+                for param_name in gate_class.PARAMETER_NAMES:
+                    val = random.uniform(-np.pi, np.pi)
+                    params[param_name] = Parameter(
+                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
+                    )
 
             # Needed to explicitly handle each gate type to satisfy mypy type checking.
             if gate_class == CNOT:
