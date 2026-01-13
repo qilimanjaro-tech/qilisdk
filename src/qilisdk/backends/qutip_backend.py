@@ -204,11 +204,6 @@ class QutipBackend(Backend):
             logger.error("Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
-        if functional.initial_state.nqubits != functional.schedule.nqubits:
-            raise ValueError(
-                f"The initial state provided acts on {functional.initial_state.nqubits} qubits while the schedule acts on {functional.schedule.nqubits} qubits"
-            )
-
         qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []

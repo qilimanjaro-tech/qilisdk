@@ -3,22 +3,18 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from qilisdk.analog.schedule import Schedule
-from qilisdk.core.qtensor import ket
-from qilisdk.functionals.time_evolution import TimeEvolution
-
 pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
     exc_type=ImportError,
 )
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
+from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.core.model import Model
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
