@@ -19,7 +19,6 @@ from abc import ABC
 from collections import defaultdict
 from functools import reduce
 from itertools import product
-from math import prod
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np

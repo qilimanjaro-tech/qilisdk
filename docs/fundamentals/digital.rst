@@ -415,6 +415,40 @@ expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.
     result = backend.execute(vqa)
     print("VQA Result:", result)
 
+TrotterizedTimeEvolution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~qilisdk.digital.ansatz.TrotterizedTimeEvolution` builds a digital circuit that follows a
+time-ordered schedule of Hamiltonians. Each schedule slice is evolved using a fixed number of
+Trotter steps, and you may optionally prepend a state-initialization circuit or list of gates.
+
+Configuration options:
+
+- **schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of Hamiltonians to trotterize.
+- **trotter_steps**: Number of Trotter steps per schedule slice. Defaults to 1.
+- **state_initialization**: Optional :class:`~qilisdk.digital.circuit.Circuit` or list of gates
+  to apply before the time evolution.
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
+    from qilisdk.analog.schedule import Schedule
+    from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        dt=0.1,
+        total_time=1
+    )
+    ansatz = TrotterizedTimeEvolution(
+        schedule=schedule,
+        trotter_steps=1,
+    )
+    ansatz.draw()
+
 Parameter Utilities
 -------------------
 

@@ -18,7 +18,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliX
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, H
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, H
 from qilisdk.utils.trotterization import trotter_evolution
 from qilisdk.yaml import yaml
 
@@ -206,12 +206,49 @@ class HardwareEfficientAnsatz(Ansatz):
 
 @yaml.register_class
 class TrotterizedTimeEvolution(Ansatz):
+    """
+    Trotterized digital time evolution over a schedule of Hamiltonians.
+
+    The circuit applies an optional state initialization and then evolves under
+    each Hamiltonian slice in the schedule using a fixed number of Trotter steps.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+            from qilisdk.analog.schedule import Schedule
+
+            ansatz = TrotterizedTimeEvolution(
+                schedule=Schedule(...),
+                trotter_steps=2,
+            )
+            ansatz.draw()
+    """
+
     def __init__(
-        self,
-        schedule: Schedule,
-        trotter_steps: int = 1,
+        self, schedule: Schedule, trotter_steps: int = 1, state_initialization: Circuit | list[Gate] | None = None
     ) -> None:
+        """
+        Args:
+            schedule (Schedule): Time-ordered schedule of Hamiltonians to evolve under.
+            trotter_steps (int, optional): Number of Trotter steps per schedule slice. Defaults to 1.
+            state_initialization (Circuit | list[Gate] | None, optional): Optional circuit or list of gates
+                prepended before time evolution. Defaults to None.
+
+        Raises:
+            ValueError: If ``state_initialization`` is not a Circuit, list of Gate, or None.
+        """
         super().__init__(schedule.nqubits)
+
+        if state_initialization is not None:
+            if isinstance(state_initialization, Circuit):
+                for g in state_initialization.gates:
+                    self.add(g)
+            elif isinstance(state_initialization, list):
+                for g in state_initialization:
+                    self.add(g)
+            else:
+                raise ValueError("Invalid state initialization format.")
 
         for hamiltonian in schedule:
             for gate in trotter_evolution(
