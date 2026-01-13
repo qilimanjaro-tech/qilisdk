@@ -268,7 +268,7 @@ def test_time_dependent_hamiltonian_bad_observable():
     ]
 
     backend = QiliSim()
-    with pytest.raises(ValueError, match="Observable type not recognized."):
+    with pytest.raises(ValueError, match=r"Observable type not recognized."):
         backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
 
@@ -303,14 +303,13 @@ def test_time_dependent_hamiltonian_imaginary(method):
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
+
 @pytest.mark.parametrize("method", simulation_types)
 def test_row_vec_ordering(method):
-
-    o = 1.0
     dt = 0.5
     T = 100
 
-    coeff = (1+1j) / np.sqrt(2)
+    coeff = (1 + 1j) / np.sqrt(2)
     hamiltonian = coeff * pauli_x(0) + np.conj(coeff) * pauli_y(0)
 
     schedule = Schedule(
@@ -363,7 +362,7 @@ def test_time_dependent_hamiltonian_density_mat(method):
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
-    
+
     # check that it's hermitian
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)

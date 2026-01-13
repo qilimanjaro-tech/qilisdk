@@ -19,11 +19,10 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.core.qtensor import QTensor, tensor_prod
 
 if TYPE_CHECKING:
+    from qilisdk.core.qtensor import QTensor
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
@@ -124,10 +123,6 @@ class QiliSim(Backend):
 
         Returns:
             TimeEvolutionResult: The results of the evolution.
-
-        Raises:
-            ValueError: If an observable type is unsupported.
-
         """
 
         # Get the time steps
