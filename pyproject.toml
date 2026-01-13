@@ -187,7 +187,9 @@ ignore = [
     "PLR0915",
     "PLR0917",
     "PLR1702",
-    "TD003"]
+    "TD003",
+    "RUF067"
+]
 dummy-variable-rgx = "^_$"
 exclude = [".tmp", "docs/*"]
 
