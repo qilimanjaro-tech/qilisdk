@@ -62,6 +62,7 @@ class Gate {
     SparseMatrix base_matrix;
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
+    std::vector<std::pair<std::string, double>> parameters;
 
     int permute_bits(int index, const std::vector<int>& perm) const {
         /*
@@ -238,12 +239,16 @@ class Gate {
 
    public:
     // Constructor
-    Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_)
-        : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_) {
-        // gate_type = gate_type_;
-        // control_qubits = controls_;
-        // target_qubits = targets_;
-        // base_matrix = base_matrix_;
+    Gate(const std::string& gate_type_, 
+         const SparseMatrix& base_matrix_, 
+         const std::vector<int>& controls_, 
+         const std::vector<int>& targets_, 
+         const std::vector<std::pair<std::string, double>>& parameters_)
+        : gate_type(gate_type_), 
+        base_matrix(base_matrix_), 
+        control_qubits(controls_), 
+        target_qubits(targets_), 
+        parameters(parameters_) {
     }
 
     std::string get_name() const {
@@ -266,13 +271,24 @@ class Gate {
             std::string: The gate identifier.
         */
         std::ostringstream oss;
-        oss << get_name() << "_c_";
-        for (const auto& q : control_qubits) {
-            oss << q << "_";
+        oss << get_name();
+        if (!control_qubits.empty()) {
+            oss << "_c_";
+            for (const auto& q : control_qubits) {
+                oss << q << "_";
+            }
         }
-        oss << "t_";
-        for (const auto& q : target_qubits) {
-            oss << q << "_";
+        if (!target_qubits.empty()) {
+            oss << "_t_";
+            for (const auto& q : target_qubits) {
+                oss << q << "_";
+            }
+        }
+        if (!parameters.empty()) {
+            oss << "p_";
+            for (const auto& param : parameters) {
+                oss << param.first << "_" << param.second << "_";
+            }
         }
         return oss.str();
     }
@@ -837,8 +853,18 @@ class QiliSimCpp {
                 targets.push_back(py_target.cast<int>());
             }
 
+            // Get the parameter names
+            std::vector<std::pair<std::string, double>> parameters;
+            py::dict py_parameters = py_gate.attr("get_parameters")();
+            for (auto item : py_parameters) {
+                std::string name = item.first.cast<std::string>();
+                double value = item.second.cast<double>();
+                parameters.emplace_back(name, value);
+            }
+
             // Add the gate
-            gates.emplace_back(gate_type_str, base_matrix, controls, targets);
+            gates.emplace_back(gate_type_str, base_matrix, controls, targets, parameters);
+
         }
 
         return gates;

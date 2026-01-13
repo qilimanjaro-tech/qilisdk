@@ -111,6 +111,16 @@ def test_multi_controlled_execution():
     assert "111" in samples
     assert samples["111"] == 100
 
+def test_multiple_parameterized_gates(backend):
+    c = Circuit(nqubits=1)
+    c.add(RX(qubit=0, theta=np.pi / 4))
+    c.add(RX(qubit=0, theta=np.pi / 4))
+    c.add(RX(qubit=0, theta=np.pi / 2))
+    result = backend.execute(Sampling(circuit=c, nshots=100))
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "1" in samples
+    assert samples["1"] == 100
 
 def test_measurement_gates():
     backend = QiliSim()
@@ -391,3 +401,4 @@ def test_real_example():
     output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), ModelCostFunction(model)))
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}
+
