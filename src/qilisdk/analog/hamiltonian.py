@@ -518,8 +518,6 @@ class Hamiltonian(Parameterizable):
         """
         partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
 
-        # def _terms_commute(term1: tuple[PauliOperator, ...], term2: tuple[PauliOperator, ...]) -> bool:
-
         # Check each term with each partition
         for term, coeff in self.elements.items():
             placed = False

@@ -251,9 +251,7 @@ class TrotterizedTimeEvolution(Ansatz):
                 raise ValueError("Invalid state initialization format.")
 
         for hamiltonian in schedule:
-            for gate in trotter_evolution(
-                hamiltonian.get_commuting_partitions(), schedule.dt, trotter_steps=trotter_steps
-            ):
+            for gate in trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps):
                 self.add(gate)
 
 
