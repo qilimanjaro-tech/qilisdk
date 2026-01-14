@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Iterator, TypeAlias, Union, overload
+from typing import Iterator, TypeAlias
 
 from numpy import pi
 
@@ -105,7 +105,7 @@ def trotter_evolution(
 
 
 def _commuting_trotter_evolution(
-    commuting_parts: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]],
+    commuting_parts: CommutingParts,
     time: complex | Term | Parameter,
     trotter_steps: int,
 ) -> GateIterator:

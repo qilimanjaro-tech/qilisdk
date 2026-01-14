@@ -18,7 +18,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliX
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, H
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, H
 from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution, trotter_evolution
 from qilisdk.yaml import yaml
 

@@ -209,7 +209,7 @@ class Circuit(Parameterizable):
         """
         if isinstance(gates, list):
             for i, g in enumerate(gates):
-                self._insert(g, i)
+                self._insert(g, i + index)
         else:
             self._insert(gates, index)
 

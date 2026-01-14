@@ -232,17 +232,18 @@ def test_append_and_prepend_circuits():
 def test_add_operator_supports_gate_and_circuit():
     c = Circuit(nqubits=2)
     x_gate = X(0)
-    c + x_gate
+    c = c + x_gate
     assert c.gates == [x_gate]
 
     other = Circuit(nqubits=2)
-    rz_gate = RZ(1, phi=0.3)
+    angle = Parameter("RZ_phi", 0.3)
+    rz_gate = RZ(1, phi=angle)
     other.add(rz_gate)
-    c + other
+    c = c + other
     assert c.gates == [x_gate, rz_gate]
 
-    prepend_gate = RX(0, theta=0.2)
-    prepend_gate + c
+    prepend_gate = RX(0, theta=angle)
+    c = prepend_gate + c
     assert c.gates == [prepend_gate, x_gate, rz_gate]
 
     # Change circuit's parameter value
