@@ -287,10 +287,10 @@ class QTensor:
                 data.append(d)
 
             if data:
-                row = np.concatenate(row)
-                col = np.concatenate(col)
-                data = np.concatenate(data)
-                out = coo_matrix((data, (row, col)), shape=(Kdim, Kdim))
+                np_row = np.concatenate(row)
+                np_col = np.concatenate(col)
+                np_data = np.concatenate(data)
+                out = coo_matrix((np_data, (np_row, np_col)), shape=(Kdim, Kdim))
                 out.sum_duplicates()
                 return QTensor(out.tocsr())
             return QTensor(csr_matrix((Kdim, Kdim)))
