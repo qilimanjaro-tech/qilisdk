@@ -2,14 +2,15 @@ Backends
 ========
 
 The :mod:`~qilisdk.backends` module provides concrete execution engines for running :mod:`~qilisdk.functionals` (quantum processes).  
-Currently, two backends are supported:
+Currently, three backends are supported:
 
+- :class:`~qilisdk.backends.qilisim.QiliSim`
 - :class:`~qilisdk.backends.cuda_backend.CudaBackend`  
 - :class:`~qilisdk.backends.qutip_backend.QutipBackend`  
 
 .. NOTE::
 
-    Backends are optional; to install one, include its extra when installing QILISDK:
+    Backends other than QiliSim are optional; to install one, include its extra when installing QILISDK:
 
     .. code-block:: console
 
@@ -54,6 +55,10 @@ drivers to be present on the system.
      - Extra
      - Key dependency
      - Notes
+   * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
+     - ``qilisim``
+     - None
+     - CPU based; no special hardware needs.
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ``cuda``
      - `cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_
@@ -76,6 +81,10 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
      - Sampling
      - TimeEvolution
      - VariationalProgram
+   * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
+     - ✓
+     - ✓
+     - ✓
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ✓
      - ✓
@@ -84,6 +93,59 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
      - ✓
      - ✓
      - ✓
+
+QiliSim Backend
+----------------
+
+The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing 
+efficient simulation of both digital and analog quantum functionals.
+It is designed for ease of use and does not require any special hardware or dependencies.
+There is no need to install QiliSim separately, as it is included with the core QILISDK installation.
+
+**Initialization**
+
+.. code-block:: python
+
+    from qilisdk.backends import QiliSim
+
+    backend = QiliSim()
+
+**Capabilities**
+
+- **Sampling** of digital circuits with efficient state-vector simulation.
+- **TimeEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
+- Compatible with :class:`~qilisdk.functionals.variational_program.VariationalProgram` for classical optimization loops.
+
+**Parameters**
+
+- ``evolution_method`` (str, optional): The method for simulating time evolution. Options include 'direct', 'arnoldi' and 'integrate'. Default is 'integrate'.
+- ``arnoldi_dim`` (int, optional): Dimension of the Krylov subspace for the Arnoldi method. Default is 10.
+- ``num_arnoldi_substeps`` (int, optional): Number of substeps for the Arnoldi method per timestep. Default is 1.
+- ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 1.
+- ``monte_carlo`` (bool, optional): Whether to use the Monte Carlo wavefunction method. Default is False.
+- ``num_monte_carlo_trajectories`` (int, optional): Number of trajectories to simulate when using the Monte Carlo method. Default is 100.
+
+**Example**
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.digital import Circuit, H, CNOT
+    from qilisdk.backends import QiliSim
+    from qilisdk.functionals import Sampling
+
+    # Build a simple circuit
+    circuit = Circuit(5)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+
+    # Create Sampling functional
+    sampling = Sampling(circuit=circuit, nshots=500)
+
+    # Execute with the QiliSim backend
+    qilisim_backend = QiliSim()
+    result = qilisim_backend.execute(sampling)
+    print(result.samples)
 
 CUDA Backend
 ------------
@@ -184,8 +246,8 @@ It is the most lightweight option, ideal for local development or environments w
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.core import ket, tensor_prod
+    from qilisdk.backends import QutipBackend
     from qilisdk.core.interpolator import Interpolation
-    from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
     # Define total time and timestep
@@ -235,3 +297,4 @@ It is the most lightweight option, ideal for local development or environments w
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]
     )
+
