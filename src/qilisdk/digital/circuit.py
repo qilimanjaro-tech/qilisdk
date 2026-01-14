@@ -13,15 +13,14 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import random
+from typing import TYPE_CHECKING
 
 import numpy as np
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Domain, Parameter, RealNumber
+from qilisdk.core.variables import Domain, Parameter
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -29,7 +28,7 @@ from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
-    from qilisdk.core.variables import Parameter, RealNumber
+    from qilisdk.core.variables import RealNumber
 
 
 @yaml.register_class
