@@ -129,6 +129,7 @@ You can also add or insert multiple gates at once:
 
   circuit.add([X(0), RX(1, theta=np.pi / 2)])
   circuit.insert([H(2), CNOT(2, 1)], index=1)
+  circuit.insert(X(0), 0)
 
 Circuits can be appended or prepended, and the ``+`` operator mirrors those behaviors:
 
@@ -141,7 +142,7 @@ Circuits can be appended or prepended, and the ``+`` operator mirrors those beha
   right.add(CNOT(0, 1))
 
   left.append(right)
-  # Equivalent: left + right
+  # Equivalent: left = left + right
 
   extra = X(1)
   # Equivalent to left.insert(extra, index=0)
@@ -468,8 +469,6 @@ Configuration options:
 
 - **schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of Hamiltonians to trotterize.
 - **trotter_steps**: Number of Trotter steps per schedule slice. Defaults to 1.
-- **state_initialization**: Optional :class:`~qilisdk.digital.circuit.Circuit` or list of gates
-  to apply before the time evolution.
 
 **Example**
 
