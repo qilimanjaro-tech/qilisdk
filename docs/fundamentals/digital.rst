@@ -120,6 +120,33 @@ Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit
   circuit.add(CNOT(0, 1))  # CNOT: control 0 → target 2
   circuit.draw()
 
+You can also add or insert multiple gates at once:
+
+.. code-block:: python
+
+  from qilisdk.digital import X, RX
+  import numpy as np
+
+  circuit.add([X(0), RX(1, theta=np.pi / 2)])
+  circuit.insert([H(2), CNOT(2, 1)], index=1)
+
+Circuits can be appended or prepended, and the ``+`` operator mirrors those behaviors:
+
+.. code-block:: python
+
+  left = Circuit(2)
+  left.add(H(0))
+
+  right = Circuit(2)
+  right.add(CNOT(0, 1))
+
+  left.append(right)
+  # Equivalent: left + right
+
+  extra = X(1)
+  # Equivalent to left.insert(extra, index=0)
+  left = extra + left
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 

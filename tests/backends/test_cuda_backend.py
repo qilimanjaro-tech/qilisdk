@@ -446,16 +446,18 @@ def test_trotterized_time_evolution_results():
         dt=0.01,
         total_time=10,
     )
-    ansatz = TrotterizedTimeEvolution(schedule, state_initialization=[H(0)])
+    cuda_ansatz = TrotterizedTimeEvolution(schedule)
+    cuda_ansatz.insert([H(0)], 0)
+
     te = TimeEvolution(
         schedule,
         observables=[h1],
         initial_state=(ket(0) + ket(1)).unit(),
     )
     nshots = 10_000
-    backend = CudaBackend()
-    te_res = backend.execute(te)
-    sam_res = backend.execute(Sampling(ansatz, nshots=nshots))
+    cuda = CudaBackend()
+    te_res = cuda.execute(te)
+    sam_res = cuda.execute(Sampling(cuda_ansatz, nshots=nshots))
     probs = np.abs((te_res.final_state.dense()) ** 2).T[0]
     te_probs = {("{" + ":0" + str(schedule.nqubits) + "b}").format(i): float(p) for i, p in enumerate(probs)}
     sam_probs = {key: sam_res.samples[key] / nshots if key in sam_res.samples else 0.0 for key in te_probs}

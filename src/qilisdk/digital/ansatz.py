@@ -19,7 +19,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, Gate, H
-from qilisdk.utils.trotterization import trotter_evolution
+from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution, trotter_evolution
 from qilisdk.yaml import yaml
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
@@ -225,34 +225,17 @@ class TrotterizedTimeEvolution(Ansatz):
             ansatz.draw()
     """
 
-    def __init__(
-        self, schedule: Schedule, trotter_steps: int = 1, state_initialization: Circuit | list[Gate] | None = None
-    ) -> None:
+    def __init__(self, schedule: Schedule, trotter_steps: int = 1) -> None:
         """
         Args:
             schedule (Schedule): Time-ordered schedule of Hamiltonians to evolve under.
             trotter_steps (int, optional): Number of Trotter steps per schedule slice. Defaults to 1.
-            state_initialization (Circuit | list[Gate] | None, optional): Optional circuit or list of gates
                 prepended before time evolution. Defaults to None.
-
-        Raises:
-            ValueError: If ``state_initialization`` is not a Circuit, list of Gate, or None.
         """
         super().__init__(schedule.nqubits)
 
-        if state_initialization is not None:
-            if isinstance(state_initialization, Circuit):
-                for g in state_initialization.gates:
-                    self.add(g)
-            elif isinstance(state_initialization, list):
-                for g in state_initialization:
-                    self.add(g)
-            else:
-                raise ValueError("Invalid state initialization format.")
-
         for hamiltonian in schedule:
-            for gate in trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps):
-                self.add(gate)
+            self.add(list(trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps)))
 
 
 @yaml.register_class
@@ -390,10 +373,10 @@ class QAOA(Ansatz):
 
             # Apply problem Hamiltonian
             gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
-            for gate in trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
+            for gate in _commuting_trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
                 self.add(gate)
 
             # Apply mixer Hamiltonian
             alpha_param = Parameter("alpha_" + str(i), initial_val_mixer)
-            for gate in trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
+            for gate in _commuting_trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
                 self.add(gate)

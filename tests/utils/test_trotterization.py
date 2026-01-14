@@ -18,11 +18,12 @@ from numpy import pi
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
 from qilisdk.digital.gates import RX, RZ, H
 from qilisdk.utils.trotterization import trotter_evolution
+from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution
 
 
 def test_trotter_evolution_commuting_parts_splits_coefficients():
     parts = [{(PauliZ(0),): 1.0, (PauliZ(1),): 2.0}]
-    gates = list(trotter_evolution(parts, time=0.5, trotter_steps=2))
+    gates = list(_commuting_trotter_evolution(parts, time=0.5, trotter_steps=2))
 
     assert len(gates) == 4
     assert all(isinstance(gate, RZ) for gate in gates)
@@ -32,7 +33,7 @@ def test_trotter_evolution_commuting_parts_splits_coefficients():
 
 def test_trotter_evolution_handles_y_basis_change():
     parts = [{(PauliY(0),): 1.0}]
-    gates = list(trotter_evolution(parts, time=1.0, trotter_steps=1))
+    gates = list(_commuting_trotter_evolution(parts, time=1.0, trotter_steps=1))
 
     assert len(gates) == 3
     assert isinstance(gates[0], RX)
@@ -45,7 +46,7 @@ def test_trotter_evolution_handles_y_basis_change():
 
 def test_trotter_evolution_ignores_identity_terms():
     parts = [{(PauliI(0),): 1.0}]
-    gates = list(trotter_evolution(parts, time=1.0, trotter_steps=3))
+    gates = list(_commuting_trotter_evolution(parts, time=1.0, trotter_steps=3))
     assert gates == []
 
 

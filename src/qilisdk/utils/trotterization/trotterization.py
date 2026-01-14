@@ -21,9 +21,9 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.core.variables import Domain, Parameter, Term
 from qilisdk.digital.gates import CNOT, RX, RZ, BasicGate, H
 
-Parts: TypeAlias = list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]
-TimeParam: TypeAlias = complex | Term | Parameter
-GateIter: TypeAlias = Iterator[BasicGate | CNOT]
+CommutingParts: TypeAlias = list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]
+TimeParameter: TypeAlias = complex | Term | Parameter
+GateIterator: TypeAlias = Iterator[BasicGate | CNOT]
 
 
 def _pauli_evolution(
@@ -84,71 +84,22 @@ def _pauli_evolution(
             yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
 
 
-@overload
 def trotter_evolution(
-    evolution_operator: Parts,
-    time: TimeParam,
-    trotter_steps: int,
-) -> GateIter:
-    """
-    An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
-
-    Args:
-        evolution_operator (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
-        time (complex | Term | Parameter): The evolution time parameter.
-        trotter_steps (int): Number of Trotter steps.
-
-    Yields:
-        Iterator[BasicGate]: Gates implementing the Trotterized evolution.
-    """
-
-
-@overload
-def trotter_evolution(
-    evolution_operator: Hamiltonian,
-    time: TimeParam,
-    trotter_steps: int,
-) -> GateIter:
-    """
-    An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
-
-    Args:
-        evolution_operator (Hamiltonian): Hamiltonian object to be trotterized.
-        time (complex | Term | Parameter): The evolution time parameter.
-        trotter_steps (int): Number of Trotter steps.
-
-    Yields:
-        Iterator[BasicGate]: Gates implementing the Trotterized evolution.
-    """
-
-
-def trotter_evolution(
-    evolution_operator: Union[Hamiltonian, Parts],
-    time: TimeParam,
-    trotter_steps: int,
-) -> GateIter:
-    """
-    An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
-
-    Args:
-        evolution_operator (Hamiltonian | list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): Hamiltonian object or a list of commuting partitions to be trotterized.
-        time (complex | Term | Parameter): The evolution time parameter.
-        trotter_steps (int): Number of Trotter steps.
-
-    Yields:
-        Iterator[BasicGate]: Gates implementing the Trotterized evolution.
-    """
-    if isinstance(evolution_operator, Hamiltonian):
-        yield from _hamiltonian_trotter_evolution(evolution_operator, time=time, trotter_steps=trotter_steps)
-    else:
-        yield from _commuting_trotter_evolution(evolution_operator, time=time, trotter_steps=trotter_steps)
-
-
-def _hamiltonian_trotter_evolution(
     hamiltonian: Hamiltonian,
-    time: complex | Term | Parameter,
+    time: TimeParameter,
     trotter_steps: int,
-) -> Iterator[BasicGate | CNOT]:
+) -> GateIterator:
+    """
+    An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
+
+    Args:
+        hamiltonian (Hamiltonian): Hamiltonian object to be trotterized.
+        time (complex | Term | Parameter): The evolution time parameter.
+        trotter_steps (int): Number of Trotter steps.
+
+    Yields:
+        Iterator[BasicGate]: Gates implementing the Trotterized evolution.
+    """
     commuting_parts = hamiltonian.get_commuting_partitions()
     yield from _commuting_trotter_evolution(commuting_parts=commuting_parts, time=time, trotter_steps=trotter_steps)
 
@@ -157,7 +108,18 @@ def _commuting_trotter_evolution(
     commuting_parts: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]],
     time: complex | Term | Parameter,
     trotter_steps: int,
-) -> Iterator[BasicGate | CNOT]:
+) -> GateIterator:
+    """
+    An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
+
+    Args:
+        commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
+        time (complex | Term | Parameter): The evolution time parameter.
+        trotter_steps (int): Number of Trotter steps.
+
+    Yields:
+        Iterator[BasicGate]: Gates implementing the Trotterized evolution.
+    """
     for _ in range(trotter_steps):
         for part in commuting_parts:
             for term, coeff in part.items():

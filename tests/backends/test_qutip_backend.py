@@ -359,7 +359,8 @@ def test_trotterized_time_evolution_results():
         dt=0.01,
         total_time=10,
     )
-    ansatz = TrotterizedTimeEvolution(schedule, state_initialization=[H(0)])
+    ansatz = TrotterizedTimeEvolution(schedule)
+    ansatz.insert([H(0)], 0)
     te = TimeEvolution(
         schedule,
         observables=[h1],
