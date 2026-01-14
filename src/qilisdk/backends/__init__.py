@@ -14,8 +14,9 @@
 import sys
 
 from qilisdk._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
+from qilisdk.backends.qilisim import QiliSim
 
-__all__ = []
+__all__ = ["QiliSim"]
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(

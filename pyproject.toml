@@ -90,10 +90,10 @@ url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
 
-[tool.hatch.build.targets.sdist]
+[tool.scikit-build.sdist]
 exclude = [
     "/.github",
     "/.hypothesis",
@@ -108,7 +108,13 @@ exclude = [
     "/tests",
 ]
 
-[tool.hatch.build.targets.wheel]
+[tool.scikit-build]
+cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
+# cmake.build-type = "Debug"
+cmake.build-type = "Release"
+cmake.define.qilisim = "ON"
+
+[tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
 
 [tool.ruff]
@@ -158,6 +164,7 @@ select = [
     "RUF"
 ]
 ignore = [
+    "S311",
     "E111",
     "E114",
     "E117",

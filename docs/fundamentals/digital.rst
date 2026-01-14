@@ -146,6 +146,21 @@ Circuits can be appended or prepended, and the ``+`` operator mirrors those beha
   extra = X(1)
   # Equivalent to left.insert(extra, index=0)
   left = extra + left
+ 
+**Generating Random Circuits**
+
+You can also initialize a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, X, H, CNOT
+    c = Circuit.random(
+        nqubits=3,
+        single_qubit_gates=[X, H],
+        two_qubit_gates=[CNOT],
+        ngates=10,
+    )
+    circuit.draw()
 
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^

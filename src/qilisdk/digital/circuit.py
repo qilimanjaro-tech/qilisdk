@@ -15,14 +15,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import random
+
 import numpy as np
+from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.variables import Domain, Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
-from .gates import Gate
+from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
     from qilisdk.core.variables import Parameter, RealNumber
@@ -287,3 +291,78 @@ class Circuit(Parameterizable):
         renderer.plot()
         if filepath:
             renderer.save(filepath)
+
+    @classmethod
+    def random(
+        cls, nqubits: int, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
+    ) -> Self:
+        """
+        Generate a random quantum circuit from a given set of gates.
+
+        Args:
+            nqubits (int): The number of qubits in the circuit.
+            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.
+            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.
+            ngates (int): The number of gates to include in the circuit.
+
+        Returns:
+            Circuit: A randomly generated quantum circuit.
+
+        Raises:
+            ValueError: If it is not possible to generate a full random circuit with the provided parameters
+
+        """
+
+        # If we only have one gate and one qubit, throw an error
+        if nqubits == 1 and len(single_qubit_gates) == 1:
+            raise ValueError("Cannot generate a full random circuit with only one qubit and one gate.")
+
+        # Make sure we have given gates
+        if len(single_qubit_gates) == 0 and len(two_qubit_gates) == 0:
+            raise ValueError("At least one gate must be provided to generate a random circuit.")
+
+        new_circuit = cls(nqubits)
+        gate_list: list[type[BasicGate]] = list(single_qubit_gates)
+        if nqubits > 1:
+            gate_list.extend(list(two_qubit_gates))
+        prev_gate_type = None
+        prev_qubits = None
+        for _ in range(ngates):
+            gate_class = random.choice(gate_list)
+            gate_nqubits = 1 if gate_class in single_qubit_gates else 2
+            qubits = tuple(random.sample(range(nqubits), gate_nqubits))
+
+            # Avoid adding the same gate on the same qubits consecutively
+            if gate_class == prev_gate_type and qubits == prev_qubits:
+                # If we only have one qubit, pick a different gate
+                if nqubits == 1:
+                    possible_new_gates = [g for g in single_qubit_gates if g != gate_class]
+                    gate_class = random.choice(possible_new_gates)
+
+                # If the gate list does not include all qubits, change the first to be a different qubit
+                if len(qubits) < nqubits:
+                    possible_new_qubits = [q for q in range(nqubits) if q not in qubits]
+                    new_qubit = random.choice(possible_new_qubits)
+                    qubits = (new_qubit, *qubits[1:])
+
+                # Otherwise, flip the order of the qubits
+                else:
+                    qubits = tuple(reversed(qubits))
+
+            # Update previous gate info
+            prev_gate_type = gate_class
+            prev_qubits = qubits
+
+            # Generate random parameters if needed
+            params = {}
+            if gate_class.PARAMETER_NAMES:
+                for param_name in gate_class.PARAMETER_NAMES:
+                    val = random.uniform(-np.pi, np.pi)
+                    params[param_name] = Parameter(
+                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
+                    )
+
+            # Add the gate to the circuit (type: ignore since mypy cannot infer the dynamic params)
+            new_circuit.add(gate_class(*qubits, **params))  # type: ignore
+
+        return new_circuit
