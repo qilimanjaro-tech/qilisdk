@@ -460,11 +460,11 @@ Configuration options:
 
 .. code-block:: python
 
-    from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
+    from qilisdk.analog.hamiltonian import Z as pauli_z
     from qilisdk.analog.schedule import Schedule
     from qilisdk.digital.ansatz import TrotterizedTimeEvolution
 
-    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    hamiltonian = pauli_z(0)
     schedule = Schedule(
         hamiltonians={"h": hamiltonian},
         dt=0.1,
