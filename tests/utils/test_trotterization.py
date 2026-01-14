@@ -16,7 +16,7 @@ import pytest
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
-from qilisdk.digital.gates import H, RX, RZ
+from qilisdk.digital.gates import RX, RZ, H
 from qilisdk.utils.trotterization import trotter_evolution
 
 
