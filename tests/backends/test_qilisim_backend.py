@@ -51,7 +51,7 @@ def test_execute_with_measurement_gate(backend):
     assert result.samples == {"1": 50}
 
 
-def test_controlled_cnot(backend):
+def test_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
     # Expect no error on building or executing
@@ -59,6 +59,17 @@ def test_controlled_cnot(backend):
     assert isinstance(result, SamplingResult)
     # All samples should be "00" since X only applies if control=1, but no preparation
     assert result.samples == {"00": 10}
+
+
+def test_exponential_gates():
+    backend = QiliSim()
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0).exponential())
+    result = backend.execute(Sampling(circuit=circuit, nshots=100))
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "1" in samples
+    assert "0" in samples
 
 
 def test_nshots():

@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <complex>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <random>
@@ -23,8 +24,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <sstream>
-#include <iomanip>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -73,9 +72,11 @@ class Gate {
         specified by the permutation vector.
         Also note, the qubit versus bit ordering is reversed (i.e. {1, 0, 2} swaps the
         first bits (0 and 1), not the last/least-significant).
+
         Args:
             index (int): The original index.
             perm (std::vector<int>): The permutation vector.
+
         Returns:
             int: The permuted index.
         */
@@ -94,10 +95,12 @@ class Gate {
     Triplets tensor_product(Triplets& A, Triplets& B, int B_width) const {
         /*
         Compute the tensor product of two sets of (row, col, value) tuples.
+
         Args:
             A (Triplets&): First matrix entries.
             B (Triplets&): Second matrix entries.
             B_width (int): Width of the second matrix (assumed square).
+
         Returns:
             Triplets: The tensor product entries.
         */
@@ -119,11 +122,13 @@ class Gate {
     SparseMatrix base_to_full(const SparseMatrix& base_gate, int num_qubits, const std::vector<int>& control_qubits, const std::vector<int>& target_qubits) const {
         /*
         Expand a base gate matrix to the full matrix on the entire qubit register.
+
         Args:
             base_gate (SparseMatrix): The base gate matrix.
             num_qubits (int): Total number of qubits in the register.
             control_qubits (std::vector<int>): List of control qubit indices.
             target_qubits (std::vector<int>): List of target qubit indices.
+
         Returns:
             SparseMatrix: The full matrix representation of the gate.
         */
@@ -241,17 +246,12 @@ class Gate {
 
    public:
     // Constructor
-    Gate(const std::string& gate_type_, 
-         const SparseMatrix& base_matrix_, 
-         const std::vector<int>& controls_, 
-         const std::vector<int>& targets_, 
+    Gate(const std::string& gate_type_,
+         const SparseMatrix& base_matrix_,
+         const std::vector<int>& controls_,
+         const std::vector<int>& targets_,
          const std::vector<std::pair<std::string, double>>& parameters_)
-        : gate_type(gate_type_), 
-        base_matrix(base_matrix_), 
-        control_qubits(controls_), 
-        target_qubits(targets_), 
-        parameters(parameters_) {
-    }
+        : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_), parameters(parameters_) {}
 
     std::string get_name() const {
         /*
@@ -298,8 +298,10 @@ class Gate {
     SparseMatrix get_full_matrix(int num_qubits) const {
         /*
         Get the full matrix representation of the gate on the entire qubit register.
+
         Args:
             num_qubits (int): Total number of qubits in the register.
+
         Returns:
             SparseMatrix: The full matrix representation of the gate.
         */
@@ -325,10 +327,12 @@ class QiliSimCpp {
     SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) const {
         /*
         Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
+
         Args:
             H (SparseMatrix): The upper Hessenberg matrix.
             dt (std::complex<double>): The time step. Can be complex if needed.
             e1 (SparseMatrix): The vector to apply the exponential to.
+
         Returns:
             SparseMatrix: The result of exp(H*dt) * e1.
         */
@@ -341,9 +345,11 @@ class QiliSimCpp {
     SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) const {
         /*
         Compute the matrix exponential exp(H*dt).
+
         Args:
             H (SparseMatrix): The matrix to exponentiate.
             dt (std::complex<double>): The time step. Can be complex if needed.
+
         Returns:
             SparseMatrix: The matrix exponential exp(H*dt).
         */
@@ -357,9 +363,11 @@ class QiliSimCpp {
         /*
         Compute the inner product between two sparse matrices.
         Note that the first matrix is conjugated.
+
         Args:
             v1 (SparseMatrix): The first matrix.
             v2 (SparseMatrix): The second matrix.
+
         Returns:
             std::complex<double>: The inner product result.
         */
@@ -370,9 +378,11 @@ class QiliSimCpp {
         /*
         Compute the inner product between two dense matrices.
         Note that the first matrix is conjugated.
+
         Args:
             v1 (DenseMatrix): The first matrix.
             v2 (DenseMatrix): The second matrix.
+
         Returns:
             std::complex<double>: The inner product result.
         */
@@ -382,6 +392,7 @@ class QiliSimCpp {
     void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H) {
         /*
         Perform the Arnoldi iteration to build the basis.
+
         Args:
             L (SparseMatrix): The Lindblad superoperator.
             v0 (SparseMatrix): The initial vectorized density matrix.
@@ -480,8 +491,10 @@ class QiliSimCpp {
     SparseMatrix from_numpy(const py::buffer& matrix_buffer) {
         /*
         Convert a numpy array buffer to a SparseMatrix.
+
         Args:
             matrix_buffer (py::buffer): The numpy array buffer.
+
         Returns:
             SparseMatrix: The converted sparse matrix.
         */
@@ -509,8 +522,10 @@ class QiliSimCpp {
     std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs) {
         /*
         Extract Hamiltonian matrices from a list of QTensor objects.
+
         Args:
             Hs (py::object): A list of QTensor Hamiltonians.
+
         Returns:
             std::vector<SparseMatrix>: The list of Hamiltonian sparse matrices.
         */
@@ -527,8 +542,10 @@ class QiliSimCpp {
     std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps) {
         /*
         Extract jump operator matrices from a list of QTensor objects.
+
         Args:
             jumps (py::object): A list of QTensor jump operators.
+
         Returns:
             std::vector<SparseMatrix>: The list of jump operator sparse matrices.
         */
@@ -545,18 +562,18 @@ class QiliSimCpp {
     std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits) {
         /*
         Extract observable matrices from a list of QTensor objects.
+
         Args:
             observables (py::object): A list of QTensor observables.
             nqubits (long): The total number of qubits.
+
         Returns:
             std::vector<SparseMatrix>: The list of observable sparse matrices.
         */
         std::vector<SparseMatrix> observable_matrices;
         for (auto obs : observables) {
-
             // Depending on the type of observable given
             if (py::isinstance(obs, Hamiltonian)) {
-
                 // Get the matrix
                 py::buffer matrix = numpy_array(obs.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
                 py::buffer_info buf = matrix.request();
@@ -571,7 +588,6 @@ class QiliSimCpp {
                 observable_matrices.push_back(O_global);
 
             } else if (py::isinstance(obs, PauliOperator)) {
-                
                 // Get the matrix
                 py::buffer matrix = numpy_array(obs.attr("matrix"), py::dtype("complex128"));
                 py::buffer_info buf = matrix.request();
@@ -599,9 +615,7 @@ class QiliSimCpp {
 
             } else {
                 throw py::value_error("Observable type not recognized.");
-
             }
-
         }
         return observable_matrices;
     }
@@ -609,8 +623,10 @@ class QiliSimCpp {
     std::vector<std::vector<double>> parse_parameters(const py::object& coeffs) {
         /*
         Extract parameter lists from a list of coefficient objects.
+
         Args:
             coeffs (py::object): A list of coefficient objects.
+
         Returns:
             std::vector<std::vector<double>>: The list of parameter vectors.
         */
@@ -628,8 +644,10 @@ class QiliSimCpp {
     std::vector<double> parse_time_steps(const py::object& steps) {
         /*
         Extract time steps from a list of step objects.
+
         Args:
             steps (py::object): A list of step objects.
+
         Returns:
             std::vector<double>: The list of time steps.
         */
@@ -643,8 +661,10 @@ class QiliSimCpp {
     SparseMatrix parse_initial_state(const py::object& initial_state) {
         /*
         Extract the initial state from a QTensor object.
+
         Args:
             initial_state (py::object): The initial state as a QTensor.
+
         Returns:
             SparseMatrix: The initial state as a sparse matrix.
         */
@@ -673,8 +693,10 @@ class QiliSimCpp {
     std::complex<double> trace(const SparseMatrix& matrix) {
         /*
         Compute the trace of a square matrix.
+
         Args:
             matrix (SparseMatrix): The input square matrix.
+
         Returns:
             std::complex<double>: The trace of the matrix.
         */
@@ -691,8 +713,10 @@ class QiliSimCpp {
     SparseMatrix vectorize(const SparseMatrix& matrix) {
         /*
         Vectorize a matrix by stacking its columns.
+
         Args:
             matrix (SparseMatrix): The input matrix.
+
         Returns:
             SparseMatrix: The vectorized matrix as a column vector.
         */
@@ -715,8 +739,10 @@ class QiliSimCpp {
     SparseMatrix devectorize(const SparseMatrix& vec_matrix) {
         /*
         Devectorize a column vector back into a square matrix.
+
         Args:
             vec_matrix (SparseMatrix): The input vectorized matrix.
+
         Returns:
             SparseMatrix: The devectorized square matrix.
         */
@@ -738,9 +764,11 @@ class QiliSimCpp {
     SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) {
         /*
         Form the Lindblad superoperator for the given Hamiltonian and jump operators.
+
         Args:
             currentH (SparseMatrix): The current Hamiltonian.
             jump_operators (std::vector<SparseMatrix>): The list of jump operators.
+
         Returns:
             SparseMatrix: The Lindblad superoperator.
         */
@@ -778,14 +806,15 @@ class QiliSimCpp {
             L -= term3;
         }
         return L;
-
     }
 
     py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) {
         /*
         Convert a SparseMatrix to a NumPy array.
+
         Args:
             matrix (SparseMatrix): The input sparse matrix.
+
         Returns:
             py::array_t<std::complex<double>>: The corresponding NumPy array.
         */
@@ -806,8 +835,10 @@ class QiliSimCpp {
     py::array_t<T> to_numpy(const std::vector<T>& vec) {
         /*
         Convert a vector of complex numbers to a NumPy array.
+
         Args:
             vec (std::vector<T>): The input vector.
+
         Returns:
             py::array_t<T>: The corresponding NumPy array.
         */
@@ -825,10 +856,12 @@ class QiliSimCpp {
     py::array_t<T> to_numpy(const std::vector<std::vector<T>>& vecs) {
         /*
         Convert a vector of vectors of complex numbers to a 2D NumPy array.
+
         Args:
-            vecs (std::vector<std::vector<std::complex<double>>>): The input vector of vectors.
+            vecs (std::vector<std::vector<T>>): The input vector of vectors.
+
         Returns:
-            py::array_t<std::complex<double>>: The corresponding 2D NumPy array.
+            py::array_t<T>: The corresponding 2D NumPy array.
         */
         int rows = vecs.size();
         int cols = vecs[0].size();
@@ -846,8 +879,10 @@ class QiliSimCpp {
     std::vector<Gate> parse_gates(const py::object& circuit) {
         /*
         Extract gates from a circuit object.
+
         Args:
             circuit (py::object): The circuit object.
+
         Returns:
             std::vector<Gate>: The list of Gate objects.
         */
@@ -865,20 +900,7 @@ class QiliSimCpp {
             // Get the matrix
             py::buffer matrix = py_gate.attr("_generate_matrix")();
             py::buffer_info buf = matrix.request();
-            int rows = int(buf.shape[0]);
-            int cols = int(buf.shape[1]);
-            auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-            Triplets entries;
-            for (int r = 0; r < rows; ++r) {
-                for (int c = 0; c < cols; ++c) {
-                    std::complex<double> val = ptr[r * cols + c];
-                    if (std::abs(val) > atol_) {
-                        entries.emplace_back(Triplet(r, c, val));
-                    }
-                }
-            }
-            SparseMatrix base_matrix(rows, cols);
-            base_matrix.setFromTriplets(entries.begin(), entries.end());
+            SparseMatrix base_matrix = from_numpy(matrix);
 
             // Get the controls
             std::vector<int> controls;
@@ -905,19 +927,19 @@ class QiliSimCpp {
 
             // Add the gate
             gates.emplace_back(gate_type_str, base_matrix, controls, targets, parameters);
-
         }
 
         return gates;
-
     }
 
     std::vector<bool> parse_measurements(const py::object& circuit) {
         /*
         Extract measurement qubit information from a circuit object.
+
         Args:
             circuit (py::object): The circuit object.
             n_qubits (int): The total number of qubits.
+
         Returns:
             std::vector<bool>: A vector indicating which qubits are measured.
         */
@@ -946,16 +968,17 @@ class QiliSimCpp {
         }
 
         return qubits_to_measure;
-
     }
 
     std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots) {
         /*
         Sample measurement outcomes from a probability distribution.
+
         Args:
             prob_entries (std::vector<std::tuple<int, double>>): List of (state index, probability) tuples.
             n_qubits (int): Number of qubits.
             n_shots (int): Number of measurement shots.
+
         Returns:
             std::map<std::string, int>: A map of bitstring outcomes to their counts.
         */
@@ -990,10 +1013,13 @@ class QiliSimCpp {
     SparseMatrix get_vector_from_density_matrix(SparseMatrix& rho_t) {
         /*
         Extract a state vector from a pure density matrix by finding a non-zero diagonal element.
+
         Args:
             rho_t (SparseMatrix): The density matrix.
+
         Returns:
             SparseMatrix: The extracted state vector.
+
         Raises:
             py::value_error: If the density matrix has no non-zero diagonal elements.
         */
@@ -1029,6 +1055,7 @@ class QiliSimCpp {
     void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) {
         /*
         Compute the right-hand side of the Lindblad master equation.
+
         Args:
             drho (DenseMatrix&): The output derivative of the density matrix.
             rho (DenseMatrix): The current density matrix.
@@ -1058,6 +1085,7 @@ class QiliSimCpp {
     SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
         /*
         4th-order Runge–Kutta integration of the Lindblad master equation
+
         Args:
             rho_0 (SparseMatrix): The initial density matrix.
             dt (double): The total time step.
@@ -1065,8 +1093,10 @@ class QiliSimCpp {
             jump_operators (std::vector<SparseMatrix>): The list of jump operators.
             is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
             num_substeps (int): Number of substeps to divide the time step into.
+
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
+
         Raises:
             py::value_error: If num_substeps is non-positive.
             py::value_error: If currentH is not square.
@@ -1142,6 +1172,7 @@ class QiliSimCpp {
                               bool is_unitary_on_statevector) {
         /*
         Perform time evolution using the Arnoldi iteration.
+
         Args:
             rho_0 (SparseMatrix): The initial density matrix.
             dt (double): The total time step.
@@ -1150,8 +1181,10 @@ class QiliSimCpp {
             arnoldi_dim (int): Dimension of the subspace.
             num_substeps (int): Number of substeps to divide the time step into.
             is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
+
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
+
         Raises:
             py::value_error: If arnoldi_dim is non-positive.
             py::value_error: If num_substeps is non-positive.
@@ -1159,7 +1192,6 @@ class QiliSimCpp {
             py::value_error: If rho_0 is not square.
             py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
             py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
-
         */
 
         // Sanity checks
@@ -1270,20 +1302,22 @@ class QiliSimCpp {
     SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
         /*
         Perform time evolution using direct matrix exponentiation.
+
         Args:
             rho_0 (SparseMatrix): The initial density matrix, which should be vectorized.
             dt (double): The total time step.
             currentH (SparseMatrix): The current Hamiltonian.
             jump_operators (std::vector<SparseMatrix>): The list of jump operators.
             is_unitary_on_statevector (bool): Whether to treat the Hamiltonian as unitary on a statevector.
+
         Returns:
             SparseMatrix: The evolved density matrix after time dt.
+
         Raises:
             py::value_error: If currentH is not square.
             py::value_error: If rho_0 is not square.
             py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
             py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
-
         */
 
         // Sanity checks
@@ -1326,11 +1360,14 @@ class QiliSimCpp {
     py::object execute_sampling(const py::object& functional, const py::dict& solver_params) {
         /*
         Execute a sampling functional using a simple statevector simulator.
+
         Args:
             functional (py::object): The Sampling functional to execute.
             solver_params (py::dict): Solver parameters, including 'max_cache_size'.
+
         Returns:
             SamplingResult: A result object containing the measurement samples and computed probabilities.
+
         Raises:
             py::value_error: If nqubits is non-positive.
             py::value_error: If shots is non-positive.
@@ -1411,6 +1448,9 @@ class QiliSimCpp {
             // Apply the gate (Sparse-Dense multiplication, OpenMP parallel if enabled)
             state = gate_matrix * state;
 
+            // Renormalize the state
+            state /= state.norm();
+
             // Clear the gate from the cache if this was its last use
             if (gate_first_last_use[gate_id].second == gate_count) {
                 gate_cache.erase(gate_id);
@@ -1469,9 +1509,11 @@ class QiliSimCpp {
     SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories) {
         /*
         Get statevector samples from a density matrix, using the eigendecomposition.
+
         Args:
             rho (SparseMatrix): The input density matrix.
             n_trajectories (int): Number of trajectories.
+
         Returns:
             SparseMatrix: A matrix who's columns are the sampled statevectors.
         */
@@ -1543,8 +1585,10 @@ class QiliSimCpp {
         If we have N trajectories |psi_i>, the density matrix is given by
         rho = 1/N sum_i |psi_i><psi_i|. Or, in matrix form, if the trajectories are columns of a matrix T,
         rho = 1/N T T^dagger.
+
         Args:
             trajectories (SparseMatrix): The input matrix with statevectors as columns.
+
         Returns:
             SparseMatrix: The corresponding density matrix.
         */
@@ -1565,6 +1609,7 @@ class QiliSimCpp {
                                       const py::dict& solver_params) {
         /*
         Execute a time evolution functional.
+
         Args:
             initial_state (py::object): The initial state as a QTensor.
             Hs (py::object): A list of Hamiltonians for time-dependent Hamiltonians.
@@ -1574,8 +1619,10 @@ class QiliSimCpp {
             jumps (py::object): A list of jump operators for the Lindblad equation.
             store_intermediate_results (bool): Whether to store results at each time step.
             params (py::dict): Additional parameters for the method. See the Python wrapper for details.
+
         Returns:
             TimeEvolutionResult: The results of the evolution.
+
         Raises:
             py::value_error: If no Hamiltonians are provided.
             py::value_error: If no time steps are provided.

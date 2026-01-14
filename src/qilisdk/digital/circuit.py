@@ -15,6 +15,7 @@
 import random
 
 import numpy as np
+from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import Domain, Parameter, RealNumber
@@ -22,7 +23,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
-from .gates import CNOT, RX, RY, RZ, U1, U2, U3, BasicGate, Gate, H, S, T, X, Y, Z
+from .gates import BasicGate, Gate
 
 
 @yaml.register_class
@@ -183,7 +184,7 @@ class Circuit(Parameterizable):
     @classmethod
     def random(
         cls, nqubits: int, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
-    ) -> "Circuit":
+    ) -> Self:
         """
         Generate a random quantum circuit from a given set of gates.
 
@@ -250,34 +251,7 @@ class Circuit(Parameterizable):
                         label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
                     )
 
-            # Needed to explicitly handle each gate type to satisfy mypy type checking.
-            if gate_class == CNOT:
-                new_circuit.add(CNOT(control=qubits[0], target=qubits[1]))
-            elif gate_class == X:
-                new_circuit.add(X(qubits[0]))
-            elif gate_class == Y:
-                new_circuit.add(Y(qubits[0]))
-            elif gate_class == Z:
-                new_circuit.add(Z(qubits[0]))
-            elif gate_class == H:
-                new_circuit.add(H(qubits[0]))
-            elif gate_class == T:
-                new_circuit.add(T(qubits[0]))
-            elif gate_class == S:
-                new_circuit.add(S(qubits[0]))
-            elif gate_class == RX:
-                new_circuit.add(RX(qubits[0], **params))
-            elif gate_class == RY:
-                new_circuit.add(RY(qubits[0], **params))
-            elif gate_class == RZ:
-                new_circuit.add(RZ(qubits[0], **params))
-            elif gate_class == U1:
-                new_circuit.add(U1(qubits[0], **params))
-            elif gate_class == U2:
-                new_circuit.add(U2(qubits[0], **params))
-            elif gate_class == U3:
-                new_circuit.add(U3(qubits[0], **params))
-            else:
-                continue
+            # Add the gate to the circuit (type: ignore since mypy cannot infer the dynamic params)
+            new_circuit.add(gate_class(*qubits, **params))  # type: ignore
 
         return new_circuit

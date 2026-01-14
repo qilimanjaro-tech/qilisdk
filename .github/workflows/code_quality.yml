@@ -55,7 +55,7 @@ jobs:
         run: uv run mypy src --ignore-missing-imports
 
       - name: Cpp Linter
-        uses: cpp-linter/cpp-linter-action@b6edc0625e3941baa1797f4b4326adeab6890c97
+        uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
