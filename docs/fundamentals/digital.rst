@@ -120,6 +120,21 @@ Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit
   circuit.add(CNOT(0, 1))  # CNOT: control 0 → target 2
   circuit.draw()
 
+**Generating Random Circuits**
+
+You can also initialize a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, X, H, CNOT
+    c = Circuit.random(
+        nqubits=3,
+        single_qubit_gates=[X, H],
+        two_qubit_gates=[CNOT],
+        ngates=10,
+    )
+    circuit.draw()
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 
