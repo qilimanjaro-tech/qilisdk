@@ -15,7 +15,7 @@ jobs:
   tests:
     name: Testing for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-latest, gpu]
     timeout-minutes: 5
 
     env:
