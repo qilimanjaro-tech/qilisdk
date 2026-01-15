@@ -66,7 +66,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& initial_state,
     if (solver_params.contains("num_arnoldi_substeps")) {
         num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
     }
-    int num_integrate_substeps = 1;
+    int num_integrate_substeps = 2;
     if (solver_params.contains("num_integrate_substeps")) {
         num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
     }

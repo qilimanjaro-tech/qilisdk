@@ -41,7 +41,7 @@ class QiliSim(Backend):
         evolution_method: str = "integrate",
         arnoldi_dim: int = 10,
         num_arnoldi_substeps: int = 1,
-        num_integrate_substeps: int = 1,
+        num_integrate_substeps: int = 2,
         monte_carlo: bool = False,
         num_monte_carlo_trajectories: int = 100,
         max_cache_size: int = 100,
