@@ -225,8 +225,10 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If the appended circuit acts on more qubits than the current circuit.
         """
-        if circuit.nqubits > self.nqubits:
-            raise QubitOutOfRangeError("the appended circuit contains more qubits than the current circuit.")
+        if circuit.nqubits != self.nqubits:
+            raise QubitOutOfRangeError(
+                "the appended circuit contains different number of qubits than the current circuit."
+            )
 
         for g in circuit.gates:
             self.add(g)
@@ -240,8 +242,10 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If the circuit to be prepended acts on more qubits than the current circuit.
         """
-        if circuit.nqubits > self.nqubits:
-            raise QubitOutOfRangeError("the prepended circuit contains more qubits than the current circuit.")
+        if circuit.nqubits != self.nqubits:
+            raise QubitOutOfRangeError(
+                "the prepended circuit contains different number of qubits than the current circuit."
+            )
 
         for i, g in enumerate(circuit.gates):
             self.insert(g, i)

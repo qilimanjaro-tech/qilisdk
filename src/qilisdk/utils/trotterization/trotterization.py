@@ -106,15 +106,15 @@ def trotter_evolution(
 
 def _commuting_trotter_evolution(
     commuting_parts: CommutingParts,
-    time: complex | Term | Parameter,
+    time: TimeParameter,
     trotter_steps: int,
 ) -> GateIterator:
     """
     An iterator of parameterized gates performing Trotterized evolution of a commuting Hamiltonian part.
 
     Args:
-        commuting_parts (list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]): List of commuting Hamiltonian parts.
-        time (complex | Term | Parameter): The evolution time parameter.
+        commuting_parts (CommutingParts): List of commuting Hamiltonian parts.
+        time (TimeParameter): The evolution time parameter.
         trotter_steps (int): Number of Trotter steps.
 
     Yields:
