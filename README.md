@@ -517,6 +517,12 @@ ruff format
 
 *(We recommend running `ruff check --fix` and `ruff format` before committing any changes.)*
 
+To check the C++ code, compile with the debug flag:
+```bash
+uv pip install -v -e ./ -Ccmake.build-type=Debug
+```
+This will run clang-format and clang-tidy as well as a number of C++ compiler flags for debugging.
+
 ### Type Checking
 
 We use [**mypy**](http://mypy-lang.org/) for static type checking. This helps ensure our code is type-safe and maintainable.
