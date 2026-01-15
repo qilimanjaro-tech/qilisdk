@@ -56,6 +56,9 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             initial_state (QTensor): Quantum state used as the simulation starting point.
             nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
+
+        Raises:
+            ValueError: if the number of qubits of the initial state doesn't match the number of qubits in the schedule.
         """
         super().__init__()
         self.initial_state = initial_state
@@ -63,6 +66,11 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self.observables = observables
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
+
+        if initial_state.nqubits != schedule.nqubits:
+            raise ValueError(
+                f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
+            )
 
     @property
     def nparameters(self) -> int:

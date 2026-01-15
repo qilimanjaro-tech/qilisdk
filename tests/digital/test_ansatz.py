@@ -15,8 +15,9 @@
 import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliY, PauliZ
-from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz
-from qilisdk.digital.gates import CNOT, CZ, U1
+from qilisdk.analog.schedule import Schedule
+from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from qilisdk.digital.gates import CNOT, CZ, RZ, U1
 
 # ------------------------------ Helpers ------------------------------
 
@@ -226,6 +227,22 @@ def test_qaoa_trotter_steps_validation():
         QAOA(problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=-2)
 
 
+def test_qaoa_trotter_steps_ignored_for_commuting_hamiltonians():
+    """trotter_steps should not expand gate count when terms commute."""
+    test_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=1, trotter_steps=5)
+    # Initial H (1) + problem RZ (1) + mixer H/RZ/H (3)
+    assert len(ansatz.gates) == 5
+
+
+def test_qaoa_trotter_steps_applied_for_non_commuting_problem():
+    """trotter_steps should expand the problem evolution for non-commuting terms."""
+    test_hamiltonian = Hamiltonian({(PauliX(0),): 1.0, (PauliZ(0),): 1.0})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=1, trotter_steps=2)
+    # Initial H (1) + problem evolution (4 gates per step * 2) + mixer (3)
+    assert len(ansatz.gates) == 12
+
+
 def test_qaoa_invalid_mixer_params():
     """Providing mixer_params of incorrect length should raise ValueError."""
     n_qubits = 2
@@ -320,3 +337,17 @@ def test_qaoa_gate_count():
     expected_gates_per_layer = (2 * len(test_hamiltonian.elements) - 1) + 3 * n_qubits
     expected_total_gates = expected_gates_per_layer * layers
     assert len(ansatz.gates) == expected_total_gates
+
+
+def test_trotterized_time_evolution_uses_schedule_dt():
+    """TrotterizedTimeEvolution should honor schedule dt and trotter_steps."""
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        coefficients={"h": {0.0: 1.0, 1.0: 1.0}},
+        dt=1.0,
+    )
+    ansatz = TrotterizedTimeEvolution(schedule, trotter_steps=3)
+    rz_gates = [gate for gate in ansatz.gates if isinstance(gate, RZ)]
+    assert len(rz_gates) == 3
+    assert all(gate.phi == pytest.approx(2.0 / 3.0) for gate in rz_gates)
