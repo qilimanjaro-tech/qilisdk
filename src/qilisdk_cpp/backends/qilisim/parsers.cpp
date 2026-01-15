@@ -26,10 +26,6 @@ std::vector<SparseMatrix> QiliSimCpp::parse_hamiltonians(const py::object& Hs) c
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        // py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
-        // py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
-        // py::buffer_info buf = matrix.request();
-        // SparseMatrix H = from_numpy(matrix);
         py::object spm = hamiltonian.attr("to_matrix")();
         SparseMatrix H = from_spmatrix(spm);
         hamiltonians.push_back(H);
@@ -49,9 +45,8 @@ std::vector<SparseMatrix> QiliSimCpp::parse_jump_operators(const py::object& jum
     */
     std::vector<SparseMatrix> jump_matrices;
     for (auto jump : jumps) {
-        py::buffer matrix = numpy_array(jump.attr("dense")(), py::dtype("complex128"));
-        py::buffer_info buf = matrix.request();
-        SparseMatrix J = from_numpy(matrix);
+        py::object spm = jump.attr("to_matrix")();
+        SparseMatrix J = from_spmatrix(spm);
         jump_matrices.push_back(J);
     }
     return jump_matrices;
@@ -73,9 +68,8 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
         // Depending on the type of observable given
         if (py::isinstance(obs, Hamiltonian)) {
             // Get the matrix
-            py::buffer matrix = numpy_array(obs.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
-            py::buffer_info buf = matrix.request();
-            SparseMatrix O = from_numpy(matrix);
+            py::object spm = obs.attr("to_matrix")();
+            SparseMatrix O = from_spmatrix(spm);
 
             // Expand to full qubit count if needed
             int obs_qubits = obs.attr("nqubits").cast<int>();
@@ -106,9 +100,10 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
             observable_matrices.push_back(O_global);
 
         } else if (py::isinstance(obs, QTensor)) {
-            py::buffer matrix = numpy_array(obs.attr("dense")(), py::dtype("complex128"));
-            py::buffer_info buf = matrix.request();
-            SparseMatrix O = from_numpy(matrix);
+            
+            // Get the data directly if it's a QTensor
+            py::object spm = obs.attr("data");
+            SparseMatrix O = from_spmatrix(spm);
             observable_matrices.push_back(O);
 
         } else {
