@@ -63,7 +63,7 @@ SparseMatrix QiliSimCpp::create_superoperator(const SparseMatrix& currentH, cons
 
 void QiliSimCpp::lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) const {
     /*
-    Compute the right-hand side of the Lindblad master equation.
+    Evaluate the right-hand side of the Lindblad master equation.
 
     Args:
         drho (DenseMatrix&): The output derivative of the density matrix.
@@ -74,7 +74,8 @@ void QiliSimCpp::lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const S
     */
     const std::complex<double> I(0.0, 1.0);
     if (is_unitary_on_statevector) {
-        drho = -I * H * rho;
+        drho = H * rho;
+        drho *= -I;
     } else {
         SparseMatrix temp = (H * rho).sparseView();
         drho = -I * temp;

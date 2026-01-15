@@ -81,8 +81,8 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<double>& vec) const {
     Returns:
         py::array_t<double>: The corresponding NumPy array.
     */
-    int size = vec.size();
-    py::array_t<double> np_array({size});
+    int size = int(vec.size());
+    py::array_t<double> np_array(size);
     py::buffer_info buf = np_array.request();
     auto ptr = static_cast<double*>(buf.ptr);
     for (int i = 0; i < size; ++i) {
@@ -101,8 +101,8 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<std::vector<double>>&
     Returns:
         py::array_t<double>: The corresponding 2D NumPy array.
     */
-    int rows = vecs.size();
-    int cols = vecs[0].size();
+    int rows = int(vecs.size());
+    int cols = int(vecs[0].size());
     py::array_t<double> np_array({rows, cols});
     py::buffer_info buf = np_array.request();
     auto ptr = static_cast<double*>(buf.ptr);

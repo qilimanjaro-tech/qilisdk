@@ -28,8 +28,8 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0,
         dt (double): The total time step.
         currentH (SparseMatrix): The current Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
-        is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
         num_substeps (int): Number of substeps to divide the time step into.
+        is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
 
     Returns:
         SparseMatrix: The evolved density matrix after time dt.
@@ -59,32 +59,58 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0,
         }
     }
 
-    int rho_rows = int(rho_0.rows());
-    int rho_cols = int(rho_0.cols());
+    long rho_rows = long(rho_0.rows());
+    long rho_cols = long(rho_0.cols());
 
     // Standard RK4 loop
     DenseMatrix rho = rho_0;
-    DenseMatrix k1(rho_rows, rho_cols);
-    DenseMatrix k2(rho_rows, rho_cols);
-    DenseMatrix k3(rho_rows, rho_cols);
-    DenseMatrix k4(rho_rows, rho_cols);
+    // DenseMatrix k1(rho_rows, rho_cols);
+    // DenseMatrix k2(rho_rows, rho_cols);
+    // DenseMatrix k3(rho_rows, rho_cols);
+    // DenseMatrix k4(rho_rows, rho_cols);
+    DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
+    DenseMatrix rho_old(rho_rows, rho_cols);
     double dt_sub = dt / static_cast<double>(num_substeps);
     for (int step = 0; step < num_substeps; ++step) {
-        lindblad_rhs(k1, rho, currentH, jump_operators, is_unitary_on_statevector);
-        rho_tmp = rho;
-        rho_tmp += 0.5 * dt_sub * k1;
-        lindblad_rhs(k2, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho_tmp = rho;
-        rho_tmp += 0.5 * dt_sub * k2;
-        lindblad_rhs(k3, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho_tmp = rho;
-        rho_tmp += dt_sub * k3;
-        lindblad_rhs(k4, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho += (dt_sub / 6.0) * k1;
-        rho += (dt_sub / 3.0) * k2;
-        rho += (dt_sub / 3.0) * k3;
-        rho += (dt_sub / 6.0) * k4;
+
+        rho_old = rho;
+
+        lindblad_rhs(k, rho, currentH, jump_operators, is_unitary_on_statevector);
+        rho += (dt_sub / 6.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += 0.5 * dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho += (dt_sub / 3.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += 0.5 * dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho += (dt_sub / 3.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho += (dt_sub / 6.0) * k;
+
+        // lindblad_rhs(k1, rho, currentH, jump_operators, is_unitary_on_statevector);
+        // rho_tmp = rho_old;
+        // rho_tmp += 0.5 * dt_sub * k1;
+        // rho += (dt_sub / 6.0) * k1;
+        // lindblad_rhs(k2, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        // rho_tmp = rho_old;
+        // rho_tmp += 0.5 * dt_sub * k2;
+        // rho += (dt_sub / 3.0) * k2;
+        // lindblad_rhs(k3, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        // rho_tmp = rho_old;
+        // rho_tmp += dt_sub * k3;
+        // rho += (dt_sub / 3.0) * k3;
+        // lindblad_rhs(k4, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        // rho += (dt_sub / 6.0) * k1;
+        // rho += (dt_sub / 3.0) * k2;
+        // rho += (dt_sub / 3.0) * k3;
+        // rho += (dt_sub / 6.0) * k4;
 
         // Normalize the density matrix
         if (is_unitary_on_statevector) {
