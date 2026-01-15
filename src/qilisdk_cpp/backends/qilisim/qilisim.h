@@ -58,6 +58,7 @@ const py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_e
 const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
 const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
 const py::object numpy_array = py::module_::import("numpy").attr("array");
+const py::object spmatrix = py::module_::import("scipy.sparse").attr("spmatrix");
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 const py::object Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
 const py::object PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
@@ -67,6 +68,7 @@ class QiliSimCpp {
    private:
     // numpy.cpp
     SparseMatrix from_numpy(const py::buffer& matrix_buffer) const;
+    SparseMatrix from_spmatrix(const py::object& matrix) const;
     py::array_t<double> to_numpy(const std::vector<double>& vec) const;
     py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs) const;
     py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) const;

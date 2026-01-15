@@ -26,9 +26,12 @@ std::vector<SparseMatrix> QiliSimCpp::parse_hamiltonians(const py::object& Hs) c
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
-        py::buffer_info buf = matrix.request();
-        SparseMatrix H = from_numpy(matrix);
+        // py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
+        // py::buffer matrix = numpy_array(hamiltonian.attr("to_matrix")().attr("toarray")(), py::dtype("complex128"));
+        // py::buffer_info buf = matrix.request();
+        // SparseMatrix H = from_numpy(matrix);
+        py::object spm = hamiltonian.attr("to_matrix")();
+        SparseMatrix H = from_spmatrix(spm);
         hamiltonians.push_back(H);
     }
     return hamiltonians;

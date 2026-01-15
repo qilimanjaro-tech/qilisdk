@@ -113,3 +113,40 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<std::vector<double>>&
     }
     return np_array;
 }
+
+
+SparseMatrix QiliSimCpp::from_spmatrix(const py::object& matrix) const {
+    /*
+    Convert a SciPy sparse matrix to a SparseMatrix.
+
+    Args:
+        matrix (py::object): The SciPy sparse matrix.
+
+    Returns:
+        SparseMatrix: The converted sparse matrix.
+    */
+    py::object coo_matrix = matrix.attr("tocoo")();
+    py::array row = coo_matrix.attr("row").cast<py::array>();
+    py::array col = coo_matrix.attr("col").cast<py::array>();
+    py::array data = coo_matrix.attr("data").cast<py::array>();
+    py::buffer_info row_buf = row.request();
+    py::buffer_info col_buf = col.request();
+    py::buffer_info data_buf = data.request();
+    int nnz = int(data_buf.shape[0]);
+    int rows = int(coo_matrix.attr("shape").attr("__getitem__")(0).cast<int>());
+    int cols = int(coo_matrix.attr("shape").attr("__getitem__")(1).cast<int>());
+    Triplets entries;
+    auto row_ptr = static_cast<int*>(row_buf.ptr);
+    auto col_ptr = static_cast<int*>(col_buf.ptr);
+    auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
+    for (int i = 0; i < nnz; ++i) {
+        std::complex<double> val = data_ptr[i];
+        if (std::abs(val) > atol_) {
+            entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
+        }
+    }
+    SparseMatrix mat(rows, cols);
+    mat.setFromTriplets(entries.begin(), entries.end());
+    return mat;
+
+}
