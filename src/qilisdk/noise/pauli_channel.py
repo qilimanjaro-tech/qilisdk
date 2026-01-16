@@ -72,15 +72,6 @@ class PauliChannel(Noise, SupportsStaticKraus):
         """
         return self._pZ
 
-    @property
-    def name(self) -> str:
-        """Return the display name for this channel.
-
-        Returns:
-            A name string. Defaults to empty.
-        """
-        return ""
-
     def as_kraus(self) -> KrausChannel:
         pI = max(0.0, 1.0 - (self._pX + self._pY + self._pZ))
         operators = []
