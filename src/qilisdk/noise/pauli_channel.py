@@ -46,6 +46,33 @@ class PauliChannel(Noise, SupportsStaticKraus):
             raise ValueError("pX + pY + pZ must be <= 1.")
 
     @property
+    def pX(self) -> float:
+        """Return the probability of an X error.
+
+        Returns:
+            float: Probability for the X Pauli error.
+        """
+        return self._pX
+
+    @property
+    def pY(self) -> float:
+        """Return the probability of a Y error.
+
+        Returns:
+            float: Probability for the Y Pauli error.
+        """
+        return self._pY
+
+    @property
+    def pZ(self) -> float:
+        """Return the probability of a Z error.
+
+        Returns:
+            float: Probability for the Z Pauli error.
+        """
+        return self._pZ
+
+    @property
     def name(self) -> str:
         """Return the display name for this channel.
 

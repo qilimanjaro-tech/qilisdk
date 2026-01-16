@@ -27,7 +27,16 @@ class KrausChannel(Noise):
     def __init__(self, operators: list[QTensor]) -> None:
         """Args:
             operators (list[QTensor]): Kraus operators defining the channel."""
-        self.operators: list[QTensor] = operators
+        self._operators: list[QTensor] = operators
+
+    @property
+    def operators(self) -> list[QTensor]:
+        """Return the Kraus operators defining the channel.
+
+        Returns:
+            list[QTensor]: The Kraus operators for this channel.
+        """
+        return self._operators
 
     def as_kraus(self) -> Self:
         return self
@@ -46,9 +55,36 @@ class LindbladGenerator(Noise):
             jump_operators (list[QTensor]): Jump operators defining dissipation.
             rates (list[float] | None): Optional rates for each jump operator.
             hamiltonian (QTensor | None): Optional Hamiltonian term for coherent evolution."""
-        self.jump_operators = jump_operators
-        self.rates = rates
-        self.hamiltonian = hamiltonian
+        self._jump_operators = jump_operators
+        self._rates = rates
+        self._hamiltonian = hamiltonian
+
+    @property
+    def jump_operators(self) -> list[QTensor]:
+        """Return the jump operators defining dissipation.
+
+        Returns:
+            list[QTensor]: Jump operators for this generator.
+        """
+        return self._jump_operators
+
+    @property
+    def rates(self) -> list[float] | None:
+        """Return the rates for each jump operator, if provided.
+
+        Returns:
+            list[float] | None: Rates for each jump operator.
+        """
+        return self._rates
+
+    @property
+    def hamiltonian(self) -> QTensor | None:
+        """Return the optional coherent Hamiltonian term.
+
+        Returns:
+            QTensor | None: The Hamiltonian term if provided.
+        """
+        return self._hamiltonian
 
     def as_lindbland(self) -> Self:
         """Return this instance as a Lindblad generator representation.

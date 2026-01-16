@@ -36,6 +36,15 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
             raise ValueError("T1 must be > 0.")
         self._T1 = float(T1)
 
+    @property
+    def T1(self) -> float:
+        """Return the relaxation time constant.
+
+        Returns:
+            float: The T1 value.
+        """
+        return self._T1
+
     def as_lindblad(self) -> LindbladGenerator:
         gamma = 1.0 / self._T1
         L = np.sqrt(gamma) * _sigma_minus()

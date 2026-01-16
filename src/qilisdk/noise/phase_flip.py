@@ -33,6 +33,15 @@ class PhaseFlip(PauliChannel, SupportsStaticKraus):
         self._probability = _check_probability(probability, "probability")
         super().__init__(pX=probability)
 
+    @property
+    def probability(self) -> float:
+        """Return the probability of applying the Pauli-X error.
+
+        Returns:
+            float: The error probability.
+        """
+        return self._probability
+
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset({

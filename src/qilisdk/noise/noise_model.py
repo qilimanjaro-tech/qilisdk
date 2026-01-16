@@ -40,15 +40,58 @@ class NoiseModel:
 
     def __init__(self) -> None:
         # noises
-        self.global_noise: list[Noise] = []
-        self.per_qubit_noise: dict[Qubit, list[Noise]] = defaultdict(list)
-        self.per_gate_noise: dict[GateType, list[Noise]] = defaultdict(list)
+        self._global_noise: list[Noise] = []
+        self._per_qubit_noise: dict[Qubit, list[Noise]] = defaultdict(list)
+        self._per_gate_noise: dict[GateType, list[Noise]] = defaultdict(list)
 
         # parameter pertubations
-        self.global_pertubations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
-        self.per_gate_pertubations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
+        self._global_pertubations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
+        self._per_gate_pertubations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
 
-        # -----------------------
+    @property
+    def global_noise(self) -> list[Noise]:
+        """Return the list of globally applied noise sources.
+
+        Returns:
+            list[Noise]: Noise sources applied to all operations.
+        """
+        return self._global_noise
+
+    @property
+    def per_qubit_noise(self) -> dict[Qubit, list[Noise]]:
+        """Return the per-qubit noise mapping.
+
+        Returns:
+            dict[int, list[Noise]]: Noise sources keyed by qubit index.
+        """
+        return self._per_qubit_noise
+
+    @property
+    def per_gate_noise(self) -> dict[GateType, list[Noise]]:
+        """Return the per-gate-type noise mapping.
+
+        Returns:
+            dict[type[Gate], list[Noise]]: Noise sources keyed by gate type.
+        """
+        return self._per_gate_noise
+
+    @property
+    def global_pertubations(self) -> dict[Parameter, list[ParameterPerturbation]]:
+        """Return the global parameter perturbation mapping.
+
+        Returns:
+            dict[str, list[ParameterPerturbation]]: Perturbations keyed by parameter name.
+        """
+        return self._global_pertubations
+
+    @property
+    def per_gate_pertubations(self) -> dict[tuple[GateType, Parameter], list[ParameterPerturbation]]:
+        """Return the per-gate-type parameter perturbation mapping.
+
+        Returns:
+            dict[tuple[type[Gate], str], list[ParameterPerturbation]]: Perturbations keyed by gate type and parameter.
+        """
+        return self._per_gate_pertubations
     # Overloads (typing)
     # -----------------------
 

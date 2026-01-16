@@ -24,5 +24,14 @@ class OffsetPerturbation(ParameterPerturbation):
         """
         self._offset = float(offset)
 
+    @property
+    def offset(self) -> float:
+        """Return the constant offset applied to parameter values.
+
+        Returns:
+            float: The additive offset.
+        """
+        return self._offset
+
     def perturb(self, value: float) -> float:
         return value + self._offset

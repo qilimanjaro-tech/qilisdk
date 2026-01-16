@@ -23,12 +23,21 @@ class Depolarizing(PauliChannel):
     configuring pX = pY = pZ = p / 3, which implies pI = 1 - p.
     """
 
-    def __init__(self, *, p: float) -> None:
+    def __init__(self, *, probability: float) -> None:
         """Args:
-            p (float): Depolarizing probability in the range [0, 1].
+            probability (float): Depolarizing probability in the range [0, 1].
 
         Raises:
-            ValueError: If p is outside [0, 1].
+            ValueError: If probability is outside [0, 1].
         """
-        self._p = _check_probability(p, "p")
-        super().__init__(pX=self._p / 3.0, pY=self._p / 3.0, pZ=self._p / 3.0)
+        self._probability = _check_probability(probability, "probability")
+        super().__init__(pX=self._probability / 3.0, pY=self._probability / 3.0, pZ=self._probability / 3.0)
+
+    @property
+    def probability(self) -> float:
+        """Return the depolarizing probability.
+
+        Returns:
+            float: The depolarizing probability.
+        """
+        return self._probability
