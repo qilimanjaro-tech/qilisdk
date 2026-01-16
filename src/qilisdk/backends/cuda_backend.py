@@ -30,7 +30,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.noise import BitFlip, SupportsLindblad, SupportsStaticKraus
+from qilisdk.noise import BitFlip, Depolarizing, Noise, PhaseFlip, SupportsLindblad, SupportsStaticKraus
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -44,6 +44,20 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+
+
+def _to_cuda_noise(noise: Noise):  # noqa: ANN202
+    if isinstance(noise, BitFlip):
+        return cudaq.BitFlipChannel(noise.probability)
+    if isinstance(noise, PhaseFlip):
+        return cudaq.PhaseFlipChannel(noise.probability)
+    if isinstance(noise, Depolarizing):
+        return cudaq.DepolarizationChannel(noise.probability)
+    if isinstance(noise, SupportsStaticKraus):
+        kraus_channel = noise.as_kraus()
+        kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+        return cudaq.KrausChannel(kraus_operators_np)
+    return None
 
 
 class CudaSamplingMethod(str, Enum):
@@ -141,7 +155,7 @@ class CudaBackend(Backend):
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
         # Apply parameter pertubations
-        if noise_model is not None:
+        if noise_model:
             if noise_model.global_perturbations:
                 circuit_parameters = functional.circuit.get_parameters()
                 for parameter, pertubations in noise_model.global_perturbations.items():
@@ -169,23 +183,26 @@ class CudaBackend(Backend):
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
-                    raise UnsupportedGateError
+                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
-        if noise_model is not None:
+        if noise_model:
+            all_cuda_gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
             cuda_noise_model = cudaq.NoiseModel()
             for noise in noise_model.global_noise:
-                if isinstance(noise, BitFlip):
-                    cuda_noise = cudaq.BitFlipChannel(noise.probability)
-                if isinstance(noise, SupportsStaticKraus):
-                    kraus_channel = noise.as_kraus()
-                    kraus_operators_np = [
-                        np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators
-                    ]
-                    cuda_noise = cudaq.KrausChannel(kraus_operators_np)
-                gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
-                for gate_name in gate_names:
-                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+                if cuda_noise := _to_cuda_noise(noise):
+                    for gate_name in all_cuda_gate_names:
+                        cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            for gate_type, noises in noise_model.per_gate_noise.items():
+                if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
+                    for noise in noises:
+                        if cuda_noise := _to_cuda_noise(noise):
+                            cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            for qubit, noises in noise_model.per_qubit_noise.items():
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise):
+                        for gate_name in all_cuda_gate_names:
+                            cuda_noise_model.add_channel(gate_type.__name__.lower(), qubit, cuda_noise)
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
         else:
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
@@ -199,7 +216,7 @@ class CudaBackend(Backend):
         cudaq.set_target("dynamics")
 
         # Apply parameter pertubations
-        if noise_model is not None and noise_model.global_perturbations:
+        if noise_model and noise_model.global_perturbations:
             schedule_parameters = functional.schedule.get_parameters()
             for parameter, pertubations in noise_model.global_perturbations.items():
                 if parameter in schedule_parameters:

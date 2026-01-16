@@ -17,6 +17,7 @@ from .bit_flip import BitFlip
 from .dephasing import Dephasing
 from .depolarizing import Depolarizing
 from .gaussian_pertubation import GaussianPerturbation
+from .noise import Noise
 from .noise_model import NoiseModel
 from .offset_pertubation import OffsetPerturbation
 from .pauli_channel import PauliChannel
@@ -33,6 +34,7 @@ __all__ = [
     "GaussianPerturbation",
     "KrausChannel",
     "LindbladGenerator",
+    "Noise",
     "NoiseModel",
     "OffsetPerturbation",
     "PauliChannel",
