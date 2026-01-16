@@ -24,7 +24,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
-#include "gate.h"
+#include "circuit_sampling/gate.h"
 
 // Eigen specfic type defs
 typedef Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor> SparseMatrix;
@@ -66,14 +66,14 @@ const py::object PauliOperator = py::module_::import("qilisdk.analog.hamiltonian
 // The main QiliSim C++ class
 class QiliSimCpp {
    private:
-    // numpy.cpp
+    // utils/numpy.cpp
     SparseMatrix from_numpy(const py::buffer& matrix_buffer) const;
     SparseMatrix from_spmatrix(const py::object& matrix) const;
     py::array_t<double> to_numpy(const std::vector<double>& vec) const;
     py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs) const;
     py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) const;
 
-    // parsers.cpp
+    // utils/parsers.cpp
     std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs) const;
     std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps) const;
     std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits) const;
@@ -83,7 +83,7 @@ class QiliSimCpp {
     std::vector<Gate> parse_gates(const py::object& circuit) const;
     std::vector<bool> parse_measurements(const py::object& circuit) const;
 
-    // matrix_utils.cpp
+    // utils/matrix_utils.cpp
     SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) const;
     SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) const;
     std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) const;
@@ -92,21 +92,27 @@ class QiliSimCpp {
     SparseMatrix vectorize(const SparseMatrix& matrix) const;
     SparseMatrix devectorize(const SparseMatrix& vec_matrix) const;
 
-    // lindblad.cpp
+    // circuit_sampling/circuit_optimizations.cpp
+    void combine_single_qubit_gates(std::vector<Gate>& gates) const;
+    std::vector<std::vector<Gate>> compress_gate_layers(std::vector<Gate>& gates) const;
+    SparseMatrix layer_to_matrix(const std::vector<Gate>& gate_layer, int n_qubits) const;
+
+    // time_evolution/lindblad.cpp
     SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) const;
     void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) const;
 
-    // sampling.cpp
-    std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots) const;
-    SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories) const;
+    // utils/random.cpp
+    std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) const;
+    std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed) const;
+    SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed) const;
     SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories) const;
     SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t) const;
 
-    // integrate.cpp
+    // time_evolution/integrate.cpp
     SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector)
         const;
 
-    // arnoldi.cpp
+    // time_evolution/arnoldi.cpp
     void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H) const;
     void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk) const;
     SparseMatrix iter_arnoldi(const SparseMatrix& rho_0,
@@ -117,14 +123,14 @@ class QiliSimCpp {
                               int num_substeps,
                               bool is_unitary_on_statevector) const;
 
-    // direct.cpp
+    // time_evolution/direct.cpp
     SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) const;
 
    public:
-    // execute_sampling.cpp
+    // circuit_sampling/execute_sampling.cpp
     py::object execute_sampling(const py::object& functional, const py::dict& solver_params);
 
-    // execute_time_evolution.cpp
+    // time_evolution/execute_time_evolution.cpp
     py::object execute_time_evolution(const py::object& initial_state,
                                       const py::object& Hs,
                                       const py::object& coeffs,

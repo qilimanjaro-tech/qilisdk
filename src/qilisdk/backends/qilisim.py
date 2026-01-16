@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import os
+import random
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -44,8 +45,11 @@ class QiliSim(Backend):
         num_integrate_substeps: int = 2,
         monte_carlo: bool = False,
         num_monte_carlo_trajectories: int = 100,
-        max_cache_size: int = 100,
+        max_cache_size: int = 1000,
         num_threads: int = 0,
+        combine_single_qubit_gates: bool = True,
+        apply_parallel_gates: bool = False,
+        seed: int | None = 42,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -60,6 +64,9 @@ class QiliSim(Backend):
             num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
             max_cache_size (int): The maximum size of the internal cache for gate caching.
             num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
+            combine_single_qubit_gates (bool): Whether to combine sequential single-qubit gates during circuit execution.
+            apply_parallel_gates (bool): Whether to apply gates in parallel when possible during circuit execution.
+            seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
         Raises:
             ValueError: If any of the parameters are invalid.
 
@@ -82,6 +89,10 @@ class QiliSim(Backend):
         if num_threads <= 0:
             num_threads = os.cpu_count() or 1
 
+        # Set a random seed
+        if seed is None:
+            seed = random.randint(0, 2**15 - 1)
+
         # Initialize the backend and the class vars
         super().__init__()
         self.qili_sim = QiliSimCpp()
@@ -94,6 +105,9 @@ class QiliSim(Backend):
             "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
             "max_cache_size": max_cache_size,
             "num_threads": num_threads,
+            "combine_single_qubit_gates": combine_single_qubit_gates,
+            "apply_parallel_gates": apply_parallel_gates,
+            "seed": seed,
         }
 
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
