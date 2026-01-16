@@ -174,8 +174,8 @@ class CudaBackend(Backend):
             cuda_noise_model = cudaq.NoiseModel()
             for noise in noise_model.global_noise:
                 if isinstance(noise, BitFlip):
-                    cuda_bit_flip = cudaq.BitFlipChannel(noise._probability)
-                    cuda_noise_model.add(cuda_bit_flip)
+                    cuda_bit_flip = cudaq.BitFlipChannel(noise.probability)
+                    cuda_noise_model.add_channel(cuda_bit_flip)
                 if isinstance(noise, SupportsStaticKraus):
                     kraus_channel = noise.as_kraus()
                     kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]

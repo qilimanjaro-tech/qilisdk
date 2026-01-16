@@ -149,7 +149,7 @@ class NoiseModel:
             self.per_gate_pertubations[gate, parameter].append(noise)
         else:
             if parameter is not None:
-                raise ValueError(f"{noise.__class__.__name__} requires a parameter name.")
+                raise ValueError(f"{noise.__class__.__name__} cannot be applied to parameters.")
             if qubit is None and gate is None:
                 scope = AttachmentScope.GLOBAL
                 if scope not in noise.allowed_scopes():
