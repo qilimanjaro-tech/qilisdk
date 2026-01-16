@@ -40,8 +40,7 @@ def _identity() -> np.ndarray:
     Returns:
         The identity matrix as a complex-valued NumPy array.
     """
-    return np.array([[1.0, 0.0],
-                     [0.0, 1.0]], dtype=complex)
+    return np.array([[1.0, 0.0], [0.0, 1.0]], dtype=complex)
 
 
 def _sigma_x() -> np.ndarray:
@@ -50,8 +49,7 @@ def _sigma_x() -> np.ndarray:
     Returns:
         The Pauli-X matrix as a complex-valued NumPy array.
     """
-    return np.array([[0.0, 1.0],
-                     [1.0, 0.0]], dtype=complex)
+    return np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex)
 
 
 def _sigma_y() -> np.ndarray:
@@ -60,8 +58,7 @@ def _sigma_y() -> np.ndarray:
     Returns:
         The Pauli-Y matrix as a complex-valued NumPy array.
     """
-    return np.array([[0.0, -1.0j],
-                     [1.0j, 0.0]], dtype=complex)
+    return np.array([[0.0, -1.0j], [1.0j, 0.0]], dtype=complex)
 
 
 def _sigma_z() -> np.ndarray:
@@ -70,8 +67,7 @@ def _sigma_z() -> np.ndarray:
     Returns:
         The Pauli-Z matrix as a complex-valued NumPy array.
     """
-    return np.array([[1.0, 0.0],
-                     [0.0, -1.0]], dtype=complex)
+    return np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)
 
 
 def _sigma_minus() -> np.ndarray:
@@ -80,8 +76,7 @@ def _sigma_minus() -> np.ndarray:
     Returns:
         The sigma- matrix as a complex-valued NumPy array.
     """
-    return np.array([[0.0, 1.0],
-                     [0.0, 0.0]], dtype=complex)
+    return np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex)
 
 
 def _sigma_plus() -> np.ndarray:
@@ -90,5 +85,4 @@ def _sigma_plus() -> np.ndarray:
     Returns:
         The sigma+ matrix as a complex-valued NumPy array.
     """
-    return np.array([[0.0, 0.0],
-                     [1.0, 0.0]], dtype=complex)
+    return np.array([[0.0, 0.0], [1.0, 0.0]], dtype=complex)

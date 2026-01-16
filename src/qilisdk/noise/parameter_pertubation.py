@@ -42,7 +42,4 @@ class ParameterPerturbation(NoiseABC, HasAllowedScopes):
         Returns:
             The set of scopes where this perturbation can be attached.
         """
-        return frozenset({
-            AttachmentScope.GLOBAL,
-            AttachmentScope.PER_GATE_TYPE
-        })
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_GATE_TYPE})

@@ -54,8 +54,6 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         if duration < 0:
             raise ValueError("duration must be >= 0.")
         gamma = 1.0 - float(np.exp(-duration / self._T1))
-        K0 = np.array([[1.0, 0.0],
-                       [0.0, np.sqrt(1.0 - gamma)]], dtype=complex)
-        K1 = np.array([[0.0, np.sqrt(gamma)],
-                       [0.0, 0.0]], dtype=complex)
+        K0 = np.array([[1.0, 0.0], [0.0, np.sqrt(1.0 - gamma)]], dtype=complex)
+        K1 = np.array([[0.0, np.sqrt(gamma)], [0.0, 0.0]], dtype=complex)
         return KrausChannel(operators=[QTensor(K0), QTensor(K1)])

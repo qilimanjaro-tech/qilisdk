@@ -31,7 +31,7 @@ class PhaseFlip(PauliChannel, SupportsStaticKraus):
             ValueError: If probability is outside [0, 1].
         """
         self._probability = _check_probability(probability, "probability")
-        super().__init__(pX=probability)
+        super().__init__(pZ=probability)
 
     @property
     def probability(self) -> float:
@@ -44,8 +44,4 @@ class PhaseFlip(PauliChannel, SupportsStaticKraus):
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        return frozenset({
-            AttachmentScope.GLOBAL,
-            AttachmentScope.PER_QUBIT,
-            AttachmentScope.PER_GATE_TYPE
-        })
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT, AttachmentScope.PER_GATE_TYPE})

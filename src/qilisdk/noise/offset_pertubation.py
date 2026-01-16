@@ -20,7 +20,7 @@ class OffsetPerturbation(ParameterPerturbation):
 
     def __init__(self, *, offset: float) -> None:
         """Args:
-            offset (float): Additive bias applied to the parameter value.
+        offset (float): Additive bias applied to the parameter value.
         """
         self._offset = float(offset)
 

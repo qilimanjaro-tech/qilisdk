@@ -147,7 +147,9 @@ class CudaBackend(Backend):
                 for parameter, pertubations in noise_model.global_perturbations.items():
                     if parameter in circuit_parameters:
                         for pertubation in pertubations:
-                            functional.circuit.set_parameters({parameter: pertubation.perturb(circuit_parameters[parameter])})
+                            functional.circuit.set_parameters(
+                                {parameter: pertubation.perturb(circuit_parameters[parameter])}
+                            )
             if noise_model.per_gate_perturbations:
                 for gate in functional.circuit.gates:
                     for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
@@ -174,16 +176,16 @@ class CudaBackend(Backend):
             cuda_noise_model = cudaq.NoiseModel()
             for noise in noise_model.global_noise:
                 if isinstance(noise, BitFlip):
-                    cuda_bit_flip = cudaq.BitFlipChannel(noise.probability)
-                    cuda_noise_model.add_channel(cuda_bit_flip)
+                    cuda_noise = cudaq.BitFlipChannel(noise.probability)
                 if isinstance(noise, SupportsStaticKraus):
                     kraus_channel = noise.as_kraus()
-                    kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
-                    cuda_kraus_channel = cudaq.KrausChannel(kraus_operators_np)
-                    qubits = list(range(functional.circuit.nqubits))
-                    gate_names = [gate.__name__.lower() for gate in self._basic_gate_handlers]
-                    for gate_name in gate_names:
-                        cuda_noise_model.add_channel(gate_name, qubits, cuda_kraus_channel)
+                    kraus_operators_np = [
+                        np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators
+                    ]
+                    cuda_noise = cudaq.KrausChannel(kraus_operators_np)
+                gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
+                for gate_name in gate_names:
+                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
         else:
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
@@ -202,7 +204,9 @@ class CudaBackend(Backend):
             for parameter, pertubations in noise_model.global_perturbations.items():
                 if parameter in schedule_parameters:
                     for pertubation in pertubations:
-                        functional.schedule.set_parameters({parameter: pertubation.perturb(schedule_parameters[parameter])})
+                        functional.schedule.set_parameters(
+                            {parameter: pertubation.perturb(schedule_parameters[parameter])}
+                        )
 
         steps = functional.schedule.tlist
 

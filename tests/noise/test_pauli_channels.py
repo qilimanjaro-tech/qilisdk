@@ -46,15 +46,16 @@ def test_bit_flip_probability_and_scopes():
     noise = BitFlip(probability=0.2)
 
     assert noise.probability == 0.2
-    assert noise.pZ == 0.2
-    assert noise.pX == 0.0
+    assert noise.pX == 0.2
+    assert noise.pY == 0.0
+    assert noise.pZ == 0.0
     assert AttachmentScope.PER_GATE_TYPE in BitFlip.allowed_scopes()
 
     kraus = noise.as_kraus()
     assert len(kraus.operators) == 2
 
-    expected_z = np.sqrt(0.2) * np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)
-    np.testing.assert_allclose(kraus.operators[1].dense(), expected_z)
+    expected_x = np.sqrt(0.2) * np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex)
+    np.testing.assert_allclose(kraus.operators[1].dense(), expected_x)
 
     with pytest.raises(ValueError):  # noqa: PT011
         BitFlip(probability=1.2)
@@ -64,15 +65,16 @@ def test_phase_flip_probability_and_scopes():
     noise = PhaseFlip(probability=0.3)
 
     assert noise.probability == 0.3
-    assert noise.pX == 0.3
-    assert noise.pZ == 0.0
+    assert noise.pX == 0.0
+    assert noise.pY == 0.0
+    assert noise.pZ == 0.3
     assert AttachmentScope.PER_GATE_TYPE in PhaseFlip.allowed_scopes()
 
     kraus = noise.as_kraus()
     assert len(kraus.operators) == 2
 
-    expected_x = np.sqrt(0.3) * np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex)
-    np.testing.assert_allclose(kraus.operators[1].dense(), expected_x)
+    expected_z = np.sqrt(0.3) * np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)
+    np.testing.assert_allclose(kraus.operators[1].dense(), expected_z)
 
     with pytest.raises(ValueError):  # noqa: PT011
         PhaseFlip(probability=-0.1)

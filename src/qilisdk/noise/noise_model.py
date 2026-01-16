@@ -92,6 +92,7 @@ class NoiseModel:
             dict[tuple[type[Gate], str], list[ParameterPerturbation]]: Perturbations keyed by gate type and parameter.
         """
         return self._per_gate_perturbations
+
     # Overloads (typing)
     # -----------------------
 

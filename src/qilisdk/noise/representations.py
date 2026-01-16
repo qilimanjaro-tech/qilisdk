@@ -26,7 +26,7 @@ class KrausChannel(Noise):
 
     def __init__(self, operators: list[QTensor]) -> None:
         """Args:
-            operators (list[QTensor]): Kraus operators defining the channel."""
+        operators (list[QTensor]): Kraus operators defining the channel."""
         self._operators: list[QTensor] = operators
 
     @property
@@ -52,9 +52,9 @@ class LindbladGenerator(Noise):
         hamiltonian: QTensor | None = None,
     ) -> None:
         """Args:
-            jump_operators (list[QTensor]): Jump operators defining dissipation.
-            rates (list[float] | None): Optional rates for each jump operator.
-            hamiltonian (QTensor | None): Optional Hamiltonian term for coherent evolution."""
+        jump_operators (list[QTensor]): Jump operators defining dissipation.
+        rates (list[float] | None): Optional rates for each jump operator.
+        hamiltonian (QTensor | None): Optional Hamiltonian term for coherent evolution."""
         self._jump_operators = jump_operators
         self._rates = rates
         self._hamiltonian = hamiltonian
