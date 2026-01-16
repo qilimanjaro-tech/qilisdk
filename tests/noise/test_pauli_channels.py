@@ -15,8 +15,7 @@
 import numpy as np
 import pytest
 
-from qilisdk.noise import BitFlip, KrausChannel, PauliChannel, PhaseFlip
-from qilisdk.noise.depolarizing import Depolarizing
+from qilisdk.noise import BitFlip, Depolarizing, KrausChannel, PauliChannel, PhaseFlip
 from qilisdk.noise.protocols import AttachmentScope
 
 
