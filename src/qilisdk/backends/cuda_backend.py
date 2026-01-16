@@ -30,7 +30,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.noise import SupportsLindblad, SupportsStaticKraus, BitFlip
+from qilisdk.noise import BitFlip, SupportsLindblad, SupportsStaticKraus
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -142,15 +142,15 @@ class CudaBackend(Backend):
 
         # Apply parameter pertubations
         if noise_model is not None:
-            if noise_model.global_pertubations:
+            if noise_model.global_perturbations:
                 circuit_parameters = functional.circuit.get_parameters()
-                for parameter, pertubations in noise_model.global_pertubations.items():
+                for parameter, pertubations in noise_model.global_perturbations.items():
                     if parameter in circuit_parameters:
                         for pertubation in pertubations:
                             functional.circuit.set_parameters({parameter: pertubation.perturb(circuit_parameters[parameter])})
-            if noise_model.per_gate_pertubations:
+            if noise_model.per_gate_perturbations:
                 for gate in functional.circuit.gates:
-                    for (gate_type, parameter), pertubations in noise_model.per_gate_pertubations.items():
+                    for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
                         if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
                             gate_parameters = gate.get_parameters()
                             for pertubation in pertubations:
@@ -197,9 +197,9 @@ class CudaBackend(Backend):
         cudaq.set_target("dynamics")
 
         # Apply parameter pertubations
-        if noise_model is not None and noise_model.global_pertubations:
+        if noise_model is not None and noise_model.global_perturbations:
             schedule_parameters = functional.schedule.get_parameters()
-            for parameter, pertubations in noise_model.global_pertubations.items():
+            for parameter, pertubations in noise_model.global_perturbations.items():
                 if parameter in schedule_parameters:
                     for pertubation in pertubations:
                         functional.schedule.set_parameters({parameter: pertubation.perturb(schedule_parameters[parameter])})

@@ -45,8 +45,8 @@ class NoiseModel:
         self._per_gate_noise: dict[GateType, list[Noise]] = defaultdict(list)
 
         # parameter pertubations
-        self._global_pertubations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
-        self._per_gate_pertubations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
+        self._global_perturbations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
+        self._per_gate_perturbations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
 
     @property
     def global_noise(self) -> list[Noise]:
@@ -76,22 +76,22 @@ class NoiseModel:
         return self._per_gate_noise
 
     @property
-    def global_pertubations(self) -> dict[Parameter, list[ParameterPerturbation]]:
+    def global_perturbations(self) -> dict[Parameter, list[ParameterPerturbation]]:
         """Return the global parameter perturbation mapping.
 
         Returns:
             dict[str, list[ParameterPerturbation]]: Perturbations keyed by parameter name.
         """
-        return self._global_pertubations
+        return self._global_perturbations
 
     @property
-    def per_gate_pertubations(self) -> dict[tuple[GateType, Parameter], list[ParameterPerturbation]]:
+    def per_gate_perturbations(self) -> dict[tuple[GateType, Parameter], list[ParameterPerturbation]]:
         """Return the per-gate-type parameter perturbation mapping.
 
         Returns:
             dict[tuple[type[Gate], str], list[ParameterPerturbation]]: Perturbations keyed by gate type and parameter.
         """
-        return self._per_gate_pertubations
+        return self._per_gate_perturbations
     # Overloads (typing)
     # -----------------------
 
@@ -141,12 +141,12 @@ class NoiseModel:
                 scope = AttachmentScope.GLOBAL
                 if scope not in noise.allowed_scopes():
                     raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
-                self.global_pertubations[parameter].append(noise)
+                self.global_perturbations[parameter].append(noise)
                 return
             scope = AttachmentScope.PER_GATE_TYPE
             if scope not in noise.allowed_scopes():
                 raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
-            self.per_gate_pertubations[gate, parameter].append(noise)
+            self.per_gate_perturbations[gate, parameter].append(noise)
         else:
             if parameter is not None:
                 raise ValueError(f"{noise.__class__.__name__} cannot be applied to parameters.")
