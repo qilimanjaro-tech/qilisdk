@@ -19,11 +19,9 @@ from qilisdk.analog.hamiltonian import PauliI, PauliOperator, PauliX, PauliY, Pa
 from qilisdk.core.qtensor import QTensor
 from qilisdk.yaml import yaml
 
-from .noise_model import DigitalNoise
-
 
 @yaml.register_class
-class KrausChannelNoise(DigitalNoise):
+class KrausChannelNoise:
     """
     Generic noise model represented by Kraus operators
     """

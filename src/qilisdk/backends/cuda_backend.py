@@ -30,14 +30,13 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.noise_models import NoiseModel, ParameterNoise
-from qilisdk.noise_models.analog_noise import AnalogNoise
-from qilisdk.noise_models.digital_noise import DigitalNoise
+from qilisdk.noise.protocols import SupportsLindblad, SupportsStaticKraus
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
+    from qilisdk.noise import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -141,21 +140,21 @@ class CudaBackend(Backend):
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
-        # Apply parameter noise if present
+        # Apply parameter pertubations
         if noise_model is not None:
-            for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, ParameterNoise):
-                    vals = functional.circuit.get_parameter_values()
-                    names = functional.circuit.get_parameter_names()
-                    for i in range(len(vals)):
-                        matches = len(noise_pass.affected_parameters) == 0
-                        for name in noise_pass.affected_parameters:
-                            if name in names[i]:
-                                matches = True
-                        if matches:
-                            noisy_param = noise_pass.apply(vals[i])
-                            vals[i] = noisy_param
-                    functional.circuit.set_parameter_values(vals)
+            if noise_model.global_pertubations:
+                circuit_parameters = functional.circuit.get_parameters()
+                for parameter, pertubations in noise_model.global_pertubations.items():
+                    if parameter in circuit_parameters:
+                        for pertubation in pertubations:
+                            functional.circuit.set_parameters({parameter: pertubation.perturb(circuit_parameters[parameter])})
+            if noise_model.per_gate_pertubations:
+                for gate in functional.circuit.gates:
+                    for (gate_type, parameter), pertubations in noise_model.per_gate_pertubations.items():
+                        if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
+                            gate_parameters = gate.get_parameters()
+                            for pertubation in pertubations:
+                                gate.set_parameters({parameter: pertubation.perturb(gate_parameters[parameter])})
 
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         for gate in transpiled_circuit.gates:
@@ -172,24 +171,17 @@ class CudaBackend(Backend):
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
         if noise_model is not None:
-            noise = cudaq.NoiseModel()
-            for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, DigitalNoise):
-                    ops_as_np = [np.array(op.dense(), dtype=np.complex128) for op in noise_pass.kraus_operators]
-                    kraus_channel = cudaq.KrausChannel(ops_as_np)
-                    affected_gates = noise_pass.affected_gates
-                    affected_qubits = noise_pass.affected_qubits
-                    if len(affected_gates) == 0:
-                        for gate_obj in self._basic_gate_handlers:
-                            if gate_obj not in {U1, U2, SWAP}:
-                                affected_gates.append(gate_obj)
-                    if len(affected_qubits) == 0:
-                        affected_qubits = list(range(functional.circuit.nqubits))
-                    for gate_obj in affected_gates:
-                        gate_name = gate_obj.__name__
-                        gate_name = gate_name.lower()
-                        noise.add_channel(gate_name, affected_qubits, kraus_channel)
-            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=noise)
+            cuda_noise_model = cudaq.NoiseModel()
+            for noise in noise_model.global_noise:
+                if isinstance(noise, SupportsStaticKraus):
+                    kraus_channel = noise.as_kraus()
+                    kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+                    cuda_kraus_channel = cudaq.KrausChannel(kraus_operators_np)
+                    qubits = list(range(functional.circuit.nqubits))
+                    gate_names = [gate.__name__.lower() for gate in self._basic_gate_handlers]
+                    for gate_name in gate_names:
+                        cuda_noise_model.add_channel(gate_name, qubits, cuda_kraus_channel)
+            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
         else:
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
@@ -201,21 +193,13 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
-        # Apply parameter noise if present
-        if noise_model is not None:
-            for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, ParameterNoise):
-                    vals = functional.schedule.get_parameter_values()
-                    names = functional.schedule.get_parameter_names()
-                    for i in range(len(vals)):
-                        matches = len(noise_pass.affected_parameters) == 0
-                        for name in noise_pass.affected_parameters:
-                            if name in names[i]:
-                                matches = True
-                        if matches:
-                            noisy_param = noise_pass.apply(vals[i])
-                            vals[i] = noisy_param
-                    functional.schedule.set_parameter_values(vals)
+        # Apply parameter pertubations
+        if noise_model is not None and noise_model.global_pertubations:
+            schedule_parameters = functional.schedule.get_parameters()
+            for parameter, pertubations in noise_model.global_pertubations.items():
+                if parameter in schedule_parameters:
+                    for pertubation in pertubations:
+                        functional.schedule.set_parameters({parameter: pertubation.perturb(schedule_parameters[parameter])})
 
         steps = functional.schedule.tlist
 
@@ -244,22 +228,22 @@ class CudaBackend(Backend):
 
         ops_numpy = []
         jump_operators = []
-        ind = 0
-        if noise_model is not None:
-            for noise_pass in noise_model.noise_passes:
-                if isinstance(noise_pass, AnalogNoise):
-                    for op in noise_pass.jump_operators:
-                        id = f"jump_op_{ind}"
-                        ops_numpy.append(np.array(op.dense(), dtype=np.complex128))
+        if noise_model:
+            for noise in noise_model.global_noise:
+                qubits = list(range(functional.schedule.nqubits))
+                if isinstance(noise, SupportsLindblad):
+                    lindbland_generator = noise.as_lindblad()
+                    for i, operator in enumerate(lindbland_generator.jump_operators):
+                        id = f"jump_op_{i}"
+                        ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
                         operators.define(
                             id=id,
                             expected_dimensions=[ops_numpy[-1].shape[0]],
                             create=lambda op_np=ops_numpy[-1]: op_np,
                             override=True,
                         )
-                        for qubit in noise_pass.affected_qubits:
+                        for qubit in qubits:
                             jump_operators.append(operators.instantiate(id, degrees=qubit))
-                        ind += 1
 
         # Remove any constant term from the Hamiltonian
         # (this causes an error if we use jump operators and does nothing normally)

@@ -17,7 +17,7 @@
         "optimizers": "target",
         "speqtrum": "cloudflare",
         "cost_functions": "cart",
-        "noise_models": "animation",
+        "noise": "animation",
         "experiments": "filter"
     },
 }
