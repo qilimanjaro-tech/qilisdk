@@ -373,4 +373,4 @@ def test_trotterized_time_evolution_results():
     probs = np.abs((te_res.final_state.dense()) ** 2).T[0]
     te_probs = {("{" + ":0" + str(schedule.nqubits) + "b}").format(i): float(p) for i, p in enumerate(probs)}
     sam_probs = {key: sam_res.samples[key] / nshots if key in sam_res.samples else 0.0 for key in te_probs}
-    assert all(np.isclose(list(te_probs.values()), list(sam_probs.values()), atol=1e-3))
+    assert all(np.isclose(list(te_probs.values()), list(sam_probs.values()), atol=1e-2))

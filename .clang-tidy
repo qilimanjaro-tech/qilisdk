@@ -200,8 +200,6 @@ CheckOptions:
     value:           'false'
   - key:             google-readability-namespace-comments.SpacesBeforeComments
     value:           '2'
-  - key:             misc-throw-by-value-catch-by-reference.MaxSize
-    value:           '-1'
   - key:             cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
     value:           'true'
   - key:             bugprone-argument-comment.IgnoreSingleArgument

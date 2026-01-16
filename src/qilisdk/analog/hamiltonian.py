@@ -359,7 +359,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix((dim, dim), dtype=complex)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -387,7 +387,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix((dim, dim), dtype=complex)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
