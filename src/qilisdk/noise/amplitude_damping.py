@@ -23,7 +23,15 @@ from .utils import _sigma_minus
 
 
 class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
+    """Amplitude damping noise model for energy relaxation."""
+
     def __init__(self, *, T1: float) -> None:
+        """Args:
+            T1 (float): Relaxation time constant (must be > 0).
+
+        Raises:
+            ValueError: If T1 is not positive.
+        """
         if T1 <= 0:
             raise ValueError("T1 must be > 0.")
         self._T1 = float(T1)

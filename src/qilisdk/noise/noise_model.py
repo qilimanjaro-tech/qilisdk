@@ -32,8 +32,13 @@ TParameterPerturbation = TypeVar("TParameterPerturbation", bound=ParameterPertur
 
 
 class NoiseModel:
+    """Container for noise sources and parameter perturbations.
+
+    Stores global, per-qubit, and per-gate noise along with parameter-level
+    perturbations for later application in backends.
+    """
+
     def __init__(self) -> None:
-        """Initialize storage for noise and parameter perturbations."""
         # noises
         self.global_noise: list[Noise] = []
         self.per_qubit_noise: dict[Qubit, list[Noise]] = defaultdict(list)
@@ -67,7 +72,7 @@ class NoiseModel:
 
     def add(
         self,
-        noise: TNoise | TParameterPerturbation,
+        noise: Noise | ParameterPerturbation,
         *,
         qubit: Qubit | None = None,
         gate: GateType | None = None,
@@ -76,19 +81,19 @@ class NoiseModel:
         """Attach a noise source or parameter perturbation to the model.
 
         Args:
-            noise: The noise or parameter perturbation instance to attach.
-            qubit: Target qubit index for per-qubit noise attachments.
-            gate: Target gate type for per-gate noise or perturbation attachments.
-            parameter: Target parameter name for perturbation attachments.
+            noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to attach.
+            qubit (int | None): Target qubit index for per-qubit noise attachments.
+            gate (type[Gate] | None): Target gate type for per-gate noise or perturbation attachments.
+            parameter (str | None): Target parameter name for perturbation attachments.
 
         Raises:
-            TypeError: If provided arguments imply an unsupported or ambiguous scope.
             ValueError: If the noise/perturbation does not allow the inferred scope.
-            RuntimeError: If an internal scope combination is unhandled.
         """
         if isinstance(noise, ParameterPerturbation):
             if parameter is None:
-                raise RuntimeError("Parameter Perturbation requires a parameter name.")
+                raise ValueError(f"{noise.__class__.__name__} requires a parameter name.")
+            if qubit is not None:
+                raise ValueError(f"{noise.__class__.__name__} cannot be applied to specific qubits.")
             if gate is None:
                 scope = AttachmentScope.GLOBAL
                 if scope not in noise.allowed_scopes():
@@ -100,6 +105,8 @@ class NoiseModel:
                 raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
             self.per_gate_pertubations[gate, parameter].append(noise)
         else:
+            if parameter is not None:
+                raise ValueError(f"{noise.__class__.__name__} requires a parameter name.")
             if qubit is None and gate is None:
                 scope = AttachmentScope.GLOBAL
                 if scope not in noise.allowed_scopes():

@@ -17,13 +17,10 @@ import numpy as np
 from .parameter_pertubation import ParameterPerturbation
 
 
-class GaussianParameterPerturbation(ParameterPerturbation):
-    """Gaussian-distributed parameter noise.
+class GaussianPerturbation(ParameterPerturbation):
+    """Gaussian-distributed parameter perturbation.
 
-    Perturbs a parameter as:
-        value -> value + N(mean, std^2)
-
-    Each call to `perturb` samples a new realization.
+    Each call to ``perturb`` adds a random offset drawn from N(mean, std^2).
     """
 
     def __init__(
@@ -32,6 +29,13 @@ class GaussianParameterPerturbation(ParameterPerturbation):
         mean: float = 0.0,
         std: float,
     ) -> None:
+        """Args:
+            mean (float): Mean of the Gaussian offset.
+            std (float): Standard deviation of the Gaussian offset (must be >= 0).
+
+        Raises:
+            ValueError: If std is negative.
+        """
         if std < 0:
             raise ValueError("std must be >= 0")
         self._mean = float(mean)
@@ -40,10 +44,20 @@ class GaussianParameterPerturbation(ParameterPerturbation):
 
     @property
     def mean(self) -> float:
+        """Return the mean of the Gaussian offset.
+
+        Returns:
+            The mean value.
+        """
         return self._mean
 
     @property
     def std(self) -> float:
+        """Return the standard deviation of the Gaussian offset.
+
+        Returns:
+            The standard deviation value.
+        """
         return self._std
 
     def perturb(self, value: float) -> float:

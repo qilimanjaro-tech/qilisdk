@@ -13,32 +13,38 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from .noise_abc import NoiseABC
-from .protocols import AttachmentScope, HasAllowedScopes
 from .utils import _check_probability
-
-if TYPE_CHECKING:
-    from .representations import KrausChannel
 
 
 class ReadoutAssignment(NoiseABC):
-    """Classical readout assignment error."""
+    """Classical readout assignment error model for measurement outcomes."""
 
     def __init__(self, *, p01: float, p10: float) -> None:
-        """
-        Args:
-            p01 (float): probability to report '1' when the state is |0>
-            p10 (float): probability to report '0' when the state is |1>
+        """Args:
+            p01 (float): Probability to report "1" when the state is |0>.
+            p10 (float): Probability to report "0" when the state is |1>.
+
+        Raises:
+            ValueError: If any probability is outside [0, 1].
         """
         self._p01 = _check_probability(p01, "p01")
         self._p10 = _check_probability(p10, "p10")
 
     @property
     def p01(self) -> float:
+        """Return the probability of reporting "1" for a |0> state.
+
+        Returns:
+            The p01 probability.
+        """
         return self._p01
-    
+
     @property
     def p10(self) -> float:
+        """Return the probability of reporting "0" for a |1> state.
+
+        Returns:
+            The p10 probability.
+        """
         return self._p10

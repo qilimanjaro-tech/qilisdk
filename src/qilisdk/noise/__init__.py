@@ -13,7 +13,15 @@
 # limitations under the License.
 
 from .amplitude_damping import AmplitudeDamping
+from .bit_flip import BitFlip
+from .dephasing import Dephasing
+from .gaussian_pertubation import GaussianPerturbation
 from .noise_model import NoiseModel
+from .offset_pertubation import OffsetPerturbation
+from .pauli_channel import PauliChannel
+from .phase_flip import PhaseFlip
+from .protocols import SupportsLindblad, SupportsStaticKraus, SupportsTimeDerivedKraus
 from .readout_assignment import ReadoutAssignment
+from .representations import KrausChannel, LindbladGenerator
 
-__all__ = ["AmplitudeDamping", "NoiseModel", "ReadoutAssignment"]
+__all__ = ["AmplitudeDamping", "BitFlip", "Dephasing", "GaussianPerturbation", "KrausChannel", "LindbladGenerator", "NoiseModel", "OffsetPerturbation", "PauliChannel", "PhaseFlip", "ReadoutAssignment", "SupportsLindblad", "SupportsStaticKraus", "SupportsTimeDerivedKraus"]

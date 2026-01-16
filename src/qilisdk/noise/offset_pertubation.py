@@ -15,16 +15,13 @@
 from .parameter_pertubation import ParameterPerturbation
 
 
-class StaticOffsetPerturbation(ParameterPerturbation):
-    """Adds a constant offset to a parameter value.
-
-    Parameter:
-    - offset: additive bias
-
-    Useful for systematic over/under-rotations or miscalibrated coefficients.
-    """
+class OffsetPerturbation(ParameterPerturbation):
+    """Parameter perturbation that adds a constant offset."""
 
     def __init__(self, *, offset: float) -> None:
+        """Args:
+            offset (float): Additive bias applied to the parameter value.
+        """
         self._offset = float(offset)
 
     def perturb(self, value: float) -> float:

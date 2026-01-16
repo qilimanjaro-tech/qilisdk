@@ -17,4 +17,4 @@ from abc import ABC
 
 
 class NoiseABC(ABC):
-    ...
+    """Base class for all noise and perturbation types."""

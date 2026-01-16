@@ -21,6 +21,14 @@ if TYPE_CHECKING:
 
 
 class AttachmentScope(str, Enum):
+    """Scope describing where a noise or perturbation can be attached.
+
+    Attributes:
+        GLOBAL: Applies to all operations or parameters.
+        PER_QUBIT: Applies only to a specific qubit.
+        PER_GATE_TYPE: Applies only to a specific gate type.
+    """
+
     GLOBAL = "global"
     PER_QUBIT = "per_qubit"
     PER_GATE_TYPE = "per_gate_type"
@@ -28,20 +36,55 @@ class AttachmentScope(str, Enum):
 
 @runtime_checkable
 class HasAllowedScopes(Protocol):
+    """Protocol for types that declare their allowed attachment scopes."""
+
     @classmethod
-    def allowed_scopes(cls) -> frozenset[AttachmentScope]: ...
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by the type.
+
+        Returns:
+            The set of scopes where the type can be attached.
+        """
+        ...
 
 
 @runtime_checkable
 class SupportsTimeDerivedKraus(Protocol):
-    def as_kraus(self, *, duration: float) -> KrausChannel: ...
+    """Protocol for types that produce duration-dependent Kraus channels."""
+
+    def as_kraus(self, *, duration: float) -> KrausChannel:
+        """Return a Kraus channel derived for a specific duration.
+
+        Args:
+            duration (float): Duration over which the noise acts.
+
+        Returns:
+            The Kraus channel for the given duration.
+        """
+        ...
 
 
 @runtime_checkable
 class SupportsStaticKraus(Protocol):
-    def as_kraus(self) -> KrausChannel: ...
+    """Protocol for types that expose a fixed Kraus channel."""
+
+    def as_kraus(self) -> KrausChannel:
+        """Return the static Kraus channel for this noise.
+
+        Returns:
+            The Kraus channel representation.
+        """
+        ...
 
 
 @runtime_checkable
 class SupportsLindblad(Protocol):
-    def as_lindblad(self) -> LindbladGenerator: ...
+    """Protocol for types that expose a Lindblad generator."""
+
+    def as_lindblad(self) -> LindbladGenerator:
+        """Return the Lindblad generator for this noise.
+
+        Returns:
+            The Lindblad generator representation.
+        """
+        ...

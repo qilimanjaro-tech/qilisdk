@@ -70,7 +70,7 @@ class KrausChannelNoise:
 
 
 @yaml.register_class
-class PauliChannelNoise(DigitalNoise):
+class PauliChannelNoise:
     """
     Pauli noise channel defined by probabilities over Pauli strings.
     """

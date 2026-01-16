@@ -22,7 +22,11 @@ if TYPE_CHECKING:
 
 
 class KrausChannel(Noise):
+    """Kraus operator representation of a quantum channel."""
+
     def __init__(self, operators: list[QTensor]) -> None:
+        """Args:
+            operators (list[QTensor]): Kraus operators defining the channel."""
         self.operators: list[QTensor] = operators
 
     def as_kraus(self) -> Self:
@@ -30,15 +34,26 @@ class KrausChannel(Noise):
 
 
 class LindbladGenerator(Noise):
+    """Lindblad generator representation for Markovian noise."""
+
     def __init__(
         self,
         jump_operators: list[QTensor],
         rates: list[float] | None = None,
         hamiltonian: QTensor | None = None,
     ) -> None:
+        """Args:
+            jump_operators (list[QTensor]): Jump operators defining dissipation.
+            rates (list[float] | None): Optional rates for each jump operator.
+            hamiltonian (QTensor | None): Optional Hamiltonian term for coherent evolution."""
         self.jump_operators = jump_operators
         self.rates = rates
         self.hamiltonian = hamiltonian
 
     def as_lindbland(self) -> Self:
+        """Return this instance as a Lindblad generator representation.
+
+        Returns:
+            The current LindbladGenerator instance.
+        """
         return self

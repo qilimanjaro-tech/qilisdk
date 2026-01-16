@@ -17,18 +17,18 @@ from .utils import _check_probability
 
 
 class Depolarizing(PauliChannel):
-    """1-qubit depolarizing noise.
+    """Single-qubit depolarizing noise channel.
 
-    Parameter:
-    - p: depolarizing probability in [0,1]
-
-    Common convention:
-    p -> (1-p)p + p * I/2
-
-    Equivalent Pauli form:
-    pX=pY=pZ=p/3 with pI=1-p
+    This channel mixes the state with the maximally mixed state by
+    configuring pX = pY = pZ = p / 3, which implies pI = 1 - p.
     """
 
     def __init__(self, *, p: float) -> None:
+        """Args:
+            p (float): Depolarizing probability in the range [0, 1].
+
+        Raises:
+            ValueError: If p is outside [0, 1].
+        """
         self._p = _check_probability(p, "p")
         super().__init__(pX=self._p / 3.0, pY=self._p / 3.0, pZ=self._p / 3.0)

@@ -30,7 +30,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.noise.protocols import SupportsLindblad, SupportsStaticKraus
+from qilisdk.noise import SupportsLindblad, SupportsStaticKraus, BitFlip
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
@@ -173,6 +173,9 @@ class CudaBackend(Backend):
         if noise_model is not None:
             cuda_noise_model = cudaq.NoiseModel()
             for noise in noise_model.global_noise:
+                if isinstance(noise, BitFlip):
+                    cuda_bit_flip = cudaq.BitFlipChannel(noise._probability)
+                    cuda_noise_model.add(cuda_bit_flip)
                 if isinstance(noise, SupportsStaticKraus):
                     kraus_channel = noise.as_kraus()
                     kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]

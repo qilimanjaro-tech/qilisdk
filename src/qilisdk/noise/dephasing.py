@@ -23,22 +23,30 @@ from .utils import _identity, _sigma_z
 
 
 class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
-    """Pure dephasing (Tphi).
+    """Pure dephasing (Tphi) noise model for single qubits.
 
-    Physics-based model parameterized by Tphi (seconds). Supports:
-    - Lindblad (jump operator proportional to Z)
-    - Time-derived Kraus channel for a given duration dt
-
-    Convention: coherences decay as exp(-t / Tphi).
+    This model supports both Lindblad and time-derived Kraus forms, with
+    coherences decaying as exp(-t / Tphi).
     """
 
     def __init__(self, *, Tphi: float) -> None:
+        """Args:
+            Tphi (float): Dephasing time constant (must be > 0).
+
+        Raises:
+            ValueError: If Tphi is not positive.
+        """
         if Tphi <= 0:
             raise ValueError("Tphi must be > 0.")
         self._Tphi = float(Tphi)
 
     @property
     def Tphi(self) -> float:
+        """Return the dephasing time constant.
+
+        Returns:
+            The Tphi value.
+        """
         return self._Tphi
 
     def as_lindblad(self) -> LindbladGenerator:

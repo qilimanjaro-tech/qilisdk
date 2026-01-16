@@ -16,6 +16,18 @@ import numpy as np
 
 
 def _check_probability(p: float, name: str = "p") -> float:
+    """Validate a probability value in the [0, 1] range.
+
+    Args:
+        p (float): Probability value to validate.
+        name (str): Name used in error messages.
+
+    Returns:
+        The validated probability as a float.
+
+    Raises:
+        ValueError: If the probability is outside [0, 1].
+    """
     p = float(p)
     if not (0.0 <= p <= 1.0):
         raise ValueError(f"{name} must be in [0, 1].")
@@ -23,30 +35,60 @@ def _check_probability(p: float, name: str = "p") -> float:
 
 
 def _identity() -> np.ndarray:
+    """Return the 2x2 identity matrix.
+
+    Returns:
+        The identity matrix as a complex-valued NumPy array.
+    """
     return np.array([[1.0, 0.0],
                      [0.0, 1.0]], dtype=complex)
 
 
 def _sigma_x() -> np.ndarray:
+    """Return the Pauli-X matrix.
+
+    Returns:
+        The Pauli-X matrix as a complex-valued NumPy array.
+    """
     return np.array([[0.0, 1.0],
                      [1.0, 0.0]], dtype=complex)
 
 
 def _sigma_y() -> np.ndarray:
+    """Return the Pauli-Y matrix.
+
+    Returns:
+        The Pauli-Y matrix as a complex-valued NumPy array.
+    """
     return np.array([[0.0, -1.0j],
                      [1.0j, 0.0]], dtype=complex)
 
 
 def _sigma_z() -> np.ndarray:
+    """Return the Pauli-Z matrix.
+
+    Returns:
+        The Pauli-Z matrix as a complex-valued NumPy array.
+    """
     return np.array([[1.0, 0.0],
                      [0.0, -1.0]], dtype=complex)
 
 
 def _sigma_minus() -> np.ndarray:
+    """Return the lowering (sigma-) operator.
+
+    Returns:
+        The sigma- matrix as a complex-valued NumPy array.
+    """
     return np.array([[0.0, 1.0],
                      [0.0, 0.0]], dtype=complex)
 
 
 def _sigma_plus() -> np.ndarray:
+    """Return the raising (sigma+) operator.
+
+    Returns:
+        The sigma+ matrix as a complex-valued NumPy array.
+    """
     return np.array([[0.0, 0.0],
                      [1.0, 0.0]], dtype=complex)

@@ -18,7 +18,18 @@ from .utils import _check_probability
 
 
 class PhaseFlip(PauliChannel, SupportsStaticKraus):
+    """Single-qubit Pauli channel configured with an X-axis error.
+
+    Applies an X error with the given probability and the identity otherwise.
+    """
+
     def __init__(self, *, probability: float) -> None:
+        """Args:
+            probability (float): Probability of applying the Pauli-X error.
+
+        Raises:
+            ValueError: If probability is outside [0, 1].
+        """
         self._probability = _check_probability(probability, "probability")
         super().__init__(pX=probability)
 

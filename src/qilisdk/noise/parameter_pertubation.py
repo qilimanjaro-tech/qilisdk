@@ -21,15 +21,27 @@ from .protocols import AttachmentScope, HasAllowedScopes
 
 
 class ParameterPerturbation(NoiseABC, HasAllowedScopes):
-    """Noise that perturbs a parameter."""
+    """Base class for noise that perturbs a numeric parameter."""
 
     @abstractmethod
     def perturb(self, value: float) -> float:
-        """Return a perturbed version of a parameter value."""
+        """Return a perturbed version of a parameter value.
+
+        Args:
+            value (float): The original parameter value.
+
+        Returns:
+            The perturbed parameter value.
+        """
         ...
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this perturbation type.
+
+        Returns:
+            The set of scopes where this perturbation can be attached.
+        """
         return frozenset({
             AttachmentScope.GLOBAL,
             AttachmentScope.PER_GATE_TYPE

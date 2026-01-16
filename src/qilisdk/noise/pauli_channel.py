@@ -28,17 +28,17 @@ class PauliChannel(Noise, SupportsStaticKraus):
     Channel:
         E(rho) = pI * rho + pX * X rho X + pY * Y rho Y + pZ * Z rho Z
         where pI = 1 - (pX + pY + pZ).
-
-    Args:
-        pX: Probability of X error.
-        pY: Probability of Y error.
-        pZ: Probability of Z error.
-
-    Raises:
-        ValueError: If any probability is outside [0,1] or pX+pY+pZ > 1.
     """
 
     def __init__(self, *, pX: float = 0.0, pY: float = 0.0, pZ: float = 0.0) -> None:
+        """Args:
+            pX (float): Probability of X error.
+            pY (float): Probability of Y error.
+            pZ (float): Probability of Z error.
+
+        Raises:
+            ValueError: If any probability is outside [0, 1] or pX + pY + pZ > 1.
+        """
         self._pX = _check_probability(pX, "pX")
         self._pY = _check_probability(pY, "pY")
         self._pZ = _check_probability(pZ, "pZ")
@@ -47,6 +47,11 @@ class PauliChannel(Noise, SupportsStaticKraus):
 
     @property
     def name(self) -> str:
+        """Return the display name for this channel.
+
+        Returns:
+            A name string. Defaults to empty.
+        """
         return ""
 
     def as_kraus(self) -> KrausChannel:

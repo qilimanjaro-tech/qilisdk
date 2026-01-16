@@ -18,12 +18,19 @@ from .utils import _check_probability
 
 
 class BitFlip(PauliChannel, SupportsStaticKraus):
-    """Phase-flip (Pauli-Z) noise.
+    """Single-qubit Pauli channel configured with a Z-axis error.
 
-    This noise applies a Z error with probability `probability`
-    and the identity otherwise.
+    Applies a Z error with the given probability and the identity otherwise.
     """
+
     def __init__(self, *, probability: float) -> None:
+        """
+        Args:
+            probability (float): Probability of applying the Pauli-Z error.
+
+        Raises:
+            ValueError: If probability is outside [0, 1].
+        """
         self._probability = _check_probability(probability, "probability")
         super().__init__(pZ=probability)
 
