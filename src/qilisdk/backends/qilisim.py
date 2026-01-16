@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-    from qilisdk.noise_models.noise_model import NoiseModel
+    from qilisdk.noise.noise_model import NoiseModel
 
 
 class QiliSim(Backend):

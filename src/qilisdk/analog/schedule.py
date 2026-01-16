@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from copy import copy
 from itertools import chain
-from typing import Mapping, overload
+from typing import Mapping, TypeAlias, overload
 
 from numpy import linspace
 
@@ -28,7 +28,7 @@ from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
 _TIME_PARAMETER_NAME = "t"
-PARAMETERIZED_NUMBER = float | Parameter | Term
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 
 # type aliases just to keep this short
 CoeffDict = dict[str, TimeDict]

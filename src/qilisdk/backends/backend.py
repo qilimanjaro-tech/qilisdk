@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-    from qilisdk.noise_models.noise_model import NoiseModel
+    from qilisdk.noise.noise_model import NoiseModel
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
 

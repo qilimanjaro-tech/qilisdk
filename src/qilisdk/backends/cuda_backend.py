@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, spin
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
@@ -30,12 +30,13 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.noise import BitFlip, Depolarizing, Noise, PhaseFlip, SupportsLindblad, SupportsStaticKraus
 
 if TYPE_CHECKING:
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
-    from qilisdk.noise_models.noise_model import NoiseModel
+    from qilisdk.noise import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -43,6 +44,20 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+
+
+def _to_cuda_noise(noise: Noise):  # noqa: ANN202
+    if isinstance(noise, BitFlip):
+        return cudaq.BitFlipChannel(noise.probability)
+    if isinstance(noise, PhaseFlip):
+        return cudaq.PhaseFlipChannel(noise.probability)
+    if isinstance(noise, Depolarizing):
+        return cudaq.DepolarizationChannel(noise.probability)
+    if isinstance(noise, SupportsStaticKraus):
+        kraus_channel = noise.as_kraus()
+        kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+        return cudaq.KrausChannel(kraus_operators_np)
+    return None
 
 
 class CudaSamplingMethod(str, Enum):
@@ -139,6 +154,24 @@ class CudaBackend(Backend):
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
+        # Apply parameter pertubations
+        if noise_model:
+            if noise_model.global_perturbations:
+                circuit_parameters = functional.circuit.get_parameters()
+                for parameter, pertubations in noise_model.global_perturbations.items():
+                    if parameter in circuit_parameters:
+                        for pertubation in pertubations:
+                            functional.circuit.set_parameters(
+                                {parameter: pertubation.perturb(circuit_parameters[parameter])}
+                            )
+            if noise_model.per_gate_perturbations:
+                for gate in functional.circuit.gates:
+                    for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
+                        if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
+                            gate_parameters = gate.get_parameters()
+                            for pertubation in pertubations:
+                                gate.set_parameters({parameter: pertubation.perturb(gate_parameters[parameter])})
+
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         for gate in transpiled_circuit.gates:
             if isinstance(gate, Controlled):
@@ -150,10 +183,29 @@ class CudaBackend(Backend):
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
-                    raise UnsupportedGateError
+                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
-        cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+        if noise_model:
+            all_cuda_gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
+            cuda_noise_model = cudaq.NoiseModel()
+            for noise in noise_model.global_noise:
+                if cuda_noise := _to_cuda_noise(noise):
+                    for gate_name in all_cuda_gate_names:
+                        cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            for gate_type, noises in noise_model.per_gate_noise.items():
+                if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
+                    for noise in noises:
+                        if cuda_noise := _to_cuda_noise(noise):
+                            cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            for qubit, noises in noise_model.per_qubit_noise.items():
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise):
+                        for gate_name in all_cuda_gate_names:
+                            cuda_noise_model.add_channel(gate_type.__name__.lower(), qubit, cuda_noise)
+            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
+        else:
+            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
@@ -162,6 +214,16 @@ class CudaBackend(Backend):
     ) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
+
+        # Apply parameter pertubations
+        if noise_model and noise_model.global_perturbations:
+            schedule_parameters = functional.schedule.get_parameters()
+            for parameter, pertubations in noise_model.global_perturbations.items():
+                if parameter in schedule_parameters:
+                    for pertubation in pertubations:
+                        functional.schedule.set_parameters(
+                            {parameter: pertubation.perturb(schedule_parameters[parameter])}
+                        )
 
         steps = functional.schedule.tlist
 
@@ -188,13 +250,41 @@ class CudaBackend(Backend):
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
         logger.trace("Observables compiled for evolution")
 
+        ops_numpy = []
+        jump_operators = []
+        if noise_model:
+            for noise in noise_model.global_noise:
+                qubits = list(range(functional.schedule.nqubits))
+                if isinstance(noise, SupportsLindblad):
+                    lindbland_generator = noise.as_lindblad()
+                    for i, operator in enumerate(lindbland_generator.jump_operators):
+                        id = f"jump_op_{i}"
+                        ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+                        operators.define(
+                            id=id,
+                            expected_dimensions=[ops_numpy[-1].shape[0]],
+                            create=lambda op_np=ops_numpy[-1]: op_np,
+                            override=True,
+                        )
+                        for qubit in qubits:
+                            jump_operators.append(operators.instantiate(id, degrees=qubit))
+
+        # Remove any constant term from the Hamiltonian
+        # (this causes an error if we use jump operators and does nothing normally)
+        # error is "Empty product operator"
+        new_ham = spin.i(0)
+        for el in cuda_hamiltonian:
+            if not el.is_identity():
+                new_ham += el
+        cuda_hamiltonian = new_ham
+
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
             initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
             observables=cuda_observables,
-            collapse_operators=[],
+            collapse_operators=jump_operators,
             store_intermediate_results=functional.store_intermediate_results,
         )
 

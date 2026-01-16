@@ -13,22 +13,18 @@
 # limitations under the License.
 from __future__ import annotations
 
-from .noise_model import NoiseBase, NoiseType
+from .noise_abc import NoiseABC
+from .protocols import AttachmentScope, HasAllowedScopes
 
 
-class ParameterNoise(NoiseBase):
-    def __init__(self, affected_parameters: list[str] | None = None, noise_std: float = 0.1) -> None:
-        self._affected_parameters: list[str] = affected_parameters or []
-        self._noise_std = noise_std
+class Noise(NoiseABC, HasAllowedScopes):
+    """Base class for state noise sources that can be attached to a model."""
 
-    @property
-    def noise_type(self) -> NoiseType:
-        return NoiseType.PARAMETER
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this noise type.
 
-    @property
-    def affected_parameters(self) -> list[str]:
-        return self._affected_parameters
-
-    @property
-    def noise_std(self) -> float:
-        return self._noise_std
+        Returns:
+            The set of scopes where this noise can be attached.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
