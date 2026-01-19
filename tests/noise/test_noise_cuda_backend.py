@@ -56,9 +56,9 @@ def test_cuda_backend_bit_flip_sampling():
     noise_model.add(BitFlip(probability=1.0))
 
     backend = CudaBackend()
-    result = backend.execute(Sampling(circuit), noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
 
-    assert result.samples == {"0": 1000}
+    assert result.samples == {"0": 100}
 
 
 def test_cuda_backend_bit_flip_two_qubits_sampling():
@@ -265,11 +265,12 @@ def test_kraus_noise_single_qubit_cuda():
 
     # Define a simple noise model
     nm = NoiseModel()
-    nm.add(KrausChannel(operators=kraus_ops))
+    nm.add(KrausChannel(operators=kraus_ops), qubits=[1])
 
     # Execute with CUDA backend
     backend_cuda = CudaBackend()
     res = backend_cuda.execute(sampler, noise_model=nm)
+    print(res)
 
     # With a probability p, the |1> state should flip to |0>
     prob_10 = res.samples.get("10", 0) / shots
