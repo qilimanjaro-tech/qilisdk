@@ -16,12 +16,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from .noise import Noise
+from .protocols import SupportsLindblad, SupportsStaticKraus
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
 
 
-class KrausChannel(Noise):
+class KrausChannel(Noise, SupportsStaticKraus):
     """Kraus operator representation of a quantum channel."""
 
     def __init__(self, operators: list[QTensor]) -> None:
@@ -42,7 +43,7 @@ class KrausChannel(Noise):
         return self
 
 
-class LindbladGenerator(Noise):
+class LindbladGenerator(Noise, SupportsLindblad):
     """Lindblad generator representation for Markovian noise."""
 
     def __init__(
