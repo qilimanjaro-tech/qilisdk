@@ -518,43 +518,14 @@ class Hamiltonian(Parameterizable):
         """
         partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
 
-        def _terms_commute(term1: tuple[PauliOperator, ...], term2: tuple[PauliOperator, ...]) -> bool:
-            """
-            Check if two Pauli terms commute.
-
-            Args:
-                term1 (tuple[PauliOperator, ...]): The first Pauli term.
-                term2 (tuple[PauliOperator, ...]): The second Pauli term.
-
-            Returns:
-                bool: True if the terms commute, False otherwise.
-
-            """
-
-            # Create a mapping from qubit index to operator for both terms
-            op_map1 = {op.qubit: op.name for op in term1}
-            op_map2 = {op.qubit: op.name for op in term2}
-
-            # Check each qubit for non-commuting operators
-            qubits = set(op_map1.keys()).union(op_map2.keys())
-            commutes = True
-            for qubit in qubits:
-                op1 = op_map1.get(qubit, "I")
-                op2 = op_map2.get(qubit, "I")
-
-                # Non-commuting pair found
-                if op1 not in {"I", op2} and op2 != "I":
-                    commutes = False
-                    break
-
-            return commutes
-
         # Check each term with each partition
         for term, coeff in self.elements.items():
             placed = False
             for partition in partitions:
                 # Check if the term commutes with all terms in the current partition
-                if all(_terms_commute(term, other_term) for other_term in partition):
+                if all(
+                    Hamiltonian({term: 1}).commutator(Hamiltonian({other_term: 1})) == 0 for other_term in partition
+                ):
                     # If so, add it to this partition
                     partition[term] = coeff
                     placed = True

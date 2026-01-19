@@ -186,6 +186,68 @@ def test_user_provides_custom_parameter():
         for label, parameter in gate.parameters.items()
     )
 
+
+def test_add_list_of_gates():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    rx_gate = RX(1, theta=0.1)
+
+    c.add([x_gate, rx_gate])
+
+    assert c.gates == [x_gate, rx_gate]
+    assert c.nparameters == 1
+    assert c.get_parameter_values() == [0.1]
+
+
+def test_insert_list_of_gates_keeps_order():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c.add(x_gate)
+
+    rz_gate = RZ(0, phi=0.2)
+    x2_gate = X(1)
+    c.insert([rz_gate, x2_gate], index=1)
+
+    assert c.gates == [x_gate, rz_gate, x2_gate]
+    assert c.nparameters == 1
+
+
+def test_append_and_prepend_circuits():
+    base = Circuit(nqubits=2)
+    x_gate = X(0)
+    base.add(x_gate)
+
+    appended = Circuit(nqubits=2)
+    rx_gate = RX(1, theta=0.4)
+    appended.add(rx_gate)
+    base.append(appended)
+
+    prepended = Circuit(nqubits=2)
+    rz_gate = RZ(0, phi=0.2)
+    x2_gate = X(1)
+    prepended.add([rz_gate, x2_gate])
+    base.prepend(prepended)
+
+    assert base.gates == [rz_gate, x2_gate, x_gate, rx_gate]
+
+
+def test_add_operator_supports_gate_and_circuit():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c = c + x_gate
+    assert c.gates == [x_gate]
+
+    other = Circuit(nqubits=2)
+    angle = Parameter("RZ_phi", 0.3)
+    rz_gate = RZ(1, phi=angle)
+    other.add(rz_gate)
+    c = c + other
+    assert c.gates == [x_gate, rz_gate]
+
+    prepend_gate = RX(0, theta=angle)
+    c = prepend_gate + c
+    assert c.gates == [prepend_gate, x_gate, rz_gate]
+
     # Change circuit's parameter value
     c.set_parameter_values([1.0])
 
