@@ -62,7 +62,7 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
                     }
                 }
 
-                // If it's on the same qubit, combine them
+                // If it's on the same qubit, add it to the list to combine
                 if (this_qubit == gates[j].get_target_qubits()[0] && !gate_used[j]) {
                     combined_gates.push_back(gates[j]);
                     gate_used[j] = true;
@@ -70,7 +70,7 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
 
             }
 
-            // If we combined more than one gate, create the new combined gate
+            // If we found more than the original gate, create the new combined gate
             if (combined_gates.size() > 1) {
 
                 // Combine the matrices
@@ -112,7 +112,7 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
 
 std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate>& gates) const {
     /*
-    Compress gate layers by combining gates that act on disjoint sets of qubits.
+    Compress gate layers by combining gates that act on different sets of qubits.
 
     Args:
         gate_layers (std::vector<std::vector<Gate>>&): The list of gate layers.
@@ -123,6 +123,8 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
     std::vector<bool> layer_has_multi_qubit;
     for (const auto& gate : gates) {
         bool placed = false;
+        
+        // Get the list of qubits this gate acts on
         std::set<int> gate_qubits;
         for (int tq : gate.get_target_qubits()) {
             gate_qubits.insert(tq);
@@ -131,9 +133,11 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
             gate_qubits.insert(cq);
         }
 
-        // Try to place the gate in an existing layer
+        // Try to place the gate in an existing layer (for now only single-qubit gates)
         if (gate_qubits.size() == 1) {
             for (int layer_idx = int(compressed_layers.size())-1; layer_idx > 0; --layer_idx) {
+                
+                // Check if there's a conflict between the qubit lists
                 bool conflict = false;
                 for (int q : gate_qubits) {
                     if (occupied_qubits_layers[layer_idx].count(q) > 0) {
@@ -141,15 +145,20 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
                         break;
                     }
                 }
+
+                // If no conflict and the layer has no multi-qubit gates, place it here
                 if (!conflict && !layer_has_multi_qubit[layer_idx]) {
                     compressed_layers[layer_idx].push_back(gate);
                     occupied_qubits_layers[layer_idx].insert(gate_qubits.begin(), gate_qubits.end());
                     placed = true;
                     break;
                 }
+                
+                // If at any point we hit a conflict, we have to stop
                 if (conflict) {
                     break;
                 }
+
             }
         }
 
@@ -168,6 +177,7 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
 SparseMatrix QiliSimCpp::layer_to_matrix(const std::vector<Gate>& gate_layer, int n_qubits) const {
     /*
     Convert a layer of gates into a full sparse matrix.
+    For some cases this can be more efficient than multiplying individual gate matrices.
 
     Args:
         gate_layer (std::vector<Gate>): The layer of gates to convert.
