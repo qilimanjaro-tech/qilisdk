@@ -14,17 +14,7 @@
 from __future__ import annotations
 
 from .noise_abc import NoiseABC
-from .protocols import AttachmentScope, HasAllowedScopes
 
 
-class Noise(NoiseABC, HasAllowedScopes):
+class Noise(NoiseABC):
     """Base class for state noise sources that can be attached to a model."""
-
-    @classmethod
-    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        """Return the attachment scopes supported by this noise type.
-
-        Returns:
-            The set of scopes where this noise can be attached.
-        """
-        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})

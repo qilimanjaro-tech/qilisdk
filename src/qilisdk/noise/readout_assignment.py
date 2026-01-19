@@ -13,11 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
-from .noise_abc import NoiseABC
+from .noise import Noise
 from .utils import _check_probability
 
 
-class ReadoutAssignment(NoiseABC):
+class ReadoutAssignment(Noise):
     """Classical readout assignment error model for measurement outcomes."""
 
     def __init__(self, *, p01: float, p10: float) -> None:

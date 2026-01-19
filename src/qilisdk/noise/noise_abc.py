@@ -15,6 +15,17 @@ from __future__ import annotations
 
 from abc import ABC
 
+from .protocols import AttachmentScope, HasAllowedScopes
 
-class NoiseABC(ABC):
+
+class NoiseABC(ABC, HasAllowedScopes):
     """Base class for all noise and perturbation types."""
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this noise type.
+
+        Returns:
+            The set of scopes where this noise can be attached.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
