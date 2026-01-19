@@ -120,6 +120,34 @@ Quantum circuits can be built using the :class:`~qilisdk.digital.circuit.Circuit
   circuit.add(CNOT(0, 1))  # CNOT: control 0 → target 2
   circuit.draw()
 
+You can also add or insert multiple gates at once:
+
+.. code-block:: python
+
+  from qilisdk.digital import X, RX
+  import numpy as np
+
+  circuit.add([X(0), RX(1, theta=np.pi / 2)])
+  circuit.insert([H(2), CNOT(2, 1)], index=1)
+  circuit.insert(X(0), 0)
+
+Circuits can be appended or prepended, and the ``+`` operator mirrors those behaviors:
+
+.. code-block:: python
+
+  left = Circuit(2)
+  left.add(H(0))
+
+  right = Circuit(2)
+  right.add(CNOT(0, 1))
+
+  left.append(right)
+  # Equivalent: left = left + right
+
+  extra = X(1)
+  # Equivalent to left.insert(extra, index=0)
+  left = extra + left
+ 
 **Generating Random Circuits**
 
 You can also initialize a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:
@@ -429,6 +457,38 @@ expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.
     backend = QutipBackend()
     result = backend.execute(vqa)
     print("VQA Result:", result)
+
+TrotterizedTimeEvolution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~qilisdk.digital.ansatz.TrotterizedTimeEvolution` builds a digital circuit that follows a
+time-ordered schedule of Hamiltonians. Each schedule slice is evolved using a fixed number of
+Trotter steps, and you may optionally prepend a state-initialization circuit or list of gates.
+
+Configuration options:
+
+- **schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of Hamiltonians to trotterize.
+- **trotter_steps**: Number of Trotter steps per schedule slice. Defaults to 1.
+
+**Example**
+
+.. code-block:: python
+
+    from qilisdk.analog.hamiltonian import Z as pauli_z
+    from qilisdk.analog.schedule import Schedule
+    from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+
+    hamiltonian = pauli_z(0)
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        dt=0.1,
+        total_time=1
+    )
+    ansatz = TrotterizedTimeEvolution(
+        schedule=schedule,
+        trotter_steps=1,
+    )
+    ansatz.draw()
 
 Parameter Utilities
 -------------------
