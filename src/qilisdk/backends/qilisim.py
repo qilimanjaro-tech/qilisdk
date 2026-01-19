@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import os
-import random
+import secrets
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -91,7 +91,7 @@ class QiliSim(Backend):
 
         # Set a random seed
         if seed is None:
-            seed = random.randint(0, 2**15 - 1)
+            seed = secrets.randbelow(2**15)
 
         # Initialize the backend and the class vars
         super().__init__()

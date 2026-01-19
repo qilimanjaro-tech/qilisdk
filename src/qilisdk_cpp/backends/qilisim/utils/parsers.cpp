@@ -100,7 +100,6 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
             observable_matrices.push_back(O_global);
 
         } else if (py::isinstance(obs, QTensor)) {
-            
             // Get the data directly if it's a QTensor
             py::object spm = obs.attr("data");
             SparseMatrix O = from_spmatrix(spm);

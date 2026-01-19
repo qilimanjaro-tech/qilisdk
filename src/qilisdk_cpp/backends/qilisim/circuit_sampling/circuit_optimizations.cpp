@@ -41,7 +41,6 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
 
             // Look ahead for consecutive single-qubit gates on the same qubit
             for (int j = i + 1; j < int(gates.size()); ++j) {
-
                 // If we hit a multi-qubit gate on either of these qubits, stop looking ahead
                 if (gates[j].get_nqubits() != 1) {
                     bool conflict = false;
@@ -67,12 +66,10 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
                     combined_gates.push_back(gates[j]);
                     gate_used[j] = true;
                 }
-
             }
 
             // If we found more than the original gate, create the new combined gate
             if (combined_gates.size() > 1) {
-
                 // Combine the matrices
                 SparseMatrix combined_matrix = I;
                 for (const auto& g : combined_gates) {
@@ -94,20 +91,16 @@ void QiliSimCpp::combine_single_qubit_gates(std::vector<Gate>& gates) const {
                 }
                 // Create a new Gate with the combined matrix
                 new_gate = Gate(combined_name, combined_matrix, {}, {this_qubit}, combined_params);
-
             }
-
         }
 
         // Add this new gate to the list
         new_gates.push_back(new_gate);
         gate_used[i] = true;
-
     }
 
     // Replace the original gates with the new combined gates
     gates = new_gates;
-
 }
 
 std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate>& gates) const {
@@ -123,7 +116,7 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
     std::vector<bool> layer_has_multi_qubit;
     for (const auto& gate : gates) {
         bool placed = false;
-        
+
         // Get the list of qubits this gate acts on
         std::set<int> gate_qubits;
         for (int tq : gate.get_target_qubits()) {
@@ -135,8 +128,7 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
 
         // Try to place the gate in an existing layer (for now only single-qubit gates)
         if (gate_qubits.size() == 1) {
-            for (int layer_idx = int(compressed_layers.size())-1; layer_idx > 0; --layer_idx) {
-                
+            for (int layer_idx = int(compressed_layers.size()) - 1; layer_idx > 0; --layer_idx) {
                 // Check if there's a conflict between the qubit lists
                 bool conflict = false;
                 for (int q : gate_qubits) {
@@ -153,12 +145,11 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
                     placed = true;
                     break;
                 }
-                
+
                 // If at any point we hit a conflict, we have to stop
                 if (conflict) {
                     break;
                 }
-
             }
         }
 
@@ -171,7 +162,6 @@ std::vector<std::vector<Gate>> QiliSimCpp::compress_gate_layers(std::vector<Gate
     }
 
     return compressed_layers;
-
 }
 
 SparseMatrix QiliSimCpp::layer_to_matrix(const std::vector<Gate>& gate_layer, int n_qubits) const {
@@ -191,7 +181,6 @@ SparseMatrix QiliSimCpp::layer_to_matrix(const std::vector<Gate>& gate_layer, in
     if (gate_layer.size() == 1) {
         return gate_layer[0].get_full_matrix(n_qubits);
     } else {
-        
         // Sort the gates by target qubit (assuming single-qubit gates for simplicity)
         std::vector<Gate> sorted_gates(n_qubits, Gate("I", I, {}, {0}, {}));
         for (const auto& gate : gate_layer) {
@@ -201,7 +190,7 @@ SparseMatrix QiliSimCpp::layer_to_matrix(const std::vector<Gate>& gate_layer, in
             int target_qubit = gate.get_target_qubits()[0];
             sorted_gates[target_qubit] = gate;
         }
-        
+
         // Tensor product the gates in the layer
         SparseMatrix full_matrix(1, 1);
         full_matrix.coeffRef(0, 0) = 1.0;
@@ -212,6 +201,5 @@ SparseMatrix QiliSimCpp::layer_to_matrix(const std::vector<Gate>& gate_layer, in
         }
 
         return full_matrix;
-
     }
 }

@@ -14,14 +14,7 @@
 
 #include "../qilisim.h"
 
-py::object QiliSimCpp::execute_time_evolution(const py::object& initial_state,
-                                              const py::object& Hs,
-                                              const py::object& coeffs,
-                                              const py::object& steps,
-                                              const py::object& observables,
-                                              const py::object& jumps,
-                                              bool store_intermediate_results,
-                                              const py::dict& solver_params) {
+py::object QiliSimCpp::execute_time_evolution(const py::object& initial_state, const py::object& Hs, const py::object& coeffs, const py::object& steps, const py::object& observables, const py::object& jumps, bool store_intermediate_results, const py::dict& solver_params) {
     /*
     Execute a time evolution functional.
 
@@ -280,6 +273,5 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& initial_state,
     }
 
     // Return a TimeEvolutionResult with these
-    return TimeEvolutionResult("final_state"_a = QTensor(rho_numpy), "final_expected_values"_a = expect_numpy, "intermediate_states"_a = intermediate_rho_numpy,
-                               "expected_values"_a = intermediate_expect_numpy);
+    return TimeEvolutionResult("final_state"_a = QTensor(rho_numpy), "final_expected_values"_a = expect_numpy, "intermediate_states"_a = intermediate_rho_numpy, "expected_values"_a = intermediate_expect_numpy);
 }

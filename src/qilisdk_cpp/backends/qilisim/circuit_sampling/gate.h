@@ -40,12 +40,7 @@ class Gate {
     SparseMatrix base_to_full(const SparseMatrix& base_gate, int num_qubits, const std::vector<int>& control_qubits, const std::vector<int>& target_qubits) const;
 
    public:
-    Gate(const std::string& gate_type_,
-         const SparseMatrix& base_matrix_,
-         const std::vector<int>& controls_,
-         const std::vector<int>& targets_,
-         const std::vector<std::pair<std::string, double>>& parameters_)
-        : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_), parameters(parameters_) {}
+    Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_), parameters(parameters_) {}
 
     // gate.cpp
     int get_nqubits() const;

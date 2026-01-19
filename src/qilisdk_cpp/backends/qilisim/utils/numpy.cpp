@@ -115,7 +115,6 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<std::vector<double>>&
     return np_array;
 }
 
-
 SparseMatrix QiliSimCpp::from_spmatrix(const py::object& matrix) const {
     /*
     Convert a SciPy sparse matrix to a SparseMatrix.
@@ -149,5 +148,4 @@ SparseMatrix QiliSimCpp::from_spmatrix(const py::object& matrix) const {
     SparseMatrix mat(rows, cols);
     mat.setFromTriplets(entries.begin(), entries.end());
     return mat;
-
 }

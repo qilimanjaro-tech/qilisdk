@@ -14,12 +14,7 @@
 
 #include "../qilisim.h"
 
-SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0,
-                                        double dt,
-                                        const SparseMatrix& currentH,
-                                        const std::vector<SparseMatrix>& jump_operators,
-                                        int num_substeps,
-                                        bool is_unitary_on_statevector) const {
+SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) const {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
@@ -73,7 +68,6 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0,
     DenseMatrix rho_old(rho_rows, rho_cols);
     double dt_sub = dt / static_cast<double>(num_substeps);
     for (int step = 0; step < num_substeps; ++step) {
-
         rho_old = rho;
 
         lindblad_rhs(k, rho, currentH, jump_operators, is_unitary_on_statevector);

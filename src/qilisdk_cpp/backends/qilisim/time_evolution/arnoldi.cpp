@@ -113,13 +113,7 @@ void QiliSimCpp::arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0,
     }
 }
 
-SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0,
-                                      double dt,
-                                      const SparseMatrix& currentH,
-                                      const std::vector<SparseMatrix>& jump_operators,
-                                      int arnoldi_dim,
-                                      int num_substeps,
-                                      bool is_unitary_on_statevector) const {
+SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector) const {
     /*
     Perform time evolution using the Arnoldi iteration.
 

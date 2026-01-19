@@ -50,6 +50,29 @@ def test_execute_with_measurement_gate(backend):
     # Still expect only '1'
     assert result.samples == {"1": 50}
 
+def test_seed_same():
+    backend1 = QiliSim(seed=42)
+    backend2 = QiliSim(seed=42)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
+    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
+    assert result1.samples == result2.samples
+
+def test_no_seed():
+    backend = QiliSim(seed=None)
+    seed = backend.solver_params["seed"]
+    assert isinstance(seed, int)
+    assert 0 <= seed <= 2**15
+
+def test_seed_different():
+    backend1 = QiliSim(seed=42)
+    backend2 = QiliSim(seed=43)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
+    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
+    assert result1.samples != result2.samples
 
 def test_cnot(backend):
     circuit = Circuit(nqubits=2)

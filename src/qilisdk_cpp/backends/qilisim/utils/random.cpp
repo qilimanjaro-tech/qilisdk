@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <random>
 #include <chrono>
+#include <random>
 #include "../qilisim.h"
 
 std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) const {
@@ -97,7 +97,6 @@ std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vect
         }
     }
     return result;
-
 }
 
 SparseMatrix QiliSimCpp::get_vector_from_density_matrix(const SparseMatrix& rho_t) const {

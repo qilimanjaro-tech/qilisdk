@@ -109,19 +109,12 @@ class QiliSimCpp {
     SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t) const;
 
     // time_evolution/integrate.cpp
-    SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector)
-        const;
+    SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) const;
 
     // time_evolution/arnoldi.cpp
     void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H) const;
     void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk) const;
-    SparseMatrix iter_arnoldi(const SparseMatrix& rho_0,
-                              double dt,
-                              const SparseMatrix& currentH,
-                              const std::vector<SparseMatrix>& jump_operators,
-                              int arnoldi_dim,
-                              int num_substeps,
-                              bool is_unitary_on_statevector) const;
+    SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector) const;
 
     // time_evolution/direct.cpp
     SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) const;
@@ -131,12 +124,5 @@ class QiliSimCpp {
     py::object execute_sampling(const py::object& functional, const py::dict& solver_params);
 
     // time_evolution/execute_time_evolution.cpp
-    py::object execute_time_evolution(const py::object& initial_state,
-                                      const py::object& Hs,
-                                      const py::object& coeffs,
-                                      const py::object& steps,
-                                      const py::object& observables,
-                                      const py::object& jumps,
-                                      bool store_intermediate_results,
-                                      const py::dict& solver_params);
+    py::object execute_time_evolution(const py::object& initial_state, const py::object& Hs, const py::object& coeffs, const py::object& steps, const py::object& observables, const py::object& jumps, bool store_intermediate_results, const py::dict& solver_params);
 };

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include "../qilisim.h"
 
@@ -130,9 +130,9 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         }
         gate_cache[gate_id] = SparseMatrix();
     }
-    #if defined(_OPENMP)
-    #pragma omp parallel for
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel for
+#endif
     for (int i = 0; i < initial_cache_size; ++i) {
         const auto& gate_layer = gate_layers[i];
         std::string gate_id = "";
@@ -148,7 +148,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     std::string gate_id = "";
     int gate_count = 0;
     for (const auto& gate_layer : gate_layers) {
-
         // Form the full id of the whole layer
         gate_id = "";
         for (const auto& gate : gate_layer) {
@@ -178,7 +177,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
             gate_cache.erase(gate_id);
         }
         gate_count++;
-
     }
 
     // Get the probabilities
