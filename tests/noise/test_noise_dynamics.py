@@ -21,11 +21,11 @@ from qilisdk.noise.utils import _sigma_plus
 
 
 def test_dephasing_init_lindblad_and_kraus():
-    with pytest.raises(ValueError, match=r"Tphi must be > 0."):
-        Dephasing(Tphi=0.0)
+    with pytest.raises(ValueError, match=r"t_phi must be > 0."):
+        Dephasing(t_phi=0.0)
 
-    noise = Dephasing(Tphi=2.0)
-    assert noise.Tphi == 2.0
+    noise = Dephasing(t_phi=2.0)
+    assert np.isclose(noise.t_phi, 2.0)
 
     generator = noise.as_lindblad()
     expected_l = 0.5 * np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)
@@ -44,11 +44,11 @@ def test_dephasing_init_lindblad_and_kraus():
 
 
 def test_amplitude_damping_init_lindblad_and_kraus():
-    with pytest.raises(ValueError, match=r"T1 must be > 0."):
-        AmplitudeDamping(T1=-1.0)
+    with pytest.raises(ValueError, match=r"t1 must be > 0."):
+        AmplitudeDamping(t1=-1.0)
 
-    noise = AmplitudeDamping(T1=4.0)
-    assert noise.T1 == 4.0
+    noise = AmplitudeDamping(t1=4.0)
+    assert np.isclose(noise.t1, 4.0)
 
     generator = noise.as_lindblad()
     expected_l = 0.5 * np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex)
@@ -60,7 +60,7 @@ def test_amplitude_damping_init_lindblad_and_kraus():
     np.testing.assert_allclose(kraus.operators[0].dense(), np.eye(2, dtype=complex))
     np.testing.assert_allclose(kraus.operators[1].dense(), np.zeros((2, 2), dtype=complex))
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=r"duration must be >= 0."):
         noise.as_kraus(duration=-0.5)
 
 

@@ -44,7 +44,7 @@ class NoScopePauliChannel(PauliChannel):
 
 def test_noise_model_add_global_noise():
     noise_model = NoiseModel()
-    noise = Dephasing(Tphi=1.0)
+    noise = Dephasing(t_phi=1.0)
 
     noise_model.add(noise)
 
@@ -55,7 +55,7 @@ def test_noise_model_add_global_noise():
 
 def test_noise_model_add_per_qubit_noise():
     noise_model = NoiseModel()
-    noise = Dephasing(Tphi=1.0)
+    noise = Dephasing(t_phi=1.0)
 
     noise_model.add(noise, qubits=[2])
 
@@ -102,7 +102,7 @@ def test_noise_model_add_per_gate_perturbation():
 
 def test_noise_model_rejects_invalid_arguments():
     noise_model = NoiseModel()
-    noise = Dephasing(Tphi=1.0)
+    noise = Dephasing(t_phi=1.0)
 
     with pytest.raises(ValueError, match="cannot be applied to parameters"):
         noise_model.add(noise, parameter="theta")
@@ -118,7 +118,7 @@ def test_noise_model_scope_validation():
     noise_model = NoiseModel()
 
     with pytest.raises(ValueError, match="per_gate_type"):
-        noise_model.add(Dephasing(Tphi=1.0), gate=X)
+        noise_model.add(Dephasing(t_phi=1.0), gate=X)
 
     with pytest.raises(ValueError, match="per_gate_type"):
         noise_model.add(GlobalOnlyPerturbation(), gate=X, parameter="theta")

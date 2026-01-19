@@ -34,9 +34,9 @@ def test_attachment_scope_values():
 
 def test_protocols_runtime_checks():
     assert isinstance(PauliChannel(), SupportsStaticKraus)
-    assert isinstance(Dephasing(Tphi=1.0), SupportsTimeDerivedKraus)
-    assert isinstance(Dephasing(Tphi=1.0), SupportsLindblad)
-    assert isinstance(AmplitudeDamping(T1=1.0), SupportsTimeDerivedKraus)
-    assert isinstance(AmplitudeDamping(T1=1.0), SupportsLindblad)
+    assert isinstance(Dephasing(t_phi=1.0), SupportsTimeDerivedKraus)
+    assert isinstance(Dephasing(t_phi=1.0), SupportsLindblad)
+    assert isinstance(AmplitudeDamping(t1=1.0), SupportsTimeDerivedKraus)
+    assert isinstance(AmplitudeDamping(t1=1.0), SupportsLindblad)
     assert isinstance(Depolarizing(probability=0.1), SupportsStaticKraus)
     assert isinstance(BitFlip(probability=0.1), SupportsStaticKraus)

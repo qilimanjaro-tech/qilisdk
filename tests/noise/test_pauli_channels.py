@@ -26,9 +26,9 @@ def test_pauli_channel_properties_and_kraus():
     identity_rate = 1.0 - (x_rate + y_rate + z_rate)
     channel = PauliChannel(pX=x_rate, pY=y_rate, pZ=z_rate)
 
-    assert channel.pX == x_rate
-    assert channel.pY == y_rate
-    assert channel.pZ == z_rate
+    assert np.isclose(channel.pX, x_rate)
+    assert np.isclose(channel.pY, y_rate)
+    assert np.isclose(channel.pZ, z_rate)
 
     kraus = channel.as_kraus()
     assert isinstance(kraus, KrausChannel)
@@ -54,10 +54,10 @@ def test_pauli_channel_properties_and_kraus():
 def test_bit_flip_probability_and_scopes():
     noise = BitFlip(probability=0.2)
 
-    assert noise.probability == 0.2
-    assert noise.pX == 0.2
-    assert noise.pY == 0.0
-    assert noise.pZ == 0.0
+    assert np.isclose(noise.probability, 0.2)
+    assert np.isclose(noise.pX, 0.2)
+    assert np.isclose(noise.pY, 0.0)
+    assert np.isclose(noise.pZ, 0.0)
 
     scopes = BitFlip.allowed_scopes()
     assert AttachmentScope.GLOBAL in scopes
@@ -78,10 +78,10 @@ def test_bit_flip_probability_and_scopes():
 def test_phase_flip_probability_and_scopes():
     noise = PhaseFlip(probability=0.3)
 
-    assert noise.probability == 0.3
-    assert noise.pX == 0.0
-    assert noise.pY == 0.0
-    assert noise.pZ == 0.3
+    assert np.isclose(noise.probability, 0.3)
+    assert np.isclose(noise.pX, 0.0)
+    assert np.isclose(noise.pY, 0.0)
+    assert np.isclose(noise.pZ, 0.3)
     scopes = PhaseFlip.allowed_scopes()
     assert AttachmentScope.GLOBAL in scopes
     assert AttachmentScope.PER_QUBIT in scopes
@@ -107,10 +107,10 @@ def test_depolarizing_probability_distribution():
     assert AttachmentScope.PER_GATE_TYPE in scopes
     assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT in scopes
 
-    assert noise.probability == 0.3
-    assert noise.pX == pytest.approx(0.1)
-    assert noise.pY == pytest.approx(0.1)
-    assert noise.pZ == pytest.approx(0.1)
+    assert np.isclose(noise.probability, 0.3)
+    assert np.isclose(noise.pX, 0.1)
+    assert np.isclose(noise.pY, 0.1)
+    assert np.isclose(noise.pZ, 0.1)
 
     with pytest.raises(ValueError):  # noqa: PT011
         Depolarizing(probability=-0.1)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import pytest
 
 from qilisdk.noise.gaussian_pertubation import GaussianPerturbation
@@ -66,8 +67,8 @@ def test_offset_perturbation_properties_and_perturb():
     assert AttachmentScope.PER_QUBIT not in scopes
     assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
-    assert perturbation.offset == 0.5
-    assert perturbation.perturb(1.25) == pytest.approx(1.75)
+    assert np.isclose(perturbation.offset, 0.5)
+    assert np.isclose(perturbation.perturb(1.25), 1.75)
 
 
 def test_gaussian_perturbation_properties_and_perturb():
@@ -81,9 +82,9 @@ def test_gaussian_perturbation_properties_and_perturb():
     assert AttachmentScope.PER_QUBIT not in scopes
     assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
-    assert perturbation.mean == 1.0
-    assert perturbation.std == 0.5
-    assert perturbation.perturb(2.0) == pytest.approx(2.25)
+    assert np.isclose(perturbation.mean, 1.0)
+    assert np.isclose(perturbation.std, 0.5)
+    assert np.isclose(perturbation.perturb(2.0), 2.25)
     assert rng.called_with == (1.0, 0.5)
 
     with pytest.raises(ValueError, match=r"std must be >= 0"):
@@ -99,8 +100,8 @@ def test_readout_assignment_properties_and_validation():
     assert AttachmentScope.PER_GATE_TYPE not in scopes
     assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
-    assert assignment.p01 == 0.1
-    assert assignment.p10 == 0.2
+    assert np.isclose(assignment.p01, 0.1)
+    assert np.isclose(assignment.p10, 0.2)
 
     with pytest.raises(ValueError, match=r"p01 must be in \[0, 1\]."):
         ReadoutAssignment(p01=-0.1, p10=0.2)

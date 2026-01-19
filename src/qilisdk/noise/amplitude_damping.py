@@ -25,25 +25,25 @@ from .utils import _sigma_minus
 class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
     """Amplitude damping noise model for energy relaxation."""
 
-    def __init__(self, *, T1: float) -> None:
+    def __init__(self, *, t1: float) -> None:
         """Args:
-            T1 (float): Relaxation time constant (must be > 0).
+            t1 (float): Relaxation time constant (must be > 0).
 
         Raises:
-            ValueError: If T1 is not positive.
+            ValueError: If t1 is not positive.
         """
-        if T1 <= 0:
-            raise ValueError("T1 must be > 0.")
-        self._T1 = float(T1)
+        if t1 <= 0:
+            raise ValueError("t1 must be > 0.")
+        self._t1 = float(t1)
 
     @property
-    def T1(self) -> float:
+    def t1(self) -> float:
         """Return the relaxation time constant.
 
         Returns:
-            float: The T1 value.
+            float: The t1 value.
         """
-        return self._T1
+        return self._t1
 
     def as_lindblad(self) -> LindbladGenerator:
         """
@@ -52,7 +52,7 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         Returns:
             LindbladGenerator: The Lindblad representation.
         """
-        gamma = 1.0 / self._T1
+        gamma = 1.0 / self._t1
         L = np.sqrt(gamma) * _sigma_minus()
         return LindbladGenerator([QTensor(L)])
 
@@ -71,7 +71,7 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         """
         if duration < 0:
             raise ValueError("duration must be >= 0.")
-        gamma = 1.0 - float(np.exp(-duration / self._T1))
+        gamma = 1.0 - float(np.exp(-duration / self._t1))
         K0 = np.array([[1.0, 0.0], [0.0, np.sqrt(1.0 - gamma)]], dtype=complex)
         K1 = np.array([[0.0, np.sqrt(gamma)], [0.0, 0.0]], dtype=complex)
         return KrausChannel(operators=[QTensor(K0), QTensor(K1)])

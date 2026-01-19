@@ -35,6 +35,7 @@ from qilisdk.noise.protocols import SupportsTimeDerivedKraus
 from qilisdk.noise.readout_assignment import ReadoutAssignment
 
 if TYPE_CHECKING:
+    from qilisdk.analog.schedule import Schedule
     from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
@@ -152,6 +153,111 @@ class CudaBackend(Backend):
             cudaq.set_target("tensornet-mps")
             logger.debug("Using cudaq's 'tensornet-mps' backend")
 
+    @staticmethod
+    def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
+        # Determine which qubits have readout assignment errors
+        readout_error_per_qubits = [(0.0, 0.0) for _ in range(nqubits)]
+        has_readout_error = False
+        for noise in noise_model.global_noise:
+            if isinstance(noise, ReadoutAssignment):
+                for qubit in range(nqubits):
+                    readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
+                    has_readout_error = True
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                if isinstance(noise, ReadoutAssignment):
+                    readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
+                    has_readout_error = True
+
+        # Adjust the results based on the errors
+        if has_readout_error:
+            # numpy generator
+            gen = np.random.default_rng(42)
+
+            # First split into individual shots
+            shots = []
+            for bitstring, count in cudaq_result.items():
+                shots.extend([bitstring] * count)
+
+            # Convert each shot according to the readout error probabilities
+            adjusted_counts: dict[str, int] = {}
+            for shot in shots:
+                adjusted_shot = list(shot)
+                for qubit_index in range(nqubits):
+                    p01, p10 = readout_error_per_qubits[qubit_index]
+                    if shot[nqubits - 1 - qubit_index] == "0":
+                        if gen.random() < p01:
+                            adjusted_shot[nqubits - 1 - qubit_index] = "1"
+                    elif gen.random() < p10:
+                        adjusted_shot[nqubits - 1 - qubit_index] = "0"
+                adjusted_bitstring = "".join(adjusted_shot)
+                if adjusted_bitstring in adjusted_counts:
+                    adjusted_counts[adjusted_bitstring] += 1
+                else:
+                    adjusted_counts[adjusted_bitstring] = 1
+
+            # Set the new results
+            cudaq_result = adjusted_counts
+
+        return cudaq_result
+
+    def _noise_model_to_cudaq(self, noise_model: NoiseModel, nqubits: int) -> cudaq.NoiseModel:
+        all_cuda_gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
+        cuda_noise_model = cudaq.NoiseModel()
+
+        # Global noise
+        for noise in noise_model.global_noise:
+            if cuda_noise := _to_cuda_noise(noise):
+                for gate_name in all_cuda_gate_names:
+                    # If it's a full size kraus channel, special treatment
+                    if isinstance(noise, SupportsStaticKraus) and len(noise.as_kraus().operators) > 0:
+                        dim = noise.as_kraus().operators[0].dense().shape[0]
+                        if dim == 2**nqubits:
+                            cuda_noise_model.add_channel(gate_name, list(range(nqubits)), cuda_noise)
+                            continue
+
+                    # Otherwise, add normally
+                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+
+        # Per gate noise
+        for gate_type, noises in noise_model.per_gate_noise.items():
+            if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise):
+                        cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+
+        # Per qubit noise
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                if cuda_noise := _to_cuda_noise(noise):
+                    for gate_name in all_cuda_gate_names:
+                        cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
+
+        # Per gate per qubit noise
+        for (gate_type, qubit), noises in noise_model.per_gate_per_qubit_noise.items():
+            if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise):
+                        cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
+
+        return cuda_noise_model
+
+    @staticmethod
+    def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
+        if noise_model.global_perturbations:
+            circuit_parameters = circuit.get_parameters()
+            for parameter, pertubations in noise_model.global_perturbations.items():
+                if parameter in circuit_parameters:
+                    for pertubation in pertubations:
+                        circuit.set_parameters({parameter: pertubation.perturb(circuit_parameters[parameter])})
+        if noise_model.per_gate_perturbations:
+            for gate in circuit.gates:
+                for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
+                    if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
+                        gate_parameters = gate.get_parameters()
+                        for pertubation in pertubations:
+                            gate.set_parameters({parameter: pertubation.perturb(gate_parameters[parameter])})
+
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
@@ -160,22 +266,9 @@ class CudaBackend(Backend):
 
         # Apply parameter pertubations
         if noise_model:
-            if noise_model.global_perturbations:
-                circuit_parameters = functional.circuit.get_parameters()
-                for parameter, pertubations in noise_model.global_perturbations.items():
-                    if parameter in circuit_parameters:
-                        for pertubation in pertubations:
-                            functional.circuit.set_parameters(
-                                {parameter: pertubation.perturb(circuit_parameters[parameter])}
-                            )
-            if noise_model.per_gate_perturbations:
-                for gate in functional.circuit.gates:
-                    for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
-                        if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
-                            gate_parameters = gate.get_parameters()
-                            for pertubation in pertubations:
-                                gate.set_parameters({parameter: pertubation.perturb(gate_parameters[parameter])})
+            self._handle_gate_parameter_perturbations(functional.circuit, noise_model)
 
+        # Transpile the circuit into CUDAQ format
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         for gate in transpiled_circuit.gates:
             if isinstance(gate, Controlled):
@@ -191,98 +284,83 @@ class CudaBackend(Backend):
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
         if noise_model:
-            all_cuda_gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
-            cuda_noise_model = cudaq.NoiseModel()
-
-            # Global noise
-            for noise in noise_model.global_noise:
-                if cuda_noise := _to_cuda_noise(noise):
-                    for gate_name in all_cuda_gate_names:
-                        # If it's a full size kraus channel, special treatment
-                        if isinstance(noise, SupportsStaticKraus) and len(noise.as_kraus().operators) > 0:
-                            dim = noise.as_kraus().operators[0].dense().shape[0]
-                            if dim == 2**functional.circuit.nqubits:
-                                cuda_noise_model.add_channel(
-                                    gate_name, list(range(functional.circuit.nqubits)), cuda_noise
-                                )
-                                continue
-
-                        # Otherwise, add normally
-                        cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
-
-            # Per gate noise
-            for gate_type, noises in noise_model.per_gate_noise.items():
-                if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
-                    for noise in noises:
-                        if cuda_noise := _to_cuda_noise(noise):
-                            cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
-
-            # Per qubit noise
-            for qubit, noises in noise_model.per_qubit_noise.items():
-                for noise in noises:
-                    if cuda_noise := _to_cuda_noise(noise):
-                        for gate_name in all_cuda_gate_names:
-                            cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
-
-            # Per gate per qubit noise
-            for (gate_type, qubit), noises in noise_model.per_gate_per_qubit_noise.items():
-                if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
-                    for noise in noises:
-                        if cuda_noise := _to_cuda_noise(noise):
-                            cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
-
+            cuda_noise_model = self._noise_model_to_cudaq(noise_model, functional.circuit.nqubits)
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
+            cudaq_result = self._handle_readout_errors(cudaq_result, noise_model, functional.circuit.nqubits)
         else:
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
-        # Handle readout assignment errors
-        if noise_model:
-            # Determine which qubits have readout assignment errors
-            readout_error_per_qubits = [(0.0, 0.0) for _ in range(functional.circuit.nqubits)]
-            has_readout_error = False
-            for noise in noise_model.global_noise:
-                if isinstance(noise, ReadoutAssignment):
-                    for qubit in range(functional.circuit.nqubits):
-                        readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
-                        has_readout_error = True
-            for qubit, noises in noise_model.per_qubit_noise.items():
-                for noise in noises:
-                    if isinstance(noise, ReadoutAssignment):
-                        readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
-                        has_readout_error = True
-
-            # Adjust the results based on the errors
-            if has_readout_error:
-                # numpy generator
-                gen = np.random.default_rng()
-
-                # First split into individual shots
-                shots = []
-                for bitstring, count in cudaq_result.items():
-                    shots.extend([bitstring] * count)
-
-                # Convert each shot according to the readout error probabilities
-                adjusted_counts: dict[str, int] = {}
-                for shot in shots:
-                    adjusted_shot = list(shot)
-                    for qubit_index in range(functional.circuit.nqubits):
-                        p01, p10 = readout_error_per_qubits[qubit_index]
-                        if shot[functional.circuit.nqubits - 1 - qubit_index] == "0":
-                            if gen.random() < p01:
-                                adjusted_shot[functional.circuit.nqubits - 1 - qubit_index] = "1"
-                        elif gen.random() < p10:
-                            adjusted_shot[functional.circuit.nqubits - 1 - qubit_index] = "0"
-                    adjusted_bitstring = "".join(adjusted_shot)
-                    if adjusted_bitstring in adjusted_counts:
-                        adjusted_counts[adjusted_bitstring] += 1
-                    else:
-                        adjusted_counts[adjusted_bitstring] = 1
-
-                # Set the new results
-                cudaq_result = adjusted_counts
-
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
+
+    @staticmethod
+    def _handle_schedule_parameter_perturbations(schedule: Schedule, noise_model: NoiseModel) -> None:
+        if noise_model.global_perturbations:
+            schedule_parameters = schedule.get_parameters()
+            for parameter, pertubations in noise_model.global_perturbations.items():
+                if parameter in schedule_parameters:
+                    for pertubation in pertubations:
+                        schedule.set_parameters({parameter: pertubation.perturb(schedule_parameters[parameter])})
+
+    def _noise_model_to_cudaq_dynamics(self, noise_model: NoiseModel, nqubits: int) -> tuple[list[OperatorSum], list]:
+        ops_numpy = []
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas = []
+
+        # Global noise
+        for noise in noise_model.global_noise:
+            if isinstance(noise, SupportsLindblad):
+                lindblad_generator = noise.as_lindblad()
+                for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
+                    op_id = f"jump_op_{i}"
+                    ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+                    operators.define(
+                        id=op_id,
+                        expected_dimensions=[2 for _ in range(nqubits)],
+                        create=lambda op_np=ops_numpy[-1]: op_np,
+                        override=True,
+                    )
+                    dim = ops_numpy[-1].shape[0]
+                    if dim == 2**nqubits:
+                        jump_operators.append(operators.instantiate(op_id, degrees=list(range(nqubits))))
+                    else:
+                        for qubit in range(nqubits):
+                            jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+                if lindblad_generator.hamiltonian is not None:
+                    hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
+
+        # Per qubit noise
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                if isinstance(noise, SupportsLindblad):
+                    lindblad_generator = noise.as_lindblad()
+                    for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
+                        op_id = f"jump_op_q{qubit}_{i}"
+                        ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+                        operators.define(
+                            id=op_id,
+                            expected_dimensions=[ops_numpy[-1].shape[0]],
+                            create=lambda op_np=ops_numpy[-1]: op_np,
+                            override=True,
+                        )
+                        jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+                    if lindblad_generator.hamiltonian is not None:
+                        hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
+
+        return jump_operators, hamiltonian_deltas
+
+    @staticmethod
+    def _remove_constant_terms(operator_sum: OperatorSum) -> OperatorSum:
+        new_operator_sum = None
+        for term in operator_sum:
+            if not term.is_identity():
+                if new_operator_sum is None:
+                    new_operator_sum = term
+                else:
+                    new_operator_sum += term
+        if new_operator_sum is None:
+            new_operator_sum = ScalarOperator(0.0)
+        return new_operator_sum
 
     def _execute_time_evolution(
         self, functional: TimeEvolution, noise_model: NoiseModel | None = None
@@ -292,13 +370,7 @@ class CudaBackend(Backend):
 
         # Apply parameter pertubations
         if noise_model and noise_model.global_perturbations:
-            schedule_parameters = functional.schedule.get_parameters()
-            for parameter, pertubations in noise_model.global_perturbations.items():
-                if parameter in schedule_parameters:
-                    for pertubation in pertubations:
-                        functional.schedule.set_parameters(
-                            {parameter: pertubation.perturb(schedule_parameters[parameter])}
-                        )
+            self._handle_schedule_parameter_perturbations(functional.schedule, noise_model)
 
         steps = functional.schedule.tlist
 
@@ -325,66 +397,31 @@ class CudaBackend(Backend):
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
         logger.trace("Observables compiled for evolution")
 
-        # Add noises
-        ops_numpy = []
-        jump_operators = []
-        hamiltonian_deltas = []
+        # Add noise
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas: list[OperatorSum] = []
         if noise_model:
-            # Add global noise
-            for noise in noise_model.global_noise:
-                qubits = list(range(functional.schedule.nqubits))
-                if isinstance(noise, SupportsLindblad):
-                    lindblad_generator = noise.as_lindblad()
-                    for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
-                        id = f"jump_op_{i}"
-                        ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
-                        operators.define(
-                            id=id,
-                            expected_dimensions=[2 for _ in range(functional.schedule.nqubits)],
-                            create=lambda op_np=ops_numpy[-1]: op_np,
-                            override=True,
-                        )
-                        dim = ops_numpy[-1].shape[0]
-                        if dim == 2**functional.schedule.nqubits:
-                            jump_operators.append(operators.instantiate(id, degrees=qubits))
-                        else:
-                            for qubit in qubits:
-                                jump_operators.append(operators.instantiate(id, degrees=qubit))
-                    if lindblad_generator.hamiltonian is not None:
-                        hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
-
-            # Add per-qubit noise
-            for qubit, noises in noise_model.per_qubit_noise.items():
-                for noise in noises:
-                    if isinstance(noise, SupportsLindblad):
-                        lindblad_generator = noise.as_lindblad()
-                        for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
-                            id = f"jump_op_q{qubit}_{i}"
-                            ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
-                            operators.define(
-                                id=id,
-                                expected_dimensions=[ops_numpy[-1].shape[0]],
-                                create=lambda op_np=ops_numpy[-1]: op_np,
-                                override=True,
-                            )
-                            jump_operators.append(operators.instantiate(id, degrees=qubit))
-                        if lindblad_generator.hamiltonian is not None:
-                            hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
+            jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
+                noise_model, functional.schedule.nqubits
+            )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas
-        new_ham = None
-        for el in cuda_hamiltonian:
-            if not el.is_identity():
-                if new_ham is None:
-                    new_ham = el
-                else:
-                    new_ham += el
+        # new_ham = None
+        # for el in cuda_hamiltonian:
+        #     if not el.is_identity():
+        #         if new_ham is None:
+        #             new_ham = el
+        #         else:
+        #             new_ham += el
+        # for delta in hamiltonian_deltas:
+        #     if new_ham is None:
+        #         new_ham = delta
+        #     else:
+        #         new_ham += delta
+        # cuda_hamiltonian = new_ham
+        cuda_hamiltonian = self._remove_constant_terms(cuda_hamiltonian)
         for delta in hamiltonian_deltas:
-            if new_ham is None:
-                new_ham = delta
-            else:
-                new_ham += delta
-        cuda_hamiltonian = new_ham
+            cuda_hamiltonian += delta
 
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,

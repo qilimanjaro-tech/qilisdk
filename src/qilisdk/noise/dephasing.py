@@ -29,25 +29,25 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedSco
     coherences decaying as exp(-t / Tphi).
     """
 
-    def __init__(self, *, Tphi: float) -> None:
+    def __init__(self, *, t_phi: float) -> None:
         """Args:
-            Tphi (float): Dephasing time constant (must be > 0).
+            t_phi (float): Dephasing time constant (must be > 0).
 
         Raises:
-            ValueError: If Tphi is not positive.
+            ValueError: If t_phi is not positive.
         """
-        if Tphi <= 0:
-            raise ValueError("Tphi must be > 0.")
-        self._Tphi = float(Tphi)
+        if t_phi <= 0:
+            raise ValueError("t_phi must be > 0.")
+        self._t_phi = float(t_phi)
 
     @property
-    def Tphi(self) -> float:
+    def t_phi(self) -> float:
         """Return the dephasing time constant.
 
         Returns:
-            The Tphi value.
+            The t_phi value.
         """
-        return self._Tphi
+        return self._t_phi
 
     def as_lindblad(self) -> LindbladGenerator:
         """
@@ -56,7 +56,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedSco
         Returns:
             LindbladGenerator: The Lindblad representation.
         """
-        gamma = 1.0 / self._Tphi
+        gamma = 1.0 / self._t_phi
         rate = gamma / 2.0
         L = QTensor(_sigma_z())
         return LindbladGenerator(jump_operators=[L], rates=[rate])
@@ -76,7 +76,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedSco
         """
         if duration < 0:
             raise ValueError("duration must be >= 0.")
-        gamma = float(np.exp(-duration / self._Tphi))
+        gamma = float(np.exp(-duration / self._t_phi))
         K0 = np.sqrt((1.0 + gamma) / 2.0) * _identity()
         K1 = np.sqrt((1.0 - gamma) / 2.0) * _sigma_z()
         return KrausChannel([QTensor(K0), QTensor(K1)])

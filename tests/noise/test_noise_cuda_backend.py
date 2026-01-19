@@ -165,7 +165,7 @@ def test_cuda_backend_time_evolution_amplitude_damping():
     )
 
     noise_model = NoiseModel()
-    noise_model.add(AmplitudeDamping(T1=0.1))
+    noise_model.add(AmplitudeDamping(t1=0.1))
 
     backend = CudaBackend()
     result = backend.execute(time_evolution, noise_model=noise_model)
@@ -190,7 +190,7 @@ def test_cuda_backend_time_evolution_dephasing():
     )
 
     noise_model = NoiseModel()
-    noise_model.add(Dephasing(Tphi=0.1))
+    noise_model.add(Dephasing(t_phi=0.1))
 
     backend = CudaBackend()
     result = backend.execute(time_evolution, noise_model=noise_model)
@@ -270,7 +270,6 @@ def test_kraus_noise_single_qubit_cuda():
     # Execute with CUDA backend
     backend_cuda = CudaBackend()
     res = backend_cuda.execute(sampler, noise_model=nm)
-    print(res)
 
     # With a probability p, the |1> state should flip to |0>
     prob_10 = res.samples.get("10", 0) / shots
@@ -310,10 +309,10 @@ def test_analog_dissapation_cuda():
     T = 10.0
     dt = 0.1
     nqubits = 1
-    Hx = sum(PauliX(i) for i in range(nqubits))
-    Hz = sum(PauliZ(i) for i in range(nqubits))
+    h_x = sum(PauliX(i) for i in range(nqubits))
+    h_z = sum(PauliZ(i) for i in range(nqubits))
     schedule = Schedule(
-        hamiltonians={"driver": Hx, "problem": Hz},
+        hamiltonians={"driver": h_x, "problem": h_z},
         coefficients={
             "driver": {(0.0, T): lambda t: 1 - t / T},
             "problem": {(0.0, T): lambda t: t / T},
@@ -348,10 +347,10 @@ def test_analog_amplitude_damping_cuda():
     T = 10.0
     dt = 0.1
     nqubits = 1
-    Hx = sum(PauliX(i) for i in range(nqubits))
-    Hz = sum(PauliZ(i) for i in range(nqubits))
+    h_x = sum(PauliX(i) for i in range(nqubits))
+    h_z = sum(PauliZ(i) for i in range(nqubits))
     schedule = Schedule(
-        hamiltonians={"driver": Hx, "problem": Hz},
+        hamiltonians={"driver": h_x, "problem": h_z},
         coefficients={
             "driver": {(0.0, T): lambda t: 1 - t / T},
             "problem": {(0.0, T): lambda t: t / T},
@@ -369,8 +368,8 @@ def test_analog_amplitude_damping_cuda():
 
     # Define the noise model
     noise_model = NoiseModel()
-    T1 = 0.1
-    noise_model.add(AmplitudeDamping(T1=T1), qubits=[0])
+    t1 = 0.1
+    noise_model.add(AmplitudeDamping(t1=t1), qubits=[0])
 
     # Execute with the backend
     backend = CudaBackend()
@@ -384,10 +383,10 @@ def test_analog_dephasing_cuda():
     T = 10.0
     dt = 0.1
     nqubits = 1
-    Hx = sum(PauliX(i) for i in range(nqubits))
-    Hz = sum(PauliZ(i) for i in range(nqubits))
+    h_x = sum(PauliX(i) for i in range(nqubits))
+    h_z = sum(PauliZ(i) for i in range(nqubits))
     schedule = Schedule(
-        hamiltonians={"driver": Hx, "problem": Hz},
+        hamiltonians={"driver": h_x, "problem": h_z},
         coefficients={
             "driver": {(0.0, T): lambda t: 1 - t / T},
             "problem": {(0.0, T): lambda t: t / T},
@@ -405,8 +404,8 @@ def test_analog_dephasing_cuda():
 
     # Define the noise model
     noise_model = NoiseModel()
-    Tphi = 0.1
-    noise_model.add(Dephasing(Tphi=Tphi), qubits=[0])
+    t_phi = 0.1
+    noise_model.add(Dephasing(t_phi=t_phi), qubits=[0])
 
     # Execute with the backend
     backend = CudaBackend()
