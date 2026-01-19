@@ -43,10 +43,10 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
     target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 
     # Set compile options
+    set (CMAKE_CXX_STANDARD 14)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
         target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
-        target_compile_features(qilisim_module PRIVATE cxx_std_17)
     endif()
 
     # Link libraries and include directories
