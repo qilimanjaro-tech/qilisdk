@@ -43,6 +43,7 @@ class NoiseModel:
         self._global_noise: list[Noise] = []
         self._per_qubit_noise: dict[Qubit, list[Noise]] = defaultdict(list)
         self._per_gate_noise: dict[GateType, list[Noise]] = defaultdict(list)
+        self._per_gate_per_qubit_noise: dict[tuple[GateType, Qubit], list[Noise]] = defaultdict(list)
 
         # parameter pertubations
         self._global_perturbations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
@@ -76,6 +77,15 @@ class NoiseModel:
         return self._per_gate_noise
 
     @property
+    def per_gate_per_qubit_noise(self) -> dict[tuple[GateType, Qubit], list[Noise]]:
+        """Return the per-gate-type and per-qubit noise mapping.
+
+        Returns:
+            dict[tuple[type[Gate], int], list[Noise]]: Noise sources keyed by gate type and qubit index.
+        """
+        return self._per_gate_per_qubit_noise
+
+    @property
     def global_perturbations(self) -> dict[Parameter, list[ParameterPerturbation]]:
         """Return the global parameter perturbation mapping.
 
@@ -100,7 +110,7 @@ class NoiseModel:
     @overload
     def add(self, noise: TNoise) -> None: ...
     @overload
-    def add(self, noise: TNoise, *, qubit: Qubit) -> None: ...
+    def add(self, noise: TNoise, *, qubits: list[Qubit]) -> None: ...
     @overload
     def add(self, noise: TNoise, *, gate: GateType) -> None: ...
 
@@ -118,7 +128,7 @@ class NoiseModel:
         self,
         noise: Noise | ParameterPerturbation,
         *,
-        qubit: Qubit | None = None,
+        qubits: list[Qubit] | None = None,
         gate: GateType | None = None,
         parameter: Parameter | None = None,
     ) -> None:
@@ -126,7 +136,7 @@ class NoiseModel:
 
         Args:
             noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to attach.
-            qubit (int | None): Target qubit index for per-qubit noise attachments.
+            qubits (list[int] | None): Target qubit index or indices for per-qubit noise attachments.
             gate (type[Gate] | None): Target gate type for per-gate noise or perturbation attachments.
             parameter (str | None): Target parameter name for perturbation attachments.
 
@@ -136,7 +146,7 @@ class NoiseModel:
         if isinstance(noise, ParameterPerturbation):
             if parameter is None:
                 raise ValueError(f"{noise.__class__.__name__} requires a parameter name.")
-            if qubit is not None:
+            if qubits is not None:
                 raise ValueError(f"{noise.__class__.__name__} cannot be applied to specific qubits.")
             if gate is None:
                 scope = AttachmentScope.GLOBAL
@@ -151,21 +161,29 @@ class NoiseModel:
         else:
             if parameter is not None:
                 raise ValueError(f"{noise.__class__.__name__} cannot be applied to parameters.")
-            if qubit is None and gate is None:
+            if qubits is None and gate is None:
                 scope = AttachmentScope.GLOBAL
                 if scope not in noise.allowed_scopes():
                     raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
                 self.global_noise.append(noise)
                 return
-            if qubit is not None and gate is None:
+            if qubits is not None and gate is None:
                 scope = AttachmentScope.PER_QUBIT
                 if scope not in noise.allowed_scopes():
                     raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
-                self.per_qubit_noise[qubit].append(noise)
+                for q in qubits:
+                    self.per_qubit_noise[q].append(noise)
                 return
-            if qubit is None and gate is not None:
+            if qubits is None and gate is not None:
                 scope = AttachmentScope.PER_GATE_TYPE
                 if scope not in noise.allowed_scopes():
                     raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
                 self.per_gate_noise[gate].append(noise)
+                return
+            if qubits is not None and gate is not None:
+                scope = AttachmentScope.PER_GATE_TYPE_PER_QUBIT
+                if scope not in noise.allowed_scopes():
+                    raise ValueError(f"{noise.__class__.__name__} cannot be added with scope '{scope.value}'.")
+                for q in qubits:
+                    self.per_gate_per_qubit_noise[gate, q].append(noise)
                 return

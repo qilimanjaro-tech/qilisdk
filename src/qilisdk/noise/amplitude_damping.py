@@ -17,7 +17,7 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import SupportsLindblad, SupportsTimeDerivedKraus
+from .protocols import AttachmentScope, SupportsLindblad, SupportsTimeDerivedKraus
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _sigma_minus
 
@@ -46,14 +46,41 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         return self._T1
 
     def as_lindblad(self) -> LindbladGenerator:
+        """
+        Return the Lindblad representation for this noise type.
+
+        Returns:
+            LindbladGenerator: The Lindblad representation.
+        """
         gamma = 1.0 / self._T1
         L = np.sqrt(gamma) * _sigma_minus()
         return LindbladGenerator([QTensor(L)])
 
     def as_kraus(self, *, duration: float) -> KrausChannel:
+        """
+        Return the time-derived Kraus representation for this noise type.
+
+        Args:
+            duration (float): The time duration over which the noise acts.
+
+        Raises:
+            ValueError: If duration is negative.
+
+        Returns:
+            KrausChannel: The Kraus representation.
+        """
         if duration < 0:
             raise ValueError("duration must be >= 0.")
         gamma = 1.0 - float(np.exp(-duration / self._T1))
         K0 = np.array([[1.0, 0.0], [0.0, np.sqrt(1.0 - gamma)]], dtype=complex)
         K1 = np.array([[0.0, np.sqrt(gamma)], [0.0, 0.0]], dtype=complex)
         return KrausChannel(operators=[QTensor(K0), QTensor(K1)])
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this perturbation type.
+
+        Returns:
+            The set of scopes where this perturbation can be attached.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})

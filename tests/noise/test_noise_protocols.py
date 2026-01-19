@@ -20,6 +20,8 @@ from qilisdk.noise import (
     SupportsStaticKraus,
     SupportsTimeDerivedKraus,
 )
+from qilisdk.noise.bit_flip import BitFlip
+from qilisdk.noise.depolarizing import Depolarizing
 from qilisdk.noise.protocols import AttachmentScope
 
 
@@ -27,6 +29,7 @@ def test_attachment_scope_values():
     assert AttachmentScope.GLOBAL.value == "global"
     assert AttachmentScope.PER_QUBIT.value == "per_qubit"
     assert AttachmentScope.PER_GATE_TYPE.value == "per_gate_type"
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT.value == "per_gate_type_per_qubit"
 
 
 def test_protocols_runtime_checks():
@@ -35,3 +38,5 @@ def test_protocols_runtime_checks():
     assert isinstance(Dephasing(Tphi=1.0), SupportsLindblad)
     assert isinstance(AmplitudeDamping(T1=1.0), SupportsTimeDerivedKraus)
     assert isinstance(AmplitudeDamping(T1=1.0), SupportsLindblad)
+    assert isinstance(Depolarizing(probability=0.1), SupportsStaticKraus)
+    assert isinstance(BitFlip(probability=0.1), SupportsStaticKraus)

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .pauli_channel import PauliChannel
-from .protocols import AttachmentScope, SupportsStaticKraus
+from .protocols import SupportsStaticKraus
 from .utils import _check_probability
 
 
@@ -41,7 +41,3 @@ class PhaseFlip(PauliChannel, SupportsStaticKraus):
             float: The error probability.
         """
         return self._probability
-
-    @classmethod
-    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT, AttachmentScope.PER_GATE_TYPE})

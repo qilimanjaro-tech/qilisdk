@@ -36,8 +36,9 @@ class DummyRng:
 def test_noise_allowed_scopes_and_protocols():
     scopes = Noise.allowed_scopes()
     assert AttachmentScope.GLOBAL in scopes
-    assert AttachmentScope.PER_QUBIT in scopes
+    assert AttachmentScope.PER_QUBIT not in scopes
     assert AttachmentScope.PER_GATE_TYPE not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
     noise = Noise()
     assert isinstance(noise, NoiseABC)
@@ -49,6 +50,7 @@ def test_parameter_perturbation_allowed_scopes_and_abstract():
     assert AttachmentScope.GLOBAL in scopes
     assert AttachmentScope.PER_GATE_TYPE in scopes
     assert AttachmentScope.PER_QUBIT not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
     with pytest.raises(TypeError):
         ParameterPerturbation()
@@ -56,6 +58,13 @@ def test_parameter_perturbation_allowed_scopes_and_abstract():
 
 def test_offset_perturbation_properties_and_perturb():
     perturbation = OffsetPerturbation(offset=0.5)
+    assert isinstance(perturbation, ParameterPerturbation)
+
+    scopes = OffsetPerturbation.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_GATE_TYPE in scopes
+    assert AttachmentScope.PER_QUBIT not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
 
     assert perturbation.offset == 0.5
     assert perturbation.perturb(1.25) == pytest.approx(1.75)
@@ -66,22 +75,34 @@ def test_gaussian_perturbation_properties_and_perturb():
     rng = DummyRng(0.25)
     perturbation._rng = rng
 
+    scopes = GaussianPerturbation.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_GATE_TYPE in scopes
+    assert AttachmentScope.PER_QUBIT not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
+
     assert perturbation.mean == 1.0
     assert perturbation.std == 0.5
     assert perturbation.perturb(2.0) == pytest.approx(2.25)
     assert rng.called_with == (1.0, 0.5)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=r"std must be >= 0"):
         GaussianPerturbation(std=-0.1)
 
 
 def test_readout_assignment_properties_and_validation():
     assignment = ReadoutAssignment(p01=0.1, p10=0.2)
 
+    scopes = ReadoutAssignment.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_QUBIT in scopes
+    assert AttachmentScope.PER_GATE_TYPE not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
+
     assert assignment.p01 == 0.1
     assert assignment.p10 == 0.2
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=r"p01 must be in \[0, 1\]."):
         ReadoutAssignment(p01=-0.1, p10=0.2)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=r"p10 must be in \[0, 1\]."):
         ReadoutAssignment(p01=0.1, p10=1.2)

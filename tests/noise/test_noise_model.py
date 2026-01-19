@@ -15,18 +15,31 @@
 import pytest
 
 from qilisdk.digital.gates import X
-from qilisdk.noise import BitFlip, Dephasing, NoiseModel, OffsetPerturbation
+from qilisdk.noise import BitFlip, Dephasing, NoiseModel, OffsetPerturbation, PauliChannel
 from qilisdk.noise.parameter_pertubation import ParameterPerturbation
 from qilisdk.noise.protocols import AttachmentScope
 
 
 class GlobalOnlyPerturbation(ParameterPerturbation):
-    def perturb(self, value: float) -> float:
-        return value
+    def perturb(self, value): ...
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset({AttachmentScope.GLOBAL})
+
+
+class NoScopePerturbation(ParameterPerturbation):
+    def perturb(self, value): ...
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        return frozenset({})
+
+
+class NoScopePauliChannel(PauliChannel):
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        return frozenset({})
 
 
 def test_noise_model_add_global_noise():
@@ -44,7 +57,7 @@ def test_noise_model_add_per_qubit_noise():
     noise_model = NoiseModel()
     noise = Dephasing(Tphi=1.0)
 
-    noise_model.add(noise, qubit=2)
+    noise_model.add(noise, qubits=[2])
 
     assert noise_model.global_noise == []
     assert noise_model.per_qubit_noise[2] == [noise]
@@ -57,6 +70,16 @@ def test_noise_model_add_per_gate_noise():
     noise_model.add(noise, gate=X)
 
     assert noise_model.per_gate_noise[X] == [noise]
+
+
+def test_noise_model_add_per_gate_per_qubit_noise():
+    noise_model = NoiseModel()
+    noise = BitFlip(probability=0.1)
+
+    noise_model.add(noise, gate=X, qubits=[1, 3])
+
+    assert noise_model.per_gate_per_qubit_noise[X, 1] == [noise]
+    assert noise_model.per_gate_per_qubit_noise[X, 3] == [noise]
 
 
 def test_noise_model_add_global_perturbation():
@@ -88,7 +111,7 @@ def test_noise_model_rejects_invalid_arguments():
         noise_model.add(OffsetPerturbation(offset=0.1))
 
     with pytest.raises(ValueError, match="cannot be applied to specific qubits"):
-        noise_model.add(OffsetPerturbation(offset=0.1), parameter="theta", qubit=1)
+        noise_model.add(OffsetPerturbation(offset=0.1), parameter="theta", qubits=[1])
 
 
 def test_noise_model_scope_validation():
@@ -99,3 +122,21 @@ def test_noise_model_scope_validation():
 
     with pytest.raises(ValueError, match="per_gate_type"):
         noise_model.add(GlobalOnlyPerturbation(), gate=X, parameter="theta")
+
+    with pytest.raises(ValueError, match="global"):
+        noise_model.add(NoScopePerturbation(), parameter="theta")
+
+    with pytest.raises(ValueError, match="per_gate_type"):
+        noise_model.add(NoScopePerturbation(), gate=X, parameter="theta")
+
+    with pytest.raises(ValueError, match="global"):
+        noise_model.add(NoScopePauliChannel())
+
+    with pytest.raises(ValueError, match="per_qubit"):
+        noise_model.add(NoScopePauliChannel(), qubits=[0])
+
+    with pytest.raises(ValueError, match="per_gate_type"):
+        noise_model.add(NoScopePauliChannel(), gate=X)
+
+    with pytest.raises(ValueError, match="per_gate_type_per_qubit"):
+        noise_model.add(NoScopePauliChannel(), gate=X, qubits=[0])

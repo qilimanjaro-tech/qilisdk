@@ -17,12 +17,12 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import SupportsLindblad, SupportsTimeDerivedKraus
+from .protocols import AttachmentScope, HasAllowedScopes, SupportsLindblad, SupportsTimeDerivedKraus
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _identity, _sigma_z
 
 
-class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
+class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedScopes):
     """Pure dephasing (Tphi) noise model for single qubits.
 
     This model supports both Lindblad and time-derived Kraus forms, with
@@ -50,14 +50,42 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         return self._Tphi
 
     def as_lindblad(self) -> LindbladGenerator:
+        """
+        Return the Lindblad representation for this noise type.
+
+        Returns:
+            LindbladGenerator: The Lindblad representation.
+        """
         gamma = 1.0 / self._Tphi
-        L = np.sqrt(gamma / 2.0) * _sigma_z()
-        return LindbladGenerator([QTensor(L)])
+        rate = gamma / 2.0
+        L = QTensor(_sigma_z())
+        return LindbladGenerator(jump_operators=[L], rates=[rate])
 
     def as_kraus(self, *, duration: float) -> KrausChannel:
+        """
+        Return the Kraus representation for this noise type over a given duration.
+
+        Args:
+            duration (float): Duration over which to apply the noise.
+
+        Returns:
+            KrausChannel: The Kraus representation.
+
+        Raises:
+            ValueError: If duration is negative.
+        """
         if duration < 0:
             raise ValueError("duration must be >= 0.")
         gamma = float(np.exp(-duration / self._Tphi))
         K0 = np.sqrt((1.0 + gamma) / 2.0) * _identity()
         K1 = np.sqrt((1.0 - gamma) / 2.0) * _sigma_z()
         return KrausChannel([QTensor(K0), QTensor(K1)])
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this perturbation type.
+
+        Returns:
+            The set of scopes where this perturbation can be attached.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})

@@ -28,4 +28,4 @@ class NoiseABC(ABC, HasAllowedScopes):
         Returns:
             The set of scopes where this noise can be attached.
         """
-        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
+        return frozenset({AttachmentScope.GLOBAL})

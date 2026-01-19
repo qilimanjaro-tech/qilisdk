@@ -17,12 +17,12 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import SupportsStaticKraus
+from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticKraus
 from .representations import KrausChannel
 from .utils import _check_probability, _identity, _sigma_x, _sigma_y, _sigma_z
 
 
-class PauliChannel(Noise, SupportsStaticKraus):
+class PauliChannel(Noise, SupportsStaticKraus, HasAllowedScopes):
     """General single-qubit Pauli channel.
 
     Channel:
@@ -73,6 +73,12 @@ class PauliChannel(Noise, SupportsStaticKraus):
         return self._pZ
 
     def as_kraus(self) -> KrausChannel:
+        """
+        Return the Kraus representation for this noise type.
+
+        Returns:
+            KrausChannel: The Kraus representation.
+        """
         pI = max(0.0, 1.0 - (self._pX + self._pY + self._pZ))
         operators = []
         if pI > 0:
@@ -84,3 +90,19 @@ class PauliChannel(Noise, SupportsStaticKraus):
         if self._pZ > 0:
             operators.append(np.sqrt(self._pZ) * _sigma_z())
         return KrausChannel([QTensor(operator) for operator in operators])
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this perturbation type.
+
+        Returns:
+            The set of scopes where this perturbation can be attached.
+        """
+        return frozenset(
+            {
+                AttachmentScope.GLOBAL,
+                AttachmentScope.PER_QUBIT,
+                AttachmentScope.PER_GATE_TYPE,
+                AttachmentScope.PER_GATE_TYPE_PER_QUBIT,
+            }
+        )

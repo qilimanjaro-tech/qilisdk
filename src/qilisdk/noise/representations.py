@@ -15,9 +15,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
+import numpy as np
+
 from .noise import Noise
+from .protocols import AttachmentScope
 
 if TYPE_CHECKING:
+    from qilisdk.analog import Hamiltonian
     from qilisdk.core import QTensor
 
 
@@ -41,6 +45,23 @@ class KrausChannel(Noise):
     def as_kraus(self) -> Self:
         return self
 
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """
+        Return the allowed attachment scopes for this noise representation.
+
+        Returns:
+            frozenset[AttachmentScope]: Allowed attachment scopes.
+        """
+        return frozenset(
+            {
+                AttachmentScope.GLOBAL,
+                AttachmentScope.PER_QUBIT,
+                AttachmentScope.PER_GATE_TYPE,
+                AttachmentScope.PER_GATE_TYPE_PER_QUBIT,
+            }
+        )
+
 
 class LindbladGenerator(Noise):
     """Lindblad generator representation for Markovian noise."""
@@ -49,12 +70,19 @@ class LindbladGenerator(Noise):
         self,
         jump_operators: list[QTensor],
         rates: list[float] | None = None,
-        hamiltonian: QTensor | None = None,
+        hamiltonian: Hamiltonian | None = None,
     ) -> None:
-        """Args:
-        jump_operators (list[QTensor]): Jump operators defining dissipation.
-        rates (list[float] | None): Optional rates for each jump operator.
-        hamiltonian (QTensor | None): Optional Hamiltonian term for coherent evolution."""
+        """
+        Args:
+            jump_operators (list[QTensor]): Jump operators defining dissipation.
+            rates (list[float] | None): Optional rates for each jump operator.
+            hamiltonian (Hamiltonian | None): Optional Hamiltonian term for coherent evolution.
+
+        Raises:
+            ValueError: If rates are provided and their length does not match jump_operators.
+        """
+        if rates is not None and len(rates) != len(jump_operators):
+            raise ValueError("Length of rates must match length of jump_operators.")
         self._jump_operators = jump_operators
         self._rates = rates
         self._hamiltonian = hamiltonian
@@ -69,6 +97,22 @@ class LindbladGenerator(Noise):
         return self._jump_operators
 
     @property
+    def jump_operators_with_rates(self) -> list[QTensor]:
+        """Return the jump operators defining dissipation, scaled by their rates.
+
+        Raises:
+            ValueError: If the rate list is provided but its length does not match jump_operators.
+
+        Returns:
+            list[QTensor]: Jump operators for this generator.
+        """
+        if self._rates is None:
+            return self._jump_operators
+        if len(self._rates) != len(self._jump_operators):
+            raise ValueError("Length of rates must match length of jump_operators.")
+        return [self._jump_operators[i] * np.sqrt(self._rates[i]) for i in range(len(self._jump_operators))]
+
+    @property
     def rates(self) -> list[float] | None:
         """Return the rates for each jump operator, if provided.
 
@@ -78,7 +122,7 @@ class LindbladGenerator(Noise):
         return self._rates
 
     @property
-    def hamiltonian(self) -> QTensor | None:
+    def hamiltonian(self) -> Hamiltonian | None:
         """Return the optional coherent Hamiltonian term.
 
         Returns:
@@ -86,10 +130,20 @@ class LindbladGenerator(Noise):
         """
         return self._hamiltonian
 
-    def as_lindbland(self) -> LindbladGenerator:
+    def as_lindblad(self) -> LindbladGenerator:
         """Return this instance as a Lindblad generator representation.
 
         Returns:
             The current LindbladGenerator instance.
         """
         return self
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """
+        Return the allowed attachment scopes for this noise representation.
+
+        Returns:
+            frozenset[AttachmentScope]: Allowed attachment scopes.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})

@@ -39,4 +39,4 @@ def test_lindblad_generator_properties():
     assert generator.jump_operators == [jump_operator]
     assert generator.rates == [0.5]
     assert generator.hamiltonian is hamiltonian
-    assert generator.as_lindbland() is generator
+    assert generator.as_lindblad() is generator

@@ -32,6 +32,7 @@ class AttachmentScope(str, Enum):
     GLOBAL = "global"
     PER_QUBIT = "per_qubit"
     PER_GATE_TYPE = "per_gate_type"
+    PER_GATE_TYPE_PER_QUBIT = "per_gate_type_per_qubit"
 
 
 @runtime_checkable

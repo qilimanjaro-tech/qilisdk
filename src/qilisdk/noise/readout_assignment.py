@@ -14,10 +14,11 @@
 from __future__ import annotations
 
 from .noise import Noise
+from .protocols import AttachmentScope, HasAllowedScopes
 from .utils import _check_probability
 
 
-class ReadoutAssignment(Noise):
+class ReadoutAssignment(Noise, HasAllowedScopes):
     """Classical readout assignment error model for measurement outcomes."""
 
     def __init__(self, *, p01: float, p10: float) -> None:
@@ -48,3 +49,12 @@ class ReadoutAssignment(Noise):
             The p10 probability.
         """
         return self._p10
+
+    @classmethod
+    def allowed_scopes(cls) -> frozenset[AttachmentScope]:
+        """Return the attachment scopes supported by this perturbation type.
+
+        Returns:
+            The set of scopes where this perturbation can be attached.
+        """
+        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})

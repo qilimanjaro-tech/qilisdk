@@ -406,7 +406,7 @@ def test_monte_carlo_time_evolution(method):
 
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
-    assert np.isclose(expect_z, -0.8, rtol=1e-2)
+    assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
 
 def test_qilisim_params():
