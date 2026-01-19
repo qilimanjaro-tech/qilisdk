@@ -27,10 +27,38 @@ from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import QTensor
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
+from qilisdk.digital.gates import (
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    BasicGate,
+    Controlled,
+    Gate,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.noise import BitFlip, Depolarizing, Noise, PhaseFlip, SupportsLindblad, SupportsStaticKraus
+from qilisdk.noise import (
+    BitFlip,
+    Depolarizing,
+    LindbladGenerator,
+    Noise,
+    PhaseFlip,
+    SupportsLindblad,
+    SupportsStaticKraus,
+)
 from qilisdk.noise.protocols import SupportsTimeDerivedKraus
 from qilisdk.noise.readout_assignment import ReadoutAssignment
 
@@ -219,7 +247,7 @@ class CudaBackend(Backend):
 
     @staticmethod
     def _add_per_gate_noise(
-        gate_type: Type[BasicGate],
+        gate_type: Type[BasicGate] | Type[Gate],
         noises: list[Noise],
         cuda_noise_model: cudaq.NoiseModel,
         all_cuda_gate_names: set[str],
@@ -243,7 +271,7 @@ class CudaBackend(Backend):
 
     @staticmethod
     def _add_per_gate_per_qubit_noise(
-        gate_type: Type[BasicGate],
+        gate_type: Type[BasicGate] | Type[Gate],
         qubit: int,
         noises: list[Noise],
         cuda_noise_model: cudaq.NoiseModel,
@@ -339,7 +367,7 @@ class CudaBackend(Backend):
         ops_numpy: list,
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
-        lindblad_generator: SupportsLindblad,
+        lindblad_generator: LindbladGenerator,
         nqubits: int,
     ) -> None:
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
@@ -365,7 +393,7 @@ class CudaBackend(Backend):
         ops_numpy: list,
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
-        lindblad_generator: SupportsLindblad,
+        lindblad_generator: LindbladGenerator,
         qubit: int,
     ) -> None:
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
@@ -382,22 +410,26 @@ class CudaBackend(Backend):
             hamiltonian_deltas.append(CudaBackend._remove_constant_terms(lindblad_generator.hamiltonian))
 
     def _noise_model_to_cudaq_dynamics(self, noise_model: NoiseModel, nqubits: int) -> tuple[list[OperatorSum], list]:
-        ops_numpy = []
+        ops_numpy: list[np.ndarray] = []
         jump_operators: list[OperatorSum] = []
-        hamiltonian_deltas = []
+        hamiltonian_deltas: list[OperatorSum] = []
 
         # Global noise
         for noise in noise_model.global_noise:
             if isinstance(noise, SupportsLindblad):
                 lindblad_generator = noise.as_lindblad()
-                self._add_global_noise_dynamics(ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits)
+                self._add_global_noise_dynamics(
+                    ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits
+                )
 
         # Per qubit noise
         for qubit, noises in noise_model.per_qubit_noise.items():
             for noise in noises:
                 if isinstance(noise, SupportsLindblad):
                     lindblad_generator = noise.as_lindblad()
-                    self._add_per_qubit_noise_dynamics(ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit)
+                    self._add_per_qubit_noise_dynamics(
+                        ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
+                    )
 
         return jump_operators, hamiltonian_deltas
 
@@ -458,19 +490,6 @@ class CudaBackend(Backend):
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas
-        # new_ham = None
-        # for el in cuda_hamiltonian:
-        #     if not el.is_identity():
-        #         if new_ham is None:
-        #             new_ham = el
-        #         else:
-        #             new_ham += el
-        # for delta in hamiltonian_deltas:
-        #     if new_ham is None:
-        #         new_ham = delta
-        #     else:
-        #         new_ham += delta
-        # cuda_hamiltonian = new_ham
         cuda_hamiltonian = self._remove_constant_terms(cuda_hamiltonian)
         for delta in hamiltonian_deltas:
             cuda_hamiltonian += delta
