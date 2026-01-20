@@ -50,6 +50,11 @@ def test_pauli_channel_properties_and_kraus():
     with pytest.raises(ValueError, match=r"pX \+ pY \+ pZ must be <= 1."):
         PauliChannel(pX=0.6, pY=0.6)
 
+    jump_operators = channel.as_lindblad_from_duration(duration=1.0)
+    assert len(jump_operators.jump_operators) == 3
+    with pytest.raises(ValueError, match="Duration must be positive"):
+        channel.as_lindblad_from_duration(duration=-1.0)
+
 
 def test_bit_flip_probability_and_scopes():
     noise = BitFlip(probability=0.2)

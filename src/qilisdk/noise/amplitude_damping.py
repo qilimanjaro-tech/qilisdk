@@ -17,12 +17,12 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import AttachmentScope, SupportsLindblad, SupportsTimeDerivedKraus
+from .protocols import AttachmentScope, SupportsStaticLindblad, SupportsTimeDerivedKraus
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _sigma_minus
 
 
-class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
+class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
     """Amplitude damping noise model for energy relaxation."""
 
     def __init__(self, *, t1: float) -> None:
@@ -56,7 +56,7 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsLindblad):
         L = np.sqrt(gamma) * _sigma_minus()
         return LindbladGenerator([QTensor(L)])
 
-    def as_kraus(self, *, duration: float) -> KrausChannel:
+    def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         """
         Return the time-derived Kraus representation for this noise type.
 

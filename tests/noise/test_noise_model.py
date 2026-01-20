@@ -16,7 +16,7 @@ import pytest
 
 from qilisdk.digital.gates import X
 from qilisdk.noise import BitFlip, Dephasing, NoiseModel, OffsetPerturbation, PauliChannel
-from qilisdk.noise.parameter_pertubation import ParameterPerturbation
+from qilisdk.noise.parameter_perturbation import ParameterPerturbation
 from qilisdk.noise.protocols import AttachmentScope
 
 

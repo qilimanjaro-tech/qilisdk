@@ -17,12 +17,12 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import AttachmentScope, HasAllowedScopes, SupportsLindblad, SupportsTimeDerivedKraus
+from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticLindblad, SupportsTimeDerivedKraus
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _identity, _sigma_z
 
 
-class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedScopes):
+class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllowedScopes):
     """Pure dephasing (Tphi) noise model for single qubits.
 
     This model supports both Lindblad and time-derived Kraus forms, with
@@ -61,7 +61,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsLindblad, HasAllowedSco
         L = QTensor(_sigma_z())
         return LindbladGenerator(jump_operators=[L], rates=[rate])
 
-    def as_kraus(self, *, duration: float) -> KrausChannel:
+    def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         """
         Return the Kraus representation for this noise type over a given duration.
 

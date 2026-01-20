@@ -56,11 +56,12 @@ from qilisdk.noise import (
     LindbladGenerator,
     Noise,
     PhaseFlip,
-    SupportsLindblad,
+    ReadoutAssignment,
     SupportsStaticKraus,
+    SupportsStaticLindblad,
+    SupportsTimeDerivedKraus,
+    SupportsTimeDerivedLindblad,
 )
-from qilisdk.noise.protocols import SupportsTimeDerivedKraus
-from qilisdk.noise.readout_assignment import ReadoutAssignment
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
@@ -77,19 +78,21 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
-def _to_cuda_noise(noise: Noise):  # noqa: ANN202
+def _to_cuda_noise(noise: Noise) -> cudaq.NoiseChannel | None:
     if isinstance(noise, BitFlip):
         return cudaq.BitFlipChannel(noise.probability)
     if isinstance(noise, PhaseFlip):
         return cudaq.PhaseFlipChannel(noise.probability)
     if isinstance(noise, Depolarizing):
         return cudaq.DepolarizationChannel(noise.probability)
+    if isinstance(noise, SupportsTimeDerivedKraus):
+        kraus_channel = noise.as_kraus_from_duration(duration=1.0)
+        kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+        return cudaq.KrausChannel(kraus_operators_np)
     if isinstance(noise, SupportsStaticKraus):
         kraus_channel = noise.as_kraus()
         kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
         return cudaq.KrausChannel(kraus_operators_np)
-    if isinstance(noise, SupportsTimeDerivedKraus):
-        raise NotImplementedError("Time-derived Kraus channels are not yet supported in the CUDA backend.")
     return None
 
 
@@ -307,16 +310,16 @@ class CudaBackend(Backend):
     @staticmethod
     def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
         circuit_parameters = circuit.get_parameters()
-        for parameter, pertubations in noise_model.global_perturbations.items():
+        for parameter, perturbations in noise_model.global_perturbations.items():
             if parameter in circuit_parameters:
-                for pertubation in pertubations:
-                    circuit.set_parameters({parameter: pertubation.perturb(circuit_parameters[parameter])})
-        for (gate_type, parameter), pertubations in noise_model.per_gate_perturbations.items():
+                for perturbation in perturbations:
+                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+        for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
                 if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
                     gate_parameters = gate.get_parameters()
-                    for pertubation in pertubations:
-                        gate.set_parameters({parameter: pertubation.perturb(gate_parameters[parameter])})
+                    for perturbation in perturbations:
+                        gate.set_parameters({parameter: perturbation.perturb(gate_parameters[parameter])})
 
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
@@ -324,7 +327,7 @@ class CudaBackend(Backend):
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
-        # Apply parameter pertubations
+        # Apply parameter perturbations
         if noise_model:
             self._handle_gate_parameter_perturbations(functional.circuit, noise_model)
 
@@ -357,10 +360,10 @@ class CudaBackend(Backend):
     def _handle_schedule_parameter_perturbations(schedule: Schedule, noise_model: NoiseModel) -> None:
         if noise_model.global_perturbations:
             schedule_parameters = schedule.get_parameters()
-            for parameter, pertubations in noise_model.global_perturbations.items():
+            for parameter, perturbations in noise_model.global_perturbations.items():
                 if parameter in schedule_parameters:
-                    for pertubation in pertubations:
-                        schedule.set_parameters({parameter: pertubation.perturb(schedule_parameters[parameter])})
+                    for perturbation in perturbations:
+                        schedule.set_parameters({parameter: perturbation.perturb(schedule_parameters[parameter])})
 
     @staticmethod
     def _add_global_noise_dynamics(
@@ -409,15 +412,22 @@ class CudaBackend(Backend):
         if lindblad_generator.hamiltonian is not None:
             hamiltonian_deltas.append(CudaBackend._remove_constant_terms(lindblad_generator.hamiltonian))
 
-    def _noise_model_to_cudaq_dynamics(self, noise_model: NoiseModel, nqubits: int) -> tuple[list[OperatorSum], list]:
+    def _noise_model_to_cudaq_dynamics(
+        self, noise_model: NoiseModel, nqubits: int, dt: float
+    ) -> tuple[list[OperatorSum], list]:
         ops_numpy: list[np.ndarray] = []
         jump_operators: list[OperatorSum] = []
         hamiltonian_deltas: list[OperatorSum] = []
 
         # Global noise
         for noise in noise_model.global_noise:
-            if isinstance(noise, SupportsLindblad):
+            if isinstance(noise, SupportsStaticLindblad):
                 lindblad_generator = noise.as_lindblad()
+                self._add_global_noise_dynamics(
+                    ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits
+                )
+            elif isinstance(noise, SupportsTimeDerivedLindblad):
+                lindblad_generator = noise.as_lindblad_from_duration(duration=dt)
                 self._add_global_noise_dynamics(
                     ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits
                 )
@@ -425,8 +435,13 @@ class CudaBackend(Backend):
         # Per qubit noise
         for qubit, noises in noise_model.per_qubit_noise.items():
             for noise in noises:
-                if isinstance(noise, SupportsLindblad):
+                if isinstance(noise, SupportsStaticLindblad):
                     lindblad_generator = noise.as_lindblad()
+                    self._add_per_qubit_noise_dynamics(
+                        ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
+                    )
+                elif isinstance(noise, SupportsTimeDerivedLindblad):
+                    lindblad_generator = noise.as_lindblad_from_duration(duration=dt)
                     self._add_per_qubit_noise_dynamics(
                         ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
                     )
@@ -452,7 +467,7 @@ class CudaBackend(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
-        # Apply parameter pertubations
+        # Apply parameter perturbations
         if noise_model and noise_model.global_perturbations:
             self._handle_schedule_parameter_perturbations(functional.schedule, noise_model)
 
@@ -486,7 +501,7 @@ class CudaBackend(Backend):
         hamiltonian_deltas: list[OperatorSum] = []
         if noise_model:
             jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
-                noise_model, functional.schedule.nqubits
+                noise_model, functional.schedule.nqubits, functional.schedule.dt
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas

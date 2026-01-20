@@ -15,11 +15,11 @@
 import numpy as np
 import pytest
 
-from qilisdk.noise.gaussian_pertubation import GaussianPerturbation
+from qilisdk.noise.gaussian_perturbation import GaussianPerturbation
 from qilisdk.noise.noise import Noise
 from qilisdk.noise.noise_abc import NoiseABC
-from qilisdk.noise.offset_pertubation import OffsetPerturbation
-from qilisdk.noise.parameter_pertubation import ParameterPerturbation
+from qilisdk.noise.offset_perturbation import OffsetPerturbation
+from qilisdk.noise.parameter_perturbation import ParameterPerturbation
 from qilisdk.noise.protocols import AttachmentScope, HasAllowedScopes
 from qilisdk.noise.readout_assignment import ReadoutAssignment
 

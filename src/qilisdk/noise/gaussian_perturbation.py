@@ -14,7 +14,7 @@
 
 import numpy as np
 
-from .parameter_pertubation import ParameterPerturbation
+from .parameter_perturbation import ParameterPerturbation
 
 
 class GaussianPerturbation(ParameterPerturbation):
@@ -28,10 +28,12 @@ class GaussianPerturbation(ParameterPerturbation):
         *,
         mean: float = 0.0,
         std: float,
+        seed: int = 42,
     ) -> None:
         """Args:
             mean (float): Mean of the Gaussian offset.
             std (float): Standard deviation of the Gaussian offset (must be >= 0).
+            seed (int): Seed for the random number generator.
 
         Raises:
             ValueError: If std is negative.
@@ -40,7 +42,7 @@ class GaussianPerturbation(ParameterPerturbation):
             raise ValueError("std must be >= 0")
         self._mean = float(mean)
         self._std = float(std)
-        self._rng = np.random.default_rng()
+        self._rng = np.random.default_rng(seed)
 
     @property
     def mean(self) -> float:

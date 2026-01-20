@@ -16,13 +16,19 @@ from .amplitude_damping import AmplitudeDamping
 from .bit_flip import BitFlip
 from .dephasing import Dephasing
 from .depolarizing import Depolarizing
-from .gaussian_pertubation import GaussianPerturbation
+from .gaussian_perturbation import GaussianPerturbation
 from .noise import Noise
+from .noise_config import NoiseConfig
 from .noise_model import NoiseModel
-from .offset_pertubation import OffsetPerturbation
+from .offset_perturbation import OffsetPerturbation
 from .pauli_channel import PauliChannel
 from .phase_flip import PhaseFlip
-from .protocols import SupportsLindblad, SupportsStaticKraus, SupportsTimeDerivedKraus
+from .protocols import (
+    SupportsStaticKraus,
+    SupportsStaticLindblad,
+    SupportsTimeDerivedKraus,
+    SupportsTimeDerivedLindblad,
+)
 from .readout_assignment import ReadoutAssignment
 from .representations import KrausChannel, LindbladGenerator
 
@@ -35,12 +41,14 @@ __all__ = [
     "KrausChannel",
     "LindbladGenerator",
     "Noise",
+    "NoiseConfig",
     "NoiseModel",
     "OffsetPerturbation",
     "PauliChannel",
     "PhaseFlip",
     "ReadoutAssignment",
-    "SupportsLindblad",
     "SupportsStaticKraus",
+    "SupportsStaticLindblad",
     "SupportsTimeDerivedKraus",
+    "SupportsTimeDerivedLindblad",
 ]

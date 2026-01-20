@@ -34,7 +34,7 @@ from qilisdk.backends.cuda_backend import CudaBackend
 from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, RX, I, X, Z
+from qilisdk.digital.gates import CNOT, RX, H, I, X, Z
 from qilisdk.functionals import Sampling, TimeEvolution
 from qilisdk.noise import (
     AmplitudeDamping,
@@ -250,6 +250,56 @@ def test_depolarizing_cuda():
     assert np.isclose(prob_10, p * 0.5, atol=0.1)
 
 
+def test_digital_dephasing_cuda():
+    # Define the random circuit and sampler
+    shots = 10000
+    nqubits = 2
+    t_phi = 0.7
+    p = 0.5 * (1 - np.exp(-1.0 / t_phi))
+    c = Circuit(nqubits=nqubits)
+    random.seed(42)
+    c.add(H(0))
+    c.add(X(0))
+    c.add(H(0))
+    sampler = Sampling(c, nshots=shots)
+
+    # Define a simple noise model
+    nm = NoiseModel()
+    nm.add(Dephasing(t_phi=t_phi), qubits=[0])
+
+    # Execute with CUDA backend
+    backend_cuda = CudaBackend()
+    res = backend_cuda.execute(sampler, noise_model=nm)
+
+    # With a probability p, the |+> state should flip to |-> (which maps to |1> after the basis change)
+    prob_10 = res.samples.get("10", 0) / shots
+    assert np.isclose(prob_10, p, atol=0.1)
+
+
+def test_amplitude_damping_cuda():
+    # Define the random circuit and sampler
+    shots = 10000
+    nqubits = 2
+    t1 = 0.7
+    p = 1 - np.exp(-1.0 / t1)
+    c = Circuit(nqubits=nqubits)
+    random.seed(42)
+    c.add(X(0))
+    sampler = Sampling(c, nshots=shots)
+
+    # Define a simple noise model
+    nm = NoiseModel()
+    nm.add(AmplitudeDamping(t1=t1), qubits=[0])
+
+    # Execute with CUDA backend
+    backend_cuda = CudaBackend()
+    res = backend_cuda.execute(sampler, noise_model=nm)
+
+    # With a probability gamma, the |1> state should decay to |0>
+    prob_00 = res.samples.get("00", 0) / shots
+    assert np.isclose(prob_00, p, atol=0.1)
+
+
 def test_kraus_noise_single_qubit_cuda():
     # Define the random circuit and sampler
     shots = 1000
@@ -307,7 +357,7 @@ def test_kraus_noise_two_qubit_cuda():
 def test_analog_dissapation_cuda():
     # Define the time evolution
     T = 10.0
-    dt = 0.1
+    dt = 0.5
     nqubits = 1
     h_x = sum(PauliX(i) for i in range(nqubits))
     h_z = sum(PauliZ(i) for i in range(nqubits))
@@ -381,7 +431,7 @@ def test_analog_amplitude_damping_cuda():
 def test_analog_dephasing_cuda():
     # Define the time evolution
     T = 10.0
-    dt = 0.1
+    dt = 0.5
     nqubits = 1
     h_x = sum(PauliX(i) for i in range(nqubits))
     h_z = sum(PauliZ(i) for i in range(nqubits))

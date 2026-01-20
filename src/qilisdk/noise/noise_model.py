@@ -20,7 +20,8 @@ from typing import TypeVar, overload
 from qilisdk.digital import Gate
 
 from .noise import Noise
-from .parameter_pertubation import ParameterPerturbation
+from .noise_config import NoiseConfig
+from .parameter_perturbation import ParameterPerturbation
 from .protocols import AttachmentScope
 
 Qubit = int
@@ -38,16 +39,31 @@ class NoiseModel:
     perturbations for later application in backends.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, noise_config: NoiseConfig | None = None) -> None:
+        # configuration
+        if noise_config is not None:
+            self._noise_config = noise_config
+        else:
+            self._noise_config = NoiseConfig()
+
         # noises
         self._global_noise: list[Noise] = []
         self._per_qubit_noise: dict[Qubit, list[Noise]] = defaultdict(list)
         self._per_gate_noise: dict[GateType, list[Noise]] = defaultdict(list)
         self._per_gate_per_qubit_noise: dict[tuple[GateType, Qubit], list[Noise]] = defaultdict(list)
 
-        # parameter pertubations
+        # parameter perturbations
         self._global_perturbations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
         self._per_gate_perturbations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
+
+    @property
+    def noise_config(self) -> NoiseConfig:
+        """Return the noise configuration.
+
+        Returns:
+            NoiseConfig: The noise configuration instance.
+        """
+        return self._noise_config
 
     @property
     def global_noise(self) -> list[Noise]:

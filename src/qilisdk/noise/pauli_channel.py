@@ -17,12 +17,12 @@ import numpy as np
 from qilisdk.core import QTensor
 
 from .noise import Noise
-from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticKraus
-from .representations import KrausChannel
+from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticKraus, SupportsTimeDerivedLindblad
+from .representations import KrausChannel, LindbladGenerator
 from .utils import _check_probability, _identity, _sigma_x, _sigma_y, _sigma_z
 
 
-class PauliChannel(Noise, SupportsStaticKraus, HasAllowedScopes):
+class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasAllowedScopes):
     """General single-qubit Pauli channel.
 
     Channel:
@@ -90,6 +90,36 @@ class PauliChannel(Noise, SupportsStaticKraus, HasAllowedScopes):
         if self._pZ > 0:
             operators.append(np.sqrt(self._pZ) * _sigma_z())
         return KrausChannel([QTensor(operator) for operator in operators])
+
+    def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
+        """Return the Lindblad generator for this noise type.
+
+        Args:
+            duration (float): Duration over which the noise acts.
+
+        Returns:
+            LindbladGenerator: The Lindblad generator representation.
+
+        Raises:
+            ValueError: If duration is not positive.
+        """
+        if duration <= 0:
+            raise ValueError("Duration must be positive.")
+        rates = []
+        if self._pX > 0:
+            rates.append(self._pX / duration)
+        if self._pY > 0:
+            rates.append(self._pY / duration)
+        if self._pZ > 0:
+            rates.append(self._pZ / duration)
+        operators = []
+        if self._pX > 0:
+            operators.append(QTensor(_sigma_x()))
+        if self._pY > 0:
+            operators.append(QTensor(_sigma_y()))
+        if self._pZ > 0:
+            operators.append(QTensor(_sigma_z()))
+        return LindbladGenerator(operators, rates)
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:

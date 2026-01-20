@@ -34,13 +34,13 @@ def test_dephasing_init_lindblad_and_kraus():
     assert len(generator.jump_operators_with_rates) == 1
     np.testing.assert_allclose(generator.jump_operators_with_rates[0].dense(), expected_l)
 
-    kraus = noise.as_kraus(duration=0.0)
+    kraus = noise.as_kraus_from_duration(duration=0.0)
     assert len(kraus.operators) == 2
     np.testing.assert_allclose(kraus.operators[0].dense(), np.eye(2, dtype=complex))
     np.testing.assert_allclose(kraus.operators[1].dense(), np.zeros((2, 2), dtype=complex))
 
     with pytest.raises(ValueError, match=r"duration must be >= 0."):
-        noise.as_kraus(duration=-1.0)
+        noise.as_kraus_from_duration(duration=-1.0)
 
 
 def test_amplitude_damping_init_lindblad_and_kraus():
@@ -55,13 +55,13 @@ def test_amplitude_damping_init_lindblad_and_kraus():
     assert len(generator.jump_operators) == 1
     np.testing.assert_allclose(generator.jump_operators[0].dense(), expected_l)
 
-    kraus = noise.as_kraus(duration=0.0)
+    kraus = noise.as_kraus_from_duration(duration=0.0)
     assert len(kraus.operators) == 2
     np.testing.assert_allclose(kraus.operators[0].dense(), np.eye(2, dtype=complex))
     np.testing.assert_allclose(kraus.operators[1].dense(), np.zeros((2, 2), dtype=complex))
 
     with pytest.raises(ValueError, match=r"duration must be >= 0."):
-        noise.as_kraus(duration=-0.5)
+        noise.as_kraus_from_duration(duration=-0.5)
 
 
 def test_lindblad_bad_rates():

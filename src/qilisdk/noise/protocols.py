@@ -53,7 +53,7 @@ class HasAllowedScopes(Protocol):
 class SupportsTimeDerivedKraus(Protocol):
     """Protocol for types that produce duration-dependent Kraus channels."""
 
-    def as_kraus(self, *, duration: float) -> KrausChannel:
+    def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         """Return a Kraus channel derived for a specific duration.
 
         Args:
@@ -79,10 +79,23 @@ class SupportsStaticKraus(Protocol):
 
 
 @runtime_checkable
-class SupportsLindblad(Protocol):
-    """Protocol for types that expose a Lindblad generator."""
+class SupportsStaticLindblad(Protocol):
+    """Protocol for types that expose a fixed Lindblad generator."""
 
     def as_lindblad(self) -> LindbladGenerator:
+        """Return the Lindblad generator for this noise.
+
+        Returns:
+            The Lindblad generator representation.
+        """
+        ...
+
+
+@runtime_checkable
+class SupportsTimeDerivedLindblad(Protocol):
+    """Protocol for types that expose a Lindblad generator derived from time."""
+
+    def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
         """Return the Lindblad generator for this noise.
 
         Returns:
