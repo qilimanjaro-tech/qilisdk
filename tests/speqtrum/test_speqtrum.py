@@ -15,6 +15,11 @@ from typing import Any
 
 import pytest
 
+from qilisdk.experiments.experiment_functional import RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.variational_program import VariationalProgram
+
 pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
 pytest.importorskip(
     "keyring",
@@ -97,31 +102,125 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     assert q.token is tok
 
 
-def test_submit_dispatches_to_sampling_handler(monkeypatch):
-    """`submit` must route to _execute_sampling when given a Sampling instance."""
-
-    # Stub the Sampling symbol **before** constructing SpeQtrum so that __init__
-    # collects the correct type inside _handlers.
-    class FakeSampling:
+class FakeSampling(Sampling):
+    def __init__(self):
         pass
+class FakeTimeEvolution(TimeEvolution):
+    def __init__(self):
+        pass
+class FakeRabiExperiment(RabiExperiment):
+    def __init__(self):
+        pass
+class FakeT1Experiment(T1Experiment):
+    def __init__(self):
+        pass
+class FakeT2Experiment(T2Experiment):
+    def __init__(self):
+        pass
+class FakeTwoTonesExperiment(TwoTonesExperiment):
+    def __init__(self):
+        pass
+class FakeVariationalProgram(VariationalProgram):
+    def __init__(self, functional):
+        self._functional = functional
 
+def test_submit_dispatches_to_sampling_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "Sampling", FakeSampling)
-
-    # simple credentials stub
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-
-    # Replace the real network-hitting method with something predictable.
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
-        "_submit_sampling",
-        lambda self, f, device_id, job_name=None: speqtrum.JobHandle.sampling(99),
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 99}),
         raising=True,
     )
-
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeSampling(), device="some_device")
+    handle = q.submit(FakeSampling(), device="some_device", job_name="my_job")
     assert handle.id == 99
 
+def test_submit_dispatches_to_variational_program_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "Sampling", FakeSampling)
+    monkeypatch.setattr(speqtrum, "TimeEvolution", FakeTimeEvolution)
+    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
+    monkeypatch.setattr(speqtrum, "VariationalProgram", FakeVariationalProgram)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 88}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeVariationalProgram(FakeSampling()), device="some_device", job_name="my_vp_job")
+    q.submit(FakeVariationalProgram(FakeTimeEvolution()), device="some_device", job_name="my_vp_job")
+    q.submit(FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job")
+    assert handle.id == 88
+
+def test_submit_dispatches_to_time_evolution_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "TimeEvolution", FakeTimeEvolution)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 77}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeTimeEvolution(), device="some_device", job_name="te_job")
+    assert handle.id == 77
+
+def test_submit_dispatches_to_rabi_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 66}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeRabiExperiment(), device="some_device", job_name="rabi_job")
+    assert handle.id == 66
+
+def test_submit_dispatches_to_t1_experiment_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "T1Experiment", FakeT1Experiment)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 55}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeT1Experiment(), device="some_device", job_name="t1_job")
+    assert handle.id == 55
+
+def test_submit_dispatches_to_t2_experiment_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "T2Experiment", FakeT2Experiment)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 44}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeT2Experiment(), device="some_device", job_name="t2_job")
+    assert handle.id == 44
+
+
+ #for two tones 
+def test_submit_dispatches_to_two_tone_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "TwoTonesExperiment", FakeTwoTonesExperiment)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 33}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeTwoTonesExperiment(), device="some_device", job_name="two_tone_job")
+    assert handle.id == 33
 
 def test_submit_unknown_functional_raises(monkeypatch):
     """Passing an unsupported functional type should raise `NotImplementedError`."""

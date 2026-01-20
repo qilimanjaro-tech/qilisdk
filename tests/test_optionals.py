@@ -4,6 +4,9 @@ import pytest
 
 from qilisdk._optionals import OptionalDependencyError, OptionalFeature, Symbol, import_optional_dependencies
 
+import importlib
+import sys
+from importlib.metadata import PackageNotFoundError
 
 def test_optional_stub_raises_on_call() -> None:
     feature = OptionalFeature(
@@ -37,3 +40,52 @@ def test_optional_stub_raises_on_attribute_call() -> None:
 
     assert "Using SpeQtrum.login requires installing the 'speqtrum' optional feature" in str(excinfo.value)
     assert "pip install qilisdk[speqtrum]" in str(excinfo.value)
+
+
+def test_version_not_found(monkeypatch):
+    def raise_not_found(name):
+        raise PackageNotFoundError
+
+    monkeypatch.setattr(
+        "importlib.metadata.version",
+        raise_not_found
+    )
+
+    sys.modules.pop("qilisdk", None)
+
+    import qilisdk
+    importlib.reload(qilisdk)
+
+    assert qilisdk.__version__ == "0.0.0"
+
+def test_optional_stub():
+
+    from qilisdk._optionals import _OptionalDependencyStub
+
+    stub = _OptionalDependencyStub(
+            symbol_name="SpeQtrum",
+            feature_name="speqtrum",
+            import_error="test"
+        )
+
+    with pytest.raises(OptionalDependencyError):
+        stub()
+
+    with pytest.raises(AttributeError):
+        stub.__getattr__("__magic__")
+
+    assert "missing optional" in repr(stub)
+
+
+def test_import_optional_dependencies(monkeypatch):
+
+    feature = OptionalFeature(
+        name="dummy_feature",
+        dependencies=[],
+        symbols=[
+            Symbol(path="qilisdk._optionals", name="Dummy1"),
+            Symbol(path="qilisdk.optional_modules.dummy", name="Dummy2")
+            ],
+    )
+
+    imported = import_optional_dependencies(feature)
