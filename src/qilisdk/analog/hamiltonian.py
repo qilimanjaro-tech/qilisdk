@@ -201,28 +201,28 @@ class PauliOperator(ABC):
 class PauliZ(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=np.complex128)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "X"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
     # __slots__ = ()
     _NAME: ClassVar[str] = "I"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=np.complex128)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
 
 
 _PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
@@ -369,12 +369,22 @@ class Hamiltonian(Parameterizable):
 
         Returns:
             spmatrix: The full matrix representation of the term.
+
+        Raises:
+            ValueError: If multiple operators act on the same qubit.
         """
+
         total_qubits = self.nqubits + padding
         if total_qubits == 0:
             return csr_matrix((1, 1), dtype=_complex_dtype())
 
         ordered_terms = sorted(terms, key=lambda op: op.qubit)
+
+        # Check we don't have multiple operators on the same qubit
+        qubit_indices = [op.qubit for op in ordered_terms]
+        if len(qubit_indices) != len(set(qubit_indices)):
+            raise ValueError("The list should not contain multiple operators acting on the same qubit.")
+
         identity_single = _get_single_qubit_sparse_matrix("I")
         idx = 0
         next_op = ordered_terms[0] if ordered_terms else None

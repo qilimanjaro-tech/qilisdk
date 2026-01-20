@@ -33,12 +33,20 @@ class Precision(str, Enum):
     def dtype(self) -> np.dtype:
         """
         Resolve the numpy dtype associated with this complex precision.
+
+        Returns:
+            np.dtype: The corresponding numpy complex dtype.
+
+        Raises:
+            ValueError: If the precision is unsupported.
         """
         match self:
             case Precision.COMPLEX_64:
                 return np.complex64  # type: ignore[return-value]
             case Precision.COMPLEX_128:
                 return np.complex128  # type: ignore[return-value]
+            case _:
+                raise ValueError(f"Unsupported precision: {self}")
 
 
 class QiliSDKSettings(BaseSettings):

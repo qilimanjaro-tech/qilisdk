@@ -43,13 +43,11 @@ def test_pauli_matrix_dtype_updates_with_settings_change():
 def test_hamiltonian_matrix_dtype_updates_with_settings_change():
     settings = get_settings()
     original_precision = settings.complex_precision
-    try:
-        settings.complex_precision = Precision.COMPLEX_128
-        assert Z(0).to_matrix().dtype == np.dtype(np.complex128)
-        settings.complex_precision = Precision.COMPLEX_64
-        assert Z(0).to_matrix().dtype == np.dtype(np.complex64)
-    finally:
-        settings.complex_precision = original_precision
+    settings.complex_precision = Precision.COMPLEX_128
+    assert Z(0).to_matrix().dtype == np.dtype(np.complex128)
+    settings.complex_precision = Precision.COMPLEX_64
+    assert Z(0).to_matrix().dtype == np.dtype(np.complex64)
+    settings.complex_precision = original_precision
 
 
 def test_parameters():
@@ -395,7 +393,7 @@ def test_to_qtensor_matches_to_matrix():
     H = 0.75 * Z(0) + (1.25 - 0.5j) * (X(1) * Y(2))
     tensor = H.to_qtensor()
 
-    np.testing.assert_allclose(tensor.dense, dense(H), atol=1e-8)
+    np.testing.assert_allclose(tensor.dense(), dense(H), atol=1e-8)
     assert tensor.nqubits == H.nqubits
 
 
@@ -408,8 +406,14 @@ def test_to_qtensor_with_padding():
     X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
     expected = 3 * np.kron(np.kron(np.kron(I2, Z_matrix), X_matrix), I2)
 
-    np.testing.assert_allclose(tensor.dense, expected, atol=1e-8)
+    np.testing.assert_allclose(tensor.dense(), expected, atol=1e-8)
     assert tensor.nqubits == 4
+
+
+def test_duplicate_terms():
+    H = Hamiltonian({(PauliZ(0),): 1})
+    with pytest.raises(ValueError, match=r"The list should not contain multiple operators acting on the same qubit."):
+        H._apply_operator_on_qubit(terms=[PauliZ(1), PauliZ(1)])
 
 
 def test_to_qtensor_raises_when_total_qubits_smaller():

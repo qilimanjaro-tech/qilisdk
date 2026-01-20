@@ -21,8 +21,8 @@ from scipy.linalg import expm
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.settings import get_settings
 from qilisdk.core.variables import Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import (
