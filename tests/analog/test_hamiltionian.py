@@ -410,10 +410,13 @@ def test_to_qtensor_with_padding():
     assert tensor.nqubits == 4
 
 
-def test_duplicate_terms():
-    H = Hamiltonian({(PauliZ(0),): 1})
+def test_apply_operator():
+    h = Hamiltonian({(PauliZ(0),): 1})
     with pytest.raises(ValueError, match=r"The list should not contain multiple operators acting on the same qubit."):
-        H._apply_operator_on_qubit(terms=[PauliZ(1), PauliZ(1)])
+        h._apply_operator_on_qubit(terms=[PauliZ(1), PauliZ(1)])
+    h_empty = Hamiltonian()
+    empty_result = h_empty._apply_operator_on_qubit(terms=[])
+    assert empty_result.shape == (1, 1)
 
 
 def test_to_qtensor_raises_when_total_qubits_smaller():
