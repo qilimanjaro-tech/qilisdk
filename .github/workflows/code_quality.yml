@@ -48,5 +48,18 @@ jobs:
       - name: Ruff
         run: uv run ruff check --output-format=github .
 
+      - name: Format
+        run: uv run ruff format --diff --output-format=github .
+
       - name: Mypy
         run: uv run mypy src --ignore-missing-imports
+
+      - name: Cpp Linter
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: 'file'
+          tidy-checks: ''
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}

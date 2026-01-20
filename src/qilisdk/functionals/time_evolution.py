@@ -16,7 +16,7 @@ from typing import ClassVar
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.variables import RealNumber
+from qilisdk.core.variables import ComparisonTerm, RealNumber
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -35,7 +35,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             from qilisdk.functionals.time_evolution import TimeEvolution
 
             h0 = Z(0)
-            schedule = Schedule(T=10.0, hamiltonians={"h0": h0})
+            schedule = Schedule(hamiltonians={"h0": h0}, total_time=10.0)
             functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
     """
 
@@ -56,6 +56,9 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             initial_state (QTensor): Quantum state used as the simulation starting point.
             nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
+
+        Raises:
+            ValueError: if the number of qubits of the initial state doesn't match the number of qubits in the schedule.
         """
         super().__init__()
         self.initial_state = initial_state
@@ -63,6 +66,11 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         self.observables = observables
         self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
+
+        if initial_state.nqubits != schedule.nqubits:
+            raise ValueError(
+                f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
+            )
 
     @property
     def nparameters(self) -> int:
@@ -96,3 +104,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """Update bounds for selected schedule parameters."""
         self.schedule.set_parameter_bounds(ranges)
+
+    def get_constraints(self) -> list[ComparisonTerm]:
+        """Return the parameter constraints defined within the underlying schedule."""
+        return self.schedule.get_constraints()

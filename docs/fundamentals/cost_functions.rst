@@ -25,7 +25,7 @@ functional result and calls the appropriate protected hook:
 - :meth:`~qilisdk.cost_functions.cost_function.CostFunction._compute_cost_time_evolution` receives a
   :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
 
-If your workflow introduces new functional result types you can subclass :class:`CostFunction` and register additional
+If your workflow introduces new functional result types you can subclass :class:`~qilisdk.cost_functions.cost_function.CostFunction` and register additional
 handlers in ``self._handlers`` or override the protected methods above. Custom implementations must return a real or
 complex number that represents the score you want to optimize.
 
@@ -38,7 +38,7 @@ an observable against either a final state (from time evolution) or the probabil
 It accepts three interchangeable representations for the observable: a
 :class:`~qilisdk.core.qtensor.QTensor`, a symbolic
 :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a single
-:class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all inputs are converted to ``QTensor`` so the same
+:class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all inputs are converted to :class:`~qilisdk.core.qtensor.QTensor` so the same
 numeric pipeline can be reused for both analog and digital results.
 
 Example: expectation value from time evolution
@@ -46,19 +46,33 @@ Example: expectation value from time evolution
 
 .. code-block:: python
 
-    from qilisdk.analog import Schedule, X, Z
-    from qilisdk.backends import QutipBackend
-    from qilisdk.core import ket
-    from qilisdk.cost_functions import ObservableCostFunction
+    import numpy as np
+    from qilisdk.analog import Schedule, X, Z, Y
+    from qilisdk.core import ket, tensor_prod
+    from qilisdk.core.interpolator import Interpolation
+    from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
-    # Build a linear interpolation between driver and problem Hamiltonians
+    # Define total time and timestep
     T = 10.0
-    dt = 1
-    schedule = Schedule(T=T, dt=dt)
-    schedule.add_hamiltonian("driver", X(0), lambda t: 1 - t / ((T - dt)/dt))
-    schedule.add_hamiltonian("problem", Z(0), lambda t: t / ((T - dt)/dt))
+    dt = 0.5
+    nqubits = 1
 
+    # Define Hamiltonians
+    Hx = sum(X(i) for i in range(nqubits))
+    Hz = sum(Z(i) for i in range(nqubits))
+
+    # Build a time‑dependent schedule
+    schedule = Schedule(
+        hamiltonians={"driver": Hx, "problem": Hz},
+        coefficients={
+            "driver": {(0.0, T): lambda t: 1 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
+        },
+        dt=dt,
+        interpolation=Interpolation.LINEAR,
+    )
+    
     schedule.draw()
 
     functional = TimeEvolution(
@@ -132,9 +146,10 @@ Example: scoring samples from a variational circuit
 Cost Functions in Variational Programs
 --------------------------------------
 
-Variational workflows combine a parameterized functional, a classical optimizer, and a cost function. At each optimizer
-iteration the backend executes the functional, obtains a result object, and feeds it into the configured cost function
-to obtain the scalar that drives the optimization loop.
+Variational workflows combine a parameterized :class:`~qilisdk.functionals.functional.Functional`, a classical optimizer, 
+and a :class:`~qilisdk.cost_functions.cost_function.CostFunction`. At each optimizer iteration the backend executes 
+the functional, obtains a :class:`~qilisdk.functionals.functional_result.FunctionalResult` 
+object, and feeds it into the configured cost function to obtain the scalar that drives the optimization loop.
 
 .. code-block:: python
 
@@ -155,5 +170,5 @@ to obtain the scalar that drives the optimization loop.
     print("Optimal cost:", result.optimal_cost)
 
 Swapping the cost function lets you explore alternative objective definitions without touching the functional itself.
-For example, you can start with :class:`ObservableCostFunction` to reproduce a physics-inspired energy expectation and
-later try :class:`ModelCostFunction` to include constraint penalties from a combinatorial problem.
+For example, you can start with :class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction` to reproduce a physics-inspired energy expectation and
+later try :class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` to include constraint penalties from a combinatorial problem.

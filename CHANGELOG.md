@@ -1,3 +1,120 @@
+# qilisdk 0.1.7 (2025-12-04)
+
+## Features
+
+- SpeQtrum's synchronous client now runs every request through a shared HTTPX client that refreshes bearer tokens automatically, ensuring submissions, listings, and polling continue seamlessly after 401s while still applying the SDK user agent. API failures now raise a dedicated SpeQtrum error that includes the message returned by the service and is logged in a human-friendly way, and job detail payloads, logs, and results are decoded defensively so malformed base64 no longer crashes the SDK. ([PR #94](https://github.com/qilimanjaro-tech/qilisdk/pulls/94))
+- Added a ``QiliSDK`` to ``OpenFermion`` converter. This allows to translate ``QubitOperator`` from ``OpenFermion`` to ``QiliSDK``'s ``Hamiltonian`` Objects and vice versa.
+
+  This optional can be installed using ``pip install qilisdk[openfermion]``.
+
+  here is an example of the usage: 
+  ```python
+  from openfermion.hamiltonians import jellium_model
+  from openfermion.transforms import fourier_transform, jordan_wigner
+  from openfermion.utils import Grid
+
+  from qilisdk.utils.openfermion import openfermion_to_qilisdk, qilisdk_to_openfermion
+
+  # Let's look at a very small model of jellium in 1D.
+  grid = Grid(dimensions=1, length=3, scale=1.0)
+  spinless = True
+
+  # Get the momentum Hamiltonian.
+  momentum_hamiltonian = jellium_model(grid, spinless)
+  momentum_qubit_operator = jordan_wigner(momentum_hamiltonian)
+  momentum_qubit_operator.compress()
+
+  # Fourier transform the Hamiltonian to the position basis.
+  position_hamiltonian = fourier_transform(momentum_hamiltonian, grid, spinless)
+  position_qubit_operator = jordan_wigner(position_hamiltonian)
+  position_qubit_operator.compress()
+
+  qilisdk_ham = openfermion_to_qilisdk(position_qubit_operator)
+  openfermion_ham = qilisdk_to_openfermion(qilisdk_ham)
+  ``` 
+  ([PR #96](https://github.com/qilimanjaro-tech/qilisdk/pulls/96))
+- Raised the SDK baseline to Python 3.11 and aligned the local version file, mypy config, CI tests, docs build, and publishing workflow up to Python 3.13. Linux and Windows installs use customized NumPy and SciPy, linked to Intel's high-performance oneAPI Math Kernel Library (Intel MKL). ([PR #99](https://github.com/qilimanjaro-tech/qilisdk/pulls/99))
+- Constraint-aware execution now threads through sampling, time evolution, variational programs, and optimizer loops, rejecting parameter sets that violate declared constraints; tests and serialization use the new APIs.
+
+  ```python
+  from qilisdk.core import GreaterThanOrEqual, Parameter
+  from qilisdk.functionals import Sampling, VariationalProgram
+
+  # Constrain theta >= phi for a variational run; violations short-circuit the optimizer step.
+  theta = Parameter("theta", 0.4, bounds=(0, 1))
+  phi = Parameter("phi", 0.3, bounds=(0, 1))
+  constraints = [GreaterThanOrEqual(theta, phi)]
+
+  vp = VariationalProgram(
+      functional=Sampling(...),
+      optimizer=...,
+      cost_function=...,
+      parameter_constraints=constraints,
+  )
+  ```
+  ([PR #100](https://github.com/qilimanjaro-tech/qilisdk/pulls/100))
+- Rebuilt analog scheduling around a single, flexible `Schedule`/`Interpolator`: `LinearSchedule` is removed, coefficients can be defined as callables or time intervals with step/linear interpolation, max-time rescaling, shared parameter tracking, and updated visualization/backends.
+
+  Centralized parameter management in `Parameterizable` so Hamiltonians, circuits, schedules, and gates all inherit consistent parameter getters/setters, constraint checking, and validation; variables add comparison helpers, caching, and math maps.
+
+  ```python
+  from qilisdk.analog import Schedule, X, Z
+  from qilisdk.analog.schedule import Interpolation
+  from qilisdk.core import Parameter
+
+  T = 10.0
+  schedule = Schedule(
+      hamiltonians={"driver": X(0), "problem": Z(0)},
+      coefficients={
+          # Interval syntax expands to sampled points; callables can reference time directly.
+          "driver": {(0, T): lambda t: 1 - t / T},
+          "problem": {(0, T): lambda t: t / T},
+      },
+      dt=0.5,
+      interpolation=Interpolation.LINEAR,
+  )
+  schedule.scale_max_time(Parameter("T_max", 8.0))
+  schedule.draw()
+  ```
+  ([PR #100](https://github.com/qilimanjaro-tech/qilisdk/pulls/100))
+- Introduced the first version of the `CircuitTranspiler` alongside the `DecomposeMultiControlledGatesPass` that decomposes any multi-controlled single-qubit gate, enabling both CUDA and QuTiP backends to execute circuits containing such constructs. The pass is wired directly into both backends today while the full transpiler pipeline is staged for future expansion. ([PR #101](https://github.com/qilimanjaro-tech/qilisdk/pulls/101))
+
+## Bugfixes
+
+- Fixed `Schedule.add_hamiltonian` so time-dependent coefficient functions populate every discrete time step.
+
+  Added regression tests to cover function-driven schedules and validate that only parameters appear in the generated coefficients. ([PR #95](https://github.com/qilimanjaro-tech/qilisdk/pulls/95))
+
+## Improved Documentation
+
+- Documentation refresh across the project:
+
+  - README now links to the hosted docs and the SpeQtrum snippet walks through building a circuit, logging in, picking a device, and submitting a `Sampling` job.
+  - Digital fundamentals gained a rendered circuit figure, QuTiP execution example for `HardwareEfficientAnsatz`, a clarified measurement note, and a new “build your own ansatz” walkthrough with code.
+  - Analog fundamentals had their operator headings cleaned up, and the shared custom CSS now ships Plus Jakarta Sans, gradient headers, and dark-mode inline-code styling; the circuit diagram image is tracked under `_static/`.
+  - The `time_evolution.ipynb` example notebook was stripped of bulky outputs/metadata to keep the repo lightweight.
+  - Installation docs call out CUDA GPU requirements and defer hands-on content to a brand-new Quickstart guide (added to the index) that hosts the digital and analog walkthroughs plus backend-specific notes.
+  - Backend fundamentals now highlight how to install optional extras and link back to the Installation guide for details.
+
+  ([PR #97](https://github.com/qilimanjaro-tech/qilisdk/pulls/97))
+- Removed `main` branch from documentation. Sorted tags by descending order. (latest is first) ([PR #104](https://github.com/qilimanjaro-tech/qilisdk/pulls/104))
+- Docs publishing now points the root of the site to the latest release docs and keeps "main" as a clearly labeled development build, with the version picker reorganized into separate Releases and Development sections so visitors land on the most current tag while still finding the dev docs easily. ([PR #109](https://github.com/qilimanjaro-tech/qilisdk/pulls/109))
+- Fixed a display bug in which inline code blocks in headers were invisible. This was due to the previous rule only accounting for "a" elements in headers and not ".pre" span elements. The reason there was a ".pre" block in the header is because of a broken class link, which will be fixed along with others in a different PR. ([PR #114](https://github.com/qilimanjaro-tech/qilisdk/pulls/114))
+- Fixed a number of broken/missing API links in the docs and in general made the docs consistent with the API reference.
+
+  Also:
+   - Remove references to optimize() since it has since been moved into execute()
+   - Fixed a broken output box
+   - Fixed several lists that weren't displaying correctly
+   - Removed an unused import from a code block in core.rst
+   - Various other typos, such as missing "a"s before certain terms (keeping consistency with previous uses of said terms)
+   - Wrapped some very long lines (as per the style throughout the rest of the files) ([PR #120](https://github.com/qilimanjaro-tech/qilisdk/pulls/120))
+
+## Misc
+
+- [PR #104](https://github.com/qilimanjaro-tech/qilisdk/pulls/104), [PR #106](https://github.com/qilimanjaro-tech/qilisdk/pulls/106)
+
+
 # qilisdk 0.1.6 (2025-10-31)
 
 ## Features

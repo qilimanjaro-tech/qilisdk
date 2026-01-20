@@ -18,6 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
+from qilisdk.core.variables import Parameter
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
@@ -127,6 +128,33 @@ def test_rx_gate(angle: float):
     assert gate.control_qubits == ()
 
 
+def test_rx_gate_term():
+    """
+    Create an RX gate with a Term object as the angle parameter.
+    """
+    qubit = 2
+    angle = np.pi
+    constant = 2.0
+    angle_term = constant * Parameter("test_angle", np.pi / constant)
+    gate = RX(qubit, theta=angle_term)
+
+    assert gate.name == "RX"
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+    assert gate.get_parameter_names() == ["test_angle"]
+    assert gate.nparameters == 1
+
+    # Check that the parameter value is set correctly
+    assert np.isclose(gate.get_parameters()["test_angle"], np.pi / constant)
+
+    expected_matrix = np.array(
+        [[np.cos(angle / 2), -1j * np.sin(angle / 2)], [-1j * np.sin(angle / 2), np.cos(angle / 2)]], dtype=complex
+    )
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
 @pytest.mark.parametrize("angle", [0, np.pi / 4, np.pi / 2, np.pi, 2 * np.pi])
 def test_ry_gate(angle: float):
     qubit = 3
@@ -139,6 +167,30 @@ def test_ry_gate(angle: float):
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
     expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=COMPLEX_DTYPE)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+def test_ry_gate_term():
+    """
+    Create an RY gate with a Term object as the angle parameter.
+    """
+    qubit = 3
+    angle = np.pi
+    constant = 2.0
+    angle_term = constant * Parameter("test_angle", np.pi / constant)
+    gate = RY(qubit, theta=angle_term)
+
+    assert gate.name == "RY"
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+    assert gate.get_parameter_names() == ["test_angle"]
+    assert gate.nparameters == 1
+
+    expected_matrix = np.array(
+        [[np.cos(angle / 2), -np.sin(angle / 2)], [np.sin(angle / 2), np.cos(angle / 2)]], dtype=complex
+    )
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -157,6 +209,30 @@ def test_rz_gate(angle: float):
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
+def test_rz_gate_term():
+    """
+    Create an RZ gate with a Term object as the angle parameter.
+    """
+    qubit = 3
+    angle = np.pi
+    constant = 2.0
+    angle_term = constant * Parameter("test_angle", np.pi / constant)
+    gate = RZ(qubit, phi=angle_term)
+
+    assert gate.name == "RZ"
+    assert gate.is_parameterized is True
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+    assert gate.get_parameter_names() == ["test_angle"]
+    assert gate.nparameters == 1
+
+    # Check that the parameter value is set correctly
+    assert np.isclose(gate.get_parameters()["test_angle"], np.pi / constant)
+
+    expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=complex)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
 # ------------------------------------------------------------------------------
 # U1 Gate Tests
 # ------------------------------------------------------------------------------
@@ -170,6 +246,30 @@ def test_u1_gate(angle: float):
     assert gate.nparameters == 1
 
     expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=COMPLEX_DTYPE)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+def test_u1_gate_term():
+    """
+    Create a U1 gate with a Term object as the angle parameter.
+    """
+    qubit = 5
+    angle = np.pi
+    constant = 3.0
+    angle_term = constant * Parameter("test_angle", np.pi / constant)
+    gate = U1(qubit, phi=angle_term)
+
+    assert gate.name == "U1"
+    assert gate.is_parameterized is True
+    assert gate.get_parameter_names() == ["test_angle"]
+    assert gate.nparameters == 1
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+
+    # Check that the parameter value is set correctly
+    assert np.isclose(gate.get_parameters()["test_angle"], np.pi / constant)
+
+    expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=complex)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -202,8 +302,45 @@ def test_u2_gate(phi, gamma):
     assert gate.control_qubits == ()
 
     # Check parameter values
-    assert gate.get_parameters()["phi"] == phi
-    assert gate.get_parameters()["gamma"] == gamma
+    assert np.isclose(gate.get_parameters()["phi"], phi)
+    assert np.isclose(gate.get_parameters()["gamma"], gamma)
+
+    # Reconstruct the expected matrix
+    factor = 1 / np.sqrt(2)
+    a = 1
+    b = -np.exp(1j * gamma)
+    c = np.exp(1j * phi)
+    d = np.exp(1j * (phi + gamma))
+
+    expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+def test_u2_gate_term():
+    """
+    Create a U2 gate with Term objects as the angle parameters.
+    """
+    qubit = 7
+    phi = np.pi / 2
+    gamma = np.pi / 3
+    constant_phi = 2.0
+    constant_gamma = 3.0
+    phi_term = constant_phi * Parameter("test_phi", phi / constant_phi)
+    gamma_term = constant_gamma * Parameter("test_gamma", gamma / constant_gamma)
+    gate = U2(qubit, phi=phi_term, gamma=gamma_term)
+
+    # Basic checks
+    assert gate.name == "U2"
+    assert gate.nqubits == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 2
+    assert gate.get_parameter_names() == ["test_phi", "test_gamma"]
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+
+    # Check parameter values
+    assert np.isclose(gate.get_parameters()["test_phi"], phi / constant_phi)
+    assert np.isclose(gate.get_parameters()["test_gamma"], gamma / constant_gamma)
 
     # Reconstruct the expected matrix
     factor = 1 / np.sqrt(2)
@@ -245,9 +382,50 @@ def test_u3_gate(theta, phi, gamma):
     assert gate.control_qubits == ()
 
     # Check parameter values
-    assert gate.get_parameters()["theta"] == theta
-    assert gate.get_parameters()["phi"] == phi
-    assert gate.get_parameters()["gamma"] == gamma
+    assert np.isclose(gate.get_parameters()["theta"], theta)
+    assert np.isclose(gate.get_parameters()["phi"], phi)
+    assert np.isclose(gate.get_parameters()["gamma"], gamma)
+
+    # Reconstruct the expected matrix.
+    a = np.cos(theta / 2)
+    b = -np.exp(1j * gamma) * np.sin(theta / 2)
+    c = np.exp(1j * phi) * np.sin(theta / 2)
+    d = np.exp(1j * (phi + gamma)) * np.cos(theta / 2)
+
+    expected_matrix = np.array([[a, b], [c, d]], dtype=complex)
+
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+def test_u3_gate_term():
+    """
+    Create a U3 gate with Term objects as the angle parameters.
+    """
+    qubit = 8
+    theta = np.pi / 2
+    phi = np.pi / 3
+    gamma = np.pi / 4
+    constant_theta = 2.0
+    constant_phi = 3.0
+    constant_gamma = 4.0
+    theta_term = constant_theta * Parameter("test_theta", theta / constant_theta)
+    phi_term = constant_phi * Parameter("test_phi", phi / constant_phi)
+    gamma_term = constant_gamma * Parameter("test_gamma", gamma / constant_gamma)
+    gate = U3(qubit, theta=theta_term, phi=phi_term, gamma=gamma_term)
+
+    # Basic checks
+    assert gate.name == "U3"
+    assert gate.nqubits == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 3
+    assert gate.get_parameter_names() == ["test_theta", "test_phi", "test_gamma"]
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+
+    # Check parameter values
+    assert np.isclose(gate.get_parameters()["test_theta"], theta / constant_theta)
+    assert np.isclose(gate.get_parameters()["test_phi"], phi / constant_phi)
+    assert np.isclose(gate.get_parameters()["test_gamma"], gamma / constant_gamma)
 
     # Reconstruct the expected matrix.
     a = np.cos(theta / 2)

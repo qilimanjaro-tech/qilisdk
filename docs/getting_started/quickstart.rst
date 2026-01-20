@@ -40,11 +40,10 @@ Build a 2-qubit circuit, sample it using CUDA backend, and inspect measurement c
 Analog Time Evolution Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Define two Hamiltonians, build a linear interpolation schedule, and run using Qutip backend:
+Define two Hamiltonians, build an interval-based interpolation schedule, and run using Qutip backend:
 
 .. code-block:: python
 
-    import numpy as np
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.core import ket, tensor_prod
     from qilisdk.functionals import TimeEvolution
@@ -52,27 +51,24 @@ Define two Hamiltonians, build a linear interpolation schedule, and run using Qu
 
     # Total time and step
     T, dt = 5.0, 0.1
-    times = np.linspace(0, T, int(T/dt) + 1)
 
     # Hamiltonians H1 = ∑ X, H2 = ∑ Z
     n = 1
     H1 = sum(X(i) for i in range(n))
     H2 = sum(Z(i) for i in range(n))
 
-    # Linear schedule: start with H1, end with H2
-    sched_map = {
-        idx: {"h1": 1 - t/T, "h2": t/T}
-        for idx, t in enumerate(times)
-    }
+    # Define coefficients over the full interval with automatic sampling
     schedule = Schedule(
-        T=T,
-        dt=dt,
         hamiltonians={"h1": H1, "h2": H2},
-        schedule=sched_map,
+        coefficients={
+            "h1": {(0.0, T): lambda t: 1 - t / T},
+            "h2": {(0.0, T): lambda t: t / T},
+        },
+        dt=dt,
     )
 
     # Initial state |+⟩
-    psi0 = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(n)]).unit()
+    psi0 = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(n)]).unit()
 
     # TimeEvolution functional
     tevo = TimeEvolution(

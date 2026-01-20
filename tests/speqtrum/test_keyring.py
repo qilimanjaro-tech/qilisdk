@@ -1,4 +1,12 @@
 # replace these with the real import paths in your project:
+import pytest
+
+pytest.importorskip(
+    "keyring",
+    reason="SpeQtrum tests require the 'speqtrum' optional dependency",
+    exc_type=ImportError,
+)
+
 import keyring
 from pydantic import ValidationError
 

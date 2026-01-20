@@ -40,7 +40,7 @@ sessions.
 Client Construction
 -------------------
 
-Once credentials are stored, instantiate :class:`SpeQtrum` to start issuing requests. Construction fails with
+Once credentials are stored, instantiate :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` to start issuing requests. Construction fails with a 
 ``RuntimeError`` if no cached credentials exist.
 
 .. code-block:: python
@@ -86,7 +86,7 @@ To inspect complete job metadata (payload, result, logs, decoded errors) call
 decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
 
 When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the returned object is a
-:class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a strongly typed :meth:`get_results` helper.
+:class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a strongly typed :meth:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail.get_results` helper.
 
 .. code-block:: python
 
@@ -105,7 +105,7 @@ Use :meth:`SpeQtrum.wait_for_job <qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_jo
 terminal state (``completed``, ``error``, or ``cancelled``). Passing a :class:`JobHandle
 <qilisdk.speqtrum.speqtrum_models.JobHandle>` yields a :class:`TypedJobDetail
 <qilisdk.speqtrum.speqtrum_models.TypedJobDetail>` with typed result access, while raw integer identifiers continue to
-return plain :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>`. The helper raises :class:`TimeoutError` if
+return a plain :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>`. The helper raises a :class:`TimeoutError` if
 the optional timeout elapses first.
 
 Functional Submission
@@ -113,7 +113,7 @@ Functional Submission
 
 SpeQtrum accepts the same primitive functionals used by local backends. The :meth:`SpeQtrum.submit
 <qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` method inspects the functional type and serializes the correct payload. You
-must supply a ``device`` argument with the device code obtained from :meth:`list_devices`.
+must supply a ``device`` argument with the device code obtained from :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`.
 
 .. code-block:: python
 
@@ -184,14 +184,14 @@ function) and submit it as any other functional.
 Pulse Experiments
 -----------------
 
-The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.speqtrum.experiments`. These
+The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.experiments.experiment_functional`. These
 functional objects mirror the interfaces described in the :doc:`functionals` chapter and return rich result types.
 
 .. code-block:: python
 
     import numpy as np
     from qilisdk.speqtrum import DeviceType, SpeQtrum
-    from qilisdk.speqtrum.experiments import RabiExperiment, T1Experiment
+    from qilisdk.experiments import RabiExperiment, T1Experiment
 
     client = SpeQtrum()
     device = client.list_devices(
@@ -210,5 +210,5 @@ functional objects mirror the interfaces described in the :doc:`functionals` cha
     t1_response = client.wait_for_job(t1_handle, timeout=600)
     t1_result = t1_response.get_results()
 
-The resulting :class:`~qilisdk.speqtrum.experiments.experiment_result.RabiExperimentResult` and
-:class:`~qilisdk.speqtrum.experiments.experiment_result.T1ExperimentResult` objects can then be used directly.
+The resulting :class:`~qilisdk.experiments.experiment_result.RabiExperimentResult` and
+:class:`~qilisdk.experiments.experiment_result.T1ExperimentResult` objects can then be used directly.

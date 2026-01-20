@@ -14,8 +14,10 @@
 
 import pytest
 
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.gates import CNOT, CZ, U1
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliY, PauliZ
+from qilisdk.analog.schedule import Schedule
+from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from qilisdk.digital.gates import CNOT, CZ, RZ, U1
 
 # ------------------------------ Helpers ------------------------------
 
@@ -171,3 +173,181 @@ def test_case_insensitivity_of_connectivity():
     for word in ("linear", "Linear", "LINEAR"):
         ans = HardwareEfficientAnsatz(nqubits=3, connectivity=word)
         assert list(ans.connectivity) == [(0, 1), (1, 2)]
+
+
+def test_nparameters_property_qaoa():
+    """
+    nparameters should equal: layers * 2 for QAOA (gamma and alpha per layer).
+    Example: 2 layers => 3 * 2 * 2 = 4.
+    """
+    n_qubits = 3
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=layers)
+    expected = layers * 2
+    assert ansatz.nparameters == expected
+
+
+def test_numqubits_qaoa():
+    """numqubits property should reflect nqubits argument."""
+    n_qubits = 3
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=layers)
+    assert ansatz.nqubits == n_qubits
+
+
+def test_qaoa_invalid_layers_raises():
+    """Providing non-positive layers should raise ValueError."""
+    n_qubits = 3
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    with pytest.raises(ValueError, match="layers must be >= 1"):
+        QAOA(problem_hamiltonian=test_hamiltonian, layers=0)
+    with pytest.raises(ValueError, match="layers must be >= 1"):
+        QAOA(problem_hamiltonian=test_hamiltonian, layers=-1)
+
+
+def test_qaoa_nqubits_must_match():
+    """nqubits must match the number of qubits in problem_hamiltonian."""
+    n_qubits = 3
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    mixer_hamiltonian = Hamiltonian({(PauliX(q),): 1.0 for q in range(n_qubits + 1)})
+    with pytest.raises(ValueError, match="qubits in problem_hamiltonian and mixer_hamiltonian must match"):
+        QAOA(problem_hamiltonian=test_hamiltonian, layers=1, mixer_hamiltonian=mixer_hamiltonian)
+
+
+def test_qaoa_trotter_steps_validation():
+    """trotter_steps must be a positive integer."""
+    n_qubits = 3
+    layers = 1
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    with pytest.raises(ValueError, match="trotter_steps must be >= 1"):
+        QAOA(problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=0)
+    with pytest.raises(ValueError, match="trotter_steps must be >= 1"):
+        QAOA(problem_hamiltonian=test_hamiltonian, layers=layers, trotter_steps=-2)
+
+
+def test_qaoa_trotter_steps_ignored_for_commuting_hamiltonians():
+    """trotter_steps should not expand gate count when terms commute."""
+    test_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=1, trotter_steps=5)
+    # Initial H (1) + problem RZ (1) + mixer H/RZ/H (3)
+    assert len(ansatz.gates) == 5
+
+
+def test_qaoa_trotter_steps_applied_for_non_commuting_problem():
+    """trotter_steps should expand the problem evolution for non-commuting terms."""
+    test_hamiltonian = Hamiltonian({(PauliX(0),): 1.0, (PauliZ(0),): 1.0})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=1, trotter_steps=2)
+    # Initial H (1) + problem evolution (4 gates per step * 2) + mixer (3)
+    assert len(ansatz.gates) == 12
+
+
+def test_qaoa_invalid_mixer_params():
+    """Providing mixer_params of incorrect length should raise ValueError."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    invalid_mixer_params = [0.1]  # Length 1 instead of 2
+    with pytest.raises(ValueError, match="length of mixer_params must match number of layers"):
+        QAOA(
+            problem_hamiltonian=test_hamiltonian,
+            layers=layers,
+            mixer_params=invalid_mixer_params,
+        )
+
+
+def test_qaoa_invalid_problem_params():
+    """Providing problem_params of incorrect length should raise ValueError."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    invalid_problem_params = [0.2]  # Length 1 instead of 2
+    with pytest.raises(ValueError, match="length of problem_params must match number of layers"):
+        QAOA(
+            problem_hamiltonian=test_hamiltonian,
+            layers=layers,
+            problem_params=invalid_problem_params,
+        )
+
+
+def test_qaoa_parameter_initialization():
+    """QAOA parameters should initialize to provided values."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    problem_params = [0.5, 1.0]
+    mixer_params = [1.5, 2.0]
+    ansatz = QAOA(
+        problem_hamiltonian=test_hamiltonian,
+        layers=layers,
+        problem_params=problem_params,
+        mixer_params=mixer_params,
+    )
+
+    params = ansatz.get_parameters()
+    for i in range(layers):
+        gamma_param = params["gamma_" + str(i)]
+        alpha_param = params["alpha_" + str(i)]
+        assert gamma_param == problem_params[i]
+        assert alpha_param == mixer_params[i]
+
+
+def test_qaoa_default_mixer_hamiltonian():
+    """If no mixer_hamiltonian is provided, it defaults to X-mixer."""
+    n_qubits = 2
+    layers = 1
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(problem_hamiltonian=test_hamiltonian, layers=layers)
+    # Construct expected X-mixer
+    expected_mixer = Hamiltonian({(PauliX(q),): 1.0 for q in range(n_qubits)})
+    assert ansatz.mixer_hamiltonian == expected_mixer
+
+
+def test_qaoa_custom_mixer_hamiltonian():
+    """Custom mixer_hamiltonian is correctly set in the QAOA ansatz."""
+    n_qubits = 2
+    layers = 1
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    custom_mixer = Hamiltonian({(PauliY(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(
+        problem_hamiltonian=test_hamiltonian,
+        layers=layers,
+        mixer_hamiltonian=custom_mixer,
+    )
+    assert ansatz.mixer_hamiltonian == custom_mixer
+
+
+def test_qaoa_gate_count():
+    """Verify the number of gates in the QAOA ansatz."""
+    n_qubits = 2
+    layers = 2
+    test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    test_mixer = Hamiltonian({(PauliX(q),): 1.0 for q in range(n_qubits)})
+    ansatz = QAOA(
+        problem_hamiltonian=test_hamiltonian,
+        layers=layers,
+        trotter_steps=1,
+        mixer_hamiltonian=test_mixer,
+    )
+
+    # Each layer has (assuming Z problem Hamiltonian and X mixer):
+    # - Problem unitary: 2m-1 gates per term of size m in problem_hamiltonian (CNOT, RZ, CNOT)
+    # - Mixer unitary: 3 gates per qubit (H RZ H)
+    expected_gates_per_layer = (2 * len(test_hamiltonian.elements) - 1) + 3 * n_qubits
+    expected_total_gates = expected_gates_per_layer * layers
+    assert len(ansatz.gates) == expected_total_gates
+
+
+def test_trotterized_time_evolution_uses_schedule_dt():
+    """TrotterizedTimeEvolution should honor schedule dt and trotter_steps."""
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        coefficients={"h": {0.0: 1.0, 1.0: 1.0}},
+        dt=1.0,
+    )
+    ansatz = TrotterizedTimeEvolution(schedule, trotter_steps=3)
+    rz_gates = [gate for gate in ansatz.gates if isinstance(gate, RZ)]
+    assert len(rz_gates) == 3
+    assert all(gate.phi == pytest.approx(2.0 / 3.0) for gate in rz_gates)

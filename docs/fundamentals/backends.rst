@@ -2,14 +2,15 @@ Backends
 ========
 
 The :mod:`~qilisdk.backends` module provides concrete execution engines for running :mod:`~qilisdk.functionals` (quantum processes).  
-Currently, two backends are supported:
+Currently, three backends are supported:
 
+- :class:`~qilisdk.backends.qilisim.QiliSim`
 - :class:`~qilisdk.backends.cuda_backend.CudaBackend`  
 - :class:`~qilisdk.backends.qutip_backend.QutipBackend`  
 
 .. NOTE::
 
-    Backends are optional; to install one, include its extra when installing QILISDK:
+    Backends other than QiliSim are optional; to install one, include its extra when installing QILISDK:
 
     .. code-block:: console
 
@@ -32,12 +33,12 @@ Architecture Overview
 ---------------------
 
 All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
-across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. Sampling or TimeEvolution)
+across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution`)
 to the appropriate simulation routine and returns the functional-specific result object (see the :doc:`Functionals
 <functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
 the underlying parameterized primitive functional.
 
-Backends register handlers for the functionals they support. If a functional is not implemented, ``execute`` raises
+Backends register handlers for the functionals they support. If a functional is not implemented, :meth:`~qilisdk.backends.backend.Backend.execute` raises
 ``NotImplementedError`` to surface the mismatch early.
 
 Hardware & Dependencies
@@ -54,6 +55,10 @@ drivers to be present on the system.
      - Extra
      - Key dependency
      - Notes
+   * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
+     - ``qilisim``
+     - None
+     - CPU based; no special hardware needs.
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ``cuda``
      - `cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_
@@ -66,9 +71,7 @@ drivers to be present on the system.
 Functional Support
 ------------------
 
-The table below summarizes which primitive functionals each backend can execute. Variational programs work whenever the
-underlying primitive functional is available, because :meth:`~qilisdk.backends.backend.Backend.optimize` orchestrates
-repeated :meth:`~qilisdk.backends.backend.Backend.execute` calls.
+The table below summarizes which primitive :mod:`~qilisdk.functionals` each backend can execute.
 
 .. list-table::
    :header-rows: 1
@@ -78,6 +81,10 @@ repeated :meth:`~qilisdk.backends.backend.Backend.execute` calls.
      - Sampling
      - TimeEvolution
      - VariationalProgram
+   * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
+     - ✓
+     - ✓
+     - ✓
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ✓
      - ✓
@@ -86,6 +93,59 @@ repeated :meth:`~qilisdk.backends.backend.Backend.execute` calls.
      - ✓
      - ✓
      - ✓
+
+QiliSim Backend
+----------------
+
+The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing 
+efficient simulation of both digital and analog quantum functionals.
+It is designed for ease of use and does not require any special hardware or dependencies.
+There is no need to install QiliSim separately, as it is included with the core QILISDK installation.
+
+**Initialization**
+
+.. code-block:: python
+
+    from qilisdk.backends import QiliSim
+
+    backend = QiliSim()
+
+**Capabilities**
+
+- **Sampling** of digital circuits with efficient state-vector simulation.
+- **TimeEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
+- Compatible with :class:`~qilisdk.functionals.variational_program.VariationalProgram` for classical optimization loops.
+
+**Parameters**
+
+- ``evolution_method`` (str, optional): The method for simulating time evolution. Options include 'direct', 'arnoldi' and 'integrate'. Default is 'integrate'.
+- ``arnoldi_dim`` (int, optional): Dimension of the Krylov subspace for the Arnoldi method. Default is 10.
+- ``num_arnoldi_substeps`` (int, optional): Number of substeps for the Arnoldi method per timestep. Default is 1.
+- ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 1.
+- ``monte_carlo`` (bool, optional): Whether to use the Monte Carlo wavefunction method. Default is False.
+- ``num_monte_carlo_trajectories`` (int, optional): Number of trajectories to simulate when using the Monte Carlo method. Default is 100.
+
+**Example**
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.digital import Circuit, H, CNOT
+    from qilisdk.backends import QiliSim
+    from qilisdk.functionals import Sampling
+
+    # Build a simple circuit
+    circuit = Circuit(5)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+
+    # Create Sampling functional
+    sampling = Sampling(circuit=circuit, nshots=500)
+
+    # Execute with the QiliSim backend
+    qilisim_backend = QiliSim()
+    result = qilisim_backend.execute(sampling)
+    print(result.samples)
 
 CUDA Backend
 ------------
@@ -118,9 +178,9 @@ commodity hardware before moving to accelerated machines.
 
 **Sampling methods**
 
-- **STATE_VECTOR**: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
-- **TENSOR_NETWORK**: Tensor-network contraction, suited for shallow yet wide circuits.  
-- **MATRIX_PRODUCT_STATE**: Matrix-product-state simulation for low-entanglement workloads.
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`: Tensor-network contraction, suited for shallow yet wide circuits.  
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`: Matrix-product-state simulation for low-entanglement workloads.
 
 **Example**
 
@@ -148,6 +208,7 @@ commodity hardware before moving to accelerated machines.
 **Output**  
 
 ::
+
     {'11': 237, '00': 263}
 
 
@@ -185,13 +246,13 @@ It is the most lightweight option, ideal for local development or environments w
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.core import ket, tensor_prod
-    from qilisdk.backends import QutipBackend, CudaBackend
+    from qilisdk.backends import QutipBackend
+    from qilisdk.core.interpolator import Interpolation
     from qilisdk.functionals import TimeEvolution
 
     # Define total time and timestep
     T = 10.0
-    dt = 0.1
-    steps = np.linspace(0, T + dt, int(T / dt))
+    dt = 0.5
     nqubits = 1
 
     # Define Hamiltonians
@@ -199,14 +260,16 @@ It is the most lightweight option, ideal for local development or environments w
     Hz = sum(Z(i) for i in range(nqubits))
 
     # Build a time‑dependent schedule
-    schedule = Schedule(T, dt)
-
-    # Add hx with a time‐dependent coefficient function
-    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
-
-    # Add hz similarly
-    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
-
+    schedule = Schedule(
+        hamiltonians={"driver": Hx, "problem": Hz},
+        coefficients={
+            "driver": {(0.0, T): lambda t: 1 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
+        },
+        dt=dt,
+        interpolation=Interpolation.LINEAR,
+    )
+    
     # Prepare an equal superposition initial state
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
@@ -234,3 +297,4 @@ It is the most lightweight option, ideal for local development or environments w
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]
     )
+

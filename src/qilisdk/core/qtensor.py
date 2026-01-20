@@ -148,7 +148,6 @@ class QTensor:
         """
         return self._data.shape
 
-    @property
     def dense(self) -> np.ndarray:
         """
         Get the dense (NumPy array) representation of the QTensor.
@@ -292,10 +291,10 @@ class QTensor:
                 data.append(d)
 
             if data:
-                row = np.concatenate(row)
-                col = np.concatenate(col)
-                data = np.concatenate(data)
-                out = coo_matrix((data, (row, col)), shape=(Kdim, Kdim))
+                np_row = np.concatenate(row)
+                np_col = np.concatenate(col)
+                np_data = np.concatenate(data)
+                out = coo_matrix((np_data, (np_row, np_col)), shape=(Kdim, Kdim))
                 out.sum_duplicates()
                 return QTensor(out.tocsr())
             return QTensor(csr_matrix((Kdim, Kdim)))
@@ -394,7 +393,7 @@ class QTensor:
             QTensor: A new QTensor that is the normalized version of this object.
         """
         norm = self.norm(order=order)
-        if norm == 0:
+        if abs(norm) < get_settings().atol:
             raise ValueError("Cannot normalize a zero-norm Quantum Object")
 
         return QTensor(self._data / norm)
@@ -438,11 +437,11 @@ class QTensor:
             raise ValueError("Invalid object for density matrix conversion.")
 
         tr = float(np.real(rho.trace()))
-        if tr == 0.0:
+        if abs(tr) < get_settings().atol:
             raise ValueError("Cannot normalize density matrix with zero trace.")
         return QTensor(rho.data / tr)  # keep it sparse
 
-    def is_density_matrix(self, tol: float = 1e-8) -> bool:
+    def is_density_matrix(self, tol: float | None = None) -> bool:
         """
         Determine if the QTensor is a valid density matrix.
 
@@ -450,11 +449,13 @@ class QTensor:
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity,
-                eigenvalue non-negativity, and trace. Defaults to 1e-8.
+                eigenvalue non-negativity, and trace. Defaults to the global setting for zero tolerance.
 
         Returns:
             bool: True if the QTensor is a valid density matrix, False otherwise.
         """
+        if tol is None:
+            tol = get_settings().atol
         # Check if rho is a square matrix
         if not self.is_operator():
             return False
@@ -476,17 +477,19 @@ class QTensor:
                 return False
         return lam_min >= -tol
 
-    def is_hermitian(self, tol: float = 1e-8) -> bool:
+    def is_hermitian(self, tol: float | None = None) -> bool:
         """
         Check if the QTensor is Hermitian.
 
         Args:
             tol (float, optional): The numerical tolerance for verifying Hermiticity.
-                Defaults to 1e-8.
+                Defaults to the global setting for zero tolerance.
 
         Returns:
             bool: True if the QTensor is Hermitian, False otherwise.
         """
+        if tol is None:
+            tol = get_settings().atol
         if not self.is_operator():
             return False
         diff = self._data - self._data.getH()
@@ -499,7 +502,7 @@ class QTensor:
     def __add__(self, other: QTensor | Complex) -> QTensor:
         if isinstance(other, QTensor):
             return QTensor(self._data + other._data)
-        if other == 0:
+        if abs(other) < get_settings().atol:
             return self
         return NotImplemented
 

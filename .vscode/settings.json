@@ -16,6 +16,8 @@
         "functionals": "organism",
         "optimizers": "target",
         "speqtrum": "cloudflare",
-        "cost_functions": "cart"
+        "cost_functions": "cart",
+        "noise_models": "animation",
+        "experiments": "filter"
     },
 }

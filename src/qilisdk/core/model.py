@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 import numpy as np
 from loguru import logger
 
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .variables import (
@@ -82,7 +83,7 @@ class ObjectiveSense(str, Enum):
         Returns:
             ScalarNode: The YAML scalar node representing the ObjectiveSense.
         """
-        return representer.represent_scalar("!ObjectiveSense", f"{node.value}")
+        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
 
     @classmethod
     def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:
@@ -613,7 +614,7 @@ class QUBO(Model):
         def to_real(num: Number) -> RealNumber:
             if isinstance(num, RealNumber):
                 return num
-            if isinstance(num, complex) and num.imag == 0:
+            if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
                 return num.real
             raise ValueError("Complex values encountered in the constraint.")
 

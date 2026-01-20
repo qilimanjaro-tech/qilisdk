@@ -14,8 +14,12 @@
 from abc import ABC
 from typing import Iterator, Literal, Type
 
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX
+from qilisdk.analog.schedule import Schedule
+from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3
+from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, H
+from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution, trotter_evolution
 from qilisdk.yaml import yaml
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
@@ -75,7 +79,7 @@ class HardwareEfficientAnsatz(Ansatz):
             nqubits (int): Number of qubits in the circuit.
             layers (int, optional): Number of entangling layers. Defaults to 1.
             connectivity (Connectivity, optional): Topology used for two-qubit gates.
-                Accepts ``"linear"``, ``"circular"``, ``"full"``, or an explicit list of edges.
+                Accepts ``"linear"``, ``"circular"``, ``"full"``, or an explicit list of tuples defining the edges.
                 Defaults to ``"linear"``.
             structure (Structure, optional): Layout of single- and two-qubit gates within each layer.
                 ``"grouped"`` applies all single-qubit gates before the entangler block; ``"interposed"``
@@ -198,3 +202,181 @@ class HardwareEfficientAnsatz(Ansatz):
                 for q in range(self.nqubits):
                     self._apply_single_qubit(q, parameter_iterator)
                     self._apply_entanglers()
+
+
+@yaml.register_class
+class TrotterizedTimeEvolution(Ansatz):
+    """
+    Trotterized digital time evolution over a schedule of Hamiltonians.
+
+    The circuit applies an optional state initialization and then evolves under
+    each Hamiltonian slice in the schedule using a fixed number of Trotter steps.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+            from qilisdk.analog.schedule import Schedule
+
+            ansatz = TrotterizedTimeEvolution(
+                schedule=Schedule(...),
+                trotter_steps=2,
+            )
+            ansatz.draw()
+    """
+
+    def __init__(self, schedule: Schedule, trotter_steps: int = 1) -> None:
+        """
+        Args:
+            schedule (Schedule): Time-ordered schedule of Hamiltonians to evolve under.
+            trotter_steps (int, optional): Number of Trotter steps per schedule slice. Defaults to 1.
+                prepended before time evolution. Defaults to None.
+        """
+        super().__init__(schedule.nqubits)
+
+        for hamiltonian in schedule:
+            self.add(list(trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps)))
+
+
+@yaml.register_class
+class QAOA(Ansatz):
+    """
+    Quantum Approximate Optimization Algorithm (QAOA) ansatz.
+
+    This ansatz alternates between applying a problem Hamiltonian and a mixer Hamiltonian,
+    parameterized by angles gamma and alpha, respectively.
+
+    By default, the mixer Hamiltonian is chosen to be a transverse field (X gates on all qubits).
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital.ansatz import QAOA
+
+            ansatz = QAOA(
+                nqubits=4,
+                hamiltonian=your_problem_hamiltonian,
+                layers=3,
+                mixer_type=None,
+                trotter_steps=1,
+            )
+            ansatz.draw()
+
+    """
+
+    def __init__(
+        self,
+        problem_hamiltonian: Hamiltonian,
+        layers: int = 1,
+        mixer_hamiltonian: Hamiltonian | None = None,
+        trotter_steps: int = 1,
+        problem_params: list[float] | None = None,
+        mixer_params: list[float] | None = None,
+    ) -> None:
+        """
+        Args:
+            problem_hamiltonian (Hamiltonian): The problem Hamiltonian encoding the cost function.
+            layers (int, optional): Number of QAOA layers. Defaults to 1.
+            mixer_hamiltonian (Hamiltonian, optional): The mixer Hamiltonian. Defaults to X mixer.
+            trotter_steps (int, optional): Number of Trotter steps for Hamiltonian evolution, if the Hamiltonian is made of non-commuting terms. Defaults to 1.
+            problem_params (list[float], optional): Initial parameter values for the problem Hamiltonian evolution angles. Defaults to all zeros.
+            mixer_params (list[float], optional): Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to all zeros.
+
+        Raises:
+            ValueError: If ``layers`` is not positive.
+            ValueError: If ``problem_hamiltonian`` has no qubits.
+            ValueError: If ``mixer_hamiltonian`` has no qubits.
+            ValueError: If ``trotter_steps`` is not positive.
+            ValueError: If ``problem_hamiltonian`` and ``mixer_hamiltonian`` have different number of qubits.
+            ValueError: If the length of ``problem_params`` does not match ``layers``.
+            ValueError: If the length of ``mixer_params`` does not match ``layers``.
+        """
+
+        nqubits = problem_hamiltonian.nqubits
+
+        if layers <= 0:
+            raise ValueError("layers must be >= 1")
+
+        if problem_hamiltonian.nqubits <= 0:
+            raise ValueError("problem hamiltonian must have at least one qubit")
+
+        # If no mixer, default to X mixer
+        if mixer_hamiltonian is None:
+            mixer_hamiltonian = Hamiltonian({(PauliX(q),): complex(1.0) for q in range(nqubits)})
+
+        if mixer_hamiltonian.nqubits <= 0:
+            raise ValueError("mixer hamiltonian must have at least one qubit")
+
+        if trotter_steps <= 0:
+            raise ValueError("trotter_steps must be >= 1")
+
+        if problem_hamiltonian.nqubits != mixer_hamiltonian.nqubits:
+            raise ValueError("qubits in problem_hamiltonian and mixer_hamiltonian must match")
+
+        if problem_params is None:
+            problem_params = [0.0] * layers
+        if mixer_params is None:
+            mixer_params = [0.0] * layers
+
+        if len(problem_params) != layers:
+            raise ValueError("length of problem_params must match number of layers")
+
+        if len(mixer_params) != layers:
+            raise ValueError("length of mixer_params must match number of layers")
+
+        super().__init__(nqubits=nqubits)
+
+        self._layers = int(layers)
+        self._problem_hamiltonian = problem_hamiltonian
+        self._mixer_hamiltonian = mixer_hamiltonian
+        self._trotter_steps = int(trotter_steps)
+        self._problem_params = problem_params
+        self._mixer_params = mixer_params
+
+        self._build_circuit()
+
+    @property
+    def layers(self) -> int:
+        """Number of entangling layers."""
+        return self._layers
+
+    @property
+    def problem_hamiltonian(self) -> Hamiltonian:
+        """The problem Hamiltonian encoding the cost function."""
+        return self._problem_hamiltonian
+
+    @property
+    def mixer_hamiltonian(self) -> Hamiltonian:
+        """The mixer Hamiltonian used."""
+        return self._mixer_hamiltonian
+
+    def _build_circuit(self) -> None:
+        """Populate the circuit according to the Hamiltonian and mixer settings."""
+
+        # Split the hamiltonians into commuting parts
+        commuting_parts_problem = self.problem_hamiltonian.get_commuting_partitions()
+        commuting_parts_mixer = self.mixer_hamiltonian.get_commuting_partitions()
+
+        # If either contains non-commuting terms, set the trotter steps
+        trotter_steps_problem = self._trotter_steps if len(commuting_parts_problem) > 1 else 1
+        trotter_steps_mixer = self._trotter_steps if len(commuting_parts_mixer) > 1 else 1
+
+        # Start with all |+> states
+        for qubit in range(self.nqubits):
+            self.add(H(qubit))
+
+        # Build the layers
+        for i in range(self.layers):
+            # Initial parameter values
+            initial_val_problem = self._problem_params[i]
+            initial_val_mixer = self._mixer_params[i]
+
+            # Apply problem Hamiltonian
+            gamma_param = Parameter("gamma_" + str(i), initial_val_problem)
+            for gate in _commuting_trotter_evolution(commuting_parts_problem, gamma_param, trotter_steps_problem):
+                self.add(gate)
+
+            # Apply mixer Hamiltonian
+            alpha_param = Parameter("alpha_" + str(i), initial_val_mixer)
+            for gate in _commuting_trotter_evolution(commuting_parts_mixer, alpha_param, trotter_steps_mixer):
+                self.add(gate)

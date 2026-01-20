@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
+
 import numpy as np
 import pytest
 
 from qilisdk.core import Parameter
-from qilisdk.digital import RX, RZ, Circuit, X
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
 
 
@@ -184,6 +186,68 @@ def test_user_provides_custom_parameter():
         for label, parameter in gate.parameters.items()
     )
 
+
+def test_add_list_of_gates():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    rx_gate = RX(1, theta=0.1)
+
+    c.add([x_gate, rx_gate])
+
+    assert c.gates == [x_gate, rx_gate]
+    assert c.nparameters == 1
+    assert c.get_parameter_values() == [0.1]
+
+
+def test_insert_list_of_gates_keeps_order():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c.add(x_gate)
+
+    rz_gate = RZ(0, phi=0.2)
+    x2_gate = X(1)
+    c.insert([rz_gate, x2_gate], index=1)
+
+    assert c.gates == [x_gate, rz_gate, x2_gate]
+    assert c.nparameters == 1
+
+
+def test_append_and_prepend_circuits():
+    base = Circuit(nqubits=2)
+    x_gate = X(0)
+    base.add(x_gate)
+
+    appended = Circuit(nqubits=2)
+    rx_gate = RX(1, theta=0.4)
+    appended.add(rx_gate)
+    base.append(appended)
+
+    prepended = Circuit(nqubits=2)
+    rz_gate = RZ(0, phi=0.2)
+    x2_gate = X(1)
+    prepended.add([rz_gate, x2_gate])
+    base.prepend(prepended)
+
+    assert base.gates == [rz_gate, x2_gate, x_gate, rx_gate]
+
+
+def test_add_operator_supports_gate_and_circuit():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c = c + x_gate
+    assert c.gates == [x_gate]
+
+    other = Circuit(nqubits=2)
+    angle = Parameter("RZ_phi", 0.3)
+    rz_gate = RZ(1, phi=angle)
+    other.add(rz_gate)
+    c = c + other
+    assert c.gates == [x_gate, rz_gate]
+
+    prepend_gate = RX(0, theta=angle)
+    c = prepend_gate + c
+    assert c.gates == [prepend_gate, x_gate, rz_gate]
+
     # Change circuit's parameter value
     c.set_parameter_values([1.0])
 
@@ -199,3 +263,77 @@ def test_user_provides_custom_parameter():
         for gate in c.gates
         for label, parameter in gate.parameters.items()
     )
+
+
+def test_random_circuit():
+    single_qubit_gates = {X, RX, S, RY, U1, U2, U3}
+    two_qubit_gates = {CNOT}
+    nqubits = 3
+    ngates = 30
+
+    random.seed(42)  # Set seed for reproducibility
+    c = Circuit.random(
+        nqubits=nqubits,
+        single_qubit_gates=single_qubit_gates,
+        two_qubit_gates=two_qubit_gates,
+        ngates=ngates,
+    )
+
+    # Check that the circuit has the correct number of gates
+    assert len(c.gates) == ngates
+
+    # Check that all gates are from the provided sets
+    for gate in c.gates:
+        if gate.nqubits == 1:
+            assert type(gate) in single_qubit_gates
+        elif gate.nqubits == 2:
+            assert type(gate) in two_qubit_gates
+        else:
+            pytest.fail("Gate with invalid number of qubits added to circuit.")
+
+    # Make sure there are no duplicate gates next to each other
+    for i in range(1, len(c.gates)):
+        assert not (c.gates[i] is c.gates[i - 1] and c.gates[i].qubits == c.gates[i - 1].qubits)
+
+    # Check that all target qubits are within range
+    for gate in c.gates:
+        for qubit in gate.qubits:
+            assert 0 <= qubit < nqubits
+
+
+def test_random_single_qubit_circuit():
+    single_qubit_gates = {X, RX, RZ}
+    two_qubit_gates = {CNOT}
+    nqubits = 1
+    ngates = 10
+
+    random.seed(123)
+    c = Circuit.random(
+        nqubits=nqubits,
+        single_qubit_gates=single_qubit_gates,
+        two_qubit_gates=two_qubit_gates,
+        ngates=ngates,
+    )
+
+    # Check that the circuit has the correct number of gates
+    assert len(c.gates) == ngates
+
+    # Check that all gates are from the provided set
+    for gate in c.gates:
+        assert type(gate) in single_qubit_gates
+        for qubit in gate.qubits:
+            assert 0 <= qubit < nqubits
+
+    # Make sure there are no duplicate gates next to each other
+    for i in range(1, len(c.gates)):
+        assert not (c.gates[i] is c.gates[i - 1] and c.gates[i].qubits == c.gates[i - 1].qubits)
+
+
+def test_random_circuit_no_gates():
+    with pytest.raises(ValueError, match=r"At least one gate must be provided to generate a random circuit."):
+        Circuit.random(nqubits=0, single_qubit_gates=set(), two_qubit_gates=set(), ngates=1000)
+
+
+def test_random_circuit_single_qubit_one_gate():
+    with pytest.raises(ValueError, match=r"Cannot generate a full random circuit with only one qubit and one gate."):
+        Circuit.random(nqubits=1, single_qubit_gates={X}, two_qubit_gates=set(), ngates=1000)

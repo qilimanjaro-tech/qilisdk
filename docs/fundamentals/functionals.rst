@@ -24,10 +24,7 @@ parameters consistently before execution.
 Each functional advertises a matching :attr:`result_type` pointing to a concrete
 :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass. When you call
 :meth:`~qilisdk.backends.backend.Backend.execute`, the backend inspects this attribute to decide which result object to
-construct and return. Variational workflows reuse this mechanism: :meth:`~qilisdk.backends.backend.Backend.optimize`
-drives a :class:`~qilisdk.functionals.variational_program.VariationalProgram` by repeatedly updating the nested
-functional's parameters and finally wrapping the optimizer report inside a
-:class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`.
+construct and return.
 
 Result Objects
 --------------
@@ -42,7 +39,7 @@ Result Objects
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
 
-These objects make post-processing workflows ergonomic. For example, ``SamplingResult`` can surface the most likely
+These objects make post-processing workflows ergonomic. For example, :class:`~qilisdk.functionals.sampling_result.SamplingResult` can surface the most likely
 bitstrings:
 
 .. code-block:: python
@@ -125,7 +122,7 @@ classical optimizers.
 **Parameters**
 
 - **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.
-- **initial_state** (:class:`~qilisdk.core.quantum_objects.QTensor`): Initial state of the system.
+- **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the system.
 - **observables** (List[:class:`~qilisdk.analog.hamiltonian.Hamiltonian` or :class:`~qilisdk.analog.hamiltonian.PauliOperator`]): Operators to measure after evolution.
 - **nshots** (int, optional): Number of repetitions for each observable measurement. Default is 1.
 - **store_intermediate_results** (bool, optional): If True, records the state at each time step. Default is False.
@@ -145,13 +142,13 @@ classical optimizers.
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.core import ket, tensor_prod
+    from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
 
     # Define total time and timestep
     T = 10.0
-    dt = 0.1
-    steps = np.linspace(0, T + dt, int(T / dt))
+    dt = 0.5
     nqubits = 1
 
     # Define Hamiltonians
@@ -159,14 +156,16 @@ classical optimizers.
     Hz = sum(Z(i) for i in range(nqubits))
 
     # Build a time‑dependent schedule
-    schedule = Schedule(T, dt)
-
-    # Add hx with a time‐dependent coefficient function
-    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, schedule=lambda t: 1 - steps[t] / T)
-
-    # Add hz similarly
-    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, schedule=lambda t: steps[t] / T)
-
+    schedule = Schedule(
+        hamiltonians={"driver": Hx, "problem": Hz},
+        coefficients={
+            "driver": {(0.0, T): lambda t: 1 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
+        },
+        dt=dt,
+        interpolation=Interpolation.LINEAR,
+    )
+    
     # Prepare an equal superposition initial state
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
@@ -206,10 +205,12 @@ Variational Programs
 
 The :class:`~qilisdk.functionals.variational_program.VariationalProgram` functional gathers the pieces required for a
 variational quantum algorithm. It accepts a parameterized primitive functional, an optimizer, and a cost function. When
-you call :meth:`~qilisdk.backends.backend.Backend.optimize`, the backend reuses the existing
-:meth:`~qilisdk.backends.backend.Backend.execute` workflow: it evaluates the functional repeatedly with updated
+you call :meth:`~qilisdk.backends.backend.Backend.execute` it evaluates the functional repeatedly with updated
 parameters, feeds the resulting :class:`~qilisdk.functionals.functional_result.FunctionalResult` into the supplied
 cost function, and finally returns a :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`.
+Parameter constraints (inequalities/equalities on parameters) are attached at this level via the ``parameter_constraints``
+argument; this is the place to enforce relations like ``theta >= phi`` or cross-parameter bounds across all QiliSDK
+functionals.
 
 **Parameters**
 
@@ -222,6 +223,9 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.
+- **parameter_constraints** (list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): Constraints on functional
+  parameters (e.g., ``theta >= 0.5``) evaluated before each optimizer update. This is the supported entry point for
+  enforcing parameter relations in QiliSDK.
 
 **Returns**
 
@@ -263,7 +267,7 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
         nqubits=3, layers=4, connectivity="Circular", one_qubit_gate=U3, two_qubit_gate=CNOT, structure="Interposed"
     )
 
-    optimizer = SciPyOptimizer(method="Powell")
+    optimizer = SciPyOptimizer(method="COBYQA")
 
     backend = QutipBackend()
     result = backend.execute(VariationalProgram(functional=Sampling(ansatz), optimizer=optimizer, cost_function=ModelCostFunction(model)))
@@ -275,61 +279,109 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
 ::
 
     VariationalProgramResult(
-        Optimal Cost = -6.9990000000000006,
-        Optimal Parameters=[-5.967478124043245e+29,
-        -2.195285764804736e+29,
-        2.786404500042059e+29,
-        7.058510522162697e+29,
-        2.723590483069596e+29,
-        1.3020689810431641e+29,
-        2.322337737413796e+29,
-        -2.4708791392079937e+29,
-        -2.9921111116213366e+29,
-        -4.422367918326788e+29,
-        -2.2221469613956625e+29,
-        -2.1656637161893554e+29,
-        -7.161057019144762e+28,
-        1.8287982773997508e+29,
-        -5.8803987767435576e+29,
-        6.184752232912928e+29,
-        -3.8100684690039315e+27,
-        2.258471865930891e+29,
-        -2.8333713288649098e+29,
-        -7.432416000178698e+29,
-        -2.6217720759389174e+29,
-        -4.081054373720909e+29,
-        -2.504065530787786e+29,
-        2.347699364445592e+29,
-        -5.91304449036894e+29,
-        -2.3222922004879052e+29,
-        1.7101847376093354e+29,
-        2.2630872188582105e+29,
-        5.819576566857851e+29,
-        -6.656314000883147e+29,
-        5.305199782465454e+29,
-        -2.360680145241282e+29,
-        -5.953809337209532e+29,
-        2.3303904290091433e+29,
-        -5.278640450004206e+29,
-        -5.278640450004205e+29,
-        5.291325944436631e+29,
-        -4.192175488922518e+29,
-        -2.824792074552054e+29,
-        4.3280821346328155e+29,
-        2.3585405087906886e+29,
-        -3.6102144368881146e+29,
-        2.3606766206075072e+29,
-        7.523751475667946e+29,
-        -5.278307260543703e+29],
-        Intermediate Results=[])
-        Optimal results=SamplingResult(
+        Optimal Cost=-9.0,
+        Optimal Parameters=[-3.0255755774847164,
+        0.01887035500903607,
+        0.028664963343905215,
+        0.013368501054216147,
+        -0.08437636531417667,
+        -0.029660168083975074,
+        0.0025941436125639207,
+        -0.008258689086022116,
+        -1.0021850138459234,
+        0.028289669542409385,
+        0.05329311289872701,
+        0.012030731723947204,
+        -0.0016337384126663568,
+        0.03515665488520232,
+        -0.0872593072394056,
+        0.014530612025796379,
+        -0.020256728609650863,
+        -0.010675287925157617,
+        0.004923341397045154,
+        -0.09761909602332684,
+        -0.03415470841379532,
+        0.01903348186553671,
+        0.026432142345385774,
+        0.02904121692864865,
+        0.003957631926259311,
+        0.04161531214200481,
+        0.010449668427772792,
+        0.06987683584625945,
+        -0.008282611237782185,
+        -1.001211264562447,
+        -0.025240867130997865,
+        -0.04703717734032765,
+        -0.09092557977061645,
+        -0.03600273303052503,
+        -0.023439848552130913,
+        0.03346875504677889],
+        Intermediate Results=[],
+        Optimal Results=SamplingResult(
         nshots=1000,
-        samples={'000': 19,
-        '001': 6,
-        '010': 42,
-        '011': 7,
-        '100': 36,
-        '101': 848,
-        '110': 26,
-        '111': 16}
-    ))
+        samples={'000': 2, '010': 3, '101': 994, '110': 1}
+        )
+        )
+
+
+**Usage Example 2 (Using QuTiP Backend)**
+This example optimizes a variational schedule under some parameter constraints.
+
+
+.. code-block:: python
+
+    from qilisdk.core.variables import LT, GreaterThan
+    from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+    from qilisdk.functionals import VariationalProgram, TimeEvolution
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.analog import *
+    from qilisdk.analog.schedule import Interpolation
+    from qilisdk.core.variables import Parameter
+    from qilisdk.core import ket, tensor_prod
+    from qilisdk.backends import QutipBackend
+    import numpy as np
+
+    from qilisdk.utils.visualization.style import ScheduleStyle
+
+
+    T = 10
+    p = [Parameter(f"p_{i}", (i + 1)*2, bounds=(0, 10)) for i in range(4)]
+    p.insert(0, 0)
+    p.append(T)
+    s = [Parameter(f"s_{i}", (i + 2) * 0.1, bounds=(0, 1)) for i in range(2)]
+    h0 = X(0)
+    h1 = Z(0)
+    max_time = Parameter("max_time", 1.5)
+
+    schedule = Schedule(
+        hamiltonians={"h_x": h0, "h_z": h1},
+        coefficients={
+            "h_x": {p[0]: 1, (p[1], p[2]): 1 - s[0], (p[3], p[4]): 1 - s[1], p[5]: 0},
+            "h_z": {p[0]: 0, (p[1], p[2]): s[0], (p[3], p[4]): s[1], p[5]: 1},
+        },
+        interpolation=Interpolation.LINEAR,
+    )
+
+    schedule.draw(ScheduleStyle(title="Schedule Before Optimization"))
+
+    te = TimeEvolution(
+        schedule=schedule,
+        observables=[h1],
+        initial_state=tensor_prod([ket(0) - ket(1) for _ in range(schedule.nqubits)]).unit(),
+    )
+
+    vp = VariationalProgram(
+        te,
+        SciPyOptimizer(method="COBYQA"),
+        cost_function=ObservableCostFunction(h1),
+        parameter_constraints=[
+            GreaterThan(p[3], 5)
+        ]
+    )
+
+    print(vp.get_constraints()) # print the constraints of the variational program.
+
+    backend = QutipBackend()
+    results = backend.execute(vp)
+    schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
+    print(results)

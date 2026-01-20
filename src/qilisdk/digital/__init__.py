@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .ansatz import HardwareEfficientAnsatz
+from .ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
 from .circuit import Circuit
 from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, I, M, S, T, X, Y, Z
 
 __all__ = [
     "CNOT",
     "CZ",
+    "QAOA",
     "RX",
     "RY",
     "RZ",
@@ -34,6 +35,7 @@ __all__ = [
     "M",
     "S",
     "T",
+    "TrotterizedTimeEvolution",
     "X",
     "Y",
     "Z",
