@@ -50,14 +50,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     if (solver_params.contains("num_threads")) {
         num_threads = solver_params["num_threads"].cast<int>();
     }
-    bool should_combine_single_qubit_gates = true;
-    if (solver_params.contains("combine_single_qubit_gates")) {
-        should_combine_single_qubit_gates = solver_params["combine_single_qubit_gates"].cast<bool>();
-    }
-    bool should_apply_parallel_gates = false;
-    if (solver_params.contains("apply_parallel_gates")) {
-        should_apply_parallel_gates = solver_params["apply_parallel_gates"].cast<bool>();
-    }
     int seed = 42;
     if (solver_params.contains("seed")) {
         seed = solver_params["seed"].cast<int>();
@@ -82,11 +74,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     // Get the gate
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
 
-    // Combine single-qubit gates acting in sequence on the same qubit
-    if (should_combine_single_qubit_gates) {
-        combine_single_qubit_gates(gates);
-    }
-
     // Determine which qubits to measure
     std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
@@ -95,23 +82,10 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     DenseMatrix state = DenseMatrix::Zero(dim, 1);
     state(0, 0) = 1.0;
 
-    // Apply parallel gates where possible
-    std::vector<std::vector<Gate>> gate_layers;
-    if (should_apply_parallel_gates) {
-        gate_layers = compress_gate_layers(gates);
-    } else {
-        for (int i = 0; i < int(gates.size()); i++) {
-            gate_layers.push_back({gates[i]});
-        }
-    }
-
     // Determine the start/end use of each gate
     std::map<std::string, std::pair<int, int>> gate_first_last_use;
-    for (int i = 0; i < int(gate_layers.size()); ++i) {
-        std::string gate_id = "";
-        for (const auto& gate : gate_layers[i]) {
-            gate_id += gate.get_id();
-        }
+    for (int i = 0; i < int(gates.size()); ++i) {
+        std::string gate_id = gates[i].get_id();
         if (gate_first_last_use.find(gate_id) == gate_first_last_use.end()) {
             gate_first_last_use[gate_id] = std::make_pair(i, i);
         } else {
@@ -121,25 +95,19 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     // Pre-cache up to the limit
     std::map<std::string, SparseMatrix> gate_cache;
-    int initial_cache_size = std::min(int(gate_layers.size()), max_cache_size);
+    int initial_cache_size = std::min(int(gates.size()), max_cache_size);
     for (int i = 0; i < initial_cache_size; ++i) {
-        const auto& gate_layer = gate_layers[i];
-        std::string gate_id = "";
-        for (const auto& gate : gate_layer) {
-            gate_id += gate.get_id();
-        }
+        const auto& gate = gates[i];
+        std::string gate_id = gate.get_id();
         gate_cache[gate_id] = SparseMatrix();
     }
 #if defined(_OPENMP)
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
-        const auto& gate_layer = gate_layers[i];
-        std::string gate_id = "";
-        for (const auto& gate : gate_layer) {
-            gate_id += gate.get_id();
-        }
-        SparseMatrix gate_matrix = layer_to_matrix(gate_layer, n_qubits);
+        const auto& gate = gates[i];
+        std::string gate_id = gate.get_id();
+        SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
         gate_cache[gate_id] = gate_matrix;
     }
 
@@ -147,18 +115,15 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     SparseMatrix gate_matrix;
     std::string gate_id = "";
     int gate_count = 0;
-    for (const auto& gate_layer : gate_layers) {
-        // Form the full id of the whole layer
-        gate_id = "";
-        for (const auto& gate : gate_layer) {
-            gate_id += gate.get_id();
-        }
+    for (const auto& gate : gates) {
+        // Get the id of the gate
+        gate_id = gate.get_id();
 
         // If we already have it in the cache, use it, otherwise generate it
         if (gate_cache.find(gate_id) != gate_cache.end()) {
             gate_matrix = gate_cache[gate_id];
         } else {
-            gate_matrix = layer_to_matrix(gate_layer, n_qubits);
+            gate_matrix = gate.get_full_matrix(n_qubits);
         }
 
         // If it will be used again later and we have space, cache it
