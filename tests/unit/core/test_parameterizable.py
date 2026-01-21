@@ -87,3 +87,15 @@ def test_set_parameter_bounds(parameterizable: DummyParameterizable):
         match=r"The provided parameter label gamma is not defined in the list of parameters in this object.",
     ):
         parameterizable.set_parameter_bounds({"gamma": (0, 1)})
+
+
+def test_set_nonexistent_parameter(monkeypatch, parameterizable: DummyParameterizable):
+    # Bypass constraint checking to test nonexistent parameter handling.
+    monkeypatch.setattr(
+        parameterizable,
+        "check_constraints",
+        lambda params: True,
+    )
+
+    with pytest.raises(ValueError, match=r"not defined for this object"):
+        parameterizable.set_parameters({"gamma": 1.0})

@@ -367,8 +367,7 @@ def test_create_client_registers_response_hook(monkeypatch) -> None:
         def __enter__(self):
             return self
 
-        def __exit__(self, *_):
-            return False
+        def __exit__(self, *_): ...
 
     token = SimpleNamespace(access_token="tok", refresh_token="rtok")
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("user", token))
@@ -540,18 +539,13 @@ def test_login_http_error(monkeypatch) -> None:
 
     monkeypatch.setattr(speqtrum.httpx, "Client", raise_http_error)
 
-    # spy on store_credentials so we can assert it was called
-    stored: list[tuple[str, object]] = []
-
-    def fake_store(username: str, token):
-        stored.append((username, token))
+    def fake_store(username: str, token): ...
 
     monkeypatch.setattr(speqtrum, "store_credentials", fake_store)
 
     # any object with an __init__(**kwargs) works here - we never use the token later
     class FakeToken:
-        def __init__(self, **_):
-            pass
+        def __init__(self, **_): ...
 
     monkeypatch.setattr(speqtrum, "Token", FakeToken)
 
@@ -943,8 +937,7 @@ def test_response_context_with_no_request(monkeypatch):
             return self._val
 
         @request.setter
-        def request(self, value):
-            self._val = value
+        def request(self, value): ...
 
     response = FakeResponse(200)
     context = speqtrum._response_context(response)

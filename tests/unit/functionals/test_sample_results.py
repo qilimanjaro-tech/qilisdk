@@ -51,3 +51,9 @@ def test_sample_results_compute_cost():
     mcf = ModelCostFunction(model)
 
     assert mcf.compute_cost(sr) == (-2 * 0.4 + -1 * 0.3 + 9 * 0.2 + 0 * 0.1)
+
+
+def test_sample_results_printable_representation():
+    sr = SamplingResult(10, {"00": 3, "01": 2, "10": 4, "11": 1})
+    expected_output = "SamplingResult(\n  nshots=10,\n  samples={'00': 3, '01': 2, '10': 4, '11': 1}\n)"
+    assert str(sr) == expected_output

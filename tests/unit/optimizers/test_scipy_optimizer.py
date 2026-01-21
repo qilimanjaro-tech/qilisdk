@@ -18,8 +18,7 @@ import numpy as np
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 
-def dummy_cost(params):
-    return sum(params)
+def dummy_cost(params): ...
 
 
 def test_optimize_sets_optimal_parameters():
@@ -81,3 +80,26 @@ def test_extra_arguments_are_propagated():
             options=None,
             callback=None,
         )
+
+
+def test_optimize_with_intermediate_results():
+    with patch("scipy.optimize.minimize") as mock_minimize:
+        fake_result = MagicMock()
+        fake_result.fun = -1.0
+        fake_result.x = np.array([2.0, 3.0])
+        mock_minimize.return_value = fake_result
+
+        optimizer = SciPyOptimizer(method="Nelder-Mead")
+        initial_parameters = [1.0, 1.0]
+        bounds = None
+
+        # Call optimize with store_intermediate_results=True
+        optimizer.optimize(dummy_cost, initial_parameters, bounds, store_intermediate_results=True)
+
+        # Verify that this returns some callback function to store intermediate results
+        kwargs = mock_minimize.call_args[1]
+        assert kwargs["callback"] is not None
+
+        # call the callback to ensure it works without error
+        callback = kwargs["callback"]
+        callback(fake_result)

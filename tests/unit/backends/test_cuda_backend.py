@@ -9,6 +9,7 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
+
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.core.model import Model
@@ -38,9 +39,6 @@ class DummyKernel:
     def qalloc(self, n):
         self.qubits = [f"q{i}" for i in range(n)]
         return self.qubits
-
-    def i(self, qubit):
-        self.calls.append(("i", qubit))
 
     def x(self, qubit):
         self.calls.append(("x", qubit))
@@ -102,8 +100,7 @@ class DummyGate(BasicGate):
         super().__init__((qubit,))
 
     @property
-    def name(self) -> str:
-        return "Dummy"
+    def name(self) -> str: ...  # type: ignore
 
     def _generate_matrix(self) -> np.ndarray:
         return np.eye(2, dtype=complex)

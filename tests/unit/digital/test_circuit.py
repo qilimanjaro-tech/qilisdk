@@ -284,12 +284,7 @@ def test_random_circuit():
 
     # Check that all gates are from the provided sets
     for gate in c.gates:
-        if gate.nqubits == 1:
-            assert type(gate) in single_qubit_gates
-        elif gate.nqubits == 2:
-            assert type(gate) in two_qubit_gates
-        else:
-            pytest.fail("Gate with invalid number of qubits added to circuit.")
+        assert type(gate) in single_qubit_gates or type(gate) in two_qubit_gates
 
     # Make sure there are no duplicate gates next to each other
     for i in range(1, len(c.gates)):

@@ -313,8 +313,7 @@ def test_draw_method_runs(monkeypatch):
         def plot(self, *a, **kw):
             return None
 
-        def save(self, *a, **kw):
-            return None
+        def save(self, *a, **kw): ...
 
         def show(self):
             pass

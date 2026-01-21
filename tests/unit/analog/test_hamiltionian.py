@@ -2,6 +2,7 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
+from scipy.sparse import csr_matrix
 
 from qilisdk.analog.exceptions import InvalidHamiltonianOperation
 from qilisdk.analog.hamiltonian import (
@@ -17,6 +18,7 @@ from qilisdk.analog.hamiltonian import (
     Z,
     _get_pauli,
 )
+from qilisdk.core import Domain, Parameter, QTensor, Variable
 from qilisdk.core.variables import BinaryVariable
 
 
@@ -36,6 +38,14 @@ def test_parameters():
         ValueError, match=r"Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
     ):
         Hamiltonian({(PauliX(0),): x + 1, (PauliX(1),): 1})
+
+    y = Parameter("y", 1.5)
+    H = Hamiltonian({(PauliX(0),): y + 1, (PauliX(1),): 1})
+    assert H.get_parameters() == {"y": 1.5}
+
+    z = Parameter("z", 1.5)
+    H = Hamiltonian({(PauliX(0),): z, (PauliX(1),): 1})
+    assert H.get_parameters() == {"z": 1.5}
 
 
 def test_get_pauli_returns_correct_instance():
@@ -278,6 +288,9 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
         ("(2.5 + 3j) Y(0)", (2.5 + 3j) * Y(0)),
         ("(2.5+3j)Y(0)", (2.5 + 3j) * Y(0)),
         ("(2.5   +   3j   )    Y(0)   ", (2.5 + 3j) * Y(0)),
+        ("  1  Z(0) + X(0)", Z(0) + X(0)),
+        ("      ", 1),
+        ("   +      Z(0)  ", Z(0)),
     ],
 )
 def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
@@ -418,3 +431,222 @@ def test_get_commuting_partitions():
             for j in range(i + 1, len(as_tensors)):
                 commutator = as_tensors[i] @ as_tensors[j] - as_tensors[j] @ as_tensors[i]
                 np.testing.assert_allclose(commutator.dense(), np.zeros_like(commutator.dense()), atol=1e-8)
+
+
+def test_pauli_with_numbers():
+    H = PauliX(0)
+
+    # Addition
+    assert H + 2 == 2 + H == Hamiltonian({(PauliX(0),): 1, (PauliI(0),): 2})
+
+    # Subtraction
+    assert Hamiltonian({(PauliX(0),): 1, (PauliI(0),): -2}) == H - 2
+    assert Hamiltonian({(PauliI(0),): 2, (PauliX(0),): -1}) == 2 - H
+
+    # Multiplication
+    assert H * 3 == 3 * H == Hamiltonian({(PauliX(0),): 3})
+    assert H * 1j == 1j * H == Hamiltonian({(PauliX(0),): 1j})
+
+    # Division
+    assert Hamiltonian({(PauliX(0),): 0.5}) == H / 2
+    assert Hamiltonian({(PauliX(0),): -1j}) == H / 1j
+
+
+def test_bad_pauli_division():
+    with pytest.raises(InvalidHamiltonianOperation, match="Division by operators is not supported"):
+        3 / PauliZ(0)
+
+
+def test_to_qtensor_not_enough_qubits():
+    H = Z(0) + X(1)
+
+    with pytest.raises(ValueError, match="can't be less than"):
+        H.to_qtensor(1)
+
+
+def test_get_static_hamiltonian():
+    x = Parameter("x", 1.5)
+    H = PauliZ(0) * PauliZ(1) + 2 * PauliX(0) + x
+    H_static = H.get_static_hamiltonian()
+
+    assert H_static == PauliZ(0) * PauliZ(1) + 2 * PauliX(0) + 1.5
+    assert H_static.get_parameters() == {}
+
+
+def test_hamiltonian_equal_pauli_operator():
+    H = Hamiltonian({(PauliZ(0),): 1})
+
+    assert PauliZ(0) == H
+    assert PauliZ(0) == H
+
+
+def test_dict_with_hamiltonian_key():
+    H1 = Hamiltonian({(PauliZ(0),): 1})
+    H2 = Hamiltonian({(PauliZ(0),): 1})
+
+    d = {H1: "test"}
+
+    assert d[H2] == "test"
+
+
+def test_from_qtensor(monkeypatch):
+    tensor = QTensor(np.array([[1, 0], [0, -1]], dtype=complex))
+    H = Hamiltonian.from_qtensor(tensor)
+
+    assert tensor == H
+
+    bad_tensor = QTensor(np.array([[1, 0], [0, -1]], dtype=complex))
+    bad_tensor._data = csr_matrix(np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]], dtype=complex))
+    with pytest.raises(ValueError, match="not a power of two"):
+        Hamiltonian.from_qtensor(bad_tensor)
+
+    non_hermitian_tensor = QTensor(np.array([[1, 1], [0, -1]], dtype=complex))
+    with pytest.raises(ValueError, match="not Hermitian"):
+        Hamiltonian.from_qtensor(non_hermitian_tensor)
+
+    # rewrite np.trace to give big value so the coversion goes wrong
+    def bad_trace(self):
+        return 10.0
+
+    monkeypatch.setattr(np, "trace", bad_trace)
+    with pytest.raises(ValueError, match="Pauli expansion failed"):
+        Hamiltonian.from_qtensor(tensor)
+
+
+def test_commutator():
+    H1 = Z(0) * Z(1) + X(0)
+    H2 = X(1) + Y(0) * Y(1)
+
+    assert H1.commutator(H2) == H1 * H2 - H2 * H1
+    assert H1.anticommutator(H2) == H1 * H2 + H2 * H1
+
+    # def frobenius_norm(self) -> float:
+    #     """
+    #     Returns:
+    #         float: the forbenius norm of the hamiltonian.
+    #     """
+    #     n = self.nqubits
+    #     s = 0
+    #     for coeff, _ in self:
+    #         s += np.conj(coeff) * coeff
+    #     return np.real(np.sqrt(s) * np.sqrt(2**n))
+
+
+def test_norms():
+    H = Z(0) + 2 * X(1) + 3j * Y(2)
+
+    assert np.isclose(H.vector_norm(), np.sqrt(1**2 + 2**2 + 3**2))
+    assert np.isclose(H.frobenius_norm(), np.sqrt(14 * 8))  # sqrt(sum |c_i|^2 * 2^n) where n=3 qubits
+
+
+def test_trace():
+    dim = 8
+
+    H = Z(0) + 2 * X(1) + 3j * Y(2) + 1 * I(0)
+    assert np.isclose(H.trace(), dim)
+
+    x = Parameter("x", 2.0)
+    H = X(1) + Z(2)
+    H._elements[PauliI(0),] = x  # to force it to be a parameter not a term
+    assert np.isclose(H.trace(), 2.0 * dim)
+
+    x = Parameter("x", 2.0)
+    H = (x + 1) * I(0) + X(1) + Z(2)
+    assert np.isclose(H.trace(), 3.0 * dim)
+
+
+def test_hamiltonian_term_arithmetic():
+    var = Variable("v", Domain.REAL)
+    term = 2 * var
+
+    H = X(0) + Y(1)
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        H + term
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        term + H
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        H - term
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        term - H
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        H * term
+
+    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+        term * H
+
+
+def test_hamiltonian_in_place_addition():
+    H = X(0) + Y(1)
+    var = Variable("v", Domain.REAL)
+    term = 2 * var
+
+    param = Parameter("p", 1.0)
+    safe_term = param * 2
+    H += safe_term
+    assert X(0) + Y(1) + 2.0 * param == H
+
+    with pytest.raises(ValueError, match="Only Parameters are allowed"):
+        H._add_inplace(term)
+
+    H += Z(2)
+    assert X(0) + Y(1) + 2.0 * param + Z(2) == H
+
+    H += PauliZ(0)
+    assert X(0) + Y(1) + 2.0 * param + Z(2) + Z(0) == H
+
+
+def test_hamiltonian_in_place_subtraction():
+    H = X(0) + Y(1)
+    var = Variable("v", Domain.REAL)
+    term = 2 * var
+
+    param = Parameter("p", 1.0)
+    safe_term = param * 2
+    H -= safe_term
+    assert X(0) + Y(1) - 2.0 * param == H
+
+    with pytest.raises(ValueError, match="Only Parameters are allowed"):
+        H._sub_inplace(term)
+
+    H -= Z(2)
+    assert X(0) + Y(1) - 2.0 * param - Z(2) == H
+
+    H -= PauliZ(0)
+    assert X(0) + Y(1) - 2.0 * param - Z(2) - Z(0) == H
+
+    H -= param
+    assert X(0) + Y(1) - 3.0 * param - Z(2) - Z(0) == H
+
+
+def test_hamiltonian_in_place_multiplication():
+    H = X(0) + Y(1)
+    var = Variable("v", Domain.REAL)
+    term = 2 * var
+
+    param = Parameter("p", 1.0)
+    safe_term = param * 2
+    H *= safe_term
+    assert (X(0) + Y(1)) * 2.0 * param == H
+
+    with pytest.raises(ValueError, match="Only Parameters are allowed"):
+        H._mul_inplace(term)
+
+    H *= Z(2)
+    assert (X(0) + Y(1)) * 2.0 * param * Z(2) == H
+
+    H *= PauliZ(0)
+    assert (X(0) + Y(1)) * 2.0 * param * Z(2) * Z(0) == H
+
+    H *= param
+    assert (X(0) + Y(1)) * 2.0 * param**2 * Z(2) * Z(0) == H
+
+
+def test_negation():
+    H = Z(0) + 2 * X(1) + 3j * Y(2)
+
+    assert -H == (-1) * H

@@ -57,6 +57,17 @@ def test_delete_credentials_calls_keyring_delete_password(monkeypatch):
     ]
 
 
+def test_bad_delete(monkeypatch):
+    # generate an identifer that is unlikely to exist
+    KEYRING_IDENTIFIER = "dskhfkjhkjhjkrhrkrhjkrhkrjhvhcxkjvhcxkjvh213123"
+
+    # make sure it doesn't exist
+    assert keyring.get_password(KEYRING_IDENTIFIER, "username") is None
+    assert keyring.get_password(KEYRING_IDENTIFIER, "token") is None
+
+    delete_credentials()
+
+
 def test_load_credentials_returns_none_if_either_missing(monkeypatch):
     # username missing
     monkeypatch.setattr(keyring, "get_password", lambda svc, key: None)

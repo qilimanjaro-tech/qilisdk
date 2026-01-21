@@ -11,6 +11,7 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
+
 from qilisdk.backends import QutipBackend
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.variables import BinaryVariable
@@ -46,8 +47,7 @@ def test_unsupported_gate_raises(backend):
             super().__init__((qubit,))
 
         @property
-        def name(self) -> str:
-            return "Dummy"
+        def name(self) -> str: ...  # type: ignore
 
         def _generate_matrix(self) -> np.ndarray:
             return np.eye(2, dtype=complex)

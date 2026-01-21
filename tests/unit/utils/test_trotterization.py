@@ -16,7 +16,7 @@ import pytest
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
-from qilisdk.digital.gates import RX, RZ, H
+from qilisdk.digital.gates import CNOT, RX, RZ, H
 from qilisdk.utils.trotterization import trotter_evolution
 from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution
 
@@ -58,3 +58,36 @@ def test_trotter_evolution_accepts_hamiltonian_input():
     assert [type(gate) for gate in gates] == [H, RZ, H, RZ, H, RZ, H, RZ]
     phis = [gate.phi for gate in gates if isinstance(gate, RZ)]
     assert phis == pytest.approx([0.5, 1.0, 0.5, 1.0])
+
+
+def test_trotter_evolution_imaginary_time():
+    hamiltonian = Hamiltonian({(PauliX(0),): 1.0, (PauliZ(0),): 2.0})
+    gates = list(trotter_evolution(hamiltonian, time=0.5 + 0.5j, trotter_steps=2))
+
+    assert len(gates) == 8
+    assert [type(gate) for gate in gates] == [H, RZ, H, RZ, H, RZ, H, RZ]
+    phis = [gate.phi for gate in gates if isinstance(gate, RZ)]
+    assert phis == pytest.approx([0.5, 1.0, 0.5, 1.0])
+
+
+def test_multi_qubit_trotter_evolution():
+    hamiltonian = Hamiltonian(
+        {
+            (PauliX(0), PauliX(1)): 1.0,
+        }
+    )
+    gates = list(trotter_evolution(hamiltonian, time=1.0, trotter_steps=1))
+
+    assert len(gates) == 7
+    expected_types = [
+        H,
+        H,
+        CNOT,
+        RZ,
+        CNOT,
+        H,
+        H,
+    ]
+    assert [type(gate) for gate in gates] == expected_types
+    phis = [gate.phi for gate in gates if isinstance(gate, RZ)]
+    assert phis == pytest.approx([2.0])
