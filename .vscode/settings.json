@@ -20,4 +20,8 @@
         "noise_models": "animation",
         "experiments": "filter"
     },
+    "sonarlint.connectedMode.project": {
+        "connectionId": "qilimanjaro",
+        "projectKey": "qilimanjaro-tech_qilisdk"
+    },
 }
