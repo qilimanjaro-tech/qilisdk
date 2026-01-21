@@ -108,10 +108,8 @@ def configure_logging() -> None:
 
     # 2) Add configured sinks
     for sink_conf in settings.sinks:
-        print(sink_conf)
         params = sink_conf.model_dump()
         sink_target = params.pop("sink")
-        print(sink_target)
 
         # Resolve stderr/stdout
         if isinstance(sink_target, str) and sink_target.lower() == "stderr":

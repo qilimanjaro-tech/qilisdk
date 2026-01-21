@@ -1,12 +1,23 @@
 from __future__ import annotations
 
-import pytest
-
-from qilisdk._optionals import OptionalDependencyError, OptionalFeature, Symbol, import_optional_dependencies
-
 import importlib
 import sys
 from importlib.metadata import PackageNotFoundError
+from typing import TYPE_CHECKING
+
+import pytest
+
+from qilisdk._optionals import (
+    OptionalDependencyError,
+    OptionalFeature,
+    Symbol,
+    _OptionalDependencyStub,
+    import_optional_dependencies,
+)
+
+if TYPE_CHECKING:
+    import SpeQtrum
+
 
 def test_optional_stub_raises_on_call() -> None:
     feature = OptionalFeature(
@@ -33,7 +44,7 @@ def test_optional_stub_raises_on_attribute_call() -> None:
     )
 
     imported = import_optional_dependencies(feature)
-    symbol = imported.symbols["SpeQtrum"]
+    symbol: SpeQtrum = imported.symbols["SpeQtrum"]
 
     with pytest.raises(OptionalDependencyError) as excinfo:
         symbol.login()
@@ -46,46 +57,37 @@ def test_version_not_found(monkeypatch):
     def raise_not_found(name):
         raise PackageNotFoundError
 
-    monkeypatch.setattr(
-        "importlib.metadata.version",
-        raise_not_found
-    )
+    monkeypatch.setattr("importlib.metadata.version", raise_not_found)
 
     sys.modules.pop("qilisdk", None)
 
-    import qilisdk
+    import qilisdk  # noqa: PLC0415
+
     importlib.reload(qilisdk)
 
     assert qilisdk.__version__ == "0.0.0"
 
+
 def test_optional_stub():
-
-    from qilisdk._optionals import _OptionalDependencyStub
-
-    stub = _OptionalDependencyStub(
-            symbol_name="SpeQtrum",
-            feature_name="speqtrum",
-            import_error="test"
-        )
+    stub = _OptionalDependencyStub(symbol_name="SpeQtrum", feature_name="speqtrum", import_error="test")
 
     with pytest.raises(OptionalDependencyError):
         stub()
 
     with pytest.raises(AttributeError):
-        stub.__getattr__("__magic__")
+        stub.__magic__
 
     assert "missing optional" in repr(stub)
 
 
 def test_import_optional_dependencies(monkeypatch):
-
     feature = OptionalFeature(
         name="dummy_feature",
         dependencies=[],
         symbols=[
             Symbol(path="qilisdk._optionals", name="Dummy1"),
-            Symbol(path="qilisdk.optional_modules.dummy", name="Dummy2")
-            ],
+            Symbol(path="qilisdk.optional_modules.dummy", name="Dummy2"),
+        ],
     )
 
-    imported = import_optional_dependencies(feature)
+    import_optional_dependencies(feature)
