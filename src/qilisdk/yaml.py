@@ -13,10 +13,10 @@
 # limitations under the License.
 
 # ruff: noqa: ANN001, ANN201 DOC201, S403
-
 import base64
 import types
 from collections import defaultdict, deque
+from uuid import UUID
 
 import numpy as np
 from dill import dumps, loads
@@ -212,6 +212,8 @@ class QiliYAML(YAML):
 
 
 yaml = QiliYAML(typ="unsafe")
+
+yaml.register_class(UUID)
 
 # SciPy CSR
 yaml.representer.add_representer(sparse.csr_matrix, csr_representer)

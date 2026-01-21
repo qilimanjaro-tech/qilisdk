@@ -13,12 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
-# import numpy as np
 import copy
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
-# import cupy as np
 import numpy as np
 from loguru import logger
 

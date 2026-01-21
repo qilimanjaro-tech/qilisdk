@@ -167,7 +167,7 @@ def _assert_real(value: Number) -> RealNumber:
     raise ValueError(f"Only Real values are allowed but {_value} was provided.")
 
 
-@yaml.register_class(shared=True)
+@yaml.register_class
 class Domain(str, Enum):
     INTEGER = "Integer Domain"
     POSITIVE_INTEGER = "Positive Integer Domain"
