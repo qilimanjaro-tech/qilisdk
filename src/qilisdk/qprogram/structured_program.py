@@ -42,7 +42,6 @@ class VariableInfo:
         self.allocated_by = None
 
 
-@yaml.register_class
 class StructuredProgram:
     """Represents a structured quantum program with various control flow blocks."""
 
@@ -278,6 +277,6 @@ class StructuredProgram:
             super().__exit__(exc_type, exc_value, exc_tb)
 
     class _AverageContext(_BlockContext):
-        def __init__(self, program: "StructuredProgram", shots: int) -> None:
+        def __init__(self, program: StructuredProgram, shots: int) -> None:
             self.program = program
             self.block: Average = Average(shots=shots)

@@ -81,55 +81,53 @@ class QProgram(StructuredProgram):
     """
 
     def __str__(self) -> str:
-        def traverse(block: Block) -> list[str]:
+        ignored_attributes = {"_uuid", "variable", "elements", "waveform", "weights"}
+
+        def format_attr_value(value: object) -> str:
+            value_text = str(value)
+            return "None" if "UUID" in value_text else value_text
+
+        def format_attributes(element: object, indent: str) -> list[str]:
+            return [
+                f"{indent}{attr_name}: {format_attr_value(attr_value)}\n"
+                for attr_name, attr_value in vars(element).items()
+                if attr_name not in ignored_attributes
+            ]
+
+        def format_envelope(envelope: object, indent: str) -> list[str]:
+            return [f"{indent}{line}\n" for line in str(envelope).splitlines()]
+
+        def format_waveform(waveform: Waveform | IQWaveform, indent: str) -> list[str]:
+            if isinstance(waveform, Waveform):
+                return [f"{indent}Waveform {type(waveform).__name__}:\n", *format_envelope(waveform.envelope(), indent + "\t")]
+
+            waveform_i = waveform.get_I()
+            waveform_q = waveform.get_Q()
+            return (
+                [f"{indent}Waveform I {type(waveform_i).__name__}:\n", *format_envelope(waveform_i.envelope(), indent + "\t"), f"{indent}Waveform Q {type(waveform_q).__name__}:\n", *format_envelope(waveform_q.envelope(), indent + "\t")]
+            )
+
+        def format_weights(weights: IQWaveform, indent: str) -> list[str]:
+            weights_i = weights.get_I()
+            weights_q = weights.get_Q()
+            return (
+                [f"{indent}Weights I {type(weights_i).__name__}:\n", *format_envelope(weights_i.envelope(), indent + "\t"), f"{indent}Weights Q {type(weights_q).__name__}:\n", *format_envelope(weights_q.envelope(), indent + "\t")]
+            )
+
+        def traverse(block: Block, indent: str = "") -> list[str]:
             string_elements = []
             for element in block.elements:
-                string_elements.append(f"{type(element).__name__}:\n")
-                for attr_name in vars(element):
-                    # ignore uuid, variables. elements, waveforms and weights are handled separately
-                    if attr_name in {"_uuid", "variable", "elements", "waveform", "weights"}:
-                        continue
-
-                    attr_value = getattr(element, attr_name)
-                    # Handle UUID checking and append to string_elements
-                    if "UUID" not in str(attr_value):
-                        string_elements.append(f"\t{attr_name}: {attr_value}\n")
-                    else:
-                        string_elements.append(f"\t{attr_name}: None\n")  # pragma: no cover
+                string_elements.append(f"{indent}{type(element).__name__}:\n")
+                string_elements.extend(format_attributes(element, indent + "\t"))
 
                 if isinstance(element, Block):
-                    # handle blocks
-                    for string_element in traverse(element):
-                        string_elements.append(f"\t{string_element}")
+                    string_elements.extend(traverse(element, indent + "\t"))
 
-                # if not a block, it is assumed that element is type Operation
                 if hasattr(element, "waveform"):
-                    waveform_string = (
-                        [f"\tWaveform {type(element.waveform).__name__}:\n"]
-                        + [f"\t\t{array_line}\n" for array_line in str(element.waveform.envelope()).split("\n")]
-                        if isinstance(element.waveform, Waveform)
-                        else [f"\tWaveform I {type(element.waveform.get_I()).__name__}:\n"]
-                        + [f"\t\t{array_line}\n" for array_line in str(element.waveform.get_I().envelope()).split("\n")]
-                        + [f"\tWaveform Q {type(element.waveform.get_Q()).__name__}):\n"]
-                        + [f"\t\t{array_line}\n" for array_line in str(element.waveform.get_Q().envelope()).split("\n")]
-                    )
-                    string_elements.extend(waveform_string)
+                    string_elements.extend(format_waveform(element.waveform, indent + "\t"))
 
                 if hasattr(element, "weights"):
-                    string_elements.append(f"\tWeights I {type(element.weights.get_I()).__name__}:\n")
-                    string_elements.extend(
-                        [
-                            f"\t\t{array_element}\n"
-                            for array_element in str(element.weights.get_I().envelope()).split("\n")
-                        ]
-                    )
-                    string_elements.append(f"\tWeights Q {type(element.weights.get_Q()).__name__}:\n")
-                    string_elements.extend(
-                        [
-                            f"\t\t{array_element}\n"
-                            for array_element in str(element.weights.get_Q().envelope()).split("\n")
-                        ]
-                    )
+                    string_elements.extend(format_weights(element.weights, indent + "\t"))
 
             return string_elements
 
