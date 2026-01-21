@@ -99,20 +99,29 @@ class QProgram(StructuredProgram):
 
         def format_waveform(waveform: Waveform | IQWaveform, indent: str) -> list[str]:
             if isinstance(waveform, Waveform):
-                return [f"{indent}Waveform {type(waveform).__name__}:\n", *format_envelope(waveform.envelope(), indent + "\t")]
+                return [
+                    f"{indent}Waveform {type(waveform).__name__}:\n",
+                    *format_envelope(waveform.envelope(), indent + "\t"),
+                ]
 
             waveform_i = waveform.get_I()
             waveform_q = waveform.get_Q()
-            return (
-                [f"{indent}Waveform I {type(waveform_i).__name__}:\n", *format_envelope(waveform_i.envelope(), indent + "\t"), f"{indent}Waveform Q {type(waveform_q).__name__}:\n", *format_envelope(waveform_q.envelope(), indent + "\t")]
-            )
+            return [
+                f"{indent}Waveform I {type(waveform_i).__name__}:\n",
+                *format_envelope(waveform_i.envelope(), indent + "\t"),
+                f"{indent}Waveform Q {type(waveform_q).__name__}:\n",
+                *format_envelope(waveform_q.envelope(), indent + "\t"),
+            ]
 
         def format_weights(weights: IQWaveform, indent: str) -> list[str]:
             weights_i = weights.get_I()
             weights_q = weights.get_Q()
-            return (
-                [f"{indent}Weights I {type(weights_i).__name__}:\n", *format_envelope(weights_i.envelope(), indent + "\t"), f"{indent}Weights Q {type(weights_q).__name__}:\n", *format_envelope(weights_q.envelope(), indent + "\t")]
-            )
+            return [
+                f"{indent}Weights I {type(weights_i).__name__}:\n",
+                *format_envelope(weights_i.envelope(), indent + "\t"),
+                f"{indent}Weights Q {type(weights_q).__name__}:\n",
+                *format_envelope(weights_q.envelope(), indent + "\t"),
+            ]
 
         def traverse(block: Block, indent: str = "") -> list[str]:
             string_elements = []
