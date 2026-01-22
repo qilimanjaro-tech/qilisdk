@@ -189,11 +189,11 @@ class Domain(str, Enum):
         if self == Domain.SPIN:
             return isinstance(value, Number) and value in {-1, 1}
         if self == Domain.REAL:
-            return isinstance(value, (int, float))
+            return isinstance(value, (int, float, np.int32, np.int64, np.float32, np.float64))
         if self == Domain.INTEGER:
-            return isinstance(value, int)
+            return isinstance(value, (int, np.int32, np.int64))
         if self == Domain.POSITIVE_INTEGER:
-            return isinstance(value, int) and value >= 0
+            return isinstance(value, (int, np.int32, np.int64)) and value >= 0
         return False
 
     def min(self) -> float:
@@ -1292,7 +1292,7 @@ class Parameter(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         if len(bounds) != 2:  # noqa: PLR2004
             raise ValueError(
-                "Invalid bounds provided: the bounds need to be a tuple with the format (lowe_bound, upper_bound)"
+                "Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"
             )
 
         if domain.check_value(self.value):

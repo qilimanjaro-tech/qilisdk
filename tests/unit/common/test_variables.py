@@ -57,7 +57,7 @@ from qilisdk.core.variables import (
 )
 
 
-def test_domain_check_value_and_bounds(monkeypatch):
+def test_domain_check_value_and_bounds():
     # BINARY domain
     assert Domain.BINARY.check_value(0)
     assert Domain.BINARY.check_value(1)
@@ -342,6 +342,7 @@ def test_term_to_list_and_unfold_parentheses():
     u = 2 * a + 2 * b
     assert isinstance(u, Term)
     assert t == u
+    assert u * u == (2 * a + 2 * b) * (2 * a + 2 * b)
 
 
 def test_encoding_constraint_not_implemented():
@@ -1090,6 +1091,9 @@ def test_parameter_value():
     p.set_value(3)
     assert p.value == 3
 
+    p.set_value(np.int64(3))
+    assert p.value == 3
+
     p.set_bounds(None, 6)
     assert p.bounds == (0, 6)
 
@@ -1238,11 +1242,11 @@ def test_base_variable():
 
     class DummyVariable(BaseVariable):
         def evaluate(self, value):
-            return super().evaluate(value)
+            ...
         def num_binary_equivalent(self):
-            return super().num_binary_equivalent()
+            ...
         def to_binary(self):
-            return super().to_binary()  
+            ...
 
     a = DummyVariable("a", Domain.INTEGER, (0, 1))
 
@@ -1289,3 +1293,52 @@ def test_big_bounds(monkeypatch):
     x.term
     assert len(out) >= 1
     assert "Encoding variable" in out[0]
+
+def test_parameter_evaluate():
+
+    p = Parameter("p", 2, domain=Domain.INTEGER, bounds=(0, 10))
+    with pytest.raises(ValueError, match=r"doesn't correspond to the parameter's domain"):
+        p.evaluate(3.5)
+    with pytest.raises(ValueError, match=r"outside the bound"):
+        p.evaluate(11)
+
+    assert p.num_binary_equivalent() == 0
+
+    with pytest.raises(NotImplementedError, match=r"with a list"):
+        p.evaluate([1,0,0])
+
+    assert p.to_binary() == Term([2], Operation.ADD)
+
+    with pytest.raises(ValueError, match=r"Invalid bounds provided"):
+        p.update_variable(Domain.BINARY, (0,1,2))
+
+def test_parameter_comparisons():
+
+    p1 = Parameter("p1", 2, domain=Domain.INTEGER, bounds=(0, 10))
+
+    assert p1 == 2
+    assert p1 != 3
+    assert p1 < 3
+    assert p1 <= 2
+    assert p1 > 1
+    assert p1 >= 2
+
+    class Dummy:
+        pass
+
+    bad_object = Dummy()
+    with pytest.raises(TypeError):
+        p1 < bad_object
+    with pytest.raises(TypeError):
+        p1 <= bad_object
+    with pytest.raises(TypeError):
+        p1 > bad_object
+    with pytest.raises(TypeError):
+        p1 >= bad_object
+    assert (p1 != bad_object) == True
+    assert (p1 == bad_object) == False
+
+def test_empty_term():
+
+    t = Term([], Operation.ADD)
+    assert t.evaluate({}) == 0
