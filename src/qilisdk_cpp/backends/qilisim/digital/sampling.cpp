@@ -13,69 +13,49 @@
 // limitations under the License.
 
 #include <iomanip>
-#include <iostream>
 #include <sstream>
-#include "../qilisim.h"
+
+#include "sampling.h"
+#include "../utils/random.h"
+#include "../libs/pybind.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::dict& solver_params) {
+void sampling(std::vector<Gate>& gates,
+                    const std::vector<bool>& qubits_to_measure,
+                    int n_qubits,
+                    int n_shots,
+                    QiliSimConfig& config,
+                    std::map<std::string, int>& counts) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
     Args:
-        functional (py::object): The Sampling functional to execute.
-        solver_params (py::dict): Solver parameters, including 'max_cache_size'.
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
+        n_qubits (int): The number of qubits in the circuit.
+        n_shots (int): The number of shots to sample.
+        config (QiliSimConfig): The simulation configuration.
+        counts (std::map<std::string, int>&): A map to store the measurement counts.
 
     Returns:
         SamplingResult: A result object containing the measurement samples and computed probabilities.
 
     Raises:
+        py::value_error: If functional is not a Sampling instance.
         py::value_error: If nqubits is non-positive.
         py::value_error: If shots is non-positive.
     */
 
-    // Get info from the functional
-    int n_shots = functional.attr("nshots").cast<int>();
-    int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
-
-    // Get parameters
-    int max_cache_size = 1000;
-    if (solver_params.contains("max_cache_size")) {
-        max_cache_size = solver_params["max_cache_size"].cast<int>();
-    }
-    int num_threads = 1;
-    if (solver_params.contains("num_threads")) {
-        num_threads = solver_params["num_threads"].cast<int>();
-    }
-    int seed = 42;
-    if (solver_params.contains("seed")) {
-        seed = solver_params["seed"].cast<int>();
-    }
-
     // Set the number of threads
-    if (num_threads <= 0) {
-        num_threads = 1;
+    if (config.num_threads <= 0) {
+        config.num_threads = 1;
     }
 #if defined(_OPENMP)
-    omp_set_num_threads(num_threads);
+    omp_set_num_threads(config.num_threads);
 #endif
-
-    // Sanity checks
-    if (n_qubits <= 0) {
-        throw py::value_error("nqubits must be positive.");
-    }
-    if (n_shots <= 0) {
-        throw py::value_error("nshots must be positive.");
-    }
-
-    // Get the gate
-    std::vector<Gate> gates = parse_gates(functional.attr("circuit"));
-
-    // Determine which qubits to measure
-    std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
     // Start with the zero state
     long dim = 1L << n_qubits;
@@ -95,7 +75,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     // Pre-cache up to the limit
     std::map<std::string, SparseMatrix> gate_cache;
-    int initial_cache_size = std::min(int(gates.size()), max_cache_size);
+    int initial_cache_size = std::min(int(gates.size()), config.max_cache_size);
     for (int i = 0; i < initial_cache_size; ++i) {
         const auto& gate = gates[i];
         std::string gate_id = gate.get_id();
@@ -127,7 +107,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         }
 
         // If it will be used again later and we have space, cache it
-        if (gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < max_cache_size) {
+        if (gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < config.max_cache_size) {
             gate_cache[gate_id] = gate_matrix;
         }
 
@@ -155,14 +135,14 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     }
 
     // Make sure probabilities sum to 1
-    if (std::abs(total_prob - 1.0) > atol_) {
+    if (std::abs(total_prob - 1.0) > config.atol) {
         std::stringstream ss;
         ss << std::setprecision(15) << total_prob;
         throw py::value_error("Probabilities do not sum to 1 (sum = " + ss.str() + ")");
     }
 
     // Sample from these probabilities
-    std::map<std::string, int> counts = sample_from_probabilities(probabilities, n_qubits, n_shots, seed);
+    counts = sample_from_probabilities(probabilities, n_qubits, n_shots, config.seed);
 
     // Only keep measured qubits in the counts
     std::map<std::string, int> filtered_counts;
@@ -178,11 +158,4 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     }
     counts = filtered_counts;
 
-    // Convert counts to samples dict
-    py::dict samples;
-    for (const auto& pair : counts) {
-        samples[py::cast(pair.first)] = py::cast(pair.second);
-    }
-
-    return SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
 }

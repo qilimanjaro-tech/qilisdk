@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "parsers.h"
+#include "../digital/gate.h"
+#include "numpy.h"
 
-std::vector<SparseMatrix> QiliSimCpp::parse_hamiltonians(const py::object& Hs) const {
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) {
     /*
     Extract Hamiltonian matrices from a list of QTensor objects.
 
@@ -27,13 +29,13 @@ std::vector<SparseMatrix> QiliSimCpp::parse_hamiltonians(const py::object& Hs) c
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
         py::object spm = hamiltonian.attr("to_matrix")();
-        SparseMatrix H = from_spmatrix(spm);
+        SparseMatrix H = from_spmatrix(spm, atol);
         hamiltonians.push_back(H);
     }
     return hamiltonians;
 }
 
-std::vector<SparseMatrix> QiliSimCpp::parse_jump_operators(const py::object& jumps) const {
+std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double atol) {
     /*
     Extract jump operator matrices from a list of QTensor objects.
 
@@ -46,13 +48,13 @@ std::vector<SparseMatrix> QiliSimCpp::parse_jump_operators(const py::object& jum
     std::vector<SparseMatrix> jump_matrices;
     for (auto jump : jumps) {
         py::object spm = jump.attr("to_matrix")();
-        SparseMatrix J = from_spmatrix(spm);
+        SparseMatrix J = from_spmatrix(spm, atol);
         jump_matrices.push_back(J);
     }
     return jump_matrices;
 }
 
-std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observables, long nqubits) const {
+std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol) {
     /*
     Extract observable matrices from a list of QTensor objects.
 
@@ -69,7 +71,7 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
         if (py::isinstance(obs, Hamiltonian)) {
             // Get the matrix
             py::object spm = obs.attr("to_matrix")();
-            SparseMatrix O = from_spmatrix(spm);
+            SparseMatrix O = from_spmatrix(spm, atol);
 
             // Expand to full qubit count if needed
             int obs_qubits = obs.attr("nqubits").cast<int>();
@@ -83,7 +85,7 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
             // Get the matrix
             py::buffer matrix = numpy_array(obs.attr("matrix"), py::dtype("complex128"));
             py::buffer_info buf = matrix.request();
-            SparseMatrix O = from_numpy(matrix);
+            SparseMatrix O = from_numpy(matrix, atol);
 
             // Expand to full qubit count
             int obs_qubit = obs.attr("qubit").cast<int>();
@@ -102,7 +104,7 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
         } else if (py::isinstance(obs, QTensor)) {
             // Get the data directly if it's a QTensor
             py::object spm = obs.attr("data");
-            SparseMatrix O = from_spmatrix(spm);
+            SparseMatrix O = from_spmatrix(spm, atol);
             observable_matrices.push_back(O);
 
         } else {
@@ -112,7 +114,7 @@ std::vector<SparseMatrix> QiliSimCpp::parse_observables(const py::object& observ
     return observable_matrices;
 }
 
-std::vector<std::vector<double>> QiliSimCpp::parse_parameters(const py::object& coeffs) const {
+std::vector<std::vector<double>> parse_parameters(const py::object& coeffs) {
     /*
     Extract parameter lists from a list of coefficient objects.
 
@@ -133,7 +135,7 @@ std::vector<std::vector<double>> QiliSimCpp::parse_parameters(const py::object& 
     return parameters_list;
 }
 
-std::vector<double> QiliSimCpp::parse_time_steps(const py::object& steps) const {
+std::vector<double> parse_time_steps(const py::object& steps) {
     /*
     Extract time steps from a list of step objects.
 
@@ -150,7 +152,7 @@ std::vector<double> QiliSimCpp::parse_time_steps(const py::object& steps) const 
     return step_list;
 }
 
-SparseMatrix QiliSimCpp::parse_initial_state(const py::object& initial_state) const {
+SparseMatrix parse_initial_state(const py::object& initial_state, double atol) {
     /*
     Extract the initial state from a QTensor object.
 
@@ -160,29 +162,13 @@ SparseMatrix QiliSimCpp::parse_initial_state(const py::object& initial_state) co
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
-    py::buffer init_state = numpy_array(initial_state.attr("dense")(), py::dtype("complex128"));
-    py::buffer_info buf = init_state.request();
-    if (buf.ndim != 2) {
-        throw py::value_error("Initial state must be a 2D array.");
-    }
-    int rows = int(buf.shape[0]);
-    int cols = int(buf.shape[1]);
-    auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-    Triplets rho_0_entries;
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-            std::complex<double> val = ptr[r * cols + c];
-            if (std::abs(val) > atol_) {
-                rho_0_entries.emplace_back(Triplet(r, c, val));
-            }
-        }
-    }
-    SparseMatrix rho_0(rows, cols);
-    rho_0.setFromTriplets(rho_0_entries.begin(), rho_0_entries.end());
-    return rho_0;
+    py::print(initial_state);
+    py::object spm = initial_state.attr("data");
+    SparseMatrix rho = from_spmatrix(spm, atol);
+    return rho;
 }
 
-std::vector<Gate> QiliSimCpp::parse_gates(const py::object& circuit) const {
+std::vector<Gate> parse_gates(const py::object& circuit, double atol) {
     /*
     Extract gates from a circuit object.
 
@@ -206,7 +192,7 @@ std::vector<Gate> QiliSimCpp::parse_gates(const py::object& circuit) const {
         // Get the matrix
         py::buffer matrix = py_gate.attr("_generate_matrix")();
         py::buffer_info buf = matrix.request();
-        SparseMatrix base_matrix = from_numpy(matrix);
+        SparseMatrix base_matrix = from_numpy(matrix, atol);
 
         // Get the controls
         std::vector<int> controls;
@@ -238,7 +224,7 @@ std::vector<Gate> QiliSimCpp::parse_gates(const py::object& circuit) const {
     return gates;
 }
 
-std::vector<bool> QiliSimCpp::parse_measurements(const py::object& circuit) const {
+std::vector<bool> parse_measurements(const py::object& circuit) {
     /*
     Extract measurement qubit information from a circuit object.
 

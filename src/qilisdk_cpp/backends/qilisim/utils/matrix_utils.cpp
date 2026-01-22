@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "matrix_utils.h"
+#include "../libs/pybind.h"
 
-SparseMatrix QiliSimCpp::exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) const {
+SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
 
@@ -32,7 +33,7 @@ SparseMatrix QiliSimCpp::exp_mat_action(const SparseMatrix& H, std::complex<doub
     return exp_H_sparse;
 }
 
-SparseMatrix QiliSimCpp::exp_mat(const SparseMatrix& H, std::complex<double> dt) const {
+SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) {
     /*
     Compute the matrix exponential exp(H*dt).
 
@@ -49,7 +50,7 @@ SparseMatrix QiliSimCpp::exp_mat(const SparseMatrix& H, std::complex<double> dt)
     return exp_H_sparse;
 }
 
-std::complex<double> QiliSimCpp::dot(const SparseMatrix& v1, const SparseMatrix& v2) const {
+std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) {
     /*
     Compute the inner product between two sparse matrices.
     Note that the first matrix is conjugated.
@@ -64,7 +65,7 @@ std::complex<double> QiliSimCpp::dot(const SparseMatrix& v1, const SparseMatrix&
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> QiliSimCpp::dot(const DenseMatrix& v1, const DenseMatrix& v2) const {
+std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
     /*
     Compute the inner product between two dense matrices.
     Note that the first matrix is conjugated.
@@ -79,7 +80,7 @@ std::complex<double> QiliSimCpp::dot(const DenseMatrix& v1, const DenseMatrix& v
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> QiliSimCpp::trace(const SparseMatrix& matrix) const {
+std::complex<double> trace(const SparseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.
 
@@ -99,7 +100,7 @@ std::complex<double> QiliSimCpp::trace(const SparseMatrix& matrix) const {
     return tr;
 }
 
-SparseMatrix QiliSimCpp::vectorize(const SparseMatrix& matrix) const {
+SparseMatrix vectorize(const SparseMatrix& matrix, double atol) {
     /*
     Vectorize a matrix by stacking its columns.
 
@@ -115,7 +116,7 @@ SparseMatrix QiliSimCpp::vectorize(const SparseMatrix& matrix) const {
     for (int c = 0; c < cols; ++c) {
         for (int r = 0; r < rows; ++r) {
             std::complex<double> val = matrix.coeff(r, c);
-            if (std::abs(val) > atol_) {
+            if (std::abs(val) > atol) {
                 vec_entries.emplace_back(Triplet(r + c * rows, 0, val));
             }
         }
@@ -125,7 +126,7 @@ SparseMatrix QiliSimCpp::vectorize(const SparseMatrix& matrix) const {
     return vec_matrix;
 }
 
-SparseMatrix QiliSimCpp::devectorize(const SparseMatrix& vec_matrix) const {
+SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol) {
     /*
     Devectorize a column vector back into a square matrix.
 
@@ -140,7 +141,7 @@ SparseMatrix QiliSimCpp::devectorize(const SparseMatrix& vec_matrix) const {
     for (int c = 0; c < dim; ++c) {
         for (int r = 0; r < dim; ++r) {
             std::complex<double> val = vec_matrix.coeff(r + c * dim, 0);
-            if (std::abs(val) > atol_) {
+            if (std::abs(val) > atol) {
                 mat_entries.emplace_back(Triplet(r, c, val));
             }
         }

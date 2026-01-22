@@ -28,7 +28,7 @@ from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 @pytest.fixture
 def backend():
-    return QiliSim()
+    return QiliSim(seed=42)
 
 
 def test_execute_simple_circuit_no_measurement(backend):
@@ -221,7 +221,7 @@ def test_time_dependent_hamiltonian(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -320,7 +320,7 @@ def test_time_dependent_hamiltonian_imaginary(method):
         pauli_y(0),  # measure y
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -354,7 +354,7 @@ def test_row_vec_ordering(method):
         pauli_y(0),  # measure y
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -384,7 +384,7 @@ def test_time_dependent_hamiltonian_density_mat(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -418,7 +418,7 @@ def test_monte_carlo_time_evolution(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method, monte_carlo=True)
+    backend = QiliSim(evolution_method=method, monte_carlo=True, seed=42)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)

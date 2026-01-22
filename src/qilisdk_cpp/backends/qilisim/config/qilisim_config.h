@@ -13,11 +13,27 @@
 // limitations under the License.
 #pragma once
 
-#include "libs/pybind.h"
+#include <string>
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
+// Config file
+class QiliSimConfig {
+public:
+    bool monte_carlo = false;
+    int num_monte_carlo_trajectories = 1000;
+    int arnoldi_dim = 10;
+    int num_arnoldi_substeps = 10;
+    int num_integrate_substeps = 2;
+    std::string method = "integrate";
+    bool store_intermediate_results = false;
+    int num_threads = 1;
+    int seed = 42;
+    double atol = 1e-12;
+    int max_cache_size = 1000;
+    
+    // Initialize with default values
+    QiliSimConfig() = default;
+
+    // Can be called to validate the config and throw a py error if not
+    void validate() const;
+
 };

@@ -11,20 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#pragma once
 
 #include <complex>
 #include <string>
 #include <vector>
 
-#include <Eigen/Sparse>
-#include <unsupported/Eigen/src/KroneckerProduct/KroneckerTensorProduct.h>
-#include <unsupported/Eigen/MatrixFunctions>
-
-// Eigen specfic type defs
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor> SparseMatrix;
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::ColMajor> SparseMatrixCol;
-typedef Eigen::Triplet<std::complex<double>> Triplet;
-typedef std::vector<Eigen::Triplet<std::complex<double>>> Triplets;
+#include "../libs/eigen.h"
 
 class Gate {
    private:

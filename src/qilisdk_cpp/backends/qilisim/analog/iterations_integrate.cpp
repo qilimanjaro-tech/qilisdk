@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "iterations.h"
+#include "lindblad.h"
+#include "../libs/pybind.h"
 
-SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) const {
+SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
@@ -25,6 +27,7 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0, double dt, co
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
         num_substeps (int): Number of substeps to divide the time step into.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         SparseMatrix: The evolved density matrix after time dt.
@@ -59,10 +62,6 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0, double dt, co
 
     // Standard RK4 loop
     DenseMatrix rho = rho_0;
-    // DenseMatrix k1(rho_rows, rho_cols);
-    // DenseMatrix k2(rho_rows, rho_cols);
-    // DenseMatrix k3(rho_rows, rho_cols);
-    // DenseMatrix k4(rho_rows, rho_cols);
     DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_old(rho_rows, rho_cols);
@@ -87,24 +86,6 @@ SparseMatrix QiliSimCpp::iter_integrate(const SparseMatrix& rho_0, double dt, co
         rho_tmp += dt_sub * k;
         lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
         rho += (dt_sub / 6.0) * k;
-
-        // lindblad_rhs(k1, rho, currentH, jump_operators, is_unitary_on_statevector);
-        // rho_tmp = rho_old;
-        // rho_tmp += 0.5 * dt_sub * k1;
-        // rho += (dt_sub / 6.0) * k1;
-        // lindblad_rhs(k2, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        // rho_tmp = rho_old;
-        // rho_tmp += 0.5 * dt_sub * k2;
-        // rho += (dt_sub / 3.0) * k2;
-        // lindblad_rhs(k3, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        // rho_tmp = rho_old;
-        // rho_tmp += dt_sub * k3;
-        // rho += (dt_sub / 3.0) * k3;
-        // lindblad_rhs(k4, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        // rho += (dt_sub / 6.0) * k1;
-        // rho += (dt_sub / 3.0) * k2;
-        // rho += (dt_sub / 3.0) * k3;
-        // rho += (dt_sub / 6.0) * k4;
 
         // Normalize the density matrix
         if (is_unitary_on_statevector) {

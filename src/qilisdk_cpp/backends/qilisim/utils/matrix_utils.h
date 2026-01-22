@@ -13,11 +13,15 @@
 // limitations under the License.
 #pragma once
 
-#include "libs/pybind.h"
+#include <complex>
+#include <vector>
+#include "../libs/eigen.h"
+#include "../config/qilisim_config.h"
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-};
+SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1);
+SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt);
+std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2);
+std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2);
+std::complex<double> trace(const SparseMatrix& matrix);
+SparseMatrix vectorize(const SparseMatrix& matrix, double atol);
+SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol);

@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "random.h"
+#include "matrix_utils.h"
 #include <chrono>
 #include <random>
-#include "../qilisim.h"
+#include "../libs/pybind.h"
 
-std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) const {
+std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
 
@@ -57,7 +59,7 @@ std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vect
     return counts;
 }
 
-std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed) const {
+std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
 
@@ -99,12 +101,13 @@ std::map<std::string, int> QiliSimCpp::sample_from_probabilities(const std::vect
     return result;
 }
 
-SparseMatrix QiliSimCpp::get_vector_from_density_matrix(const SparseMatrix& rho_t) const {
+SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double atol) {
     /*
     Extract a state vector from a pure density matrix by finding a non-zero diagonal element.
 
     Args:
         rho_t (SparseMatrix): The density matrix.
+        atol (double): Absolute tolerance for considering elements as non-zero.
 
     Returns:
         SparseMatrix: The extracted state vector.
@@ -117,7 +120,7 @@ SparseMatrix QiliSimCpp::get_vector_from_density_matrix(const SparseMatrix& rho_
     int non_zero_col = -1;
     for (int r = 0; r < rho_t.rows(); ++r) {
         std::complex<double> val = rho_t.coeff(r, r);
-        if (std::abs(val) > atol_) {
+        if (std::abs(val) > atol) {
             non_zero_col = r;
             break;
         }
@@ -130,7 +133,7 @@ SparseMatrix QiliSimCpp::get_vector_from_density_matrix(const SparseMatrix& rho_
     Triplets state_vec_entries;
     for (int r = 0; r < rho_t.rows(); ++r) {
         std::complex<double> val = rho_t.coeff(r, non_zero_col);
-        if (std::abs(val) > atol_) {
+        if (std::abs(val) > atol) {
             state_vec_entries.emplace_back(Triplet(r, 0, val));
         }
     }
@@ -142,13 +145,15 @@ SparseMatrix QiliSimCpp::get_vector_from_density_matrix(const SparseMatrix& rho_
 }
 
 // Sample from a density matrix
-SparseMatrix QiliSimCpp::sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed) const {
+SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed, double atol) {
     /*
     Get statevector samples from a density matrix, using the eigendecomposition.
 
     Args:
         rho (SparseMatrix): The input density matrix.
         n_trajectories (int): Number of trajectories.
+        seed (int): Random seed for sampling.
+        atol (double): Absolute tolerance for considering eigenvalues as non-zero.
 
     Returns:
         SparseMatrix: A matrix who's columns are the sampled statevectors.
@@ -162,14 +167,14 @@ SparseMatrix QiliSimCpp::sample_from_density_matrix(const SparseMatrix& rho, int
     double total_prob = 0.0;
     for (int i = 0; i < evals.size(); ++i) {
         double prob = evals(i).real();
-        if (prob > atol_) {
+        if (prob > atol) {
             prob_entries.emplace_back(i, prob);
             total_prob += prob;
         }
     }
 
     // Make sure probabilities sum to 1
-    if (std::abs(total_prob - 1.0) > atol_) {
+    if (std::abs(total_prob - 1.0) > atol) {
         throw py::value_error("Probabilities from state do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
     }
 
@@ -190,7 +195,7 @@ SparseMatrix QiliSimCpp::sample_from_density_matrix(const SparseMatrix& rho, int
 
         // Normalize the state vector
         double norm = std::sqrt(state_vec.squaredNorm());
-        if (norm > atol_) {
+        if (norm > atol) {
             state_vec /= norm;
         }
 
@@ -215,7 +220,7 @@ SparseMatrix QiliSimCpp::sample_from_density_matrix(const SparseMatrix& rho, int
 }
 
 // Convert a matrix containing trajectories as columns to a density matrix
-SparseMatrix QiliSimCpp::trajectories_to_density_matrix(const SparseMatrix& trajectories) const {
+SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories) {
     /*
     Convert a matrix containing statevector trajectories as columns to a density matrix.
     If we have N trajectories |psi_i>, the density matrix is given by

@@ -13,11 +13,15 @@
 // limitations under the License.
 #pragma once
 
-#include "libs/pybind.h"
+#include <map>
+#include <string>
+#include <vector>
+#include "../digital/gate.h"
+#include "../config/qilisim_config.h"
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-};
+void sampling(std::vector<Gate>& gates,
+              const std::vector<bool>& qubits_to_measure,
+              int n_qubits,
+              int n_shots,
+              QiliSimConfig& config,
+              std::map<std::string, int>& counts);

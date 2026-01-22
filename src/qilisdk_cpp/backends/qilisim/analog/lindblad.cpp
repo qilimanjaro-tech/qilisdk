@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "lindblad.h"
 
-SparseMatrix QiliSimCpp::create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) const {
+SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) {
     /*
     Form the Lindblad superoperator for the given Hamiltonian and jump operators.
 
@@ -61,7 +61,7 @@ SparseMatrix QiliSimCpp::create_superoperator(const SparseMatrix& currentH, cons
     return L;
 }
 
-void QiliSimCpp::lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) const {
+void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) {
     /*
     Evaluate the right-hand side of the Lindblad master equation.
 

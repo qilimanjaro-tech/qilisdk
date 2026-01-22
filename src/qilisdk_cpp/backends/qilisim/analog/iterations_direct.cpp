@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "iterations.h"
+#include "../utils/matrix_utils.h"
+#include "lindblad.h"
+#include "../libs/pybind.h"
 
-SparseMatrix QiliSimCpp::iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) const {
+SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double atol) {
     /*
     Perform time evolution using direct matrix exponentiation.
 
@@ -24,6 +27,7 @@ SparseMatrix QiliSimCpp::iter_direct(const SparseMatrix& rho_0, double dt, const
         currentH (SparseMatrix): The current Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
         is_unitary_on_statevector (bool): Whether to treat the Hamiltonian as unitary on a statevector.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         SparseMatrix: The evolved density matrix after time dt.
@@ -59,10 +63,10 @@ SparseMatrix QiliSimCpp::iter_direct(const SparseMatrix& rho_0, double dt, const
 
         // If we have jump operators, need to form the full superoperator and act on the vectorized density matrix
     } else if (jump_operators.size() > 0) {
-        SparseMatrix rho_t = vectorize(rho_0);
+        SparseMatrix rho_t = vectorize(rho_0, atol);
         SparseMatrix L = create_superoperator(currentH, jump_operators);
         rho_t = exp_mat_action(L, dt, rho_t);
-        return devectorize(rho_t);
+        return devectorize(rho_t, atol);
 
         // Otherwise we just exponentiate the Hamiltonian
     } else {

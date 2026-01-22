@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include "../qilisim.h"
+#include "numpy.h"
 
-namespace py = pybind11;
-
-SparseMatrix QiliSimCpp::from_numpy(const py::buffer& matrix_buffer) const {
+SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     /*
     Convert a numpy array buffer to a SparseMatrix.
 
@@ -39,7 +35,7 @@ SparseMatrix QiliSimCpp::from_numpy(const py::buffer& matrix_buffer) const {
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             std::complex<double> val = ptr[r * cols + c];
-            if (std::abs(val) > atol_) {
+            if (std::abs(val) > atol) {
                 entries.emplace_back(Triplet(r, c, val));
             }
         }
@@ -49,7 +45,7 @@ SparseMatrix QiliSimCpp::from_numpy(const py::buffer& matrix_buffer) const {
     return mat;
 }
 
-py::array_t<std::complex<double>> QiliSimCpp::to_numpy(const SparseMatrix& matrix) const {
+py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) {
     /*
     Convert a SparseMatrix to a NumPy array.
 
@@ -72,7 +68,7 @@ py::array_t<std::complex<double>> QiliSimCpp::to_numpy(const SparseMatrix& matri
     return np_array;
 }
 
-py::array_t<double> QiliSimCpp::to_numpy(const std::vector<double>& vec) const {
+py::array_t<double> to_numpy(const std::vector<double>& vec) {
     /*
     Convert a vector of complex numbers to a NumPy array.
 
@@ -92,7 +88,7 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<double>& vec) const {
     return np_array;
 }
 
-py::array_t<double> QiliSimCpp::to_numpy(const std::vector<std::vector<double>>& vecs) const {
+py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs) {
     /*
     Convert a vector of vectors of complex numbers to a 2D NumPy array.
 
@@ -115,17 +111,19 @@ py::array_t<double> QiliSimCpp::to_numpy(const std::vector<std::vector<double>>&
     return np_array;
 }
 
-SparseMatrix QiliSimCpp::from_spmatrix(const py::object& matrix) const {
+SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     /*
     Convert a SciPy sparse matrix to a SparseMatrix.
 
     Args:
         matrix (py::object): The SciPy sparse matrix.
+        config (QiliSimConfig&): Configuration parameters for the extraction.
 
     Returns:
         SparseMatrix: The converted sparse matrix.
     */
-    py::object coo_matrix = matrix.attr("tocoo")();
+    py::object matrix_typed = matrix.attr("astype")(dtype);
+    py::object coo_matrix = matrix_typed.attr("tocoo")();
     py::array row = coo_matrix.attr("row").cast<py::array>();
     py::array col = coo_matrix.attr("col").cast<py::array>();
     py::array data = coo_matrix.attr("data").cast<py::array>();
@@ -141,7 +139,7 @@ SparseMatrix QiliSimCpp::from_spmatrix(const py::object& matrix) const {
     auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
     for (int i = 0; i < nnz; ++i) {
         std::complex<double> val = data_ptr[i];
-        if (std::abs(val) > atol_) {
+        if (std::abs(val) > atol) {
             entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
         }
     }

@@ -13,11 +13,8 @@
 // limitations under the License.
 #pragma once
 
-#include "libs/pybind.h"
+#include <vector>
+#include "../libs/eigen.h"
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-};
+SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators);
+void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector);

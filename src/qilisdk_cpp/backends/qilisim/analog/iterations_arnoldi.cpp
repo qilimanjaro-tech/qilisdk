@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../qilisim.h"
+#include "iterations.h"
+#include "../utils/matrix_utils.h"
+#include "lindblad.h"
+#include "../libs/pybind.h"
 
-void QiliSimCpp::arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H) const {
+void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H, double atol) {
     /*
     Perform the Arnoldi iteration to build the basis.
 
@@ -24,6 +27,7 @@ void QiliSimCpp::arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, s
         m (int): The dimension of the subspace.
         V (SparseMatrix&): Output basis vectors.
         H (SparseMatrix&): Output upper Hessenberg matrix.
+        atol (double): Absolute tolerance for numerical operations.
     */
 
     // Set up the outputs
@@ -53,7 +57,7 @@ void QiliSimCpp::arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, s
         // Update H and check for convergence
         double to_add = w.norm();
         H.coeffRef(j + 1, j) = to_add;
-        if (to_add < atol_) {
+        if (to_add < atol) {
             break;
         }
 
@@ -63,7 +67,7 @@ void QiliSimCpp::arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, s
     }
 }
 
-void QiliSimCpp::arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk) const {
+void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk, double atol) {
     /*
     Arnoldi iteration for the unitary Liouvillian:
         L(rho) = -i (H rho - rho H)
@@ -83,7 +87,7 @@ void QiliSimCpp::arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0,
     // Normalize initial matrix (Frobenius norm)
     SparseMatrix v = rho0;
     double beta = v.norm();
-    if (beta < atol_) {
+    if (beta < atol) {
         return;
     }
     v /= beta;
@@ -103,7 +107,7 @@ void QiliSimCpp::arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0,
         // Compute norm and check for convergence
         double norm_w = w.norm();
         Hk.coeffRef(j + 1, j) = norm_w;
-        if (norm_w < atol_) {
+        if (norm_w < atol) {
             break;
         }
 
@@ -113,7 +117,7 @@ void QiliSimCpp::arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0,
     }
 }
 
-SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector) const {
+SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol) {
     /*
     Perform time evolution using the Arnoldi iteration.
 
@@ -125,6 +129,7 @@ SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, cons
         arnoldi_dim (int): Dimension of the subspace.
         num_substeps (int): Number of substeps to divide the time step into.
         is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         SparseMatrix: The evolved density matrix after time dt.
@@ -167,7 +172,7 @@ SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, cons
     // Need to vectorize the density matrix if we're going to use the superoperator
     SparseMatrix rho_t;
     if (!is_unitary && !is_unitary_on_statevector) {
-        rho_t = vectorize(rho_0);
+        rho_t = vectorize(rho_0, atol);
     } else {
         rho_t = rho_0;
     }
@@ -190,13 +195,13 @@ SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, cons
         // After this, we have our operator approximated in the basis as A
         // and the basis vectors in V
         if (is_unitary_on_statevector) {
-            arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A);
+            arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
         } else if (!is_unitary) {
-            arnoldi(L, rho_t, arnoldi_dim, V, A);
+            arnoldi(L, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size()) - 1;
         } else {
-            arnoldi_mat(currentH, rho_t, arnoldi_dim, V, A);
+            arnoldi_mat(currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
         }
         A.conservativeResize(subspace_dim, subspace_dim);
@@ -237,7 +242,7 @@ SparseMatrix QiliSimCpp::iter_arnoldi(const SparseMatrix& rho_0, double dt, cons
 
     // If we vectorized, need to devectorize before returning
     if (!is_unitary && !is_unitary_on_statevector) {
-        rho_t = devectorize(rho_t);
+        rho_t = devectorize(rho_t, atol);
     }
 
     return rho_t;
