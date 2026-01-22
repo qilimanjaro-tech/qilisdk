@@ -350,9 +350,9 @@ def test_to_matrix_two_qubit_single_term():
     should return the correct Kronecker product.
     """
     H = Hamiltonian({(PauliZ(0), PauliX(1)): 2})
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
-    expected = 2 * np.kron(Z_matrix, X_matrix)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 2 * np.kron(z_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -362,10 +362,10 @@ def test_to_matrix_two_qubit_multiple_terms():
     the matrix representation should be the sum of the two Kronecker products.
     """
     H = 0.5 * PauliZ(0).to_hamiltonian() + 1.5 * PauliX(1).to_hamiltonian()
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
     I_matrix = np.eye(2, dtype=COMPLEX_DTYPE)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
-    expected = 0.5 * np.kron(Z_matrix, I_matrix) + 1.5 * np.kron(I_matrix, X_matrix)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 0.5 * np.kron(z_matrix, I_matrix) + 1.5 * np.kron(I_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -380,9 +380,9 @@ def test_to_matrix_three_qubit():
     """
     H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
     I2 = np.eye(2, dtype=COMPLEX_DTYPE)
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
-    expected = 3 * np.kron(I2, np.kron(Z_matrix, X_matrix))
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 3 * np.kron(I2, np.kron(z_matrix, x_matrix))
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -402,9 +402,9 @@ def test_to_qtensor_with_padding():
     tensor = H.to_qtensor(total_nqubits=4)
 
     I2 = np.eye(2, dtype=COMPLEX_DTYPE)
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
-    expected = 3 * np.kron(np.kron(np.kron(I2, Z_matrix), X_matrix), I2)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 3 * np.kron(np.kron(np.kron(I2, z_matrix), x_matrix), I2)
 
     np.testing.assert_allclose(tensor.dense(), expected, atol=1e-8)
     assert tensor.nqubits == 4

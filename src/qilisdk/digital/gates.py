@@ -422,15 +422,15 @@ class Controlled(Modified[TBasicGate]):
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        I_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
+        i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
         P = np.array([[0, 0], [0, 1]], dtype=_complex_dtype())
         for _ in range(len(self.control_qubits) - 1):
             P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=_complex_dtype()))
-        # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
-        I_target = np.eye(1 << len(self.target_qubits), dtype=_complex_dtype())
+        # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ i_target.
+        i_target = np.eye(1 << len(self.target_qubits), dtype=_complex_dtype())
         # The controlled gate is then:
-        controlled = I_full + np.kron(P, self.basic_gate.matrix - I_target)
+        controlled = i_full + np.kron(P, self.basic_gate.matrix - i_target)
         return controlled
 
     @property
