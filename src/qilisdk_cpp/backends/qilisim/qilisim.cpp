@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "qilisim.h"
-#include "digital/sampling.h"
 #include "analog/time_evolution.h"
-#include "utils/parsers.h"
-#include "utils/numpy.h"
-#include "digital/gate.h"
 #include "config/qilisim_config.h"
+#include "digital/gate.h"
+#include "digital/sampling.h"
+#include "utils/numpy.h"
+#include "utils/parsers.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -139,7 +139,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         coeffs.append(coeffs_for_h);
     }
     py::object observables = functional.attr("observables");
-    
+
     // Get parameters
     QiliSimConfig config;
     if (solver_params.contains("arnoldi_dim")) {
@@ -205,18 +205,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     SparseMatrix rho_t;
     std::vector<double> expectation_values;
     std::vector<std::vector<double>> intermediate_expectation_values;
-    time_evolution(rho_0, 
-                   hamiltonians, 
-                   parameters_list, 
-                   step_list, 
-                   jump_operators, 
-                   observable_matrices, 
-                   config,
-                   rho_t,
-                   intermediate_rhos,
-                   expectation_values,
-                   intermediate_expectation_values
-                );
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, jump_operators, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
 
     // Convert things to numpy arrays
     py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);
@@ -235,5 +224,4 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
 
     // Return a TimeEvolutionResult with these
     return TimeEvolutionResult("final_state"_a = QTensor(rho_numpy), "final_expected_values"_a = expect_numpy, "intermediate_states"_a = intermediate_rho_numpy, "expected_values"_a = intermediate_expect_numpy);
-
 }

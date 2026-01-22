@@ -16,12 +16,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "../digital/gate.h"
 #include "../config/qilisim_config.h"
+#include "../digital/gate.h"
 
-void sampling(std::vector<Gate>& gates,
-              const std::vector<bool>& qubits_to_measure,
-              int n_qubits,
-              int n_shots,
-              QiliSimConfig& config,
-              std::map<std::string, int>& counts);
+void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, QiliSimConfig& config, std::map<std::string, int>& counts);

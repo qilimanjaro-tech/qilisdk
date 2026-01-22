@@ -16,7 +16,6 @@
 #include "../libs/pybind.h"
 
 void QiliSimConfig::validate() const {
-
     /*
     Validate the QiliSim configuration.
 

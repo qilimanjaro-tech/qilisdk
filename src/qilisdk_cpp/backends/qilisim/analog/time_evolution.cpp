@@ -13,21 +13,11 @@
 // limitations under the License.
 
 #include "time_evolution.h"
-#include "../utils/random.h"
 #include "../utils/matrix_utils.h"
+#include "../utils/random.h"
 #include "iterations.h"
 
-void time_evolution(SparseMatrix rho_0,
-                    const std::vector<SparseMatrix>& hamiltonians,
-                    const std::vector<std::vector<double>>& parameters_list,
-                    const std::vector<double>& step_list,
-                    const std::vector<SparseMatrix>& jump_operators,
-                    const std::vector<SparseMatrix>& observable_matrices,
-                    QiliSimConfig& config,
-                    SparseMatrix& rho_t,
-                    std::vector<SparseMatrix>& intermediate_rhos,
-                    std::vector<double>& expectation_values,
-                    std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, const std::vector<SparseMatrix>& jump_operators, const std::vector<SparseMatrix>& observable_matrices, QiliSimConfig& config, SparseMatrix& rho_t, std::vector<SparseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
     /*
     Execute a time evolution functional.
 
@@ -195,5 +185,4 @@ void time_evolution(SparseMatrix rho_0,
             intermediate_expectation_values.push_back(step_expectation_values);
         }
     }
-
 }

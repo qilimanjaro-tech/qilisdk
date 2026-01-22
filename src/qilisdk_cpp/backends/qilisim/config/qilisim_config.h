@@ -17,7 +17,7 @@
 
 // Config file
 class QiliSimConfig {
-public:
+   public:
     bool monte_carlo = false;
     int num_monte_carlo_trajectories = 1000;
     int arnoldi_dim = 10;
@@ -29,11 +29,10 @@ public:
     int seed = 42;
     double atol = 1e-12;
     int max_cache_size = 1000;
-    
+
     // Initialize with default values
     QiliSimConfig() = default;
 
     // Can be called to validate the config and throw a py error if not
     void validate() const;
-
 };

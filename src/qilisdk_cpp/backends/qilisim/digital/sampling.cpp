@@ -15,20 +15,15 @@
 #include <iomanip>
 #include <sstream>
 
-#include "sampling.h"
-#include "../utils/random.h"
 #include "../libs/pybind.h"
+#include "../utils/random.h"
+#include "sampling.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-void sampling(std::vector<Gate>& gates,
-                    const std::vector<bool>& qubits_to_measure,
-                    int n_qubits,
-                    int n_shots,
-                    QiliSimConfig& config,
-                    std::map<std::string, int>& counts) {
+void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, QiliSimConfig& config, std::map<std::string, int>& counts) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -157,5 +152,4 @@ void sampling(std::vector<Gate>& gates,
         filtered_counts[filtered_bitstring] += pair.second;
     }
     counts = filtered_counts;
-
 }
