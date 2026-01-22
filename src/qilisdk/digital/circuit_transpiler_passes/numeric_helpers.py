@@ -21,7 +21,7 @@ _EPS = 1e-12
 _SIG_DECIMALS = 12
 
 
-def _wrap_angle(a: float) -> float:
+def _wrap_angle(angle: float) -> float:
     """Wrap an angle to the (-pi, pi] range.
 
     Args:
@@ -29,33 +29,33 @@ def _wrap_angle(a: float) -> float:
     Returns:
         float: Angle mapped into the open-closed interval (-pi, pi].
     """
-    a = (a + math.pi) % (2.0 * math.pi) - math.pi
-    if a <= -math.pi:
-        a = math.pi
-    return a
+    angle = (angle + math.pi) % (2.0 * math.pi) - math.pi
+    if angle <= -math.pi:
+        angle = math.pi
+    return angle
 
 
-def _zyz_from_unitary(U: np.ndarray) -> tuple[float, float, float]:
+def _zyz_from_unitary(unitary: np.ndarray) -> tuple[float, float, float]:
     """Recover ZYZ Euler angles from a 2x2 unitary.
 
     Args:
-        U (np.ndarray): 2x2 unitary matrix.
+        u (np.ndarray): 2x2 unitary matrix.
     Returns:
         tuple[float, float, float]: Tuple containing theta, phi and gamma angles.
     Raises:
         ValueError: If matrix is not 2x2.
     """
-    if U.shape != (2, 2):
+    if unitary.shape != (2, 2):
         raise ValueError("Expected 2x2 unitary for ZYZ decomposition.")
-    det = np.linalg.det(U)
+    det = np.linalg.det(unitary)
     if abs(det) < _EPS:
         raise ValueError("Matrix is singular.")
     # remove phase to a U3 rotation
-    phase = np.angle(U[0, 0])
-    U /= np.exp(1j * phase, dtype=complex)
+    phase = np.angle(unitary[0, 0])
+    unitary /= np.exp(1j * phase, dtype=complex)
 
-    a00, a01 = U[0, 0], U[0, 1]
-    a10, a11 = U[1, 0], U[1, 1]
+    a00, a01 = unitary[0, 0], unitary[0, 1]
+    a10, a11 = unitary[1, 0], unitary[1, 1]
     theta = 2.0 * math.atan2(np.abs(a01), np.abs(a00))
     s = math.sin(theta / 2.0)
 
@@ -68,7 +68,7 @@ def _zyz_from_unitary(U: np.ndarray) -> tuple[float, float, float]:
     return (theta, phi, lam)
 
 
-def _unitary_sqrt_2x2(U: np.ndarray) -> np.ndarray:
+def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
     """Compute the principal square root of a 2x2 unitary.
 
     Args:
@@ -76,7 +76,7 @@ def _unitary_sqrt_2x2(U: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Matrix V such that V · V equals U.
     """
-    w, V = np.linalg.eig(U)
+    w, V = np.linalg.eig(unitary)
     ph = np.angle(w)
     sqrt_w = np.exp(0.5j * ph)
     return V @ np.diag(sqrt_w) @ np.linalg.inv(V)

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ruff: noqa: ANN001, ANN202, PLR6301
+from __future__ import annotations
+
 from email.utils import parsedate_to_datetime
 from enum import Enum
 from typing import Any, Callable, Generic, TypeVar, cast, overload
@@ -368,16 +370,16 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
     @classmethod
-    def sampling(cls, job_id: int) -> "JobHandle[SamplingResult]":
-        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)  # type: ignore[return-value, arg-type]
+    def sampling(cls: type[JobHandle[SamplingResult]], job_id: int) -> JobHandle[SamplingResult]:
+        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)
 
     @classmethod
-    def time_evolution(cls, job_id: int) -> "JobHandle[TimeEvolutionResult]":
-        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)  # type: ignore[return-value, arg-type]
+    def time_evolution(cls: type[JobHandle[TimeEvolutionResult]], job_id: int) -> JobHandle[TimeEvolutionResult]:
+        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)
 
     @overload
     @classmethod
-    def variational_program(cls, job_id: int) -> "JobHandle[VariationalProgramResult]": ...
+    def variational_program(cls, job_id: int) -> JobHandle[VariationalProgramResult]: ...
 
     @overload
     @classmethod
@@ -406,32 +408,32 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
             handle = cls(
                 id=job_id,
                 execute_type=ExecuteType.VARIATIONAL_PROGRAM,
-                extractor=_require_variational_program_result,  # type: ignore[arg-type]
+                extractor=_require_variational_program_result,
             )
             return cast("JobHandle[VariationalProgramResult]", handle)
 
         extractor = _require_variational_program_result_typed(result_type)
-        handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)  # type: ignore[arg-type]
+        handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)
         return cast("JobHandle[VariationalProgramResult[TVariationalInnerResult]]", handle)
 
     @classmethod
-    def rabi_experiment(cls, job_id: int) -> "JobHandle[RabiExperimentResult]":
-        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)  # type: ignore[return-value, arg-type]
+    def rabi_experiment(cls: type[JobHandle[RabiExperimentResult]], job_id: int) -> JobHandle[RabiExperimentResult]:
+        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)
 
     @classmethod
-    def t1_experiment(cls, job_id: int) -> "JobHandle[T1ExperimentResult]":
-        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)  # type: ignore[return-value, arg-type]
+    def t1_experiment(cls: type[JobHandle[T1ExperimentResult]], job_id: int) -> JobHandle[T1ExperimentResult]:
+        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)
 
     @classmethod
-    def t2_experiment(cls, job_id: int) -> "JobHandle[T2ExperimentResult]":
-        return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)  # type: ignore[return-value, arg-type]
+    def t2_experiment(cls: type[JobHandle[T2ExperimentResult]], job_id: int) -> JobHandle[T2ExperimentResult]:
+        return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)
 
     @classmethod
-    def two_tones_experiment(cls, job_id: int) -> "JobHandle[TwoTonesExperimentResult]":
+    def two_tones_experiment(cls: type[JobHandle[TwoTonesExperimentResult]], job_id: int) -> JobHandle[TwoTonesExperimentResult]:
         return cls(
             id=job_id,
             execute_type=ExecuteType.TWO_TONES_EXPERIMENT,
-            extractor=_require_two_tones_experiment_result,  # type: ignore[return-value, arg-type]
+            extractor=_require_two_tones_experiment_result,
         )
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":

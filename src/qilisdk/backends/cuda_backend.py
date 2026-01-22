@@ -90,7 +90,7 @@ class CudaBackend(Backend):
             U1: CudaBackend._handle_U1,
             U2: CudaBackend._handle_U2,
             U3: CudaBackend._handle_U3,
-            SWAP: CudaBackend._handle_SWAP,  # type: ignore[dict-item]
+            SWAP: CudaBackend._handle_SWAP,
         }
         self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
             PauliX: CudaBackend._handle_PauliX,
@@ -367,7 +367,7 @@ class CudaBackend(Backend):
     def _handle_SWAP(kernel: cudaq.Kernel, gate: SWAP, qubit_0: cudaq.QuakeValue, qubit_1: cudaq.QuakeValue) -> None:
         kernel.swap(qubit_0, qubit_1)
 
-    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian, padding: int = 0) -> OperatorSum:  # type: ignore
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian, padding: int = 0) -> OperatorSum:
         out = None
         for offset, terms in hamiltonian:
             if out is None:
@@ -377,17 +377,17 @@ class CudaBackend(Backend):
         return out
 
     @staticmethod
-    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:  # type: ignore
+    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
         return spin.x(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:  # type: ignore
+    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
         return spin.y(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:  # type: ignore
+    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
         return spin.z(target=operator.qubit)
 
     @staticmethod
-    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:  # type: ignore
+    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
         return spin.i(target=operator.qubit)
