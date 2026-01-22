@@ -16,6 +16,8 @@ import math
 from copy import copy
 
 import numpy as np
+from io import StringIO
+from ruamel.yaml import YAML
 import pytest
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
@@ -28,6 +30,8 @@ from qilisdk.core.variables import (
     MAX_INT,
     MIN_INT,
     NEQ,
+    LARGE_BOUND,
+    BaseVariable,
     BinaryVariable,
     Bitwise,
     ComparisonTerm,
@@ -43,6 +47,7 @@ from qilisdk.core.variables import (
     NotEqual,
     Number,
     OneHot,
+    ComparisonOperation,
     Operation,
     Parameter,
     Sin,
@@ -52,7 +57,7 @@ from qilisdk.core.variables import (
 )
 
 
-def test_domain_check_value_and_bounds():
+def test_domain_check_value_and_bounds(monkeypatch):
     # BINARY domain
     assert Domain.BINARY.check_value(0)
     assert Domain.BINARY.check_value(1)
@@ -78,6 +83,9 @@ def test_domain_check_value_and_bounds():
     # REAL domain
     assert Domain.REAL.min() == -1e30
     assert Domain.REAL.max() == 1e30
+
+    # test a different type of domain that doesn't current exist
+    assert not Domain.check_value("not a domain", 3.1)
 
 
 def test_comparison_operators():
@@ -393,40 +401,45 @@ def test_num_binary_equivalent():
     assert x.num_binary_equivalent() == 7
 
 
-def test_invalid_bit_string():
+def test_invalid_bit_string(monkeypatch):
     # OneHot
-
     x = Variable("x", Domain.INTEGER, (-10, 10), OneHot)
-
     with pytest.raises(ValueError, match=r"invalid binary string"):
         x.evaluate([1, 0, 1])
-
     with pytest.raises(ValueError, match=r"invalid binary string"):
         x.evaluate([0, 0, 0])
-
     x = Variable("x", Domain.INTEGER, (0, 2), OneHot)
     x.evaluate([0, 0, 1])
     with pytest.raises(ValueError, match=r"expected 3 variables but received 5"):
         x.evaluate([1, 0, 0, 0, 0])
+    with pytest.raises(ValueError, match=r"invalid binary string"):
+        x.evaluate([1, 1, 1])
+    with pytest.raises(ValueError, match=r"invalid binary string"):
+        x.evaluate([1, 1, 1])
+    
+    # pretend we inited wrongly
+    monkeypatch.setattr(x, "_term", x.term + x[0])
+    x.evaluate([1, 0, 0])
 
     # Bitwise
-
     x = Variable("x", Domain.INTEGER, (0, 2), Bitwise)
     x.evaluate([0, 0])
     with pytest.raises(ValueError, match=r"expected 2 variables but received 3"):
         x.evaluate([1, 0, 0])
+    with pytest.raises(ValueError, match=r"Invalid Value Provided"):
+        x.evaluate("string var")
+    monkeypatch.setattr(Bitwise, "check_valid", lambda bits: (False, "invalid binary string"))
+    with pytest.raises(ValueError, match=r"invalid binary string"):
+        x.evaluate([1, 1])
 
     # DomainWall
     x = Variable("x", Domain.INTEGER, (0, 10), DomainWall)
-
     with pytest.raises(ValueError, match=r"invalid binary string"):
         x.evaluate([1, 0, 1])
-
     x = Variable("x", Domain.INTEGER, (0, 2), DomainWall)
     x.evaluate([1, 1])
     with pytest.raises(ValueError, match=r"expected 2 variables but received 5"):
         x.evaluate([1, 0, 0, 0, 0])
-
     with pytest.raises(ValueError, match=r"invalid binary string"):
         x.evaluate([0, 1, 0])
 
@@ -1178,3 +1191,101 @@ def test_cos_map():
     assert cos_map.evaluate({b: 1}) == np.cos(3)
 
     assert isinstance(copy(cos_map), Cos)
+
+@pytest.mark.parametrize("domain", list(Domain))
+def test_domain_yaml(domain):
+
+    yaml = YAML()
+    yaml.register_class(Domain)
+    stream = StringIO()
+
+    yaml.dump(domain, stream)
+    stream.seek(0)
+
+    loaded = yaml.load(stream)
+
+    assert loaded is domain
+
+@pytest.mark.parametrize("operation", list(Operation))
+def test_operation(operation):
+
+    yaml = YAML()
+    yaml.register_class(Operation)
+    stream = StringIO()
+
+    yaml.dump(operation, stream)
+    stream.seek(0)
+
+    loaded = yaml.load(stream)
+
+    assert loaded is operation
+
+@pytest.mark.parametrize("comparison_operation", list(ComparisonOperation))
+def test_operation_comparison_operator(comparison_operation):
+
+    yaml = YAML()
+    yaml.register_class(ComparisonOperation)
+    stream = StringIO()
+
+    yaml.dump(comparison_operation, stream)
+    stream.seek(0)
+
+    loaded = yaml.load(stream)
+
+    assert loaded is comparison_operation
+
+def test_base_variable():
+
+    class DummyVariable(BaseVariable):
+        def evaluate(self, value):
+            return super().evaluate(value)
+        def num_binary_equivalent(self):
+            return super().num_binary_equivalent()
+        def to_binary(self):
+            return super().to_binary()  
+
+    a = DummyVariable("a", Domain.INTEGER, (0, 1))
+
+    not_number = "not a number"
+    np_generic = np.float64(1.0)
+
+    with pytest.raises(TypeError):
+        a + not_number
+    with pytest.raises(TypeError):
+        not_number + a
+    assert a + np_generic == a + 1.0
+    assert np_generic + a == 1.0 + a
+
+    with pytest.raises(TypeError):
+        a - not_number
+    with pytest.raises(TypeError):
+        not_number - a
+    assert a - np_generic == a - 1.0
+    assert a.__rsub__(np_generic) == 1.0 - a
+
+    with pytest.raises(TypeError):
+        a * not_number
+    with pytest.raises(TypeError):
+        not_number * a
+    assert a * np_generic == a * 1.0
+    assert a.__rmul__(np_generic) == 1.0 * a
+
+    with pytest.raises(NotImplementedError, match="Only division by real numbers"):
+        a / not_number
+    assert a / np_generic == a / 1.0
+
+def test_binary_variable_evaluate(monkeypatch):
+
+    x = BinaryVariable("x")
+    monkeypatch.setattr(Domain, "check_value", lambda self, value: (True, ""))
+    assert x.evaluate(2) == 2
+
+def test_big_bounds(monkeypatch):
+    
+    # capture output of logger.warning
+    out = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg: out.append(msg))
+    x = Variable("x", Domain.REAL, (0, LARGE_BOUND+1))
+    x.term
+    assert len(out) >= 1
+    assert "Encoding variable" in out[0]
