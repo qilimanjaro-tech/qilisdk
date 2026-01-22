@@ -363,9 +363,9 @@ def test_to_matrix_two_qubit_multiple_terms():
     """
     H = 0.5 * PauliZ(0).to_hamiltonian() + 1.5 * PauliX(1).to_hamiltonian()
     z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
-    I_matrix = np.eye(2, dtype=COMPLEX_DTYPE)
+    i_matrix = np.eye(2, dtype=COMPLEX_DTYPE)
     x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
-    expected = 0.5 * np.kron(z_matrix, I_matrix) + 1.5 * np.kron(I_matrix, x_matrix)
+    expected = 0.5 * np.kron(z_matrix, i_matrix) + 1.5 * np.kron(i_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
