@@ -11,9 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pydantic import BaseModel, Field
+
 from qilisdk.digital import Circuit
 
-from .circuit_transpiler_passes import CircuitTranspilerPass, DecomposeMultiControlledGatesPass
+from .circuit_transpiler_passes import (
+    CircuitTranspilerPass,
+    DecomposeMultiControlledGatesPass,
+    DecomposeToUniversalSetPass,
+    TranspilationContext,
+    UniversalSet,
+)
+
+
+class DigitalTranspilationConfig(BaseModel):
+    universal_set:  UniversalSet = Field(default=UniversalSet.RZ_RX_CX)
 
 
 class CircuitTranspiler:
@@ -30,8 +42,24 @@ class CircuitTranspiler:
         pipeline (list[CircuitTranspilerPass] | None): Sequential list of passes to execute while transpiling.
     """
 
-    def __init__(self, pipeline: list[CircuitTranspilerPass] | None = None) -> None:
-        self._pipeline = pipeline or [DecomposeMultiControlledGatesPass()]
+    def __init__(self,
+        universal_set:  UniversalSet = UniversalSet.RZ_RX_CX,
+        pipeline: list[CircuitTranspilerPass] | None = None,
+        context: TranspilationContext | None = None
+    ) -> None:
+        self._universal_set = universal_set
+        self._pipeline = pipeline or [
+            DecomposeMultiControlledGatesPass(),
+            DecomposeToUniversalSetPass(self._universal_set)
+        ]
+        self._context = context or TranspilationContext()
+
+        for p in self._pipeline:
+            p.attach_context(self._context)
+
+    @property
+    def context(self) -> TranspilationContext:
+        return self._context
 
     def transpile(self, circuit: Circuit) -> Circuit:
         """Run the configured pass pipeline over the provided circuit.

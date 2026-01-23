@@ -12,15 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .circuit_transpiler_pass import CircuitTranspilerPass
-from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
-from .decompose_to_universal_set_pass import DecomposeToUniversalSetPass, UniversalSet
-from .transpilation_context import TranspilationContext
+from __future__ import annotations
 
-__all__ = [
-    "CircuitTranspilerPass",
-    "DecomposeMultiControlledGatesPass",
-    "DecomposeToUniversalSetPass",
-    "TranspilationContext",
-    "UniversalSet",
-]
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from qilisdk.digital import Circuit
+
+
+@dataclass
+class TranspilationPassOutput:
+    label: str
+    circuit: Circuit
+
+
+@dataclass
+class TranspilationContext:
+    """Shared, mutable state for passes."""
+    outputs: list[TranspilationPassOutput] = field(default_factory=list)

@@ -46,6 +46,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             for h in self._rewrite_gate(g):
                 out.add(h)
 
+        self.add_output_to_context(out)
         return out
 
     def _rewrite_gate(self, gate: Gate) -> List[Gate]:  # noqa: PLR6301
@@ -149,8 +150,8 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
 
     # Express V as a U3 on the same qubit. This introduces a new gate in U3 form
     # for the *square root*, but leaves the original g untouched.
-    th, ph, lam = _zyz_from_unitary(Vs)
-    return U3(q, theta=th, phi=ph, gamma=lam)
+    th, ph, gamma = _zyz_from_unitary(Vs)
+    return U3(q, theta=th, phi=ph, gamma=gamma)
 
 
 def _adjoint_of(gate: BasicGate) -> BasicGate:
