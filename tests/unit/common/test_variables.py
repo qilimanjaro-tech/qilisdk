@@ -19,6 +19,7 @@ import numpy as np
 from io import StringIO
 from ruamel.yaml import YAML
 import pytest
+from enum import Enum
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.core.variables import (
@@ -54,6 +55,10 @@ from qilisdk.core.variables import (
     SpinVariable,
     Term,
     Variable,
+    _check_output,
+    _extract_number,
+    _float_if_real,
+    _assert_real,
 )
 
 
@@ -907,6 +912,12 @@ def test_Term_printing():
     expected_t = "x * y * (2)"
     assert repr(t) == expected_t
 
+    # test default print
+    t = 1 + x
+    t._elements["test"] = 1
+    expected_t = "x + (1) + test"
+    assert repr(t) == expected_t
+
 
 def test_Term_division():
     x = Variable("x", Domain.REAL)
@@ -1342,3 +1353,145 @@ def test_empty_term():
 
     t = Term([], Operation.ADD)
     assert t.evaluate({}) == 0
+
+def test_term_evaluate_invalid_variable(monkeypatch):
+
+    x = Parameter("x", 2)
+    term = 2 * x + 3
+    with pytest.raises(ValueError, match=r"value with a list is not supported"):
+        term.evaluate({x: [1]}) 
+
+    # test that if somehow in the evaulate we get a integer, that it's returned as a float
+    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5)
+    assert term.evaluate({x: 2}) == 5
+
+    # test that if somehow in the evaulate we get a complex with no imag part, that the real part is returned
+    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5 + 0j)
+    assert term.evaluate({x: 2}) == 5
+
+    # test that if somehow in the evaulate we get a complex, that the full thing is returned
+    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5 + 5j)
+    assert term.evaluate({x: 2}) == 5 + 5j
+
+def test_is_parameterized_term():
+    
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    x = Variable("x", Domain.INTEGER, (0,3))
+    term1 = 2 * b + 3
+    term2 = 2 * p + 3
+    term3 = 2 * x + 3
+    term4 = 2 * b + 3 * p + x
+    assert not term1.is_parameterized_term()
+    assert term2.is_parameterized_term()
+    assert not term3.is_parameterized_term()
+    assert not term4.is_parameterized_term()
+
+def test_term_arithmetic():
+
+    not_number = "not a number"
+    np_generic = np.float64(1.0)
+
+    b = BinaryVariable("b")
+    t = b + 2
+
+    with pytest.raises(TypeError):
+        t + not_number
+    with pytest.raises(TypeError):
+        not_number + t
+    assert t + np_generic == t + 1.0
+    assert t.__radd__(np_generic) == 1.0 + t
+
+    with pytest.raises(TypeError):
+        t - not_number
+    with pytest.raises(TypeError):
+        not_number - t
+    assert t - np_generic == t - 1.0
+    assert t.__rsub__(np_generic) == 1.0 - t
+
+    with pytest.raises(TypeError):
+        t * not_number
+    with pytest.raises(TypeError):
+        not_number * t
+    assert t * np_generic == t * 1.0
+    assert t.__rmul__(np_generic) == 1.0 * t
+
+    with pytest.raises(NotImplementedError, match="Only division by"):
+        t / not_number
+    assert t / np_generic == t / 1.0
+
+    with pytest.raises(ValueError, match="Only integer exponents"):
+        t ** 2.5
+
+def test_strange_comparison_terms():
+    comp = ComparisonTerm(2, 3, ComparisonOperation.LEQ)
+    assert comp.to_list() == [-1]
+
+def test_bad_comparison_operation():
+    class DummyComparisonOperation(Enum):
+        DUMMY = "DUMMY"
+    comp = ComparisonTerm(2, 3, DummyComparisonOperation.DUMMY)
+    with pytest.raises(ValueError, match="Unsupported Operation"):
+        comp.evaluate({})
+
+def test_complex_comparison_term_evaluate(monkeypatch):
+
+    v = Variable("v", Domain.REAL)
+    lhs_real = v * 2
+    lhs_imag = v * 2j
+    rhs_real = v + 3
+    rhs_imag = v + 3j
+    rhs_almost_imag = v + complex(3, 0)
+    lhs_almost_imag = v * complex(2, 0)
+    with pytest.raises(ValueError, match="evaluating inequality constraints"):
+        EQ(lhs_imag, rhs_real).evaluate({v: 1})
+    with pytest.raises(ValueError, match="evaluating inequality constraints"):
+        EQ(lhs_real, rhs_imag).evaluate({v: 1})
+    monkeypatch.setattr(
+        Term,
+        "evaluate",
+        lambda self, value_dict: complex(self.get_constant(), 0),
+    )
+    assert EQ(lhs_almost_imag, rhs_almost_imag).evaluate({v: 1}) == False
+
+def test_comparison_term_equality():
+
+    v = Variable("v", Domain.REAL)
+    comp1 = EQ(v + 1, 2)
+    comp2 = EQ(v + 1, 2)
+    comp3 = EQ(v + 2, 2)
+    other = "not a comparison term"
+
+    assert comp1 == comp2
+    assert comp1 != comp3
+    assert comp1 != other
+
+def test_check_output():
+
+    x = Variable("x", Domain.INTEGER, (0, 3))
+    assert _check_output(x, 3) == 3
+    with pytest.raises(ValueError, match=r"outside the variable domain"):
+        _check_output(x, "test")
+    assert _check_output(x, complex(3, 0)) == 3
+
+    b = Variable("b", Domain.BINARY)
+    with pytest.raises(ValueError, match=r"violates the domain"):
+        _check_output(b, 4.4)
+
+def test_extract_number():
+    assert _extract_number("var(3)") == 3
+    assert _extract_number("var(33)") == 33
+    assert _extract_number("var(test)") == 0
+
+def test_float_if_real():
+    assert _float_if_real(3) == 3.0
+    assert _float_if_real(3.5) == 3.5
+    assert _float_if_real(complex(3, 0)) == 3.0
+    assert _float_if_real(complex(3, 2)) == complex(3, 2)
+
+def test_assert_real():
+    assert _assert_real(3) == 3
+    assert _assert_real(3.5) == 3.5
+    assert _assert_real(complex(3, 0)) == 3.0
+    with pytest.raises(ValueError, match=r"Only Real values"):
+        _assert_real(complex(3, 2))

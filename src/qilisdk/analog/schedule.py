@@ -88,6 +88,7 @@ class Schedule(Parameterizable):
         """
         # THIS is the only runtime implementation
         super(Schedule, self).__init__()
+
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[str, Interpolator] = {}
         self._interpolation = None

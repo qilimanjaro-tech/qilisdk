@@ -137,7 +137,9 @@ GreaterThanOrEqual = GEQ
 
 
 def _extract_number(label: str) -> int:
-    """Extracts the number from the variable's label.
+    """
+    Extracts the number from the variable's label.
+    Note that this only matches positive integers.
 
     Args:
         label (str): variable label that follows the format <label>(<number>).
@@ -414,7 +416,7 @@ def _check_output(var: Variable, output: Number) -> RealNumber:
     if not var.domain.check_value(out):
         raise ValueError(
             f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-        )  # not sure this line can be reached.
+        ) 
 
     return out
 
@@ -1700,10 +1702,6 @@ class Term:
                     )
             elif isinstance(e, BaseVariable):
                 if self._is_constant(e):
-                    if self.operation in {Operation.ADD, Operation.SUB} and self[e] == 0:
-                        continue
-                    if self.operation in {Operation.MUL, Operation.DIV} and self[e] == 1:
-                        continue
                     output_string += f"({_float_if_real(self[e])}) "
                 elif (self.operation is Operation.MUL or self.operation is Operation.DIV) and _assert_real(self[e]) > 1:
                     output_string += f"({e}^{_float_if_real(self[e])}) "
@@ -1880,7 +1878,7 @@ class ComparisonTerm:
         """
         term = lhs - rhs
         if not isinstance(term, Term):
-            term = Term([term], Operation.ADD)  # I don't think this line is reachable
+            term = Term([term], Operation.ADD)
         const = -1 * term.pop(Term.CONST) if Term.CONST in term else 0
         self._lhs = term
         self._rhs = Term([const], Operation.ADD)
@@ -2000,11 +1998,11 @@ class ComparisonTerm:
         lhs = self._lhs.evaluate(var_values)
         rhs = self._rhs.evaluate(var_values)
         if isinstance(lhs, complex):
-            if lhs.imag != 0:
+            if abs(lhs.imag) > get_settings().atol:
                 raise ValueError("evaluating inequality constraints with complex values is not allowed")
             lhs = lhs.real
         if isinstance(rhs, complex):
-            if rhs.imag != 0:
+            if abs(rhs.imag) > get_settings().atol:
                 raise ValueError("evaluating inequality constraints with complex values is not allowed")
             rhs = rhs.real
         return self._apply_comparison_operation(lhs, rhs)

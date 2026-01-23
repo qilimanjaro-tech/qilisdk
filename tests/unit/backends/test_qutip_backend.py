@@ -4,6 +4,11 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import PauliZ, Hamiltonian
+from qilisdk.analog.schedule import Schedule
+from qilisdk.core.qtensor import tensor_prod
+from qilisdk.functionals.time_evolution import TimeEvolution
+
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
     "qutip_qip",
@@ -13,10 +18,13 @@ pytest.importorskip(
 
 
 from qilisdk.backends import QutipBackend
+from qilisdk.backends.qutip_backend import QutipI
+from qilisdk.core import ket
+import qutip
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z, M
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
@@ -24,6 +32,7 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qutip_qip.circuit import CircuitSimulator
 
 
 @pytest.fixture
@@ -200,3 +209,46 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     # The dummy_cost_function returns 0.7 regardless of input.
     assert output.optimal_cost == 0.2
     assert cost_function.compute_cost(output.optimal_execution_results) == 8.0
+
+def test_qutip_i():
+
+    i = QutipI(0)
+    obj = i.get_compact_qobj()
+    assert obj.dims == [[2], [2]]
+    assert obj.shape == (2, 2)
+    assert np.allclose(obj.full(), np.eye(2))
+
+def test_measurement_gates():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(M(0))
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.nshots == 10
+    assert all(len(key) == 1 for key in result.samples)
+
+
+def test_bad_probability(monkeypatch):
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=1)
+    class CircuitSimulatorMockResults():
+        def __init__(self):
+            self.probabilities = np.array([1.2, 0.2])
+            self.cbits = ["0", "1"]
+    monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.nshots == 10
+    assert sum(result.samples.values()) == 10
+
+# def test_time_evolution(monkeypatch):
+#     class TimeEvolutionMockResults:
+#         pass
+#     backend = QutipBackend()
+#     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+#     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+#     initial_state = ket(0)
+#     func = TimeEvolution(schedule=schedule, observables=[PauliZ(0)], initial_state=initial_state)
+#     monkeypatch.setattr(qutip, "mesolve", lambda self, *args, **kwargs: TimeEvolutionMockResults())
+#     result = backend.execute(func)
+
