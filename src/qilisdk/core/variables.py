@@ -26,6 +26,7 @@ from loguru import logger
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
+from .types import QiliEnum
 
 if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
@@ -168,7 +169,7 @@ def _assert_real(value: Number) -> RealNumber:
 
 
 @yaml.register_class(shared=True)
-class Domain(str, Enum):
+class Domain(QiliEnum):
     INTEGER = "Integer Domain"
     POSITIVE_INTEGER = "Positive Integer Domain"
     REAL = "Real Domain"
@@ -220,84 +221,24 @@ class Domain(str, Enum):
             return MAX_INT
         return 1e30
 
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: Domain) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the Domain.
-        """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> Domain:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            Domain: The Domain instance created from the YAML node value.
-        """
-        return cls(node.value)
-
 
 @yaml.register_class
-class Operation(str, Enum):
+class Operation(QiliEnum):
     MUL = "*"
     ADD = "+"
     DIV = "/"
     SUB = "-"
     MATH_MAP = "mathematical_map"
 
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: Operation) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the Operation.
-        """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> Operation:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            Operation: The Operation instance created from the YAML node value.
-        """
-        return cls(node.value)
-
 
 @yaml.register_class
-class ComparisonOperation(str, Enum):
+class ComparisonOperation(QiliEnum):
     LT = "<"
     LEQ = "<="
     EQ = "=="
     NEQ = "!="
     GT = ">"
     GEQ = ">="
-
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: ComparisonOperation) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the ComparisonOperation.
-        """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> ComparisonOperation:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            ComparisonOperation: The ComparisonOperation instance created from the YAML node value.
-        """
-        return cls(node.value)
 
 
 @yaml.register_class
