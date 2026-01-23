@@ -34,6 +34,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     Args:
         functional (py::object): The Sampling functional to execute.
+        noise_model (py::object): The noise model to apply during simulation.
         solver_params (py::dict): Solver parameters, including 'max_cache_size'.
 
     Returns:

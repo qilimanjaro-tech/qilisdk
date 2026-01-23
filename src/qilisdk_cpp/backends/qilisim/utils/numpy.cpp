@@ -20,6 +20,7 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
 
     Args:
         matrix_buffer (py::buffer): The numpy array buffer.
+        atol (double): Absolute tolerance for considering values as non-zero.
 
     Returns:
         SparseMatrix: The converted sparse matrix.
@@ -117,7 +118,7 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
 
     Args:
         matrix (py::object): The SciPy sparse matrix.
-        config (QiliSimConfig&): Configuration parameters for the extraction.
+        atol (double): Absolute tolerance for considering values as non-zero.
 
     Returns:
         SparseMatrix: The converted sparse matrix.

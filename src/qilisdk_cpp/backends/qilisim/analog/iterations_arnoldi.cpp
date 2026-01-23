@@ -73,11 +73,12 @@ void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std:
         L(rho) = -i (H rho - rho H)
 
     Args:
-        Hsys (SparseMatrix): Hamiltonian (dim x dim)
-        rho0 (SparseMatrix): Initial density matrix (dim x dim)
-        m (int): Krylov dimension
-        V (vector<SparseMatrix>): Orthonormal basis (output)
-        Hk (SparseMatrix): Upper Hessenberg matrix (output)
+        Hsys (SparseMatrix): Hamiltonian (dim x dim).
+        rho0 (SparseMatrix): Initial density matrix (dim x dim).
+        m (int): Krylov dimension.
+        V (vector<SparseMatrix>): Orthonormal basis (output).
+        Hk (SparseMatrix): Upper Hessenberg matrix (output).
+        atol (double): Absolute tolerance for numerical operations.
     */
 
     // Set up outputs

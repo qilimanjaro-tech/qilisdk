@@ -22,6 +22,7 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
 
     Args:
         Hs (py::object): A list of QTensor Hamiltonians.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         std::vector<SparseMatrix>: The list of Hamiltonian sparse matrices.
@@ -41,6 +42,7 @@ std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double a
 
     Args:
         jumps (py::object): A list of QTensor jump operators.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         std::vector<SparseMatrix>: The list of jump operator sparse matrices.
@@ -61,6 +63,7 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
     Args:
         observables (py::object): A list of QTensor observables.
         nqubits (long): The total number of qubits.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         std::vector<SparseMatrix>: The list of observable sparse matrices.
@@ -158,11 +161,11 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol) {
 
     Args:
         initial_state (py::object): The initial state as a QTensor.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
-    py::print(initial_state);
     py::object spm = initial_state.attr("data");
     SparseMatrix rho = from_spmatrix(spm, atol);
     return rho;
@@ -174,6 +177,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol) {
 
     Args:
         circuit (py::object): The circuit object.
+        atol (double): Absolute tolerance for numerical operations.
 
     Returns:
         std::vector<Gate>: The list of Gate objects.
@@ -230,7 +234,6 @@ std::vector<bool> parse_measurements(const py::object& circuit) {
 
     Args:
         circuit (py::object): The circuit object.
-        n_qubits (int): The total number of qubits.
 
     Returns:
         std::vector<bool>: A vector indicating which qubits are measured.

@@ -26,6 +26,7 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<std::tupl
         prob_entries (std::vector<std::tuple<int, double>>): List of (state index, probability) tuples.
         n_qubits (int): Number of qubits.
         n_shots (int): Number of measurement shots.
+        seed (int): Random seed for sampling.
 
     Returns:
         std::map<std::string, int>: A map of bitstring outcomes to their counts.
@@ -67,6 +68,7 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         probabilities (std::vector<double>): List of probabilities for each state index.
         n_qubits (int): Number of qubits.
         n_shots (int): Number of measurement shots.
+        seed (int): Random seed for sampling.
 
     Returns:
         std::map<std::string, int>: A map of bitstring outcomes to their counts.

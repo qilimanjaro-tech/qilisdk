@@ -106,6 +106,7 @@ SparseMatrix vectorize(const SparseMatrix& matrix, double atol) {
 
     Args:
         matrix (SparseMatrix): The input matrix.
+        atol (double): Absolute tolerance for considering values as non-zero.
 
     Returns:
         SparseMatrix: The vectorized matrix as a column vector.
@@ -132,6 +133,7 @@ SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol) {
 
     Args:
         vec_matrix (SparseMatrix): The input vectorized matrix.
+        atol (double): Absolute tolerance for considering values as non-zero.
 
     Returns:
         SparseMatrix: The devectorized square matrix.
