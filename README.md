@@ -429,8 +429,8 @@ openfermion_ham = qilisdk_to_openfermion(qilisdk_ham)
 This section covers how to set up a local development environment for qilisdk, run tests, enforce code style, manage dependencies, and contribute to the project. We use a number of tools to maintain code quality and consistency:
 
 - **[uv](https://pypi.org/project/uv/)** for dependency management and packaging.
-- **[ruff](https://beta.ruff.rs/docs/)** for linting and code formatting.
-- **[mypy](http://mypy-lang.org/)** for static type checking.
+- **[ruff](https://docs.astral.sh/ruff/)** for linting and code formatting.
+- **[ty](https://docs.astral.sh/ty/)** for language server and static type checking.
 - **[towncrier](https://github.com/twisted/towncrier)** for automated changelog generation.
 
 ### Prerequisites
@@ -458,7 +458,7 @@ This section covers how to set up a local development environment for qilisdk, r
      ```bash
      uv sync
      ```
-     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `mypy`, `towncrier`, etc.).
+     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `ty`, `towncrier`, etc.).
    - To install extra dependencies such as `CudaBackend`, run:
      ```bash
      uv sync --extra cuda -extra ...
@@ -519,16 +519,10 @@ ruff format
 
 ### Type Checking
 
-We use [**mypy**](http://mypy-lang.org/) for static type checking. This helps ensure our code is type-safe and maintainable.
+We use [**ty**](https://docs.astral.sh/ty/) for static type checking. This helps ensure our code is type-safe and maintainable.
 
 ```bash
-mypy qilisdk
-```
-
-If you have extra modules or tests you want type-checked, specify them:
-
-```bash
-mypy qilisdk tests
+ty check
 ```
 
 *(We encourage developers to annotate new functions, classes, and methods with type hints.)*
@@ -566,7 +560,7 @@ We welcome contributions! Here’s the workflow:
    ```bash
    ruff check --fix
    ruff format
-   mypy qilisdk
+   ty check
    pytest tests
    ```
 5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
@@ -585,8 +579,8 @@ This project is licensed under the [Apache License](LICENSE).
 ## Acknowledgments
 
 - Thanks to all the contributors who help develop qilisdk!
-- [uv](https://pypi.org/project/uv/) for making dependency management smoother.
-- [ruff](https://beta.ruff.rs/docs/), [mypy](http://mypy-lang.org/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
+- [uv](https://docs.astral.sh/uv/) for making dependency management smoother.
+- [ruff](https://docs.astral.sh/ruff/), [ty](https://docs.astral.sh/ty/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
 
 ---
 

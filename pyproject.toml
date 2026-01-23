@@ -101,7 +101,6 @@ exclude = [
     "/.vscode",
     "/.pytest_cache",
     "/.ruff_cache",
-    "/.mypy_cache",
     "/dist",
     "/docs",
     "/changes",

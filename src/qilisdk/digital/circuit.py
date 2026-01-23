@@ -362,7 +362,7 @@ class Circuit(Parameterizable):
                         label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
                     )
 
-            # Add the gate to the circuit (type: ignore since mypy cannot infer the dynamic params)
+            # Add the gate to the circuit
             new_circuit.add(gate_class(*qubits, **params))
 
         return new_circuit
