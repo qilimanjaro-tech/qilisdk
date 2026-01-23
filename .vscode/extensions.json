@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "PKief.material-icon-theme",
-    "PKief.material-product-icons"
+    "PKief.material-product-icons",
+    "SonarSource.sonarlint-vscode"
   ]
 }
