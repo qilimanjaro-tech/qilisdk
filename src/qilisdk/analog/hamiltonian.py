@@ -287,8 +287,8 @@ class Hamiltonian(Parameterizable):
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
         return {
             k: (
-                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())
-            )  # ty  # ty:ignore[possibly-missing-attribute]
+                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[possibly-missing-attribute]
+            )
             for k, v in self._elements.items()
         }
 
