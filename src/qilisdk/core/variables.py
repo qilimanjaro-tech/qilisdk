@@ -17,7 +17,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import Iterator, Mapping, Sequence, TypeAlias, TypeVar, cast, overload
+from typing import Iterator, Mapping, Sequence, TypeVar, cast, overload
 
 import numpy as np
 from loguru import logger
@@ -26,10 +26,8 @@ from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupp
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import QiliEnum
+from .types import Number, QiliEnum, RealNumber
 
-Number: TypeAlias = int | float | complex
-RealNumber: TypeAlias = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max

@@ -14,18 +14,21 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Domain, Parameter, RealNumber
+from qilisdk.core.variables import Domain, Parameter
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
 from .gates import BasicGate, Gate
+
+if TYPE_CHECKING:
+    from qilisdk.core.types import RealNumber
 
 
 @yaml.register_class

@@ -22,7 +22,7 @@ from matplotlib.figure import Figure
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.core.variables import Number
+    from qilisdk.core.types import Number
 
 
 from qilisdk.utils.visualization.style import ScheduleStyle

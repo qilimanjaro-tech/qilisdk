@@ -18,14 +18,17 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import Any, Mapping, TypeAlias
+from typing import TYPE_CHECKING, Any, Mapping, TypeAlias
 
 import numpy as np
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, BaseVariable, Number, Parameter, Term
+from qilisdk.core.variables import LEQ, BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.core.types import Number
 
 _TIME_PARAMETER_NAME = "t"
 PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term

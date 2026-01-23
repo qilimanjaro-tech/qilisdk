@@ -14,11 +14,15 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self, TypeAlias
 
 if TYPE_CHECKING:
     from ruamel.yaml.nodes import ScalarNode
     from ruamel.yaml.representer import RoundTripRepresenter
+
+
+Number: TypeAlias = int | float | complex
+RealNumber: TypeAlias = int | float
 
 
 class QiliEnum(str, Enum):

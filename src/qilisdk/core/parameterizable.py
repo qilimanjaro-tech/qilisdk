@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
-    from .variables import RealNumber
+    from .types import RealNumber
 
 
 class Parameterizable(ABC):

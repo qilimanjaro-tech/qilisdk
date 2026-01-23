@@ -26,7 +26,8 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.variables import BaseVariable, Number, Parameter, Term
+from qilisdk.core.types import Number
+from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
