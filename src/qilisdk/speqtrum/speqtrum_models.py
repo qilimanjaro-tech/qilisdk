@@ -429,7 +429,9 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
         return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)
 
     @classmethod
-    def two_tones_experiment(cls: type[JobHandle[TwoTonesExperimentResult]], job_id: int) -> JobHandle[TwoTonesExperimentResult]:
+    def two_tones_experiment(
+        cls: type[JobHandle[TwoTonesExperimentResult]], job_id: int
+    ) -> JobHandle[TwoTonesExperimentResult]:
         return cls(
             id=job_id,
             execute_type=ExecuteType.TWO_TONES_EXPERIMENT,

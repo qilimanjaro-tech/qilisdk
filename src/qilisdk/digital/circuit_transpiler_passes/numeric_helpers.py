@@ -25,7 +25,7 @@ def _wrap_angle(angle: float) -> float:
     """Wrap an angle to the (-pi, pi] range.
 
     Args:
-        a (float): Angle value in radians.
+        angle (float): Angle value in radians.
     Returns:
         float: Angle mapped into the open-closed interval (-pi, pi].
     """
@@ -39,7 +39,7 @@ def _zyz_from_unitary(unitary: np.ndarray) -> tuple[float, float, float]:
     """Recover ZYZ Euler angles from a 2x2 unitary.
 
     Args:
-        u (np.ndarray): 2x2 unitary matrix.
+        unitary (np.ndarray): 2x2 unitary matrix.
     Returns:
         tuple[float, float, float]: Tuple containing theta, phi and gamma angles.
     Raises:
@@ -72,7 +72,7 @@ def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
     """Compute the principal square root of a 2x2 unitary.
 
     Args:
-        U (np.ndarray): 2x2 unitary matrix.
+        unitary (np.ndarray): 2x2 unitary matrix.
     Returns:
         np.ndarray: Matrix V such that V · V equals U.
     """

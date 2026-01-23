@@ -37,7 +37,9 @@ if TYPE_CHECKING:
 
 _DEVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
 _GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
-_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
+    "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+)
 
 
 ###############################################################################
@@ -262,17 +264,13 @@ class Hamiltonian(Parameterizable):
                         if isinstance(v, Parameter):
                             self._parameters[v.label] = v
                         else:
-                            raise ValueError(
-                                _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE
-                            )
+                            raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 elif isinstance(val, BaseVariable):
                     if isinstance(val, Parameter):
                         self._parameters[val.label] = val
 
                     else:
-                        raise ValueError(
-                            _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE
-                        )
+                        raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._elements[key] += val
             self.simplify()
 
@@ -287,7 +285,9 @@ class Hamiltonian(Parameterizable):
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
         return {
-            k: (v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate()))  # ty  # ty:ignore[possibly-missing-attribute]
+            k: (
+                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())
+            )  # ty  # ty:ignore[possibly-missing-attribute]
             for k, v in self._elements.items()
         }
 
@@ -908,9 +908,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other
@@ -932,9 +930,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other
@@ -962,9 +958,7 @@ class Hamiltonian(Parameterizable):
         if isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other

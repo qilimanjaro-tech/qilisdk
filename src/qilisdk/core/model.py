@@ -15,7 +15,6 @@ from __future__ import annotations
 
 # import numpy as np
 import copy
-from enum import Enum
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
 # import cupy as np
@@ -42,9 +41,6 @@ from .variables import (
 )
 
 if TYPE_CHECKING:
-    from ruamel.yaml.nodes import ScalarNode
-    from ruamel.yaml.representer import RoundTripRepresenter
-
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
