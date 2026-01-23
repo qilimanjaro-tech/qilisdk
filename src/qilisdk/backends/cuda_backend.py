@@ -201,21 +201,21 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]
+            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()]  # ty:ignore[possibly-missing-attribute]
         )
         expected_values = (
-            np.array([[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()])
-            if evolution_result.expectation_values() is not None and functional.store_intermediate_results
+            np.array([[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()])  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.expectation_values() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
             else None
         )
         final_state = (
-            QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))
-            if evolution_result.final_state() is not None
+            QTensor(np.array(evolution_result.final_state()).reshape(-1, 1))  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
             else None
         )
         intermediate_states = (
-            [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]
-            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results
+            [QTensor(np.array(state).reshape(-1, 1)) for state in evolution_result.intermediate_states()]  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
             else None
         )
 
@@ -367,7 +367,7 @@ class CudaBackend(Backend):
     def _handle_SWAP(kernel: cudaq.Kernel, gate: SWAP, qubit_0: cudaq.QuakeValue, qubit_1: cudaq.QuakeValue) -> None:
         kernel.swap(qubit_0, qubit_1)
 
-    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian, padding: int = 0) -> OperatorSum:
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
         out = None
         for offset, terms in hamiltonian:
             if out is None:
@@ -378,16 +378,16 @@ class CudaBackend(Backend):
 
     @staticmethod
     def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
-        return spin.x(target=operator.qubit)
+        return spin.x(target=operator.qubit)  # ty:ignore[unresolved-attribute]
 
     @staticmethod
     def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
-        return spin.y(target=operator.qubit)
+        return spin.y(target=operator.qubit)  # ty:ignore[unresolved-attribute]
 
     @staticmethod
     def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
-        return spin.z(target=operator.qubit)
+        return spin.z(target=operator.qubit)  # ty:ignore[unresolved-attribute]
 
     @staticmethod
     def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
-        return spin.i(target=operator.qubit)
+        return spin.i(target=operator.qubit)  # ty:ignore[unresolved-attribute]

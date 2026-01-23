@@ -17,8 +17,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import TYPE_CHECKING, Iterator, Mapping, Sequence, TypeVar, overload
+from typing import Iterator, Mapping, Sequence, TypeAlias, TypeVar, cast, overload
 
 import numpy as np
 from loguru import logger
@@ -26,14 +25,11 @@ from loguru import logger
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
+
 from .types import QiliEnum
 
-if TYPE_CHECKING:
-    from ruamel.yaml.nodes import ScalarNode
-    from ruamel.yaml.representer import RoundTripRepresenter
-
-Number = int | float | complex
-RealNumber = int | float
+Number: TypeAlias = int | float | complex
+RealNumber: TypeAlias = int | float
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
@@ -831,7 +827,7 @@ class BaseVariable(ABC):
             return other + self
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return Term(elements=[self, other], operation=Operation.ADD)
 
@@ -845,7 +841,7 @@ class BaseVariable(ABC):
             return other * self
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return Term(elements=[self, other], operation=Operation.MUL)
 
@@ -856,7 +852,7 @@ class BaseVariable(ABC):
             return other * self
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return Term(elements=[other, self], operation=Operation.MUL)
 
@@ -867,7 +863,7 @@ class BaseVariable(ABC):
             return NotImplemented
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return self + -1 * other
 
@@ -876,7 +872,7 @@ class BaseVariable(ABC):
             return NotImplemented
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return -1 * self + other
 
@@ -893,7 +889,7 @@ class BaseVariable(ABC):
             raise ValueError("Division by zero is not allowed")
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("RealNumber", other.item())
         other = 1 / other
         return self * other
 
@@ -1184,7 +1180,7 @@ class Parameter(BaseVariable):
         self.check_value(value)
 
         if isinstance(value, np.generic):
-            value = value.item()
+            value = cast("RealNumber", value.item())
         self._value = value
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
@@ -1682,7 +1678,7 @@ class Term:
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         out.append(other)
         return Term(out, Operation.ADD)
@@ -1695,7 +1691,7 @@ class Term:
         out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
         out.insert(0, other)
         return Term(out, Operation.ADD)
 
@@ -1707,7 +1703,7 @@ class Term:
             out = [0]
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         out.append(other)
         return Term(out, Operation.MUL)._unfold_parentheses()
@@ -1722,7 +1718,7 @@ class Term:
             out = [0]
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         out.insert(0, other)
         return Term(out, Operation.MUL)._unfold_parentheses()
@@ -1735,7 +1731,7 @@ class Term:
             return NotImplemented
 
         if isinstance(other, np.generic):
-            other = other.item()
+            other = cast("Number", other.item())
 
         return self + -1 * other
 

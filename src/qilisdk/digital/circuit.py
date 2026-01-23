@@ -14,21 +14,18 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import Iterable
 
 import numpy as np
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Domain, Parameter
+from qilisdk.core.variables import Domain, Parameter, RealNumber
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
 from .gates import BasicGate, Gate
-
-if TYPE_CHECKING:
-    from qilisdk.core.variables import RealNumber
 
 
 @yaml.register_class
@@ -118,16 +115,16 @@ class Circuit(Parameterizable):
         for i, parameter in enumerate(self._parameters.values()):
             parameter.set_value(values[i])
 
-    def set_parameters(self, parameter_dict: dict[str, RealNumber]) -> None:
+    def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
         Args:
-            parameter_dict (dict[str, RealNumber]): A dictionary with the labels of the parameters to be modified and their new value.
+            parameters (dict[str, float]): A dictionary with the labels of the parameters to be modified and their new value.
 
         Raises:
             ValueError: if the label provided doesn't correspond to a parameter defined in this circuit.
         """
-        for label, param in parameter_dict.items():
+        for label, param in parameters.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
             self._parameters[label].set_value(param)
@@ -174,18 +171,18 @@ class Circuit(Parameterizable):
         self._parse_params(gate)
         self._gates.append(gate)
 
-    def add(self, gates: Gate | list[Gate]) -> None:
+    def add(self, gates: Gate | Iterable[Gate]) -> None:
         """
         Add a quantum gate to the circuit.
 
         Args:
             gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.
         """
-        if isinstance(gates, list):
-            for g in gates:
-                self._add(g)
-        else:
+        if isinstance(gates, Gate):
             self._add(gates)
+            return
+        for g in gates:
+            self._add(g)
 
     def _insert(self, gate: Gate, index: int = -1) -> None:
         """Insert a quantum gate to the circuit at a given index.
@@ -203,18 +200,18 @@ class Circuit(Parameterizable):
         self._parse_params(gate)
         self._gates.insert(index, gate)
 
-    def insert(self, gates: Gate | list[Gate], index: int = -1) -> None:
+    def insert(self, gates: Gate | Iterable[Gate], index: int = -1) -> None:
         """Insert a quantum gate to the circuit at a given index.
 
         Args:
             gates (Gate | list[Gate]): The gate or list of gates to be inserted.
             index (int, optional): The index at which the gate is inserted. Defaults to -1.
         """
-        if isinstance(gates, list):
-            for i, g in enumerate(gates):
-                self._insert(g, i + index)
-        else:
+        if isinstance(gates, Gate):
             self._insert(gates, index)
+            return
+        for i, gate in enumerate(gates):
+            self._insert(gate, i + index)
 
     def append(self, circuit: Circuit) -> None:
         """Append circuit elements at the end of the current circuit.
@@ -366,6 +363,6 @@ class Circuit(Parameterizable):
                     )
 
             # Add the gate to the circuit (type: ignore since mypy cannot infer the dynamic params)
-            new_circuit.add(gate_class(*qubits, **params))  # type: ignore
+            new_circuit.add(gate_class(*qubits, **params))
 
         return new_circuit

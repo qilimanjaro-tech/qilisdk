@@ -250,12 +250,12 @@ class QutipBackend(Backend):
 
         logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
-            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),
+            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),  # ty:ignore[not-subscriptable]
             expected_values=(
                 np.array(
                     [
-                        [results.expect[val][i] for val in range(len(results.expect))]
-                        for i in range(len(results.expect[0]))
+                        [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
+                        for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
                     ]
                 )
                 if len(results.expect) > 0 and functional.store_intermediate_results

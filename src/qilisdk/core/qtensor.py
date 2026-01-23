@@ -87,7 +87,7 @@ class QTensor:
                 raise ValueError("Input ndarray must be 2D")
             self._data = csr_matrix(data)
         elif issparse(data):
-            self._data = data.tocsr()
+            self._data = data.tocsr()  # ty:ignore[unresolved-attribute]
         else:
             raise ValueError("Input must be a NumPy array or a SciPy sparse matrix")
 

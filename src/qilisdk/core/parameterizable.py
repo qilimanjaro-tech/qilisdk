@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
+    from .variables import RealNumber
+
 
 class Parameterizable(ABC):
     """Mixin for objects that expose tunable parameters and constraints."""
@@ -41,7 +43,7 @@ class Parameterizable(ABC):
         """Return the ordered list of parameter labels."""
         return list(self._parameters.keys())
 
-    def get_parameters(self) -> dict[str, float]:
+    def get_parameters(self) -> dict[str, RealNumber]:
         """Return a mapping from parameter labels to their current numerical values."""
         return {label: param.value for label, param in self._parameters.items()}
 
