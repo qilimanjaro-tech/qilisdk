@@ -36,7 +36,7 @@ from .exceptions import InvalidHamiltonianOperation
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-_DEVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
+_DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
 _GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
 _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
@@ -175,7 +175,7 @@ class PauliOperator(ABC):
         return self.to_hamiltonian() / other
 
     def __rtruediv__(self, _: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
-        raise InvalidHamiltonianOperation(_DEVISION_BY_OPERATORS_MESSAGE)
+        raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __itruediv__ = __truediv__
 
@@ -881,7 +881,7 @@ class Hamiltonian(Parameterizable):
 
     def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         # (other / self)
-        raise InvalidHamiltonianOperation(_DEVISION_BY_OPERATORS_MESSAGE)
+        raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __iadd__ = __add__
     __isub__ = __sub__
@@ -1005,7 +1005,7 @@ class Hamiltonian(Parameterizable):
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
-            raise InvalidHamiltonianOperation(_DEVISION_BY_OPERATORS_MESSAGE)
+            raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
         if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")
         self._mul_inplace(1 / other)
