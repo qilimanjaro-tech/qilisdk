@@ -68,6 +68,21 @@ def test_no_seed():
     assert 0 <= seed <= 2**15
 
 
+def test_monte_carlo_circuit():
+    p = 0.2
+    initial_state_1 = ket(0).unit()
+    initial_state_2 = ket(1).unit()
+    initial_state = (initial_state_1.to_density_matrix() * (1 - p) + initial_state_2.to_density_matrix() * p).unit()
+    backend = QiliSim(monte_carlo=True, num_monte_carlo_trajectories=100, seed=42, num_threads=1)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    result = backend._execute_sampling(Sampling(circuit=circuit, nshots=100), initial_state=initial_state)
+    assert isinstance(result, SamplingResult)
+    samples = result.samples
+    assert "0" in samples
+    assert "1" in samples
+
+
 def test_seed_different():
     backend1 = QiliSim(seed=42, num_threads=1)
     backend2 = QiliSim(seed=43, num_threads=1)
