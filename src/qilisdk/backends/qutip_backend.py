@@ -104,7 +104,7 @@ class QutipBackend(Backend):
             U1: QutipBackend._handle_U1,
             U2: QutipBackend._handle_U2,
             U3: QutipBackend._handle_U3,
-            SWAP: QutipBackend._handle_SWAP,  # type: ignore[dict-item]
+            SWAP: QutipBackend._handle_SWAP,
         }
         logger.success("QutipBackend initialised")
 
@@ -259,14 +259,14 @@ class QutipBackend(Backend):
         logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
             final_expected_values=np.array(
-                [results.expect[i][-1] for i in range(len(qutip_obs))],
+                [results.expect[i][-1] for i in range(len(qutip_obs))],  # ty:ignore[not-subscriptable]
                 dtype=_complex_dtype(),
             ),
             expected_values=(
                 np.array(
                     [
-                        [results.expect[val][i] for val in range(len(results.expect))]
-                        for i in range(len(results.expect[0]))
+                        [results.expect[val][i] for val in range(len(results.expect))] # ty:ignore[not-subscriptable]
+                        for i in range(len(results.expect[0])) # ty:ignore[invalid-argument-type]
                     ],
                     dtype=_complex_dtype(),
                 )

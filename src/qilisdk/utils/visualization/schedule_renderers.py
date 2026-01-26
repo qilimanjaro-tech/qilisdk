@@ -18,10 +18,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.core.variables import Number
+    from qilisdk.core.types import Number
 
 from qilisdk.utils.visualization.style import ScheduleStyle
 
@@ -94,7 +95,14 @@ class MatplotlibScheduleRenderer:
             if "color" not in line_style:
                 color = grad_colors[idx]
                 line_style = {**line_style, "color": color}
-            self.ax.plot(times, plots[h], label=h, marker=marker, markersize=style.marker_size, **line_style)
+            self.ax.plot(
+                times,
+                plots[h],
+                label=h,
+                marker=marker,
+                markersize=style.marker_size,
+                **line_style,  # ty:ignore[invalid-argument-type]
+            )
         if style.grid:
             grid_style = dict(style.grid_style)
             if "color" not in grid_style:
@@ -144,8 +152,8 @@ class MatplotlibScheduleRenderer:
         Args:
             filename: Path to save the figure (e.g., 'circuit.png').
         """
-
-        self.ax.figure.savefig(filename, bbox_inches="tight")  # type: ignore[union-attr]
+        if isinstance(self.ax.figure, Figure):
+            self.ax.figure.savefig(filename, bbox_inches="tight")
 
     def show(self) -> None:  # noqa: PLR6301
         """Show the current figure."""

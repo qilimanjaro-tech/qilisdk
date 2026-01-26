@@ -36,13 +36,17 @@ if (DEFINED qilisim AND qilisim STREQUAL "ON")
 
     # Assuming we have the core dependencies, prep the C++ backend
     message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
-    pybind11_add_module(qilisim_module src/qilisdk/backends/qilisim.cpp)
+    pybind11_add_module(qilisim_module src/qilisdk_cpp/backends/qilisim/qilisim.cpp)
+    file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
+    file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
+    list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
+    target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 
     # Set compile options
+    set (CMAKE_CXX_STANDARD 14)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
         target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
-        target_compile_features(qilisim_module PRIVATE cxx_std_17)
     endif()
 
     # Link libraries and include directories

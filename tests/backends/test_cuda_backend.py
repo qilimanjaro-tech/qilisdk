@@ -99,7 +99,7 @@ def dummy_make_kernel(*args, **kwargs):
     return DummyKernel(), "dummy_qubit"
 
 
-dummy_make_kernel.main_kernel = DummyKernel()  # type: ignore[attr-defined]
+dummy_make_kernel.main_kernel = DummyKernel()
 
 
 class DummyGate(BasicGate):
