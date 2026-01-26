@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TypeVar, overload
+from typing import TypeAlias, TypeVar, overload
 
 from qilisdk.digital import Gate
 
@@ -24,9 +24,9 @@ from .noise_config import NoiseConfig
 from .parameter_perturbation import ParameterPerturbation
 from .protocols import AttachmentScope
 
-Qubit = int
-GateType = type[Gate]
-Parameter = str
+Qubit: TypeAlias = int
+GateType: TypeAlias = type[Gate]
+Parameter: TypeAlias = str
 
 TNoise = TypeVar("TNoise", bound=Noise)
 TParameterPerturbation = TypeVar("TParameterPerturbation", bound=ParameterPerturbation)

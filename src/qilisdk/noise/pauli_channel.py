@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import numpy as np
 
 from qilisdk.core import QTensor
@@ -73,12 +75,6 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         return self._pZ
 
     def as_kraus(self) -> KrausChannel:
-        """
-        Return the Kraus representation for this noise type.
-
-        Returns:
-            KrausChannel: The Kraus representation.
-        """
         pI = max(0.0, 1.0 - (self._pX + self._pY + self._pZ))
         operators = []
         if pI > 0:
@@ -92,42 +88,23 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         return KrausChannel([QTensor(operator) for operator in operators])
 
     def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
-        """Return the Lindblad generator for this noise type.
-
-        Args:
-            duration (float): Duration over which the noise acts.
-
-        Returns:
-            LindbladGenerator: The Lindblad generator representation.
-
-        Raises:
-            ValueError: If duration is not positive.
-        """
         if duration <= 0:
             raise ValueError("Duration must be positive.")
         rates = []
-        if self._pX > 0:
-            rates.append(self._pX / duration)
-        if self._pY > 0:
-            rates.append(self._pY / duration)
-        if self._pZ > 0:
-            rates.append(self._pZ / duration)
         operators = []
         if self._pX > 0:
+            rates.append(self._pX / duration)
             operators.append(QTensor(_sigma_x()))
         if self._pY > 0:
+            rates.append(self._pY / duration)
             operators.append(QTensor(_sigma_y()))
         if self._pZ > 0:
+            rates.append(self._pZ / duration)
             operators.append(QTensor(_sigma_z()))
         return LindbladGenerator(operators, rates)
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        """Return the attachment scopes supported by this perturbation type.
-
-        Returns:
-            The set of scopes where this perturbation can be attached.
-        """
         return frozenset(
             {
                 AttachmentScope.GLOBAL,

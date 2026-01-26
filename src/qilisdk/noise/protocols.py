@@ -98,6 +98,9 @@ class SupportsTimeDerivedLindblad(Protocol):
     def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
         """Return the Lindblad generator for this noise.
 
+        Args:
+            duration (float): Duration over which the noise acts.
+
         Returns:
             The Lindblad generator representation.
         """

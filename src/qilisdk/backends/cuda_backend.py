@@ -55,6 +55,7 @@ from qilisdk.noise import (
     Depolarizing,
     LindbladGenerator,
     Noise,
+    NoiseConfig,
     PhaseFlip,
     ReadoutAssignment,
     SupportsStaticKraus,
@@ -78,7 +79,7 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
-def _to_cuda_noise(noise: Noise) -> cudaq.KrausChannel | None:
+def _to_cuda_noise(noise: Noise, gate_duration: float) -> cudaq.KrausChannel | None:
     if isinstance(noise, BitFlip):
         return cudaq.BitFlipChannel(noise.probability)
     if isinstance(noise, PhaseFlip):
@@ -86,7 +87,7 @@ def _to_cuda_noise(noise: Noise) -> cudaq.KrausChannel | None:
     if isinstance(noise, Depolarizing):
         return cudaq.DepolarizationChannel(noise.probability)
     if isinstance(noise, SupportsTimeDerivedKraus):
-        kraus_channel = noise.as_kraus_from_duration(duration=1.0)
+        kraus_channel = noise.as_kraus_from_duration(duration=gate_duration)
         kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
         return cudaq.KrausChannel(kraus_operators_np)
     if isinstance(noise, SupportsStaticKraus):
@@ -233,13 +234,14 @@ class CudaBackend(Backend):
     def _add_global_noise(
         noise: Noise,
         cuda_noise_model: cudaq.NoiseModel,
-        all_cuda_gate_names: set[str],
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
         nqubits: int,
+        noise_config: NoiseConfig,
     ) -> None:
-        if cuda_noise := _to_cuda_noise(noise):
-            for gate_name in all_cuda_gate_names:
+        for gate, gate_name in all_cuda_gate_names.items():
+            if cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate)):
                 # If it's a full size kraus channel, special treatment
-                if isinstance(noise, SupportsStaticKraus) and len(noise.as_kraus().operators) > 0:
+                if isinstance(noise, SupportsStaticKraus) and noise.as_kraus().operators:
                     dim = noise.as_kraus().operators[0].dense().shape[0]
                     if dim == 2**nqubits:
                         cuda_noise_model.add_channel(gate_name, list(range(nqubits)), cuda_noise)
@@ -253,23 +255,26 @@ class CudaBackend(Backend):
         gate_type: Type[BasicGate] | Type[Gate],
         noises: list[Noise],
         cuda_noise_model: cudaq.NoiseModel,
-        all_cuda_gate_names: set[str],
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
     ) -> None:
-        if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
-            for noise in noises:
-                if cuda_noise := _to_cuda_noise(noise):
-                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+        for gate, gate_name in all_cuda_gate_names.items():
+            if gate_name == gate_type.__name__.lower():
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate)):
+                        cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
 
     @staticmethod
     def _add_per_qubit_noise(
         qubit: int,
         noises: list[Noise],
         cuda_noise_model: cudaq.NoiseModel,
-        all_cuda_gate_names: set[str],
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
     ) -> None:
         for noise in noises:
-            if cuda_noise := _to_cuda_noise(noise):
-                for gate_name in all_cuda_gate_names:
+            for gate, gate_name in all_cuda_gate_names.items():
+                if cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate)):
                     cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
 
     @staticmethod
@@ -278,32 +283,40 @@ class CudaBackend(Backend):
         qubit: int,
         noises: list[Noise],
         cuda_noise_model: cudaq.NoiseModel,
-        all_cuda_gate_names: set[str],
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
     ) -> None:
-        if (gate_name := gate_type.__name__.lower()) in all_cuda_gate_names:
-            for noise in noises:
-                if cuda_noise := _to_cuda_noise(noise):
-                    cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
+        for gate, gate_name in all_cuda_gate_names.items():
+            if gate_name == gate_type.__name__.lower():
+                for noise in noises:
+                    if cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate)):
+                        cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
 
     def _noise_model_to_cudaq(self, noise_model: NoiseModel, nqubits: int) -> cudaq.NoiseModel:
-        all_cuda_gate_names = {gate.__name__.lower() for gate in self._basic_gate_handlers} - {"u1", "u2", "swap"}
+        all_cuda_gate_names = {
+            gate: gate.__name__.lower()
+            for gate in self._basic_gate_handlers
+            if gate.__name__.lower() not in {"u1", "u2", "swap"}
+        }
         cuda_noise_model = cudaq.NoiseModel()
 
         # Global noise
         for noise in noise_model.global_noise:
-            self._add_global_noise(noise, cuda_noise_model, all_cuda_gate_names, nqubits)
+            self._add_global_noise(noise, cuda_noise_model, all_cuda_gate_names, nqubits, noise_model.noise_config)
 
         # Per gate noise
         for gate_type, noises in noise_model.per_gate_noise.items():
-            self._add_per_gate_noise(gate_type, noises, cuda_noise_model, all_cuda_gate_names)
+            self._add_per_gate_noise(gate_type, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config)
 
         # Per qubit noise
         for qubit, noises in noise_model.per_qubit_noise.items():
-            self._add_per_qubit_noise(qubit, noises, cuda_noise_model, all_cuda_gate_names)
+            self._add_per_qubit_noise(qubit, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config)
 
         # Per gate per qubit noise
         for (gate_type, qubit), noises in noise_model.per_gate_per_qubit_noise.items():
-            self._add_per_gate_per_qubit_noise(gate_type, qubit, noises, cuda_noise_model, all_cuda_gate_names)
+            self._add_per_gate_per_qubit_noise(
+                gate_type, qubit, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config
+            )
 
         return cuda_noise_model
 

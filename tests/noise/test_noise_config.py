@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-from qilisdk.digital.gates import X, Y
+from qilisdk.digital.gates import X, Y, Z
 from qilisdk.noise import NoiseConfig, NoiseModel
 
 
@@ -24,9 +24,10 @@ def test_noise_config():
     config.set_gate_time(X, 2.0)
     config.set_gate_time(Y, 3.0)
 
-    assert np.isclose(config.gate_times[X], 2.0)
-    assert np.isclose(config.gate_times[Y], 3.0)
-    assert len(config.gate_times) == 2
+    assert np.isclose(config.get_gate_time(X), 2.0)
+    assert np.isclose(config.get_gate_time(Y), 3.0)
+    assert np.isclose(config.get_gate_time(Z), config.default_gate_time)
+    assert len(config._gate_times) == 2
 
     nm = NoiseModel(noise_config=config)
     assert nm.noise_config == config

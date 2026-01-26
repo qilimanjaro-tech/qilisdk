@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import numpy as np
 
@@ -50,30 +51,12 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
         return self._t_phi
 
     def as_lindblad(self) -> LindbladGenerator:
-        """
-        Return the Lindblad representation for this noise type.
-
-        Returns:
-            LindbladGenerator: The Lindblad representation.
-        """
         gamma = 1.0 / self._t_phi
         rate = gamma / 2.0
         L = QTensor(_sigma_z())
         return LindbladGenerator(jump_operators=[L], rates=[rate])
 
     def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
-        """
-        Return the Kraus representation for this noise type over a given duration.
-
-        Args:
-            duration (float): Duration over which to apply the noise.
-
-        Returns:
-            KrausChannel: The Kraus representation.
-
-        Raises:
-            ValueError: If duration is negative.
-        """
         if duration < 0:
             raise ValueError("duration must be >= 0.")
         gamma = float(np.exp(-duration / self._t_phi))
@@ -83,9 +66,4 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        """Return the attachment scopes supported by this perturbation type.
-
-        Returns:
-            The set of scopes where this perturbation can be attached.
-        """
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
