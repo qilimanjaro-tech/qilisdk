@@ -4,9 +4,9 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import PauliZ, Hamiltonian
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
-from qilisdk.core.qtensor import tensor_prod
+from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.functionals.time_evolution import TimeEvolution
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
@@ -17,14 +17,14 @@ pytest.importorskip(
 )
 
 
-from qilisdk.backends import QutipBackend
-from qilisdk.backends.qutip_backend import QutipI
-from qilisdk.core import ket
-import qutip
+from qutip_qip.circuit import CircuitSimulator
+
+from qilisdk.backends.qutip_backend import QutipBackend, QutipI
+from qilisdk.core import bra, ket
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z, M
+from qilisdk.digital import CNOT, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
@@ -32,7 +32,6 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
-from qutip_qip.circuit import CircuitSimulator
 
 
 @pytest.fixture
@@ -98,7 +97,7 @@ swap_test_case = [
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
 def test_adjoint_handler(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=10)
+    circuit = Circuit(nqubits=3)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
@@ -109,19 +108,36 @@ def test_adjoint_handler(gate_instance):
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_controlled_handler(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=10)
-    controlled_gate = Controlled(9, basic_gate=gate_instance)
+    circuit = Circuit(nqubits=3)
+    controlled_gate = Controlled(2, basic_gate=gate_instance)
     circuit.add(controlled_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
     assert any(g.name.startswith(controlled_gate.name) for g in qutip_circuit.gates)
 
 
+def test_controlled_cnot():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=3)
+    controlled_gate = Controlled(0, basic_gate=CNOT(1, 2))
+    circuit.add(controlled_gate)
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+    assert any(g.name.startswith(controlled_gate.name) for g in qutip_circuit.gates)
+
+
+def test_cnot():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(CNOT(0, 1))
+    qutip_circuit = backend._get_qutip_circuit(circuit)
+    assert any(g.name.startswith("CNOT") for g in qutip_circuit.gates)
+
+
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_multi_controlled_handler(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=10)
-    controlled_gate = Controlled(7, 8, 9, basic_gate=gate_instance)
+    circuit = Circuit(nqubits=5)
+    controlled_gate = Controlled(2, 3, 4, basic_gate=gate_instance)
     circuit.add(controlled_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
     expected_targets = set(controlled_gate.target_qubits).union(set(controlled_gate.control_qubits))
@@ -133,11 +149,24 @@ def test_multi_controlled_handler(gate_instance):
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
 def test_handlers(gate_instance):
     backend = QutipBackend()
-    circuit = Circuit(nqubits=10)
+    circuit = Circuit(nqubits=3)
     circuit.add(gate_instance)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
     assert any(g.name == gate_instance.name for g in qutip_circuit.gates)
+
+
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+def test_adjoint_fully(gate_instance):
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(gate_instance)
+    circuit.add(Adjoint(gate_instance))
+    result = backend.execute(Sampling(circuit=circuit, nshots=100))
+    assert isinstance(result, SamplingResult)
+    assert result.nshots == 100
+    assert all(len(key) == 2 for key in result.samples)
+    assert result.samples.get("00", 0) == 100
 
 
 ###################
@@ -210,13 +239,14 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     assert output.optimal_cost == 0.2
     assert cost_function.compute_cost(output.optimal_execution_results) == 8.0
 
-def test_qutip_i():
 
+def test_qutip_i():
     i = QutipI(0)
     obj = i.get_compact_qobj()
     assert obj.dims == [[2], [2]]
     assert obj.shape == (2, 2)
     assert np.allclose(obj.full(), np.eye(2))
+
 
 def test_measurement_gates():
     backend = QutipBackend()
@@ -231,24 +261,68 @@ def test_measurement_gates():
 def test_bad_probability(monkeypatch):
     backend = QutipBackend()
     circuit = Circuit(nqubits=1)
-    class CircuitSimulatorMockResults():
+
+    class CircuitSimulatorMockResults:
         def __init__(self):
             self.probabilities = np.array([1.2, 0.2])
             self.cbits = ["0", "1"]
+
     monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
     result = backend.execute(Sampling(circuit=circuit, nshots=10))
     assert isinstance(result, SamplingResult)
     assert result.nshots == 10
     assert sum(result.samples.values()) == 10
 
-# def test_time_evolution(monkeypatch):
-#     class TimeEvolutionMockResults:
-#         pass
-#     backend = QutipBackend()
-#     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-#     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
-#     initial_state = ket(0)
-#     func = TimeEvolution(schedule=schedule, observables=[PauliZ(0)], initial_state=initial_state)
-#     monkeypatch.setattr(qutip, "mesolve", lambda self, *args, **kwargs: TimeEvolutionMockResults())
-#     result = backend.execute(func)
 
+class QObjMock:
+    def __init__(self, data):
+        self.data = data
+
+    def full(self):
+        return self.data
+
+
+class TimeEvolutionMockResults:
+    def __init__(self):
+        self.expect = [np.array([0.0, 0.0]), np.array([1.0, 1.0])]
+        self.final_state = QObjMock(np.array([[0], [1]]))
+        self.states = [self.final_state, self.final_state]
+
+
+# @pytest.mark.parametrize("initial_state", [ket(0), ket(0).to_density_matrix(), bra(0)])
+@pytest.mark.parametrize(
+    "initial_state",
+    [tensor_prod([ket(0), ket(0)]), tensor_prod([ket(0), ket(0)]).to_density_matrix(), tensor_prod([bra(0), bra(0)])],
+)
+@pytest.mark.parametrize("ob", [PauliZ(0), Hamiltonian({(PauliZ(0),): 1.0}), (PauliZ(0) * PauliZ(1)).to_qtensor()])
+def test_time_evolution(monkeypatch, initial_state, ob):
+    monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
+    backend = QutipBackend()
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
+    result = backend.execute(func)
+    assert np.allclose(result.final_expected_values, np.array([0]))
+    assert isinstance(result.final_state, QTensor)
+
+
+def test_time_evolution_bad_initial(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
+    backend = QutipBackend()
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    bad_state = QTensor(-np.eye(2))
+    func = TimeEvolution(schedule=schedule, observables=[PauliZ(0)], initial_state=bad_state)
+    with pytest.raises(ValueError, match="initial state"):
+        backend.execute(func)
+
+
+def test_time_evolution_bad_observable():
+    backend = QutipBackend()
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    initial_state = ket(0)
+    ob = "bad"
+    func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
+    with pytest.raises(ValueError, match="observable"):
+        backend.execute(func)

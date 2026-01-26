@@ -414,9 +414,7 @@ def _check_output(var: Variable, output: Number) -> RealNumber:
     out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
     if not var.domain.check_value(out):
-        raise ValueError(
-            f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-        ) 
+        raise ValueError(f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}")
 
     return out
 

@@ -413,17 +413,17 @@ class Controlled(Modified[TBasicGate]):
         if set(control_qubits) & set(basic_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
-        self._control_qubits = control_qubits
+        self._control_qubits = control_qubits + basic_gate.control_qubits
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
         I_full = np.eye(1 << self.nqubits, dtype=complex)
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
         P = np.array([[0, 0], [0, 1]], dtype=complex)
-        for _ in range(len(self.control_qubits) - 1):
+        for _ in range(len(self.control_qubits) - len(self.basic_gate.control_qubits) - 1):
             P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=complex))
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
-        I_target = np.eye(1 << len(self.target_qubits), dtype=complex)
+        I_target = np.eye(1 << self.basic_gate.nqubits, dtype=complex)
         # The controlled gate is then:
         controlled = I_full + np.kron(P, self.basic_gate.matrix - I_target)
         return controlled

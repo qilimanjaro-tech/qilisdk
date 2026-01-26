@@ -14,27 +14,28 @@
 
 import math
 from copy import copy
+from enum import Enum
+from io import StringIO
 
 import numpy as np
-from io import StringIO
-from ruamel.yaml import YAML
 import pytest
-from enum import Enum
+from ruamel.yaml import YAML
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.core.variables import (
     EQ,
     GEQ,
     GT,
+    LARGE_BOUND,
     LEQ,
     LT,
     MAX_INT,
     MIN_INT,
     NEQ,
-    LARGE_BOUND,
     BaseVariable,
     BinaryVariable,
     Bitwise,
+    ComparisonOperation,
     ComparisonTerm,
     Cos,
     Domain,
@@ -48,17 +49,16 @@ from qilisdk.core.variables import (
     NotEqual,
     Number,
     OneHot,
-    ComparisonOperation,
     Operation,
     Parameter,
     Sin,
     SpinVariable,
     Term,
     Variable,
+    _assert_real,
     _check_output,
     _extract_number,
     _float_if_real,
-    _assert_real,
 )
 
 
@@ -422,7 +422,7 @@ def test_invalid_bit_string(monkeypatch):
         x.evaluate([1, 1, 1])
     with pytest.raises(ValueError, match=r"invalid binary string"):
         x.evaluate([1, 1, 1])
-    
+
     # pretend we inited wrongly
     monkeypatch.setattr(x, "_term", x.term + x[0])
     x.evaluate([1, 0, 0])
@@ -1207,9 +1207,9 @@ def test_cos_map():
 
     assert isinstance(copy(cos_map), Cos)
 
+
 @pytest.mark.parametrize("domain", list(Domain))
 def test_domain_yaml(domain):
-
     yaml = YAML()
     yaml.register_class(Domain)
     stream = StringIO()
@@ -1221,9 +1221,9 @@ def test_domain_yaml(domain):
 
     assert loaded is domain
 
+
 @pytest.mark.parametrize("operation", list(Operation))
 def test_operation(operation):
-
     yaml = YAML()
     yaml.register_class(Operation)
     stream = StringIO()
@@ -1235,9 +1235,9 @@ def test_operation(operation):
 
     assert loaded is operation
 
+
 @pytest.mark.parametrize("comparison_operation", list(ComparisonOperation))
 def test_operation_comparison_operator(comparison_operation):
-
     yaml = YAML()
     yaml.register_class(ComparisonOperation)
     stream = StringIO()
@@ -1249,15 +1249,14 @@ def test_operation_comparison_operator(comparison_operation):
 
     assert loaded is comparison_operation
 
-def test_base_variable():
 
+def test_base_variable():
     class DummyVariable(BaseVariable):
-        def evaluate(self, value):
-            ...
-        def num_binary_equivalent(self):
-            ...
-        def to_binary(self):
-            ...
+        def evaluate(self, value): ...
+
+        def num_binary_equivalent(self): ...
+
+        def to_binary(self): ...
 
     a = DummyVariable("a", Domain.INTEGER, (0, 1))
 
@@ -1276,37 +1275,41 @@ def test_base_variable():
     with pytest.raises(TypeError):
         not_number - a
     assert a - np_generic == a - 1.0
-    assert a.__rsub__(np_generic) == 1.0 - a
+    assert a.__rsub__(np_generic) == 1.0 - a  # noqa: PLC2801
 
     with pytest.raises(TypeError):
         a * not_number
     with pytest.raises(TypeError):
         not_number * a
     assert a * np_generic == a * 1.0
-    assert a.__rmul__(np_generic) == 1.0 * a
+    assert a.__rmul__(np_generic) == 1.0 * a  # noqa: PLC2801
 
     with pytest.raises(NotImplementedError, match="Only division by real numbers"):
         a / not_number
     assert a / np_generic == a / 1.0
 
-def test_binary_variable_evaluate(monkeypatch):
 
+def test_binary_variable_evaluate(monkeypatch):
     x = BinaryVariable("x")
     monkeypatch.setattr(Domain, "check_value", lambda self, value: (True, ""))
     assert x.evaluate(2) == 2
 
+
 def test_big_bounds(monkeypatch):
-    
     # capture output of logger.warning
     out = []
-    monkeypatch.setattr("loguru.logger.warning", lambda msg: out.append(msg))
-    x = Variable("x", Domain.REAL, (0, LARGE_BOUND+1))
+
+    def log_append(msg):
+        out.append(msg)
+
+    monkeypatch.setattr("loguru.logger.warning", log_append)
+    x = Variable("x", Domain.REAL, (0, LARGE_BOUND + 1))
     x.term
     assert len(out) >= 1
     assert "Encoding variable" in out[0]
 
-def test_parameter_evaluate():
 
+def test_parameter_evaluate():
     p = Parameter("p", 2, domain=Domain.INTEGER, bounds=(0, 10))
     with pytest.raises(ValueError, match=r"doesn't correspond to the parameter's domain"):
         p.evaluate(3.5)
@@ -1316,15 +1319,15 @@ def test_parameter_evaluate():
     assert p.num_binary_equivalent() == 0
 
     with pytest.raises(NotImplementedError, match=r"with a list"):
-        p.evaluate([1,0,0])
+        p.evaluate([1, 0, 0])
 
     assert p.to_binary() == Term([2], Operation.ADD)
 
     with pytest.raises(ValueError, match=r"Invalid bounds provided"):
-        p.update_variable(Domain.BINARY, (0,1,2))
+        p.update_variable(Domain.BINARY, (0, 1, 2))
+
 
 def test_parameter_comparisons():
-
     p1 = Parameter("p1", 2, domain=Domain.INTEGER, bounds=(0, 10))
 
     assert p1 == 2
@@ -1346,20 +1349,20 @@ def test_parameter_comparisons():
         p1 > bad_object
     with pytest.raises(TypeError):
         p1 >= bad_object
-    assert (p1 != bad_object) == True
-    assert (p1 == bad_object) == False
+    assert p1 != bad_object
+    assert not (p1 == bad_object)  # noqa: SIM201
+
 
 def test_empty_term():
-
     t = Term([], Operation.ADD)
     assert t.evaluate({}) == 0
 
-def test_term_evaluate_invalid_variable(monkeypatch):
 
+def test_term_evaluate_invalid_variable(monkeypatch):
     x = Parameter("x", 2)
     term = 2 * x + 3
     with pytest.raises(ValueError, match=r"value with a list is not supported"):
-        term.evaluate({x: [1]}) 
+        term.evaluate({x: [1]})
 
     # test that if somehow in the evaulate we get a integer, that it's returned as a float
     monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5)
@@ -1373,11 +1376,11 @@ def test_term_evaluate_invalid_variable(monkeypatch):
     monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5 + 5j)
     assert term.evaluate({x: 2}) == 5 + 5j
 
+
 def test_is_parameterized_term():
-    
     b = BinaryVariable("b")
     p = Parameter("p", 1)
-    x = Variable("x", Domain.INTEGER, (0,3))
+    x = Variable("x", Domain.INTEGER, (0, 3))
     term1 = 2 * b + 3
     term2 = 2 * p + 3
     term3 = 2 * x + 3
@@ -1387,8 +1390,8 @@ def test_is_parameterized_term():
     assert not term3.is_parameterized_term()
     assert not term4.is_parameterized_term()
 
-def test_term_arithmetic():
 
+def test_term_arithmetic():
     not_number = "not a number"
     np_generic = np.float64(1.0)
 
@@ -1400,42 +1403,45 @@ def test_term_arithmetic():
     with pytest.raises(TypeError):
         not_number + t
     assert t + np_generic == t + 1.0
-    assert t.__radd__(np_generic) == 1.0 + t
+    assert t.__radd__(np_generic) == 1.0 + t  # noqa: PLC2801
 
     with pytest.raises(TypeError):
         t - not_number
     with pytest.raises(TypeError):
         not_number - t
     assert t - np_generic == t - 1.0
-    assert t.__rsub__(np_generic) == 1.0 - t
+    assert t.__rsub__(np_generic) == 1.0 - t  # noqa: PLC2801
 
     with pytest.raises(TypeError):
         t * not_number
     with pytest.raises(TypeError):
         not_number * t
     assert t * np_generic == t * 1.0
-    assert t.__rmul__(np_generic) == 1.0 * t
+    assert t.__rmul__(np_generic) == 1.0 * t  # noqa: PLC2801
 
     with pytest.raises(NotImplementedError, match="Only division by"):
         t / not_number
     assert t / np_generic == t / 1.0
 
     with pytest.raises(ValueError, match="Only integer exponents"):
-        t ** 2.5
+        t**2.5
+
 
 def test_strange_comparison_terms():
     comp = ComparisonTerm(2, 3, ComparisonOperation.LEQ)
     assert comp.to_list() == [-1]
 
+
 def test_bad_comparison_operation():
     class DummyComparisonOperation(Enum):
         DUMMY = "DUMMY"
+
     comp = ComparisonTerm(2, 3, DummyComparisonOperation.DUMMY)
     with pytest.raises(ValueError, match="Unsupported Operation"):
         comp.evaluate({})
 
-def test_complex_comparison_term_evaluate(monkeypatch):
 
+def test_complex_comparison_term_evaluate(monkeypatch):
     v = Variable("v", Domain.REAL)
     lhs_real = v * 2
     lhs_imag = v * 2j
@@ -1452,10 +1458,10 @@ def test_complex_comparison_term_evaluate(monkeypatch):
         "evaluate",
         lambda self, value_dict: complex(self.get_constant(), 0),
     )
-    assert EQ(lhs_almost_imag, rhs_almost_imag).evaluate({v: 1}) == False
+    assert not EQ(lhs_almost_imag, rhs_almost_imag).evaluate({v: 1})
+
 
 def test_comparison_term_equality():
-
     v = Variable("v", Domain.REAL)
     comp1 = EQ(v + 1, 2)
     comp2 = EQ(v + 1, 2)
@@ -1466,8 +1472,8 @@ def test_comparison_term_equality():
     assert comp1 != comp3
     assert comp1 != other
 
-def test_check_output():
 
+def test_check_output():
     x = Variable("x", Domain.INTEGER, (0, 3))
     assert _check_output(x, 3) == 3
     with pytest.raises(ValueError, match=r"outside the variable domain"):
@@ -1478,16 +1484,19 @@ def test_check_output():
     with pytest.raises(ValueError, match=r"violates the domain"):
         _check_output(b, 4.4)
 
+
 def test_extract_number():
     assert _extract_number("var(3)") == 3
     assert _extract_number("var(33)") == 33
     assert _extract_number("var(test)") == 0
+
 
 def test_float_if_real():
     assert _float_if_real(3) == 3.0
     assert _float_if_real(3.5) == 3.5
     assert _float_if_real(complex(3, 0)) == 3.0
     assert _float_if_real(complex(3, 2)) == complex(3, 2)
+
 
 def test_assert_real():
     assert _assert_real(3) == 3
