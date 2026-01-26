@@ -27,9 +27,10 @@ void sampling(std::vector<Gate>& gates,
               const std::vector<bool>& qubits_to_measure, 
               int n_qubits, 
               int n_shots, 
-              QiliSimConfig& config, 
               SparseMatrix& initial_state,
-              std::map<std::string, int>& counts) {
+              DenseMatrix& state,
+              std::map<std::string, int>& counts, 
+              QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -38,8 +39,10 @@ void sampling(std::vector<Gate>& gates,
         qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
-        config (QiliSimConfig): The simulation configuration.
+        initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
+        state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
         counts (std::map<std::string, int>&): A map to store the measurement counts.
+        config (QiliSimConfig): The simulation configuration.
 
     Returns:
         SamplingResult: A result object containing the measurement samples and computed probabilities.
@@ -61,8 +64,9 @@ void sampling(std::vector<Gate>& gates,
 
     // Start with the zero state
     long dim = 1L << n_qubits;
-    DenseMatrix state = initial_state;
+    state = initial_state;
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
+    bool initially_was_statevector = is_statevector;
 
     // If it's a density matrix, check if it's pure
     if (!is_statevector) {
@@ -208,4 +212,10 @@ omp_set_num_threads(config.num_threads);
         filtered_counts[filtered_bitstring] += pair.second;
     }
     counts = filtered_counts;
+
+    // If we started with a density matrix and ended with a statevector, convert back
+    if (!initially_was_statevector && is_statevector) {
+        state = state * state.adjoint();
+    }
+
 }

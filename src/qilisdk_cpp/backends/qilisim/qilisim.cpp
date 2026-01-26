@@ -84,7 +84,9 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
-    sampling(gates, qubits_to_measure, n_qubits, n_shots, config, initial_state_cpp, counts);
+    DenseMatrix state;
+    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, state, counts, config);
+
     // Convert counts to samples dict
     py::dict samples;
     for (const auto& pair : counts) {

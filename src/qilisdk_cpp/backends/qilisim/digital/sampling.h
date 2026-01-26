@@ -23,6 +23,7 @@ void sampling(std::vector<Gate>& gates,
               const std::vector<bool>& qubits_to_measure, 
               int n_qubits, 
               int n_shots, 
-              QiliSimConfig& config, 
               SparseMatrix& initial_state,
-              std::map<std::string, int>& counts);
+              DenseMatrix& state,
+              std::map<std::string, int>& counts,
+              QiliSimConfig& config);
