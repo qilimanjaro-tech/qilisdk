@@ -114,8 +114,6 @@ class PauliOperator(ABC):
     _MATRIX: ClassVar[np.ndarray]
     _MATRIX_CACHE: ClassVar[dict[np.dtype, np.ndarray]]
 
-    # __slots__ = ("_qubit",)
-
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         cls._MATRIX_CACHE = {}
