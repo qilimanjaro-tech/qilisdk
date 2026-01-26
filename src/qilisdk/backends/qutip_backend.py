@@ -265,8 +265,8 @@ class QutipBackend(Backend):
             expected_values=(
                 np.array(
                     [
-                        [results.expect[val][i] for val in range(len(results.expect))] # ty:ignore[not-subscriptable]
-                        for i in range(len(results.expect[0])) # ty:ignore[invalid-argument-type]
+                        [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
+                        for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
                     ],
                     dtype=_complex_dtype(),
                 )
