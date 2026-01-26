@@ -121,7 +121,7 @@ There is no need to install QiliSim separately, as it is included with the core 
 - ``evolution_method`` (str, optional): The method for simulating time evolution. Options include 'direct', 'arnoldi' and 'integrate'. Default is 'integrate'.
 - ``arnoldi_dim`` (int, optional): Dimension of the Krylov subspace for the Arnoldi method. Default is 10.
 - ``num_arnoldi_substeps`` (int, optional): Number of substeps for the Arnoldi method per timestep. Default is 1.
-- ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 1.
+- ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 2.
 - ``monte_carlo`` (bool, optional): Whether to use the Monte Carlo wavefunction method. Default is False.
 - ``num_monte_carlo_trajectories`` (int, optional): Number of trajectories to simulate when using the Monte Carlo method. Default is 100.
 
