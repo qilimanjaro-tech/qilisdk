@@ -120,6 +120,12 @@ class QutipBackend(Backend):
         """
         logger.info("Executing Sampling (shots={})", functional.nshots)
 
+        # If we have a noise model, log a warning that it's not supported
+        if noise_model is not None:
+            logger.warning(
+                "Noise models are not yet implemented for the Qutip backend."
+            )
+
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
         measurements_set = set()
@@ -174,6 +180,13 @@ class QutipBackend(Backend):
         Raises:
             ValueError: if the initial state provided is invalid.
         """
+
+        # If we have a noise model, log a warning that it's not supported
+        if noise_model is not None:
+            logger.warning(
+                "Noise models are not yet implemented for the Qutip backend."
+            )
+
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         steps = functional.schedule.tlist
 

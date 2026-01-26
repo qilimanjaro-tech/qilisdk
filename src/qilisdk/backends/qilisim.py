@@ -107,6 +107,13 @@ class QiliSim(Backend):
             SamplingResult: A result object containing the measurement samples and computed probabilities.
 
         """
+
+        # If we have a noise model, log a warning that it's not supported
+        if noise_model is not None:
+            logger.warning(
+                "Noise models are not yet implemented for the Qutip backend."
+            )
+
         logger.info("Executing Sampling with {} shots", functional.nshots)
         result = self.qili_sim.execute_sampling(functional, self.solver_params)
         logger.success("Sampling finished")
@@ -124,6 +131,12 @@ class QiliSim(Backend):
         Returns:
             TimeEvolutionResult: The results of the evolution.
         """
+
+        # If we have a noise model, log a warning that it's not supported
+        if noise_model is not None:
+            logger.warning(
+                "Noise models are not yet implemented for the Qutip backend."
+            )
 
         # Get the time steps
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)

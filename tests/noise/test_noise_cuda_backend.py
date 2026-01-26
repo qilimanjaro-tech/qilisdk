@@ -46,8 +46,19 @@ from qilisdk.noise import (
     PauliChannel,
     ReadoutAssignment,
 )
+import cudaq
 
+_MINIMUM_VERSION = (13, 12)
+def _get_version():
+    cudaq_version = cudaq.__version__
+    cudaq_version = int(cudaq_version.split(".")[1])
+    cuda_version = int(cudaq.cuda_major)
+    return cudaq_version, cuda_version
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_bit_flip_sampling():
     circuit = Circuit(nqubits=1)
     circuit.add(X(0))
@@ -61,6 +72,10 @@ def test_cuda_backend_bit_flip_sampling():
     assert result.samples == {"0": 100}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_bit_flip_two_qubits_sampling():
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
@@ -75,6 +90,10 @@ def test_cuda_backend_bit_flip_two_qubits_sampling():
     assert result.samples == {"01": 100}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_bit_flip_only_identity():
     circuit = Circuit(nqubits=2)
     circuit.add(I(0))
@@ -89,6 +108,10 @@ def test_cuda_backend_bit_flip_only_identity():
     assert result.samples == {"11": 100}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_bit_flip_global():
     circuit = Circuit(nqubits=2)
     circuit.add(I(0))
@@ -103,6 +126,10 @@ def test_cuda_backend_bit_flip_global():
     assert result.samples == {"11": 100}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_bit_flip_gate_and_qubit():
     circuit = Circuit(nqubits=2)
     circuit.add(Z(0))
@@ -119,6 +146,10 @@ def test_cuda_backend_bit_flip_gate_and_qubit():
     assert result.samples == {"01": 100}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_static_kraus_sampling():
     shots = 100
     circuit = Circuit(nqubits=1)
@@ -134,6 +165,10 @@ def test_cuda_backend_static_kraus_sampling():
     assert result.samples == {"1": shots}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_gate_parameter_perturbation():
     shots = 100
     circuit = Circuit(nqubits=1)
@@ -149,6 +184,10 @@ def test_cuda_backend_gate_parameter_perturbation():
     assert result.samples == {"1": shots}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_time_evolution_amplitude_damping():
     total_time = 1.0
     schedule = Schedule(
@@ -173,6 +212,10 @@ def test_cuda_backend_time_evolution_amplitude_damping():
     assert result.final_expected_values[0] > 0.9
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_time_evolution_dephasing():
     total_time = 1.0
     schedule = Schedule(
@@ -198,6 +241,10 @@ def test_cuda_backend_time_evolution_dephasing():
     assert abs(result.final_expected_values[0]) < 0.1
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_cuda_backend_schedule_parameter_perturbation():
     total_time = np.pi / 2
     coupling = Parameter("g", 0.0)
@@ -224,9 +271,10 @@ def test_cuda_backend_schedule_parameter_perturbation():
     assert result.final_expected_values[0] < -0.8
 
 
-# --------------
-
-
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_depolarizing_cuda():
     # Define the random circuit and sampler
     shots = 1000
@@ -250,6 +298,10 @@ def test_depolarizing_cuda():
     assert np.isclose(prob_10, p * 0.5, atol=0.1)
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_digital_dephasing_cuda():
     # Define the random circuit and sampler
     shots = 10000
@@ -276,6 +328,10 @@ def test_digital_dephasing_cuda():
     assert np.isclose(prob_10, p, atol=0.1)
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_amplitude_damping_cuda():
     # Define the random circuit and sampler
     shots = 10000
@@ -300,6 +356,10 @@ def test_amplitude_damping_cuda():
     assert np.isclose(prob_00, p, atol=0.1)
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_kraus_noise_single_qubit_cuda():
     # Define the random circuit and sampler
     shots = 1000
@@ -326,6 +386,10 @@ def test_kraus_noise_single_qubit_cuda():
     assert np.isclose(prob_10, p, atol=0.1)
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_kraus_noise_two_qubit_cuda():
     # Define the random circuit and sampler
     shots = 1000
@@ -354,6 +418,10 @@ def test_kraus_noise_two_qubit_cuda():
     assert np.isclose(prob_00, p, atol=0.1)
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_analog_dissapation_cuda():
     # Define the time evolution
     T = 10.0
@@ -392,6 +460,10 @@ def test_analog_dissapation_cuda():
     assert results.final_expected_values[0] > -0.8
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_analog_amplitude_damping_cuda():
     # Define the time evolution
     T = 10.0
@@ -428,6 +500,10 @@ def test_analog_amplitude_damping_cuda():
     assert results.final_expected_values[0] > -0.8
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_analog_dephasing_cuda():
     # Define the time evolution
     T = 10.0
@@ -464,6 +540,10 @@ def test_analog_dephasing_cuda():
     assert results.final_expected_values[0] > -0.8
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_readout_error_cuda_01():
     # Define the random circuit and sampler
     shots = 100
@@ -484,6 +564,10 @@ def test_readout_error_cuda_01():
     assert res.samples == {"1": shots}
 
 
+@pytest.mark.skipif(
+    _get_version() < _MINIMUM_VERSION,
+    reason="These tests require CUDAQ version >= 13 and CUDA version >= 12",
+)
 def test_readout_error_cuda_10():
     # Define the random circuit and sampler
     shots = 100
