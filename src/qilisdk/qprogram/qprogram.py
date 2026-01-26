@@ -132,10 +132,10 @@ class QProgram(StructuredProgram):
                 if isinstance(element, Block):
                     string_elements.extend(traverse(element, indent + "\t"))
 
-                if hasattr(element, "waveform"):
+                if isinstance(element, (Play, Measure)):
                     string_elements.extend(format_waveform(element.waveform, indent + "\t"))
 
-                if hasattr(element, "weights"):
+                if isinstance(element, Measure):
                     string_elements.extend(format_weights(element.weights, indent + "\t"))
 
             return string_elements

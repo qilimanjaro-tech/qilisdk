@@ -153,7 +153,7 @@ class QProgramVariable:
 
 
 @yaml.register_class
-class IntVariable(QProgramVariable, int):  # type: ignore
+class IntVariable(QProgramVariable, int):
     """Integer variable. This class is used to define a variable of type int, such that Python recognizes this class
     as an integer."""
 
@@ -167,7 +167,7 @@ class IntVariable(QProgramVariable, int):  # type: ignore
 
 
 @yaml.register_class
-class FloatVariable(QProgramVariable, float):  # type: ignore
+class FloatVariable(QProgramVariable, float):
     """Float variable. This class is used to define a variable of type float, such that Python recognizes this class
     as a float."""
 

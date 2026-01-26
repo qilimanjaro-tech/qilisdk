@@ -14,20 +14,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from qilisdk.qprogram.element import Element
 from qilisdk.yaml import yaml
-
-if TYPE_CHECKING:
-    from qilisdk.qprogram.operations.operation import Operation
 
 
 @yaml.register_class
 class Block(Element):
     def __init__(self) -> None:
         super().__init__()
-        self.elements: list[Block | Operation] = []
+        self.elements: list[Element] = []
 
-    def append(self, element: Block | Operation) -> None:
+    def append(self, element: Element) -> None:
         self.elements.append(element)
