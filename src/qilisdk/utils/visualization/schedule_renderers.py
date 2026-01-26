@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
     from qilisdk.core.types import Number
 
-
 from qilisdk.utils.visualization.style import ScheduleStyle
 
 
@@ -96,7 +95,14 @@ class MatplotlibScheduleRenderer:
             if "color" not in line_style:
                 color = grad_colors[idx]
                 line_style = {**line_style, "color": color}
-            self.ax.plot(times, plots[h], label=h, marker=marker, markersize=style.marker_size, kwargs=line_style)
+            self.ax.plot(
+                times,
+                plots[h],
+                label=h,
+                marker=marker,
+                markersize=style.marker_size,
+                **line_style,  # ty:ignore[invalid-argument-type]
+            )
         if style.grid:
             grid_style = dict(style.grid_style)
             if "color" not in grid_style:
