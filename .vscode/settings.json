@@ -4,10 +4,8 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    // Use the Material themes
     "workbench.iconTheme": "material-icon-theme",
     "workbench.productIconTheme": "material-product-icons",
-    // QiliSDK-specific folder icons
     "material-icon-theme.folders.associations": {
         "common": "app",
         "analog": "functions",
@@ -19,5 +17,9 @@
         "cost_functions": "cart",
         "noise_models": "animation",
         "experiments": "filter"
+    },
+    "sonarlint.connectedMode.project": {
+        "connectionId": "qilimanjaro",
+        "projectKey": "qilimanjaro-tech_qilisdk"
     },
 }

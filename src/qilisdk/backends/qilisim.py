@@ -18,7 +18,7 @@ import secrets
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from qilisim_module import QiliSimCpp
+from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
 from qilisdk.backends.backend import Backend
 

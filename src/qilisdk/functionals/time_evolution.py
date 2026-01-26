@@ -16,7 +16,8 @@ from typing import ClassVar
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.variables import ComparisonTerm, RealNumber
+from qilisdk.core.types import RealNumber
+from qilisdk.core.variables import ComparisonTerm
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml

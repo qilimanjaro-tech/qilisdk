@@ -15,7 +15,6 @@ from __future__ import annotations
 
 # import numpy as np
 import copy
-from enum import Enum
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
 # import cupy as np
@@ -25,6 +24,7 @@ from loguru import logger
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
+from .types import QiliEnum
 from .variables import (
     GEQ,
     LEQ,
@@ -41,9 +41,6 @@ from .variables import (
 )
 
 if TYPE_CHECKING:
-    from ruamel.yaml.nodes import ScalarNode
-    from ruamel.yaml.representer import RoundTripRepresenter
-
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
@@ -69,31 +66,11 @@ class SlackCounter:
 
 
 @yaml.register_class
-class ObjectiveSense(str, Enum):
+class ObjectiveSense(QiliEnum):
     """An Enumeration of the Objective sense options."""
 
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
-
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: ObjectiveSense) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the ObjectiveSense.
-        """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.value}")  # type: ignore[attr-defined]
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> ObjectiveSense:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            ObjectiveSense: The ObjectiveSense instance created from the YAML node value.
-        """
-        return cls(node.value)
 
 
 @yaml.register_class
