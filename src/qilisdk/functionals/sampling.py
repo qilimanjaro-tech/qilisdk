@@ -13,7 +13,8 @@
 # limitations under the License.
 from typing import ClassVar
 
-from qilisdk.core.variables import ComparisonTerm, RealNumber
+from qilisdk.core.types import RealNumber
+from qilisdk.core.variables import ComparisonTerm
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.sampling_result import SamplingResult

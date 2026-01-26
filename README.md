@@ -429,8 +429,8 @@ openfermion_ham = qilisdk_to_openfermion(qilisdk_ham)
 This section covers how to set up a local development environment for qilisdk, run tests, enforce code style, manage dependencies, and contribute to the project. We use a number of tools to maintain code quality and consistency:
 
 - **[uv](https://pypi.org/project/uv/)** for dependency management and packaging.
-- **[ruff](https://beta.ruff.rs/docs/)** for linting and code formatting.
-- **[mypy](http://mypy-lang.org/)** for static type checking.
+- **[ruff](https://docs.astral.sh/ruff/)** for linting and code formatting.
+- **[ty](https://docs.astral.sh/ty/)** for language server and static type checking.
 - **[towncrier](https://github.com/twisted/towncrier)** for automated changelog generation.
 
 ### Prerequisites
@@ -458,7 +458,7 @@ This section covers how to set up a local development environment for qilisdk, r
      ```bash
      uv sync
      ```
-     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `mypy`, `towncrier`, etc.).
+     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `ty`, `towncrier`, etc.).
    - To install extra dependencies such as `CudaBackend`, run:
      ```bash
      uv sync --extra cuda -extra ...
@@ -517,18 +517,25 @@ ruff format
 
 *(We recommend running `ruff check --fix` and `ruff format` before committing any changes.)*
 
-### Type Checking
-
-We use [**mypy**](http://mypy-lang.org/) for static type checking. This helps ensure our code is type-safe and maintainable.
-
+To check the C++ code, compile with the debug flag:
 ```bash
-mypy qilisdk
+uv pip install -v -e ./ -Ccmake.build-type=Debug
+```
+This will run clang-format and clang-tidy as well as a number of C++ compiler flags for debugging. For this you will need clang-tidy and clang-format installed, which can be done on Debian/Ubuntu with:
+```bash
+sudo apt-get install clang-format clang-tidy
+```
+It may also throw an error about not being able to find `omp.h`, if so, try:
+```bash
+sudo apt-get install libomp-dev
 ```
 
-If you have extra modules or tests you want type-checked, specify them:
+### Type Checking
+
+We use [**ty**](https://docs.astral.sh/ty/) for static type checking. This helps ensure our code is type-safe and maintainable.
 
 ```bash
-mypy qilisdk tests
+ty check
 ```
 
 *(We encourage developers to annotate new functions, classes, and methods with type hints.)*
@@ -543,7 +550,7 @@ changes/123.feature.rst
 ```
 Inside this file, you briefly describe the new feature:
 ```rst
-Added a new `cool_feature` in the `qilisdk.backend` module.
+Added a new `cool_feature` in the `qilisdk.backends` module.
 ```
 Instead of manually creating the file, you can run:
 ```bash
@@ -566,7 +573,7 @@ We welcome contributions! Here’s the workflow:
    ```bash
    ruff check --fix
    ruff format
-   mypy qilisdk
+   ty check
    pytest tests
    ```
 5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
@@ -585,8 +592,8 @@ This project is licensed under the [Apache License](LICENSE).
 ## Acknowledgments
 
 - Thanks to all the contributors who help develop qilisdk!
-- [uv](https://pypi.org/project/uv/) for making dependency management smoother.
-- [ruff](https://beta.ruff.rs/docs/), [mypy](http://mypy-lang.org/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
+- [uv](https://docs.astral.sh/uv/) for making dependency management smoother.
+- [ruff](https://docs.astral.sh/ruff/), [ty](https://docs.astral.sh/ty/), and [towncrier](https://github.com/twisted/towncrier) for their amazing tooling.
 
 ---
 

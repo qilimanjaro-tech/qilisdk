@@ -134,6 +134,6 @@ class Backend(ABC):
                 "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
             )
         functional.functional.set_parameters(optimal_parameter_dict)
-        optimal_results: TResult = cast("TResult", self.execute(functional.functional))
+        optimal_results: TResult = self.execute(functional.functional)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)

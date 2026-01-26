@@ -18,17 +18,20 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping, TypeAlias
 
 import numpy as np
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, BaseVariable, Number, Parameter, Term
+from qilisdk.core.variables import LEQ, BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
+if TYPE_CHECKING:
+    from qilisdk.core.types import Number
+
 _TIME_PARAMETER_NAME = "t"
-PARAMETERIZED_NUMBER = float | Parameter | Term
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 
 # type aliases just to keep this short
 TimeDict = dict[PARAMETERIZED_NUMBER | tuple[float, float], PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
@@ -152,7 +155,7 @@ class Interpolator(Parameterizable):
         time_insertion_list = sorted(
             [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
             key=self._get_value,
-        )
+        )  # ty:ignore[no-matching-overload]
         l = len(time_insertion_list)
         for i in range(l):
             t = time_insertion_list[i]
@@ -173,7 +176,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.
         """
-        return sorted((self._time_dict.keys()), key=self._get_value)
+        return sorted((self._time_dict.keys()), key=self._get_value)  # ty:ignore[invalid-return-type]
 
     @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
@@ -377,7 +380,7 @@ class Interpolator(Parameterizable):
         coeff = coefficient
         if callable(coeff):
             self._current_time.set_value(self._get_value(time))
-            coeff, _params = _process_callable(coeff, self._current_time)
+            coeff, _params = _process_callable(coeff, self._current_time)  # ty:ignore[invalid-argument-type]
             self._extract_parameters(coeff)
             if len(_params) > 0:
                 self._parameters.update(_params)
@@ -434,7 +437,7 @@ class Interpolator(Parameterizable):
         Returns:
             float: Evaluated coefficient.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None and self._tlist is not None:
@@ -459,7 +462,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
 
         # generate the tlist
         self._tlist = self._generate_tlist()

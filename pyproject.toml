@@ -56,7 +56,6 @@ openfermion = [
 dev = [
     "hypothesis>=6.150.1",
     "ipykernel>=7.1.0",
-    "mypy>=1.19.1",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
@@ -64,6 +63,7 @@ dev = [
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
+    "ty>=0.0.13",
 ]
 docs = [
     "astroid<3.2",
@@ -101,7 +101,6 @@ exclude = [
     "/.vscode",
     "/.pytest_cache",
     "/.ruff_cache",
-    "/.mypy_cache",
     "/dist",
     "/docs",
     "/changes",
@@ -117,10 +116,14 @@ cmake.define.qilisim = "ON"
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
 
+[tool.ty.src]
+include = ["src"]
+exclude = ["tests"]
+
 [tool.ruff]
 line-length = 120
 output-format = "concise"
-target-version = "py310"
+target-version = "py313"
 
 [tool.ruff.lint]
 preview = true
@@ -214,11 +217,6 @@ convention = "google"
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
-
-[tool.mypy]
-python_version = "3.13"
-ignore_missing_imports = true
-exclude = ["\\.ipynb$"]
 
 [tool.pytest.ini_options]
 markers = [
