@@ -81,7 +81,11 @@ def defaultdict_representer(representer, data: defaultdict):
     (as module+qualname) plus its items dict.
     """
     factory = data.default_factory
-    factory_name = None if factory is None else f"{factory.__module__}.{factory.__qualname__}"
+    factory_name = (
+        f"{factory.__module__}.{factory.__qualname__}"
+        if factory is not None and hasattr(factory, "__qualname__")
+        else None
+    )
     return representer.represent_mapping(
         "!defaultdict",
         {"default_factory": factory_name, "items": dict(data)},

@@ -81,7 +81,7 @@ class InterceptHandler(logging.Handler):
         try:
             level = logger.level(record.levelname).name
         except ValueError:
-            level = record.levelno  # type: ignore[assignment]
+            level = record.levelno
 
         frame: FrameType | None = logging.currentframe()
         depth = 2

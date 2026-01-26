@@ -52,7 +52,7 @@ jobs:
         run: uv run ruff format --diff --output-format=github .
 
       - name: Mypy
-        run: uv run mypy src --ignore-missing-imports
+        run: uv run ty check --output-format=github
 
       - name: Cpp Linter
         uses: cpp-linter/cpp-linter-action@v2
