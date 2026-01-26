@@ -23,7 +23,14 @@
 #include <omp.h>
 #endif
 
-void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, QiliSimConfig& config, std::map<std::string, int>& counts) {
+void sampling(const std::vector<Gate>& gates, 
+              const std::vector<bool>& qubits_to_measure, 
+              int n_qubits, 
+              int n_shots, 
+              const SparseMatrix& initial_state,
+              DenseMatrix& state,
+              std::map<std::string, int>& counts, 
+              const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -32,8 +39,10 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
         qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
-        config (QiliSimConfig): The simulation configuration.
+        initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
+        state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
         counts (std::map<std::string, int>&): A map to store the measurement counts.
+        config (QiliSimConfig): The simulation configuration.
 
     Returns:
         SamplingResult: A result object containing the measurement samples and computed probabilities.
@@ -45,17 +54,32 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
     */
 
     // Set the number of threads
-    if (config.num_threads <= 0) {
-        config.num_threads = 1;
-    }
 #if defined(_OPENMP)
     omp_set_num_threads(config.num_threads);
+    Eigen::setNbThreads(config.num_threads);
 #endif
 
     // Start with the zero state
     long dim = 1L << n_qubits;
-    DenseMatrix state = DenseMatrix::Zero(dim, 1);
-    state(0, 0) = 1.0;
+    state = initial_state;
+    bool is_statevector = (state.cols() == 1 && state.rows() == dim);
+    bool initially_was_statevector = is_statevector;
+
+    // If it's a density matrix, check if it's pure
+    if (!is_statevector) {
+        DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
+        double trace_squared = state_squared.trace().real();
+        if (std::abs(trace_squared - 1.0) < config.atol) {
+            state = get_vector_from_density_matrix(state.sparseView());
+            is_statevector = true;
+        }
+    }
+
+    // Whether we should do monte-carlo sampling (only for density matrices)
+    bool monte_carlo = (!is_statevector && config.monte_carlo);
+    if (monte_carlo) {
+        state = sample_from_density_matrix(state.sparseView(), config.num_monte_carlo_trajectories, config.seed);
+    }
 
     // Determine the start/end use of each gate
     std::map<std::string, std::pair<int, int>> gate_first_last_use;
@@ -68,22 +92,31 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
         }
     }
 
-    // Pre-cache up to the limit
-    std::map<std::string, SparseMatrix> gate_cache;
+    // Pre-cache up to the limit (in parallel)
     int initial_cache_size = std::min(int(gates.size()), config.max_cache_size);
-    for (int i = 0; i < initial_cache_size; ++i) {
-        const auto& gate = gates[i];
-        std::string gate_id = gate.get_id();
-        gate_cache[gate_id] = SparseMatrix();
-    }
+    std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
+Eigen::setNbThreads(1);
+omp_set_num_threads(config.num_threads);
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
         const auto& gate = gates[i];
         std::string gate_id = gate.get_id();
         SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
-        gate_cache[gate_id] = gate_matrix;
+        precomputed_gates[i] = std::make_pair(gate_id, gate_matrix);
+    }
+#if defined(_OPENMP)
+Eigen::setNbThreads(config.num_threads);
+omp_set_num_threads(config.num_threads);
+#endif
+
+    // Convert pre-cached gates to a map for easier access (in serial)
+    std::map<std::string, SparseMatrix> gate_cache;
+    for (int i = 0; i < initial_cache_size; ++i) {
+        const auto& pair = precomputed_gates[i];
+        gate_cache[pair.first] = pair.second;
+        precomputed_gates[i] = std::make_pair("", SparseMatrix());
     }
 
     // Apply each gate (caching as needed)
@@ -107,10 +140,25 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
         }
 
         // Apply the gate (Sparse-Dense multiplication, OpenMP parallel if enabled)
-        state = gate_matrix * state;
+        if (is_statevector || monte_carlo) {
+            state = gate_matrix * state;
+        } else {
+            state = gate_matrix * state * gate_matrix.adjoint();
+        }
 
         // Renormalize the state
-        state /= state.norm();
+        if (monte_carlo) {
+            for (int col = 0; col < state.cols(); ++col) {
+                DenseMatrix traj = state.col(col);
+                traj /= traj.norm();
+                state.col(col) = traj;
+            }
+        } else if (is_statevector) {
+            state /= state.norm();
+        } else {
+            double trace = state.trace().real();
+            state /= trace;
+        }
 
         // Clear the gate from the cache if this was its last use
         if (gate_first_last_use[gate_id].second <= gate_count) {
@@ -119,12 +167,21 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
         gate_count++;
     }
 
+    // If we have statevector/s but we should return a density matrix
+    if (monte_carlo) {
+        state = trajectories_to_density_matrix(state.sparseView());
+    }
+
     // Get the probabilities
     std::vector<double> probabilities(state.rows());
     double total_prob = 0.0;
+    double prob = 0.0;
     for (int row = 0; row < state.rows(); ++row) {
-        std::complex<double> amp = state(row, 0);
-        double prob = std::norm(amp);
+        if (is_statevector) {
+            prob = std::norm(state(row, 0));
+        } else {
+            prob = state.coeff(row, row).real();
+        }
         total_prob += prob;
         probabilities[row] = prob;
     }
@@ -152,4 +209,10 @@ void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measu
         filtered_counts[filtered_bitstring] += pair.second;
     }
     counts = filtered_counts;
+
+    // If we started with a density matrix and ended with a statevector, convert back
+    if (!initially_was_statevector && is_statevector) {
+        state = state * state.adjoint();
+    }
+
 }
