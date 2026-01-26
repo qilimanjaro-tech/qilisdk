@@ -264,3 +264,48 @@ std::vector<bool> parse_measurements(const py::object& circuit) {
 
     return qubits_to_measure;
 }
+
+QiliSimConfig parse_solver_params(const py::dict& solver_params) {
+    /*
+    Extract QiliSimConfig parameters from a Python dictionary.
+
+    Args:
+        solver_params (py::dict): The dictionary of solver parameters.
+
+    Returns:
+        QiliSimConfig: The populated configuration object.
+    */
+    QiliSimConfig config;
+    if (solver_params.contains("max_cache_size")) {
+        config.max_cache_size = solver_params["max_cache_size"].cast<int>();
+    }
+    if (solver_params.contains("seed")) {
+        config.seed = solver_params["seed"].cast<int>();
+    }
+    if (solver_params.contains("atol")) {
+        config.atol = solver_params["atol"].cast<double>();
+    }
+    if (solver_params.contains("arnoldi_dim")) {
+        config.arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
+    }
+    if (solver_params.contains("num_arnoldi_substeps")) {
+        config.num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
+    }
+    if (solver_params.contains("num_integrate_substeps")) {
+        config.num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
+    }
+    if (solver_params.contains("evolution_method")) {
+        config.method = solver_params["evolution_method"].cast<std::string>();
+    }
+    if (solver_params.contains("monte_carlo")) {
+        config.monte_carlo = solver_params["monte_carlo"].cast<bool>();
+    }
+    if (solver_params.contains("num_monte_carlo_trajectories")) {
+        config.num_monte_carlo_trajectories = solver_params["num_monte_carlo_trajectories"].cast<int>();
+    }
+    if (solver_params.contains("num_threads")) {
+        config.num_threads = solver_params["num_threads"].cast<int>();
+    }
+    config.validate();
+    return config;
+}
