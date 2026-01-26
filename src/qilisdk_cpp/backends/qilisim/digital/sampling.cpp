@@ -23,14 +23,14 @@
 #include <omp.h>
 #endif
 
-void sampling(std::vector<Gate>& gates, 
+void sampling(const std::vector<Gate>& gates, 
               const std::vector<bool>& qubits_to_measure, 
               int n_qubits, 
               int n_shots, 
-              SparseMatrix& initial_state,
+              const SparseMatrix& initial_state,
               DenseMatrix& state,
               std::map<std::string, int>& counts, 
-              QiliSimConfig& config) {
+              const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -54,9 +54,6 @@ void sampling(std::vector<Gate>& gates,
     */
 
     // Set the number of threads
-    if (config.num_threads <= 0) {
-        config.num_threads = 1;
-    }
 #if defined(_OPENMP)
     omp_set_num_threads(config.num_threads);
     Eigen::setNbThreads(config.num_threads);

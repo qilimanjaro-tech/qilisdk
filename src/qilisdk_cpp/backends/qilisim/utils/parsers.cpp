@@ -306,6 +306,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("num_threads")) {
         config.num_threads = solver_params["num_threads"].cast<int>();
     }
+    if (config.num_threads <= 0) {
+        config.num_threads = 1;
+    }
     config.validate();
     return config;
 }
