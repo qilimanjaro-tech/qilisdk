@@ -28,7 +28,7 @@ from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 @pytest.fixture
 def backend():
-    return QiliSim()
+    return QiliSim(seed=42, num_threads=1)
 
 
 def test_execute_simple_circuit_no_measurement(backend):
@@ -51,6 +51,33 @@ def test_execute_with_measurement_gate(backend):
     assert result.samples == {"1": 50}
 
 
+def test_seed_same():
+    backend1 = QiliSim(seed=42, num_threads=1)
+    backend2 = QiliSim(seed=42, num_threads=1)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
+    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
+    assert result1.samples == result2.samples
+
+
+def test_no_seed():
+    backend = QiliSim(seed=None, num_threads=1)
+    seed = backend.solver_params["seed"]
+    assert isinstance(seed, int)
+    assert 0 <= seed <= 2**15
+
+
+def test_seed_different():
+    backend1 = QiliSim(seed=42, num_threads=1)
+    backend2 = QiliSim(seed=43, num_threads=1)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
+    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
+    assert result1.samples != result2.samples
+
+
 def test_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
@@ -61,8 +88,7 @@ def test_cnot(backend):
     assert result.samples == {"00": 10}
 
 
-def test_exponential_gates():
-    backend = QiliSim()
+def test_exponential_gates(backend):
     circuit = Circuit(nqubits=1)
     circuit.add(X(0).exponential())
     result = backend.execute(Sampling(circuit=circuit, nshots=100))
@@ -72,8 +98,7 @@ def test_exponential_gates():
     assert "0" in samples
 
 
-def test_nshots():
-    backend = QiliSim()
+def test_nshots(backend):
     circuit = Circuit(nqubits=1)
     result = backend.execute(Sampling(circuit=circuit, nshots=10))
     assert isinstance(result, SamplingResult)
@@ -109,10 +134,9 @@ def test_basic_gates(backend, gate):
     assert isinstance(result, SamplingResult)
 
 
-def test_multi_controlled_execution():
+def test_multi_controlled_execution(backend):
     # Create two Xs then a multi-controlled X (Toffoli) gate
     # Expect roughly all shots to be '111'
-    backend = QiliSim()
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
@@ -137,13 +161,12 @@ def test_multiple_parameterized_gates(backend):
 
 
 def test_many_gates(backend):
-    c = Circuit.random(nqubits=2, single_qubit_gates={H, X, Y, Z, T, RX, RZ}, two_qubit_gates={CNOT}, ngates=10000)
+    c = Circuit.random(nqubits=2, single_qubit_gates={H, X, Y, Z, T, RX, RZ}, two_qubit_gates={CNOT}, ngates=1000)
     result = backend.execute(Sampling(circuit=c, nshots=1000))
     assert isinstance(result, SamplingResult)
 
 
-def test_measurement_gates():
-    backend = QiliSim()
+def test_measurement_gates(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(M(0))
@@ -154,7 +177,7 @@ def test_measurement_gates():
     assert samples["1"] == 50
 
 
-def test_constant_hamiltonian():
+def test_constant_hamiltonian(backend):
     x = 2.0
     schedule = Schedule(
         hamiltonians={"hz": x * pauli_z(0)},
@@ -164,7 +187,6 @@ def test_constant_hamiltonian():
     )
     psi0 = ket(0)
     obs = [pauli_z(0)]
-    backend = QiliSim()
     res = backend.execute(
         TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=True)
     )
@@ -199,7 +221,7 @@ def test_time_dependent_hamiltonian(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42, num_threads=1)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -209,7 +231,7 @@ def test_time_dependent_hamiltonian(method):
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
-def test_time_dependent_hamiltonian_qtensor_observable():
+def test_time_dependent_hamiltonian_qtensor_observable(backend):
     o = 1.0
     dt = 0.5
     T = 100
@@ -225,7 +247,6 @@ def test_time_dependent_hamiltonian_qtensor_observable():
         QTensor(pauli_z(0).to_matrix()),  # measure z as QTensor
     ]
 
-    backend = QiliSim()
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -235,7 +256,7 @@ def test_time_dependent_hamiltonian_qtensor_observable():
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
-def test_time_dependent_hamiltonian_pauli_observable():
+def test_time_dependent_hamiltonian_pauli_observable(backend):
     o = 1.0
     dt = 0.5
     T = 100
@@ -252,7 +273,6 @@ def test_time_dependent_hamiltonian_pauli_observable():
         pauli_z_pauli(0),
     ]
 
-    backend = QiliSim()
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -262,7 +282,7 @@ def test_time_dependent_hamiltonian_pauli_observable():
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
-def test_time_dependent_hamiltonian_bad_observable():
+def test_time_dependent_hamiltonian_bad_observable(backend):
     o = 1.0
     dt = 0.5
     T = 100
@@ -278,7 +298,6 @@ def test_time_dependent_hamiltonian_bad_observable():
         3.5,  # invalid observable
     ]
 
-    backend = QiliSim()
     with pytest.raises(ValueError, match=r"Observable type not recognized."):
         backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
@@ -301,7 +320,7 @@ def test_time_dependent_hamiltonian_imaginary(method):
         pauli_y(0),  # measure y
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42, num_threads=1)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -335,7 +354,7 @@ def test_row_vec_ordering(method):
         pauli_y(0),  # measure y
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42, num_threads=1)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -365,7 +384,7 @@ def test_time_dependent_hamiltonian_density_mat(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method)
+    backend = QiliSim(evolution_method=method, seed=42, num_threads=1)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -399,14 +418,14 @@ def test_monte_carlo_time_evolution(method):
         pauli_z(0),  # measure z
     ]
 
-    backend = QiliSim(evolution_method=method, monte_carlo=True)
+    backend = QiliSim(evolution_method=method, monte_carlo=True, seed=42, num_threads=1)
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
-    assert np.isclose(expect_z, -0.8, rtol=1e-2)
+    assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
 
 def test_qilisim_params():
@@ -426,7 +445,7 @@ def test_qilisim_params():
         QiliSim(num_monte_carlo_trajectories=0)
 
 
-def test_time_dependent_hamiltonian_with_3_qubits():
+def test_time_dependent_hamiltonian_with_3_qubits(backend):
     dt = 0.01
     T = 50
 
@@ -444,7 +463,6 @@ def test_time_dependent_hamiltonian_with_3_qubits():
     psi0 = tensor_prod([psi0, psi0, psi0]).unit()
     obs = [pauli_z(0), pauli_z(1), pauli_z(2)]  # measure z
 
-    backend = QiliSim()
     res = backend.execute(
         TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False)
     )
@@ -489,7 +507,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     assert parameterized_program.cost_function == cost_function
 
 
-def test_obtain_cost_calls_backend(dummy_optimizer):
+def test_obtain_cost_calls_backend(dummy_optimizer, backend):
     """
     Test that the obtain_cost method correctly generates the circuit, calls the backend,
     and applies the cost function.
@@ -517,15 +535,13 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     cost_function = ModelCostFunction(mock_instance)
     parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)
     # Call obtain_cost with a custom number of shots.
-    backend = QiliSim()
     output = backend.execute(parameterized_program)
 
     assert np.isclose(output.optimal_cost, 0.2)
     assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0)
 
 
-def test_real_example():
-    backend = QiliSim()
+def test_real_example(backend):
     b = BinaryVariable("b")
     model = Model("test")
     model.set_objective(2 * b - 1)

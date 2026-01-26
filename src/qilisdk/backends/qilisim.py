@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -22,7 +23,6 @@ from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 from qilisdk.backends.backend import Backend
 
 if TYPE_CHECKING:
-    from qilisdk.core.qtensor import QTensor
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
@@ -41,11 +41,13 @@ class QiliSim(Backend):
         evolution_method: str = "integrate",
         arnoldi_dim: int = 10,
         num_arnoldi_substeps: int = 1,
-        num_integrate_substeps: int = 1,
+        num_integrate_substeps: int = 2,
         monte_carlo: bool = False,
         num_monte_carlo_trajectories: int = 100,
-        max_cache_size: int = 100,
+        max_cache_size: int = 1000,
         num_threads: int = 0,
+        seed: int | None = None,
+        atol: float = 1e-12,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -60,9 +62,11 @@ class QiliSim(Backend):
             num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
             max_cache_size (int): The maximum size of the internal cache for gate caching.
             num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
+            seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
+            atol (float): Absolute tolerance for numerical methods.
+
         Raises:
             ValueError: If any of the parameters are invalid.
-
         """
 
         # Sanity checks on params
@@ -77,10 +81,16 @@ class QiliSim(Backend):
             raise ValueError("num_integrate_substeps must be a positive integer")
         if num_monte_carlo_trajectories <= 0:
             raise ValueError("num_monte_carlo_trajectories must be a positive integer")
+        if atol <= 0:
+            raise ValueError("atol must be a positive float")
 
         # Set number of threads if non-positive
         if num_threads <= 0:
             num_threads = os.cpu_count() or 1
+
+        # Set a random seed
+        if seed is None:
+            seed = secrets.randbelow(2**15)
 
         # Initialize the backend and the class vars
         super().__init__()
@@ -94,6 +104,8 @@ class QiliSim(Backend):
             "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
             "max_cache_size": max_cache_size,
             "num_threads": num_threads,
+            "seed": seed,
+            "atol": atol,
         }
 
     def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
@@ -108,7 +120,7 @@ class QiliSim(Backend):
 
         """
         logger.info("Executing Sampling with {} shots", functional.nshots)
-        result = self.qili_sim.execute_sampling(functional, self.solver_params)
+        result = self.qili_sim.execute_sampling(functional, noise_model, self.solver_params)
         logger.success("Sampling finished")
         return result
 
@@ -127,29 +139,9 @@ class QiliSim(Backend):
 
         # Get the time steps
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        steps = functional.schedule.tlist
-
-        # Get the Hamiltonians and their parameters from the schedule per timestep
-        hamiltonians = [functional.schedule.hamiltonians[h] for h in functional.schedule.hamiltonians]
-        coeffs = [[functional.schedule.coefficients[h][t] for t in steps] for h in functional.schedule.hamiltonians]
-
-        # Jump operators TODO
-        jump_operators: list[QTensor] = []
-
-        # Get the observables
-        observables = functional.observables
 
         # Execute the time evolution
-        result = self.qili_sim.execute_time_evolution(
-            functional.initial_state,
-            hamiltonians,
-            coeffs,
-            steps,
-            observables,
-            jump_operators,
-            functional.store_intermediate_results,
-            self.solver_params,
-        )
+        result = self.qili_sim.execute_time_evolution(functional, noise_model, self.solver_params)
 
         logger.success("TimeEvolution finished")
         return result

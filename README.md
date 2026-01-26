@@ -517,6 +517,19 @@ ruff format
 
 *(We recommend running `ruff check --fix` and `ruff format` before committing any changes.)*
 
+To check the C++ code, compile with the debug flag:
+```bash
+uv pip install -v -e ./ -Ccmake.build-type=Debug
+```
+This will run clang-format and clang-tidy as well as a number of C++ compiler flags for debugging. For this you will need clang-tidy and clang-format installed, which can be done on Debian/Ubuntu with:
+```bash
+sudo apt-get install clang-format clang-tidy
+```
+It may also throw an error about not being able to find `omp.h`, if so, try:
+```bash
+sudo apt-get install libomp-dev
+```
+
 ### Type Checking
 
 We use [**ty**](https://docs.astral.sh/ty/) for static type checking. This helps ensure our code is type-safe and maintainable.
@@ -537,7 +550,7 @@ changes/123.feature.rst
 ```
 Inside this file, you briefly describe the new feature:
 ```rst
-Added a new `cool_feature` in the `qilisdk.backend` module.
+Added a new `cool_feature` in the `qilisdk.backends` module.
 ```
 Instead of manually creating the file, you can run:
 ```bash
