@@ -3,6 +3,7 @@
     "PKief.material-icon-theme",
     "PKief.material-product-icons",
     "charliermarsh.ruff",
-    "astral-sh.ty"
+    "astral-sh.ty",
+    "SonarSource.sonarlint-vscode"
   ]
 }
