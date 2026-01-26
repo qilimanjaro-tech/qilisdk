@@ -23,7 +23,7 @@ from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
-    from qilisdk.core.variables import Number
+    from qilisdk.core.types import Number
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
