@@ -27,6 +27,8 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
+import cudaq
+
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Z as PauliZ
@@ -46,14 +48,16 @@ from qilisdk.noise import (
     PauliChannel,
     ReadoutAssignment,
 )
-import cudaq
 
 _MINIMUM_VERSION = (13, 12)
+
+
 def _get_version():
     cudaq_version = cudaq.__version__
     cudaq_version = int(cudaq_version.split(".")[1])
     cuda_version = int(cudaq.cuda_major)
     return cudaq_version, cuda_version
+
 
 @pytest.mark.skipif(
     _get_version() < _MINIMUM_VERSION,

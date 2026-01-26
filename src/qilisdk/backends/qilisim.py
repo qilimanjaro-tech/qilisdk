@@ -110,9 +110,7 @@ class QiliSim(Backend):
 
         # If we have a noise model, log a warning that it's not supported
         if noise_model is not None:
-            logger.warning(
-                "Noise models are not yet implemented for the Qutip backend."
-            )
+            logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         logger.info("Executing Sampling with {} shots", functional.nshots)
         result = self.qili_sim.execute_sampling(functional, self.solver_params)
@@ -134,9 +132,7 @@ class QiliSim(Backend):
 
         # If we have a noise model, log a warning that it's not supported
         if noise_model is not None:
-            logger.warning(
-                "Noise models are not yet implemented for the Qutip backend."
-            )
+            logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         # Get the time steps
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
