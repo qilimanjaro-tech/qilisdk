@@ -78,7 +78,7 @@ TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
-def _to_cuda_noise(noise: Noise) -> cudaq.NoiseChannel | None:
+def _to_cuda_noise(noise: Noise) -> cudaq.KrausChannel | None:
     if isinstance(noise, BitFlip):
         return cudaq.BitFlipChannel(noise.probability)
     if isinstance(noise, PhaseFlip):

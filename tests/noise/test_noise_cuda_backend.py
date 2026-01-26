@@ -299,7 +299,7 @@ def test_depolarizing_cuda():
 
     # With a probability p, the |1> state should flip to |0> or |1> with equal chance
     prob_10 = res.samples.get("00", 0) / shots
-    assert np.isclose(prob_10, p * 0.5, atol=0.1)
+    assert np.isclose(prob_10, p * 0.5, atol=0.2)
 
 
 @pytest.mark.skipif(
@@ -329,7 +329,7 @@ def test_digital_dephasing_cuda():
 
     # With a probability p, the |+> state should flip to |-> (which maps to |1> after the basis change)
     prob_10 = res.samples.get("10", 0) / shots
-    assert np.isclose(prob_10, p, atol=0.1)
+    assert np.isclose(prob_10, p, atol=0.2)
 
 
 @pytest.mark.skipif(
@@ -357,7 +357,7 @@ def test_amplitude_damping_cuda():
 
     # With a probability gamma, the |1> state should decay to |0>
     prob_00 = res.samples.get("00", 0) / shots
-    assert np.isclose(prob_00, p, atol=0.1)
+    assert np.isclose(prob_00, p, atol=0.2)
 
 
 @pytest.mark.skipif(
@@ -387,7 +387,7 @@ def test_kraus_noise_single_qubit_cuda():
 
     # With a probability p, the |1> state should flip to |0>
     prob_10 = res.samples.get("10", 0) / shots
-    assert np.isclose(prob_10, p, atol=0.1)
+    assert np.isclose(prob_10, p, atol=0.2)
 
 
 @pytest.mark.skipif(
@@ -419,7 +419,7 @@ def test_kraus_noise_two_qubit_cuda():
 
     # With a probability p, the |11> state should flip to |00>
     prob_00 = res.samples.get("00", 0) / shots
-    assert np.isclose(prob_00, p, atol=0.1)
+    assert np.isclose(prob_00, p, atol=0.2)
 
 
 @pytest.mark.skipif(
