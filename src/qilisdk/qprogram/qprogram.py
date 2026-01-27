@@ -156,11 +156,16 @@ class QProgram(StructuredProgram):
             for index, element in enumerate(block.elements):
                 if isinstance(element, Block):
                     traverse(element)
-                elif hasattr(element, "bus"):
+                    continue
+                if hasattr(element, "bus"):
                     bus = getattr(element, "bus")
                     if isinstance(bus, str) and bus in bus_mapping:
                         setattr(block.elements[index], "bus", bus_mapping[bus])
-                elif hasattr(element, "buses"):
+                if hasattr(element, "control_bus"):
+                    control_bus = getattr(element, "control_bus")
+                    if isinstance(control_bus, str) and control_bus in bus_mapping:
+                        setattr(block.elements[index], "control_bus", bus_mapping[control_bus])
+                if hasattr(element, "buses"):
                     buses = getattr(element, "buses")
                     if isinstance(buses, list):
                         setattr(
