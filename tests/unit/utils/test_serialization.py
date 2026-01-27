@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+import qilisdk
 from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
@@ -71,3 +72,22 @@ def test_deserialization_with_wrong_cls_raises_error():
         _ = deserialize_from("pauli_x.yml", PauliY)
 
     Path("pauli_x.yml").unlink()
+
+
+def test_arbitrary_serialize_errors(monkeypatch):
+    # monkeypatch.setattr("qilisdk.utils.serialization.yaml.dump", lambda *args, **kwargs: (_ for _ in ()).throw(Exception("Serialization error")))
+    monkeypatch.setattr(
+        qilisdk.utils.serialization.yaml,
+        "dump",
+        lambda *args, **kwargs: (_ for _ in ()).throw(Exception("Serialization error")),
+    )
+
+    operator = X(0)
+
+    with pytest.raises(Exception, match="Serialization error"):
+        _ = serialize(operator)
+
+    with pytest.raises(Exception, match="Serialization error"):
+        serialize_to(operator, "pauli_x.yml")
+
+    Path("pauli_x.yml").unlink(missing_ok=True)

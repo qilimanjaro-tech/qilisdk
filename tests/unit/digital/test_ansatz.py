@@ -49,6 +49,12 @@ def test_nparameters_property():
     assert ansatz.nparameters == expected
 
 
+def test_hw_efficient_negative_layers_raises():
+    """Providing negative layers should raise ValueError."""
+    with pytest.raises(ValueError, match="layers must be >= 0"):
+        HardwareEfficientAnsatz(nqubits=3, layers=-1, connectivity="Linear", structure="grouped")
+
+
 def test_construct_circuit_grouped_structure_gate_count():
     """
     grouped schedule:
@@ -201,9 +207,7 @@ def test_qaoa_invalid_layers_raises():
     """Providing non-positive layers should raise ValueError."""
     n_qubits = 3
     test_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
-    with pytest.raises(ValueError, match="layers must be >= 1"):
-        QAOA(problem_hamiltonian=test_hamiltonian, layers=0)
-    with pytest.raises(ValueError, match="layers must be >= 1"):
+    with pytest.raises(ValueError, match="layers must be >= 0"):
         QAOA(problem_hamiltonian=test_hamiltonian, layers=-1)
 
 
@@ -351,3 +355,15 @@ def test_trotterized_time_evolution_uses_schedule_dt():
     rz_gates = [gate for gate in ansatz.gates if isinstance(gate, RZ)]
     assert len(rz_gates) == 3
     assert all(gate.phi == pytest.approx(2.0 / 3.0) for gate in rz_gates)
+
+
+def test_qaoa_empty_hamiltonians():
+    """Providing empty Hamiltonians should raise ValueError."""
+    n_qubits = 3
+    layers = 1
+    empty_hamiltonian = Hamiltonian({})
+    with pytest.raises(ValueError, match="problem hamiltonian must have at least one qubit"):
+        QAOA(problem_hamiltonian=empty_hamiltonian, layers=layers)
+    valid_hamiltonian = Hamiltonian({(PauliZ(q),): 1.0 for q in range(n_qubits)})
+    with pytest.raises(ValueError, match="mixer hamiltonian must have at least one qubit"):
+        QAOA(problem_hamiltonian=valid_hamiltonian, layers=layers, mixer_hamiltonian=empty_hamiltonian)

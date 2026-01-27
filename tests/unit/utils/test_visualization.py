@@ -15,6 +15,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 
+import qilisdk
 from qilisdk.analog import Schedule, X, Z
 from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer
 from qilisdk.utils.visualization.style import ScheduleStyle
@@ -56,11 +57,14 @@ def test_schedule_renderer_with_axes(monkeypatch):
 
 
 def test_schedule_draw(monkeypatch):
-    monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual rendering during tests
-    monkeypatch.setattr(plt, "savefig", lambda *args, **kwargs: None)  # Prevent file saving during tests
-    monkeypatch.setattr(
-        MatplotlibScheduleRenderer, "save", lambda self, filepath: None
-    )  # Prevent file saving during tests
+    def mock_show():
+        return None
+
+    def mock_save(self, *args, **kwargs):
+        return None
+
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
 
     # Create a simple schedule for testing
     H0 = X(1) + X(0)

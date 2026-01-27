@@ -498,7 +498,7 @@ class QTensor:
     def __add__(self, other: QTensor | Complex) -> QTensor:
         if isinstance(other, QTensor):
             return QTensor(self._data + other._data)
-        if abs(other) < get_settings().atol:
+        if isinstance(other, Complex) and abs(other) < get_settings().atol:
             return self
         return NotImplemented
 

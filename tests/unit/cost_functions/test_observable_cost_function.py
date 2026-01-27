@@ -14,11 +14,30 @@
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import Z
-from qilisdk.core.qtensor import ket, tensor_prod
+from qilisdk.analog.hamiltonian import PauliZ, Z
+from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+
+
+def test_init_observable_cost_function():
+    n = 2
+
+    # from hamiltonian
+    H = sum(Z(i) for i in range(n))
+    ocf = ObservableCostFunction(H)
+    assert ocf.observable == H
+
+    # from qtensor
+    qtensor = tensor_prod([ket(0), ket(1)])
+    ocf = ObservableCostFunction(qtensor)
+    assert ocf.observable == qtensor
+
+    # from pauli operator
+    pauli = PauliZ(0)
+    ocf = ObservableCostFunction(pauli)
+    assert isinstance(ocf.observable, QTensor)
 
 
 def test_compute_cost_time_evolution():
@@ -89,3 +108,32 @@ def test_compute_cost_sampling():
     cost = ocf.compute_cost(te_results)
 
     assert cost == 0
+
+
+def test_imag_time_evolution_result():
+    n = 2
+    ob = QTensor(1j * np.eye(2**n))
+
+    ocf = ObservableCostFunction(ob)
+
+    te_results = TimeEvolutionResult(
+        final_expected_values=np.array([[-0.9, 0]]),
+        expected_values=None,
+        final_state=tensor_prod([ket(1), ket(1)]),
+        intermediate_states=None,
+    )
+    cost = ocf.compute_cost(te_results)
+
+    assert cost == 1j
+
+
+def test_imag_sampling_result():
+    n = 2
+    ob = QTensor(1j * np.eye(2**n))
+
+    ocf = ObservableCostFunction(ob)
+
+    te_results = SamplingResult(nshots=100, samples={"11": 100})
+    cost = ocf.compute_cost(te_results)
+
+    assert cost == 1j

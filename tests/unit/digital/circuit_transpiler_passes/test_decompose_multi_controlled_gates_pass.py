@@ -1,9 +1,11 @@
 import math
 
+import numpy as np
 import pytest
 
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
+from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _wrap_angle, _zyz_from_unitary
 from qilisdk.digital.gates import Controlled, Gate
 
 from .utils import _sequences_equivalent
@@ -101,3 +103,27 @@ def test_other_gates_remain_unchanged() -> None:
     transpiled = DecomposeMultiControlledGatesPass().run(circuit)
     assert isinstance(transpiled.gates[0], RZ)
     assert isinstance(transpiled.gates[-1], RY)
+
+
+def test_wrap_angle():
+    assert _wrap_angle(0) == 0
+    assert _wrap_angle(math.pi) == math.pi
+    assert _wrap_angle(-math.pi) == math.pi
+    assert _wrap_angle(3 * math.pi) == math.pi
+    assert _wrap_angle(-3 * math.pi) == math.pi
+
+
+def test_zyz_unitary():
+    unitary = np.eye(2, dtype=complex)
+    theta, phi, gamma = _zyz_from_unitary(unitary)
+    assert math.isclose(theta, 0)
+    assert math.isclose(phi, 0)
+    assert math.isclose(gamma, 0)
+
+    bad_unitary = np.ones((3, 2), dtype=complex)
+    with pytest.raises(ValueError, match="Expected 2x2 unitary"):
+        _zyz_from_unitary(bad_unitary)
+
+    singular = np.array([[1, 0], [0, 0]], dtype=complex)
+    with pytest.raises(ValueError, match="Matrix is singular"):
+        _zyz_from_unitary(singular)

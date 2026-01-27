@@ -77,6 +77,8 @@ class QiliSim(Backend):
             raise ValueError("num_integrate_substeps must be a positive integer")
         if num_monte_carlo_trajectories <= 0:
             raise ValueError("num_monte_carlo_trajectories must be a positive integer")
+        if max_cache_size < 0:
+            raise ValueError("max_cache_size cannot be negative")
 
         # Set number of threads if non-positive
         if num_threads <= 0:

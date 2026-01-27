@@ -3,8 +3,9 @@ import pytest
 
 from qilisdk.analog import Schedule, X, Z
 from qilisdk.analog.hamiltonian import PauliX, PauliZ
-from qilisdk.core.interpolator import Interpolation
-from qilisdk.core.variables import BinaryVariable, Parameter
+from qilisdk.analog.schedule import _TIME_PARAMETER_NAME
+from qilisdk.core.interpolator import Interpolation, Interpolator
+from qilisdk.core.variables import BinaryVariable, Domain, Parameter, Variable
 
 # --- Constructor and Property Tests ---
 
@@ -320,6 +321,7 @@ def test_draw_method_runs(monkeypatch):
 
     monkeypatch.setattr("qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer", DummyRenderer)
     sched.draw()
+    sched.draw(filepath="dummy_path.png")
 
 
 def test_add_hamiltonian_term_basevariable_errors():
@@ -423,3 +425,151 @@ def test_linear_schedule_expression():
     alpha = (5 - 0) / (10 - 0)
     expected = (1 - alpha) * p + alpha * 4.0
     assert expr == expected.evaluate({p: 2})
+
+
+def test_schedule_from_interpolator():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR)
+    sch = {"H1": inter}
+    sched1 = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    assert np.isclose(sched1.coefficients["H1"][0], 0.0)
+    assert np.isclose(sched1.coefficients["H1"][10], 10.0)
+    assert np.isclose(sched1.coefficients["H1"][5], 5.0)
+
+
+def test_schedule_get_coeffs_dict():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    coeff_dict_original = {0: 0, 5: 1, 10: 2}
+    sch = {"H1": coeff_dict_original}
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    coeffs_dict = sched.coefficients_dict
+    assert "H1" in coeffs_dict
+    assert coeffs_dict["H1"] == coeff_dict_original
+
+
+def test_schedule_set_dt():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {"H1": {0: 0, 5: 1, 10: 2}}
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    assert sched.dt == dt
+
+    new_dt = 0.5
+    sched.set_dt(new_dt)
+    assert sched.dt == new_dt
+
+    with pytest.raises(ValueError, match=r"only allowed to be a float"):
+        sched.set_dt("test")
+
+
+def test_schedule_get_value():
+    param = Parameter("param", 1.0)
+    time_param = Parameter(_TIME_PARAMETER_NAME, 1.0)
+    sched = Schedule(dt=1)
+    time = 1.0
+    term = 2 * param + 3
+    assert sched._get_value(1.0, time) == 1.0
+    assert sched._get_value(1.0 + 0j, time) == 1.0
+    assert sched._get_value(param, time) == 1.0
+    assert sched._get_value(time_param, time) == time
+    with pytest.raises(ValueError, match=r"time is not provided"):
+        sched._get_value(time_param)
+    assert sched._get_value(term, time) == 2 * 1.0 + 3
+    with pytest.raises(ValueError, match=r"Invalid value of type"):
+        sched._get_value("bad type", time)
+
+
+def test_schedule_extract_parameters():
+    param1 = Parameter("param1", 1.0)
+    param2 = Parameter("param2", 2.0)
+
+    sched = Schedule(dt=1)
+    term1 = 2 * param1 + 3
+
+    sched._extract_parameters(term1)
+    assert param1 in sched._parameters.values()
+    sched._parameters.clear()
+
+    sched._extract_parameters(param1)
+    assert param1 in sched._parameters.values()
+
+    var = Variable("var", Domain.REAL)
+    bad_term = 2 * param2 + var
+    with pytest.raises(ValueError, match=r"contains objects other than parameters"):
+        sched._extract_parameters(bad_term)
+
+
+def test_scale_max_time_bad():
+    sched = Schedule(dt=1)
+    with pytest.raises(ValueError, match=r"Cannot set the total time to zero."):
+        sched.scale_max_time(0)
+
+
+def test_schedule_add_hamiltonian_from_dict():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    param = Parameter("param", 1.0)
+    coeff_dict = {0: 0, 5: param, 10: 2}
+    sched = Schedule(dt=dt)
+    sched.add_hamiltonian("H1", H1, coefficients=coeff_dict)
+    with pytest.raises(ValueError, match=r"already associated"):
+        sched.add_hamiltonian("H1", H1, coefficients=coeff_dict)
+
+
+def test_schedule_add_hamiltonian_from_interpolator():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    param = Parameter("param", 1.0)
+    inter = Interpolator({0: 0, 5: param, 10: 2}, Interpolation.LINEAR)
+    sched = Schedule(dt=dt)
+    sched.add_hamiltonian("H1", H1, coefficients=inter)
+    with pytest.raises(ValueError, match=r"already associated"):
+        sched.add_hamiltonian("H1", H1, coefficients=inter)
+
+
+def test_add_bad_hamiltonian():
+    dt = 1
+    sched = Schedule(dt=dt)
+    with pytest.raises(ValueError, match=r"Expecting a Hamiltonian object"):
+        sched.add_hamiltonian("H1", "not a hamiltonian", coefficients={0: 1})
+    H1 = PauliZ(0).to_hamiltonian()
+    with pytest.raises(ValueError, match=r"Unsupported type of coefficient"):
+        sched.add_hamiltonian("H1", H1, coefficients="bad coeffs")
+
+
+def test_scale_max_time_add_hamiltonian():
+    dt = 1
+    p = Parameter("p", 2.0)
+    H1 = PauliZ(0).to_hamiltonian()
+    sch = {"H1": {0: p, 10: 4.0}}
+    sched = Schedule(dt=dt)
+    sched.scale_max_time(20)
+    sched.add_hamiltonian("H1", H1, coefficients=sch["H1"])
+    assert sched.T == 20
+
+
+def test_update_hamiltonian_from_interpolator():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    param = Parameter("param", 1.0)
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1})
+    inter = Interpolator({0: 0, 5: param, 10: 2}, Interpolation.LINEAR)
+    sched.update_hamiltonian("H1", new_coefficients=inter)
+    assert np.isclose(sched.coefficients["H1"][0], 0.0)
+    assert np.isclose(sched.coefficients["H1"][10], 2.0)
+    assert np.isclose(sched.coefficients["H1"][5], 1.0)
+
+
+def test_bad_update_hamiltonian():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    H2 = PauliX(0).to_hamiltonian()
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1})
+    with pytest.raises(ValueError, match=r"Unsupported type of coefficient"):
+        sched.update_hamiltonian("H1", new_coefficients="bad coeffs")
+    with pytest.raises(ValueError, match=r"Expecting a Hamiltonian object"):
+        sched.update_hamiltonian("H1", "bad hamiltonian")
+    sched.update_hamiltonian("H1", H2)
+    assert sched.hamiltonians["H1"] == H2

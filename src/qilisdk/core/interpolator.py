@@ -72,6 +72,9 @@ def _process_callable(
                 value = kwargs.get(param_name, 0)
                 if isinstance(value, (float, int)):
                     parameters[param_name] = Parameter(param_name, value)
+                    # needed since it could be that the kwargs don't contain param_name and we don't have a default
+                    # and in that case the below function() call would fail
+                    kwargs[param_name] = parameters[param_name]
                 elif isinstance(value, Parameter):
                     parameters[value.label] = value
 
@@ -176,6 +179,21 @@ class Interpolator(Parameterizable):
         return sorted((self._time_dict.keys()), key=self._get_value)
 
     @property
+    def _time_scale(self) -> float:
+        """
+        Return the scaling factor applied to time points when ``max_time`` is set.
+        This handles the caching, so self._time_scale_cache should never be accessed directly.
+
+        Returns:
+            float: Scaling factor.
+        """
+        if self._time_scale_cache is None:
+            max_t = self._get_value(max(self._tlist, key=self._get_value)) or 1
+            max_t = max_t if max_t != 0 else 1
+            self._time_scale_cache = self._get_value(self._max_time) / max_t
+        return self._time_scale_cache
+
+    @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
         """
         Return the (possibly rescaled) list of time points used for interpolation.
@@ -186,11 +204,7 @@ class Interpolator(Parameterizable):
         if self._tlist is None:
             self._tlist = self._generate_tlist()
         if self._max_time is not None:
-            if self._time_scale_cache is None:
-                max_t = self._get_value(max(self._tlist, key=self._get_value)) or 1
-                max_t = max_t if max_t != 0 else 1
-                self._time_scale_cache = self._get_value(self._max_time) / max_t
-            return [t * self._time_scale_cache for t in self._tlist]
+            return [t * self._time_scale for t in self._tlist]
         return self._tlist
 
     @property
@@ -225,12 +239,10 @@ class Interpolator(Parameterizable):
         Returns:
             list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]: Time and coefficient pairs.
         """
+        if self._tlist is None:
+            self._tlist = self._generate_tlist()
         if self._max_time is not None and self._tlist is not None:
-            if self._time_scale_cache is None:
-                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
-                    max(self._tlist, key=self._get_value)
-                )
-            return [(k * self._time_scale_cache, v) for k, v in self._time_dict.items()]
+            return [(k * self._time_scale, v) for k, v in self._time_dict.items()]
         return list(self._time_dict.items())
 
     def fixed_items(self) -> list[tuple[float, float]]:
@@ -293,7 +305,7 @@ class Interpolator(Parameterizable):
             ValueError: If the max time is set to zero.
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
-            raise ValueError("Setting the max time to zero.")
+            raise ValueError("Cannot set the max time to zero.")
         self._delete_cache()
         self._max_time = max_time
 
@@ -384,13 +396,9 @@ class Interpolator(Parameterizable):
         elif isinstance(coeff, (int, float, Parameter, Term)):
             self._extract_parameters(coeff)
         else:
-            raise ValueError
-        if self._max_time is not None and self._tlist is not None:
-            if self._time_scale_cache is None:
-                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
-                    max(self._tlist, key=self._get_value)
-                )
-            time /= self._time_scale_cache
+            raise ValueError(
+                "Coefficient must be a number, Parameter, Term, or callable that returns one of these types."
+            )
         self._time_dict[time] = coeff
         self._delete_cache()
 
@@ -437,12 +445,10 @@ class Interpolator(Parameterizable):
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
-        if self._max_time is not None and self._tlist is not None:
-            if self._time_scale_cache is None:
-                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
-                    max(self._tlist, key=self._get_value)
-                )
-            time_step /= self._time_scale_cache
+        if self._max_time is not None:
+            if self._tlist is None:
+                self._tlist = self._generate_tlist()
+            time_step /= self._time_scale
 
         return self._get_value(val, time_step)
 
@@ -471,11 +477,7 @@ class Interpolator(Parameterizable):
             return self._cached_time[time_step]
 
         if self._max_time is not None and self._tlist is not None:
-            if self._time_scale_cache is None:
-                self._time_scale_cache = self._get_value(self._max_time) / self._get_value(
-                    max(self._tlist, key=self._get_value)
-                )
-            time_step /= self._time_scale_cache
+            time_step /= self._time_scale
         factor = self._time_scale_cache or 1.0
 
         result = None
@@ -485,7 +487,7 @@ class Interpolator(Parameterizable):
             result = self._get_coefficient_expression_linear(time_step)
 
         if result is None:
-            raise ValueError(f"interpolation {self._interpolation.value} is not supported!")
+            raise ValueError(f"Interpolation type {self._interpolation.value} is not supported.")
         self._cached_time[time_step * factor] = result
         return result
 
@@ -501,8 +503,7 @@ class Interpolator(Parameterizable):
         """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
-        if prev_indx >= len(self._tlist):
-            prev_indx = -1
+        prev_indx = -1 if prev_indx >= len(self._tlist) else prev_indx
         prev_time_step = self._tlist[prev_indx]
         return self._time_dict[prev_time_step]
 
@@ -516,7 +517,7 @@ class Interpolator(Parameterizable):
         Returns:
             Number | Term | Parameter: Coefficient expression interpolated between neighbor points.
 
-        Raises:
+        Raises: # noqa: DOC502
             ValueError: If two points share the same time or an unexpected interpolation state is reached.
         """
         self._tlist = self._generate_tlist()
@@ -534,7 +535,7 @@ class Interpolator(Parameterizable):
             t1_val = self._get_value(t1)
             if t0_val == t1_val:
                 raise ValueError(
-                    f"Ambigous evaluation: The same time step {t0_val} has two different coefficient assignation ({v0} and {v1})."
+                    f"Ambiguous evaluation: The same time step {t0_val} has two different coefficient assignation ({v0} and {v1})."
                 )
             alpha: float = (time_step - t0_val) / (t1_val - t0_val)
             next_is_term = isinstance(v1, (Term, Parameter))
@@ -565,8 +566,11 @@ class Interpolator(Parameterizable):
         if prev_expr is None and next_expr is None:
             return 0
 
-        if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
-            raise ValueError("Something unexpected happened while retrieving the coefficient.")
+        # unreachable: if either index is none then the expressions are also none from their initialization
+        #              if either expression is none then one of the above cases triggers
+        # if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
+        #     raise ValueError("Something unexpected happened while retrieving the coefficient.")
+
         return _linear_value(prev_idx, prev_expr, next_idx, next_expr)
 
     def __getitem__(self, time_step: float) -> float:

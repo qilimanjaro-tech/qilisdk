@@ -7,7 +7,7 @@ import pytest
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, RX, H, M
+from qilisdk.digital.gates import CNOT, CZ, RX, H, M
 from qilisdk.utils.openqasm2 import from_qasm2, from_qasm2_file, to_qasm2, to_qasm2_file
 
 
@@ -147,3 +147,115 @@ def test_to_qasm2_file_and_from_qasm2_file(tmp_path):
         assert orig_gate.name == recon_gate.name
         assert orig_gate.qubits == recon_gate.qubits
         assert orig_gate.get_parameter_values() == recon_gate.get_parameter_values()
+
+
+def test_skip_comments():
+    """Test that comments in QASM are properly ignored during parsing."""
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "// This is a comment line",
+            "qreg q[2];",
+            "/* Multi-line",
+            "   comment */",
+            "h q[0]; // Another comment",
+            "cx q[0], q[1];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    # Check that the circuit has the correct number of qubits and gates.
+    assert circuit.nqubits == 2
+    assert len(circuit.gates) == 2
+    # Verify the gates are as expected.
+    assert circuit.gates[0].name == "H"
+    assert circuit.gates[0].qubits == (0,)
+    assert circuit.gates[1].name == "CNOT"
+    assert circuit.gates[1].qubits == (0, 1)
+
+
+def test_too_many_qubit_gates():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[3];",
+            "h q[0] q[1] q[2];",
+        ]
+    )
+    with pytest.raises(UnsupportedGateError):
+        from_qasm2(qasm_str)
+
+
+def test_register_not_declared():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "h q[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="must be declared"):
+        from_qasm2(qasm_str)
+
+
+def test_two_qubit_parameterized_gate(monkeypatch):
+    # pretend that CNOT can take a parameter for this test
+    def MockInit(self, control: int, target: int, theta: float):
+        self._control_qubits = (control,)
+        self._target_qubits = (target,)
+        self._basic_gate = CZ(control, target)._basic_gate
+
+    monkeypatch.setattr(CNOT, "PARAMETER_NAMES", ["theta"])
+    monkeypatch.setattr(CNOT, "__init__", MockInit)
+
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[2];",
+            "cx(1.57) q[0], q[1];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 2
+    assert len(circuit.gates) == 1
+    gate = circuit.gates[0]
+    assert gate.name == "CNOT"
+    assert gate.qubits == (0, 1)
+    assert gate.get_parameter_values() == []
+
+
+def test_measurements_from_qasm():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[2];",
+            "creg c[2];",
+            "measure q[0] -> c[0];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 2
+    assert len(circuit.gates) == 1
+    gate1 = circuit.gates[0]
+    assert gate1.name == "M"
+    assert gate1.qubits == (0,)
+
+
+def test_measurement_without_qreg():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "measure q[0] -> c[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="must be declared"):
+        from_qasm2(qasm_str)
+
+
+def test_measure_all_without_qreg():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "measure q -> c;",
+        ]
+    )
+    with pytest.raises(ValueError, match="must be declared"):
+        from_qasm2(qasm_str)

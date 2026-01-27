@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
-from scipy.sparse import csc_array, issparse
+from scipy.sparse import csc_array, csr_matrix, issparse
+from scipy.sparse.linalg import ArpackNoConvergence
 from scipy.sparse.linalg import norm as scipy_norm
 
+import qilisdk
 from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
 
 # --- Constructor Tests ---
@@ -405,6 +407,9 @@ def test_basis():
     expected[n] = 1
     np.testing.assert_array_equal(dense, expected)
 
+    with pytest.raises(ValueError, match="must be in"):
+        basis_state(5, 4)  # n >= N should raise error
+
 
 @pytest.mark.parametrize("state", [(0,), (1,), (0, 0), (0, 1), (1, 0), (1, 1)])
 def test_ket_valid(state):
@@ -414,7 +419,7 @@ def test_ket_valid(state):
     assert qket_obj.shape == (expected_dim, 1)
 
 
-@pytest.mark.parametrize("state", [(2,), (-1,), (0, 2), (1, 3)])
+@pytest.mark.parametrize("state", [(), (2,), (-1,), (0, 2), (1, 3)])
 def test_ket_invalid(state):
     """ket should raise ValueError if any qubit state is not 0 or 1."""
     with pytest.raises(ValueError):  # noqa: PT011
@@ -444,6 +449,11 @@ def test_tensor():
     np.testing.assert_array_equal(qt.dense().shape, (4, 1))
 
 
+def test_bad_tensor_prod():
+    with pytest.raises(ValueError, match="at least one"):
+        tensor_prod([])
+
+
 def test_expect_density():
     """Test the expectation value for a density matrix using the identity operator."""
     qdm = ket(0).to_density_matrix()
@@ -462,6 +472,15 @@ def test_expect_ket():
     assert np.isclose(exp_val, 1)
 
 
+def test_expect_bra():
+    """Test the expectation value for a bra state using the identity operator."""
+    qbra_obj = bra(0)
+    identity = QTensor(np.eye(2))
+    exp_val = expect_val(identity, qbra_obj)
+    # For a normalized bra, ⟨ψ|I|ψ⟩ should equal 1.
+    assert np.isclose(exp_val, 1)
+
+
 def test_to_density_matrix():
     s = ket(0) + ket(1)
     qdm = s @ s.adjoint()
@@ -476,3 +495,146 @@ def test_to_density_matrix():
     s = bra(0)
     qdm = s.to_density_matrix()
     np.testing.assert_allclose(qdm.dense(), np.array([[1, 0], [0, 0]]), atol=1e-8)
+
+
+def test_3d_init():
+    """QTensor should raise ValueError for 3D arrays."""
+    arr = np.zeros((2, 2, 2))
+    with pytest.raises(ValueError, match="Input ndarray must be 2D"):
+        QTensor(arr)
+
+
+def test_bad_partial_trace():
+    """Partial trace should raise ValueError for invalid keep indices."""
+
+    qket = ket(0, 1)
+    rho = qket.to_density_matrix()
+
+    with pytest.raises(ValueError, match="must be positive"):
+        rho.ptrace(keep=[], dims=[-2, 2])
+    with pytest.raises(ValueError, match="does not match Hilbert"):
+        rho.ptrace(keep=[], dims=[1, 1])
+    with pytest.raises(ValueError, match="Duplicate indices in keep"):
+        rho.ptrace(keep=[0, 0], dims=[2, 2])
+
+    nothing = rho.ptrace(keep=[], dims=[2, 2])
+    assert nothing.shape == (1, 1)
+
+    everything = rho.ptrace(keep=[0, 1], dims=[2, 2])
+    np.testing.assert_allclose(everything.dense(), rho.dense(), atol=1e-8)
+
+    rho._data = np.array([[1, 2, 3], [3, 4, 5]])
+    with pytest.raises(ValueError, match="not a valid state or operator"):
+        rho.ptrace(keep=[0], dims=[3, 1])
+
+    big_dim = 2**21
+    qket._data = csr_matrix((big_dim, 1))
+    assert qket.is_ket()
+    qket.ptrace(keep=[], dims=[2 for _ in range(21)])
+
+
+def test_large_trace_norm():
+    qket = ket(*([0 for _ in range(21)]))
+    rho = qket.to_density_matrix()
+    rho._data[0, 0] = 2.0
+    with pytest.raises(ValueError, match="Trace norm for large"):
+        rho.norm(order="tr")
+
+
+def test_non_hermitian_trace_norm():
+    arr = np.array([[0, 1], [0, 0]])
+    qobj = QTensor(arr)
+    norm = qobj.norm(order="tr")
+    assert np.isclose(norm, 1.0)
+
+
+def test_non_hermitian_large_trace_norm():
+    arr = np.zeros((2048, 2048))
+    arr[0, 1] = 1.0
+    qobj = QTensor(arr)
+    with pytest.raises(ValueError, match="norm for large non-Hermitian"):
+        qobj.norm(order="tr")
+
+
+def test_trace_norm_ket_bra():
+    v_ket = ket(0)
+    v_bra = bra(0)
+    assert np.isclose(v_ket.norm(order="tr"), 1.0)
+    assert np.isclose(v_bra.norm(order="tr"), 1.0)
+
+
+def test_non_operator_to_density_matrix():
+    arr = np.array([[0, 2], [3, 0]])
+    qobj = QTensor(arr)
+
+    qobj._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
+    with pytest.raises(ValueError, match="Invalid object for density matrix conversion"):
+        qobj.to_density_matrix()
+
+    v_ket = QTensor(np.array([[0], [0]]))
+    with pytest.raises(ValueError, match="zero trace"):
+        v_ket.to_density_matrix()
+
+
+def test_non_hermitian_is_dm():
+    arr = np.array([[0, 1], [0, 1]])
+    qobj = QTensor(arr)
+    assert not qobj.is_density_matrix()
+    assert not qobj.is_hermitian()
+
+
+def test_is_dm_no_eigsh(monkeypatch):
+    def mock_eigsh(*args, **kwargs):
+        raise ArpackNoConvergence("Simulated failure", [], [])
+
+    monkeypatch.setattr(qilisdk.core.qtensor, "eigsh", mock_eigsh)
+
+    arr = np.array([[1, 1], [1, 0]])
+    qobj = QTensor(arr)
+    assert not qobj.is_density_matrix()
+
+    big_arr = np.zeros((4096, 4096))
+    big_arr[0, 0] = 1.0
+    big_arr[1, 0] = 1.0
+    big_arr[0, 1] = 1.0
+    qobj_big = QTensor(big_arr)
+    assert not qobj_big.is_density_matrix()
+
+
+def test_is_hermitian_not_operator():
+    arr = np.array([[1, 2], [3, 4]])
+    qobj = QTensor(arr)
+    qobj._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
+    assert not qobj.is_hermitian()
+
+
+def test_arithmetic():
+    a = QTensor(np.array([[1, 0], [0, 1]]))
+    d = 0 + 0j
+    with pytest.raises(TypeError, match="unsupported operand"):
+        _ = a + 3.0
+    assert a + d == a
+    assert d + a == a
+
+
+def test_qtensor_output():
+    arr = np.array([[1, 0], [0, 1]])
+    qobj = QTensor(arr)
+    output = repr(qobj)
+    assert "QTensor" in output
+    assert "shape=2x2" in output
+    assert "nnz=2" in output
+
+
+def test_expect_val_bad_operator():
+    qket_obj = ket(0)
+    arr = np.array([[0, 1], [3, 4]])
+    qbad = QTensor(arr)
+
+    bad_state = qbad
+    with pytest.raises(ValueError, match="state is invalid"):
+        expect_val(qbad, bad_state)
+
+    qbad._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
+    with pytest.raises(ValueError, match="must be square"):
+        expect_val(qbad, qket_obj)

@@ -171,6 +171,15 @@ class Schedule(Parameterizable):
         return self._dt
 
     def set_dt(self, dt: float) -> None:
+        """
+        Set the time resolution ``dt`` used for sampling callable/interval definitions and plotting.
+
+        Args:
+            dt (float): New time resolution. Must be positive.
+
+        Raises:
+            ValueError: If ``dt`` is not a positive float.
+        """
         if not isinstance(dt, float):
             raise ValueError(f"dt is only allowed to be a float but {type(dt)} was provided")
         self._dt = dt
@@ -269,7 +278,7 @@ class Schedule(Parameterizable):
             ValueError: If the max time provided is zero.
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
-            raise ValueError("Setting the total time to zero.")
+            raise ValueError("Cannot set the total time to zero.")
         self._extract_parameters(max_time)
         self._max_time = max_time
         for ham in self._hamiltonians:
