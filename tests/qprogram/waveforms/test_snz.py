@@ -34,7 +34,7 @@ def test_envelope(snz: SuddenNetZero):
     expected[:half_pulse_t] = amp
     expected[half_pulse_t] = b * amp
     expected[half_pulse_t + 1 + t_phi] = -b * amp
-    expected[half_pulse_t + 2 + t_phi:] = -amp
+    expected[half_pulse_t + 2 + t_phi :] = -amp
 
     actual = snz.envelope(resolution=resolution)
 

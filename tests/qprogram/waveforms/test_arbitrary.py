@@ -31,13 +31,33 @@ def test_envelope_with_higher_resolution(arbitrary: Arbitrary):
     assert math.isclose(envelope[-1], samples[-1], abs_tol=1e-9)
     assert max(envelope) == max(samples)
     assert min(envelope) == min(envelope)
-    assert np.allclose(envelope, np.array([
-        0.00000000e+00, 1.11111111e+03, 2.22222222e+03, 3.33333333e+03,
-        4.44444444e+03, 5.55555556e+03, 6.66666667e+03, 7.77777778e+03,
-        8.88888889e+03, 1.00000000e+04, 1.00000000e+04, 8.88888889e+03,
-        7.77777778e+03, 6.66666667e+03, 5.55555556e+03, 4.44444444e+03,
-        3.33333333e+03, 2.22222222e+03, 1.11111111e+03, 0.00000000e+00
-    ]))
+    assert np.allclose(
+        envelope,
+        np.array(
+            [
+                0.00000000e00,
+                1.11111111e03,
+                2.22222222e03,
+                3.33333333e03,
+                4.44444444e03,
+                5.55555556e03,
+                6.66666667e03,
+                7.77777778e03,
+                8.88888889e03,
+                1.00000000e04,
+                1.00000000e04,
+                8.88888889e03,
+                7.77777778e03,
+                6.66666667e03,
+                5.55555556e03,
+                4.44444444e03,
+                3.33333333e03,
+                2.22222222e03,
+                1.11111111e03,
+                0.00000000e00,
+            ]
+        ),
+    )
 
 
 def test_envelope_with_constant_values():

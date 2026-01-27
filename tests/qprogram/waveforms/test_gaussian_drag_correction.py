@@ -20,9 +20,7 @@ def test_init(gaussian_drag_correction: GaussianDragCorrection):
     assert math.isclose(gaussian_drag_correction.drag_coefficient, 2.5)
 
 
-def test_envelope_matches_drag_formula(
-    gaussian_drag_correction: GaussianDragCorrection
-):
+def test_envelope_matches_drag_formula(gaussian_drag_correction: GaussianDragCorrection):
     resolution = 5
     sigma = gaussian_drag_correction.duration / gaussian_drag_correction.num_sigmas
     mu = gaussian_drag_correction.duration / 2
@@ -34,15 +32,10 @@ def test_envelope_matches_drag_formula(
         num_sigmas=gaussian_drag_correction.num_sigmas,
     ).envelope(resolution=resolution)
 
-    expected = (
-        -gaussian_drag_correction.drag_coefficient * (x - mu) / sigma**2
-    ) * base_gaussian
+    expected = (-gaussian_drag_correction.drag_coefficient * (x - mu) / sigma**2) * base_gaussian
 
-    np.testing.assert_allclose(
-        gaussian_drag_correction.envelope(resolution=resolution), expected
-    )
+    np.testing.assert_allclose(gaussian_drag_correction.envelope(resolution=resolution), expected)
 
 
 def test_get_duration(gaussian_drag_correction: GaussianDragCorrection):
     assert gaussian_drag_correction.get_duration() == gaussian_drag_correction.duration
-
