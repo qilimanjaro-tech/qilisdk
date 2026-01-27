@@ -15,16 +15,13 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from qilisdk.yaml import yaml
 
-from .blocks import Average, Block, ForLoop, Loop
+from .blocks import Average, Block, ForLoop
 from .exceptions import VariableAllocated
 from .variables import FloatVariable, IntVariable, QProgramDomain, QProgramVariable
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 @yaml.register_class
@@ -146,27 +143,6 @@ class StructuredProgram:
 
         return StructuredProgram._ForLoopContext(program=self, variable=variable, start=start, stop=stop, step=step)
 
-    def loop(self, variable: QProgramVariable, values: np.ndarray) -> _LoopContext:
-        """Define a loop block to iterate values over a variable.
-
-        Blocks need to open a scope.
-
-        Args:
-            variable (Variable): The variable to be affected from the loop.
-            values (np.ndarray): The values to iterate over.
-
-        Returns:
-            Loop: The loop block.
-
-        Examples:
-
-            >>> variable = qp.variable(int)
-            >>> with qp.loop(variable=variable, values=np.array(range(100))):
-            >>> # operations that shall be executed in the loop block
-        """
-
-        return StructuredProgram._LoopContext(program=self, variable=variable, values=values)
-
     def average(self, shots: int) -> _AverageContext:
         """Define a measurement loop block with averaging in real time.
 
@@ -256,21 +232,6 @@ class StructuredProgram:
                 raise VariableAllocated(self.block.variable)
             self.program._variables[self.block.variable].allocate(self.block)
             return cast("ForLoop", super().__enter__())
-
-        def __exit__(self, exc_type, exc_value, exc_tb) -> None:
-            self.program._variables[self.block.variable].free()
-            super().__exit__(exc_type, exc_value, exc_tb)
-
-    class _LoopContext(_BlockContext):
-        def __init__(self, program: StructuredProgram, variable: QProgramVariable, values: np.ndarray) -> None:
-            self.program = program
-            self.block: Loop = Loop(variable=variable, values=values)
-
-        def __enter__(self) -> Loop:
-            if self.program._variables[self.block.variable].is_allocated:
-                raise VariableAllocated(self.block.variable)
-            self.program._variables[self.block.variable].allocate(self.block)
-            return cast("Loop", super().__enter__())
 
         def __exit__(self, exc_type, exc_value, exc_tb) -> None:
             self.program._variables[self.block.variable].free()
