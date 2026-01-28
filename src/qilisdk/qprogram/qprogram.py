@@ -33,7 +33,7 @@ from .variables import QProgramDomain, requires_domain
 from .waveforms import IQWaveform, Waveform
 
 
-@yaml.register_class
+@yaml.register_class(shared=True)
 class QProgram(StructuredProgram):
     """QProgram is a hardware-agnostic pulse-level programming interface for describing quantum programs.
 
