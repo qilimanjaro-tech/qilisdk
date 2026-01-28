@@ -749,11 +749,11 @@ class BaseVariable(ABC):
 
         if not self.domain.check_value(upper_bound):
             raise OutOfBoundsException(
-                f"the lower bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
+                f"the upper bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if not self.domain.check_value(lower_bound):
             raise OutOfBoundsException(
-                f"the upper bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
+                f"the lower bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if lower_bound > upper_bound:
             raise InvalidBoundsError("lower bound can't be larger than the upper bound.")

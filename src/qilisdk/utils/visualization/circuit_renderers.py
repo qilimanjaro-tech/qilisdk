@@ -152,25 +152,25 @@ class MatplotlibCircuitRenderer:
     # ------------------------------------------------------------------
     def _generate_layer_gate_mapping(self) -> None:
         self._layer_gate_mapping: dict[int, dict[int, Gate]] = {}
-        gate_maping: dict[int, list[Gate]] = {}
+        gate_mapping: dict[int, list[Gate]] = {}
         for qubit in range(self.circuit.nqubits):
-            gate_maping[qubit] = []
+            gate_mapping[qubit] = []
         for gate in self.circuit.gates:
             qubits = gate.qubits
             if len(qubits) == 1:
-                gate_maping[qubits[0]].append(gate)
+                gate_mapping[qubits[0]].append(gate)
             elif len(qubits) > 1:
                 if self.style.layout == "compact":
                     con_qubits = qubits
                 elif self.style.layout == "normal":
                     con_qubits = tuple(range(min(qubits), max(qubits) + 1))
                 for qubit in con_qubits:
-                    gate_maping[qubit].append(gate)
+                    gate_mapping[qubit].append(gate)
 
         layer: int = 0
         waiting_list: dict[int, Gate] = {}
         completed = [False] * self.circuit.nqubits
-        for q, l in gate_maping.items():
+        for q, l in gate_mapping.items():
             completed[q] = not bool(l)
         ignore_q: list[int] = []
         self.last_idx: dict[int, int] = {}
@@ -181,15 +181,15 @@ class MatplotlibCircuitRenderer:
                 if q in ignore_q:
                     ignore_q.remove(q)
                     continue
-                if len(gate_maping[q]) == 0 and not completed[q]:
+                if len(gate_mapping[q]) == 0 and not completed[q]:
                     completed[q] = True
                     self.last_idx[q] = layer - 1
                 if q in waiting_list or completed[q]:
                     continue
-                gate = gate_maping[q][0]
+                gate = gate_mapping[q][0]
                 if gate.nqubits == 1:
                     self._layer_gate_mapping[layer][q] = gate
-                    gate_maping[q].pop(0)
+                    gate_mapping[q].pop(0)
                 if gate.nqubits > 1:
                     waiting_list[q] = gate
                     qubits = gate.qubits
@@ -202,7 +202,7 @@ class MatplotlibCircuitRenderer:
                     ):
                         self._layer_gate_mapping[layer][q] = gate
                         for c_qubit in con_qubits:
-                            gate_maping[c_qubit].pop(0)
+                            gate_mapping[c_qubit].pop(0)
                             del waiting_list[c_qubit]
 
                         if self.style.layout == "compact":
@@ -216,7 +216,7 @@ class MatplotlibCircuitRenderer:
                                     ]
                                     del self._layer_gate_mapping[layer][m_qubit]
                         ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
-                if len(gate_maping[q]) == 0 and not completed[q]:
+                if len(gate_mapping[q]) == 0 and not completed[q]:
                     completed[q] = True
                     self.last_idx[q] = layer
             layer += 1
@@ -764,7 +764,7 @@ class MatplotlibCircuitRenderer:
                 MatplotlibCircuitRenderer._pi_fraction(value) for value in gate.get_parameter_values()
             )
             return rf"{name} (${parameters}$)"
-        return gate.name
+        return name
 
     @staticmethod
     def _make_axes(dpi: int) -> Axes:

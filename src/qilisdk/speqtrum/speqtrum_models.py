@@ -16,6 +16,7 @@ from email.utils import parsedate_to_datetime
 from enum import Enum
 from typing import Any, Callable, Generic, TypeVar, cast, overload
 
+from qilisdk.yaml import yaml
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.experiments import (

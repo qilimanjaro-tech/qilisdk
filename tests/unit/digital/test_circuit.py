@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import random
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -20,7 +21,6 @@ import pytest
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
-
 
 def test_circuit_initialization():
     """
@@ -31,7 +31,41 @@ def test_circuit_initialization():
     assert c.nparameters == 0  # No gates yet
     assert c.get_parameter_values() == []
     assert c.gates == []
+    assert c.get_parameter_names() == []
 
+def test_circuit_set_parameters_bad():
+    c = Circuit(nqubits=1)
+    assert c.nparameters == 0
+    with pytest.raises(ValueError, match="not defined in this circuit"):
+        c.set_parameters({"param1": 0.5})
+    with pytest.raises(ValueError, match="not defined in the list of"):
+        c.set_parameter_bounds({"param1": (0.0, np.pi)})
+
+def test_circuit_set_parameters():
+    c = Circuit(nqubits=1)
+    param = Parameter("param1", 0.0)
+    c.add(RX(qubit=0, theta=param))
+    assert c.nparameters == 1
+    c.set_parameters({"param1": 0.5})
+    assert c.get_parameter_values() == [0.5]
+
+def test_circuit_set_parameters_values():
+    c = Circuit(nqubits=1)
+    param = Parameter("param1", 0.0)
+    c.add(RX(qubit=0, theta=param))
+    assert c.nparameters == 1
+    c.set_parameter_values([0.5])
+    assert c.get_parameter_values() == [0.5]
+
+def test_parameter_bounds():
+    c = Circuit(nqubits=1)
+    param = Parameter("param1", 0.0, bounds=(0.0, np.pi))
+    c.add(RX(qubit=0, theta=param))
+    bounds = c.get_parameter_bounds()
+    assert bounds == {"param1": (0.0, np.pi)}
+    c.set_parameter_bounds({"param1": (0.0, np.pi - 0.1)})
+    bounds = c.get_parameter_bounds()
+    assert bounds == {"param1": (0.0, np.pi - 0.1)}
 
 def test_add_non_parameterized_gate():
     """
@@ -272,6 +306,7 @@ def test_random_circuit():
     ngates = 30
 
     random.seed(42)  # Set seed for reproducibility
+    np.random.seed(42)
     c = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
@@ -302,7 +337,8 @@ def test_random_single_qubit_circuit():
     nqubits = 1
     ngates = 10
 
-    random.seed(123)
+    random.seed(42)  # Set seed for reproducibility
+    np.random.seed(42)
     c = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
@@ -325,10 +361,92 @@ def test_random_single_qubit_circuit():
 
 
 def test_random_circuit_no_gates():
+    random.seed(42)
+    np.random.seed(42)
     with pytest.raises(ValueError, match=r"At least one gate must be provided to generate a random circuit."):
         Circuit.random(nqubits=0, single_qubit_gates=set(), two_qubit_gates=set(), ngates=1000)
 
 
 def test_random_circuit_single_qubit_one_gate():
+    random.seed(42)
+    np.random.seed(42)
     with pytest.raises(ValueError, match=r"Cannot generate a full random circuit with only one qubit and one gate."):
         Circuit.random(nqubits=1, single_qubit_gates={X}, two_qubit_gates=set(), ngates=1000)
+
+def test_circuit_bad_insert_append():
+    c = Circuit(nqubits=2)
+    x_gate = X(10)
+    with pytest.raises(QubitOutOfRangeError):
+        c.insert(x_gate, index=0)
+    with pytest.raises(QubitOutOfRangeError):
+        c.append(x_gate)
+
+def test_circuit_bad_prepend():
+    c = Circuit(nqubits=2)
+    c_2 = Circuit(nqubits=3)
+    with pytest.raises(QubitOutOfRangeError, match="the prepended circuit contains"):
+        c.prepend(c_2)
+
+def test_circuit_add_not_supported():
+    c = Circuit(nqubits=2)
+    new_circuit = c + 5
+    assert isinstance(new_circuit, NotImplementedError)
+    new_circuit = 5 + c
+    assert isinstance(new_circuit, NotImplementedError)
+
+def test_circuit_draw_runs(monkeypatch):
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c.add(x_gate)
+
+    renderer = MagicMock()
+    import qilisdk
+    import qilisdk.utils.visualization.circuit_renderers
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers, "MatplotlibCircuitRenderer", renderer)
+    output = c.draw(filepath="some/path.png")
+    assert renderer.called
+
+def test_prepend_circuit():
+    base = Circuit(nqubits=2)
+    x_gate = X(0)
+    base.add(x_gate)
+
+    prepended = Circuit(nqubits=2)
+    rz_gate = RZ(0, phi=0.2)
+    x2_gate = X(1)
+    prepended.add([rz_gate, x2_gate])
+    new = base.__radd__(prepended)
+
+    assert new.gates == [rz_gate, x2_gate, x_gate]
+
+
+def test_random_circuit_seedable():
+    single_qubit_gates = {X}
+    two_qubit_gates = {CNOT}
+    nqubits = 3
+    ngates = 200
+
+    random.seed(42)
+    np.random.seed(42)
+    c1 = Circuit.random(
+        nqubits=nqubits,
+        single_qubit_gates=single_qubit_gates,
+        two_qubit_gates=two_qubit_gates,
+        ngates=ngates,
+    )
+
+    random.seed(42)
+    np.random.seed(42)
+    c2 = Circuit.random(
+        nqubits=nqubits,
+        single_qubit_gates=single_qubit_gates,
+        two_qubit_gates=two_qubit_gates,
+        ngates=ngates,
+    )
+
+    # Check that both circuits have the same gates in the same order
+    assert len(c1.gates) == len(c2.gates)
+    for gate1, gate2 in zip(c1.gates, c2.gates):
+        assert type(gate1) == type(gate2)
+        assert gate1.qubits == gate2.qubits
+        assert gate1.get_parameter_values() == gate2.get_parameter_values()

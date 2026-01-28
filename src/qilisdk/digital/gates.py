@@ -413,6 +413,10 @@ class Controlled(Modified[TBasicGate]):
         if set(control_qubits) & set(basic_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
+        # Make sure we have some control qubits
+        if len(control_qubits) == 0:
+            raise ValueError("At least one control qubit must be specified.")
+
         self._control_qubits = control_qubits + basic_gate.control_qubits
         self._matrix = self._generate_matrix()
 

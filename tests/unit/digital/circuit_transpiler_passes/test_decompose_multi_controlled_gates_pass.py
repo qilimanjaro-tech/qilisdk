@@ -3,12 +3,14 @@ import math
 import numpy as np
 import pytest
 
-from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, S, T, X, Y, Z, I, CNOT
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _wrap_angle, _zyz_from_unitary
-from qilisdk.digital.gates import Controlled, Gate
+from qilisdk.digital.gates import Controlled, Gate, BasicGate
 
-from .utils import _sequences_equivalent
+from qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass import _adjoint_of, _sqrt_of
+from .utils import _unitaries_equivalent, _sequences_equivalent
+from unittest.mock import MagicMock
 
 
 def _run_pass_with_gate(gate: Gate, nqubits: int) -> Circuit:
@@ -18,6 +20,7 @@ def _run_pass_with_gate(gate: Gate, nqubits: int) -> Circuit:
 
 
 GATE_FACTORIES = [
+    ("I", I),
     ("X", X),
     ("Y", Y),
     ("Z", Z),
@@ -113,13 +116,15 @@ def test_wrap_angle():
     assert _wrap_angle(-3 * math.pi) == math.pi
 
 
-def test_zyz_unitary():
-    unitary = np.eye(2, dtype=complex)
+@pytest.mark.parametrize(("factory_name", "factory"), GATE_FACTORIES)
+def test_zyz_unitary(factory_name: str, factory) -> None:
+    gate = factory(0)
+    unitary = gate.matrix
     theta, phi, gamma = _zyz_from_unitary(unitary)
-    assert math.isclose(theta, 0)
-    assert math.isclose(phi, 0)
-    assert math.isclose(gamma, 0)
+    reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix
+    assert np.allclose(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
 
+def test_zyz_unitary_errors():
     bad_unitary = np.ones((3, 2), dtype=complex)
     with pytest.raises(ValueError, match="Expected 2x2 unitary"):
         _zyz_from_unitary(bad_unitary)
@@ -127,3 +132,50 @@ def test_zyz_unitary():
     singular = np.array([[1, 0], [0, 0]], dtype=complex)
     with pytest.raises(ValueError, match="Matrix is singular"):
         _zyz_from_unitary(singular)
+
+@pytest.mark.parametrize(("factory_name", "factory"), GATE_FACTORIES)
+def test_adjoint_of_gate(factory_name: str, factory) -> None:
+    gate = factory(0)
+    adjoint_gate = _adjoint_of(gate)
+    assert _unitaries_equivalent(gate.matrix.conj().T, adjoint_gate.matrix), f"Adjoint computation failed for {factory_name}"
+
+@pytest.mark.parametrize(("factory_name", "factory"), GATE_FACTORIES)
+def test_sqrt_of_gate(factory_name: str, factory) -> None:
+    gate = factory(0)
+    sqrt_gate = _sqrt_of(gate)
+    reconstructed = sqrt_gate.matrix @ sqrt_gate.matrix
+    assert _unitaries_equivalent(gate.matrix, reconstructed), f"Sqrt computation failed for {factory_name}"
+
+def test_sqrt_of_gate_errors():
+    custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
+    custom_gate = MagicMock(spec=BasicGate)
+    custom_gate.matrix = custom_matrix
+    custom_gate.qubits = (0,1,)
+    custom_gate.nqubits = 2
+    with pytest.raises(NotImplementedError, match="only supports 1-qubit gates"):
+        sqrt_gate = _sqrt_of(custom_gate)
+
+def test_adjoint_of_generic_gate():
+    custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
+    custom_gate = MagicMock(spec=BasicGate)
+    custom_gate.matrix = custom_matrix
+    custom_gate.qubits = (0,)
+    custom_gate.nqubits = 1
+    adjoint_gate = _adjoint_of(custom_gate)
+    assert _unitaries_equivalent(custom_matrix.conj().T, adjoint_gate.matrix), "Adjoint computation failed for generic gate"
+
+def test_adjoint_of_generic_multi_qubit_gate():
+    custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
+    custom_gate = MagicMock(spec=BasicGate)
+    custom_gate.matrix = custom_matrix
+    custom_gate.qubits = (0,1,)
+    custom_gate.nqubits = 2
+    with pytest.raises(NotImplementedError, match="only supports 1-qubit gates"):
+        adjoint_gate = _adjoint_of(custom_gate)
+
+def test_decompose_pass_of_multi_controlled_generic_gate():
+    controlled_gate = Controlled(2, basic_gate=CNOT(0,1))
+    circuit = Circuit(3)
+    circuit.add(controlled_gate)
+    with pytest.raises(NotImplementedError, match="Controlled version of multi-qubit gates is not supported"):
+        transpiled = DecomposeMultiControlledGatesPass().run(circuit)

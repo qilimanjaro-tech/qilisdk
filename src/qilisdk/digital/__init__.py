@@ -14,9 +14,12 @@
 
 from .ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
 from .circuit import Circuit
-from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, I, M, S, T, X, Y, Z
+from .gates import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Gate, H, I, M, S, T, X, Y, Z, Adjoint, Controlled, Exponential
 
 __all__ = [
+    "Controlled",
+    "Adjoint",
+    "Exponential",
     "CNOT",
     "CZ",
     "QAOA",

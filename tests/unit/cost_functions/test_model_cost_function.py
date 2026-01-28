@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
 from qilisdk.core import Model
-from qilisdk.core.model import ObjectiveSense
+from qilisdk.core.model import ObjectiveSense, QUBO
 from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
@@ -119,3 +120,55 @@ def test_compute_cost_sampling():
     cost = mcf.compute_cost(te_results)
 
     assert cost == -1 * 0.5 + 9 * 0.5
+
+def test_complex_return_values():
+
+    return_val = complex(1, 2)
+    model = MagicMock()
+    eval_results = MagicMock()
+    eval_results.values = MagicMock(return_value=[return_val])
+    model.evaluate = MagicMock(return_value=eval_results)
+    mcf = ModelCostFunction(model)
+    sampling_result = MagicMock(spec=SamplingResult)
+    sampling_result.get_probabilities = MagicMock(return_value=[("", 1.0)])
+    cost = mcf._compute_cost_sampling(sampling_result)
+    assert cost == return_val
+
+    # same for time evolution
+    model = MagicMock()
+    rho = QTensor(np.array([[1, 0], [0, 0]]))
+    eval_results = MagicMock()
+    eval_results.values = MagicMock(return_value=[return_val])
+    model.evaluate = MagicMock(return_value=eval_results)
+    mcf = ModelCostFunction(model)
+    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
+    time_evolution_result.final_state = rho
+    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    assert cost == return_val
+
+    # same for time evolution (bra)
+    model = MagicMock()
+    rho = QTensor(np.array([1, 0]).reshape((2, 1)))
+    eval_results = MagicMock()
+    eval_results.values = MagicMock(return_value=[return_val])
+    model.evaluate = MagicMock(return_value=eval_results)
+    mcf = ModelCostFunction(model)
+    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
+    time_evolution_result.final_state = rho
+    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    assert cost == return_val
+
+    # same for time evolution (qubo)
+    fake_ham = MagicMock()
+    fake_ham.to_matrix = MagicMock(return_value=np.array([[return_val, 0], [0, 1]]))
+    model = MagicMock(spec=QUBO)
+    model.to_hamiltonian = MagicMock(return_value=fake_ham)
+    rho = QTensor(np.array([[1, 0], [0, 0]]))
+    eval_results = MagicMock()
+    eval_results.values = MagicMock(return_value=[return_val])
+    model.evaluate = MagicMock(return_value=eval_results)
+    mcf = ModelCostFunction(model)
+    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
+    time_evolution_result.final_state = rho
+    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    assert cost == return_val

@@ -17,6 +17,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+from qilisdk.backends.qutip_backend import QutipBackend
+from qilisdk.core.qtensor import ket
+from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+import numpy as np
+
 pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
@@ -24,6 +30,11 @@ pytest.importorskip(
 )
 
 
+from qilisdk.analog import Schedule
+from qilisdk.analog import X as pauli_x
+from qilisdk.analog import Y as pauli_y
+from qilisdk.analog import Z as pauli_z
+from qilisdk.analog import I as pauli_i
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.core.model import Model
@@ -33,7 +44,7 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z, I
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -53,6 +64,9 @@ class DummyKernel:
     def qalloc(self, n):
         self.qubits = [f"q{i}" for i in range(n)]
         return self.qubits
+
+    def i(self, qubit):
+        self.calls.append(("i", qubit))
 
     def x(self, qubit):
         self.calls.append(("x", qubit))
@@ -123,6 +137,7 @@ class DummyGate(BasicGate):
 # --- Parameterized test cases for basic gate handler ---
 # For each case, we create an instance and note the expected call on the dummy kernel.
 basic_gate_test_cases = [
+    (I(0), ("i", "q0")),
     (X(0), ("x", "q0")),
     (Y(0), ("y", "q0")),
     (Z(0), ("z", "q0")),
@@ -439,3 +454,73 @@ def test_integer_gates():
     circuit.add(U3(0, theta=1, phi=1, gamma=1))
     result = backend.execute(Sampling(circuit, nshots=1000))
     assert isinstance(result, SamplingResult)
+
+def test_multi_qubit_controls_no_decompose(monkeypatch):
+
+
+    # need to patch DecomposeMultiControlledGatesPass to not decompose
+    import qilisdk
+    monkeypatch.setattr("qilisdk.digital.circuit_transpiler_passes.DecomposeMultiControlledGatesPass.run", lambda self, circuit: circuit)
+
+    backend = CudaBackend()
+    circuit = Circuit(3)
+    gate = Controlled(0, 1, basic_gate=X(2))
+    assert gate.control_qubits == (0, 1)
+    circuit.add(gate)
+    with pytest.raises(UnsupportedGateError):
+        backend.execute(Sampling(circuit, nshots=1000))
+
+
+def test_time_dependent_hamiltonian_cuda(monkeypatch):
+
+    #monkeypatch the evolve that we import from cudaq in cuda_backend
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+
+    o = 1.0
+    dt = 1
+    T = 1000
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0) + pauli_y(0), "h2": o * pauli_z(0) + pauli_i(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        pauli_z(0),
+        PauliZ(0),
+    ]
+
+    backend = CudaBackend()
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+    assert dummy_evolve.called
+
+
+def test_bad_observable_raises(monkeypatch):
+
+    #monkeypatch the evolve that we import from cudaq in cuda_backend
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+
+    o = 1.0
+    dt = 1
+    T = 1000
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        "bad observable",  # measure z
+    ]
+
+    backend = CudaBackend()
+    with pytest.raises(ValueError, match="unsupported observable type"):
+        backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
