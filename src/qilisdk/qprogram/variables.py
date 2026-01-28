@@ -15,53 +15,26 @@
 from __future__ import annotations
 
 import functools
-from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, ParamSpec, TypeVar
+from typing import Any, Callable, ParamSpec, Self, TypeVar
 from uuid import UUID, uuid4
 
-from typing_extensions import Self
-
+from qilisdk.core.types import QiliEnum
 from qilisdk.yaml import yaml
-
-if TYPE_CHECKING:
-    from ruamel.yaml.nodes import ScalarNode
-    from ruamel.yaml.representer import RoundTripRepresenter
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
 @yaml.register_class
-class QProgramDomain(str, Enum):
+class QProgramDomain(QiliEnum):
     """QProgramDomain class."""
 
-    Scalar = 0
-    Time = 1
-    Frequency = 2
-    Phase = 3
-    Voltage = 4
-    Flux = 5
-
-    @classmethod
-    def to_yaml(cls, representer: RoundTripRepresenter, node: QProgramDomain) -> ScalarNode:
-        """
-        Method to be called automatically during YAML serialization.
-
-        Returns:
-            ScalarNode: The YAML scalar node representing the QProgramDomain.
-        """
-        return representer.represent_scalar(cls.yaml_tag, f"{node.name}-{node.value}")  # type: ignore[attr-defined]
-
-    @classmethod
-    def from_yaml(cls, _, node: ScalarNode) -> QProgramDomain:
-        """
-        Method to be called automatically during YAML deserialization.
-
-        Returns:
-            QProgramDomain: The QProgramDomain instance created from the YAML node value.
-        """
-        _, value = node.value.split("-")
-        return cls(int(value))
+    Scalar = "Scalar"
+    Time = "Time"
+    Frequency = "Frequency"
+    Phase = "Phase"
+    Voltage = "Voltage"
+    Flux = "Flux"
 
 
 def requires_domain(parameter: str, domain: QProgramDomain) -> Callable[[Callable[P, R]], Callable[P, R]]:
