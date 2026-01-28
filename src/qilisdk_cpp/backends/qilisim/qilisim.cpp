@@ -26,7 +26,7 @@ PYBIND11_MODULE(qilisim_module, m) {
 }
 
 // The public execute_sampling
-py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params) {
+py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
     Execute a sampling functional using a simple statevector simulator.
     Note that this is just the wrapper mapping the Python objects to C++ objects.
@@ -35,6 +35,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     Args:
         functional (py::object): The Sampling functional to execute.
         noise_model (py::object): The noise model to apply during simulation.
+        initial_state (py::object): The initial state as a QTensor or none.
         solver_params (py::dict): Solver parameters, including 'max_cache_size'.
 
     Returns:
@@ -56,20 +57,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
 
     // Get parameters
-    QiliSimConfig config;
-    if (solver_params.contains("max_cache_size")) {
-        config.max_cache_size = solver_params["max_cache_size"].cast<int>();
-    }
-    if (solver_params.contains("num_threads")) {
-        config.num_threads = solver_params["num_threads"].cast<int>();
-    }
-    if (solver_params.contains("seed")) {
-        config.seed = solver_params["seed"].cast<int>();
-    }
-    if (solver_params.contains("atol")) {
-        config.atol = solver_params["atol"].cast<double>();
-    }
-    config.validate();
+    QiliSimConfig config = parse_solver_params(solver_params);
 
     // Sanity checks
     if (n_qubits <= 0) {
@@ -83,9 +71,21 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.atol);
     std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
 
+    // The initial state
+    long dim = 1L << n_qubits;
+    SparseMatrix initial_state_cpp;
+    if (initial_state.is_none()) {
+        initial_state_cpp = SparseMatrix(dim, 1);
+        initial_state_cpp.coeffRef(0, 0) = 1.0;
+        initial_state_cpp.makeCompressed();
+    } else {
+        initial_state_cpp = parse_initial_state(initial_state, config.atol);
+    }
+
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
-    sampling(gates, qubits_to_measure, n_qubits, n_shots, config, counts);
+    DenseMatrix state;
+    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, state, counts, config);
 
     // Convert counts to samples dict
     py::dict samples;
@@ -142,39 +142,10 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     py::object observables = functional.attr("observables");
 
     // Get parameters
-    QiliSimConfig config;
-    if (solver_params.contains("arnoldi_dim")) {
-        config.arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
-    }
-    if (solver_params.contains("num_arnoldi_substeps")) {
-        config.num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
-    }
-    if (solver_params.contains("num_integrate_substeps")) {
-        config.num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
-    }
-    if (solver_params.contains("evolution_method")) {
-        config.method = solver_params["evolution_method"].cast<std::string>();
-    }
-    if (solver_params.contains("monte_carlo")) {
-        config.monte_carlo = solver_params["monte_carlo"].cast<bool>();
-    }
-    if (solver_params.contains("num_monte_carlo_trajectories")) {
-        config.num_monte_carlo_trajectories = solver_params["num_monte_carlo_trajectories"].cast<int>();
-    }
-    if (solver_params.contains("num_threads")) {
-        config.num_threads = solver_params["num_threads"].cast<int>();
-    }
-    if (solver_params.contains("seed")) {
-        config.seed = solver_params["seed"].cast<int>();
-    }
-    if (solver_params.contains("atol")) {
-        config.atol = solver_params["atol"].cast<double>();
-    }
-    // store_intermediate_results is in the functional
+    QiliSimConfig config = parse_solver_params(solver_params);
     if (functional.attr("store_intermediate_results").cast<bool>()) {
         config.store_intermediate_results = true;
     }
-    config.validate();
 
     // Convert to C++ objects
     std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.atol);

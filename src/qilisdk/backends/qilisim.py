@@ -23,6 +23,7 @@ from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 from qilisdk.backends.backend import Backend
 
 if TYPE_CHECKING:
+    from qilisdk.core import QTensor
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
@@ -108,7 +109,9 @@ class QiliSim(Backend):
             "atol": atol,
         }
 
-    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+    def _execute_sampling(
+        self, functional: Sampling, noise_model: NoiseModel | None = None, initial_state: QTensor | None = None
+    ) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -125,7 +128,7 @@ class QiliSim(Backend):
             logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         logger.info("Executing Sampling with {} shots", functional.nshots)
-        result = self.qili_sim.execute_sampling(functional, noise_model, self.solver_params)
+        result = self.qili_sim.execute_sampling(functional, noise_model, initial_state, self.solver_params)
         logger.success("Sampling finished")
         return result
 
