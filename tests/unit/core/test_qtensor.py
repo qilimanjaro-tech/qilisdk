@@ -149,16 +149,6 @@ def test_ptrace_works_for_operators_which_are_not_density_matrices():
     np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense(), expected_result, atol=1e-8)
 
 
-# def test_ptrace_invalid_dims():
-#     """Partial trace should raise ValueError if dims do not match the matrix dimensions."""
-#     arr = np.eye(2)
-#     qobj = QTensor(arr)
-#     with pytest.raises(ValueError):
-#         qobj.ptrace(keep=[0], dims=[2, 2])
-#     with pytest.raises(ValueError):
-#         qobj.ptrace(keep=[0], dims=[1])  # too few dimensions
-
-
 def test_ptrace_invalid_keep():
     """Partial trace should raise ValueError if keep indices are out of bounds."""
     arr = np.eye(2)
