@@ -638,3 +638,29 @@ def test_expect_val_bad_operator():
     qbad._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
     with pytest.raises(ValueError, match="must be square"):
         expect_val(qbad, qket_obj)
+
+
+def test_qtensor_equality():
+    arr1 = np.array([[1, 0], [0, 1]])
+    arr2 = np.array([[1, 0], [0, 1]])
+    arr3 = np.array([[0, 1], [1, 0]])
+
+    q1 = QTensor(arr1)
+    q2 = QTensor(arr2)
+    q3 = QTensor(arr3)
+
+    assert q1 == q2
+    assert q1 != q3
+
+
+def test_qtensor_hash():
+    arr1 = np.array([[1, 0], [0, 1]])
+    arr2 = np.array([[1, 0], [0, 1]])
+    arr3 = np.array([[0, 1], [1, 0]])
+
+    q1 = QTensor(arr1)
+    q2 = QTensor(arr2)
+    q3 = QTensor(arr3)
+
+    assert hash(q1) == hash(q2)
+    assert hash(q1) != hash(q3)

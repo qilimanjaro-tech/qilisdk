@@ -540,7 +540,8 @@ class QTensor:
         return (self._data != other._data).nnz == 0
 
     def __hash__(self) -> int:
-        return hash(self._data.tostring())
+        coo = self._data.tocoo()
+        return hash((self.shape, tuple(zip(coo.row, coo.col, coo.data))))
 
 
 ###############################################################################

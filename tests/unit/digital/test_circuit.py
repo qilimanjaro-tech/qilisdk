@@ -22,6 +22,7 @@ import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
 from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
+from qilisdk.digital.gates import Gate
 
 
 def test_circuit_initialization():
@@ -451,6 +452,8 @@ def test_random_circuit_seedable():
     # Check that both circuits have the same gates in the same order
     assert len(c1.gates) == len(c2.gates)
     for gate1, gate2 in zip(c1.gates, c2.gates):
-        assert gate1 is gate2
+        assert isinstance(gate1, Gate)
+        assert isinstance(gate2, Gate)
+        assert gate1.name == gate2.name
         assert gate1.qubits == gate2.qubits
         assert gate1.get_parameter_values() == gate2.get_parameter_values()
