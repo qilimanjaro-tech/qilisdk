@@ -15,6 +15,7 @@
 
 #include "../digital/gate.h"
 #include "../qilisim.h"
+#include "../config/qilisim_config.h"
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
 std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double atol);
@@ -24,3 +25,4 @@ std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol);
 std::vector<bool> parse_measurements(const py::object& circuit);
+QiliSimConfig parse_solver_params(const py::dict& solver_params);

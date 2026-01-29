@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
     from qilisdk.core.types import Number
 
-
 from qilisdk.utils.visualization.style import ScheduleStyle
 
 
@@ -102,9 +101,7 @@ class MatplotlibScheduleRenderer:
                 label=h,
                 marker=marker,
                 markersize=style.marker_size,
-                linestyle=line_style["linestyle"],
-                color=line_style["color"],
-                linewidth=line_style.get("linewidth", 1.5),
+                **line_style,  # ty:ignore[invalid-argument-type]
             )
         if style.grid:
             grid_style = dict(style.grid_style)
