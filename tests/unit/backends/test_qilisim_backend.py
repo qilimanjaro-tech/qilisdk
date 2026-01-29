@@ -39,6 +39,8 @@ def test_qilisim_init():
         QiliSim(num_monte_carlo_trajectories=-10)
     with pytest.raises(ValueError, match=r"max_cache_size cannot be negative"):
         QiliSim(max_cache_size=-5)
+    with pytest.raises(ValueError, match=r"atol must be a positive float"):
+        QiliSim(atol=-1)
 
 
 class QiliSimMock:
