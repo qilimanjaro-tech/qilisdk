@@ -1,28 +1,19 @@
-import math
+from dataclasses import dataclass
 
 import numpy as np
 import pytest
-
-from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, S, T, X, Y, Z
-from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
-from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _wrap_angle, _zyz_from_unitary
-from qilisdk.digital.gates import Controlled, Gate
 
 from .utils import (
-    _int_to_bits,
+    _apply_gate_to_state,
     _bits_to_int,
     _expand_gate_to_order,
-    _apply_gate_to_state,
+    _int_to_bits,
     _sequence_matrix,
-    _unitaries_equivalent,
-    _apply_sequence_to_state,
-    _vectors_equal_up_to_phase,
     _sequences_equivalent,
+    _unitaries_equivalent,
+    _vectors_equal_up_to_phase,
 )
 
-import numpy as np
-import pytest
-from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Gate:
@@ -34,8 +25,9 @@ class Gate:
 # Bit / integer conversions
 # ---------------------------
 
+
 @pytest.mark.parametrize(
-    "value,width,expected",
+    ("value", "width", "expected"),
     [
         (0, 1, (0,)),
         (1, 1, (1,)),
@@ -49,7 +41,7 @@ def test_int_to_bits(value, width, expected):
 
 
 @pytest.mark.parametrize(
-    "bits,expected",
+    ("bits", "expected"),
     [
         ((0,), 0),
         ((1,), 1),
@@ -71,6 +63,7 @@ def test_bits_roundtrip():
 # ---------------------------
 # Gate expansion
 # ---------------------------
+
 
 def test_expand_single_qubit_gate():
     # Pauli-X on qubit 0 in a 2-qubit system
@@ -107,6 +100,7 @@ def test_expand_two_qubit_gate_swapped_order():
 # State application
 # ---------------------------
 
+
 def test_apply_gate_matches_matrix_application():
     rng = np.random.default_rng(0)
 
@@ -130,6 +124,7 @@ def test_apply_gate_matches_matrix_application():
 # Sequence matrix
 # ---------------------------
 
+
 def test_sequence_matrix_composition():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
     Z = np.array([[1, 0], [0, -1]], dtype=complex)
@@ -149,6 +144,7 @@ def test_sequence_matrix_composition():
 # Unitary equivalence
 # ---------------------------
 
+
 def test_unitaries_equivalent_up_to_phase():
     U = np.eye(2, dtype=complex)
     V = np.exp(1j * 0.123) * np.eye(2, dtype=complex)
@@ -156,10 +152,10 @@ def test_unitaries_equivalent_up_to_phase():
     assert _unitaries_equivalent(U, V)
     assert _unitaries_equivalent(V, U)
 
+
 def test_unitaries_non_equivalent():
     H = (1 / np.sqrt(2)) * np.array(
-        [[1, 1],
-         [1, -1]],
+        [[1, 1], [1, -1]],
         dtype=complex,
     )
     I = np.eye(2, dtype=complex)
@@ -170,6 +166,7 @@ def test_unitaries_non_equivalent():
 # ---------------------------
 # Vector phase equivalence
 # ---------------------------
+
 
 def test_vectors_equal_up_to_global_phase():
     v = np.array([1, 1j], dtype=complex)
@@ -184,6 +181,7 @@ def test_vectors_not_equal():
 
     assert not _vectors_equal_up_to_phase(v, w)
 
+
 def test_zero_vectors_equal():
     v = np.array([0, 0], dtype=complex)
     w = np.array([0, 0], dtype=complex)
@@ -194,6 +192,7 @@ def test_zero_vectors_equal():
 # ---------------------------
 # Sequence equivalence
 # ---------------------------
+
 
 def test_sequences_equivalent_small_system():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -213,12 +212,11 @@ def test_sequences_equivalent_with_basis_states():
         Gate(matrix=X, qubits=(0,)),
         Gate(matrix=H, qubits=(0,)),
     ]
-    gates_b = [
-        Gate(matrix=np.array([[1, 0], [0, -1]], dtype=complex), qubits=(0,))
-    ]
+    gates_b = [Gate(matrix=np.array([[1, 0], [0, -1]], dtype=complex), qubits=(0,))]
 
     basis = [(0,), (1,)]
     assert _sequences_equivalent(gates_a, gates_b, nqubits=1, basis_states=basis)
+
 
 def test_sequences_equivalent_large_with_basis_states():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -239,4 +237,3 @@ def test_sequences_not_equivalent_large_with_basis_states():
     gates_b = [Gate(matrix=Y, qubits=(i,)) for i in range(nqubits)]
 
     assert not _sequences_equivalent(gates_a, gates_b, nqubits=nqubits)
-

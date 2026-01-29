@@ -1,49 +1,28 @@
-import logging
-import sys
-from types import SimpleNamespace
-
-import pytest
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
-
-from qilisdk import _logging
-from qilisdk._logging import InterceptHandler
-from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
-
-from types import SimpleNamespace
-from qilisdk.yaml import type_representer, type_constructor
-
-from ruamel.yaml import YAML
-from qilisdk.yaml import QiliYAML
-
-import math
-from collections import defaultdict, deque
-
-import numpy as np
-import pytest
-from pydantic import BaseModel
-from scipy import sparse
-
+import base64
 import types
 from collections import defaultdict, deque
+from io import StringIO
+from types import SimpleNamespace
 
 import numpy as np
-import pytest
+from dill import dumps
+from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
+
+from qilisdk.core.model import Model
+from qilisdk.yaml import (
+    QiliYAML,
+    function_constructor,
+    function_representer,
+    pydantic_model_constructor,
+    pydantic_model_representer,
+    type_constructor,
+    type_representer,
+)
 
 yaml = YAML(typ="unsafe")
-
-import types
-from io import StringIO
-from collections import defaultdict, deque
-
-import numpy as np
-import pytest
-from pydantic import BaseModel
-from ruamel.yaml import YAML
-from scipy import sparse
 
 
 def dump_load(obj):
@@ -56,6 +35,7 @@ def dump_load(obj):
 # SciPy CSR matrix
 # -----------------------
 
+
 def test_csr_matrix_roundtrip():
     m = sparse.csr_matrix([[0, 1], [2, 0]])
     loaded = dump_load(m)
@@ -67,6 +47,7 @@ def test_csr_matrix_roundtrip():
 # -----------------------
 # NumPy ndarray
 # -----------------------
+
 
 def test_ndarray_roundtrip():
     arr = np.arange(6, dtype=np.float32).reshape(2, 3)
@@ -81,6 +62,7 @@ def test_ndarray_roundtrip():
 # NumPy scalar
 # -----------------------
 
+
 def test_numpy_scalar_roundtrip():
     x = np.int64(42)
     loaded = dump_load(x)
@@ -92,6 +74,7 @@ def test_numpy_scalar_roundtrip():
 # -----------------------
 # defaultdict (with factory)
 # -----------------------
+
 
 def test_defaultdict_with_factory():
     dd = defaultdict(list)
@@ -108,6 +91,7 @@ def test_defaultdict_with_factory():
 # defaultdict (factory=None branch)
 # -----------------------
 
+
 def test_defaultdict_without_factory():
     dd = defaultdict(None)
     dd["x"] = 5
@@ -123,6 +107,7 @@ def test_defaultdict_without_factory():
 # Regular function
 # -----------------------
 
+
 def test_function_roundtrip():
     def f(x):
         return x + 1
@@ -137,6 +122,7 @@ def test_function_roundtrip():
 # Lambda function
 # -----------------------
 
+
 def test_lambda_roundtrip():
     f = lambda x: x * 2  # noqa: E731
 
@@ -149,6 +135,7 @@ def test_lambda_roundtrip():
 # -----------------------
 # Pydantic model
 # -----------------------
+
 
 class User(BaseModel):
     id: int
@@ -167,6 +154,7 @@ def test_pydantic_model_roundtrip():
 # Complex numbers
 # -----------------------
 
+
 def test_complex_roundtrip():
     z = 3 + 4j
     loaded = dump_load(z)
@@ -179,6 +167,7 @@ def test_complex_roundtrip():
 # Tuple
 # -----------------------
 
+
 def test_tuple_roundtrip():
     t = (1, "a", 3.5)
     loaded = dump_load(t)
@@ -186,9 +175,11 @@ def test_tuple_roundtrip():
     assert isinstance(loaded, tuple)
     assert loaded == t
 
+
 # -----------------------
 # Model
 # -----------------------
+
 
 def test_model_roundtrip():
     mod = Model("test")
@@ -202,6 +193,7 @@ def test_model_roundtrip():
 # Type objects
 # -----------------------
 
+
 def test_type_roundtrip():
     t = type(int)
     loaded = dump_load(t)
@@ -211,6 +203,7 @@ def test_type_roundtrip():
 # -----------------------
 # deque
 # -----------------------
+
 
 def test_deque_roundtrip():
     d = deque([1, 2, 3])
@@ -223,6 +216,7 @@ def test_deque_roundtrip():
 # -----------------------
 # QiliYAML.register_class decorator branch
 # -----------------------
+
 
 def test_register_class_decorator_path():
     y = QiliYAML(typ="unsafe")
@@ -239,6 +233,7 @@ def test_register_class_decorator_path():
 # QiliYAML.register_class(shared=True) branch
 # -----------------------
 
+
 def test_register_class_shared():
     y = QiliYAML(typ="unsafe")
 
@@ -250,12 +245,6 @@ def test_register_class_shared():
     assert hasattr(Bar, "yaml_tag")
     assert "." in Bar.yaml_tag
 
-import base64
-from types import SimpleNamespace
-
-from dill import dumps
-
-from qilisdk.yaml import function_representer, function_constructor
 
 def test_function_representer_direct():
     def f(x):
@@ -294,20 +283,6 @@ def test_function_constructor_direct():
 
     assert callable(loaded)
     assert loaded(3) == 6
-
-from types import SimpleNamespace
-
-from pydantic import BaseModel
-
-from qilisdk.yaml import (
-    pydantic_model_representer,
-    pydantic_model_constructor,
-)
-
-
-class User(BaseModel):
-    id: int
-    name: str
 
 
 def test_pydantic_model_representer_direct():
@@ -351,7 +326,6 @@ def test_pydantic_model_constructor_direct():
     assert isinstance(loaded, User)
     assert loaded.id == 2
     assert loaded.name == "bob"
-
 
 
 def test_type_representer_direct():

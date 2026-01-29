@@ -17,11 +17,9 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from qilisdk.backends.qutip_backend import QutipBackend
 from qilisdk.core.qtensor import ket
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-import numpy as np
 
 pytest.importorskip(
     "cudaq",
@@ -30,11 +28,11 @@ pytest.importorskip(
 )
 
 
+from qilisdk.analog import I as pauli_i
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as pauli_x
 from qilisdk.analog import Y as pauli_y
 from qilisdk.analog import Z as pauli_z
-from qilisdk.analog import I as pauli_i
 from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
 from qilisdk.core.model import Model
@@ -44,7 +42,7 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, M, S, T, X, Y, Z, I
+from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -455,12 +453,12 @@ def test_integer_gates():
     result = backend.execute(Sampling(circuit, nshots=1000))
     assert isinstance(result, SamplingResult)
 
+
 def test_multi_qubit_controls_no_decompose(monkeypatch):
-
-
     # need to patch DecomposeMultiControlledGatesPass to not decompose
-    import qilisdk
-    monkeypatch.setattr("qilisdk.digital.circuit_transpiler_passes.DecomposeMultiControlledGatesPass.run", lambda self, circuit: circuit)
+    monkeypatch.setattr(
+        "qilisdk.digital.circuit_transpiler_passes.DecomposeMultiControlledGatesPass.run", lambda self, circuit: circuit
+    )
 
     backend = CudaBackend()
     circuit = Circuit(3)
@@ -472,8 +470,7 @@ def test_multi_qubit_controls_no_decompose(monkeypatch):
 
 
 def test_time_dependent_hamiltonian_cuda(monkeypatch):
-
-    #monkeypatch the evolve that we import from cudaq in cuda_backend
+    # monkeypatch the evolve that we import from cudaq in cuda_backend
     dummy_return = MagicMock()
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
@@ -501,8 +498,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
 
 
 def test_bad_observable_raises(monkeypatch):
-
-    #monkeypatch the evolve that we import from cudaq in cuda_backend
+    # monkeypatch the evolve that we import from cudaq in cuda_backend
     dummy_return = MagicMock()
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)

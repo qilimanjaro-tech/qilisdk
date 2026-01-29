@@ -18,10 +18,10 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.core.variables import Parameter
+from qilisdk.core.variables import Domain, Parameter, Term, Variable
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
-from qilisdk.digital.gates import Adjoint, Controlled, Exponential
+from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
 
 
 # ------------------------------------------------------------------------------
@@ -816,3 +816,191 @@ def test_exponential_gate_parameter_update():
     # The matrix should update to the exponential of the new base matrix.
     expected_matrix = expm(base_gate.matrix)
     assert_matrix_equal(exp_gate.matrix, expected_matrix)
+
+
+def test_base_gate_class():
+    class NewGate(Gate):
+        def __init__(self):
+            super().__init__()
+
+        @property
+        def matrix(self):
+            raise NotImplementedError("NewGate has no matrix.")
+
+        @property
+        def name(self):
+            return "NewGate"
+
+    gate = NewGate()
+
+    assert gate.nqubits == 0
+    assert gate.target_qubits == ()
+    assert gate.control_qubits == ()
+    assert gate.parameters == {}
+    assert gate.get_parameter_bounds() == {}
+    assert gate.is_parameterized is False
+    assert gate.get_parameter_names() == []
+    assert gate.get_parameter_values() == []
+    assert gate.name == "NewGate"
+
+    with pytest.raises(NotImplementedError, match="NewGate has no matrix"):
+        _ = gate.matrix
+
+    with pytest.raises(GateNotParameterizedError):
+        gate.set_parameters({"param": 1.0})
+    with pytest.raises(GateNotParameterizedError):
+        gate.set_parameter_values([1.0])
+    with pytest.raises(GateNotParameterizedError):
+        gate.set_parameter_bounds({"param": (0.0, 1.0)})
+
+    assert "NewGate" in repr(gate)
+
+
+class CustomGate(BasicGate):
+    def __init__(
+        self,
+        target_qubits: tuple[int, ...],
+        parameter_transforms: dict[str, Term] | None = None,
+        parameters: dict[str, Parameter] | None = None,
+    ):
+        super().__init__(target_qubits=target_qubits, parameter_transforms=parameter_transforms, parameters=parameters)
+
+    @property
+    def name(self) -> str:
+        return "CustomGate"
+
+    def _generate_matrix(self) -> np.ndarray:
+        return np.array([[0, 1], [1, 0]], dtype=complex)
+
+
+def test_basic_gate():
+    qubit = 0
+    gate = CustomGate((qubit,))
+
+    assert gate.name == "CustomGate"
+    assert gate.nqubits == 1
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+    assert gate.is_parameterized is False
+    assert gate.nparameters == 0
+    assert gate.get_parameter_names() == []
+    assert gate.get_parameters() == {}
+    assert gate.get_parameter_values() == []
+    assert gate.get_parameter_bounds() == {}
+
+    expected_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+    with pytest.raises(ValueError, match="Duplicate target qubits"):
+        CustomGate(
+            target_qubits=(
+                0,
+                0,
+            )
+        )
+
+    var = Variable("test_var", Domain.REAL)
+    param = Parameter("param", 1.0)
+    term_var = var * 2.0 + 1
+    term_param = param * 2.0 + 1
+    with pytest.raises(ValueError, match="must be a parameterized"):
+        CustomGate(target_qubits=(0,), parameter_transforms={"param": term_var})
+    with pytest.raises(InvalidParameterNameError):
+        CustomGate(target_qubits=(0,), parameter_transforms={"param": term_param})
+
+
+def test_parameterized_custom_gate():
+    qubit = 0
+    param = Parameter("param", np.pi / 2)
+    term = param * 2.0
+    gate = CustomGate(target_qubits=(qubit,), parameters={"param": param}, parameter_transforms={"param": term})
+    assert gate.name == "CustomGate"
+    assert gate.nqubits == 1
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 1
+    assert gate.get_parameter_names() == ["param"]
+    assert gate.get_parameters() == {"param": np.pi / 2}
+    assert gate.get_parameter_values() == [np.pi / 2]
+
+    gate.set_parameters({"param": np.pi})
+    assert gate.get_parameters() == {"param": np.pi}
+
+    gate.set_parameter_bounds({"param": (0.0, 2 * np.pi)})
+    assert gate.get_parameter_bounds() == {"param": (0.0, 2 * np.pi)}
+
+    with pytest.raises(InvalidParameterNameError):
+        gate.set_parameter_bounds({"unknown_param": (0.0, 1.0)})
+
+
+def test_modified_parameterized_gate():
+    qubit = 0
+    param = Parameter("param", np.pi / 2)
+    basic_gate = RX(qubit, theta=param)
+
+    control_qubit = 1
+    gate_mod = Controlled(control_qubit, basic_gate=basic_gate)
+    assert gate_mod.name == "CRX"
+    assert gate_mod.nqubits == 2
+    assert gate_mod.target_qubits == (qubit,)
+    assert gate_mod.control_qubits == (control_qubit,)
+    assert gate_mod.is_parameterized is True
+    assert gate_mod.nparameters == 1
+    assert gate_mod.parameters == {"theta": np.pi / 2}
+    assert gate_mod.get_parameter_names() == ["theta"]
+    assert gate_mod.get_parameters() == {"theta": np.pi / 2}
+    assert gate_mod.get_parameter_values() == [np.pi / 2]
+    gate_mod.set_parameters({"theta": np.pi})
+    assert gate_mod.get_parameters() == {"theta": np.pi}
+    gate_mod.set_parameter_values([np.pi / 4])
+    assert gate_mod.get_parameters() == {"theta": np.pi / 4}
+    gate_mod.set_parameter_bounds({"theta": (0.0, 2 * np.pi)})
+    assert gate_mod.get_parameter_bounds() == {"theta": (0.0, 2 * np.pi)}
+
+
+def test_bad_control_init():
+    qubit = 0
+    basic_gate = RX(qubit, theta=np.pi / 2)
+
+    with pytest.raises(ValueError, match="Duplicate control qubits"):
+        Controlled(0, 0, basic_gate=basic_gate)
+    with pytest.raises(ValueError, match="Some control qubits are the same"):
+        Controlled(0, basic_gate=basic_gate)
+    with pytest.raises(ValueError, match="At least one control qubit"):
+        Controlled(basic_gate=basic_gate)
+
+
+def test_param_gate_given_variable():
+    qubit = 0
+    var = Variable("theta", Domain.REAL, (0.0, 1.0))
+    term = var * 2.0 + 1
+    with pytest.raises(ValueError, match="must contain a Parameter"):
+        RX(qubit, theta=term)
+
+
+def test_complex_transform():
+    qubit = 0
+    param = Parameter("theta", np.pi / 2)
+    term = param * 1j
+
+    rx = RX(qubit, theta=term)
+    assert abs(rx.theta) < 1e-5
+
+    ry = RY(qubit, theta=term)
+    assert abs(ry.theta) < 1e-5
+
+    rz = RZ(qubit, phi=term)
+    assert abs(rz.phi) < 1e-5
+
+    u1 = U1(qubit, phi=term)
+    assert abs(u1.phi) < 1e-5
+
+    u2 = U2(qubit, phi=term, gamma=term)
+    assert abs(u2.phi) < 1e-5
+    assert abs(u2.gamma) < 1e-5
+
+    u3 = U3(qubit, theta=term, phi=term, gamma=term)
+    assert abs(u3.theta) < 1e-5
+    assert abs(u3.phi) < 1e-5
+    assert abs(u3.gamma) < 1e-5

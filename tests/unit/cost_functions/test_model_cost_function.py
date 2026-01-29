@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
 from qilisdk.core import Model
-from qilisdk.core.model import ObjectiveSense, QUBO
+from qilisdk.core.model import QUBO, ObjectiveSense
 from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
@@ -121,8 +122,8 @@ def test_compute_cost_sampling():
 
     assert cost == -1 * 0.5 + 9 * 0.5
 
-def test_complex_return_values():
 
+def test_complex_return_values():
     return_val = complex(1, 2)
     model = MagicMock()
     eval_results = MagicMock()

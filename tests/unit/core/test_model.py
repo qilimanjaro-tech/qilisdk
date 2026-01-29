@@ -14,17 +14,18 @@
 
 
 import copy
+from unittest.mock import MagicMock
 
 import pytest
 
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
 from qilisdk.core.variables import (
-    NEQ,
     EQ,
     GT,
     LEQ,
     LT,
+    NEQ,
     BinaryVariable,
     Bitwise,
     ComparisonOperation,
@@ -432,6 +433,7 @@ def test_qubo_transform_slack_penalization():
     c = q._constraints["c2"].term.lhs - q._constraints["c2"].term.rhs
     assert slack[0] in c
 
+
 def test_qubo_transform_eq_always_feasible():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 0))
@@ -440,6 +442,7 @@ def test_qubo_transform_eq_always_feasible():
 
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
+
 
 def test_qubo_transform_gt_always_feasible():
     q = QUBO(label="test")
@@ -450,6 +453,7 @@ def test_qubo_transform_gt_always_feasible():
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
 
+
 def test_qubo_transform_lt_always_feasible():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 1))
@@ -459,10 +463,9 @@ def test_qubo_transform_lt_always_feasible():
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
 
+
 def test_qubo_transform_gt_zero_slack(monkeypatch):
-    
     # Pretend that we are somehow able to add an inequality constraint that requires no slack but isn't always feasible
-    from unittest.mock import MagicMock
     check_valid_mock = MagicMock(return_value=0)
 
     monkeypatch.setattr(QUBO, "_check_valid_constraint", check_valid_mock)
@@ -474,10 +477,9 @@ def test_qubo_transform_gt_zero_slack(monkeypatch):
     assert len(q._constraints) == 2
     assert "c_slack" not in q._constraints
 
+
 def test_qubo_transform_lt_zero_slack(monkeypatch):
-    
     # Pretend that we are somehow able to add an inequality constraint that requires no slack but isn't always feasible
-    from unittest.mock import MagicMock
     check_valid_mock = MagicMock(return_value=0)
 
     monkeypatch.setattr(QUBO, "_check_valid_constraint", check_valid_mock)
@@ -489,6 +491,7 @@ def test_qubo_transform_lt_zero_slack(monkeypatch):
     assert len(q._constraints) == 2
     assert "c_slack" not in q._constraints
 
+
 def test_add_constraint_unknown_type():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
@@ -497,6 +500,7 @@ def test_add_constraint_unknown_type():
 
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
+
 
 def test_add_constraint_error_constraint_already_xists():
     q = QUBO(label="test")
@@ -616,6 +620,7 @@ def test_to_hamiltonian_with_empty_qubo():
     with pytest.raises(ValueError, match=r"Can't transform empty QUBO model to a Hamiltonian."):
         q.to_hamiltonian()
 
+
 def test_qubo_constraint_name_mismatch():
     """
     Test what happens when lagrange multipliers are set wrong (somehow)
@@ -626,14 +631,15 @@ def test_qubo_constraint_name_mismatch():
     t = 2 * v
     q.set_objective(t)
     assert q.lagrange_multipliers == {}
-    assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value 
+    assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value
 
     # add a constraint
     ct = EQ(v, 1)
     q.add_constraint("con1", ct)
     q._constraints["con1"]._label = "con2"  # force a mismatch
     assert "con1" in q.lagrange_multipliers
-    assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value 
+    assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value
+
 
 # def test_qubo_constraint_evaluate():
 #     q = QUBO(label="q1")
@@ -670,20 +676,23 @@ def test_model_evaluate():
     assert results["obj"] == 23
     assert results["c"] == 20
 
+
 def test_add_constraint_with_terms():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    term = 2*x + 1
-    term_of_terms = 2*term + 1
+    term = 2 * x + 1
+    term_of_terms = 2 * term + 1
     term_of_terms._elements = {term: 2, 1: 2}
     assert q._parse_term(term_of_terms) == (0, [(2, x), (2, 1)])
+
 
 def test_complex_constraint_raises():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    complex_constraint = ComparisonTerm(lhs=2*x+1j, rhs=1, operation=ComparisonOperation.EQ)
+    complex_constraint = ComparisonTerm(lhs=2 * x + 1j, rhs=1, operation=ComparisonOperation.EQ)
     with pytest.raises(ValueError, match=r"Complex values"):
         q.add_constraint("c", complex_constraint)
+
 
 def test_qubo_from_model():
     m = Model("test")
@@ -699,14 +708,14 @@ def test_qubo_from_model():
     assert q.lagrange_multipliers == {"c": 100}
     assert len(q._constraints) == len(m.constraints)
 
+
 def test_parse_term_unsupported_element(monkeypatch):
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    from unittest.mock import MagicMock
     bad_objective = MagicMock()
     bad_objective.term = Term(elements=[x, 3], operation=Operation.SUB)
     bad_objective.variables = MagicMock(return_value=[x])
     monkeypatch.setattr(QUBO, "qubo_objective", bad_objective)
     q = QUBO(label="test")
-    bad_term = Term(elements=[x, 3], operation=Operation.SUB)
+    Term(elements=[x, 3], operation=Operation.SUB)
     with pytest.raises(ValueError, match=r"is not supported"):
         q.to_hamiltonian()

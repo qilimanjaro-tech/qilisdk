@@ -533,6 +533,15 @@ class QTensor:
             s += f"\n{self._data.toarray()}"
         return s
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, QTensor):
+            return NotImplemented
+        # this checks the sparsity of the inequality array (i.e. no nonzeros means equal)
+        return (self._data != other._data).nnz == 0
+
+    def __hash__(self) -> int:
+        return hash(self._data.tostring())
+
 
 ###############################################################################
 # Outside class Function Definitions

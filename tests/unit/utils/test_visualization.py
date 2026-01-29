@@ -12,25 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import builtins
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import font_manager as fm
 
-import qilisdk
-import numpy as np
+import qilisdk.utils.visualization.circuit_renderers
+import qilisdk.utils.visualization.schedule_renderers
 from qilisdk.analog import Schedule, X, Z
-from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer
-from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer
-from qilisdk.utils.visualization.style import ScheduleStyle, CircuitStyle
-from qilisdk.digital.gates import BasicGate
-from qilisdk.digital import Circuit, SWAP, Controlled, M, RX, CNOT
+from qilisdk.digital import CNOT, RX, SWAP, Circuit, Controlled, M
 from qilisdk.digital import X as XGate
 from qilisdk.digital import Y as YGate
-from unittest.mock import MagicMock
+from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer
+from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer
+from qilisdk.utils.visualization.style import CircuitStyle, ScheduleStyle
+
 
 def mock_show():
     return None
+
+
 def mock_save(self, *args, **kwargs):
     return None
+
 
 def test_schedule_style_init():
     style = ScheduleStyle()
@@ -78,9 +84,11 @@ def test_schedule_draw(monkeypatch):
     schedule.draw()
     schedule.draw(filepath="test_schedule.png")
 
+
 def test_circuit_style_init():
     style = CircuitStyle()
     assert style.padding == 0.3
+
 
 def test_circuit_renderer_init():
     circuit = Circuit(2)
@@ -89,6 +97,7 @@ def test_circuit_renderer_init():
     assert renderer.circuit == circuit
     assert renderer.style == style
     assert renderer._ax is not None
+
 
 def test_circuit_renderer_with_axes(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual rendering during tests
@@ -103,6 +112,7 @@ def test_circuit_renderer_with_axes(monkeypatch):
     assert renderer._ax is not None
     renderer.plot()
 
+
 def test_circuit_draw(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
@@ -110,8 +120,8 @@ def test_circuit_draw(monkeypatch):
     # Create a simple circuit for testing
     circuit = Circuit(2)
     circuit.add(XGate(0))
-    circuit.add(SWAP(0,1))
-    circuit.add(CNOT(0,1))
+    circuit.add(SWAP(0, 1))
+    circuit.add(CNOT(0, 1))
     circuit.add(M(0))
     circuit.add(Controlled(0, basic_gate=XGate(1)))
     circuit.add(M(0))
@@ -125,12 +135,12 @@ def test_compact_layout(monkeypatch):
 
     circuit = Circuit(3)
     circuit.add(XGate(0))
-    circuit.add(SWAP(0,1))
+    circuit.add(SWAP(0, 1))
     circuit.add(M(0))
-    circuit.add(RX(0, theta=np.pi/2))
+    circuit.add(RX(0, theta=np.pi / 2))
     circuit.add(Controlled(0, basic_gate=XGate(1)))
     circuit.add(Controlled(0, basic_gate=YGate(1)))
-    circuit.add(Controlled(2, basic_gate=SWAP(0,1)))
+    circuit.add(Controlled(2, basic_gate=SWAP(0, 1)))
     circuit.add(M(0))
 
     style = CircuitStyle()
@@ -140,11 +150,11 @@ def test_compact_layout(monkeypatch):
     assert renderer.style.layout == "compact"
     renderer.plot()
 
+
 def test_ipython(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
 
-    import builtins
     monkeypatch.setattr(
         builtins,
         "get_ipython",
@@ -157,28 +167,30 @@ def test_ipython(monkeypatch):
     renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
     renderer.plot()
 
+
 def test_pi_fraction():
     circuit = Circuit(1)
     style = CircuitStyle()
     renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
-    
+
     # backslash blackslash pi
-    assert renderer._pi_fraction(np.pi/2) == "\\pi/2"
+    assert renderer._pi_fraction(np.pi / 2) == "\\pi/2"
     assert renderer._pi_fraction(np.pi) == "\\pi"
-    assert renderer._pi_fraction(3*np.pi/4) == "3\\pi/4"
-    assert renderer._pi_fraction(np.pi/3) == "\\pi/3"
-    assert renderer._pi_fraction(2*np.pi/3) == "2\\pi/3"
-    assert renderer._pi_fraction(np.pi/6) == "\\pi/6"
+    assert renderer._pi_fraction(3 * np.pi / 4) == "3\\pi/4"
+    assert renderer._pi_fraction(np.pi / 3) == "\\pi/3"
+    assert renderer._pi_fraction(2 * np.pi / 3) == "2\\pi/3"
+    assert renderer._pi_fraction(np.pi / 6) == "\\pi/6"
     assert renderer._pi_fraction(0) == "0"
     assert renderer._pi_fraction(np.sqrt(2), tol=1e-7) == "1.41"
+
 
 def test_superscript_dagger():
     circuit = Circuit(1)
     style = CircuitStyle()
     renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
-    
+
     assert renderer._with_superscript_dagger("RX†") == "$\\mathrm{RX}^{\\dagger}$"
-    
+
 
 def test_multi_target_gates(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
@@ -193,6 +205,7 @@ def test_multi_target_gates(monkeypatch):
     circuit.add(three_target_gate)
     renderer.plot()
 
+
 def test_layer_stacking(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
@@ -202,5 +215,5 @@ def test_layer_stacking(monkeypatch):
     style.layout = "compact"
     renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
     circuit.add(XGate(1))
-    circuit.add(CNOT(0,2))
+    circuit.add(CNOT(0, 2))
     renderer.plot()

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-import qilisdk
-from qilisdk.analog.hamiltonian import PauliY, X, Y, Z
+import qilisdk.utils.serialization
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Y, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -18,6 +18,9 @@ def test_time_evolution_algorithm_serialization():
 
     H1 = sum(X(i) for i in range(nqubits))
     H2 = sum(Z(i) for i in range(nqubits))
+
+    assert isinstance(H1, Hamiltonian)
+    assert isinstance(H2, Hamiltonian)
 
     schedule = Schedule(
         dt=dt,

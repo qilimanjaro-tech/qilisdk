@@ -27,7 +27,7 @@ def test_trotter_evolution_commuting_parts_splits_coefficients():
 
     assert len(gates) == 4
     assert all(isinstance(gate, RZ) for gate in gates)
-    phis = [gate.phi for gate in gates]
+    phis = [gate.phi for gate in gates if isinstance(gate, RZ)]
     assert phis == pytest.approx([0.5, 1.0, 0.5, 1.0])
 
 

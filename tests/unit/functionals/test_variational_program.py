@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import MagicMock
+
 import pytest
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
-from qilisdk.analog.schedule import Schedule
-from qilisdk.core import Parameter
-from qilisdk.core.qtensor import ket, tensor_prod
+from qilisdk.core import LT, Domain, Parameter, Variable
 from qilisdk.functionals.variational_program import VariationalProgram
-from unittest.mock import MagicMock
-from qilisdk.core import Variable, Domain, LT
-
 
 
 def test_variational_init():
@@ -46,14 +42,15 @@ def test_variational_init():
         assert con in vp.get_constraints()
     assert vp.check_parameter_constraints({}) == 0
 
+
 def test_bad_parameter_constraints():
     functional = MagicMock()
     optimizer = MagicMock()
     cost_function = MagicMock()
 
     var = Variable("var", Domain.REAL)
-    term = 3*var + 1
-    parameter_constraints = [LT(term, 5)] 
+    term = 3 * var + 1
+    parameter_constraints = [LT(term, 5)]
     with pytest.raises(ValueError, match="Only parameters"):
         VariationalProgram(
             functional=functional,
@@ -63,7 +60,7 @@ def test_bad_parameter_constraints():
         )
 
     param = Parameter("param", 0.0)
-    better_term = 2*param + 1
+    better_term = 2 * param + 1
     parameter_constraints = [LT(better_term, 10)]
     with pytest.raises(ValueError, match="not present in the variational program"):
         VariationalProgram(
@@ -95,6 +92,7 @@ def test_bad_parameter_constraints():
     with pytest.raises(ValueError, match="Only Parameters are allowed"):
         vp.check_parameter_constraints({"var": 3})
 
+
 def test_good_parameter_constraints():
     optimizer = MagicMock()
     cost_function = MagicMock()
@@ -102,7 +100,7 @@ def test_good_parameter_constraints():
     param1 = Parameter("param1", 0.0)
     param2 = Parameter("param2", 0.0)
 
-    term1 = 2*param1 + 1
+    term1 = 2 * param1 + 1
     term2 = param2 - 3
 
     parameter_constraints = [LT(term1, 10), LT(term2, 5)]
@@ -122,4 +120,3 @@ def test_good_parameter_constraints():
     assert vp.check_parameter_constraints({"param1": 5, "param2": 7}) == 100
     assert vp.check_parameter_constraints({"param1": 3, "param2": 10}) == 100
     assert vp.check_parameter_constraints({"param1": 6, "param2": 10}) == 200
-
