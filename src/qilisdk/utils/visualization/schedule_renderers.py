@@ -96,14 +96,16 @@ class MatplotlibScheduleRenderer:
             if "color" not in line_style:
                 color = grad_colors[idx]
                 line_style = {**line_style, "color": color}
-            self.ax.plot(times, 
-                         plots[h], 
-                         label=h, 
-                         marker=marker, 
-                         markersize=style.marker_size, 
-                         linestyle=line_style["linestyle"], 
-                         color=line_style["color"], 
-                         linewidth=line_style.get("linewidth", 1.5))
+            self.ax.plot(
+                times,
+                plots[h],
+                label=h,
+                marker=marker,
+                markersize=style.marker_size,
+                linestyle=line_style["linestyle"],
+                color=line_style["color"],
+                linewidth=line_style.get("linewidth", 1.5),
+            )
         if style.grid:
             grid_style = dict(style.grid_style)
             if "color" not in grid_style:
