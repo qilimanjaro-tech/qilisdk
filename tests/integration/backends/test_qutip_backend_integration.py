@@ -74,8 +74,7 @@ def test_unsupported_gate_raises(backend):
             super().__init__((qubit,))
 
         @property
-        def name(self) -> str:
-            return "Dummy"
+        def name(self) -> str: ...
 
         def _generate_matrix(self) -> np.ndarray:
             return np.eye(2, dtype=complex)

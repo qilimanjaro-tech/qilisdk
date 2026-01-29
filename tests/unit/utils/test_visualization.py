@@ -87,7 +87,7 @@ def test_schedule_draw(monkeypatch):
 
 def test_circuit_style_init():
     style = CircuitStyle()
-    assert style.padding == 0.3
+    assert np.isclose(style.padding, 0.3)
 
 
 def test_circuit_renderer_init():

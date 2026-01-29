@@ -78,7 +78,7 @@ def test_compute_cost_time_evolution():
         ValueError,
         match=r"can't compute cost using Observables from time evolution results when the state is not provided.",
     ):
-        cost = ocf.compute_cost(te_results)
+        _ = ocf.compute_cost(te_results)
 
     with pytest.raises(
         ValueError,
@@ -102,7 +102,7 @@ def test_compute_cost_sampling():
     te_results = SamplingResult(nshots=100, samples={"0": 100})
 
     with pytest.raises(ValueError, match=r"The samples provided have 1 qubits but the observable has 2 qubits"):
-        cost = ocf.compute_cost(te_results)
+        _ = ocf.compute_cost(te_results)
 
     te_results = SamplingResult(nshots=100, samples={"11": 50, "00": 50})
     cost = ocf.compute_cost(te_results)

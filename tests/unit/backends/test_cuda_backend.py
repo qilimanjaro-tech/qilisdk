@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.qtensor import ket
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
@@ -373,7 +374,7 @@ def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
     }
 
     # Minimal dummy “Hamiltonian” iterable
-    class DummyHam:
+    class DummyHam(Hamiltonian):
         def __iter__(self):
             # note: 2 * 2  +  3 * (3*4)  = 4 + 36 = 40
             yield 2, [PauliX(0)]

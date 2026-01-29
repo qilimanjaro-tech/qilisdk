@@ -56,6 +56,6 @@ def test_two_tones_experiment_initialization():
         qubit=qubit, frequency_start=freq_start, frequency_stop=freq_stop, frequency_step=freq_step
     )
     assert two_tones_exp.qubit == qubit
-    assert two_tones_exp.frequency_start == freq_start
-    assert two_tones_exp.frequency_stop == freq_stop
-    assert two_tones_exp.frequency_step == freq_step
+    assert np.isclose(two_tones_exp.frequency_start, freq_start)
+    assert np.isclose(two_tones_exp.frequency_stop, freq_stop)
+    assert np.isclose(two_tones_exp.frequency_step, freq_step)

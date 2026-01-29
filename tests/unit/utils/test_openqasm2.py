@@ -198,13 +198,13 @@ def test_register_not_declared():
 
 def test_two_qubit_parameterized_gate(monkeypatch):
     # pretend that CNOT can take a parameter for this test
-    def MockInit(self, control: int, target: int, theta: float):
+    def mock_init(self, control: int, target: int, theta: float):
         self._control_qubits = (control,)
         self._target_qubits = (target,)
         self._basic_gate = CZ(control, target)._basic_gate
 
     monkeypatch.setattr(CNOT, "PARAMETER_NAMES", ["theta"])
-    monkeypatch.setattr(CNOT, "__init__", MockInit)
+    monkeypatch.setattr(CNOT, "__init__", mock_init)
 
     qasm_str = "\n".join(
         [

@@ -78,11 +78,13 @@ def test_deserialization_with_wrong_cls_raises_error():
 
 
 def test_arbitrary_serialize_errors(monkeypatch):
-    # monkeypatch.setattr("qilisdk.utils.serialization.yaml.dump", lambda *args, **kwargs: (_ for _ in ()).throw(Exception("Serialization error")))
+    def new_dump(*args, **kwargs):
+        raise ValueError("Serialization error")
+
     monkeypatch.setattr(
         qilisdk.utils.serialization.yaml,
         "dump",
-        lambda *args, **kwargs: (_ for _ in ()).throw(Exception("Serialization error")),
+        new_dump,
     )
 
     operator = X(0)

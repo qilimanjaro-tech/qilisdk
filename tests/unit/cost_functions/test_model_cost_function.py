@@ -81,7 +81,7 @@ def test_compute_cost_time_evolution():
         intermediate_states=None,
     )
     with pytest.raises(ValueError, match=r"The final state is invalid."):
-        cost = mcf.compute_cost(te_results)
+        _ = mcf.compute_cost(te_results)
 
     te_results = TimeEvolutionResult(
         final_expected_values=np.array([[-0.9, 0]]),
@@ -92,7 +92,7 @@ def test_compute_cost_time_evolution():
     with pytest.raises(
         ValueError, match=r"can't compute cost using Models from time evolution results when the state is not provided."
     ):
-        cost = mcf.compute_cost(te_results)
+        _ = mcf.compute_cost(te_results)
 
 
 def test_compute_cost_sampling():
@@ -115,12 +115,12 @@ def test_compute_cost_sampling():
     te_results = SamplingResult(nshots=100, samples={"0": 100})
 
     with pytest.raises(ValueError, match=r"Mapping samples to the model's variables is ambiguous."):
-        cost = mcf.compute_cost(te_results)
+        _ = mcf.compute_cost(te_results)
 
     te_results = SamplingResult(nshots=100, samples={"01": 50, "10": 50})
     cost = mcf.compute_cost(te_results)
 
-    assert cost == -1 * 0.5 + 9 * 0.5
+    assert np.isclose(cost, -1 * 0.5 + 9 * 0.5)
 
 
 def test_complex_return_values():

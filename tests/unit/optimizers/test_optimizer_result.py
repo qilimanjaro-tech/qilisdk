@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
+
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 
 
 def test_intermediate_result():
     res = OptimizerIntermediateResult(parameters=[0.1, 0.2], cost=0.5)
     assert res.parameters == [0.1, 0.2]
-    assert res.cost == 0.5
+    assert np.isclose(res.cost, 0.5)
     assert repr(res) == "OptimizerIntermediateResult(cost=0.5, parameters=[0.1, 0.2])"
 
 
@@ -31,7 +33,7 @@ def test_optimizer_result():
         intermediate_results=[intermediate1, intermediate2],
     )
     assert res.optimal_parameters == [0.3, 0.4]
-    assert res.optimal_cost == 0.2
+    assert np.isclose(res.optimal_cost, 0.2)
     assert res.intermediate_results == [intermediate1, intermediate2]
     as_str = repr(res)
     assert "OptimizerResult" in as_str

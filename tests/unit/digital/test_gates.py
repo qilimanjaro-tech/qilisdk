@@ -686,9 +686,9 @@ def test_controlled_gate_multiple_controls():
     # For two controls, P is a 4x4 matrix that is all zeros except for a 1 in the bottom-right position.
     # Thus, the lower-right 2x2 block of I₈ is replaced with H.
     expected_matrix = np.eye(8, dtype=complex)
-    H_matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+    h_matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
     # The block corresponding to the control state |11> is at indices 6 and 7.
-    expected_matrix[6:8, 6:8] = H_matrix
+    expected_matrix[6:8, 6:8] = h_matrix
     assert_matrix_equal(controlled_gate.matrix, expected_matrix)
 
 

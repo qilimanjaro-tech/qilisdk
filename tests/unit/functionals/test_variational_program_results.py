@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+import numpy as np
+
 from qilisdk.functionals import VariationalProgramResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
@@ -31,7 +33,7 @@ def test_variational_program_results_initialization():
     )
     var_res = VariationalProgramResult(optimizer_result, result)
 
-    assert var_res.optimal_cost == 1.5
+    assert np.isclose(var_res.optimal_cost, 1.5)
     assert var_res.optimal_parameters == [0.1, 0.2, 0.3]
     assert var_res.optimal_execution_results == result
     assert var_res.intermediate_results == []

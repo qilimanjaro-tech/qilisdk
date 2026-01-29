@@ -77,8 +77,7 @@ def test_time_evolution_results_compute_cost():
     )
 
     class MockCostFunction(ModelCostFunction):
-        def __init__(self):
-            pass
+        def __init__(self): ...
 
     with pytest.raises(NotImplementedError):
         results.compute_cost(MockCostFunction())

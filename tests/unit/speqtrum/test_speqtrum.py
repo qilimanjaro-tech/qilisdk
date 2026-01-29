@@ -82,9 +82,11 @@ class DummyClient:
         return DummyResponse(self._post_payload)
 
 
-# ────────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------------
 # tests
-# ────────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------------
+
+
 def test_init_raises_when_no_credentials(monkeypatch):
     """Constructing SpeQtrum without cached credentials must fail."""
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: None)
@@ -106,33 +108,27 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
 
 
 class FakeSampling(Sampling):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeTimeEvolution(TimeEvolution):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeRabiExperiment(RabiExperiment):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeT1Experiment(T1Experiment):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeT2Experiment(T2Experiment):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeTwoTonesExperiment(TwoTonesExperiment):
-    def __init__(self):
-        pass
+    def __init__(self): ...
 
 
 class FakeVariationalProgram(VariationalProgram):
@@ -506,8 +502,7 @@ def test_login_success(monkeypatch) -> None:
 
     # any object with an __init__(**kwargs) works here - we never use the token later
     class FakeToken:
-        def __init__(self, **_):
-            pass
+        def __init__(self, **_): ...
 
     monkeypatch.setattr(speqtrum, "Token", FakeToken)
 
@@ -840,7 +835,7 @@ def test_summarize_error(monkeypatch) -> None:
 
     # monekypatch the read
     def fake_read(self):
-        raise Exception("Simulated read error")
+        raise ValueError("Simulated read error")
 
     # simulate error on reading
     response3 = DummyResponse(status_code=400, content=b"")
@@ -880,7 +875,7 @@ def test_dict_without_message_like_keys_serializes_to_json():
 
 
 def test_dict_with_unserializable_value_falls_back_to_str():
-    payload = {"a": set({1, 2, 3})}
+    payload = {"a": {1, 2, 3}}
     result = speqtrum._stringify_payload(payload)
     assert result == str(payload)
 
@@ -957,17 +952,6 @@ def test_response_context_with_extension():
     response = httpx.Response(200, request=request)
     context = speqtrum._response_context(response)
     assert context == "Custom context"
-
-
-# def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
-
-#     decoded_text = _safe_b64_decode(value, context=context)
-
-#     if decoded_text is None:
-
-#         return None
-
-#     return _safe_json_loads(decoded_text, context=context)
 
 
 def test_safe_b64_json_with_valid_base64_json():
