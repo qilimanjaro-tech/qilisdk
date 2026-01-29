@@ -29,6 +29,7 @@ DimensionAxisArray: TypeAlias = NDArray[np.floating | np.integer]
 Measurement: TypeAlias = tuple[DataArray, list["Dimension"]]
 
 
+@yaml.register_class
 class Dimension:
     """Stores dimension labels and their coordinate values."""
 
@@ -45,21 +46,8 @@ class Dimension:
 
 @yaml.register_class
 class PulseExperimentResult(FunctionalResult):
-    def __init__(self, data: list[DataArray], dimensions: list[list[Dimension]]) -> None:
-        if len(data) != len(dimensions):
-            raise ValueError("data and dimensions must have the same length")
-
-        for i, (arr, dims) in enumerate(zip(data, dimensions, strict=True)):
-            if not isinstance(arr, np.ndarray):
-                raise TypeError(f"data[{i}] must be a numpy.ndarray")
-
-            if arr.ndim != len(dims):
-                raise ValueError(
-                    f"data[{i}] has ndim={arr.ndim} but dimensions[{i}] has {len(dims)} axes"
-                )
-
-        self.data = data
-        self.dimensions = dimensions
+    def __init__(self, measurements: list[Measurement]) -> None:
+        self.measurements = measurements
 
     def __iter__(self) -> Iterator[Measurement]:
         """Iterate over measurements.
@@ -67,10 +55,10 @@ class PulseExperimentResult(FunctionalResult):
         Returns:
             Iterator[Measurement]: Iterator over tuples containing the data array and a list of dimension dictionaries.
         """
-        return iter(zip(self.data, self.dimensions, strict=True))
+        return iter(self.measurements)
 
     def __len__(self) -> int:
-        return len(self.data)
+        return len(self.measurements)
 
     def get(self, measurement: int = 0) -> Measurement:
         """Retrieves data and dimensions for a specified measurement.
@@ -82,4 +70,4 @@ class PulseExperimentResult(FunctionalResult):
             tuple[Measurement]: A tuple containing the data array and a list of dimension dictionaries.
         """
 
-        return self.data[measurement], self.dimensions[measurement]
+        return self.measurements[measurement]
