@@ -361,17 +361,6 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
         backend.execute(Sampling(circuit, nshots=10))
 
 
-# @patch("qilisdk.backends.cuda_backend.spin.x", lambda *, target: f"x{target}")
-# @patch("qilisdk.backends.cuda_backend.spin.y", lambda *, target: f"y{target}")
-# @patch("qilisdk.backends.cuda_backend.spin.z", lambda *, target: f"z{target}")
-# @patch("qilisdk.backends.cuda_backend.spin.i", lambda *, target: f"i{target}")
-# def test_pauli_operator_handlers_call_spin():
-#     assert CudaBackend._handle_PauliX(PauliX(1)) == "x1"
-#     assert CudaBackend._handle_PauliY(PauliY(2)) == "y2"
-#     assert CudaBackend._handle_PauliZ(PauliZ(3)) == "z3"
-#     assert CudaBackend._handle_PauliI(PauliI(4)) == "i4"
-
-
 def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
     be = CudaBackend()
 
@@ -386,7 +375,7 @@ def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
     # Minimal dummy “Hamiltonian” iterable
     class DummyHam:
         def __iter__(self):
-            # 2 * 2  +  3 * (3*4)  = 4 + 36 = 40
+            # note: 2 * 2  +  3 * (3*4)  = 4 + 36 = 40
             yield 2, [PauliX(0)]
             yield 3, [PauliY(0), PauliZ(0)]
 

@@ -250,8 +250,8 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     output = backend.execute(parameterized_program)
 
     # The dummy_cost_function returns 0.7 regardless of input.
-    assert output.optimal_cost == 0.2
-    assert cost_function.compute_cost(output.optimal_execution_results) == 8.0
+    assert np.isclose(output.optimal_cost, 0.2)
+    assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0)
 
 
 def test_qutip_i():

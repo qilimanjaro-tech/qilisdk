@@ -86,8 +86,8 @@ def test_domain_check_value_and_bounds():
     assert Domain.POSITIVE_INTEGER.min() == 0
     assert Domain.POSITIVE_INTEGER.max() == MAX_INT
     # REAL domain
-    assert Domain.REAL.min() == -1e30
-    assert Domain.REAL.max() == 1e30
+    assert np.isclose(Domain.REAL.min(), -1e30)
+    assert np.isclose(Domain.REAL.max(), 1e30)
 
     # test a different type of domain that doesn't current exist
     assert not Domain.check_value("not a domain", 3.1)
@@ -241,11 +241,11 @@ def test_arithmetic_and_comparisons():
     assert t == -1 * a
 
     with pytest.raises(NotImplementedError):
-        t = a / b
+        _ = a / b
 
     t = a / 2
 
-    assert t == a * 0.5
+    assert t == (a * 0.5)
 
     t = a + b * 2 - 3
     # t should be Term
@@ -486,7 +486,7 @@ def test_encoding_and_evaluate():
 
     assert x.term == sum(i * x[i] for i in range(x.num_binary_equivalent()))
     x.set_precision(1e-1)
-    assert x.term == sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1
+    assert x.term == (sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1)
 
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=OneHot)
     # should have 3 binary vars
@@ -744,7 +744,7 @@ def test_apply_operation_on_constants():
     assert t[Term.CONST] == 20
 
     t = Term([4, 5], operation=Operation.DIV)
-    assert t[Term.CONST] == 0.8
+    assert np.isclose(t[Term.CONST], 0.8)
 
     t = Term([4, 5, 9, 7, 13], operation=Operation.ADD)
     assert t[Term.CONST] == 38
@@ -848,7 +848,7 @@ def test_get_constant():
     t = 3 * x + 2 * y + 4
     assert t.get_constant() == 4
 
-    t = 3 * x - 3 * x
+    t = (3 * x) - 3 * x
     assert t.get_constant() == 0
 
 
@@ -876,7 +876,7 @@ def test_Term_printing():
     expected_t = "x"
     assert repr(t) == expected_t
 
-    t = x + (1 - 1)
+    t = 1 + x - 1
     expected_t = "x"
     assert repr(t) == expected_t
 
@@ -923,13 +923,13 @@ def test_Term_division():
     x = Variable("x", Domain.REAL)
     t = 2 * x + 2
     with pytest.raises(NotImplementedError):
-        t / x
+        _ = t / x
     with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
-        t / 0
+        _ = t / 0
     with pytest.raises(NotSupportedOperation):
-        2 / t
+        _ = 2 / t
     with pytest.raises(NotSupportedOperation):
-        2 // t
+        _ = 2 // t
 
     t /= 2
     assert t == (x + 1)
@@ -948,7 +948,7 @@ def test_Term_power():
     t = Term([2], Operation.SUB)
 
     with pytest.raises(NotImplementedError):
-        t**2
+        _ = t**2
 
 
 ##############################
@@ -999,12 +999,12 @@ def test_type_error_bool():
     t = EQ(x, 0)
 
     with pytest.raises(TypeError):
-        bool(t)
+        _ = bool(t)
 
     t = EQ(x, x)
 
     with pytest.raises(TypeError):
-        bool(t)
+        _ = bool(t)
 
 
 def test_Comparison_Term_to_binary():
@@ -1025,7 +1025,7 @@ def test_Comparison_Term_to_binary():
     _t = Term([], operation=Operation.ADD)
     _t._elements[""] = 1
     with pytest.raises(ValueError, match=r"Term accepts object of types Term or Variable but an object of type "):
-        t = EQ(_t, 0)
+        _ = EQ(_t, 0)
 
 
 def test_Comparison_Term_printing():
@@ -1057,7 +1057,7 @@ def test_Comparison_Term_printing():
 
     assert repr(t) == expected_t
 
-    t = GEQ(x + (1 - 1), 2)
+    t = GEQ(1 + x - 1, 2)
     expected_t = "x >= (2)"
 
     assert repr(t) == expected_t
@@ -1261,29 +1261,29 @@ def test_base_variable():
     np_generic = np.float64(1.0)
 
     with pytest.raises(TypeError):
-        a + not_number
+        _ = a + not_number
     with pytest.raises(TypeError):
-        not_number + a
-    assert a + np_generic == a + 1.0
-    assert np_generic + a == 1.0 + a
+        _ = not_number + a
+    assert (a + np_generic) == (a + 1.0)
+    assert (a.__radd__(np_generic)) == (1.0 + a)  # noqa: PLC2801
 
     with pytest.raises(TypeError):
-        a - not_number
+        _ = a - not_number
     with pytest.raises(TypeError):
-        not_number - a
-    assert a - np_generic == a - 1.0
-    assert a.__rsub__(np_generic) == 1.0 - a  # noqa: PLC2801
+        _ = not_number - a
+    assert (a - np_generic) == (a - 1.0)
+    assert (a.__rsub__(np_generic)) == (1.0 - a)  # noqa: PLC2801
 
     with pytest.raises(TypeError):
-        a * not_number
+        _ = a * not_number
     with pytest.raises(TypeError):
-        not_number * a
-    assert a * np_generic == a * 1.0
-    assert a.__rmul__(np_generic) == 1.0 * a  # noqa: PLC2801
+        _ = not_number * a
+    assert (a * np_generic) == (1.0 * a)
+    assert (a.__rmul__(np_generic)) == (1.0 * a)  # noqa: PLC2801
 
     with pytest.raises(NotImplementedError, match="Only division by real numbers"):
-        a / not_number
-    assert a / np_generic == a / 1.0
+        _ = a / not_number
+    assert (a / np_generic) == (a / 1.0)
 
 
 def test_binary_variable_evaluate(monkeypatch):
@@ -1339,15 +1339,14 @@ def test_parameter_comparisons():
 
     bad_object = Dummy()
     with pytest.raises(TypeError):
-        p1 < bad_object
+        _ = p1 < bad_object
     with pytest.raises(TypeError):
-        p1 <= bad_object
+        _ = p1 <= bad_object
     with pytest.raises(TypeError):
-        p1 > bad_object
+        _ = p1 > bad_object
     with pytest.raises(TypeError):
-        p1 >= bad_object
+        _ = p1 >= bad_object
     assert p1 != bad_object
-    assert not (p1 == bad_object)  # noqa: SIM201
 
 
 def test_empty_term():
@@ -1396,32 +1395,32 @@ def test_term_arithmetic():
     t = b + 2
 
     with pytest.raises(TypeError):
-        t + not_number
+        _ = t + not_number
     with pytest.raises(TypeError):
-        not_number + t
-    assert t + np_generic == t + 1.0
-    assert t.__radd__(np_generic) == 1.0 + t  # noqa: PLC2801
+        _ = not_number + t
+    assert (t + np_generic) == (t + 1.0)
+    assert (t.__radd__(np_generic)) == (1.0 + t)  # noqa: PLC2801
 
     with pytest.raises(TypeError):
-        t - not_number
+        _ = t - not_number
     with pytest.raises(TypeError):
-        not_number - t
-    assert t - np_generic == t - 1.0
-    assert t.__rsub__(np_generic) == 1.0 - t  # noqa: PLC2801
+        _ = not_number - t
+    assert (t - np_generic) == (t - 1.0)
+    assert (t.__rsub__(np_generic)) == (1.0 - t)  # noqa: PLC2801
 
     with pytest.raises(TypeError):
-        t * not_number
+        _ = t * not_number
     with pytest.raises(TypeError):
-        not_number * t
-    assert t * np_generic == t * 1.0
-    assert t.__rmul__(np_generic) == 1.0 * t  # noqa: PLC2801
+        _ = not_number * t
+    assert (t * np_generic) == (t * 1.0)
+    assert (t.__rmul__(np_generic)) == (1.0 * t)  # noqa: PLC2801
 
     with pytest.raises(NotImplementedError, match="Only division by"):
-        t / not_number
-    assert t / np_generic == t / 1.0
+        _ = t / not_number
+    assert (t / np_generic) == (t / 1.0)
 
     with pytest.raises(ValueError, match="Only integer exponents"):
-        t**2.5
+        _ = t**2.5
 
 
 def test_strange_comparison_terms():
@@ -1489,15 +1488,15 @@ def test_extract_number():
 
 
 def test_float_if_real():
-    assert _float_if_real(3) == 3.0
-    assert _float_if_real(3.5) == 3.5
-    assert _float_if_real(complex(3, 0)) == 3.0
-    assert _float_if_real(complex(3, 2)) == complex(3, 2)
+    assert np.isclose(_float_if_real(3), 3.0)
+    assert np.isclose(_float_if_real(3.5), 3.5)
+    assert np.isclose(_float_if_real(complex(3, 0)), 3.0)
+    assert np.isclose(_float_if_real(complex(3, 2)), complex(3, 2))
 
 
 def test_assert_real():
     assert _assert_real(3) == 3
-    assert _assert_real(3.5) == 3.5
-    assert _assert_real(complex(3, 0)) == 3.0
+    assert np.isclose(_assert_real(3.5), 3.5)
+    assert np.isclose(_assert_real(complex(3, 0)), 3.0)
     with pytest.raises(ValueError, match=r"Only Real values"):
-        _assert_real(complex(3, 2))
+        _ = _assert_real(complex(3, 2))

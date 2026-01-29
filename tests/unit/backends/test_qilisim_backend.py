@@ -25,7 +25,7 @@ from qilisdk.functionals import Sampling, TimeEvolution
 
 def test_qilisim_init():
     backend = QiliSim()
-    assert backend is not None
+    assert backend.solver_params is not None
 
     with pytest.raises(ValueError, match=r"Unknown time evolution method"):
         QiliSim(evolution_method="invalid_method")
@@ -44,8 +44,7 @@ def test_qilisim_init():
 
 
 class QiliSimMock:
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, *args, **kwargs): ...
 
     def execute_sampling(self, *args, **kwargs):
         return "mocked_sampling_result"

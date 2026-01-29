@@ -272,8 +272,8 @@ def test_interpolar_set_parameter_bounds():
     )
     interp.set_parameter_bounds({"a": (0.5, 1.5)})
     param_a = interp.parameters["a"]
-    assert param_a.lower_bound == 0.5
-    assert param_a.upper_bound == 1.5
+    assert np.isclose(param_a.lower_bound, 0.5)
+    assert np.isclose(param_a.upper_bound, 1.5)
 
 
 def test_interpolator_get_coefficient(monkeypatch):
@@ -284,13 +284,13 @@ def test_interpolator_get_coefficient(monkeypatch):
     )
 
     # make it so we don't cache the time scaling between calls
-    def NewGetCoefficientExpression(self, time_step):
+    def new_get_coefficient_expression(self, time_step):
         return_val = self.old_get_coefficient_expression(time_step)
         self._delete_cache()
         return return_val
 
     interp.old_get_coefficient_expression = interp.get_coefficient_expression
-    monkeypatch.setattr(interp, "get_coefficient_expression", NewGetCoefficientExpression.__get__(interp))
+    monkeypatch.setattr(interp, "get_coefficient_expression", new_get_coefficient_expression.__get__(interp))
 
     interp.set_max_time(5)
     coeff_0 = interp.get_coefficient(0)
@@ -376,9 +376,9 @@ def test_interpolator_terms():
     coeff_2_5 = interp.get_coefficient(2.5)
     coeff_7_5 = interp.get_coefficient(7.5)
     coeff_12_5 = interp.get_coefficient(12.5)
-    assert coeff_2_5 == 6.5
-    assert coeff_7_5 == 5.5
-    assert coeff_12_5 == 8.0
+    assert np.isclose(coeff_2_5, 6.5)
+    assert np.isclose(coeff_7_5, 5.5)
+    assert np.isclose(coeff_12_5, 8.0)
 
 
 def test_interpolator_single_time():
@@ -389,8 +389,8 @@ def test_interpolator_single_time():
     )
     coeff_0 = interp.get_coefficient(0)
     coeff_1 = interp.get_coefficient(1)
-    assert coeff_0 == 0
-    assert coeff_1 == 0
+    assert np.isclose(coeff_0, 0)
+    assert np.isclose(coeff_1, 0)
 
 
 def test_interpolator_no_time():
@@ -504,14 +504,14 @@ def test_time_scale_caching():
     )
 
     # first call without max_time set
-    assert interp._time_scale == 1.0
+    assert np.isclose(interp._time_scale, 1.0)
 
     # second call should use cache
-    assert interp._time_scale == 1.0
+    assert np.isclose(interp._time_scale, 1.0)
 
     # set max_time and check scale updates
     interp.set_max_time(5)
-    assert interp._time_scale == 0.5
+    assert np.isclose(interp._time_scale, 0.5)
 
     # subsequent call should use cache
-    assert interp._time_scale == 0.5
+    assert np.isclose(interp._time_scale, 0.5)

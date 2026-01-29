@@ -201,13 +201,13 @@ def test_constant_hamiltonian():
 
     assert isinstance(res, TimeEvolutionResult)
 
-    assert pytest.approx(res.final_expected_values, rel=1e-6) == 1.0
+    assert np.isclose(res.final_expected_values[0], 1.0, rtol=1e-6)
 
     # Intermediate states should replicate constant behavior
     assert res.intermediate_states is not None
     for state in res.intermediate_states:
         psi = state.dense().flatten()
-        assert pytest.approx(abs(psi[0]) ** 2, rel=1e-6) == 1.0
+        assert np.isclose(abs(psi[0]) ** 2, 1.0, rtol=1e-6)
 
 
 def test_time_dependent_hamiltonian():
@@ -232,7 +232,7 @@ def test_time_dependent_hamiltonian():
     assert isinstance(res, TimeEvolutionResult)
 
     expect_z = res.final_expected_values[0]
-    assert pytest.approx(expect_z, rel=1e-2) == -1.0
+    assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
 def test_time_dependent_hamiltonian_with_3_qubits():
@@ -258,9 +258,9 @@ def test_time_dependent_hamiltonian_with_3_qubits():
         TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False)
     )
 
-    assert pytest.approx(res.final_expected_values[0], rel=1e-2) == -1.0
-    assert pytest.approx(res.final_expected_values[1], rel=1e-2) == -1.0
-    assert pytest.approx(res.final_expected_values[2], rel=1e-2) == -1.0
+    assert np.isclose(res.final_expected_values[0], -1.0, rtol=1e-2)
+    assert np.isclose(res.final_expected_values[1], -1.0, rtol=1e-2)
+    assert np.isclose(res.final_expected_values[2], -1.0, rtol=1e-2)
 
 
 ###################
@@ -330,8 +330,8 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     output = backend.execute(parameterized_program)
 
     # The dummy_cost_function returns 0.7 regardless of input.
-    assert output.optimal_cost == 0.2
-    assert cost_function.compute_cost(output.optimal_execution_results) == 8.0
+    assert np.isclose(output.optimal_cost, 0.2, rtol=1e-6)
+    assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0, rtol=1e-6)
 
 
 def test_real_example():
@@ -344,7 +344,7 @@ def test_real_example():
     cr.add(U1(0, phi=0.1))
 
     output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), ModelCostFunction(model)))
-    assert output.optimal_cost == -1
+    assert np.isclose(output.optimal_cost, -1.0, rtol=1e-6)
     assert output.optimal_execution_results.samples == {"0": 1000}
 
 

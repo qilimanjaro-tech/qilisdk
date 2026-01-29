@@ -113,10 +113,10 @@ def test_schedule_constructor_invalid_schedule_reference():
         Schedule(dt=1, hamiltonians=hams, coefficients=sch)
 
 
-@pytest.mark.parametrize(("T", "dt"), [(10, 1), (20, 2)])
-def test_len_schedule(T, dt):
+@pytest.mark.parametrize(("t", "dt"), [(10, 1), (20, 2)])
+def test_len_schedule(t, dt):
     """The length of a Schedule is T/dt (as an integer)."""
-    sched = Schedule(dt=dt, total_time=T)
+    sched = Schedule(dt=dt, total_time=t)
     assert len(sched) == len(sched.tlist)
 
 
@@ -308,16 +308,14 @@ def test_draw_method_runs(monkeypatch):
 
     # Monkeypatch renderer to avoid actual plotting
     class DummyRenderer:
-        def __init__(self, *a, **kw):
-            pass
+        def __init__(self, *a, **kw): ...
 
         def plot(self, *a, **kw):
             return None
 
         def save(self, *a, **kw): ...
 
-        def show(self):
-            pass
+        def show(self): ...
 
     monkeypatch.setattr("qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer", DummyRenderer)
     sched.draw()
@@ -357,17 +355,17 @@ def test_add_schedule_through_function():
     nqubits = 1
 
     # Define Hamiltonians
-    Hx = sum(X(i) for i in range(nqubits))
-    Hz = sum(Z(i) for i in range(nqubits)) - sum(Z(i) * Z(i + 1) for i in range(nqubits - 1))
+    h_x = sum(X(i) for i in range(nqubits))
+    h_z = sum(Z(i) for i in range(nqubits)) - sum(Z(i) * Z(i + 1) for i in range(nqubits - 1))
 
     # Build a time-dependent schedule
     schedule = Schedule(dt=dt)
 
     # Add hx with a time-dependent coefficient function
-    schedule.add_hamiltonian(label="hx", hamiltonian=Hx, coefficients={(0, T): lambda t: 1 - t / T})
+    schedule.add_hamiltonian(label="hx", hamiltonian=h_x, coefficients={(0, T): lambda t: 1 - t / T})
 
     # Add hz similarly
-    schedule.add_hamiltonian(label="hz", hamiltonian=Hz, coefficients={(0, T): lambda t: t / T})
+    schedule.add_hamiltonian(label="hz", hamiltonian=h_z, coefficients={(0, T): lambda t: t / T})
 
     assert schedule.coefficients["hx"][0] == 1
     assert schedule.coefficients["hz"][0] == 0
@@ -458,7 +456,7 @@ def test_schedule_set_dt():
 
     new_dt = 0.5
     sched.set_dt(new_dt)
-    assert sched.dt == new_dt
+    assert np.isclose(sched.dt, new_dt)
 
     with pytest.raises(ValueError, match=r"only allowed to be a float"):
         sched.set_dt("test")
@@ -470,13 +468,13 @@ def test_schedule_get_value():
     sched = Schedule(dt=1)
     time = 1.0
     term = 2 * param + 3
-    assert sched._get_value(1.0, time) == 1.0
-    assert sched._get_value(1.0 + 0j, time) == 1.0
-    assert sched._get_value(param, time) == 1.0
-    assert sched._get_value(time_param, time) == time
+    assert np.isclose(sched._get_value(1.0, time), 1.0)
+    assert np.isclose(sched._get_value(1.0 + 0j, time), 1.0)
+    assert np.isclose(sched._get_value(param, time), 1.0)
+    assert np.isclose(sched._get_value(time_param, time), time)
     with pytest.raises(ValueError, match=r"time is not provided"):
         sched._get_value(time_param)
-    assert sched._get_value(term, time) == 2 * 1.0 + 3
+    assert np.isclose(sched._get_value(term, time), 2 * 1.0 + 3)
     with pytest.raises(ValueError, match=r"Invalid value of type"):
         sched._get_value("bad type", time)
 

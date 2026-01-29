@@ -74,8 +74,8 @@ class MockOptimizer:
         else:
             with pytest.raises(ValueError, match="Unsupported result type"):
                 cost_function([1])
-            assert cost_function([0.7]) == 0.7
-            assert cost_function([0.5]) == 0.5
+            assert np.isclose(cost_function([0.5]), 0.5)
+            assert np.isclose(cost_function([0.7]), 0.7)
         return MockOptimizerResult(optimal_parameters=[0.5], optimal_value=0.1)
 
 

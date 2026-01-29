@@ -1248,11 +1248,6 @@ class Parameter(BaseVariable):
             return self.value == other
         return False
 
-    def __ne__(self, other: object) -> bool:
-        if isinstance(other, (float, int)):
-            return self.value != other
-        return NotImplemented
-
     def __le__(self, other: object) -> bool:
         if isinstance(other, (float, int)):
             return self.value <= other

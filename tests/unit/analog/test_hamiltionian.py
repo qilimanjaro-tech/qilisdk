@@ -90,7 +90,7 @@ def test_addition(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
 
 def test_invalid_addition_operation():
     with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid addition between Hamiltonian and str"):
-        (Z(0) + Z(2)) + "Z"
+        _ = (Z(0) + Z(2)) + "Z"
 
 
 # -----------------------------
@@ -117,7 +117,7 @@ def test_subtraction(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian
 
 def test_invalid_subtraction_operation():
     with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid subtraction between Hamiltonian and str"):
-        (Z(0) + Z(2)) - "Z"
+        _ = (Z(0) + Z(2)) - "Z"
 
 
 # -----------------------------
@@ -156,7 +156,7 @@ def test_multiplication(hamiltonian: Hamiltonian, expected_hamiltonian: Hamilton
 
 def test_invalid_multiplication_operation():
     with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid multiplication between Hamiltonian and str"):
-        (Z(0) + Z(2)) * "Z"
+        _ = (Z(0) + Z(2)) * "Z"
 
 
 @pytest.mark.parametrize(
@@ -205,7 +205,7 @@ def test_division(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
 
 def test_truediv_raises_not_supported():
     with pytest.raises(InvalidHamiltonianOperation, match="Division by operators is not supported"):
-        2 / Z(0)
+        _ = 2 / Z(0)
 
 
 def test_equality():
@@ -236,13 +236,13 @@ def test_str_and_repr(pauli: PauliOperator, expected_output: str):
 def test_hamiltonian_division_errors():
     H = 1 + 2 * Z(0) + Z(0) * Z(1)
     with pytest.raises(InvalidHamiltonianOperation, match=r"Division by operators is not supported"):
-        2 / H
+        _ = 2 / H
 
     with pytest.raises(InvalidHamiltonianOperation, match=r"Division by operators is not supported"):
-        H / Z(0)
+        _ = H / Z(0)
 
     with pytest.raises(ZeroDivisionError, match=r"Cannot divide by zero."):
-        H / 0
+        _ = H / 0
 
 
 # -----------------------------
@@ -338,9 +338,9 @@ def test_to_matrix_two_qubit_single_term():
     should return the correct Kronecker product.
     """
     H = Hamiltonian({(PauliZ(0), PauliX(1)): 2})
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
-    expected = 2 * np.kron(Z_matrix, X_matrix)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 2 * np.kron(z_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -350,10 +350,10 @@ def test_to_matrix_two_qubit_multiple_terms():
     the matrix representation should be the sum of the two Kronecker products.
     """
     H = 0.5 * PauliZ(0).to_hamiltonian() + 1.5 * PauliX(1).to_hamiltonian()
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    I_matrix = np.eye(2, dtype=complex)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
-    expected = 0.5 * np.kron(Z_matrix, I_matrix) + 1.5 * np.kron(I_matrix, X_matrix)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    i_matrix = np.eye(2, dtype=complex)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 0.5 * np.kron(z_matrix, i_matrix) + 1.5 * np.kron(i_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -368,9 +368,9 @@ def test_to_matrix_three_qubit():
     """
     H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
     I2 = np.eye(2, dtype=complex)
-    Z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    X_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
-    expected = 3 * np.kron(I2, np.kron(Z_matrix, X_matrix))
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    expected = 3 * np.kron(I2, np.kron(z_matrix, x_matrix))
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -454,7 +454,7 @@ def test_pauli_with_numbers():
 
 def test_bad_pauli_division():
     with pytest.raises(InvalidHamiltonianOperation, match="Division by operators is not supported"):
-        3 / PauliZ(0)
+        _ = 3 / PauliZ(0)
 
 
 def test_to_qtensor_not_enough_qubits():
@@ -467,10 +467,10 @@ def test_to_qtensor_not_enough_qubits():
 def test_get_static_hamiltonian():
     x = Parameter("x", 1.5)
     H = PauliZ(0) * PauliZ(1) + 2 * PauliX(0) + x
-    H_static = H.get_static_hamiltonian()
+    h_static = H.get_static_hamiltonian()
 
-    assert H_static == PauliZ(0) * PauliZ(1) + 2 * PauliX(0) + 1.5
-    assert H_static.get_parameters() == {}
+    assert h_static == (PauliZ(0) * PauliZ(1) + 2 * PauliX(0) + 1.5)
+    assert h_static.get_parameters() == {}
 
 
 def test_hamiltonian_equal_pauli_operator():
@@ -520,17 +520,6 @@ def test_commutator():
     assert H1.commutator(H2) == H1 * H2 - H2 * H1
     assert H1.anticommutator(H2) == H1 * H2 + H2 * H1
 
-    # def frobenius_norm(self) -> float:
-    #     """
-    #     Returns:
-    #         float: the forbenius norm of the hamiltonian.
-    #     """
-    #     n = self.nqubits
-    #     s = 0
-    #     for coeff, _ in self:
-    #         s += np.conj(coeff) * coeff
-    #     return np.real(np.sqrt(s) * np.sqrt(2**n))
-
 
 def test_norms():
     H = Z(0) + 2 * X(1) + 3j * Y(2)
@@ -562,22 +551,22 @@ def test_hamiltonian_term_arithmetic():
     H = X(0) + Y(1)
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        H + term
+        _ = H + term
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        term + H
+        _ = term + H
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        H - term
+        _ = H - term
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        term - H
+        _ = term - H
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        H * term
+        _ = H * term
 
     with pytest.raises(ValueError, match="Term provided contains generic variables"):
-        term * H
+        _ = term * H
 
 
 def test_hamiltonian_in_place_addition():
@@ -588,16 +577,16 @@ def test_hamiltonian_in_place_addition():
     param = Parameter("p", 1.0)
     safe_term = param * 2
     H += safe_term
-    assert X(0) + Y(1) + 2.0 * param == H
+    assert (X(0) + Y(1) + 2.0 * param) == H
 
     with pytest.raises(ValueError, match="Only Parameters are allowed"):
         H._add_inplace(term)
 
     H += Z(2)
-    assert X(0) + Y(1) + 2.0 * param + Z(2) == H
+    assert (X(0) + Y(1) + 2.0 * param + Z(2)) == H
 
     H += PauliZ(0)
-    assert X(0) + Y(1) + 2.0 * param + Z(2) + Z(0) == H
+    assert (X(0) + Y(1) + 2.0 * param + Z(2) + Z(0)) == H
 
 
 def test_hamiltonian_in_place_subtraction():
@@ -608,42 +597,42 @@ def test_hamiltonian_in_place_subtraction():
     param = Parameter("p", 1.0)
     safe_term = param * 2
     H -= safe_term
-    assert X(0) + Y(1) - 2.0 * param == H
+    assert (X(0) + Y(1) - 2.0 * param) == H
 
     with pytest.raises(ValueError, match="Only Parameters are allowed"):
         H._sub_inplace(term)
 
     H -= Z(2)
-    assert X(0) + Y(1) - 2.0 * param - Z(2) == H
+    assert (X(0) + Y(1) - 2.0 * param - Z(2)) == H
 
     H -= PauliZ(0)
-    assert X(0) + Y(1) - 2.0 * param - Z(2) - Z(0) == H
+    assert (X(0) + Y(1) - 2.0 * param - Z(2) - Z(0)) == H
 
     H -= param
-    assert X(0) + Y(1) - 3.0 * param - Z(2) - Z(0) == H
+    assert (X(0) + Y(1) - 3.0 * param - Z(2) - Z(0)) == H
 
 
 def test_hamiltonian_in_place_multiplication():
-    H = X(0) + Y(1)
+    H: Hamiltonian = X(0) + Y(1)
     var = Variable("v", Domain.REAL)
     term = 2 * var
 
     param = Parameter("p", 1.0)
     safe_term = param * 2
     H *= safe_term
-    assert (X(0) + Y(1)) * 2.0 * param == H
+    assert ((X(0) + Y(1)) * 2.0 * param) == H
 
     with pytest.raises(ValueError, match="Only Parameters are allowed"):
         H._mul_inplace(term)
 
     H *= Z(2)
-    assert (X(0) + Y(1)) * 2.0 * param * Z(2) == H
+    assert ((X(0) + Y(1)) * 2.0 * param * Z(2)) == H
 
     H *= PauliZ(0)
-    assert (X(0) + Y(1)) * 2.0 * param * Z(2) * Z(0) == H
+    assert ((X(0) + Y(1)) * 2.0 * param * Z(2) * Z(0)) == H
 
     H *= param
-    assert (X(0) + Y(1)) * 2.0 * param**2 * Z(2) * Z(0) == H
+    assert ((X(0) + Y(1)) * 2.0 * param**2 * Z(2) * Z(0)) == H
 
 
 def test_negation():

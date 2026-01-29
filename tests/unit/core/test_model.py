@@ -233,13 +233,6 @@ def test_model_evaluation():
     # TODO (Ameer): Objective contains an Integer variable, so results["obj"] should be 13.
     # Now, it is 13.0, a float.
 
-    # results = m.evaluate({v: 5})
-    # assert results["obj"] == -(5 * 2 + 3)
-    # assert results["c"] == 0
-    # results = m.evaluate({v: 10})
-    # assert results["obj"] == -(10 * 2 + 3)
-    # assert results["c"] == 20
-
 
 def test_model_to_ham():
     m = Model("test")
@@ -247,7 +240,7 @@ def test_model_to_ham():
 
     term = b[0] + 2 * b[1] + 3 * b[2]
     m.set_objective(term)
-    assert m.to_qubo().to_hamiltonian() == 3 - Z(1) - 0.5 * Z(0) - 1.5 * Z(2)
+    assert m.to_qubo().to_hamiltonian() == (3 - Z(1) - 0.5 * Z(0) - 1.5 * Z(2))
     m.add_constraint("c", EQ(b[0], 0), lagrange_multiplier=10)
     assert m.to_qubo().to_hamiltonian() == (
         (1 - Z(0)) / 2 + 2 * (1 - Z(1)) / 2 + 3 * (1 - Z(2)) / 2 + 10 * ((1 - Z(0)) / 2) * ((1 - Z(0)) / 2)
@@ -639,27 +632,6 @@ def test_qubo_constraint_name_mismatch():
     q._constraints["con1"]._label = "con2"  # force a mismatch
     assert "con1" in q.lagrange_multipliers
     assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value
-
-
-# def test_qubo_constraint_evaluate():
-#     q = QUBO(label="q1")
-#     v = BinaryVariable("b")
-
-#     t = 2 * v
-#     q.set_objective(t)
-
-#     ct = EQ(v, 1)
-#     q.add_constraint("con1", ct, lagrange_multiplier=5)
-
-#     values = {v: 1}
-#     results = q.evaluate(values)
-#     assert results["obj"] == 2
-#     assert results["con1"] == 0
-
-#     values = {v: 0}
-#     results = q.evaluate(values)
-#     assert results["obj"] == 0
-#     assert results["con1"] == 5
 
 
 def test_model_evaluate():
