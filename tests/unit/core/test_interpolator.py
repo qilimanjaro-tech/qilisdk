@@ -494,3 +494,24 @@ def test_interpolator_callables():
         _process_callable(callable, 2.5, param=term)
     with pytest.raises(ValueError, match="contains variables that are not time"):
         _process_callable(callable, 2.5, param=var)
+
+
+def test_time_scale_caching():
+    points = {0: 0, 10: 10}
+    interp = Interpolator(
+        points,
+        Interpolation.LINEAR,
+    )
+
+    # first call without max_time set
+    assert interp._time_scale == 1.0
+
+    # second call should use cache
+    assert interp._time_scale == 1.0
+
+    # set max_time and check scale updates
+    interp.set_max_time(5)
+    assert interp._time_scale == 0.5
+
+    # subsequent call should use cache
+    assert interp._time_scale == 0.5

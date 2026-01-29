@@ -1102,9 +1102,6 @@ def test_parameter_value():
     p.set_value(3)
     assert p.value == 3
 
-    p.set_value(np.int64(3))
-    assert p.value == 3
-
     p.set_bounds(None, 6)
     assert p.bounds == (0, 6)
 

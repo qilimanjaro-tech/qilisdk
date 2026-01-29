@@ -190,10 +190,28 @@ class Interpolator(Parameterizable):
         Returns:
             float: Scaling factor.
         """
+
+        # If we don't have a cached value, compute it
         if self._time_scale_cache is None:
-            max_t = self._get_value(max(self._tlist, key=self._get_value)) or 1
-            max_t = max_t if max_t != 0 else 1
-            self._time_scale_cache = self._get_value(self._max_time) / max_t
+            # Make sure we have a max time set
+            if self._max_time is not None:
+                # Generate the tlist if we haven't already
+                if self._tlist is None:
+                    self._tlist = self._generate_tlist()
+
+                # Find the maximum time value in the tlist
+                max_t = 0.0
+                for t in self._tlist:
+                    max_t = max(max_t, self._get_value(t))
+                max_t = max_t if abs(max_t) > get_settings().atol else 1.0
+
+                # Compute the time scale
+                self._time_scale_cache = self._get_value(self._max_time) / max_t
+
+            # Otherwise set the scale to 1.0
+            else:
+                self._time_scale_cache = 1.0
+
         return self._time_scale_cache
 
     @property
@@ -526,11 +544,6 @@ class Interpolator(Parameterizable):
         self._tlist = self._generate_tlist()
         insert_pos = bisect_right(self._tlist, time_step, key=self._get_value)
 
-        prev_idx = self._tlist[insert_pos - 1] if insert_pos else None
-        next_idx = self._tlist[insert_pos] if insert_pos < len(self._tlist) else None
-        prev_expr = self._time_dict[prev_idx] if prev_idx is not None else None
-        next_expr = self._time_dict[next_idx] if next_idx is not None else None
-
         def _linear_value(
             t0: PARAMETERIZED_NUMBER, v0: PARAMETERIZED_NUMBER, t1: PARAMETERIZED_NUMBER, v1: PARAMETERIZED_NUMBER
         ) -> PARAMETERIZED_NUMBER:
@@ -553,27 +566,32 @@ class Interpolator(Parameterizable):
 
             return v1 * alpha + v0 * (1 - alpha)
 
-        if prev_expr is None and next_expr is not None:
+        # this is done in order to prevent setting the indices to none and causing type errors
+        has_prev = insert_pos >= 1
+        has_next = insert_pos < len(self._tlist)
+        prev_idx = self._tlist[insert_pos - 1] if has_prev else 0
+        prev_expr = self._time_dict[prev_idx] if has_prev else 0
+        next_idx = self._tlist[insert_pos] if has_next else 0
+        next_expr = self._time_dict[next_idx] if has_next else 0
+
+        if not has_prev and has_next:
             if len(self._tlist) == 1:
                 return next_expr
             first_idx = self._tlist[0]
             second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
-        if next_expr is None and prev_expr is not None:
+        if not has_next and has_prev:
             if len(self._tlist) == 1:
                 return prev_expr
             last_idx = self._tlist[-1]
             penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
-        if prev_expr is None and next_expr is None:
+
+        if not has_next and not has_prev:
             return 0
 
-        # unreachable: if either index is none then the expressions are also none from their initialization
-        #              if either expression is none then one of the above cases triggers
-        # if next_idx is None or prev_idx is None or prev_expr is None or next_expr is None:
-        #     raise ValueError("Something unexpected happened while retrieving the coefficient.")
-
+        # this can only be reached if both has_next and has_prev are true, meaning they will not be the default 0s
         return _linear_value(prev_idx, prev_expr, next_idx, next_expr)
 
     def __getitem__(self, time_step: float) -> float:

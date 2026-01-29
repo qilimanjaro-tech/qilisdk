@@ -186,11 +186,11 @@ class Domain(QiliEnum):
         if self == Domain.SPIN:
             return isinstance(value, Number) and value in {-1, 1}
         if self == Domain.REAL:
-            return isinstance(value, (int, float, np.int32, np.int64, np.float32, np.float64))
+            return isinstance(value, (int, float))
         if self == Domain.INTEGER:
-            return isinstance(value, (int, np.int32, np.int64))
+            return isinstance(value, int)
         if self == Domain.POSITIVE_INTEGER:
-            return isinstance(value, (int, np.int32, np.int64)) and value >= 0
+            return isinstance(value, int) and value >= 0
         return False
 
     def min(self) -> float:
