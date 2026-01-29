@@ -131,7 +131,7 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
     if not _viewcode.is_supported_builder(app.builder):
         return
 
-    highlighter = app.builder.highlighter  # type: ignore[attr-defined]
+    highlighter = app.builder.highlighter
     urito = app.builder.get_relative_uri
     modnames = set(env._viewcode_modules)
 

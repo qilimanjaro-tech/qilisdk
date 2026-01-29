@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import math
-from typing import List
+from typing import List, TypeGuard
 
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, Gate, H, I, S, T, X, Y, Z
 from qilisdk.digital.gates import BasicGate, Controlled
@@ -23,6 +23,10 @@ from .numeric_helpers import (
     _unitary_sqrt_2x2,
     _zyz_from_unitary,
 )
+
+
+def _is_controlled_basic(g: Gate) -> TypeGuard[Controlled[BasicGate]]:
+    return isinstance(g, Controlled)
 
 
 class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
@@ -57,7 +61,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             list[Gate]: Sequence of equivalent gates that rely on supported primitives.
         """
         # --- Multi-controlled gates ---
-        if isinstance(gate, Controlled):
+        if _is_controlled_basic(gate):
             base: BasicGate = gate.basic_gate
             if base.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
@@ -82,15 +86,15 @@ def _decompose(gate: Controlled) -> List[Gate]:
     c_last = gate.control_qubits[-1]
     rest = gate.control_qubits[:-1]
 
-    V = _sqrt_of(gate.basic_gate)
-    Vd = _adjoint_of(V)
+    v = _sqrt_of(gate.basic_gate)
+    v_adjoint = _adjoint_of(v)
 
     seq: List[Gate] = []
-    seq += _decompose(Controlled(c_last, basic_gate=V))
+    seq += _decompose(Controlled(c_last, basic_gate=v))
     seq += _decompose(X(c_last).controlled(*rest))
-    seq += _decompose(Controlled(c_last, basic_gate=Vd))
+    seq += _decompose(Controlled(c_last, basic_gate=v_adjoint))
     seq += _decompose(X(c_last).controlled(*rest))
-    seq += _decompose(Controlled(*rest, basic_gate=V))
+    seq += _decompose(Controlled(*rest, basic_gate=v))
 
     return seq
 
@@ -145,11 +149,11 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
         raise NotImplementedError(f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}")
 
     # Compute a matrix square root V such that V @ V ≈ U.
-    Vs = _unitary_sqrt_2x2(U)
+    v_sqrt = _unitary_sqrt_2x2(U)
 
     # Express V as a U3 on the same qubit. This introduces a new gate in U3 form
     # for the *square root*, but leaves the original g untouched.
-    th, ph, lam = _zyz_from_unitary(Vs)
+    th, ph, lam = _zyz_from_unitary(v_sqrt)
     return U3(q, theta=th, phi=ph, gamma=lam)
 
 
@@ -211,6 +215,6 @@ def _adjoint_of(gate: BasicGate) -> BasicGate:
         raise NotImplementedError(f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}")
 
     # Take the matrix adjoint U† and convert to ZYZ → U3.
-    U_dag = U.conj().T
-    theta, phi, gamma = _zyz_from_unitary(U_dag)
+    u_dagger = U.conj().T
+    theta, phi, gamma = _zyz_from_unitary(u_dagger)
     return U3(q, theta=theta, phi=phi, gamma=gamma)

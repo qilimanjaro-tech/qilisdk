@@ -26,6 +26,7 @@ from scipy.sparse import csr_matrix, identity, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
+from qilisdk.core.types import Number
 from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
@@ -35,8 +36,11 @@ from .exceptions import InvalidHamiltonianOperation
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-
-Number = int | float | complex
+_DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
+_GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
+_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
+    "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
+)
 
 
 ###############################################################################
@@ -53,11 +57,11 @@ def _get_pauli(name: str, qubit: int) -> PauliOperator:
     if name == "Z":
         op = PauliZ(qubit)
     elif name == "X":
-        op = PauliX(qubit)  # type: ignore[assignment]
+        op = PauliX(qubit)
     elif name == "Y":
-        op = PauliY(qubit)  # type: ignore[assignment]
+        op = PauliY(qubit)
     elif name == "I":
-        op = PauliI(qubit)  # type: ignore[assignment]
+        op = PauliI(qubit)
     else:
         raise ValueError(f"Unknown Pauli operator name: {name}")
 
@@ -105,8 +109,6 @@ class PauliOperator(ABC):
 
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
-
-    # __slots__ = ("_qubit",)
 
     def __init__(self, qubit: int) -> None:
         self._qubit = qubit
@@ -175,7 +177,7 @@ class PauliOperator(ABC):
         return self.to_hamiltonian() / other
 
     def __rtruediv__(self, _: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
-        raise InvalidHamiltonianOperation("Division by operators is not supported")
+        raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __itruediv__ = __truediv__
 
@@ -185,28 +187,24 @@ class PauliOperator(ABC):
 ###############################################################################
 @yaml.register_class
 class PauliZ(PauliOperator):
-    # __slots__ = ()
     _NAME: ClassVar[str] = "Z"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=complex)
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
-    # __slots__ = ()
     _NAME: ClassVar[str] = "X"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=complex)
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
-    # __slots__ = ()
     _NAME: ClassVar[str] = "Y"
     _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
-    # __slots__ = ()
     _NAME: ClassVar[str] = "I"
     _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
 
@@ -269,17 +267,13 @@ class Hamiltonian(Parameterizable):
                         if isinstance(v, Parameter):
                             self._parameters[v.label] = v
                         else:
-                            raise ValueError(
-                                "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
-                            )
+                            raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 elif isinstance(val, BaseVariable):
                     if isinstance(val, Parameter):
                         self._parameters[val.label] = val
 
                     else:
-                        raise ValueError(
-                            "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
-                        )
+                        raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._elements[key] += val
             self.simplify()
 
@@ -294,7 +288,9 @@ class Hamiltonian(Parameterizable):
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
         return {
-            k: (v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate()))
+            k: (
+                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[possibly-missing-attribute]
+            )
             for k, v in self._elements.items()
         }
 
@@ -361,7 +357,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix((dim, dim), dtype=complex)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -389,7 +385,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix(np.zeros((dim, dim), dtype=complex))
+        result = csr_matrix((dim, dim), dtype=complex)
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
@@ -840,18 +836,18 @@ class Hamiltonian(Parameterizable):
     def __add__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         out = copy.copy(self)
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out._add_inplace(other)
         return out.simplify()
 
     def __radd__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         return self.__add__(other)
 
     def __sub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._sub_inplace(other)
         return out.simplify()
@@ -859,7 +855,7 @@ class Hamiltonian(Parameterizable):
     def __rsub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         # (other - self)
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(other if isinstance(other, Hamiltonian) else Hamiltonian() + other)
         out._sub_inplace(self)
         return out.simplify()
@@ -869,14 +865,14 @@ class Hamiltonian(Parameterizable):
 
     def __mul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._mul_inplace(other)
         return out.simplify()
 
     def __rmul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
         if isinstance(other, Term) and not other.is_parameterized_term():
-            raise ValueError("Term provided contains generic variables that are not Parameter.")
+            raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         if isinstance(other, Hamiltonian):
             out = copy.copy(other)
             out._mul_inplace(self)
@@ -890,7 +886,7 @@ class Hamiltonian(Parameterizable):
 
     def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         # (other / self)
-        raise InvalidHamiltonianOperation("Division by operators is not supported")
+        raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __iadd__ = __add__
     __isub__ = __sub__
@@ -918,9 +914,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other
@@ -942,9 +936,7 @@ class Hamiltonian(Parameterizable):
         elif isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other
@@ -972,9 +964,7 @@ class Hamiltonian(Parameterizable):
         if isinstance(other, (Term, Parameter)):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
-                    raise ValueError(
-                        "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
-                    )
+                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
             else:
                 self._parameters[other.label] = other
@@ -1020,7 +1010,7 @@ class Hamiltonian(Parameterizable):
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
-            raise InvalidHamiltonianOperation("Division by operators is not supported")
+            raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
         if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")
         self._mul_inplace(1 / other)

@@ -180,16 +180,16 @@ def from_qasm2(qasm_str: str) -> Circuit:
                 if gate_class.PARAMETER_NAMES:
                     # Build a dictionary of parameter names to values.
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], **param_dict)  # type: ignore[call-arg]
+                    gate_instance = gate_class(qubits[0], **param_dict)
                 else:
-                    gate_instance = gate_class(qubits[0])  # type: ignore[call-arg]
+                    gate_instance = gate_class(qubits[0])
             # For two-qubit gates.
             elif len(qubits) == 2:  # noqa: PLR2004
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # type: ignore[call-arg]
+                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)
                 else:
-                    gate_instance = gate_class(qubits[0], qubits[1])  # type: ignore[call-arg]
+                    gate_instance = gate_class(qubits[0], qubits[1])
             else:
                 raise UnsupportedGateError("Only one- and two-qubit gates are supported.")
 

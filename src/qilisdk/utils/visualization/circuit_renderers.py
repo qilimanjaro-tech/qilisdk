@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Final, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 
 from qilisdk.digital.gates import Controlled, Gate, M, X
@@ -128,7 +129,7 @@ class MatplotlibCircuitRenderer:
         # 3. draw any deferred (final-column) measurements -----------------
         # ------------------------------------------------------------------
         if deferred_qubits:
-            self._draw_concurrent_measures(sorted(deferred_qubits), layer=layer)
+            self._draw_concurrent_measures(sorted(deferred_qubits))
 
         # ------------------------------------------------------------------
         # final touches -----------------------------------------------------
@@ -144,8 +145,8 @@ class MatplotlibCircuitRenderer:
         Args:
             filename: Path to save the figure (e.g., 'circuit.png').
         """
-
-        self.axes.figure.savefig(filename, bbox_inches="tight")  # type: ignore[union-attr]
+        if isinstance(self.axes.figure, Figure):
+            self.axes.figure.savefig(filename, bbox_inches="tight")
 
     # ------------------------------------------------------------------
     # Low-level drawing helpers (private)
@@ -215,7 +216,7 @@ class MatplotlibCircuitRenderer:
                                         m_qubit
                                     ]
                                     del self._layer_gate_mapping[layer][m_qubit]
-                        ignore_q += [*(m_qubit for m_qubit in range(q + 1, max(qubits) + 1))]
+                        ignore_q += [*range(q + 1, max(qubits) + 1)]
                 if len(gate_mapping[q]) == 0 and not completed[q]:
                     completed[q] = True
                     self.last_idx[q] = layer
@@ -295,7 +296,7 @@ class MatplotlibCircuitRenderer:
             fontproperties=self.style.font,
         )
         self.axes.add_artist(t)
-        renderer = self.axes.figure.canvas.get_renderer()  # type: ignore[attr-defined]
+        renderer = self.axes.figure.canvas.get_renderer()  # ty:ignore[unresolved-attribute]
         width = t.get_window_extent(renderer=renderer).width / self.style.dpi
         t.remove()
         return width
@@ -568,13 +569,12 @@ class MatplotlibCircuitRenderer:
         Args:
             qubits: Wires to measure in this column.
         """
-        layer = max(len(self._layer_widths[q]) for q in qubits)
         x = self._xpos(layer) + self.style.gate_margin
         self._reserve(self.style.min_gate_w, qubits, layer)
         for q in qubits:
             self._draw_measure_symbol(q, x)
 
-    def _draw_concurrent_measures(self, qubits: list[int], layer: int) -> None:
+    def _draw_concurrent_measures(self, qubits: list[int]) -> None:
         """
         Draw a final column of measurements (one shared column).
 
@@ -700,9 +700,9 @@ class MatplotlibCircuitRenderer:
         try:
             get_ipython()  # type: ignore
             size = max(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding)
-            fig.set_size_inches(size, size, forward=True)  # type: ignore[union-attr]
+            fig.set_size_inches(size, size, forward=True)  # ty:ignore[possibly-missing-attribute]
         except NameError:
-            fig.set_size_inches(  # type: ignore[union-attr]
+            fig.set_size_inches(  # ty:ignore[possibly-missing-attribute]
                 self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding, forward=True
             )
 
