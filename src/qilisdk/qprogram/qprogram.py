@@ -142,52 +142,6 @@ class QProgram(StructuredProgram):
 
         return "".join(traverse(self._body))
 
-    def with_bus_mapping(self, bus_mapping: dict[str, str]) -> Self:
-        """Returns a copy of the QProgram with bus mappings applied.
-
-        Args:
-            bus_mapping (dict[str, str]): A dictionary mapping old bus names to new bus names.
-
-        Returns:
-            QProgram: A new instance of QProgram with updated bus names.
-        """
-
-        def traverse(block: Block) -> None:
-            for index, element in enumerate(block.elements):
-                if isinstance(element, Block):
-                    traverse(element)
-                    continue
-                if hasattr(element, "bus"):
-                    bus = getattr(element, "bus")
-                    if isinstance(bus, str) and bus in bus_mapping:
-                        setattr(block.elements[index], "bus", bus_mapping[bus])
-                if hasattr(element, "control_bus"):
-                    control_bus = getattr(element, "control_bus")
-                    if isinstance(control_bus, str) and control_bus in bus_mapping:
-                        setattr(block.elements[index], "control_bus", bus_mapping[control_bus])
-                if hasattr(element, "buses"):
-                    buses = getattr(element, "buses")
-                    if isinstance(buses, list):
-                        setattr(
-                            block.elements[index],
-                            "buses",
-                            [bus_mapping.get(bus, bus) for bus in buses],
-                        )
-
-        # Copy qprogram so the original remain unaffected
-        copied_qprogram = deepcopy(self)
-
-        # Recursively traverse qprogram applying the bus mapping
-        traverse(copied_qprogram.body)
-
-        # Apply the mapping to buses property
-        for bus in copied_qprogram.buses:
-            if bus in bus_mapping:
-                copied_qprogram.buses.remove(bus)
-                copied_qprogram.buses.add(bus_mapping[bus])
-
-        return copied_qprogram
-
     def play(self, bus: str, waveform: Waveform | IQWaveform) -> None:
         """Play a single waveform or an I/Q pair of waveforms on the bus.
 
