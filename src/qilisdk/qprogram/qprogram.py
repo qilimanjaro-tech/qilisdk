@@ -13,9 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from copy import deepcopy
-from typing import Self
-
 from qilisdk.yaml import yaml
 
 from .blocks import Block
