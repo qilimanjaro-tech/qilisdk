@@ -27,7 +27,7 @@ def _expand_gate_to_order(gate: Gate, order: tuple[int, ...]) -> np.ndarray:
         local_col = _bits_to_int(sub_bits)
         for local_row in range(1 << len(positions)):
             amplitude = local_matrix[local_row, local_col]
-            if amplitude == 0.0:
+            if np.isclose(amplitude, 0.0):
                 continue
             target_bits = bits.copy()
             new_sub_bits = _int_to_bits(local_row, len(positions))

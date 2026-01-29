@@ -18,7 +18,7 @@ import numpy as np
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
 
-def dummy_cost(params): ...
+def dummy_cost(params: list[float]) -> float: ...
 
 
 def test_optimize_sets_optimal_parameters():

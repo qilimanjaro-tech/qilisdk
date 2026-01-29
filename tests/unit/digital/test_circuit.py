@@ -294,7 +294,7 @@ def test_add_operator_supports_gate_and_circuit():
     c.set_parameter_values([1.0])
 
     # Check that Parameter object has changed its value
-    assert angle.value == 1.0
+    assert np.isclose(angle.value, 1.0)
 
     # Check that circuit's parameter has the correct label and value
     assert c.get_parameters() == {angle.label: angle.value}

@@ -105,7 +105,7 @@ def test_apply_gate_matches_matrix_application():
     rng = np.random.default_rng(0)
 
     H = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
-    gate = Gate(matrix=H, qubits=(1,))
+    gate: Gate = Gate(matrix=H, qubits=(1,))
 
     nqubits = 2
     dim = 1 << nqubits
