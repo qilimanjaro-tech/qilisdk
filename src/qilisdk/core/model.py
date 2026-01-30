@@ -666,7 +666,7 @@ class QUBO(Model):
             # assuming the operation is h >= 0 or h > 0
             h = term.lhs - term.rhs
             if lower_penalization == "unbalanced":
-                if len(parameters) < 2:  # noqa: PLR2004
+                if len(parameters) < 2:
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
 
@@ -692,7 +692,7 @@ class QUBO(Model):
             if lower_penalization == "unbalanced":
                 # assuming the operation is -> 0 < h  or 0 <= h
                 h = term.rhs - term.lhs
-                if len(parameters) < 2:  # noqa: PLR2004
+                if len(parameters) < 2:
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
             if lower_penalization == "slack":
@@ -765,7 +765,7 @@ class QUBO(Model):
         else:
             c = copy.copy(term)
 
-        if c.degree > 2:  # noqa: PLR2004
+        if c.degree > 2:
             raise ValueError(
                 f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree}."
             )

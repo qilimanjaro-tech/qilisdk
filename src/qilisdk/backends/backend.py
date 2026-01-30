@@ -34,7 +34,7 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 
 class Backend(ABC):
     def __init__(self) -> None:
-        self._handlers: dict[type[Functional], Callable[[Functional, NoiseModel | None], FunctionalResult]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional, ...], FunctionalResult]] = {
             Sampling: lambda f, noise_model: self._execute_sampling(cast("Sampling", f), noise_model),
             TimeEvolution: lambda f, noise_model: self._execute_time_evolution(cast("TimeEvolution", f), noise_model),
             VariationalProgram: lambda f, noise_model: self._execute_variational_program(

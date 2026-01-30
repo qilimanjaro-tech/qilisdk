@@ -144,9 +144,7 @@ class HardwareEfficientAnsatz(Ansatz):
                 edges = [(i, j) for i in range(self.nqubits) for j in range(i + 1, self.nqubits)]
             elif kind == "circular":
                 edges = (
-                    []
-                    if self.nqubits < 2  # noqa: PLR2004
-                    else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
+                    [] if self.nqubits < 2 else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
                 )
             elif kind == "linear":
                 edges = [(i, i + 1) for i in range(self.nqubits - 1)]

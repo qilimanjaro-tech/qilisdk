@@ -209,7 +209,7 @@ class ExperimentResult(FunctionalResult):
         n_dimensions = len(self.s21_modulus.shape)
         if n_dimensions == 1:
             plot_1d(self.s21_modulus, self.dims)
-        elif n_dimensions == 2:  # noqa: PLR2004
+        elif n_dimensions == 2:
             plot_2d(self.s21_modulus, self.dims)
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
