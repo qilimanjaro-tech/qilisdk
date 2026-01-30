@@ -18,6 +18,8 @@ import pytest
 
 import qilisdk
 from qilisdk.analog import Hamiltonian, PauliZ, Schedule
+from qilisdk.analog.hamiltonian import X as pauli_x
+from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
 from qilisdk.functionals import Sampling, TimeEvolution
@@ -71,7 +73,9 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     backend = QiliSim()
     assert backend.execute(func) == "mocked_time_evolution_result"
 
-def test_time_dependent_hamiltonian_bad_observable(backend):
+
+def test_time_dependent_hamiltonian_bad_observable():
+    backend = QiliSim(seed=42, num_threads=1)
     o = 1.0
     dt = 0.5
     T = 100

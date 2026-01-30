@@ -8,29 +8,25 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
-from qilisdk.analog.hamiltonian import X as pauli_x
-from qilisdk.analog.hamiltonian import Z as pauli_z
-from qilisdk.analog.schedule import Schedule
 from unittest import mock
 from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.analog.hamiltonian import PauliZ as pauli_z_pauli
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
+from qilisdk.backends import QutipBackend
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedTimeEvolution
 from qilisdk.digital.gates import CNOT, Controlled
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
@@ -40,39 +36,13 @@ from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
-
-from qilisdk.backends import QutipBackend
-from qilisdk.core.model import Model
-from qilisdk.core.qtensor import ket, tensor_prod
-from qilisdk.core.variables import BinaryVariable
-from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import U1, Circuit, H, M, X
-from qilisdk.digital.ansatz import TrotterizedTimeEvolution
-from qilisdk.digital.gates import CNOT, Controlled
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-
-from qilisdk.analog.schedule import Schedule
-from qilisdk.core.qtensor import ket
-from qilisdk.functionals.time_evolution import TimeEvolution
-
 pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
     exc_type=ImportError,
 )
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.backends.cuda_backend import CudaBackend
-from qilisdk.digital.ansatz import TrotterizedTimeEvolution
-from qilisdk.digital.gates import H
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.backends.qilisim import QiliSim
-
 
 backends = [QutipBackend(), QiliSim(seed=42, num_threads=1)]
 if pytest.importorskip(
@@ -260,6 +230,7 @@ def test_trotterized_time_evolution_results(backend):
     sam_probs = {key: sam_res.samples[key] / nshots if key in sam_res.samples else 0.0 for key in te_probs}
     assert all(np.isclose(list(te_probs.values()), list(sam_probs.values()), atol=1e-2))
 
+
 basic_gate_test_cases = [
     (I(0), ("i", "q0")),
     (X(0), ("x", "q0")),
@@ -289,6 +260,7 @@ def test_basic_gates(backend, gate):
     result = backend.execute(Sampling(circuit=circuit, nshots=10))
     assert isinstance(result, SamplingResult)
 
+
 @pytest.fixture
 def dummy_optimizer():
     """
@@ -300,6 +272,7 @@ def dummy_optimizer():
         lambda cost_function, init_parameters, bounds, store_intermediate_results: OptimizerResult(0.2, [0.9, 0.1])
     )
     return optimizer
+
 
 @pytest.mark.parametrize("backend", backends)
 def test_obtain_cost_calls_backend(dummy_optimizer, backend):
@@ -335,6 +308,7 @@ def test_obtain_cost_calls_backend(dummy_optimizer, backend):
     assert np.isclose(output.optimal_cost, 0.2)
     assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0)
 
+
 @pytest.mark.parametrize("backend", backends_no_cuda)
 def test_time_dependent_hamiltonian_pauli_observable(backend):
     o = 1.0
@@ -360,6 +334,7 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
+
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
 def test_time_dependent_hamiltonian_imaginary(backend):
@@ -390,6 +365,7 @@ def test_time_dependent_hamiltonian_imaginary(backend):
     # check that it's hermitian
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
+
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
 def test_time_dependent_hamiltonian_qtensor_observable(backend):
@@ -459,6 +435,7 @@ def test_measurement_gates(backend):
     assert "1" in samples
     assert samples["1"] == 50
 
+
 @pytest.mark.parametrize("backend", backends_no_cuda)
 def test_time_dependent_hamiltonian_density_mat(backend):
     o = 1.0
@@ -488,4 +465,3 @@ def test_time_dependent_hamiltonian_density_mat(backend):
     # check that it's hermitian
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
-

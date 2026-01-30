@@ -1,32 +1,20 @@
-from unittest import mock
-from unittest.mock import MagicMock
-
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import PauliZ as pauli_z_pauli
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core.model import Constraint, Model, Objective
-from qilisdk.core.qtensor import QTensor, ket, tensor_prod
-from qilisdk.core.variables import BinaryVariable
-from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.digital.gates import CNOT, Controlled
+from qilisdk.core.qtensor import ket
+from qilisdk.digital import Circuit, H, X
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.optimizers.optimizer_result import OptimizerResult
-from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-
 
 simulation_types = ["direct", "arnoldi", "integrate"]
+
 
 def test_seed_same():
     backend1 = QiliSim(seed=42, num_threads=1)
@@ -100,7 +88,6 @@ def test_row_vec_ordering(method):
     # check that it's hermitian
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
-
 
 
 @pytest.mark.parametrize("method", simulation_types)
