@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import numpy as np
 import pytest
 
@@ -21,15 +19,17 @@ class FakeGate(Gate):
     def __init__(self, base_matrix: np.ndarray, qubits: tuple[int, ...]):
         self._matrix = base_matrix
         self._qubits = qubits
+
     @property
     def matrix(self) -> np.ndarray:
         return self._matrix
+
     @property
     def qubits(self) -> tuple[int, ...]:
         return self._qubits
+
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
 
 # ---------------------------

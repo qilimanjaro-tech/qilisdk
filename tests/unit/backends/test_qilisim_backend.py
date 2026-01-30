@@ -70,3 +70,22 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
     backend = QiliSim()
     assert backend.execute(func) == "mocked_time_evolution_result"
+
+def test_time_dependent_hamiltonian_bad_observable(backend):
+    o = 1.0
+    dt = 0.5
+    T = 100
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        3.5,  # invalid observable
+    ]
+
+    with pytest.raises(ValueError, match=r"Observable type not recognized."):
+        backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))

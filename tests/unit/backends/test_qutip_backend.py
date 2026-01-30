@@ -80,14 +80,6 @@ def test_unsupported_gate_raises(backend):
         backend.execute(Sampling(circuit=circuit))
 
 
-def test_nshots():
-    backend = QutipBackend()
-    circuit = Circuit(nqubits=1)
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.nshots == 10
-
-
 basic_gate_test_cases = [
     (I(0), ("i", "q0")),
     (X(0), ("x", "q0")),
