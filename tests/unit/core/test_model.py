@@ -224,16 +224,6 @@ def test_model_copy(simple_model):
         assert m2.constraints[i].term.operation == c.term.operation
 
 
-def test_model_evaluation():
-    m = Model("test")
-    v = Variable("v", Domain.INTEGER, (-10, 10))
-
-    m.set_objective(v * 2 + 3)
-    m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
-    # TODO (Ameer): Objective contains an Integer variable, so results["obj"] should be 13.
-    # Now, it is 13.0, a float.
-
-
 def test_model_to_ham():
     m = Model("test")
     b = [BinaryVariable(f"b{i}") for i in range(3)]
@@ -294,18 +284,6 @@ def test_qubo_print_and_str():
     assert "\nWith Lagrange Multiplier/s: \n" in s
 
     assert repr(q) == q.label
-
-
-def test_qubo_transform_constraint():
-    q = QUBO(label="q1")
-    v = BinaryVariable("b")
-
-    t = 2 * v
-    q.set_objective(t)
-
-    ct = EQ(v, 1)
-    q.add_constraint("con1", ct, lagrange_multiplier=2)
-    # TODO (ameer): finish this test
 
 
 def test_qubo_check_valid_constraint_always_feasible_and_unsat():

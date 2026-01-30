@@ -31,7 +31,7 @@ def test_optimize_sets_optimal_parameters():
 
         optimizer = SciPyOptimizer(method="BFGS")
         initial_parameters = [0.0, 0.0, 0.0]
-        bounds = None
+        bounds = []
         optimizer_result = optimizer.optimize(dummy_cost, initial_parameters, bounds)
 
         # Check that the optimizer returned the fake result.
@@ -46,7 +46,7 @@ def test_optimize_sets_optimal_parameters():
             jac=None,
             hess=None,
             hessp=None,
-            bounds=None,
+            bounds=[],
             constraints=(),
             tol=None,
             options=None,
@@ -91,7 +91,7 @@ def test_optimize_with_intermediate_results():
 
         optimizer = SciPyOptimizer(method="Nelder-Mead")
         initial_parameters = [1.0, 1.0]
-        bounds = None
+        bounds = []
 
         # Call optimize with store_intermediate_results=True
         optimizer.optimize(dummy_cost, initial_parameters, bounds, store_intermediate_results=True)

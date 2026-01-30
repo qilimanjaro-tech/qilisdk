@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import numpy as np
 import pytest
 
+from qilisdk.digital.gates import Gate
+
 from .utils import (
     _apply_gate_to_state,
     _bits_to_int,
@@ -15,10 +17,19 @@ from .utils import (
 )
 
 
-@dataclass(frozen=True)
-class Gate:
-    matrix: np.ndarray
-    qubits: tuple[int, ...]
+class FakeGate(Gate):
+    def __init__(self, base_matrix: np.ndarray, qubits: tuple[int, ...]):
+        self._matrix = base_matrix
+        self._qubits = qubits
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._matrix
+    @property
+    def qubits(self) -> tuple[int, ...]:
+        return self._qubits
+    @property
+    def name(self) -> str:
+        ...
 
 
 # ---------------------------
@@ -68,7 +79,7 @@ def test_bits_roundtrip():
 def test_expand_single_qubit_gate():
     # Pauli-X on qubit 0 in a 2-qubit system
     X = np.array([[0, 1], [1, 0]], dtype=complex)
-    gate = Gate(matrix=X, qubits=(0,))
+    gate = FakeGate(base_matrix=X, qubits=(0,))
     order = (0, 1)
 
     expanded = _expand_gate_to_order(gate, order)
@@ -88,7 +99,7 @@ def test_expand_two_qubit_gate_swapped_order():
         ],
         dtype=complex,
     )
-    gate = Gate(matrix=CNOT, qubits=(1, 0))
+    gate = FakeGate(base_matrix=CNOT, qubits=(1, 0))
     order = (0, 1)
 
     expanded = _expand_gate_to_order(gate, order)
@@ -105,7 +116,7 @@ def test_apply_gate_matches_matrix_application():
     rng = np.random.default_rng(0)
 
     H = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
-    gate: Gate = Gate(matrix=H, qubits=(1,))
+    gate = FakeGate(base_matrix=H, qubits=(1,))
 
     nqubits = 2
     dim = 1 << nqubits
@@ -130,8 +141,8 @@ def test_sequence_matrix_composition():
     Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
     gates = [
-        Gate(matrix=X, qubits=(0,)),
-        Gate(matrix=Z, qubits=(0,)),
+        FakeGate(base_matrix=X, qubits=(0,)),
+        FakeGate(base_matrix=Z, qubits=(0,)),
     ]
 
     seq = _sequence_matrix(gates, nqubits=1)
@@ -197,7 +208,7 @@ def test_zero_vectors_equal():
 def test_sequences_equivalent_small_system():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
 
-    gates_a = [Gate(matrix=X, qubits=(0,)), Gate(matrix=X, qubits=(0,))]
+    gates_a = [FakeGate(base_matrix=X, qubits=(0,)), FakeGate(base_matrix=X, qubits=(0,))]
     gates_b = []
 
     assert _sequences_equivalent(gates_a, gates_b, nqubits=1)
@@ -208,11 +219,11 @@ def test_sequences_equivalent_with_basis_states():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
 
     gates_a = [
-        Gate(matrix=H, qubits=(0,)),
-        Gate(matrix=X, qubits=(0,)),
-        Gate(matrix=H, qubits=(0,)),
+        FakeGate(base_matrix=H, qubits=(0,)),
+        FakeGate(base_matrix=X, qubits=(0,)),
+        FakeGate(base_matrix=H, qubits=(0,)),
     ]
-    gates_b = [Gate(matrix=np.array([[1, 0], [0, -1]], dtype=complex), qubits=(0,))]
+    gates_b = [FakeGate(base_matrix=np.array([[1, 0], [0, -1]], dtype=complex), qubits=(0,))]
 
     basis = [(0,), (1,)]
     assert _sequences_equivalent(gates_a, gates_b, nqubits=1, basis_states=basis)
@@ -222,8 +233,8 @@ def test_sequences_equivalent_large_with_basis_states():
     X = np.array([[0, 1], [1, 0]], dtype=complex)
 
     nqubits = 10
-    gates_a = [Gate(matrix=X, qubits=(i,)) for i in range(nqubits)]
-    gates_b = [Gate(matrix=X, qubits=(i,)) for i in range(nqubits)]
+    gates_a = [FakeGate(base_matrix=X, qubits=(i,)) for i in range(nqubits)]
+    gates_b = [FakeGate(base_matrix=X, qubits=(i,)) for i in range(nqubits)]
 
     assert _sequences_equivalent(gates_a, gates_b, nqubits=nqubits)
 
@@ -233,7 +244,7 @@ def test_sequences_not_equivalent_large_with_basis_states():
     Y = np.array([[0, -1j], [1j, 0]], dtype=complex)
 
     nqubits = 10
-    gates_a = [Gate(matrix=X, qubits=(i,)) for i in range(nqubits)]
-    gates_b = [Gate(matrix=Y, qubits=(i,)) for i in range(nqubits)]
+    gates_a = [FakeGate(base_matrix=X, qubits=(i,)) for i in range(nqubits)]
+    gates_b = [FakeGate(base_matrix=Y, qubits=(i,)) for i in range(nqubits)]
 
     assert not _sequences_equivalent(gates_a, gates_b, nqubits=nqubits)

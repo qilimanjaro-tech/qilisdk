@@ -14,7 +14,7 @@ from qilisdk.speqtrum.keyring import KEYRING_IDENTIFIER, delete_credentials, loa
 from qilisdk.speqtrum.speqtrum_models import Token
 
 
-class FakeToken:
+class FakeToken(Token):
     """A minimal stand-in for Token instances."""
 
     def __init__(self, json_str: str):
