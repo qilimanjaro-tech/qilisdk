@@ -81,6 +81,8 @@ class QiliSim(Backend):
             raise ValueError("num_integrate_substeps must be a positive integer")
         if num_monte_carlo_trajectories <= 0:
             raise ValueError("num_monte_carlo_trajectories must be a positive integer")
+        if max_cache_size < 0:
+            raise ValueError("max_cache_size cannot be negative")
         if atol <= 0:
             raise ValueError("atol must be a positive float")
 
@@ -120,11 +122,6 @@ class QiliSim(Backend):
             SamplingResult: A result object containing the measurement samples and computed probabilities.
 
         """
-
-        # If we have a noise model, log a warning that it's not supported
-        if self._noise_model is not None:
-            logger.warning("Noise models are not yet implemented for the QiliSim backend.")
-
         logger.info("Executing Sampling with {} shots", functional.nshots)
         result = self.qili_sim.execute_sampling(functional, self._noise_model, initial_state, self.solver_params)
         logger.success("Sampling finished")
@@ -140,10 +137,6 @@ class QiliSim(Backend):
         Returns:
             TimeEvolutionResult: The results of the evolution.
         """
-
-        # If we have a noise model, log a warning that it's not supported
-        if self._noise_model is not None:
-            logger.warning("Noise models are not yet implemented for the QiliSim backend.")
 
         # Get the time steps
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)

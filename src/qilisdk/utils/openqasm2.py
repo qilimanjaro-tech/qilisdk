@@ -154,7 +154,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
         #   Group 1: gate name (e.g., "h", "rx", "cx")
         #   Group 2: optional parameters (inside parentheses)
         #   Group 3: operand list (e.g., "q[0]" or "q[0], q[1]")
-        m = re.match(r"^(\w+)(?:\(([^)]*)\))?\s+(.+);$", line)
+        m = re.match(r"^(\w+)(?:\(([^)]*)\))?\s+(.+);", line)
         if m:
             qasm_gate_name = m.group(1)
             params_str = m.group(2)

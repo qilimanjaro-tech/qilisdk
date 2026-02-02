@@ -132,7 +132,9 @@ GreaterThanOrEqual = GEQ
 
 
 def _extract_number(label: str) -> int:
-    """Extracts the number from the variable's label.
+    """
+    Extracts the number from the variable's label.
+    Note that this only matches positive integers.
 
     Args:
         label (str): variable label that follows the format <label>(<number>).
@@ -347,9 +349,7 @@ def _check_output(var: Variable, output: Number) -> RealNumber:
     out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
     if not var.domain.check_value(out):
-        raise ValueError(
-            f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}"
-        )  # not sure this line can be reached.
+        raise ValueError(f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}")
 
     return out
 
@@ -684,11 +684,11 @@ class BaseVariable(ABC):
 
         if not self.domain.check_value(upper_bound):
             raise OutOfBoundsException(
-                f"the lower bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
+                f"the upper bound ({upper_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if not self.domain.check_value(lower_bound):
             raise OutOfBoundsException(
-                f"the upper bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
+                f"the lower bound ({lower_bound}) does not respect the domain of the variable ({self.domain})"
             )
         if lower_bound > upper_bound:
             raise InvalidBoundsError("lower bound can't be larger than the upper bound.")
@@ -1245,7 +1245,7 @@ class Parameter(BaseVariable):
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         if len(bounds) != 2:  # noqa: PLR2004
             raise ValueError(
-                "Invalid bounds provided: the bounds need to be a tuple with the format (lowe_bound, upper_bound)"
+                "Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"
             )
 
         if domain.check_value(self.value):
@@ -1265,11 +1265,6 @@ class Parameter(BaseVariable):
         if isinstance(other, (float, int)):
             return self.value == other
         return False
-
-    def __ne__(self, other: object) -> bool:
-        if isinstance(other, (float, int)):
-            return self.value != other
-        return NotImplemented
 
     def __le__(self, other: object) -> bool:
         if isinstance(other, (float, int)):
@@ -1653,10 +1648,6 @@ class Term:
                     )
             elif isinstance(e, BaseVariable):
                 if self._is_constant(e):
-                    if self.operation in {Operation.ADD, Operation.SUB} and self[e] == 0:
-                        continue
-                    if self.operation in {Operation.MUL, Operation.DIV} and self[e] == 1:
-                        continue
                     output_string += f"({_float_if_real(self[e])}) "
                 elif (self.operation is Operation.MUL or self.operation is Operation.DIV) and _assert_real(self[e]) > 1:
                     output_string += f"({e}^{_float_if_real(self[e])}) "
@@ -1833,7 +1824,7 @@ class ComparisonTerm:
         """
         term = lhs - rhs
         if not isinstance(term, Term):
-            term = Term([term], Operation.ADD)  # I don't think this line is reachable
+            term = Term([term], Operation.ADD)
         const = -1 * term.pop(Term.CONST) if Term.CONST in term else 0
         self._lhs = term
         self._rhs = Term([const], Operation.ADD)
@@ -1953,11 +1944,11 @@ class ComparisonTerm:
         lhs = self._lhs.evaluate(var_values)
         rhs = self._rhs.evaluate(var_values)
         if isinstance(lhs, complex):
-            if lhs.imag != 0:
+            if abs(lhs.imag) > get_settings().atol:
                 raise ValueError("evaluating inequality constraints with complex values is not allowed")
             lhs = lhs.real
         if isinstance(rhs, complex):
-            if rhs.imag != 0:
+            if abs(rhs.imag) > get_settings().atol:
                 raise ValueError("evaluating inequality constraints with complex values is not allowed")
             rhs = rhs.real
         return self._apply_comparison_operation(lhs, rhs)
