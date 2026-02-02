@@ -398,11 +398,8 @@ class Hamiltonian(Parameterizable):
 
             result = single if result is None else kron(result, single, format="csr")
 
-        # Added for type safety
-        if result is None:
-            result = csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
-
-        return result
+        # Added for type safety, but should never occur
+        return result if result is not None else csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
 
     def to_matrix(self) -> spmatrix:
         """Return the full matrix representation of the Hamiltonian by summing over all terms.
