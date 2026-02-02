@@ -420,6 +420,10 @@ class Interpolator(Parameterizable):
             raise ValueError(
                 "Coefficient must be a number, Parameter, Term, or callable that returns one of these types."
             )
+        if self._max_time is not None:
+            if self._tlist is None:
+                self._tlist = self._generate_tlist()
+            time /= self._time_scale
         self._time_dict[time] = coeff
         self._delete_cache()
 

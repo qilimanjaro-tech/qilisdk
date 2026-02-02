@@ -466,6 +466,8 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    dummy_state = MagicMock(return_value=None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
 
     o = 1.0
     dt = 1
@@ -486,6 +488,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
 
     assert isinstance(res, TimeEvolutionResult)
     assert dummy_evolve.called
+    assert dummy_state.called
 
 
 def test_bad_observable_raises(monkeypatch):
@@ -495,6 +498,8 @@ def test_bad_observable_raises(monkeypatch):
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    dummy_state = MagicMock(return_value=None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
 
     o = 1.0
     dt = 1

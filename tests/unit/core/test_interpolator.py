@@ -252,18 +252,6 @@ def test_add_time_point_bad_coeff():
         interp.add_time_point(5, "bad_coefficient")
 
 
-def test_add_time_point_scaling():
-    points = {0: 0, 10: 10}
-    interp = Interpolator(
-        points,
-        Interpolation.LINEAR,
-    )
-    interp.set_max_time(5)
-    interp.add_time_point(20, 3)
-    expected_items = {(0, 0), (2.5, 10), (5, 3)}
-    assert set(interp.items()) == expected_items
-
-
 def test_interpolar_set_parameter_bounds():
     points = {0: Parameter("a", 1.0), 10: Parameter("b", 2.0)}
     interp = Interpolator(
@@ -515,3 +503,19 @@ def test_time_scale_caching():
 
     # subsequent call should use cache
     assert np.isclose(interp._time_scale, 0.5)
+
+
+def test_add_time_point_with_scaling():
+    points = {0: 0, 10: 10}
+    interp = Interpolator(
+        points,
+        Interpolation.LINEAR,
+    )
+    interp.set_max_time(5)
+    time = 2.5
+    coeff = 3
+    interp.add_time_point(time, coeff)
+    expected_time_dict = {(0, 0), (5, 3), (10, 10)}
+    expected_items = {(0, 0), (2.5, 3), (5, 10)}
+    assert set(interp._time_dict.items()) == expected_time_dict
+    assert set(interp.items()) == expected_items
