@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from .analog_noise import DissipationNoise
-from .common_noise import ParameterNoise
-from .digital_noise import KrausNoise
-from .noise_model import NoiseModel, NoiseType
+from .noise_abc import NoiseABC
 
-__all__ = ["DissipationNoise", "KrausNoise", "NoiseModel", "NoiseType", "ParameterNoise"]
+
+class Noise(NoiseABC):
+    """Base class for state noise sources that can be attached to a model."""
