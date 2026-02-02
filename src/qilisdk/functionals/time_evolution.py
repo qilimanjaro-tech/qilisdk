@@ -102,6 +102,18 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         """Return current bounds for schedule parameters."""
         return self.schedule.get_parameter_bounds()
 
+    def get_trainable_parameter_names(self) -> list[str]:
+        """Return the ordered list of parameter labels."""
+        return self.schedule.get_trainable_parameter_names()
+
+    def get_trainable_parameters(self) -> dict[str, RealNumber]:
+        """Return a mapping from parameter labels to their current numerical values."""
+        return self.schedule.get_trainable_parameters()
+
+    def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the ``(lower, upper)`` bounds associated with each parameter."""
+        return self.schedule.get_trainable_parameter_bounds()
+
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """Update bounds for selected schedule parameters."""
         self.schedule.set_parameter_bounds(ranges)
