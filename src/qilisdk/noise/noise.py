@@ -13,22 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from .noise_model import NoiseBase, NoiseType
-
-if TYPE_CHECKING:
-    from qilisdk.core.qtensor import QTensor
+from .noise_abc import NoiseABC
 
 
-class DissipationNoise(NoiseBase):
-    def __init__(self, jump_operators: list[QTensor]) -> None:
-        self._jump_operators: list[QTensor] = jump_operators or []
-
-    @property
-    def noise_type(self) -> NoiseType:
-        return NoiseType.ANALOG
-
-    @property
-    def jump_operators(self) -> list[QTensor]:
-        return self._jump_operators
+class Noise(NoiseABC):
+    """Base class for state noise sources that can be attached to a model."""
