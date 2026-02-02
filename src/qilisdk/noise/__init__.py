@@ -21,6 +21,7 @@ from .noise import Noise
 from .noise_config import NoiseConfig
 from .noise_model import NoiseModel
 from .offset_perturbation import OffsetPerturbation
+from .parameter_perturbation import ParameterPerturbation
 from .pauli_channel import PauliChannel
 from .phase_flip import PhaseFlip
 from .protocols import (
@@ -44,6 +45,7 @@ __all__ = [
     "NoiseConfig",
     "NoiseModel",
     "OffsetPerturbation",
+    "ParameterPerturbation",
     "PauliChannel",
     "PhaseFlip",
     "ReadoutAssignment",

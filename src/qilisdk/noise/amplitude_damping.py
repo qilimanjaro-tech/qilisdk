@@ -61,4 +61,11 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
-        return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
+        return frozenset(
+            {
+                AttachmentScope.GLOBAL,
+                AttachmentScope.PER_QUBIT,
+                AttachmentScope.PER_GATE_TYPE,
+                AttachmentScope.PER_GATE_TYPE_PER_QUBIT,
+            }
+        )

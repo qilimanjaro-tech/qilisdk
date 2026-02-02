@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, State, evolve, operators, spin
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
@@ -335,15 +335,18 @@ class CudaBackend(Backend):
     def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
         circuit_parameters = circuit.get_parameters()
         for parameter, perturbations in noise_model.global_perturbations.items():
-            if parameter in circuit_parameters:
+            parameter_name = parameter.label if not isinstance(parameter, str) else parameter
+            if parameter_name in circuit_parameters:
                 for perturbation in perturbations:
-                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+                    circuit.set_parameters({parameter_name: perturbation.perturb(circuit_parameters[parameter_name])})
         for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
-                if isinstance(gate, gate_type) and parameter in gate.get_parameter_names():
+                true_name_to_gate_param_name = {param: param_name for param_name, param in gate.parameters.items()}
+                if isinstance(gate, gate_type) and parameter in true_name_to_gate_param_name:
                     gate_parameters = gate.get_parameters()
+                    gate_param_name = true_name_to_gate_param_name[parameter]
                     for perturbation in perturbations:
-                        gate.set_parameters({parameter: perturbation.perturb(gate_parameters[parameter])})
+                        gate.set_parameters({gate_param_name: perturbation.perturb(gate_parameters[gate_param_name])})
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
@@ -385,12 +388,15 @@ class CudaBackend(Backend):
         if noise_model.global_perturbations:
             schedule_parameters = schedule.get_parameters()
             for parameter, perturbations in noise_model.global_perturbations.items():
-                if parameter in schedule_parameters:
+                parameter_name = parameter.label if not isinstance(parameter, str) else parameter
+                if parameter_name in schedule_parameters:
                     for perturbation in perturbations:
-                        schedule.set_parameters({parameter: perturbation.perturb(schedule_parameters[parameter])})
+                        schedule.set_parameters(
+                            {parameter_name: perturbation.perturb(schedule_parameters[parameter_name])}
+                        )
 
-    @staticmethod
     def _add_global_noise_dynamics(
+        self,
         ops_numpy: list,
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
@@ -413,10 +419,10 @@ class CudaBackend(Backend):
                 for qubit in range(nqubits):
                     jump_operators.append(operators.instantiate(op_id, degrees=qubit))
         if lindblad_generator.hamiltonian is not None:
-            hamiltonian_deltas.append(CudaBackend._remove_constant_terms(lindblad_generator.hamiltonian))
+            hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
 
-    @staticmethod
     def _add_per_qubit_noise_dynamics(
+        self,
         ops_numpy: list,
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
@@ -434,7 +440,7 @@ class CudaBackend(Backend):
             )
             jump_operators.append(operators.instantiate(op_id, degrees=qubit))
         if lindblad_generator.hamiltonian is not None:
-            hamiltonian_deltas.append(CudaBackend._remove_constant_terms(lindblad_generator.hamiltonian))
+            hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
 
     def _noise_model_to_cudaq_dynamics(
         self, noise_model: NoiseModel, nqubits: int, dt: float
@@ -470,13 +476,16 @@ class CudaBackend(Backend):
                         ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
                     )
 
+        # Remove any constant terms from the deltas
+        hamiltonian_deltas = [CudaBackend._remove_constant_terms(delta) for delta in hamiltonian_deltas]
+
         return jump_operators, hamiltonian_deltas
 
     @staticmethod
     def _remove_constant_terms(operator_sum: OperatorSum) -> OperatorSum:
         new_operator_sum = None
         for term in operator_sum:
-            if not term.is_identity():
+            if isinstance(term, SpinOperatorTerm) and not term.is_identity():
                 if new_operator_sum is None:
                     new_operator_sum = term
                 else:
