@@ -260,9 +260,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]: Time and coefficient pairs.
         """
-        if self._tlist is None:
-            self._tlist = self._generate_tlist()
-        if self._max_time is not None and self._tlist is not None:
+        if self._max_time is not None:
             return [(k * self._time_scale, v) for k, v in self._time_dict.items()]
         return list(self._time_dict.items())
 
@@ -420,11 +418,7 @@ class Interpolator(Parameterizable):
             raise ValueError(
                 "Coefficient must be a number, Parameter, Term, or callable that returns one of these types."
             )
-        if self._max_time is not None:
-            if self._tlist is None:
-                self._tlist = self._generate_tlist()
-            time /= self._time_scale
-        self._time_dict[time] = coeff
+        self._time_dict[time / self._time_scale] = coeff
         self._delete_cache()
 
     def set_parameter_values(self, values: list[float]) -> None:
@@ -501,7 +495,7 @@ class Interpolator(Parameterizable):
         if time_step in self._cached_time:
             return self._cached_time[time_step]
 
-        if self._max_time is not None and self._tlist is not None:
+        if self._max_time is not None:
             time_step /= self._time_scale
         factor = self._time_scale_cache or 1.0
 
