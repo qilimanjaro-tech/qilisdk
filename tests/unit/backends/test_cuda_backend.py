@@ -18,9 +18,12 @@ import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian
+from qilisdk.core import Parameter
 from qilisdk.core.qtensor import ket
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
+from qilisdk.noise.offset_perturbation import OffsetPerturbation
 
 pytest.importorskip(
     "cudaq",
@@ -521,3 +524,90 @@ def test_bad_observable_raises(monkeypatch):
     backend = CudaBackend()
     with pytest.raises(ValueError, match="unsupported observable type"):
         backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+
+def test_time_dependent_hamiltonian_cuda_with_noise(monkeypatch):
+    # monkeypatch the evolve that we import from cudaq in cuda_backend
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    dummy_state = MagicMock(return_value=None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
+
+    noise_model = NoiseModel()
+    noise_model.add(Dephasing(t_phi=1.0))
+    noise_model.add(AmplitudeDamping(t1=1.0))
+
+    o = 1.0
+    dt = 1
+    T = 1000
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0) + pauli_y(0), "h2": o * pauli_z(0) + pauli_i(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        pauli_z(0),
+        PauliZ(0),
+    ]
+
+    backend = CudaBackend(noise_model=noise_model)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+    assert dummy_evolve.called
+    assert dummy_state.called
+
+
+@patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
+@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.set_target")
+def test_execute_cuda_noise(mock_set_target, mock_sample, mock_make_kernel):
+    dummy_make_kernel.main_kernel = DummyKernel()
+    circuit = Circuit(nqubits=1)
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=0.3))
+    backend = CudaBackend(noise_model=NoiseModel())
+    backend.execute(Sampling(circuit, nshots=10))
+
+
+def test_time_dependent_hamiltonian_cuda_noise(monkeypatch):
+    # monkeypatch the evolve that we import from cudaq in cuda_backend
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    dummy_state = MagicMock(return_value=None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
+
+    o = 1.0
+    dt = 1
+    T = 1000
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": o * pauli_x(0) + pauli_y(0), "h2": o * pauli_z(0) + pauli_i(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [
+        pauli_z(0),
+        PauliZ(0),
+    ]
+
+    param = Parameter("p", 1.0)
+    noise_model = NoiseModel()
+    noise_model.add(Dephasing(t_phi=1.0))
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    noise_model.add(LindbladGenerator(jump_operators=[], hamiltonian=pauli_z(0)))
+    noise_model.add(OffsetPerturbation(offset=0.1), parameter=param)
+
+    backend = CudaBackend(noise_model=noise_model)
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+    assert dummy_evolve.called
+    assert dummy_state.called

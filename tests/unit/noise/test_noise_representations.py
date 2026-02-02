@@ -16,6 +16,7 @@ import numpy as np
 
 from qilisdk.core import QTensor
 from qilisdk.noise import KrausChannel, LindbladGenerator
+from qilisdk.noise.protocols import AttachmentScope
 
 
 def test_kraus_channel_properties():
@@ -25,6 +26,12 @@ def test_kraus_channel_properties():
     assert channel.operators == [operator]
     assert channel.as_kraus() is channel
 
+    scopes = channel.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_QUBIT in scopes
+    assert AttachmentScope.PER_GATE_TYPE in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT in scopes
+
 
 def test_lindblad_generator_properties():
     jump_operator = QTensor(np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex))
@@ -32,11 +39,19 @@ def test_lindblad_generator_properties():
 
     generator = LindbladGenerator([jump_operator])
     assert generator.jump_operators == [jump_operator]
+    assert generator.jump_operators_with_rates == [jump_operator]
     assert generator.rates is None
     assert generator.hamiltonian is None
 
     generator = LindbladGenerator([jump_operator], rates=[0.5], hamiltonian=hamiltonian)
     assert generator.jump_operators == [jump_operator]
+    assert generator.jump_operators_with_rates == [np.sqrt(0.5) * jump_operator]
     assert generator.rates == [0.5]
     assert generator.hamiltonian is hamiltonian
     assert generator.as_lindblad() is generator
+
+    scopes = generator.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_QUBIT in scopes
+    assert AttachmentScope.PER_GATE_TYPE not in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes

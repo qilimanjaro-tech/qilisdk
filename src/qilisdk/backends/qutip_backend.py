@@ -37,7 +37,6 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
-    from qilisdk.noise.noise_model import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -88,7 +87,6 @@ class QutipBackend(Backend):
         Args:
             nsteps (int): The maximum number of internal steps for the ODE solver."""
         self.nsteps = nsteps
-        self._noise_model: NoiseModel | None = None
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -125,10 +123,6 @@ class QutipBackend(Backend):
 
         """
         logger.info("Executing Sampling (shots={})", functional.nshots)
-
-        # If we have a noise model, log a warning that it's not supported
-        if self._noise_model is not None:
-            logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
@@ -220,10 +214,6 @@ class QutipBackend(Backend):
         Raises:
             ValueError: if the initial state provided is invalid.
         """
-
-        # If we have a noise model, log a warning that it's not supported
-        if self._noise_model is not None:
-            logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         steps = functional.schedule.tlist

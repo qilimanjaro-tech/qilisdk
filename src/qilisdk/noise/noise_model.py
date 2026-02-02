@@ -26,7 +26,7 @@ from .protocols import AttachmentScope
 
 Qubit: TypeAlias = int
 GateType: TypeAlias = type[Gate]
-Parameter: TypeAlias = str
+ParameterName: TypeAlias = str
 
 TNoise = TypeVar("TNoise", bound=Noise)
 TParameterPerturbation = TypeVar("TParameterPerturbation", bound=ParameterPerturbation)
@@ -53,8 +53,10 @@ class NoiseModel:
         self._per_gate_per_qubit_noise: dict[tuple[GateType, Qubit], list[Noise]] = defaultdict(list)
 
         # parameter perturbations
-        self._global_perturbations: dict[Parameter, list[ParameterPerturbation]] = defaultdict(list)
-        self._per_gate_perturbations: dict[tuple[GateType, Parameter], list[ParameterPerturbation]] = defaultdict(list)
+        self._global_perturbations: dict[ParameterName, list[ParameterPerturbation]] = defaultdict(list)
+        self._per_gate_perturbations: dict[tuple[GateType, ParameterName], list[ParameterPerturbation]] = defaultdict(
+            list
+        )
 
     @property
     def noise_config(self) -> NoiseConfig:
@@ -102,7 +104,7 @@ class NoiseModel:
         return self._per_gate_per_qubit_noise
 
     @property
-    def global_perturbations(self) -> dict[Parameter, list[ParameterPerturbation]]:
+    def global_perturbations(self) -> dict[ParameterName, list[ParameterPerturbation]]:
         """Return the global parameter perturbation mapping.
 
         Returns:
@@ -111,7 +113,7 @@ class NoiseModel:
         return self._global_perturbations
 
     @property
-    def per_gate_perturbations(self) -> dict[tuple[GateType, Parameter], list[ParameterPerturbation]]:
+    def per_gate_perturbations(self) -> dict[tuple[GateType, ParameterName], list[ParameterPerturbation]]:
         """Return the per-gate-type parameter perturbation mapping.
 
         Returns:
@@ -132,9 +134,9 @@ class NoiseModel:
 
     # ParameterPerturbation: global/per_gate_type
     @overload
-    def add(self, noise: TParameterPerturbation, *, parameter: Parameter) -> None: ...
+    def add(self, noise: TParameterPerturbation, *, parameter: ParameterName) -> None: ...
     @overload
-    def add(self, noise: TParameterPerturbation, *, gate: GateType, parameter: Parameter) -> None: ...
+    def add(self, noise: TParameterPerturbation, *, gate: GateType, parameter: ParameterName) -> None: ...
 
     # -----------------------
     # Implementation
@@ -146,7 +148,7 @@ class NoiseModel:
         *,
         qubits: list[Qubit] | None = None,
         gate: GateType | None = None,
-        parameter: Parameter | None = None,
+        parameter: ParameterName | None = None,
     ) -> None:
         """Attach a noise source or parameter perturbation to the model.
 
@@ -197,7 +199,7 @@ class NoiseModel:
         *,
         qubits: list[Qubit] | None = None,
         gate: GateType | None = None,
-        parameter: Parameter | None = None,
+        parameter: ParameterName | None = None,
     ) -> None:
         """Attach a noise source to the model.
 
@@ -235,7 +237,7 @@ class NoiseModel:
         noise: ParameterPerturbation,
         *,
         gate: GateType | None = None,
-        parameter: Parameter | None = None,
+        parameter: ParameterName | None = None,
     ) -> None:
         """Attach a parameter perturbation to the model.
 

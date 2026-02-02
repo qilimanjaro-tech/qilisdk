@@ -23,10 +23,12 @@ def test_noise_config():
     config = NoiseConfig()
     config.set_gate_time(X, 2.0)
     config.set_gate_time(Y, 3.0)
+    config.set_default_gate_time(1.5)
 
     assert np.isclose(config.get_gate_time(X), 2.0)
     assert np.isclose(config.get_gate_time(Y), 3.0)
-    assert np.isclose(config.get_gate_time(Z), config.default_gate_time)
+    assert np.isclose(config.get_gate_time(Z), 1.5)
+    assert np.isclose(config.default_gate_time, 1.5)
     assert len(config._gate_times) == 2
 
     nm = NoiseModel(noise_config=config)
@@ -34,3 +36,6 @@ def test_noise_config():
 
     with pytest.raises(ValueError, match="Execution time must be positive"):
         config.set_gate_time(X, -1.0)
+
+    with pytest.raises(ValueError, match="Default execution time must be positive"):
+        config.set_default_gate_time(-1.0)

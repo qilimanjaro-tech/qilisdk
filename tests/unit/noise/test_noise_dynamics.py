@@ -17,6 +17,7 @@ import pytest
 
 from qilisdk.core import QTensor
 from qilisdk.noise import AmplitudeDamping, Dephasing, LindbladGenerator
+from qilisdk.noise.protocols import AttachmentScope
 from qilisdk.noise.utils import _sigma_plus
 
 
@@ -49,6 +50,12 @@ def test_amplitude_damping_init_lindblad_and_kraus():
 
     noise = AmplitudeDamping(t1=4.0)
     assert np.isclose(noise.t1, 4.0)
+
+    scopes = noise.allowed_scopes()
+    assert AttachmentScope.GLOBAL in scopes
+    assert AttachmentScope.PER_QUBIT in scopes
+    assert AttachmentScope.PER_GATE_TYPE in scopes
+    assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT in scopes
 
     generator = noise.as_lindblad()
     expected_l = 0.5 * np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex)
