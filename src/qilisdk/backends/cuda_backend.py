@@ -117,7 +117,11 @@ class CudaBackend(Backend):
     mapped to CUDA operations via dedicated handler functions.
     """
 
-    def __init__(self, sampling_method: CudaSamplingMethod = CudaSamplingMethod.STATE_VECTOR) -> None:
+    def __init__(
+        self,
+        sampling_method: CudaSamplingMethod = CudaSamplingMethod.STATE_VECTOR,
+        noise_model: NoiseModel | None = None,
+    ) -> None:
         """
         Initialize the CudaBackend.
 
@@ -151,6 +155,7 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
+        self._noise_model = noise_model
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     @property
@@ -334,15 +339,15 @@ class CudaBackend(Backend):
                     for perturbation in perturbations:
                         gate.set_parameters({parameter: perturbation.perturb(gate_parameters[parameter])})
 
-    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
 
         # Apply parameter perturbations
-        if noise_model:
-            self._handle_gate_parameter_perturbations(functional.circuit, noise_model)
+        if self._noise_model:
+            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
@@ -359,10 +364,10 @@ class CudaBackend(Backend):
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
-        if noise_model:
-            cuda_noise_model = self._noise_model_to_cudaq(noise_model, functional.circuit.nqubits)
+        if self._noise_model:
+            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
-            cudaq_result = self._handle_readout_errors(cudaq_result, noise_model, functional.circuit.nqubits)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
         else:
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
@@ -474,15 +479,13 @@ class CudaBackend(Backend):
             new_operator_sum = ScalarOperator(0.0)
         return new_operator_sum
 
-    def _execute_time_evolution(
-        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
-    ) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
 
         # Apply parameter perturbations
-        if noise_model and noise_model.global_perturbations:
-            self._handle_schedule_parameter_perturbations(functional.schedule, noise_model)
+        if self._noise_model and self._noise_model.global_perturbations:
+            self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
 
         steps = functional.schedule.tlist
 
@@ -512,9 +515,9 @@ class CudaBackend(Backend):
         # Add noise
         jump_operators: list[OperatorSum] = []
         hamiltonian_deltas: list[OperatorSum] = []
-        if noise_model:
+        if self._noise_model:
             jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
-                noise_model, functional.schedule.nqubits, functional.schedule.dt
+                self._noise_model, functional.schedule.nqubits, functional.schedule.dt
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas

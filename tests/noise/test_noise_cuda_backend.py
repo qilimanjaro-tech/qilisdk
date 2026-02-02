@@ -65,8 +65,8 @@ def test_cuda_backend_bit_flip_sampling():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0))
 
-    backend = CudaBackend()
-    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100))
 
     assert result.samples == {"0": 100}
 
@@ -80,8 +80,8 @@ def test_cuda_backend_bit_flip_two_qubits_sampling():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
-    backend = CudaBackend()
-    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100))
 
     assert result.samples == {"01": 100}
 
@@ -98,8 +98,8 @@ def test_cuda_backend_bit_flip_only_identity():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), gate=I)
 
-    backend = CudaBackend()
-    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100))
 
     assert result.samples == {"11": 100}
 
@@ -116,8 +116,8 @@ def test_cuda_backend_bit_flip_global():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0))
 
-    backend = CudaBackend()
-    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100))
 
     assert result.samples == {"11": 100}
 
@@ -136,8 +136,8 @@ def test_cuda_backend_bit_flip_gate_and_qubit():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), gate=I, qubits=[1])
 
-    backend = CudaBackend()
-    result = backend.execute(Sampling(circuit, nshots=100), noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(Sampling(circuit, nshots=100))
 
     assert result.samples == {"01": 100}
 
@@ -155,8 +155,8 @@ def test_cuda_backend_static_kraus_sampling():
     noise_model = NoiseModel()
     noise_model.add(PauliChannel(pX=1.0))
 
-    backend = CudaBackend()
-    result = backend.execute(sampler, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(sampler)
 
     assert result.samples == {"1": shots}
 
@@ -174,8 +174,8 @@ def test_cuda_backend_gate_parameter_perturbation():
     noise_model = NoiseModel()
     noise_model.add(OffsetPerturbation(offset=np.pi), gate=RX, parameter="theta")
 
-    backend = CudaBackend()
-    result = backend.execute(sampler, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(sampler)
 
     assert result.samples == {"1": shots}
 
@@ -202,8 +202,8 @@ def test_cuda_backend_time_evolution_amplitude_damping():
     noise_model = NoiseModel()
     noise_model.add(AmplitudeDamping(t1=0.1))
 
-    backend = CudaBackend()
-    result = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(time_evolution)
 
     assert result.final_expected_values[0] > 0.9
 
@@ -231,8 +231,8 @@ def test_cuda_backend_time_evolution_dephasing():
     noise_model = NoiseModel()
     noise_model.add(Dephasing(t_phi=0.1))
 
-    backend = CudaBackend()
-    result = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(time_evolution)
 
     assert abs(result.final_expected_values[0]) < 0.1
 
@@ -261,8 +261,8 @@ def test_cuda_backend_schedule_parameter_perturbation():
     noise_model = NoiseModel()
     noise_model.add(OffsetPerturbation(offset=1.0), parameter="g")
 
-    backend = CudaBackend()
-    result = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(time_evolution)
 
     assert result.final_expected_values[0] < -0.8
 
@@ -286,8 +286,8 @@ def test_depolarizing_cuda():
     nm.add(Depolarizing(probability=p), qubits=[0], gate=X)
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     # With a probability p, the |1> state should flip to |0> or |1> with equal chance
     prob_10 = res.samples.get("00", 0) / shots
@@ -316,8 +316,8 @@ def test_digital_dephasing_cuda():
     nm.add(Dephasing(t_phi=t_phi), qubits=[0])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     # With a probability p, the |+> state should flip to |-> (which maps to |1> after the basis change)
     prob_10 = res.samples.get("10", 0) / shots
@@ -344,8 +344,8 @@ def test_amplitude_damping_cuda():
     nm.add(AmplitudeDamping(t1=t1), qubits=[0])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     # With a probability gamma, the |1> state should decay to |0>
     prob_00 = res.samples.get("00", 0) / shots
@@ -374,8 +374,8 @@ def test_kraus_noise_single_qubit_cuda():
     nm.add(KrausChannel(operators=kraus_ops), qubits=[1])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     # With a probability p, the |1> state should flip to |0>
     prob_10 = res.samples.get("10", 0) / shots
@@ -406,8 +406,8 @@ def test_kraus_noise_two_qubit_cuda():
     nm.add(KrausChannel(operators=kraus_ops))
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     # With a probability p, the |11> state should flip to |00>
     prob_00 = res.samples.get("00", 0) / shots
@@ -450,8 +450,8 @@ def test_analog_dissapation_cuda():
     noise_model.add(LindbladGenerator(jump_operators=[op], rates=[rate]), qubits=[0])
 
     # Execute with the backend
-    backend = CudaBackend()
-    results = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    results = backend.execute(time_evolution)
 
     assert results.final_expected_values[0] > -0.8
 
@@ -490,8 +490,8 @@ def test_analog_amplitude_damping_cuda():
     noise_model.add(AmplitudeDamping(t1=t1), qubits=[0])
 
     # Execute with the backend
-    backend = CudaBackend()
-    results = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    results = backend.execute(time_evolution)
 
     assert results.final_expected_values[0] > -0.8
 
@@ -530,8 +530,8 @@ def test_analog_dephasing_cuda():
     noise_model.add(Dephasing(t_phi=t_phi), qubits=[0])
 
     # Execute with the backend
-    backend = CudaBackend()
-    results = backend.execute(time_evolution, noise_model=noise_model)
+    backend = CudaBackend(noise_model=noise_model)
+    results = backend.execute(time_evolution)
 
     assert results.final_expected_values[0] > -0.8
 
@@ -554,8 +554,8 @@ def test_readout_error_cuda_01():
     nm.add(ReadoutAssignment(p01=1.0, p10=0.0), qubits=[0])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     assert res.samples == {"1": shots}
 
@@ -578,7 +578,7 @@ def test_readout_error_cuda_10():
     nm.add(ReadoutAssignment(p01=0.0, p10=1.0), qubits=[0])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
 
     assert res.samples == {"0": shots}

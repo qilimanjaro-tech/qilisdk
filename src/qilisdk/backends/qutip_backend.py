@@ -83,6 +83,7 @@ class QutipBackend(Backend):
         Args:
             nsteps (int): The maximum number of internal steps for the ODE solver."""
         self.nsteps = nsteps
+        self._noise_model: NoiseModel | None = None
 
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -103,7 +104,7 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -121,7 +122,7 @@ class QutipBackend(Backend):
         logger.info("Executing Sampling (shots={})", functional.nshots)
 
         # If we have a noise model, log a warning that it's not supported
-        if noise_model is not None:
+        if self._noise_model is not None:
             logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
@@ -164,9 +165,7 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    def _execute_time_evolution(
-        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
-    ) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -180,7 +179,7 @@ class QutipBackend(Backend):
         """
 
         # If we have a noise model, log a warning that it's not supported
-        if noise_model is not None:
+        if self._noise_model is not None:
             logger.warning("Noise models are not yet implemented for the Qutip backend.")
 
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
