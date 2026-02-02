@@ -18,6 +18,7 @@
 #include "../libs/pybind.h"
 #include "../utils/random.h"
 #include "sampling.h"
+#include "../noise/noise_model.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -28,6 +29,7 @@ void sampling(const std::vector<Gate>& gates,
               int n_qubits, 
               int n_shots, 
               const SparseMatrix& initial_state,
+              NoiseModelCpp& noise_model_cpp,
               DenseMatrix& state,
               std::map<std::string, int>& counts, 
               const QiliSimConfig& config) {
@@ -40,6 +42,7 @@ void sampling(const std::vector<Gate>& gates,
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
         initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
         state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
         counts (std::map<std::string, int>&): A map to store the measurement counts.
         config (QiliSimConfig): The simulation configuration.
@@ -55,8 +58,8 @@ void sampling(const std::vector<Gate>& gates,
 
     // Set the number of threads
 #if defined(_OPENMP)
-    omp_set_num_threads(config.num_threads);
-    Eigen::setNbThreads(config.num_threads);
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
 #endif
 
     // Start with the zero state
@@ -69,16 +72,16 @@ void sampling(const std::vector<Gate>& gates,
     if (!is_statevector) {
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
-        if (std::abs(trace_squared - 1.0) < config.atol) {
+        if (std::abs(trace_squared - 1.0) < config.get_atol()) {
             state = get_vector_from_density_matrix(state.sparseView());
             is_statevector = true;
         }
     }
 
     // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.monte_carlo);
+    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
     if (monte_carlo) {
-        state = sample_from_density_matrix(state.sparseView(), config.num_monte_carlo_trajectories, config.seed);
+        state = sample_from_density_matrix(state.sparseView(), config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
     // Determine the start/end use of each gate
@@ -93,11 +96,11 @@ void sampling(const std::vector<Gate>& gates,
     }
 
     // Pre-cache up to the limit (in parallel)
-    int initial_cache_size = std::min(int(gates.size()), config.max_cache_size);
+    int initial_cache_size = std::min(int(gates.size()), config.get_max_cache_size());
     std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
 Eigen::setNbThreads(1);
-omp_set_num_threads(config.num_threads);
+omp_set_num_threads(config.get_num_threads());
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
@@ -107,8 +110,8 @@ omp_set_num_threads(config.num_threads);
         precomputed_gates[i] = std::make_pair(gate_id, gate_matrix);
     }
 #if defined(_OPENMP)
-Eigen::setNbThreads(config.num_threads);
-omp_set_num_threads(config.num_threads);
+Eigen::setNbThreads(config.get_num_threads());
+omp_set_num_threads(config.get_num_threads());
 #endif
 
     // Convert pre-cached gates to a map for easier access (in serial)
@@ -135,7 +138,7 @@ omp_set_num_threads(config.num_threads);
         }
 
         // If it will be used again later and we have space, cache it
-        if (gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < config.max_cache_size) {
+        if (gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < config.get_max_cache_size()) {
             gate_cache[gate_id] = gate_matrix;
         }
 
@@ -187,14 +190,14 @@ omp_set_num_threads(config.num_threads);
     }
 
     // Make sure probabilities sum to 1
-    if (std::abs(total_prob - 1.0) > config.atol) {
+    if (std::abs(total_prob - 1.0) > config.get_atol()) {
         std::stringstream ss;
         ss << std::setprecision(15) << total_prob;
         throw py::value_error("Probabilities do not sum to 1 (sum = " + ss.str() + ")");
     }
 
     // Sample from these probabilities
-    counts = sample_from_probabilities(probabilities, n_qubits, n_shots, config.seed);
+    counts = sample_from_probabilities(probabilities, n_qubits, n_shots, config.get_seed());
 
     // Only keep measured qubits in the counts
     std::map<std::string, int> filtered_counts;

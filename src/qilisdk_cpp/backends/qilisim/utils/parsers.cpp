@@ -36,24 +36,20 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
     return hamiltonians;
 }
 
-std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double atol) {
+NoiseModelCpp parse_noise_model(const py::object& noise_model) {
     /*
-    Extract jump operator matrices from a list of QTensor objects.
+    Extract a NoiseModelCpp from a NoiseModel object.
 
     Args:
-        jumps (py::object): A list of QTensor jump operators.
+        noise_model (py::object): A NoiseModel object containing kraus operators.
+        nqubits (int): The total number of qubits.
         atol (double): Absolute tolerance for numerical operations.
 
     Returns:
-        std::vector<SparseMatrix>: The list of jump operator sparse matrices.
+        NoiseModelCpp: The parsed noise model.
     */
-    std::vector<SparseMatrix> jump_matrices;
-    for (auto jump : jumps) {
-        py::object spm = jump.attr("to_matrix")();
-        SparseMatrix J = from_spmatrix(spm, atol);
-        jump_matrices.push_back(J);
-    }
-    return jump_matrices;
+    NoiseModelCpp noise_model_cpp;
+    return noise_model_cpp;
 }
 
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol) {
@@ -277,37 +273,37 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     */
     QiliSimConfig config;
     if (solver_params.contains("max_cache_size")) {
-        config.max_cache_size = solver_params["max_cache_size"].cast<int>();
+        config.set_max_cache_size(solver_params["max_cache_size"].cast<int>());
     }
     if (solver_params.contains("seed")) {
-        config.seed = solver_params["seed"].cast<int>();
+        config.set_seed(solver_params["seed"].cast<int>());
     }
     if (solver_params.contains("atol")) {
-        config.atol = solver_params["atol"].cast<double>();
+        config.set_atol(solver_params["atol"].cast<double>());
     }
     if (solver_params.contains("arnoldi_dim")) {
-        config.arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
+        config.set_arnoldi_dim(solver_params["arnoldi_dim"].cast<int>());
     }
     if (solver_params.contains("num_arnoldi_substeps")) {
-        config.num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
+        config.set_num_arnoldi_substeps(solver_params["num_arnoldi_substeps"].cast<int>());
     }
     if (solver_params.contains("num_integrate_substeps")) {
-        config.num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
+        config.set_num_integrate_substeps(solver_params["num_integrate_substeps"].cast<int>());
     }
     if (solver_params.contains("evolution_method")) {
-        config.method = solver_params["evolution_method"].cast<std::string>();
+        config.set_method(solver_params["evolution_method"].cast<std::string>());
     }
     if (solver_params.contains("monte_carlo")) {
-        config.monte_carlo = solver_params["monte_carlo"].cast<bool>();
+        config.set_monte_carlo(solver_params["monte_carlo"].cast<bool>());
     }
     if (solver_params.contains("num_monte_carlo_trajectories")) {
-        config.num_monte_carlo_trajectories = solver_params["num_monte_carlo_trajectories"].cast<int>();
+        config.set_num_monte_carlo_trajectories(solver_params["num_monte_carlo_trajectories"].cast<int>());
     }
     if (solver_params.contains("num_threads")) {
-        config.num_threads = solver_params["num_threads"].cast<int>();
+        config.set_num_threads(solver_params["num_threads"].cast<int>());
     }
-    if (config.num_threads <= 0) {
-        config.num_threads = 1;
+    if (config.get_num_threads() <= 0) {
+        config.set_num_threads(1);
     }
     config.validate();
     return config;

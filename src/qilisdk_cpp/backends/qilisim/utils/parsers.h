@@ -16,9 +16,10 @@
 #include "../digital/gate.h"
 #include "../qilisim.h"
 #include "../config/qilisim_config.h"
+#include "../noise/noise_model.h"
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
-std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double atol);
+NoiseModelCpp parse_noise_model(const py::object& noise_model);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<std::vector<double>> parse_parameters(const py::object& coeffs);
 std::vector<double> parse_time_steps(const py::object& steps);

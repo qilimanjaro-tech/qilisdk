@@ -19,6 +19,7 @@
 #include "digital/sampling.h"
 #include "utils/numpy.h"
 #include "utils/parsers.h"
+#include "noise/noise_model.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -68,8 +69,9 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     }
 
     // Parse the Python objects into C++ objects
-    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.atol);
+    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol());
     std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model);
 
     // The initial state
     long dim = 1L << n_qubits;
@@ -79,13 +81,13 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         initial_state_cpp.coeffRef(0, 0) = 1.0;
         initial_state_cpp.makeCompressed();
     } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.atol);
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
     }
 
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
     DenseMatrix state;
-    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, state, counts, config);
+    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
 
     // Convert counts to samples dict
     py::dict samples;
@@ -144,20 +146,20 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
     if (functional.attr("store_intermediate_results").cast<bool>()) {
-        config.store_intermediate_results = true;
+        config.set_store_intermediate_results(true);
     }
 
     // Convert to C++ objects
-    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.atol);
+    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
     if (hamiltonians.size() == 0) {
         throw py::value_error("At least one Hamiltonian must be provided");
     }
     int nqubits = static_cast<int>(std::log2(hamiltonians[0].rows()));
-    std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.atol);
+    std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
     std::vector<std::vector<double>> parameters_list = parse_parameters(coeffs);
-    std::vector<SparseMatrix> jump_operators;
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model);
     std::vector<double> step_list = parse_time_steps(steps);
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.atol);
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
 
     // Sanity checks
     if (step_list.size() == 0) {
@@ -177,7 +179,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     SparseMatrix rho_t;
     std::vector<double> expectation_values;
     std::vector<std::vector<double>> intermediate_expectation_values;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, jump_operators, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
 
     // Convert things to numpy arrays
     py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);
@@ -186,7 +188,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     // Also convert intermediates if needed
     py::list intermediate_rho_numpy;
     py::array_t<double> intermediate_expect_numpy;
-    if (config.store_intermediate_results) {
+    if (config.get_store_intermediate_results()) {
         for (const auto& rho_intermediate : intermediate_rhos) {
             py::array_t<std::complex<double>> rho_step_numpy = to_numpy(rho_intermediate);
             intermediate_rho_numpy.append(QTensor(rho_step_numpy));
