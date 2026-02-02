@@ -22,6 +22,9 @@ from qilisdk.core.variables import Parameter
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
+from qilisdk.settings import get_settings
+
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 # ------------------------------------------------------------------------------
@@ -41,13 +44,13 @@ def assert_matrix_equal(actual: np.ndarray, expected: np.ndarray, rtol=1e-7, ato
 @pytest.mark.parametrize(
     ("gate_class", "expected_name", "expected_matrix"),
     [
-        (I, "I", np.array([[1, 0], [0, 1]], dtype=complex)),
-        (X, "X", np.array([[0, 1], [1, 0]], dtype=complex)),
-        (Y, "Y", np.array([[0, -1j], [1j, 0]], dtype=complex)),
-        (Z, "Z", np.array([[1, 0], [0, -1]], dtype=complex)),
-        (S, "S", np.array([[1, 0], [0, 1j]], dtype=complex)),
-        (T, "T", np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)),
-        (H, "H", (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)),
+        (I, "I", np.array([[1, 0], [0, 1]], dtype=COMPLEX_DTYPE)),
+        (X, "X", np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)),
+        (Y, "Y", np.array([[0, -1j], [1j, 0]], dtype=COMPLEX_DTYPE)),
+        (Z, "Z", np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)),
+        (S, "S", np.array([[1, 0], [0, 1j]], dtype=COMPLEX_DTYPE)),
+        (T, "T", np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=COMPLEX_DTYPE)),
+        (H, "H", (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=COMPLEX_DTYPE)),
     ],
 )
 def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_matrix: np.ndarray):
@@ -119,7 +122,7 @@ def test_rx_gate(angle: float):
 
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
-    expected_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+    expected_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
     assert gate.target_qubits == (qubit,)
     assert gate.control_qubits == ()
@@ -163,7 +166,7 @@ def test_ry_gate(angle: float):
 
     cos_half = np.cos(angle / 2)
     sin_half = np.sin(angle / 2)
-    expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+    expected_matrix = np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -202,7 +205,7 @@ def test_rz_gate(angle: float):
 
     # The file's RZ uses the same form as RY in the code.
     # That might be a placeholder, but let's test correctness.
-    expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=complex)
+    expected_matrix = np.array([[np.exp(-0.5j * angle), 0.0], [0.0, np.exp(0.5j * angle)]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -242,7 +245,7 @@ def test_u1_gate(angle: float):
     assert gate.is_parameterized is True
     assert gate.nparameters == 1
 
-    expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=complex)
+    expected_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -346,7 +349,7 @@ def test_u2_gate_term():
     c = np.exp(1j * phi)
     d = np.exp(1j * (phi + gamma))
 
-    expected_matrix = factor * np.array([[a, b], [c, d]], dtype=complex)
+    expected_matrix = factor * np.array([[a, b], [c, d]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -430,7 +433,7 @@ def test_u3_gate_term():
     c = np.exp(1j * phi) * np.sin(theta / 2)
     d = np.exp(1j * (phi + gamma)) * np.cos(theta / 2)
 
-    expected_matrix = np.array([[a, b], [c, d]], dtype=complex)
+    expected_matrix = np.array([[a, b], [c, d]], dtype=COMPLEX_DTYPE)
 
     assert_matrix_equal(gate.matrix, expected_matrix)
 
@@ -478,7 +481,7 @@ def test_cnot_gate(control: int, target: int):
     assert gate.qubits == (control, target)
 
     # Check matrix
-    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -518,7 +521,7 @@ def test_cz_gate(control, target):
 
     # Check matrix
     # This is as coded, though it's unusual for a CZ gate:
-    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex)
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -555,7 +558,7 @@ def test_swap_gate(qubit_a, qubit_b):
     assert gate.qubits == (qubit_a, qubit_b)
 
     # Check matrix
-    expected_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=COMPLEX_DTYPE)
     assert_matrix_equal(gate.matrix, expected_matrix)
 
 
@@ -652,7 +655,7 @@ def test_controlled_gate_single_control():
     # P = [[0, 0],
     #      [0, 1]] and I₂ is the 2x2 identity.
     # This results in:
-    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+    expected_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=COMPLEX_DTYPE)
 
     assert_matrix_equal(controlled_gate.matrix, expected_matrix)
 
@@ -685,10 +688,10 @@ def test_controlled_gate_multiple_controls():
     # I₈ + kron(P, (H - I₂)) where P = kron([[0,0],[0,1]], [[0,0],[0,1]])
     # For two controls, P is a 4x4 matrix that is all zeros except for a 1 in the bottom-right position.
     # Thus, the lower-right 2x2 block of I₈ is replaced with H.
-    expected_matrix = np.eye(8, dtype=complex)
-    H_matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+    expected_matrix = np.eye(8, dtype=COMPLEX_DTYPE)
+    h_matrix = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=COMPLEX_DTYPE)
     # The block corresponding to the control state |11> is at indices 6 and 7.
-    expected_matrix[6:8, 6:8] = H_matrix
+    expected_matrix[6:8, 6:8] = h_matrix
     assert_matrix_equal(controlled_gate.matrix, expected_matrix)
 
 
@@ -713,11 +716,11 @@ def test_controlled_gate_parameter_update():
     # Compute the updated RX matrix.
     cos_half = np.cos(new_theta / 2)
     sin_half = np.sin(new_theta / 2)
-    rx_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+    rx_matrix = np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=COMPLEX_DTYPE)
 
     # For a single control, the expected controlled matrix is:
     # I₄ with the lower-right 2x2 block replaced by the updated RX matrix.
-    expected_matrix = np.eye(4, dtype=complex)
+    expected_matrix = np.eye(4, dtype=COMPLEX_DTYPE)
     expected_matrix[2:4, 2:4] = rx_matrix
     assert_matrix_equal(controlled_gate.matrix, expected_matrix)
 
