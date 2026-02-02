@@ -16,6 +16,7 @@ from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
+import numpy as np
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,6 +29,20 @@ class Precision(str, Enum):
     COMPLEX_64 = "COMPLEX_64"
     COMPLEX_128 = "COMPLEX_128"
 
+    @property
+    def dtype(self) -> np.dtype:
+        """
+        Resolve the numpy dtype associated with this complex precision.
+
+        Returns:
+            np.dtype: The corresponding numpy complex dtype.
+        """
+        match self:
+            case Precision.COMPLEX_64:
+                return np.complex64  # type: ignore[return-value]
+            case _:
+                return np.complex128  # type: ignore[return-value]
+
 
 class QiliSDKSettings(BaseSettings):
     """
@@ -39,9 +54,7 @@ class QiliSDKSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8")
 
-    arithmetic_precision: Precision = Field(
-        default=Precision.COMPLEX_128, description="[env: QILISDK_ARITHMETIC_PRECISION]"
-    )
+    complex_precision: Precision = Field(default=Precision.COMPLEX_128, description="[env: QILISDK_COMPLEX_PRECISION]")
     logging_config_path: Path = Field(
         default_factory=default_logging_config_path,
         description="YAML file used for logging configuration. [env: QILISDK_LOGGING_CONFIG_PATH]",

@@ -34,11 +34,36 @@ from qilisdk.analog.hamiltonian import (
 )
 from qilisdk.core import Domain, Parameter, QTensor, Variable
 from qilisdk.core.variables import BinaryVariable
+from qilisdk.settings import Precision, get_settings
+
+COMPLEX_DTYPE = get_settings().complex_precision.dtype
 
 
 # Helper function to convert sparse matrix to dense NumPy array.
 def dense(ham: Hamiltonian) -> np.ndarray:
     return ham.to_matrix().toarray()
+
+
+def test_pauli_matrix_dtype_updates_with_settings_change():
+    settings = get_settings()
+    original_precision = settings.complex_precision
+    try:
+        settings.complex_precision = Precision.COMPLEX_128
+        assert PauliX(0).matrix.dtype == np.dtype(np.complex128)
+        settings.complex_precision = Precision.COMPLEX_64
+        assert PauliX(0).matrix.dtype == np.dtype(np.complex64)
+    finally:
+        settings.complex_precision = original_precision
+
+
+def test_hamiltonian_matrix_dtype_updates_with_settings_change():
+    settings = get_settings()
+    original_precision = settings.complex_precision
+    settings.complex_precision = Precision.COMPLEX_128
+    assert Z(0).to_matrix().dtype == np.dtype(np.complex128)
+    settings.complex_precision = Precision.COMPLEX_64
+    assert Z(0).to_matrix().dtype == np.dtype(np.complex64)
+    settings.complex_precision = original_precision
 
 
 def test_parameters():
@@ -186,7 +211,7 @@ def test_hamiltonian_rmul(hamiltonian_rhs, hamiltonian_lhs, expected_hamiltonian
 
 class MockPauli(PauliOperator):
     _NAME: ClassVar[str] = "M"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=COMPLEX_DTYPE)
 
     def __init__(self, qubit: int):
         super().__init__(qubit)
@@ -322,13 +347,13 @@ def test_parse_value_error():
     ("hamiltonian", "expected"),
     [
         # Identity Hamiltonian on qubit 0.
-        (PauliI(0).to_hamiltonian(), np.eye(2, dtype=complex)),
+        (PauliI(0).to_hamiltonian(), np.eye(2, dtype=COMPLEX_DTYPE)),
         # 2 * Z operator: 2*[[1, 0],[0, -1]]
-        (2 * PauliZ(0).to_hamiltonian(), 2 * np.array([[1, 0], [0, -1]], dtype=complex)),
+        (2 * PauliZ(0).to_hamiltonian(), 2 * np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)),
         # Sum of 0.5*Z and 1*X: 0.5*[[1, 0],[0, -1]] + [[0, 1],[1, 0]]
         (
             0.5 * Z(0) + X(0),
-            0.5 * np.array([[1, 0], [0, -1]], dtype=complex) + np.array([[0, 1], [1, 0]], dtype=complex),
+            0.5 * np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE) + np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE),
         ),
     ],
 )
@@ -339,7 +364,7 @@ def test_to_matrix_single_qubit(hamiltonian: Hamiltonian, expected: np.ndarray):
 def test_to_matrix_zero_hamiltonian():
     """An empty Hamiltonian should produce a zero matrix."""
     H = Hamiltonian()
-    expected = np.zeros((1, 1), dtype=complex)
+    expected = np.zeros((1, 1), dtype=COMPLEX_DTYPE)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
 
@@ -352,8 +377,8 @@ def test_to_matrix_two_qubit_single_term():
     should return the correct Kronecker product.
     """
     H = Hamiltonian({(PauliZ(0), PauliX(1)): 2})
-    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
     expected = 2 * np.kron(z_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
@@ -364,9 +389,9 @@ def test_to_matrix_two_qubit_multiple_terms():
     the matrix representation should be the sum of the two Kronecker products.
     """
     H = 0.5 * PauliZ(0).to_hamiltonian() + 1.5 * PauliX(1).to_hamiltonian()
-    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    i_matrix = np.eye(2, dtype=complex)
-    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    i_matrix = np.eye(2, dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
     expected = 0.5 * np.kron(z_matrix, i_matrix) + 1.5 * np.kron(i_matrix, x_matrix)
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
 
@@ -381,11 +406,51 @@ def test_to_matrix_three_qubit():
     The full Hamiltonian should be embedded as I ⊗ Z ⊗ X.
     """
     H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
-    I2 = np.eye(2, dtype=complex)
-    z_matrix = np.array([[1, 0], [0, -1]], dtype=complex)
-    x_matrix = np.array([[0, 1], [1, 0]], dtype=complex)
+    I2 = np.eye(2, dtype=COMPLEX_DTYPE)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
     expected = 3 * np.kron(I2, np.kron(z_matrix, x_matrix))
     np.testing.assert_allclose(dense(H), expected, atol=1e-8)
+
+
+# --- QTensor Tests ---
+
+
+def test_to_qtensor_matches_to_matrix():
+    H = 0.75 * Z(0) + (1.25 - 0.5j) * (X(1) * Y(2))
+    tensor = H.to_qtensor()
+
+    np.testing.assert_allclose(tensor.dense(), dense(H), atol=1e-8)
+    assert tensor.nqubits == H.nqubits
+
+
+def test_to_qtensor_with_padding():
+    H = Hamiltonian({(PauliZ(1), PauliX(2)): 3})
+    tensor = H.to_qtensor(total_nqubits=4)
+
+    I2 = np.eye(2, dtype=COMPLEX_DTYPE)
+    z_matrix = np.array([[1, 0], [0, -1]], dtype=COMPLEX_DTYPE)
+    x_matrix = np.array([[0, 1], [1, 0]], dtype=COMPLEX_DTYPE)
+    expected = 3 * np.kron(np.kron(np.kron(I2, z_matrix), x_matrix), I2)
+
+    np.testing.assert_allclose(tensor.dense(), expected, atol=1e-8)
+    assert tensor.nqubits == 4
+
+
+def test_apply_operator():
+    h = Hamiltonian({(PauliZ(0),): 1})
+    with pytest.raises(ValueError, match=r"The list should not contain multiple operators acting on the same qubit."):
+        h._apply_operator_on_qubit(terms=[PauliZ(1), PauliZ(1)])
+    h_empty = Hamiltonian()
+    empty_result = h_empty._apply_operator_on_qubit(terms=[])
+    assert empty_result.shape == (1, 1)
+
+
+def test_to_qtensor_raises_when_total_qubits_smaller():
+    H = Hamiltonian({(PauliZ(1),): 1})
+
+    with pytest.raises(ValueError, match=r"total number of qubits can't be less than the number"):
+        H.to_qtensor(total_nqubits=1)
 
 
 # ------ Hamiltonian Simplification Test -------

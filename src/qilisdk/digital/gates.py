@@ -22,6 +22,7 @@ from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import Parameter, Term
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 from .exceptions import (
@@ -32,6 +33,10 @@ from .exceptions import (
 )
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
 
 
 class Gate(Parameterizable, ABC):
@@ -417,15 +422,15 @@ class Controlled(Modified[TBasicGate]):
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
-        I_full = np.eye(1 << self.nqubits, dtype=complex)
+        i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
-        P = np.array([[0, 0], [0, 1]], dtype=complex)
+        P = np.array([[0, 0], [0, 1]], dtype=_complex_dtype())
         for _ in range(len(self.control_qubits) - len(self.basic_gate.control_qubits) - 1):
-            P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=complex))
+            P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=_complex_dtype()))
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
-        I_target = np.eye(1 << self.basic_gate.nqubits, dtype=complex)
+        i_target = np.eye(1 << self.basic_gate.nqubits, dtype=_complex_dtype())
         # The controlled gate is then:
-        controlled = I_full + np.kron(P, self.basic_gate.matrix - I_target)
+        controlled = i_full + np.kron(P, self.basic_gate.matrix - i_target)
         return controlled
 
     @property
@@ -550,7 +555,7 @@ class I(BasicGate):
         return "I"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, 1]], dtype=complex)
+        return np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -582,7 +587,7 @@ class X(BasicGate):
         return "X"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[0, 1], [1, 0]], dtype=complex)
+        return np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -614,7 +619,7 @@ class Y(BasicGate):
         return "Y"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[0, -1j], [1j, 0]], dtype=complex)
+        return np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -646,7 +651,7 @@ class Z(BasicGate):
         return "Z"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, -1]], dtype=complex)
+        return np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -678,7 +683,7 @@ class H(BasicGate):
         return "H"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+        return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -710,7 +715,7 @@ class S(BasicGate):
         return "S"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, 1j]], dtype=complex)
+        return np.array([[1, 0], [0, 1j]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -742,7 +747,7 @@ class T(BasicGate):
         return "T"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex)
+        return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype())
 
 
 def _process_param(
@@ -833,7 +838,7 @@ class RX(BasicGate):
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -895,7 +900,7 @@ class RY(BasicGate):
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=complex)
+        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -963,7 +968,7 @@ class RZ(BasicGate):
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
-        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
+        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -1026,7 +1031,7 @@ class U1(BasicGate):
 
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
-        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
+        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
 
 
 @yaml.register_class
@@ -1110,7 +1115,7 @@ class U2(BasicGate):
                 [1, -np.exp(1j * gamma)],
                 [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
 
 
@@ -1216,7 +1221,7 @@ class U3(BasicGate):
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
 
 
@@ -1300,4 +1305,4 @@ class SWAP(BasicGate):
         return "SWAP"
 
     def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
+        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype())

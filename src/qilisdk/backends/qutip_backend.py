@@ -32,6 +32,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals.sampling import Sampling
@@ -44,6 +45,10 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[QubitCircuit, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], Qobj]]
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
 
 
 class QutipI(SingleQubitGate):
@@ -189,7 +194,10 @@ class QutipBackend(Backend):
         H_t = [
             [
                 qutip_hamiltonians[i],
-                np.array([functional.schedule.coefficients[h][t] for t in steps]),
+                np.array(
+                    [functional.schedule.coefficients[h][t] for t in steps],
+                    dtype=_complex_dtype(),
+                ),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
@@ -250,13 +258,17 @@ class QutipBackend(Backend):
 
         logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
-            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),  # ty:ignore[not-subscriptable]
+            final_expected_values=np.array(
+                [results.expect[i][-1] for i in range(len(qutip_obs))],  # ty:ignore[not-subscriptable]
+                dtype=_complex_dtype(),
+            ),
             expected_values=(
                 np.array(
                     [
                         [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
                         for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
-                    ]
+                    ],
+                    dtype=_complex_dtype(),
                 )
                 if len(results.expect) > 0 and functional.store_intermediate_results
                 else None
@@ -418,7 +430,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _qutip_U1(phi: float) -> Qobj:
-        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
+        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
         return Qobj(mat, dims=[[2], [2]])
 
     @staticmethod
@@ -439,7 +451,7 @@ class QutipBackend(Backend):
                 [1, -np.exp(1j * gamma)],
                 [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
         return Qobj(mat, dims=[[2], [2]])
 
@@ -462,7 +474,7 @@ class QutipBackend(Backend):
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
         return Qobj(mat, dims=[[2], [2]])
 
