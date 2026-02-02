@@ -19,4 +19,11 @@
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 
-void sampling(std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, QiliSimConfig& config, std::map<std::string, int>& counts);
+void sampling(const std::vector<Gate>& gates, 
+              const std::vector<bool>& qubits_to_measure, 
+              int n_qubits, 
+              int n_shots, 
+              const SparseMatrix& initial_state,
+              DenseMatrix& state,
+              std::map<std::string, int>& counts,
+              const QiliSimConfig& config);
