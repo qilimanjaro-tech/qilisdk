@@ -122,6 +122,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -148,6 +149,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -158,6 +160,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -168,10 +171,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -192,11 +195,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
@@ -205,6 +221,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -213,12 +230,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -236,6 +253,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
       </li>
@@ -466,7 +486,7 @@
 </span><span id="line-154">        <span class="c1">#   Group 1: gate name (e.g., &quot;h&quot;, &quot;rx&quot;, &quot;cx&quot;)</span>
 </span><span id="line-155">        <span class="c1">#   Group 2: optional parameters (inside parentheses)</span>
 </span><span id="line-156">        <span class="c1">#   Group 3: operand list (e.g., &quot;q[0]&quot; or &quot;q[0], q[1]&quot;)</span>
-</span><span id="line-157">        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(\w+)(?:\(([^)]*)\))?\s+(.+);$&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-157">        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(\w+)(?:\(([^)]*)\))?\s+(.+);&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
 </span><span id="line-158">        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
 </span><span id="line-159">            <span class="n">qasm_gate_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </span><span id="line-160">            <span class="n">params_str</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -492,16 +512,16 @@
 </span><span id="line-180">                <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
 </span><span id="line-181">                    <span class="c1"># Build a dictionary of parameter names to values.</span>
 </span><span id="line-182">                    <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)}</span>
-</span><span id="line-183">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]</span>
+</span><span id="line-183">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>
 </span><span id="line-184">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-185">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># type: ignore[call-arg]</span>
+</span><span id="line-185">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </span><span id="line-186">            <span class="c1"># For two-qubit gates.</span>
 </span><span id="line-187">            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
 </span><span id="line-188">                <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
 </span><span id="line-189">                    <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)}</span>
-</span><span id="line-190">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]</span>
+</span><span id="line-190">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>
 </span><span id="line-191">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-192">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># type: ignore[call-arg]</span>
+</span><span id="line-192">                    <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">gate_class</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 </span><span id="line-193">            <span class="k">else</span><span class="p">:</span>
 </span><span id="line-194">                <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="s2">&quot;Only one- and two-qubit gates are supported.&quot;</span><span class="p">)</span>
 </span><span id="line-195">

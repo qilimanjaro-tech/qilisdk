@@ -91,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -117,6 +118,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -127,6 +129,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -137,10 +140,10 @@
 </ul>
 </li>
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -161,11 +164,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise_models/index.html">qilisdk.noise_models<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -174,6 +190,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -182,12 +199,12 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -200,6 +217,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.8/index.html">0.1.8</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../../../../0.1.7/index.html">0.1.7</a>
 </li>
@@ -264,7 +284,7 @@
 <p>Initialize a Circuit instance with a specified number of qubits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nqubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of qubits in the circuit.</p>
+<dd class="field-odd"><p><strong>nqubits</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of qubits in the circuit.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -360,11 +380,11 @@
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.set_parameters">
-<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.variables.RealNumber</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.set_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.set_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.types.RealNumber</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.set_parameters" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.set_parameters'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Set the parameter values by their label. No need to provide the full list of parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parameter_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">RealNumber]</span></code>) – A dictionary with the labels of the parameters to be modified and their new value.</p>
+<dd class="field-odd"><p><strong>parameters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float]</span></code>) – A dictionary with the labels of the parameters to be modified and their new value.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – if the label provided doesn’t correspond to a parameter defined in this circuit.</p>
@@ -391,14 +411,50 @@
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.add">
-<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.Gate" title="qilisdk.digital.gates.Gate"><span class="pre">qilisdk.digital.gates.Gate</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.add" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.add'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.Gate" title="qilisdk.digital.gates.Gate"><span class="pre">qilisdk.digital.gates.Gate</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.Gate" title="qilisdk.digital.gates.Gate"><span class="pre">qilisdk.digital.gates.Gate</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.add" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.add'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Add a quantum gate to the circuit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>gate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Gate</span></code>) – The quantum gate to add to the circuit.</p>
+<dd class="field-odd"><p><strong>gates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Gate</span> <span class="pre">|</span> <span class="pre">list[Gate]</span></code>) – The quantum gate or a list of quantum gates to be added to the circuit.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.insert">
+<span class="sig-name descname"><span class="pre">insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.Gate" title="qilisdk.digital.gates.Gate"><span class="pre">qilisdk.digital.gates.Gate</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.Gate" title="qilisdk.digital.gates.Gate"><span class="pre">qilisdk.digital.gates.Gate</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.insert" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.insert'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Insert a quantum gate to the circuit at a given index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Gate</span> <span class="pre">|</span> <span class="pre">list[Gate]</span></code>) – The gate or list of gates to be inserted.</p></li>
+<li><p><strong>index</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – The index at which the gate is inserted. Defaults to -1.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><span class="pre">Circuit</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.append" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.append'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Append circuit elements at the end of the current circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>circuit</strong> (<a class="reference internal" href="#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a>) – The circuit to be appended.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="../exceptions/index.html#qilisdk.digital.exceptions.QubitOutOfRangeError" title="qilisdk.digital.exceptions.QubitOutOfRangeError"><strong>QubitOutOfRangeError</strong></a> – If any qubit index used by the gate is not within the circuit’s qubit range.</p>
+<dd class="field-even"><p><a class="reference internal" href="../exceptions/index.html#qilisdk.digital.exceptions.QubitOutOfRangeError" title="qilisdk.digital.exceptions.QubitOutOfRangeError"><strong>QubitOutOfRangeError</strong></a> – If the appended circuit acts on more qubits than the current circuit.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.prepend">
+<span class="sig-name descname"><span class="pre">prepend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><span class="pre">Circuit</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.prepend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.prepend" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.prepend'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Prepend circuit elements to the beginning of the current circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>circuit</strong> (<a class="reference internal" href="#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a>) – The circuit to be prepended.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../exceptions/index.html#qilisdk.digital.exceptions.QubitOutOfRangeError" title="qilisdk.digital.exceptions.QubitOutOfRangeError"><strong>QubitOutOfRangeError</strong></a> – If the circuit to be prepended acts on more qubits than the current circuit.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -417,6 +473,30 @@ If not provided, the default <code class="xref py py-class docutils literal notr
 <li><p><strong>filepath</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Destination file path for the rendered figure.
 If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the figure is not saved.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qilisdk.digital.circuit.Circuit.random">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nqubits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_qubit_gates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.BasicGate" title="qilisdk.digital.gates.BasicGate"><span class="pre">qilisdk.digital.gates.BasicGate</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">two_qubit_gates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../gates/index.html#qilisdk.digital.gates.BasicGate" title="qilisdk.digital.gates.BasicGate"><span class="pre">qilisdk.digital.gates.BasicGate</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ngates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">typing_extensions.Self</span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/digital/circuit.html#Circuit.random"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.digital.circuit.Circuit.random" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.digital.circuit.Circuit.random'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd><p>Generate a random quantum circuit from a given set of gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nqubits</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of qubits in the circuit.</p></li>
+<li><p><strong>single_qubit_gates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">set[Gate]</span></code>) – A set of single-qubit gate classes to choose from.</p></li>
+<li><p><strong>two_qubit_gates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">set[Gate]</span></code>) – A set of two-qubit gate classes to choose from.</p></li>
+<li><p><strong>ngates</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of gates to include in the circuit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A randomly generated quantum circuit.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit">Circuit</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If it is not possible to generate a full random circuit with the provided parameters</p>
 </dd>
 </dl>
 </dd></dl>
@@ -457,7 +537,11 @@ If <code class="docutils literal notranslate"><span class="pre">None</span></cod
 <li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.get_parameter_bounds'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.get_parameter_bounds"><code class="docutils literal notranslate"><span class="pre">Circuit.get_parameter_bounds()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.set_parameter_bounds'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.set_parameter_bounds"><code class="docutils literal notranslate"><span class="pre">Circuit.set_parameter_bounds()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.add'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.add"><code class="docutils literal notranslate"><span class="pre">Circuit.add()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.insert'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.insert"><code class="docutils literal notranslate"><span class="pre">Circuit.insert()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.append'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.append"><code class="docutils literal notranslate"><span class="pre">Circuit.append()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.prepend'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.prepend"><code class="docutils literal notranslate"><span class="pre">Circuit.prepend()</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.draw'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.draw"><code class="docutils literal notranslate"><span class="pre">Circuit.draw()</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.digital.circuit.Circuit.random'" class="reference internal" href="#qilisdk.digital.circuit.Circuit.random"><code class="docutils literal notranslate"><span class="pre">Circuit.random()</span></code></a></li>
 </ul>
 </li>
 </ul>

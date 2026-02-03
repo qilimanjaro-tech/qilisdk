@@ -146,16 +146,14 @@
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
 </ul>
@@ -167,6 +165,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.8/fundamentals/speqtrum.html">0.1.8</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../0.1.7/fundamentals/speqtrum.html">0.1.7</a>
 </li>
@@ -251,7 +252,7 @@ sessions.</p>
 </section>
 <section id="device-catalogue">
 <h2>Device Catalogue<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#device-catalogue" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#device-catalogue'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Devices are represented by <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device" title="qilisdk.speqtrum.speqtrum_models.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></a> models containing the device code, number of
+<p>Devices are represented by <code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code> models containing the device code, number of
 qubits, hardware type, and status. Use <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices" title="qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.list_devices</span></code></a> to enumerate them. An optional <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate allows client-side
 filtering.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span><span class="p">,</span> <span class="n">DeviceStatus</span>
@@ -264,7 +265,7 @@ filtering.</p>
 </section>
 <section id="remote-jobs">
 <h2>Remote Jobs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#remote-jobs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#remote-jobs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs" title="qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.list_jobs</span></code></a> returns lightweight <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo" title="qilisdk.speqtrum.speqtrum_models.JobInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobInfo</span></code></a> records. The <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate works the same way as with devices.</p>
+<p><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs" title="qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.list_jobs</span></code></a> returns lightweight <code class="xref py py-class docutils literal notranslate"><span class="pre">JobInfo</span></code> records. The <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate works the same way as with devices.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpeQtrum</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.speqtrum.speqtrum_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 </span><span id="line-3">
@@ -276,8 +277,8 @@ filtering.</p>
 </div>
 <p>To inspect complete job metadata (payload, result, logs, decoded errors) call
 <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details" title="qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpeQtrum.get_job_details</span></code></a>. Binary fields are returned as
-decoded strings or structured <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult" title="qilisdk.speqtrum.speqtrum_models.ExecuteResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecuteResult</span></code></a> objects.</p>
-<p>To obtain the results of a completed job, check the <code class="docutils literal notranslate"><span class="pre">result</span></code> attribute of the returned <a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail" title="qilisdk.speqtrum.speqtrum_models.JobDetail"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobDetail</span></code></a>.
+decoded strings or structured <code class="xref py py-class docutils literal notranslate"><span class="pre">ExecuteResult</span></code> objects.</p>
+<p>To obtain the results of a completed job, check the <code class="docutils literal notranslate"><span class="pre">result</span></code> attribute of the returned <code class="xref py py-class docutils literal notranslate"><span class="pre">JobDetail</span></code>.
 The specific result type depends on the job type.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_job_details</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
 </span><span id="line-2">

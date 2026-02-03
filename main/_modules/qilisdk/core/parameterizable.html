@@ -122,6 +122,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -148,6 +149,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -158,6 +160,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -168,10 +171,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -192,11 +195,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
@@ -205,6 +221,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -213,12 +230,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -236,6 +253,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
       </li>
@@ -320,147 +340,149 @@
 </span><span id="line-19"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
 </span><span id="line-20">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">ComparisonTerm</span><span class="p">,</span> <span class="n">Parameter</span>
 </span><span id="line-21">
-</span><span id="line-22">
+</span><span id="line-22">    <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealNumber</span>
+</span><span id="line-23">
+</span><span id="line-24">
 <div class="viewcode-block" id="Parameterizable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable">[docs]</a>
-</span><span id="line-23"><span class="k">class</span><span class="w"> </span><span class="nc">Parameterizable</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-</span><span id="line-24"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for objects that expose tunable parameters and constraints.&quot;&quot;&quot;</span>
-</span><span id="line-25">
-</span><span id="line-26">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-27">        <span class="nb">super</span><span class="p">(</span><span class="n">Parameterizable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-28">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-29">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComparisonTerm</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-30">
-</span><span id="line-31">    <span class="nd">@property</span>
+</span><span id="line-25"><span class="k">class</span><span class="w"> </span><span class="nc">Parameterizable</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-26"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for objects that expose tunable parameters and constraints.&quot;&quot;&quot;</span>
+</span><span id="line-27">
+</span><span id="line-28">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-29">        <span class="nb">super</span><span class="p">(</span><span class="n">Parameterizable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-30">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-31">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComparisonTerm</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-32">
+</span><span id="line-33">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Parameterizable.nparameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.nparameters">[docs]</a>
-</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-33"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of tunable parameters defined by the object.&quot;&quot;&quot;</span>
-</span><span id="line-34">        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span></div>
+</span><span id="line-34">    <span class="k">def</span><span class="w"> </span><span class="nf">nparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-35"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of tunable parameters defined by the object.&quot;&quot;&quot;</span>
+</span><span id="line-36">        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span></div>
 
-</span><span id="line-35">
+</span><span id="line-37">
 <div class="viewcode-block" id="Parameterizable.get_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_values">[docs]</a>
-</span><span id="line-36">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-37"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current numerical values of the parameters.&quot;&quot;&quot;</span>
-</span><span id="line-38">        <span class="k">return</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span></div>
+</span><span id="line-38">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-39"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current numerical values of the parameters.&quot;&quot;&quot;</span>
+</span><span id="line-40">        <span class="k">return</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span></div>
 
-</span><span id="line-39">
+</span><span id="line-41">
 <div class="viewcode-block" id="Parameterizable.get_parameter_names">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_names">[docs]</a>
-</span><span id="line-40">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-41"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ordered list of parameter labels.&quot;&quot;&quot;</span>
-</span><span id="line-42">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+</span><span id="line-42">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-43"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ordered list of parameter labels.&quot;&quot;&quot;</span>
+</span><span id="line-44">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
-</span><span id="line-43">
+</span><span id="line-45">
 <div class="viewcode-block" id="Parameterizable.get_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameters">[docs]</a>
-</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-45"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a mapping from parameter labels to their current numerical values.&quot;&quot;&quot;</span>
-</span><span id="line-46">        <span class="k">return</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+</span><span id="line-46">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">]:</span>
+</span><span id="line-47"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a mapping from parameter labels to their current numerical values.&quot;&quot;&quot;</span>
+</span><span id="line-48">        <span class="k">return</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
 
-</span><span id="line-47">
+</span><span id="line-49">
 <div class="viewcode-block" id="Parameterizable.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_parameter_values">[docs]</a>
-</span><span id="line-48">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-49"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-50"><span class="sd">        Update all parameter values at once.</span>
-</span><span id="line-51">
-</span><span id="line-52"><span class="sd">        Args:</span>
-</span><span id="line-53"><span class="sd">            values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">        Raises:</span>
-</span><span id="line-56"><span class="sd">            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.</span>
-</span><span id="line-57"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-58">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nparameters</span><span class="p">:</span>
-</span><span id="line-59">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provided </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2"> but this object has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nparameters</span><span class="si">}</span><span class="s2"> parameters.&quot;</span><span class="p">)</span>
-</span><span id="line-60">        <span class="n">param_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-61">        <span class="n">value_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))}</span>
-</span><span id="line-62">        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">value_dict</span><span class="p">)</span></div>
+</span><span id="line-50">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-51"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-52"><span class="sd">        Update all parameter values at once.</span>
+</span><span id="line-53">
+</span><span id="line-54"><span class="sd">        Args:</span>
+</span><span id="line-55"><span class="sd">            values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.</span>
+</span><span id="line-56">
+</span><span id="line-57"><span class="sd">        Raises:</span>
+</span><span id="line-58"><span class="sd">            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.</span>
+</span><span id="line-59"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-60">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nparameters</span><span class="p">:</span>
+</span><span id="line-61">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provided </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2"> but this object has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nparameters</span><span class="si">}</span><span class="s2"> parameters.&quot;</span><span class="p">)</span>
+</span><span id="line-62">        <span class="n">param_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-63">        <span class="n">value_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))}</span>
+</span><span id="line-64">        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">value_dict</span><span class="p">)</span></div>
 
-</span><span id="line-63">
+</span><span id="line-65">
 <div class="viewcode-block" id="Parameterizable.set_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_parameters">[docs]</a>
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-65"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-66"><span class="sd">        Update a subset of parameters by label.</span>
-</span><span id="line-67">
-</span><span id="line-68"><span class="sd">        Args:</span>
-</span><span id="line-69"><span class="sd">            parameters (dict[str, float]): Mapping from parameter labels to updated numeric values.</span>
-</span><span id="line-70">
-</span><span id="line-71"><span class="sd">        Raises:</span>
-</span><span id="line-72"><span class="sd">            ValueError: If an unknown parameter label is provided or constraints are violated.</span>
-</span><span id="line-73"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-74">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_constraints</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
-</span><span id="line-75">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-76">                <span class="sa">f</span><span class="s2">&quot;New assignation of the parameters breaks the parameter constraints: </span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="line-77">            <span class="p">)</span>
-</span><span id="line-78">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-79">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
-</span><span id="line-80">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined for this object.&quot;</span><span class="p">)</span>
-</span><span id="line-81">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">param</span><span class="p">)</span></div>
+</span><span id="line-66">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-67"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-68"><span class="sd">        Update a subset of parameters by label.</span>
+</span><span id="line-69">
+</span><span id="line-70"><span class="sd">        Args:</span>
+</span><span id="line-71"><span class="sd">            parameters (dict[str, float]): Mapping from parameter labels to updated numeric values.</span>
+</span><span id="line-72">
+</span><span id="line-73"><span class="sd">        Raises:</span>
+</span><span id="line-74"><span class="sd">            ValueError: If an unknown parameter label is provided or constraints are violated.</span>
+</span><span id="line-75"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-76">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_constraints</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+</span><span id="line-77">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-78">                <span class="sa">f</span><span class="s2">&quot;New assignation of the parameters breaks the parameter constraints: </span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-79">            <span class="p">)</span>
+</span><span id="line-80">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-81">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+</span><span id="line-82">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined for this object.&quot;</span><span class="p">)</span>
+</span><span id="line-83">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">param</span><span class="p">)</span></div>
 
-</span><span id="line-82">
+</span><span id="line-84">
 <div class="viewcode-block" id="Parameterizable.get_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_bounds">[docs]</a>
-</span><span id="line-83">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-84"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``(lower, upper)`` bounds associated with each parameter.&quot;&quot;&quot;</span>
-</span><span id="line-85">        <span class="k">return</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``(lower, upper)`` bounds associated with each parameter.&quot;&quot;&quot;</span>
+</span><span id="line-87">        <span class="k">return</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
 
-</span><span id="line-86">
+</span><span id="line-88">
 <div class="viewcode-block" id="Parameterizable.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_parameter_bounds">[docs]</a>
-</span><span id="line-87">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-88"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-89"><span class="sd">        Update the allowable ranges for the specified parameters.</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="sd">        Args:</span>
-</span><span id="line-92"><span class="sd">            ranges (dict[str, tuple[float, float]]): Mapping from parameter label to ``(lower, upper)`` bounds.</span>
-</span><span id="line-93">
-</span><span id="line-94"><span class="sd">        Raises:</span>
-</span><span id="line-95"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
-</span><span id="line-96"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-97">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-98">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
-</span><span id="line-99">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-100">                    <span class="sa">f</span><span class="s2">&quot;The provided parameter label </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined in the list of parameters in this object.&quot;</span>
-</span><span id="line-101">                <span class="p">)</span>
-</span><span id="line-102">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">bound</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bound</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+</span><span id="line-89">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-90"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-91"><span class="sd">        Update the allowable ranges for the specified parameters.</span>
+</span><span id="line-92">
+</span><span id="line-93"><span class="sd">        Args:</span>
+</span><span id="line-94"><span class="sd">            ranges (dict[str, tuple[float, float]]): Mapping from parameter label to ``(lower, upper)`` bounds.</span>
+</span><span id="line-95">
+</span><span id="line-96"><span class="sd">        Raises:</span>
+</span><span id="line-97"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
+</span><span id="line-98"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-99">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-100">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+</span><span id="line-101">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-102">                    <span class="sa">f</span><span class="s2">&quot;The provided parameter label </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined in the list of parameters in this object.&quot;</span>
+</span><span id="line-103">                <span class="p">)</span>
+</span><span id="line-104">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">bound</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bound</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
 
-</span><span id="line-103">
+</span><span id="line-105">
 <div class="viewcode-block" id="Parameterizable.get_constraints">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_constraints">[docs]</a>
-</span><span id="line-104">    <span class="k">def</span><span class="w"> </span><span class="nf">get_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComparisonTerm</span><span class="p">]:</span>
-</span><span id="line-105"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all constraints on the parameters.</span>
-</span><span id="line-106">
-</span><span id="line-107"><span class="sd">        Returns:</span>
-</span><span id="line-108"><span class="sd">            list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.</span>
-</span><span id="line-109"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-110">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter_constraints</span></div>
+</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="nf">get_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComparisonTerm</span><span class="p">]:</span>
+</span><span id="line-107"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all constraints on the parameters.</span>
+</span><span id="line-108">
+</span><span id="line-109"><span class="sd">        Returns:</span>
+</span><span id="line-110"><span class="sd">            list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.</span>
+</span><span id="line-111"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-112">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter_constraints</span></div>
 
-</span><span id="line-111">
+</span><span id="line-113">
 <div class="viewcode-block" id="Parameterizable.check_constraints">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.check_constraints">[docs]</a>
-</span><span id="line-112">    <span class="k">def</span><span class="w"> </span><span class="nf">check_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-113"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that proposed parameter updates satisfy all constraints.</span>
-</span><span id="line-114">
-</span><span id="line-115"><span class="sd">        Args:</span>
-</span><span id="line-116"><span class="sd">            parameters (dict[str, float]): Candidate parameter values keyed by label.</span>
-</span><span id="line-117">
-</span><span id="line-118"><span class="sd">        Returns:</span>
-</span><span id="line-119"><span class="sd">            bool: True if every constraint evaluates to True for the provided values.</span>
-</span><span id="line-120">
-</span><span id="line-121"><span class="sd">        Raises:</span>
-</span><span id="line-122"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
-</span><span id="line-123"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-124">        <span class="n">evaluate_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-125">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-126">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
-</span><span id="line-127">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined for this object.&quot;</span><span class="p">)</span>
-</span><span id="line-128">            <span class="n">evaluate_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
-</span><span id="line-129">        <span class="n">constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
-</span><span id="line-130">        <span class="n">valid</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">evaluate_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">)</span>
-</span><span id="line-131">        <span class="k">return</span> <span class="n">valid</span></div>
+</span><span id="line-114">    <span class="k">def</span><span class="w"> </span><span class="nf">check_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-115"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that proposed parameter updates satisfy all constraints.</span>
+</span><span id="line-116">
+</span><span id="line-117"><span class="sd">        Args:</span>
+</span><span id="line-118"><span class="sd">            parameters (dict[str, float]): Candidate parameter values keyed by label.</span>
+</span><span id="line-119">
+</span><span id="line-120"><span class="sd">        Returns:</span>
+</span><span id="line-121"><span class="sd">            bool: True if every constraint evaluates to True for the provided values.</span>
+</span><span id="line-122">
+</span><span id="line-123"><span class="sd">        Raises:</span>
+</span><span id="line-124"><span class="sd">            ValueError: If an unknown parameter label is provided.</span>
+</span><span id="line-125"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-126">        <span class="n">evaluate_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-127">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-128">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+</span><span id="line-129">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined for this object.&quot;</span><span class="p">)</span>
+</span><span id="line-130">            <span class="n">evaluate_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+</span><span id="line-131">        <span class="n">constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+</span><span id="line-132">        <span class="n">valid</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">evaluate_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">)</span>
+</span><span id="line-133">        <span class="k">return</span> <span class="n">valid</span></div>
 </div>
 
 </span></code></pre></div>

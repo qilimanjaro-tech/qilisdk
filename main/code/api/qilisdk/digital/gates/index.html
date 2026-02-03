@@ -91,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -117,6 +118,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -127,6 +129,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -137,10 +140,10 @@
 </ul>
 </li>
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.digital.gates</a></li>
 </ul>
@@ -161,11 +164,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise_models/index.html">qilisdk.noise_models<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -174,6 +190,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -182,12 +199,12 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -200,6 +217,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.8/index.html">0.1.8</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../../../../0.1.7/index.html">0.1.7</a>
 </li>
@@ -580,7 +600,7 @@
 <dd class="field-even"><ul class="simple">
 <li><p><strong>ValueError</strong> – if duplicate target qubits are found.</p></li>
 <li><p><strong>ValueError</strong> – if any parameter transform is not a parameterized term.</p></li>
-<li><p><strong>ValueError</strong> – if any parameter mentioned in parameter_transforms is not defined in parameters.</p></li>
+<li><p><a class="reference internal" href="../exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError" title="qilisdk.digital.exceptions.InvalidParameterNameError"><strong>InvalidParameterNameError</strong></a> – if any parameter mentioned in parameter_transforms is not in parameters.</p></li>
 </ul>
 </dd>
 </dl>
@@ -698,7 +718,7 @@ control qubits and the current unitary gate is used as the target. The resulting
 on both the control and target qubits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>*control_qubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – One or more integer indices specifying the control qubits.</p>
+<dd class="field-odd"><p><strong>*control_qubits</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – One or more integer indices specifying the control qubits.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new Controlled gate instance that wraps this unitary gate with the specified control qubits.</p>
@@ -996,7 +1016,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a measurement operation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The qubit index to be measured.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The qubit index to be measured.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1055,7 +1075,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a Pauli-X gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the X gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the X gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1086,7 +1106,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a Pauli-X gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the X gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the X gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1117,7 +1137,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a Pauli-Y gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the Y gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the Y gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1148,7 +1168,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a Pauli-Z gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the Z gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the Z gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1179,7 +1199,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a Hadamard gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the Hadamard gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the Hadamard gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1210,7 +1230,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize an S gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the S gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the S gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1241,7 +1261,7 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <p>Initialize a T gate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the T gate.</p>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the T gate.</p>
 </dd>
 </dl>
 <dl class="py property">
@@ -1276,8 +1296,8 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the rotation.</p></li>
-<li><p><strong>theta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The rotation angle (polar) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the rotation.</p></li>
+<li><p><strong>theta</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The rotation angle (polar) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1321,8 +1341,8 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the rotation.</p></li>
-<li><p><strong>theta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The rotation angle (polar) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the rotation.</p></li>
+<li><p><strong>theta</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The rotation angle (polar) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1374,8 +1394,8 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the rotation.</p></li>
-<li><p><strong>phi</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the rotation.</p></li>
+<li><p><strong>phi</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The rotation angle (azimuthal) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1425,8 +1445,8 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the U1 gate.</p></li>
-<li><p><strong>phi</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The phase to add, or equivalently the rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the U1 gate.</p></li>
+<li><p><strong>phi</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The phase to add, or equivalently the rotation angle (azimuthal) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1478,9 +1498,9 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the U2 gate.</p></li>
-<li><p><strong>phi</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</p></li>
-<li><p><strong>gamma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the U2 gate.</p></li>
+<li><p><strong>phi</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>gamma</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1537,10 +1557,10 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The target qubit index for the U3 gate.</p></li>
-<li><p><strong>theta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The rotation angle (polar), in between both phase rotations (azimuthal).</p></li>
-<li><p><strong>phi</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</p></li>
-<li><p><strong>gamma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code>) – The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>qubit</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The target qubit index for the U3 gate.</p></li>
+<li><p><strong>theta</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The rotation angle (polar), in between both phase rotations (azimuthal).</p></li>
+<li><p><strong>phi</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.</p></li>
+<li><p><strong>gamma</strong> (<a class="reference internal" href="../../core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER" title="float | Parameter | Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term</span></code></a>) – The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1638,8 +1658,8 @@ result is stored in a classical bit with the same label as the measured qubit.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubit_a</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – First qubit to swap with.</p></li>
-<li><p><strong>qubit_b</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Second qubit to swap with.</p></li>
+<li><p><strong>qubit_a</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – First qubit to swap with.</p></li>
+<li><p><strong>qubit_b</strong> (<a class="reference internal" href="../../noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit" title="int"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Second qubit to swap with.</p></li>
 </ul>
 </dd>
 </dl>

@@ -125,6 +125,7 @@
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -151,6 +152,7 @@
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -161,6 +163,7 @@
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -171,10 +174,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -195,11 +198,24 @@
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
@@ -208,6 +224,7 @@
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -216,12 +233,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -239,6 +256,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.1.8/index.html">0.1.8</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../0.1.7/index.html">0.1.7</a>
       </li>
@@ -330,6 +350,11 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/backends/qilisim/index.html#module-qilisdk.backends.qilisim"><code class="xref">qilisdk.backends.qilisim</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="code/api/qilisdk/backends/qutip_backend/index.html#module-qilisdk.backends.qutip_backend"><code class="xref">qilisdk.backends.qutip_backend</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
@@ -366,6 +391,11 @@
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="code/api/qilisdk/core/result/index.html#module-qilisdk.core.result"><code class="xref">qilisdk.core.result</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/core/types/index.html#module-qilisdk.core.types"><code class="xref">qilisdk.core.types</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -505,27 +535,92 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="code/api/qilisdk/noise_models/index.html#module-qilisdk.noise_models"><code class="xref">qilisdk.noise_models</code></a></td><td>
+       <a href="code/api/qilisdk/noise/index.html#module-qilisdk.noise"><code class="xref">qilisdk.noise</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="code/api/qilisdk/noise_models/analog_noise/index.html#module-qilisdk.noise_models.analog_noise"><code class="xref">qilisdk.noise_models.analog_noise</code></a></td><td>
+       <a href="code/api/qilisdk/noise/amplitude_damping/index.html#module-qilisdk.noise.amplitude_damping"><code class="xref">qilisdk.noise.amplitude_damping</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="code/api/qilisdk/noise_models/common_noise/index.html#module-qilisdk.noise_models.common_noise"><code class="xref">qilisdk.noise_models.common_noise</code></a></td><td>
+       <a href="code/api/qilisdk/noise/bit_flip/index.html#module-qilisdk.noise.bit_flip"><code class="xref">qilisdk.noise.bit_flip</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="code/api/qilisdk/noise_models/digital_noise/index.html#module-qilisdk.noise_models.digital_noise"><code class="xref">qilisdk.noise_models.digital_noise</code></a></td><td>
+       <a href="code/api/qilisdk/noise/dephasing/index.html#module-qilisdk.noise.dephasing"><code class="xref">qilisdk.noise.dephasing</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="code/api/qilisdk/noise_models/noise_model/index.html#module-qilisdk.noise_models.noise_model"><code class="xref">qilisdk.noise_models.noise_model</code></a></td><td>
+       <a href="code/api/qilisdk/noise/depolarizing/index.html#module-qilisdk.noise.depolarizing"><code class="xref">qilisdk.noise.depolarizing</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/gaussian_perturbation/index.html#module-qilisdk.noise.gaussian_perturbation"><code class="xref">qilisdk.noise.gaussian_perturbation</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/noise/index.html#module-qilisdk.noise.noise"><code class="xref">qilisdk.noise.noise</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/noise_abc/index.html#module-qilisdk.noise.noise_abc"><code class="xref">qilisdk.noise.noise_abc</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/noise_config/index.html#module-qilisdk.noise.noise_config"><code class="xref">qilisdk.noise.noise_config</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/noise_model/index.html#module-qilisdk.noise.noise_model"><code class="xref">qilisdk.noise.noise_model</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/offset_perturbation/index.html#module-qilisdk.noise.offset_perturbation"><code class="xref">qilisdk.noise.offset_perturbation</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/parameter_perturbation/index.html#module-qilisdk.noise.parameter_perturbation"><code class="xref">qilisdk.noise.parameter_perturbation</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/pauli_channel/index.html#module-qilisdk.noise.pauli_channel"><code class="xref">qilisdk.noise.pauli_channel</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/phase_flip/index.html#module-qilisdk.noise.phase_flip"><code class="xref">qilisdk.noise.phase_flip</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/protocols/index.html#module-qilisdk.noise.protocols"><code class="xref">qilisdk.noise.protocols</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/readout_assignment/index.html#module-qilisdk.noise.readout_assignment"><code class="xref">qilisdk.noise.readout_assignment</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/representations/index.html#module-qilisdk.noise.representations"><code class="xref">qilisdk.noise.representations</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/noise/utils/index.html#module-qilisdk.noise.utils"><code class="xref">qilisdk.noise.utils</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -596,6 +691,16 @@
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="code/api/qilisdk/utils/serialization/index.html#module-qilisdk.utils.serialization"><code class="xref">qilisdk.utils.serialization</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/utils/trotterization/index.html#module-qilisdk.utils.trotterization"><code class="xref">qilisdk.utils.trotterization</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="code/api/qilisdk/utils/trotterization/trotterization/index.html#module-qilisdk.utils.trotterization.trotterization"><code class="xref">qilisdk.utils.trotterization.trotterization</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>

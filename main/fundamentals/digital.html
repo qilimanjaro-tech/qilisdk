@@ -91,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -117,6 +118,7 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -127,6 +129,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -137,10 +140,10 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -161,11 +164,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
@@ -174,6 +190,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -182,12 +199,12 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -200,6 +217,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.1.8/fundamentals/digital.html">0.1.8</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../0.1.7/fundamentals/digital.html">0.1.7</a>
 </li>
@@ -342,6 +362,42 @@ Measures the listed qubits in the computational basis.</p></li>
 </span><span id="line-3"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># Hadamard on qubit 0</span>
 </span><span id="line-4"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># CNOT: control 0 → target 2</span>
 </span><span id="line-5"><span class="n">circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>You can also add or insert multiple gates at once:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">X</span><span class="p">,</span> <span class="n">RX</span>
+</span><span id="line-2"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">RX</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)])</span>
+</span><span id="line-5"><span class="n">circuit</span><span class="o">.</span><span class="n">insert</span><span class="p">([</span><span class="n">H</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">CNOT</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">circuit</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Circuits can be appended or prepended, and the <code class="docutils literal notranslate"><span class="pre">+</span></code> operator mirrors those behaviors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">left</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-2"><span class="n">left</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">right</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">right</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="n">left</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
+</span><span id="line-8"><span class="c1"># Equivalent: left = left + right</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="n">extra</span> <span class="o">=</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-11"><span class="c1"># Equivalent to left.insert(extra, index=0)</span>
+</span><span id="line-12"><span class="n">left</span> <span class="o">=</span> <span class="n">extra</span> <span class="o">+</span> <span class="n">left</span>
+</span></code></pre></div>
+</div>
+<p><strong>Generating Random Circuits</strong></p>
+<p>You can also initialize a random circuit with a specified number of gates using the <a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.random" title="qilisdk.digital.circuit.Circuit.random"><code class="xref py py-meth docutils literal notranslate"><span class="pre">random()</span></code></a> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">CNOT</span>
+</span><span id="line-2"><span class="n">c</span> <span class="o">=</span> <span class="n">Circuit</span><span class="o">.</span><span class="n">random</span><span class="p">(</span>
+</span><span id="line-3">    <span class="n">nqubits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+</span><span id="line-4">    <span class="n">single_qubit_gates</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">],</span>
+</span><span id="line-5">    <span class="n">two_qubit_gates</span><span class="o">=</span><span class="p">[</span><span class="n">CNOT</span><span class="p">],</span>
+</span><span id="line-6">    <span class="n">ngates</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="line-7"><span class="p">)</span>
+</span><span id="line-8"><span class="n">circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
 <section id="parameterized-circuits">
@@ -601,6 +657,35 @@ expectation value of the problem Hamiltonian, one can set up a <a class="referen
 </span></code></pre></div>
 </div>
 </section>
+<section id="trotterizedtimeevolution">
+<h3>TrotterizedTimeEvolution<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#trotterizedtimeevolution" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#trotterizedtimeevolution'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<p><a class="reference internal" href="../code/api/qilisdk/digital/ansatz/index.html#qilisdk.digital.ansatz.TrotterizedTimeEvolution" title="qilisdk.digital.ansatz.TrotterizedTimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrotterizedTimeEvolution</span></code></a> builds a digital circuit that follows a
+time-ordered schedule of Hamiltonians. Each schedule slice is evolved using a fixed number of
+Trotter steps, and you may optionally prepend a state-initialization circuit or list of gates.</p>
+<p>Configuration options:</p>
+<ul class="simple">
+<li><p><strong>schedule</strong>: A <a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> of Hamiltonians to trotterize.</p></li>
+<li><p><strong>trotter_steps</strong>: Number of Trotter steps per schedule slice. Defaults to 1.</p></li>
+</ul>
+<p><strong>Example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">pauli_z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.ansatz</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrotterizedTimeEvolution</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">hamiltonian</span> <span class="o">=</span> <span class="n">pauli_z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-7">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="n">hamiltonian</span><span class="p">},</span>
+</span><span id="line-8">    <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="line-9">    <span class="n">total_time</span><span class="o">=</span><span class="mi">1</span>
+</span><span id="line-10"><span class="p">)</span>
+</span><span id="line-11"><span class="n">ansatz</span> <span class="o">=</span> <span class="n">TrotterizedTimeEvolution</span><span class="p">(</span>
+</span><span id="line-12">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+</span><span id="line-13">    <span class="n">trotter_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="line-14"><span class="p">)</span>
+</span><span id="line-15"><span class="n">ansatz</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</section>
 </section>
 <section id="parameter-utilities">
 <h2>Parameter Utilities<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#parameter-utilities" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#parameter-utilities'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -706,6 +791,7 @@ the circuit.</p>
 <li><a :data-current="activeSection === '#ansatz'" class="reference internal" href="#ansatz">Ansatz</a><ul>
 <li><a :data-current="activeSection === '#hardwareefficientansatz'" class="reference internal" href="#hardwareefficientansatz">HardwareEfficientAnsatz</a></li>
 <li><a :data-current="activeSection === '#qaoa'" class="reference internal" href="#qaoa">QAOA</a></li>
+<li><a :data-current="activeSection === '#trotterizedtimeevolution'" class="reference internal" href="#trotterizedtimeevolution">TrotterizedTimeEvolution</a></li>
 </ul>
 </li>
 <li><a :data-current="activeSection === '#parameter-utilities'" class="reference internal" href="#parameter-utilities">Parameter Utilities</a></li>

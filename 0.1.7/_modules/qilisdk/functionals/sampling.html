@@ -168,10 +168,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -198,6 +198,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -206,12 +207,11 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -229,6 +229,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="sampling.html">0.1.7</a>
       </li>
@@ -343,8 +346,14 @@
 </span><span id="line-44"><span class="sd">            circuit (Circuit): Circuit to execute for sampling.</span>
 </span><span id="line-45"><span class="sd">            nshots (int, optional): Number of repetitions used to estimate probabilities. Defaults to 1000.</span>
 </span><span id="line-46"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-47">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span>
-</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span>
+<div class="viewcode-block" id="Sampling.circuit">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.circuit">[docs]</a>
+</span><span id="line-47">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span></div>
+
+<div class="viewcode-block" id="Sampling.nshots">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.nshots">[docs]</a>
+</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">nshots</span> <span class="o">=</span> <span class="n">nshots</span></div>
+
 </span><span id="line-49">
 </span><span id="line-50">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Sampling.nparameters">

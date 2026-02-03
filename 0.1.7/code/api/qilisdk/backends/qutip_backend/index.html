@@ -137,10 +137,10 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../digital/index.html">qilisdk.digital<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -167,6 +167,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../speqtrum/index.html">qilisdk.speqtrum<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -175,12 +176,11 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -193,6 +193,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.1.8/index.html">0.1.8</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="index.html">0.1.7</a>
 </li>
@@ -302,6 +305,14 @@
 </span><span id="line-6"><span class="go"> [0. 1.]]</span>
 </span></code></pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.backends.qutip_backend.QutipI.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'I'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/backends/qutip_backend.html#QutipI.name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.backends.qutip_backend.QutipI.name" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.backends.qutip_backend.QutipI.name'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.backends.qutip_backend.QutipI.latex_str">
+<span class="sig-name descname"><span class="pre">latex_str</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'I'</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/backends/qutip_backend.html#QutipI.latex_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.backends.qutip_backend.QutipI.latex_str" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.backends.qutip_backend.QutipI.latex_str'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.backends.qutip_backend.QutipI.get_compact_qobj">
 <span class="sig-name descname"><span class="pre">get_compact_qobj</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/qilisdk/backends/qutip_backend.html#QutipI.get_compact_qobj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
@@ -319,6 +330,10 @@ ideal for local development, CI pipelines, and educational notebooks.</p>
 <p>Instantiate a new <a class="reference internal" href="#qilisdk.backends.qutip_backend.QutipBackend" title="qilisdk.backends.qutip_backend.QutipBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">QutipBackend</span></code></a>.
 :param nsteps: The maximum number of internal steps for the ODE solver.
 :type nsteps: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qilisdk.backends.qutip_backend.QutipBackend.nsteps">
+<span class="sig-name descname"><span class="pre">nsteps</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10000</span></em><a class="reference internal" href="../../../../../_modules/qilisdk/backends/qutip_backend.html#QutipBackend.nsteps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.backends.qutip_backend.QutipBackend.nsteps" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.backends.qutip_backend.QutipBackend.nsteps'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -350,10 +365,15 @@ ideal for local development, CI pipelines, and educational notebooks.</p>
 <li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.TPauliOperator'" class="reference internal" href="#qilisdk.backends.qutip_backend.TPauliOperator"><code class="docutils literal notranslate"><span class="pre">TPauliOperator</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.PauliOperatorHandlersMapping'" class="reference internal" href="#qilisdk.backends.qutip_backend.PauliOperatorHandlersMapping"><code class="docutils literal notranslate"><span class="pre">PauliOperatorHandlersMapping</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipI'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipI"><code class="docutils literal notranslate"><span class="pre">QutipI</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipI.name'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipI.name"><code class="docutils literal notranslate"><span class="pre">QutipI.name</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipI.latex_str'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipI.latex_str"><code class="docutils literal notranslate"><span class="pre">QutipI.latex_str</span></code></a></li>
 <li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj"><code class="docutils literal notranslate"><span class="pre">QutipI.get_compact_qobj()</span></code></a></li>
 </ul>
 </li>
-<li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipBackend'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipBackend"><code class="docutils literal notranslate"><span class="pre">QutipBackend</span></code></a></li>
+<li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipBackend'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipBackend"><code class="docutils literal notranslate"><span class="pre">QutipBackend</span></code></a><ul>
+<li><a :data-current="activeSection === '#qilisdk.backends.qutip_backend.QutipBackend.nsteps'" class="reference internal" href="#qilisdk.backends.qutip_backend.QutipBackend.nsteps"><code class="docutils literal notranslate"><span class="pre">QutipBackend.nsteps</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

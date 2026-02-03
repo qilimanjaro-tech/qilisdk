@@ -122,6 +122,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/functionals.html">Functionals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/backends.html">Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/noise_models.html">Noise Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
@@ -148,6 +149,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
@@ -158,6 +160,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/qtensor/index.html">qilisdk.core.qtensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/result/index.html">qilisdk.core.result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/types/index.html">qilisdk.core.types</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/core/variables/index.html">qilisdk.core.variables</a></li>
 </ul>
 </li>
@@ -168,10 +171,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/digital/index.html">qilisdk.digital</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/ansatz/index.html">qilisdk.digital.ansatz</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit/index.html">qilisdk.digital.circuit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit_transpiler/index.html">qilisdk.digital.circuit_transpiler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
 </ul>
@@ -192,11 +195,24 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/noise_models/index.html">qilisdk.noise_models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise_models/analog_noise/index.html">qilisdk.noise_models.analog_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise_models/common_noise/index.html">qilisdk.noise_models.common_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise_models/digital_noise/index.html">qilisdk.noise_models.digital_noise</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise_models/noise_model/index.html">qilisdk.noise_models.noise_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise_config/index.html">qilisdk.noise.noise_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise_model/index.html">qilisdk.noise.noise_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/offset_perturbation/index.html">qilisdk.noise.offset_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/parameter_perturbation/index.html">qilisdk.noise.parameter_perturbation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/pauli_channel/index.html">qilisdk.noise.pauli_channel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/phase_flip/index.html">qilisdk.noise.phase_flip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/protocols/index.html">qilisdk.noise.protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/readout_assignment/index.html">qilisdk.noise.readout_assignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/representations/index.html">qilisdk.noise.representations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/utils/index.html">qilisdk.noise.utils</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/index.html">qilisdk.optimizers</a><ul>
@@ -205,6 +221,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
@@ -213,12 +230,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/yaml/index.html">qilisdk.yaml</a></li>
 </ul>
 </li>
@@ -236,6 +253,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.1.8/index.html">0.1.8</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.1.7/index.html">0.1.7</a>
       </li>
@@ -319,164 +339,181 @@
 </span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 </span><span id="line-19">
 </span><span id="line-20"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-</span><span id="line-21">
-</span><span id="line-22"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-23">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
-</span><span id="line-24">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
-</span><span id="line-25">
-</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScheduleStyle</span>
-</span><span id="line-27">
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+</span><span id="line-22">
+</span><span id="line-23"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-24">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
+</span><span id="line-25">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
+</span><span id="line-26">
+</span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScheduleStyle</span>
 </span><span id="line-28">
+</span><span id="line-29">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer">[docs]</a>
-</span><span id="line-29"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibScheduleRenderer</span><span class="p">:</span>
-</span><span id="line-30"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Schedule using matplotlib, with theme support.&quot;&quot;&quot;</span>
-</span><span id="line-31">
-</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-33">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-34">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
-</span><span id="line-35">        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-36">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-37">        <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-38">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-39">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span>
-</span><span id="line-40">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">ScheduleStyle</span><span class="p">()</span>
-</span><span id="line-41">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
-</span><span id="line-42">
+</span><span id="line-30"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibScheduleRenderer</span><span class="p">:</span>
+</span><span id="line-31"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Schedule using matplotlib, with theme support.&quot;&quot;&quot;</span>
+</span><span id="line-32">
+</span><span id="line-33">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-34">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-35">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
+</span><span id="line-36">        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-37">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-38">        <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-39">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.schedule">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.schedule">[docs]</a>
+</span><span id="line-40">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span></div>
+
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.style">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">[docs]</a>
+</span><span id="line-41">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">ScheduleStyle</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.ax">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">[docs]</a>
+</span><span id="line-42">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span></div>
+
+</span><span id="line-43">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.plot">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">[docs]</a>
-</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-44"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-45"><span class="sd">        Plot the schedule coefficients for each Hamiltonian over time.</span>
-</span><span id="line-46"><span class="sd">        Args:</span>
-</span><span id="line-47"><span class="sd">            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.</span>
-</span><span id="line-48"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-49">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
-</span><span id="line-50">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
-</span><span id="line-51">        <span class="n">facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">background</span>
-</span><span id="line-52">        <span class="n">title_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-53">        <span class="n">label_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-54">        <span class="n">legend_facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface</span>
-</span><span id="line-55">        <span class="n">legend_edgecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">border</span>
-</span><span id="line-56">        <span class="n">tick_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-57">
-</span><span id="line-58">        <span class="c1"># Set axes and figure background to theme</span>
-</span><span id="line-59">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
-</span><span id="line-60">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;figure&quot;</span><span class="p">):</span>
-</span><span id="line-61">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
-</span><span id="line-62">        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-63">        <span class="n">hamiltonians</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
-</span><span id="line-64">        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
-</span><span id="line-65">        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hamiltonians</span><span class="p">:</span>
-</span><span id="line-66">            <span class="n">coef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
-</span><span id="line-67">            <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coef</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">]</span>
-</span><span id="line-68">
-</span><span id="line-69">        <span class="c1"># Generate gradient colors between primary and accent</span>
-</span><span id="line-70">        <span class="k">def</span><span class="w"> </span><span class="nf">hex_to_rgb</span><span class="p">(</span><span class="n">hex_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-</span><span id="line-71">            <span class="n">hex_color</span> <span class="o">=</span> <span class="n">hex_color</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
-</span><span id="line-72">            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hex_color</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-</span><span id="line-73">
-</span><span id="line-74">        <span class="k">def</span><span class="w"> </span><span class="nf">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-75">            <span class="k">return</span> <span class="s2">&quot;#</span><span class="si">{:02x}{:02x}{:02x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">rgb</span><span class="p">)</span>
-</span><span id="line-76">
-</span><span id="line-77">        <span class="k">def</span><span class="w"> </span><span class="nf">gradient_colors</span><span class="p">(</span><span class="n">start_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-78">            <span class="n">start_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">start_hex</span><span class="p">)</span>
-</span><span id="line-79">            <span class="n">end_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">end_hex</span><span class="p">)</span>
-</span><span id="line-80">            <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-81">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-</span><span id="line-82">                <span class="n">ratio</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-</span><span id="line-83">                <span class="n">rgb</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-</span><span id="line-84">                <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">))</span>
-</span><span id="line-85">            <span class="k">return</span> <span class="n">colors</span>
-</span><span id="line-86">
-</span><span id="line-87">        <span class="n">n_hams</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">)</span>
-</span><span id="line-88">        <span class="n">grad_colors</span> <span class="o">=</span> <span class="n">gradient_colors</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">primary</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span> <span class="n">n_hams</span><span class="p">)</span>
-</span><span id="line-89">
-</span><span id="line-90">        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">):</span>
-</span><span id="line-91">            <span class="n">line_style</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">line_styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">default_line_style</span><span class="p">)</span>
-</span><span id="line-92">            <span class="n">marker</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">marker</span>
-</span><span id="line-93">            <span class="c1"># If no color specified, use gradient color</span>
-</span><span id="line-94">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line_style</span><span class="p">:</span>
-</span><span id="line-95">                <span class="n">color</span> <span class="o">=</span> <span class="n">grad_colors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-</span><span id="line-96">                <span class="n">line_style</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">line_style</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">}</span>
-</span><span id="line-97">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span> <span class="o">**</span><span class="n">line_style</span><span class="p">)</span>
-</span><span id="line-98">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
-</span><span id="line-99">            <span class="n">grid_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">grid_style</span><span class="p">)</span>
-</span><span id="line-100">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">grid_style</span><span class="p">:</span>
-</span><span id="line-101">                <span class="n">grid_style</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface_muted</span>
-</span><span id="line-102">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="o">**</span><span class="n">grid_style</span><span class="p">)</span>
-</span><span id="line-103">        <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
-</span><span id="line-104">            <span class="n">loc</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_loc</span><span class="p">,</span>
-</span><span id="line-105">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_fontsize</span><span class="p">,</span>
-</span><span id="line-106">            <span class="n">frameon</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_frame</span><span class="p">,</span>
-</span><span id="line-107">            <span class="n">facecolor</span><span class="o">=</span><span class="n">legend_facecolor</span><span class="p">,</span>
-</span><span id="line-108">            <span class="n">edgecolor</span><span class="o">=</span><span class="n">legend_edgecolor</span><span class="p">,</span>
-</span><span id="line-109">        <span class="p">)</span>
-</span><span id="line-110">        <span class="c1"># Set legend text color to match theme text color</span>
-</span><span id="line-111">        <span class="k">if</span> <span class="n">leg</span><span class="p">:</span>
-</span><span id="line-112">            <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">leg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
-</span><span id="line-113">                <span class="n">text</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">title_color</span><span class="p">)</span>
-</span><span id="line-114">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
-</span><span id="line-115">            <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Schedule Plot&quot;</span><span class="p">,</span>
-</span><span id="line-116">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">title_fontsize</span><span class="p">,</span>
-</span><span id="line-117">            <span class="n">color</span><span class="o">=</span><span class="n">title_color</span><span class="p">,</span>
-</span><span id="line-118">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-119">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-120">        <span class="p">)</span>
-</span><span id="line-121">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
-</span><span id="line-122">            <span class="n">style</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
-</span><span id="line-123">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
-</span><span id="line-124">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
-</span><span id="line-125">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-126">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-127">        <span class="p">)</span>
-</span><span id="line-128">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span>
-</span><span id="line-129">            <span class="n">style</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
-</span><span id="line-130">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
-</span><span id="line-131">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
-</span><span id="line-132">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-133">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-134">        <span class="p">)</span>
-</span><span id="line-135">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">xtick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
-</span><span id="line-136">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">ytick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
-</span><span id="line-137">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">:</span>
-</span><span id="line-138">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-</span><span id="line-139">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-45"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-46"><span class="sd">        Plot the schedule coefficients for each Hamiltonian over time.</span>
+</span><span id="line-47"><span class="sd">        Args:</span>
+</span><span id="line-48"><span class="sd">            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.</span>
+</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-50">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
+</span><span id="line-51">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
+</span><span id="line-52">        <span class="n">facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">background</span>
+</span><span id="line-53">        <span class="n">title_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-54">        <span class="n">label_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-55">        <span class="n">legend_facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface</span>
+</span><span id="line-56">        <span class="n">legend_edgecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">border</span>
+</span><span id="line-57">        <span class="n">tick_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-58">
+</span><span id="line-59">        <span class="c1"># Set axes and figure background to theme</span>
+</span><span id="line-60">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
+</span><span id="line-61">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;figure&quot;</span><span class="p">):</span>
+</span><span id="line-62">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
+</span><span id="line-63">        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-64">        <span class="n">hamiltonians</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
+</span><span id="line-65">        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
+</span><span id="line-66">        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hamiltonians</span><span class="p">:</span>
+</span><span id="line-67">            <span class="n">coef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+</span><span id="line-68">            <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coef</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">]</span>
+</span><span id="line-69">
+</span><span id="line-70">        <span class="c1"># Generate gradient colors between primary and accent</span>
+</span><span id="line-71">        <span class="k">def</span><span class="w"> </span><span class="nf">hex_to_rgb</span><span class="p">(</span><span class="n">hex_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+</span><span id="line-72">            <span class="n">hex_color</span> <span class="o">=</span> <span class="n">hex_color</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
+</span><span id="line-73">            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hex_color</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+</span><span id="line-74">
+</span><span id="line-75">        <span class="k">def</span><span class="w"> </span><span class="nf">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-76">            <span class="k">return</span> <span class="s2">&quot;#</span><span class="si">{:02x}{:02x}{:02x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">rgb</span><span class="p">)</span>
+</span><span id="line-77">
+</span><span id="line-78">        <span class="k">def</span><span class="w"> </span><span class="nf">gradient_colors</span><span class="p">(</span><span class="n">start_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-79">            <span class="n">start_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">start_hex</span><span class="p">)</span>
+</span><span id="line-80">            <span class="n">end_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">end_hex</span><span class="p">)</span>
+</span><span id="line-81">            <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-82">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+</span><span id="line-83">                <span class="n">ratio</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="line-84">                <span class="n">rgb</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</span><span id="line-85">                <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">))</span>
+</span><span id="line-86">            <span class="k">return</span> <span class="n">colors</span>
+</span><span id="line-87">
+</span><span id="line-88">        <span class="n">n_hams</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">)</span>
+</span><span id="line-89">        <span class="n">grad_colors</span> <span class="o">=</span> <span class="n">gradient_colors</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">primary</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span> <span class="n">n_hams</span><span class="p">)</span>
+</span><span id="line-90">
+</span><span id="line-91">        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">):</span>
+</span><span id="line-92">            <span class="n">line_style</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">line_styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">default_line_style</span><span class="p">)</span>
+</span><span id="line-93">            <span class="n">marker</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">marker</span>
+</span><span id="line-94">            <span class="c1"># If no color specified, use gradient color</span>
+</span><span id="line-95">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line_style</span><span class="p">:</span>
+</span><span id="line-96">                <span class="n">color</span> <span class="o">=</span> <span class="n">grad_colors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+</span><span id="line-97">                <span class="n">line_style</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">line_style</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">}</span>
+</span><span id="line-98">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="line-99">                <span class="n">times</span><span class="p">,</span>
+</span><span id="line-100">                <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">],</span>
+</span><span id="line-101">                <span class="n">label</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+</span><span id="line-102">                <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span>
+</span><span id="line-103">                <span class="n">markersize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span>
+</span><span id="line-104">                <span class="o">**</span><span class="n">line_style</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-105">            <span class="p">)</span>
+</span><span id="line-106">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
+</span><span id="line-107">            <span class="n">grid_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">grid_style</span><span class="p">)</span>
+</span><span id="line-108">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">grid_style</span><span class="p">:</span>
+</span><span id="line-109">                <span class="n">grid_style</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface_muted</span>
+</span><span id="line-110">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="o">**</span><span class="n">grid_style</span><span class="p">)</span>
+</span><span id="line-111">        <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+</span><span id="line-112">            <span class="n">loc</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_loc</span><span class="p">,</span>
+</span><span id="line-113">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_fontsize</span><span class="p">,</span>
+</span><span id="line-114">            <span class="n">frameon</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_frame</span><span class="p">,</span>
+</span><span id="line-115">            <span class="n">facecolor</span><span class="o">=</span><span class="n">legend_facecolor</span><span class="p">,</span>
+</span><span id="line-116">            <span class="n">edgecolor</span><span class="o">=</span><span class="n">legend_edgecolor</span><span class="p">,</span>
+</span><span id="line-117">        <span class="p">)</span>
+</span><span id="line-118">        <span class="c1"># Set legend text color to match theme text color</span>
+</span><span id="line-119">        <span class="k">if</span> <span class="n">leg</span><span class="p">:</span>
+</span><span id="line-120">            <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">leg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
+</span><span id="line-121">                <span class="n">text</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">title_color</span><span class="p">)</span>
+</span><span id="line-122">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+</span><span id="line-123">            <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Schedule Plot&quot;</span><span class="p">,</span>
+</span><span id="line-124">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">title_fontsize</span><span class="p">,</span>
+</span><span id="line-125">            <span class="n">color</span><span class="o">=</span><span class="n">title_color</span><span class="p">,</span>
+</span><span id="line-126">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-127">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-128">        <span class="p">)</span>
+</span><span id="line-129">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
+</span><span id="line-130">            <span class="n">style</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+</span><span id="line-131">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
+</span><span id="line-132">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
+</span><span id="line-133">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-134">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-135">        <span class="p">)</span>
+</span><span id="line-136">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span>
+</span><span id="line-137">            <span class="n">style</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
+</span><span id="line-138">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
+</span><span id="line-139">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
+</span><span id="line-140">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-141">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-142">        <span class="p">)</span>
+</span><span id="line-143">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">xtick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
+</span><span id="line-144">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">ytick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
+</span><span id="line-145">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">:</span>
+</span><span id="line-146">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</span><span id="line-147">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
 
-</span><span id="line-140">
+</span><span id="line-148">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.save">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">[docs]</a>
-</span><span id="line-141">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># thin wrapper</span>
-</span><span id="line-142"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
-</span><span id="line-143">
-</span><span id="line-144"><span class="sd">        Args:</span>
-</span><span id="line-145"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
-</span><span id="line-146"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-147">
-</span><span id="line-148">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
+</span><span id="line-149">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># thin wrapper</span>
+</span><span id="line-150"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
+</span><span id="line-151">
+</span><span id="line-152"><span class="sd">        Args:</span>
+</span><span id="line-153"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
+</span><span id="line-154"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-155">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">Figure</span><span class="p">):</span>
+</span><span id="line-156">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-149">
+</span><span id="line-157">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.show">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">[docs]</a>
-</span><span id="line-150">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-151"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
-</span><span id="line-152">
-</span><span id="line-153">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-159"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
+</span><span id="line-160">
+</span><span id="line-161">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
 
-</span><span id="line-154">
-</span><span id="line-155">    <span class="nd">@staticmethod</span>
-</span><span id="line-156">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
-</span><span id="line-157"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-158"><span class="sd">        Create a new figure and axes with the given DPI.</span>
-</span><span id="line-159">
-</span><span id="line-160"><span class="sd">        Args:</span>
-</span><span id="line-161"><span class="sd">            style: Optional style configuration (for DPI).</span>
 </span><span id="line-162">
-</span><span id="line-163"><span class="sd">        Returns:</span>
-</span><span id="line-164"><span class="sd">            A newly created Matplotlib Axes.</span>
-</span><span id="line-165"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-166">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span> <span class="ow">or</span> <span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">theme</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
-</span><span id="line-167">        <span class="k">return</span> <span class="n">ax</span></div>
+</span><span id="line-163">    <span class="nd">@staticmethod</span>
+</span><span id="line-164">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
+</span><span id="line-165"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-166"><span class="sd">        Create a new figure and axes with the given DPI.</span>
+</span><span id="line-167">
+</span><span id="line-168"><span class="sd">        Args:</span>
+</span><span id="line-169"><span class="sd">            style: Optional style configuration (for DPI).</span>
+</span><span id="line-170">
+</span><span id="line-171"><span class="sd">        Returns:</span>
+</span><span id="line-172"><span class="sd">            A newly created Matplotlib Axes.</span>
+</span><span id="line-173"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-174">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span> <span class="ow">or</span> <span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">theme</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
+</span><span id="line-175">        <span class="k">return</span> <span class="n">ax</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
