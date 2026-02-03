@@ -5,7 +5,7 @@ project(qilisdk LANGUAGES CXX)
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("" COMPILER_EXISTS)
 if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
-    message(FATAL_ERROR "[QiliSim] No C++ compiler found. Please either install one (e.g. \"sudo apt-get install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisim=OFF to disable QiliSim backend.")
+    message(FATAL_ERROR "[QiliSim] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisim=OFF to disable QiliSim backend.")
 endif()
 
 # The CMake option to enable QiliSim backend

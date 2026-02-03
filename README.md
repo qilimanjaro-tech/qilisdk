@@ -440,7 +440,7 @@ This section covers how to set up a local development environment for qilisdk, r
 - [uv](https://pypi.org/project/uv/) for dependency management.
 - A C++ compiler and CMake, which can be installed together on Ubuntu/Debian using:
   ```bash
-  sudo apt-get install build-essential
+  sudo apt install build-essential
   ```
   or on Windows via [this guide](https://code.visualstudio.com/docs/cpp/cmake-linux).
 
