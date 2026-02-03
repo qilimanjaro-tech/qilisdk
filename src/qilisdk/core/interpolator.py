@@ -136,8 +136,8 @@ class Interpolator(Parameterizable):
         for i in range(len(fixed_times) - 1):
             ti = fixed_times[i]
             tj = fixed_times[i + 1]
-            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
-            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:
@@ -149,8 +149,8 @@ class Interpolator(Parameterizable):
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient)
-                self.add_time_point(time[1], coefficient)
+                self.add_time_point(time[0], coefficient)  # ty:ignore[invalid-argument-type]
+                self.add_time_point(time[1], coefficient)  # ty:ignore[invalid-argument-type]
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
