@@ -32,7 +32,7 @@ from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, RX, H, I, X, Z
+from qilisdk.digital.gates import RX, H, I, X, Z
 from qilisdk.functionals import Sampling, TimeEvolution
 from qilisdk.noise import (
     AmplitudeDamping,
