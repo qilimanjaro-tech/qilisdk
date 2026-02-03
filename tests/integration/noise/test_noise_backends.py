@@ -323,79 +323,8 @@ def test_kraus_noise_single_qubit_noise(backend_class):
     prob_10 = res.samples.get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
-
-# @pytest.mark.parametrize("backend_class", backends)
-# def test_kraus_noise_two_qubit_noise(backend_class):
-#     # Define the random circuit and sampler
-#     shots = 1000
-#     nqubits = 2
-#     p = 0.3
-#     c = Circuit(nqubits=nqubits)
-#     random.seed(42)
-#     c.add(X(0))
-#     c.add(CNOT(0, 1))
-#     c.add(I(0))
-#     sampler = Sampling(c, nshots=shots)
-#     ops = [np.array([[1, 0], [0, 1]]), np.array([[0, 1], [1, 0]])]
-#     ops = [QTensor(K) for K in ops]
-#     kraus_ops = [tensor_prod([op, op]) for op in ops]
-#     kraus_ops = [np.sqrt(1 - p) * kraus_ops[0], np.sqrt(p) * kraus_ops[1]]
-
-#     # Define a simple noise model
-#     nm = NoiseModel()
-#     nm.add(KrausChannel(operators=kraus_ops), gate=I)
-
-#     # Execute with QiliSim backend
-#     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-#     res = backend.execute(sampler)
-
-#     # With a probability p, the |11> state should flip to |00>
-#     prob_00 = res.samples.get("00", 0) / shots
-#     assert np.isclose(prob_00, p, atol=0.2)
-
-
-@pytest.mark.parametrize("backend_class", backends)
-def test_analog_dissapation_noise(backend_class):
-    # Define the time evolution
-    T = 10.0
-    dt = 0.5
-    nqubits = 1
-    h_x = sum(PauliX(i) for i in range(nqubits))
-    h_z = sum(PauliZ(i) for i in range(nqubits))
-    schedule = Schedule(
-        hamiltonians={"driver": h_x, "problem": h_z},
-        coefficients={
-            "driver": {(0.0, T): lambda t: 1 - t / T},
-            "problem": {(0.0, T): lambda t: t / T},
-        },
-        dt=dt,
-        interpolation=Interpolation.LINEAR,
-    )
-    initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
-    time_evolution = TimeEvolution(
-        schedule=schedule,
-        initial_state=initial_state,
-        observables=[PauliZ(0), PauliX(0), PauliY(0)],
-        store_intermediate_results=False,
-    )
-
-    # Define the noise model
-    noise_model = NoiseModel()
-    gamma = 0.1
-    op = QTensor(np.array([[0, 1], [0, 0]]))
-    rate = gamma
-    noise_model.add(LindbladGenerator(jump_operators=[op], rates=[rate]), qubits=[0])
-
-    # Execute with the backend
-    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    results = backend.execute(time_evolution)
-
-    assert results.final_expected_values[0] > -0.8
-
-
-@pytest.mark.parametrize("backend_class", backends)
-def test_analog_amplitude_damping_noise(backend_class):
-    # Define the time evolution
+@pytest.fixture
+def time_evolution():
     T = 10.0
     dt = 0.1
     nqubits = 1
@@ -417,6 +346,27 @@ def test_analog_amplitude_damping_noise(backend_class):
         observables=[PauliZ(0), PauliX(0), PauliY(0)],
         store_intermediate_results=False,
     )
+    return time_evolution
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_analog_dissapation_noise(backend_class, time_evolution):
+
+    # Define the noise model
+    noise_model = NoiseModel()
+    gamma = 0.1
+    op = QTensor(np.array([[0, 1], [0, 0]]))
+    rate = gamma
+    noise_model.add(LindbladGenerator(jump_operators=[op], rates=[rate]), qubits=[0])
+
+    # Execute with the backend
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    results = backend.execute(time_evolution)
+
+    assert results.final_expected_values[0] > -0.8
+
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_analog_amplitude_damping_noise(backend_class, time_evolution):
 
     # Define the noise model
     noise_model = NoiseModel()
@@ -431,29 +381,7 @@ def test_analog_amplitude_damping_noise(backend_class):
 
 
 @pytest.mark.parametrize("backend_class", backends)
-def test_analog_dephasing_noise(backend_class):
-    # Define the time evolution
-    T = 10.0
-    dt = 0.5
-    nqubits = 1
-    h_x = sum(PauliX(i) for i in range(nqubits))
-    h_z = sum(PauliZ(i) for i in range(nqubits))
-    schedule = Schedule(
-        hamiltonians={"driver": h_x, "problem": h_z},
-        coefficients={
-            "driver": {(0.0, T): lambda t: 1 - t / T},
-            "problem": {(0.0, T): lambda t: t / T},
-        },
-        dt=dt,
-        interpolation=Interpolation.LINEAR,
-    )
-    initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
-    time_evolution = TimeEvolution(
-        schedule=schedule,
-        initial_state=initial_state,
-        observables=[PauliZ(0), PauliX(0), PauliY(0)],
-        store_intermediate_results=False,
-    )
+def test_analog_dephasing_noise(backend_class, time_evolution):
 
     # Define the noise model
     noise_model = NoiseModel()
