@@ -32,5 +32,5 @@ const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matri
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 const py::object Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
 const py::object PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
-const py::object NoiseModel = py::module_::import("qilisdk.noise_models.noise_model").attr("NoiseModel");
+const py::object NoiseModel = py::module_::import("qilisdk.noise.noise_model").attr("NoiseModel");
 const py::dtype dtype = py::dtype("complex128");

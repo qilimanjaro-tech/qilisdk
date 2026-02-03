@@ -153,6 +153,8 @@ class PauliOperator(ABC):
         return hash((self._NAME, self._qubit))
 
     def __eq__(self, other: object) -> bool:
+        if isinstance(other, Hamiltonian):
+            return other == self
         if not isinstance(other, PauliOperator):
             return False
         return (self._NAME == other._NAME) and (self._qubit == other._qubit)
@@ -396,11 +398,8 @@ class Hamiltonian(Parameterizable):
 
             result = single if result is None else kron(result, single, format="csr")
 
-        # Added for type safety
-        if result is None:
-            result = csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
-
-        return result
+        # Added for type safety, but should never occur
+        return result if result is not None else csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
 
     def to_matrix(self) -> spmatrix:
         """Return the full matrix representation of the Hamiltonian by summing over all terms.
@@ -471,6 +470,8 @@ class Hamiltonian(Parameterizable):
             )
         if isinstance(other, PauliOperator):
             other = other.to_hamiltonian()
+        if isinstance(other, QTensor):
+            other = Hamiltonian.from_qtensor(other)
         if not isinstance(other, Hamiltonian):
             return False
         return dict(self._elements) == dict(other._elements)
@@ -698,14 +699,13 @@ class Hamiltonian(Parameterizable):
 
         def parse_token(token: str) -> tuple[complex, list[PauliOperator]]:
             def looks_like_number(text: str) -> bool:
-                # If it's empty, it's not a number
-                if not text:
-                    return False
-                # If the first char is digit, '(', '.', '+', '-', or '0',
-                # or if 'j' is present, assume it's numeric
-                first = text[0]
-                if first.isdigit() or first in {"(", ".", "+", "-"}:
-                    return True
+                # Make sure it's not empty
+                if text:
+                    # If the first char is digit, '(', '.', '+', '-', or '0',
+                    # or if 'j' is present, assume it's numeric
+                    first = text[0]
+                    if first.isdigit() or first in {"(", ".", "+", "-"}:
+                        return True
                 return "j" in text
 
             sign = 1
@@ -813,12 +813,14 @@ class Hamiltonian(Parameterizable):
         Returns:
             float: the trace of the hamiltonian.
         """
+        n = self.nqubits
+        d = 2**n
         t = self._elements.get((PauliI(0),), 0)
         if isinstance(t, Parameter):
-            return t.evaluate()
+            return t.evaluate() * d
         if isinstance(t, Term):
-            return t.evaluate({})
-        return t
+            return t.evaluate({}) * d
+        return t * d
 
     # ------- Internal multiplication helpers --------
 

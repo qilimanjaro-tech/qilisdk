@@ -232,7 +232,7 @@ class BasicGate(Gate):
         Raises:
             ValueError: if duplicate target qubits are found.
             ValueError: if any parameter transform is not a parameterized term.
-            ValueError: if any parameter mentioned in parameter_transforms is not defined in parameters.
+            InvalidParameterNameError: if any parameter mentioned in parameter_transforms is not in parameters.
         """
         # Check for duplicate integers in target_qubits.
         super(BasicGate, self).__init__()
@@ -255,9 +255,7 @@ class BasicGate(Gate):
             # Check that anything mentioned in parameter_transforms is also in parameters
             for param in self._parameter_transforms[term].variables():
                 if param.label not in self._parameters:
-                    raise ValueError(
-                        f"Parameter transform '{term}' contains parameter '{param.label}' which is not defined in the parameters list."
-                    )
+                    raise InvalidParameterNameError
 
     @property
     def matrix(self) -> np.ndarray:
@@ -295,9 +293,7 @@ class BasicGate(Gate):
         super().set_parameter_bounds(ranges=ranges)
         for label, bound in ranges.items():
             if label not in self._parameters:
-                raise ValueError(
-                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
-                )
+                raise InvalidParameterNameError
             self._parameters[label].set_bounds(bound[0], bound[1])
 
     def controlled(self: Self, *control_qubits: int) -> Controlled[Self]:
@@ -418,17 +414,21 @@ class Controlled(Modified[TBasicGate]):
         if set(control_qubits) & set(basic_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
-        self._control_qubits = control_qubits
+        # Make sure we have some control qubits
+        if len(control_qubits) == 0:
+            raise ValueError("At least one control qubit must be specified.")
+
+        self._control_qubits = control_qubits + basic_gate.control_qubits
         self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
         P = np.array([[0, 0], [0, 1]], dtype=_complex_dtype())
-        for _ in range(len(self.control_qubits) - 1):
+        for _ in range(len(self.control_qubits) - len(self.basic_gate.control_qubits) - 1):
             P = np.kron(P, np.array([[0, 0], [0, 1]], dtype=_complex_dtype()))
-        # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ i_target.
-        i_target = np.eye(1 << len(self.target_qubits), dtype=_complex_dtype())
+        # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
+        i_target = np.eye(1 << self.basic_gate.nqubits, dtype=_complex_dtype())
         # The controlled gate is then:
         controlled = i_full + np.kron(P, self.basic_gate.matrix - i_target)
         return controlled

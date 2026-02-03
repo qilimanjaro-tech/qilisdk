@@ -82,7 +82,7 @@ class _OptionalDependencyStub:
         if self._import_error is None:
             raise OptionalDependencyError(message)
         detail = f"{type(self._import_error).__name__}: {self._import_error}"
-        raise OptionalDependencyError(message + f"Import failed with: {detail}\n") from self._import_error
+        raise OptionalDependencyError(message + f"Import failed with: {detail}\n")
 
     def __call__(self, *_: Any, **__: Any) -> NoReturn:
         self._raise()

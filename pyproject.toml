@@ -78,6 +78,9 @@ docs = [
     "sphinxawesome-theme>=5.3.2",
 ]
 
+[tool.uv]
+override-dependencies = ["nbconvert >= 7.17.0"]
+
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
 numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
@@ -198,6 +201,7 @@ ignore = [
     "PLR0917",
     "PLR1702",
     "TD003",
+    "DOC502",
     "RUF067"
 ]
 dummy-variable-rgx = "^_$"
