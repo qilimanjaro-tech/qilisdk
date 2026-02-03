@@ -69,9 +69,9 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     }
 
     // Parse the Python objects into C++ objects
-    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol());
     std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model);
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
     // The initial state
     long dim = 1L << n_qubits;
@@ -125,22 +125,32 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         throw py::value_error("The provided functional is not a TimeEvolution instance");
     }
 
+    // Check if we need to perturb the parameters
+    py::object schedule = functional.attr("schedule");
+    if (!noise_model.is_none()) {
+        py::dict schedule_parameters = schedule.attr("get_parameters")();
+        py::dict global_noise_map = noise_model.attr("global_perturbations");
+        for (auto item : global_noise_map) {
+            py::handle param_name = item.first;
+            if (schedule_parameters.contains(param_name)) {
+                for (auto perturbation : global_noise_map[param_name]) {
+                    double original_value = schedule_parameters[param_name].cast<double>();
+                    double new_value = perturbation.attr("perturb")(original_value).cast<double>();
+                    schedule_parameters[param_name] = new_value;
+                }
+            }
+        }
+        schedule.attr("set_parameters")(schedule_parameters);
+        schedule_parameters = schedule.attr("get_parameters")();
+    }
+    
+
     // Pre-process the Python objects
     py::object initial_state = functional.attr("initial_state");
     py::object hamiltonians_full = functional.attr("schedule").attr("hamiltonians");
     py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
     py::list hamiltonians_values = hamiltonians_full.attr("values")();
     py::object steps = functional.attr("schedule").attr("tlist");
-    py::object coeffs_full = functional.attr("schedule").attr("coefficients");
-    py::list coeffs;
-    for (const auto& h_key : hamiltonians_keys) {
-        py::object h_coeffs = coeffs_full[h_key];
-        py::list coeffs_for_h;
-        for (const auto& t : steps) {
-            coeffs_for_h.append(h_coeffs[t]);
-        }
-        coeffs.append(coeffs_for_h);
-    }
     py::object observables = functional.attr("observables");
 
     // Get parameters
@@ -156,8 +166,8 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     }
     int nqubits = static_cast<int>(std::log2(hamiltonians[0].rows()));
     std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
-    std::vector<std::vector<double>> parameters_list = parse_parameters(coeffs);
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model);
+    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
     std::vector<double> step_list = parse_time_steps(steps);
     SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
 

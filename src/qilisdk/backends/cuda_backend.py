@@ -341,10 +341,11 @@ class CudaBackend(Backend):
                     circuit.set_parameters({parameter_name: perturbation.perturb(circuit_parameters[parameter_name])})
         for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
-                true_name_to_gate_param_name = {param: param_name for param_name, param in gate.parameters.items()}
-                if isinstance(gate, gate_type) and parameter in true_name_to_gate_param_name:
+                parameter_name = parameter.label if not isinstance(parameter, str) else parameter
+                true_name_to_gate_param_name = {str(param): param_name for param_name, param in gate.parameters.items()}
+                if isinstance(gate, gate_type) and parameter_name in true_name_to_gate_param_name:
                     gate_parameters = gate.get_parameters()
-                    gate_param_name = true_name_to_gate_param_name[parameter]
+                    gate_param_name = true_name_to_gate_param_name[parameter_name]
                     for perturbation in perturbations:
                         gate.set_parameters({gate_param_name: perturbation.perturb(gate_parameters[gate_param_name])})
 

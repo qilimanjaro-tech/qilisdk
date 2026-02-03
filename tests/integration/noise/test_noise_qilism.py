@@ -12,23 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import random
 
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import PauliY
-from qilisdk.core.qtensor import QTensor, tensor_prod
-from qilisdk.noise.representations import KrausChannel, LindbladGenerator
-
-import os
-
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Z as PauliZ
+from qilisdk.analog.hamiltonian import PauliY
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
+from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, RX, H, I, X, Z
 from qilisdk.functionals import Sampling, TimeEvolution
@@ -42,6 +39,7 @@ from qilisdk.noise import (
     PauliChannel,
     ReadoutAssignment,
 )
+from qilisdk.noise.representations import KrausChannel, LindbladGenerator
 
 _IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 _NO_INTEGRATION_TESTS = "Integration tests should not run on GitHub Actions"
@@ -388,6 +386,7 @@ def test_kraus_noise_two_qubit_qilisim():
     random.seed(42)
     c.add(X(0))
     c.add(CNOT(0, 1))
+    c.add(I(0))
     sampler = Sampling(c, nshots=shots)
     ops = [np.array([[1, 0], [0, 1]]), np.array([[0, 1], [1, 0]])]
     ops = [QTensor(K) for K in ops]
@@ -396,7 +395,7 @@ def test_kraus_noise_two_qubit_qilisim():
 
     # Define a simple noise model
     nm = NoiseModel()
-    nm.add(KrausChannel(operators=kraus_ops))
+    nm.add(KrausChannel(operators=kraus_ops), gate=I)
 
     # Execute with QiliSim backend
     backend_qilisim = QiliSim(seed=42, num_threads=1, noise_model=nm)
@@ -575,3 +574,13 @@ def test_readout_error_qilisim_10():
     res = backend_qilisim.execute(sampler)
 
     assert res.samples == {"0": shots}
+
+
+if __name__ == "__main__":
+    # pytest.main([__file__])
+    # test_qilisim_backend_bit_flip_sampling()
+    # test_kraus_noise_two_qubit_qilisim()
+    # test_qilisim_backend_gate_parameter_perturbation()
+    test_qilisim_backend_schedule_parameter_perturbation()
+    # test_readout_error_qilisim_01()
+    # test_readout_error_qilisim_10()

@@ -19,6 +19,7 @@
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
+#include "../libs/eigen.h"
 
 void sampling(const std::vector<Gate>& gates, 
               const std::vector<bool>& qubits_to_measure, 
