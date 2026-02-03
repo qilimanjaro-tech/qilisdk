@@ -323,6 +323,7 @@ def test_kraus_noise_single_qubit_noise(backend_class):
     prob_10 = res.samples.get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
+
 @pytest.fixture
 def time_evolution():
     T = 10.0
@@ -348,9 +349,9 @@ def time_evolution():
     )
     return time_evolution
 
+
 @pytest.mark.parametrize("backend_class", backends)
 def test_analog_dissapation_noise(backend_class, time_evolution):
-
     # Define the noise model
     noise_model = NoiseModel()
     gamma = 0.1
@@ -367,7 +368,6 @@ def test_analog_dissapation_noise(backend_class, time_evolution):
 
 @pytest.mark.parametrize("backend_class", backends)
 def test_analog_amplitude_damping_noise(backend_class, time_evolution):
-
     # Define the noise model
     noise_model = NoiseModel()
     t1 = 0.1
@@ -382,7 +382,6 @@ def test_analog_amplitude_damping_noise(backend_class, time_evolution):
 
 @pytest.mark.parametrize("backend_class", backends)
 def test_analog_dephasing_noise(backend_class, time_evolution):
-
     # Define the noise model
     noise_model = NoiseModel()
     t_phi = 0.1
