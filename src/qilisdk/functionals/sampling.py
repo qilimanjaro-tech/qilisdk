@@ -69,6 +69,18 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
         """Return the current parameter values following ``get_parameter_names`` order."""
         return list(self.circuit.get_parameters().values())
 
+    def get_trainable_parameter_names(self) -> list[str]:
+        """Return the ordered list of parameter labels."""
+        return self.circuit.get_trainable_parameter_names()
+
+    def get_trainable_parameters(self) -> dict[str, RealNumber]:
+        """Return a mapping from parameter labels to their current numerical values."""
+        return self.circuit.get_trainable_parameters()
+
+    def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the ``(lower, upper)`` bounds associated with each parameter."""
+        return self.circuit.get_trainable_parameter_bounds()
+
     def set_parameter_values(self, values: list[float]) -> None:
         """Update all circuit parameters using the order defined by ``get_parameter_names``."""
         self.circuit.set_parameter_values(values)

@@ -1152,6 +1152,7 @@ class Parameter(BaseVariable):
         value: RealNumber,
         domain: Domain = Domain.REAL,
         bounds: tuple[float | None, float | None] = (None, None),
+        trainable: bool = True,
     ) -> None:
         super().__init__(label=label, domain=domain, bounds=bounds)
 
@@ -1160,18 +1161,28 @@ class Parameter(BaseVariable):
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
         self._value = value
-        self.set_bounds(bounds[0], bounds[1])
+        self._trainable = trainable
+        if not trainable:
+            if bounds[0] is not None or bounds[1] is not None:
+                logger.warning(f"Ignoring the bounds of the un-trainable parameter {label}")
+            self.set_bounds(None, None)
+        else:
+            self.set_bounds(bounds[0], bounds[1])
 
     @property
     def value(self) -> RealNumber:
         return self._value
+
+    @property
+    def is_trainable(self) -> bool:
+        return self._trainable
 
     def check_value(self, value: RealNumber) -> None:
         if not self.domain.check_value(value):
             raise ValueError(
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
-        if value > self.bounds[1] or value < self.bounds[0]:
+        if self.is_trainable and (value > self.bounds[1] or value < self.bounds[0]):
             raise ValueError(f"The value provided ({value}) is outside the bound of the parameter {self.bounds}")
 
     def set_value(self, value: RealNumber) -> None:
@@ -1180,6 +1191,8 @@ class Parameter(BaseVariable):
         if isinstance(value, np.generic):
             value = cast("RealNumber", value.item())
         self._value = value
+        if not self.is_trainable:
+            self.set_bounds(None, None)
 
     def num_binary_equivalent(self) -> int:  # noqa: PLR6301
         """
@@ -1216,6 +1229,11 @@ class Parameter(BaseVariable):
         return Term([self.value], operation=Operation.ADD)
 
     def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
+        if not self.is_trainable:
+            if lower_bound is not None or upper_bound is not None:
+                logger.warning(f"Ignoring the bounds of the un-trainable parameter {self.label}")
+            super().set_bounds(self.value, self.value)
+            return
         upper_bound = upper_bound if upper_bound is not None else self.domain.max()
         lower_bound = lower_bound if lower_bound is not None else self.domain.min()
         if self.value > upper_bound or self.value < lower_bound:
