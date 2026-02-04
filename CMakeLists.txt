@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 # Check to make sure we have a C++ compiler
 include(CheckCXXCompilerFlag)
@@ -9,10 +10,11 @@ if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
 endif()
 
 # The CMake option to enable QiliSim backend
-# To enable/disable QiliSim backend or to choose build type, use:
-#   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Release
-#   uv pip install -v -e ./ -Ccmake.define.qilisim=ON -Ccmake.build-type=Debug
-if (DEFINED qilisim AND qilisim STREQUAL "ON")
+# To disable QiliSim backend:
+#   uv pip install -v -e ./ -Ccmake.define.qilisim=OFF 
+# To enable debug build:
+#   uv pip install -v -e ./ -Ccmake.build-type=Debug
+if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     message(STATUS "[QiliSim] QiliSim backend enabled, preparing to build")
     message(STATUS "[QiliSim] Build type: ${CMAKE_BUILD_TYPE}")
     message(STATUS "[QiliSim] Verbose: ${CMAKE_VERBOSE_MAKEFILE}")

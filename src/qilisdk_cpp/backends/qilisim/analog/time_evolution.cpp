@@ -16,8 +16,19 @@
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
 #include "iterations.h"
+#include "../noise/noise_model.h"
 
-void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, const std::vector<SparseMatrix>& jump_operators, const std::vector<SparseMatrix>& observable_matrices, QiliSimConfig& config, SparseMatrix& rho_t, std::vector<SparseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution(SparseMatrix rho_0, 
+                    const std::vector<SparseMatrix>& hamiltonians, 
+                    const std::vector<std::vector<double>>& parameters_list, 
+                    const std::vector<double>& step_list, 
+                    NoiseModelCpp& noise_model_cpp,
+                    const std::vector<SparseMatrix>& observable_matrices, 
+                    QiliSimConfig& config, 
+                    SparseMatrix& rho_t, 
+                    std::vector<SparseMatrix>& intermediate_rhos, 
+                    std::vector<double>& expectation_values, 
+                    std::vector<std::vector<double>>& intermediate_expectation_values) {
     /*
     Execute a time evolution functional.
 
@@ -26,7 +37,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         hamiltonians (std::vector<SparseMatrix>): The list of Hamiltonian terms.
         parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
         step_list (std::vector<double>): The list of time steps.
-        jump_operators (std::vector<SparseMatrix>): The list of jump operators for non-unitary dynamics.
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during evolution.
         observable_matrices (std::vector<SparseMatrix>): The list of observable matrices to measure.
         config (QiliSimConfig&): Configuration parameters for the time evolution.
         rho_t (SparseMatrix&): Output parameter to hold the final state after evolution.
@@ -45,10 +56,13 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     config.validate();
 
     // Set the number of threads
-    if (config.num_threads <= 0) {
-        config.num_threads = 1;
+    if (config.get_num_threads() <= 0) {
+        config.set_num_threads(1);
     }
-    Eigen::setNbThreads(config.num_threads);
+    Eigen::setNbThreads(config.get_num_threads());
+
+    // Get the jump operators from the noise model
+    std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
     // Dimensions of everything
     long dim = long(hamiltonians[0].rows());
@@ -78,7 +92,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
                 trace_rho2 += std::pow(std::abs(it1.value()), 2);
             }
         }
-        if (std::abs(trace_rho2 - 1.0) < config.atol) {
+        if (std::abs(trace_rho2 - 1.0) < config.get_atol()) {
             rho_0 = get_vector_from_density_matrix(rho_0);
             is_unitary_on_statevector = true;
         }
@@ -86,7 +100,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // If we were told to do monte carlo, but we already have unitary dynamics, don't bother
     if (is_unitary_on_statevector) {
-        config.monte_carlo = false;
+        config.set_monte_carlo(false);
     }
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
@@ -102,8 +116,8 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // If monte carlo, sample from rho_0 to get initial states
     // Then rho should be a collection of state vectors as columns
-    if (config.monte_carlo) {
-        rho_0 = sample_from_density_matrix(rho_0, config.num_monte_carlo_trajectories, config.seed);
+    if (config.get_monte_carlo()) {
+        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
         is_unitary_on_statevector = true;
     }
 
@@ -138,17 +152,17 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
 
         // Perform the iteration depending on the method
-        if (config.method == "integrate") {
-            rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.num_integrate_substeps, is_unitary_on_statevector);
-        } else if (config.method == "direct") {
-            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector, config.atol);
-        } else if (config.method == "arnoldi") {
-            rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.arnoldi_dim, config.num_arnoldi_substeps, is_unitary_on_statevector, config.atol);
+        if (config.get_method() == "integrate") {
+            rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+        } else if (config.get_method() == "direct") {
+            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector, config.get_atol());
+        } else if (config.get_method() == "arnoldi") {
+            rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
         }
 
         // If we should store intermediates, do it here
-        if (config.store_intermediate_results) {
-            if (config.monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+        if (config.get_store_intermediate_results()) {
+            if (config.get_monte_carlo() || (!input_was_vector && rho_t.cols() == 1)) {
                 intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
             } else {
                 intermediate_rhos.push_back(rho_t);
@@ -157,7 +171,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (config.monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+    if (config.get_monte_carlo() || (!input_was_vector && rho_t.cols() == 1)) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 
@@ -171,7 +185,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 
     // If we have intermediates, process them too
-    if (config.store_intermediate_results) {
+    if (config.get_store_intermediate_results()) {
         for (const auto& rho_intermediate : intermediate_rhos) {
             std::vector<double> step_expectation_values;
             for (const auto& O : observable_matrices) {

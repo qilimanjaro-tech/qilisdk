@@ -25,3 +25,6 @@ std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2);
 std::complex<double> trace(const SparseMatrix& matrix);
 SparseMatrix vectorize(const SparseMatrix& matrix, double atol);
 SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol);
+SparseMatrix expand_operator(int qubit, int nqubits, const SparseMatrix& op);
+SparseMatrix expand_operator(int nqubits, const SparseMatrix& op);
+SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits, const SparseMatrix& op);

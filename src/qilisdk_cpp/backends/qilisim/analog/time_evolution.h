@@ -17,5 +17,16 @@
 
 #include "../config/qilisim_config.h"
 #include "../libs/eigen.h"
+#include "../noise/noise_model.h"
 
-void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, const std::vector<SparseMatrix>& jump_operators, const std::vector<SparseMatrix>& observable_matrices, QiliSimConfig& config, SparseMatrix& rho_t, std::vector<SparseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values);
+void time_evolution(SparseMatrix rho_0, 
+                    const std::vector<SparseMatrix>& hamiltonians, 
+                    const std::vector<std::vector<double>>& parameters_list, 
+                    const std::vector<double>& step_list, 
+                    NoiseModelCpp& noise_model_cpp, 
+                    const std::vector<SparseMatrix>& observable_matrices, 
+                    QiliSimConfig& config, 
+                    SparseMatrix& rho_t, 
+                    std::vector<SparseMatrix>& intermediate_rhos, 
+                    std::vector<double>& expectation_values, 
+                    std::vector<std::vector<double>>& intermediate_expectation_values);
