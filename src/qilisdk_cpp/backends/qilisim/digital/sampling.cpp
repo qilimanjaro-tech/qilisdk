@@ -20,7 +20,7 @@
 #include "sampling.h"
 #include "../noise/noise_model.h"
 
-#include <iostream> // TODO remove
+#include <iostream> // TODO (luke) remove
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -54,7 +54,7 @@ void sampling(const std::vector<Gate>& gates,
 
     Raises:
         py::value_error: If functional is not a Sampling instance.
-        py::value_error: If nqubits is non-positive.
+        py::value_error: If n_qubits is non-positive.
         py::value_error: If shots is non-positive.
     */
 
@@ -276,6 +276,377 @@ omp_set_num_threads(config.get_num_threads());
     // If we started with a density matrix and ended with a statevector, convert back
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
+    }
+
+}
+
+typedef std::vector<std::pair<double, double>> ProductState;
+typedef std::pair<ProductState, ProductState> StateElement;
+
+class MatrixFreeState {
+    private:
+        std::map<StateElement, std::complex<double>> state;
+
+    public:
+        
+        MatrixFreeState() {}
+        MatrixFreeState(const MatrixFreeState& other) : state(other.state) {}
+        MatrixFreeState& operator=(const MatrixFreeState& other) {
+            if (this != &other) {
+                state = other.state;
+            }
+            return *this;
+        }
+
+        bool is_ket() const {
+            if (state.empty()) {
+                return false;
+            }
+            return state.begin()->first.second.empty();
+        }
+
+        bool is_bra() const {
+            if (state.empty()) {
+                return false;
+            }
+            return state.begin()->first.first.empty();
+        }
+
+        bool is_density_matrix() const {
+            if (state.empty()) {
+                return false;
+            }
+            return !state.begin()->first.first.empty() && !state.begin()->first.second.empty();
+        }
+
+        void to_density_matrix() {
+            if (is_density_matrix()) {
+                return;
+            }
+            MatrixFreeState new_state;
+            if (is_ket()) {
+                for (const auto& pair : state) {
+                    const auto& ket = pair.first.first;
+                    std::complex<double> amplitude = pair.second;
+                    StateElement element = std::make_pair(ket, ket);
+                    new_state.state[element] = amplitude * std::conj(amplitude);
+                }
+            } else if (is_bra()) {
+                for (const auto& pair : state) {
+                    const auto& bra = pair.first.second;
+                    std::complex<double> amplitude = pair.second;
+                    StateElement element = std::make_pair(bra, bra);
+                    new_state.state[element] = amplitude * std::conj(amplitude);
+                }
+            }
+            state = new_state.state;
+        }
+
+        bool is_pure(double atol=1e-12) const {
+            if (!is_density_matrix()) {
+                return false;
+            }
+            double trace_squared = 0.0;
+            for (const auto& pair : state) {
+                if (pair.first.first == pair.first.second) {
+                    trace_squared += std::norm(pair.second);
+                }
+            }
+            return std::abs(trace_squared - 1.0) < atol;
+        }
+
+        bool empty() const {
+            return state.empty();
+        }
+
+        void normalize() {
+            double total_prob = 0.0;
+            for (const auto& pair : state) {
+                total_prob += std::norm(pair.second);
+            }
+            double norm_factor = std::sqrt(total_prob);
+            for (auto& pair : state) {
+                pair.second /= norm_factor;
+            }
+        }
+
+        int n_qubits() const {
+            if (state.empty()) {
+                return 0;
+            }
+            return state.begin()->first.first.size();
+        }
+
+        void prune(double atol) {
+            for (auto it = state.begin(); it != state.end(); ) {
+                if (std::norm(it->second) < atol * atol) {
+                    it = state.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        std::complex<double>& operator[](const StateElement& key) {
+            return state[key];
+        }
+        const std::complex<double>& operator[](const StateElement& key) const {
+            return state.at(key);
+        }
+
+        auto begin() { return state.begin(); }
+        auto end() { return state.end(); }
+        const auto begin() const { return state.begin(); }
+        const auto end() const { return state.end(); }
+
+        std::map<std::string, int> sample(int n_samples, int seed) const {
+            // TODO (luke)
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const MatrixFreeState& mfs) {
+            for (const auto& pair : mfs.state) {
+                os << "[";
+                for (const auto& amp : pair.first.first) {
+                    os << "(" << amp.first << "," << amp.second << ")";
+                    if (&amp != &pair.first.first.back()) {
+                        os << "x";
+                    }
+                }
+                os << " , [";
+                for (const auto& amp : pair.first.second) {
+                    os << "(" << amp.first << "," << amp.second << ")";
+                    if (&amp != &pair.first.second.back()) {
+                        os << "x";
+                    }
+                }
+                os << "]: " << pair.second << std::endl;
+            }
+            return os;
+        }
+
+        MatrixFreeState operator+(const MatrixFreeState& other) const {
+            MatrixFreeState result = *this;
+            for (const auto& pair : other.state) {
+                result.state[pair.first] += pair.second;
+            }
+            return result;
+        }
+        MatrixFreeState operator-(const MatrixFreeState& other) const {
+            MatrixFreeState result = *this;
+            for (const auto& pair : other.state) {
+                result.state[pair.first] -= pair.second;
+            }
+            return result;
+        }
+        MatrixFreeState& operator+=(const MatrixFreeState& other) {
+            for (const auto& pair : other.state) {
+                state[pair.first] += pair.second;
+            }
+            return *this;
+        }
+        MatrixFreeState& operator-=(const MatrixFreeState& other) {
+            for (const auto& pair : other.state) {
+                state[pair.first] -= pair.second;
+            }
+            return *this;
+        }
+
+};
+
+void element_to_computational(const StateElement& product_state, const std::vector<int>& target_qubits, DenseMatrix& vec) {
+    // TODO (luke)
+}
+
+void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& target_qubits, MatrixFreeState& output_state) {
+    // TODO (luke)
+} 
+
+class MatrixFreeOperator {
+    private:
+        SparseMatrix matrix;
+        std::vector<int> target_qubits;
+    public:
+        MatrixFreeOperator(const SparseMatrix& mat) : matrix(mat) {}
+        MatrixFreeState apply(const MatrixFreeState& input_state) const {
+            MatrixFreeState output_state;
+            DenseMatrix vec;
+            MatrixFreeState state_delta;
+            DenseMatrix output_vec;
+            for (auto& pair : input_state) {
+
+                // Convert product state of target qubits to computational basis
+                element_to_computational(pair.first, target_qubits, vec);
+
+                // Apply matrix
+                if (input_state.is_density_matrix()) {
+                    output_vec = matrix * vec * matrix.adjoint();
+                } else {
+                    output_vec = matrix * vec;
+                }
+            
+                // Convert back to product state and add to output_state
+                computational_to_elements(output_vec, target_qubits, state_delta);
+                output_state += state_delta;
+
+            }
+            return output_state;
+        }
+        MatrixFreeState operator*(const MatrixFreeState& input_state) const {
+            return apply(input_state);
+        }
+
+};
+
+void sampling_matrix_free(const std::vector<Gate>& gates, 
+                          const std::vector<bool>& qubits_to_measure, 
+                          int n_qubits, 
+                          int n_shots, 
+                          const MatrixFreeState& initial_state,
+                          NoiseModelCpp& noise_model_cpp,
+                          MatrixFreeState& state,
+                          std::map<std::string, int>& counts, 
+                          const QiliSimConfig& config) {
+    /*
+    Execute a sampling functional using a simple statevector simulator.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
+        n_qubits (int): The number of qubits in the circuit.
+        n_shots (int): The number of shots to sample.
+        initial_state (MatrixFreeState&): The initial state of the system (statevector or density matrix).
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
+        state (MatrixFreeState&): The final state after applying all gates (statevector or density matrix).
+        counts (std::map<std::string, int>&): A map to store the measurement counts.
+        config (QiliSimConfig): The simulation configuration.
+
+    Returns:
+        SamplingResult: A result object containing the measurement samples and computed probabilities.
+
+    Raises:
+        py::value_error: If functional is not a Sampling instance.
+        py::value_error: If n_qubits is non-positive.
+        py::value_error: If shots is non-positive.
+    */
+
+    // Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+#endif
+
+    // Start with the zero state
+    long dim = 1L << n_qubits;
+    state = initial_state;
+    bool is_statevector = (state.is_ket() || state.is_bra());
+    bool initially_was_statevector = is_statevector;
+
+    // Check if we have noise
+    bool has_noise = !noise_model_cpp.is_empty();
+    
+    // If we have noise but start with a statevector, convert to density matrix
+    if (has_noise && is_statevector) {
+        state.to_density_matrix();
+        is_statevector = false;
+    }
+
+    // Whether we should do monte-carlo sampling (only for density matrices)
+    bool monte_carlo = (!is_statevector && config.get_monte_carlo() && !has_noise);
+    if (monte_carlo) {
+        // TODO (luke)
+    }
+
+    // Apply each gate
+    for (const auto& gate : gates) {
+
+        // Convert gate to matrix-free operator
+        MatrixFreeOperator op(gate.get_base_matrix());
+
+        // Apply the gate
+        op.apply(state);
+
+        // Apply any relevant Kraus operators
+        if (has_noise) {
+            for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), gate.get_target_qubits(), n_qubits)) {
+                MatrixFreeState new_state;
+                MatrixFreeState new_state_element;
+                for (const auto& K : operator_set) {
+                    MatrixFreeOperator k_op(K);
+                    new_state_element = state;
+                    k_op.apply(new_state_element);
+                    new_state += new_state_element;
+                }
+                state = new_state;
+            }
+        }
+
+        // Renormalize the state
+        state.normalize();
+
+    }
+
+    // If we have statevector/s but we should return a density matrix
+    if (monte_carlo) {
+        // TODO (luke)
+    }
+
+    // Sample from the state
+    counts = state.sample(n_shots, config.get_seed());
+
+    // Apply readout error to counts
+    if (has_noise) {
+        std::map<std::string, int> noisy_counts;
+        for (const auto& pair : counts) {
+            std::string bitstring = pair.first;
+            int count = pair.second;
+            // For each shot in the count, apply readout error
+            for (int shot = 0; shot < count; ++shot) {
+                std::string noisy_bitstring = "";
+                for (int q = 0; q < n_qubits; ++q) {
+                    char bit = bitstring[q];
+                    auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
+                    double p01 = readout_error.first;
+                    double p10 = readout_error.second;
+                    double rand_val = ((double) rand() / (RAND_MAX));
+                    if (bit == '0') {
+                        // 0 -> 1 with probability p01
+                        if (rand_val < p01) {
+                            noisy_bitstring += '1';
+                        } else {
+                            noisy_bitstring += '0';
+                        }
+                    } else {
+                        // 1 -> 0 with probability p10
+                        if (rand_val < p10) {
+                            noisy_bitstring += '0';
+                        } else {
+                            noisy_bitstring += '1';
+                        }
+                    }
+                }
+                noisy_counts[noisy_bitstring] += 1;
+            }
+        }
+        counts = noisy_counts;
+    }
+
+    // Only keep measured qubits in the counts
+    std::map<std::string, int> filtered_counts;
+    for (const auto& pair : counts) {
+        std::string bitstring = pair.first;
+        std::string filtered_bitstring = "";
+        for (int i = 0; i < n_qubits; ++i) {
+            if (qubits_to_measure[i]) {
+                filtered_bitstring += bitstring[i];
+            }
+        }
+        filtered_counts[filtered_bitstring] += pair.second;
+    }
+    counts = filtered_counts;
+
+    // If we started with a (pure) density matrix and ended with a statevector, convert back
+    if (!initially_was_statevector && is_statevector) {
+        state.to_density_matrix();
     }
 
 }

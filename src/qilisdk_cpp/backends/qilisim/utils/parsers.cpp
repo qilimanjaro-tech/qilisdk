@@ -16,7 +16,6 @@
 #include "../digital/gate.h"
 #include "numpy.h"
 #include "../utils/matrix_utils.h"
-#include <iostream> // TODO remove
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) {
     /*

@@ -244,6 +244,16 @@ std::string Gate::get_id() const {
     return oss.str();
 }
 
+SparseMatrix Gate::get_base_matrix() const {
+    /*
+    Get the base matrix of the gate.
+
+    Returns:
+        SparseMatrix: The base matrix of the gate.
+    */
+    return base_matrix;
+}
+
 SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     /*
     Get the full matrix representation of the gate on the entire qubit register.

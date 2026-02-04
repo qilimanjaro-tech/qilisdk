@@ -42,6 +42,7 @@ class Gate {
     std::vector<std::pair<std::string, double>> get_parameters() const;
     std::string get_name() const;
     std::string get_id() const;
+    SparseMatrix get_base_matrix() const;
     SparseMatrix get_full_matrix(int num_qubits) const;
 };
 
