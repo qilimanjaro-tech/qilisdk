@@ -502,7 +502,7 @@ class QTensor:
     def __add__(self, other: QTensor | Complex) -> QTensor:
         if isinstance(other, QTensor):
             return QTensor(self._data + other._data)
-        if abs(other) < get_settings().atol:
+        if isinstance(other, Complex) and abs(other) < get_settings().atol:
             return self
         return NotImplemented
 
@@ -536,6 +536,16 @@ class QTensor:
         if r * c <= 64:
             s += f"\n{self._data.toarray()}"
         return s
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, QTensor):
+            return NotImplemented
+        # this checks the sparsity of the inequality array (i.e. no nonzeros means equal)
+        return (self._data != other._data).nnz == 0
+
+    def __hash__(self) -> int:
+        coo = self._data.tocoo()
+        return hash((self.shape, tuple(zip(coo.row, coo.col, coo.data))))
 
 
 ###############################################################################
