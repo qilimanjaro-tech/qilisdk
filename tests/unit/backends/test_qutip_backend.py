@@ -187,8 +187,8 @@ def dummy_optimizer():
     (optimal_cost, optimal_parameters). For testing, we use (0.2, [0.9, 0.1]).
     """
     optimizer = MagicMock()
-    optimizer.optimize.side_effect = (
-        lambda cost_function, init_parameters, bounds, store_intermediate_results: OptimizerResult(0.2, [0.9, 0.1])
+    optimizer.optimize.side_effect = lambda cost_function, init_parameters, bounds, store_intermediate_results: (
+        OptimizerResult(0.2, [0.9, 0.1])
     )
     return optimizer
 
