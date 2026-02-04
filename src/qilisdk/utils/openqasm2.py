@@ -184,7 +184,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
                 else:
                     gate_instance = gate_class(qubits[0])
             # For two-qubit gates.
-            elif len(qubits) == 2:  # noqa: PLR2004
+            elif len(qubits) == 2:
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
                     gate_instance = gate_class(qubits[0], qubits[1], **param_dict)

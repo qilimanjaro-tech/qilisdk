@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .pulse_experiment import PulseExperiment
+from .pulse_experiment_result import PulseExperimentResult
 from .sampling import Sampling
 from .sampling_result import SamplingResult
 from .time_evolution import TimeEvolution
@@ -20,6 +22,8 @@ from .variational_program import VariationalProgram
 from .variational_program_result import VariationalProgramResult
 
 __all__ = [
+    "PulseExperiment",
+    "PulseExperimentResult",
     "Sampling",
     "SamplingResult",
     "TimeEvolution",
