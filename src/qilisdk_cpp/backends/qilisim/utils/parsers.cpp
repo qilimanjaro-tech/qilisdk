@@ -536,6 +536,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);
     }
+    if (solver_params.contains("matrix_free")) {
+        config.set_matrix_free(solver_params["matrix_free"].cast<bool>());
+    }
     config.validate();
     return config;
 }

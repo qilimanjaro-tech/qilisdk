@@ -20,6 +20,7 @@
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
 #include "../libs/eigen.h"
+#include "../matrix_free/matrix_free.h"
 
 void sampling(const std::vector<Gate>& gates, 
               const std::vector<bool>& qubits_to_measure, 
@@ -30,3 +31,13 @@ void sampling(const std::vector<Gate>& gates,
               DenseMatrix& state,
               std::map<std::string, int>& counts,
               const QiliSimConfig& config);
+
+void sampling_matrix_free(const std::vector<Gate>& gates, 
+                          const std::vector<bool>& qubits_to_measure, 
+                          int n_qubits, 
+                          int n_shots, 
+                          const MatrixFreeState& initial_state,
+                          NoiseModelCpp& noise_model_cpp,
+                          MatrixFreeState& state,
+                          std::map<std::string, int>& counts,
+                          const QiliSimConfig& config);

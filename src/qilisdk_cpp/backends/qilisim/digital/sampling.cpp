@@ -19,6 +19,7 @@
 #include "../utils/random.h"
 #include "sampling.h"
 #include "../noise/noise_model.h"
+#include "../matrix_free/matrix_free.h"
 
 #include <iostream> // TODO (luke) remove
 
@@ -280,223 +281,6 @@ omp_set_num_threads(config.get_num_threads());
 
 }
 
-typedef std::vector<std::pair<double, double>> ProductState;
-typedef std::pair<ProductState, ProductState> StateElement;
-
-class MatrixFreeState {
-    private:
-        std::map<StateElement, std::complex<double>> state;
-
-    public:
-        
-        MatrixFreeState() {}
-        MatrixFreeState(const MatrixFreeState& other) : state(other.state) {}
-        MatrixFreeState& operator=(const MatrixFreeState& other) {
-            if (this != &other) {
-                state = other.state;
-            }
-            return *this;
-        }
-
-        bool is_ket() const {
-            if (state.empty()) {
-                return false;
-            }
-            return state.begin()->first.second.empty();
-        }
-
-        bool is_bra() const {
-            if (state.empty()) {
-                return false;
-            }
-            return state.begin()->first.first.empty();
-        }
-
-        bool is_density_matrix() const {
-            if (state.empty()) {
-                return false;
-            }
-            return !state.begin()->first.first.empty() && !state.begin()->first.second.empty();
-        }
-
-        void to_density_matrix() {
-            if (is_density_matrix()) {
-                return;
-            }
-            MatrixFreeState new_state;
-            if (is_ket()) {
-                for (const auto& pair : state) {
-                    const auto& ket = pair.first.first;
-                    std::complex<double> amplitude = pair.second;
-                    StateElement element = std::make_pair(ket, ket);
-                    new_state.state[element] = amplitude * std::conj(amplitude);
-                }
-            } else if (is_bra()) {
-                for (const auto& pair : state) {
-                    const auto& bra = pair.first.second;
-                    std::complex<double> amplitude = pair.second;
-                    StateElement element = std::make_pair(bra, bra);
-                    new_state.state[element] = amplitude * std::conj(amplitude);
-                }
-            }
-            state = new_state.state;
-        }
-
-        bool is_pure(double atol=1e-12) const {
-            if (!is_density_matrix()) {
-                return false;
-            }
-            double trace_squared = 0.0;
-            for (const auto& pair : state) {
-                if (pair.first.first == pair.first.second) {
-                    trace_squared += std::norm(pair.second);
-                }
-            }
-            return std::abs(trace_squared - 1.0) < atol;
-        }
-
-        bool empty() const {
-            return state.empty();
-        }
-
-        void normalize() {
-            double total_prob = 0.0;
-            for (const auto& pair : state) {
-                total_prob += std::norm(pair.second);
-            }
-            double norm_factor = std::sqrt(total_prob);
-            for (auto& pair : state) {
-                pair.second /= norm_factor;
-            }
-        }
-
-        int n_qubits() const {
-            if (state.empty()) {
-                return 0;
-            }
-            return state.begin()->first.first.size();
-        }
-
-        void prune(double atol) {
-            for (auto it = state.begin(); it != state.end(); ) {
-                if (std::norm(it->second) < atol * atol) {
-                    it = state.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-        }
-
-        std::complex<double>& operator[](const StateElement& key) {
-            return state[key];
-        }
-        const std::complex<double>& operator[](const StateElement& key) const {
-            return state.at(key);
-        }
-
-        auto begin() { return state.begin(); }
-        auto end() { return state.end(); }
-        const auto begin() const { return state.begin(); }
-        const auto end() const { return state.end(); }
-
-        std::map<std::string, int> sample(int n_samples, int seed) const {
-            // TODO (luke)
-        }
-
-        friend std::ostream& operator<<(std::ostream& os, const MatrixFreeState& mfs) {
-            for (const auto& pair : mfs.state) {
-                os << "[";
-                for (const auto& amp : pair.first.first) {
-                    os << "(" << amp.first << "," << amp.second << ")";
-                    if (&amp != &pair.first.first.back()) {
-                        os << "x";
-                    }
-                }
-                os << " , [";
-                for (const auto& amp : pair.first.second) {
-                    os << "(" << amp.first << "," << amp.second << ")";
-                    if (&amp != &pair.first.second.back()) {
-                        os << "x";
-                    }
-                }
-                os << "]: " << pair.second << std::endl;
-            }
-            return os;
-        }
-
-        MatrixFreeState operator+(const MatrixFreeState& other) const {
-            MatrixFreeState result = *this;
-            for (const auto& pair : other.state) {
-                result.state[pair.first] += pair.second;
-            }
-            return result;
-        }
-        MatrixFreeState operator-(const MatrixFreeState& other) const {
-            MatrixFreeState result = *this;
-            for (const auto& pair : other.state) {
-                result.state[pair.first] -= pair.second;
-            }
-            return result;
-        }
-        MatrixFreeState& operator+=(const MatrixFreeState& other) {
-            for (const auto& pair : other.state) {
-                state[pair.first] += pair.second;
-            }
-            return *this;
-        }
-        MatrixFreeState& operator-=(const MatrixFreeState& other) {
-            for (const auto& pair : other.state) {
-                state[pair.first] -= pair.second;
-            }
-            return *this;
-        }
-
-};
-
-void element_to_computational(const StateElement& product_state, const std::vector<int>& target_qubits, DenseMatrix& vec) {
-    // TODO (luke)
-}
-
-void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& target_qubits, MatrixFreeState& output_state) {
-    // TODO (luke)
-} 
-
-class MatrixFreeOperator {
-    private:
-        SparseMatrix matrix;
-        std::vector<int> target_qubits;
-    public:
-        MatrixFreeOperator(const SparseMatrix& mat) : matrix(mat) {}
-        MatrixFreeState apply(const MatrixFreeState& input_state) const {
-            MatrixFreeState output_state;
-            DenseMatrix vec;
-            MatrixFreeState state_delta;
-            DenseMatrix output_vec;
-            for (auto& pair : input_state) {
-
-                // Convert product state of target qubits to computational basis
-                element_to_computational(pair.first, target_qubits, vec);
-
-                // Apply matrix
-                if (input_state.is_density_matrix()) {
-                    output_vec = matrix * vec * matrix.adjoint();
-                } else {
-                    output_vec = matrix * vec;
-                }
-            
-                // Convert back to product state and add to output_state
-                computational_to_elements(output_vec, target_qubits, state_delta);
-                output_state += state_delta;
-
-            }
-            return output_state;
-        }
-        MatrixFreeState operator*(const MatrixFreeState& input_state) const {
-            return apply(input_state);
-        }
-
-};
-
 void sampling_matrix_free(const std::vector<Gate>& gates, 
                           const std::vector<bool>& qubits_to_measure, 
                           int n_qubits, 
@@ -536,7 +320,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
 #endif
 
     // Start with the zero state
-    long dim = 1L << n_qubits;
     state = initial_state;
     bool is_statevector = (state.is_ket() || state.is_bra());
     bool initially_was_statevector = is_statevector;
@@ -556,34 +339,40 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
         // TODO (luke)
     }
 
+    // std::cout << "State before circuit:\n" << state << std::endl; // TODO (luke) remove
+
     // Apply each gate
     for (const auto& gate : gates) {
 
         // Convert gate to matrix-free operator
-        MatrixFreeOperator op(gate.get_base_matrix());
+        MatrixFreeOperator op(gate);
 
         // Apply the gate
-        op.apply(state);
+        state = op.apply(state);
 
         // Apply any relevant Kraus operators
         if (has_noise) {
+            std::vector<int> all_qubits(n_qubits);
+            for (int i = 0; i < n_qubits; ++i) {
+                all_qubits[i] = i;
+            }
             for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), gate.get_target_qubits(), n_qubits)) {
                 MatrixFreeState new_state;
-                MatrixFreeState new_state_element;
                 for (const auto& K : operator_set) {
                     MatrixFreeOperator k_op(K);
-                    new_state_element = state;
-                    k_op.apply(new_state_element);
-                    new_state += new_state_element;
+                    new_state += k_op.apply(state);
                 }
                 state = new_state;
             }
         }
 
         // Renormalize the state
-        state.normalize();
+        // state.normalize();
 
     }
+
+    // std::cout << "State after circuit:\n" << state << std::endl; // TODO (luke) remove
+    std::cout << "State after circuit has size " << state.size() << " elements\n"; // TODO (luke) remove
 
     // If we have statevector/s but we should return a density matrix
     if (monte_carlo) {

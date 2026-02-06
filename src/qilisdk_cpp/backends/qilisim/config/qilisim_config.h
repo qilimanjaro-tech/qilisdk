@@ -29,6 +29,7 @@ class QiliSimConfig {
     int seed = 42;
     double atol = 1e-12;
     int max_cache_size = 1000;
+    bool matrix_free = false;
 
     public:
 
@@ -44,6 +45,7 @@ class QiliSimConfig {
     int get_seed() const { return seed; }
     double get_atol() const { return atol; }
     int get_max_cache_size() const { return max_cache_size; }
+    bool get_matrix_free() const { return matrix_free; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -57,6 +59,7 @@ class QiliSimConfig {
     void set_seed(int value) { seed = value; }
     void set_atol(double value) { atol = value; }
     void set_max_cache_size(int value) { max_cache_size = value; }
+    void set_matrix_free(bool value) { matrix_free = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

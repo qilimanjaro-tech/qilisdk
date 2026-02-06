@@ -50,6 +50,7 @@ class QiliSim(Backend):
         num_threads: int = 0,
         seed: int | None = None,
         atol: float = 1e-12,
+        matrix_free: bool = False,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -66,6 +67,7 @@ class QiliSim(Backend):
             num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
             seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
             atol (float): Absolute tolerance for numerical methods.
+            matrix_free (bool): Whether to use matrix-free states and operators. Faster for sparse systems.
 
         Raises:
             ValueError: If any of the parameters are invalid.
@@ -111,6 +113,7 @@ class QiliSim(Backend):
             "num_threads": num_threads,
             "seed": seed,
             "atol": atol,
+            "matrix_free": matrix_free,
         }
 
     def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> SamplingResult:

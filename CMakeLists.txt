@@ -67,7 +67,7 @@ if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     endif()
 
     # Enable if you want to run clang-tidy on the code
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (DEFINED tidy AND qilisim STREQUAL "ON")
         message(STATUS "[QiliSim] Enabling clang-tidy")
         set_target_properties(qilisim_module PROPERTIES
             CXX_CLANG_TIDY
