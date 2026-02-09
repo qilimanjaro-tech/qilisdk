@@ -366,12 +366,17 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
             }
         }
 
+        // Prune the state
+        state.prune(config.get_atol());
+
         // Renormalize the state
         // state.normalize();
 
     }
 
-    // std::cout << "State after circuit:\n" << state << std::endl; // TODO (luke) remove
+    if (state.size() < 10) {
+        std::cout << "State after circuit:\n" << state << std::endl; // TODO (luke) remove
+    }
     std::cout << "State after circuit has size " << state.size() << " elements\n"; // TODO (luke) remove
 
     // If we have statevector/s but we should return a density matrix

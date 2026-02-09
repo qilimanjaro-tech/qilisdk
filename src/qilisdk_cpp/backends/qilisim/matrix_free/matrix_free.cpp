@@ -23,7 +23,7 @@ void element_to_computational(const StateElement& product_state, const std::vect
     if (product_state.first.size() > 0 && product_state.second.size() > 0) {
         DenseMatrix bra_vec = DenseMatrix::Ones(1, 1);
         DenseMatrix ket_vec = DenseMatrix::Ones(1, 1);
-        for (size_t i = 0; i < target_qubits.size(); ++i) {
+        for (int i : target_qubits) {
             double theta_ket = product_state.first[i].first;
             double phi_ket = product_state.first[i].second;
             double theta_bra = product_state.second[i].first;
@@ -38,11 +38,11 @@ void element_to_computational(const StateElement& product_state, const std::vect
             bra_vec = kroneckerProduct(bra_vec, single_qubit_bra).eval();
         }
         vec = ket_vec * bra_vec.adjoint();
-    // statevector
-    } else {
+    // ket
+    } else if (product_state.first.size() > 0) {
         DenseMatrix single_qubit_vec;
         vec = DenseMatrix::Ones(1, 1);
-        for (size_t i = 0; i < target_qubits.size(); ++i) {
+        for (int i : target_qubits) {
             double theta = product_state.first[i].first;
             double phi = product_state.first[i].second;
             single_qubit_vec = DenseMatrix(2, 1);
@@ -50,59 +50,110 @@ void element_to_computational(const StateElement& product_state, const std::vect
             single_qubit_vec(1, 0) = std::sin(theta / 2) * std::exp(std::complex<double>(0, phi));
             vec = kroneckerProduct(vec, single_qubit_vec).eval();
         }   
+    // bra
+    } else if (product_state.second.size() > 0) {
+        DenseMatrix single_qubit_vec;
+        vec = DenseMatrix::Ones(1, 1);
+        for (int i : target_qubits) {
+            double theta = product_state.second[i].first;
+            double phi = product_state.second[i].second;
+            single_qubit_vec = DenseMatrix(1, 2);
+            single_qubit_vec(0, 0) = std::cos(theta / 2);
+            single_qubit_vec(0, 1) = std::sin(theta / 2) * std::exp(std::complex<double>(0, phi));
+            vec = kroneckerProduct(vec, single_qubit_vec).eval();
+        }
     }
 }
 
 void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& target_qubits, const StateElement& original, MatrixFreeState& output_state) {
     // density matrix
     if (vec.rows() == vec.cols()) {
-        for (int i = 0; i < vec.rows(); ++i) {
-            for (int j = 0; j < vec.cols(); ++j) {
-                StateElement element = original;
-                std::complex<double> coeff = vec(i, j);
-                if (std::norm(coeff) > 1e-12) {
-                    for (size_t q = 0; q < target_qubits.size(); ++q) {
-                        int bit_i = (i >> (target_qubits.size() - 1 - q)) & 1;
-                        int bit_j = (j >> (target_qubits.size() - 1 - q)) & 1;
-                        double theta_i = bit_i == 0 ? 0.0 : M_PI;
-                        double phi_i = 0.0;
-                        double theta_j = bit_j == 0 ? 0.0 : M_PI;
-                        double phi_j = 0.0;
-                        element.first[q] = std::make_pair(theta_i, phi_i);
-                        element.second[q] = std::make_pair(theta_j, phi_j);
+        // if it's a single-qubit state, can do theta and phi directly
+        if (target_qubits.size() == 1) {
+            StateElement element = original;
+            double theta_ket = std::atan2(std::abs(vec(1, 0)), std::abs(vec(0, 0))) * 2;
+            double phi_ket = std::arg(vec(1, 0)) - std::arg(vec(0, 0));
+            double theta_bra = std::atan2(std::abs(vec(0, 1)), std::abs(vec(0, 0))) * 2;
+            double phi_bra = std::arg(vec(0, 1)) - std::arg(vec(0, 0));
+            element.first[target_qubits[0]] = std::make_pair(theta_ket, phi_ket);
+            element.second[target_qubits[0]] = std::make_pair(theta_bra, phi_bra);
+            std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0)) + std::norm(vec(1, 1)));
+            output_state[element] += coeff;
+        // otherwise, need to iterate through the vector and form the product state from the computational
+        } else {
+            for (int i = 0; i < vec.rows(); ++i) {
+                for (int j = 0; j < vec.cols(); ++j) {
+                    StateElement element = original;
+                    std::complex<double> coeff = vec(i, j);
+                    if (std::norm(coeff) > 1e-12) {
+                        for (size_t q = 0; q < target_qubits.size(); ++q) {
+                            int bit_i = (i >> (target_qubits.size() - 1 - q)) & 1;
+                            int bit_j = (j >> (target_qubits.size() - 1 - q)) & 1;
+                            double theta_i = bit_i == 0 ? 0.0 : M_PI;
+                            double phi_i = 0.0;
+                            double theta_j = bit_j == 0 ? 0.0 : M_PI;
+                            double phi_j = 0.0;
+                            int qubit = target_qubits[q];
+                            element.first[qubit] = std::make_pair(theta_i, phi_i);
+                            element.second[qubit] = std::make_pair(theta_j, phi_j);
+                        }
                     }
+                    output_state[element] += coeff;
                 }
-                output_state[element] += coeff;
             }
         }
     // ket
     } else if (vec.cols() == 1) {
-        for (int i = 0; i < vec.rows(); ++i) {
-            std::complex<double> coeff = vec(i, 0);
-            if (std::norm(coeff) > 1e-12) {
-                StateElement element = original;
-                for (size_t q = 0; q < target_qubits.size(); ++q) {
-                    int bit = (i >> (target_qubits.size() - 1 - q)) & 1;
-                    double theta = bit == 0 ? 0.0 : M_PI;
-                    double phi = 0.0;
-                    element.first[q] = std::make_pair(theta, phi);
+        // if it's a single-qubit state, can do theta and phi directly
+        if (target_qubits.size() == 1) {
+            StateElement element = original;
+            double theta = std::atan2(std::abs(vec(1, 0)), std::abs(vec(0, 0))) * 2;
+            double phi = std::arg(vec(1, 0)) - std::arg(vec(0, 0));
+            element.first[target_qubits[0]] = std::make_pair(theta, phi);
+            std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0)) + std::norm(vec(1, 0)));
+            output_state[element] += coeff;
+        // otherwise, need to iterate through the vector and form the product state from the computational
+        } else {
+            for (int i = 0; i < vec.rows(); ++i) {
+                std::complex<double> coeff = vec(i, 0);
+                if (std::norm(coeff) > 1e-12) {
+                    StateElement element = original;
+                    for (size_t q = 0; q < target_qubits.size(); ++q) {
+                        int bit = (i >> (target_qubits.size() - 1 - q)) & 1;
+                        double theta = bit == 0 ? 0.0 : M_PI;
+                        double phi = 0.0;
+                        int qubit = target_qubits[q];
+                        element.first[qubit] = std::make_pair(theta, phi);
+                    }
+                    output_state[element] += coeff;
                 }
-                output_state[element] += coeff;
             }
         }
     // bra
     } else if (vec.rows() == 1) {
-        for (int j = 0; j < vec.cols(); ++j) {
-            std::complex<double> coeff = vec(0, j);
-            if (std::norm(coeff) > 1e-12) {
-                StateElement element = original;
-                for (size_t q = 0; q < target_qubits.size(); ++q) {
-                    int bit = (j >> (target_qubits.size() - 1 - q)) & 1;
-                    double theta = bit == 0 ? 0.0 : M_PI;
-                    double phi = 0.0;
-                    element.second[q] = std::make_pair(theta, phi);
+        // if it's a single-qubit state, can do theta and phi directly
+        if (target_qubits.size() == 1) {
+            StateElement element = original;
+            double theta = std::atan2(std::abs(vec(0, 1)), std::abs(vec(0, 0))) * 2;
+            double phi = std::arg(vec(0, 1)) - std::arg(vec(0, 0));
+            element.second[target_qubits[0]] = std::make_pair(theta, phi);
+            std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0))     + std::norm(vec(0, 1)));
+            output_state[element] += coeff;
+        // otherwise, need to iterate through the vector and form the product state from the computational
+        } else { 
+            for (int j = 0; j < vec.cols(); ++j) {
+                std::complex<double> coeff = vec(0, j);
+                if (std::norm(coeff) > 1e-12) {
+                    StateElement element = original;
+                    for (size_t q = 0; q < target_qubits.size(); ++q) {
+                        int bit = (j >> (target_qubits.size() - 1 - q)) & 1;
+                        double theta = bit == 0 ? 0.0 : M_PI;
+                        double phi = 0.0;
+                        int qubit = target_qubits[q];
+                        element.second[qubit] = std::make_pair(theta, phi);
+                    }
+                    output_state[element] += coeff;
                 }
-                output_state[element] += coeff;
             }
         }
     }
@@ -360,6 +411,7 @@ MatrixFreeState MatrixFreeOperator::apply(const MatrixFreeState& input_state, bo
         } else {
             output_vec = matrix * vec;
         }
+        output_vec *= pair.second;
 
         // Convert back to product state and add to output_state
         computational_to_elements(output_vec, target_qubits, pair.first, output_state);
