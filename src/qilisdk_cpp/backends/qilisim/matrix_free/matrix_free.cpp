@@ -78,7 +78,8 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
             element.first[target_qubits[0]] = std::make_pair(theta_ket, phi_ket);
             element.second[target_qubits[0]] = std::make_pair(theta_bra, phi_bra);
             std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0)) + std::norm(vec(1, 1)));
-            output_state[element] += coeff;
+            // output_state[element] += coeff;
+            output_state.add_state(std::make_pair(element, coeff));
         // otherwise, need to iterate through the vector and form the product state from the computational
         } else {
             for (int i = 0; i < vec.rows(); ++i) {
@@ -98,7 +99,7 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
                             element.second[qubit] = std::make_pair(theta_j, phi_j);
                         }
                     }
-                    output_state[element] += coeff;
+                    output_state.add_state(std::make_pair(element, coeff));
                 }
             }
         }
@@ -111,7 +112,7 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
             double phi = std::arg(vec(1, 0)) - std::arg(vec(0, 0));
             element.first[target_qubits[0]] = std::make_pair(theta, phi);
             std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0)) + std::norm(vec(1, 0)));
-            output_state[element] += coeff;
+            output_state.add_state(std::make_pair(element, coeff));
         // otherwise, need to iterate through the vector and form the product state from the computational
         } else {
             for (int i = 0; i < vec.rows(); ++i) {
@@ -125,7 +126,7 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
                         int qubit = target_qubits[q];
                         element.first[qubit] = std::make_pair(theta, phi);
                     }
-                    output_state[element] += coeff;
+                    output_state.add_state(std::make_pair(element, coeff));
                 }
             }
         }
@@ -138,7 +139,7 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
             double phi = std::arg(vec(0, 1)) - std::arg(vec(0, 0));
             element.second[target_qubits[0]] = std::make_pair(theta, phi);
             std::complex<double> coeff = 1.0 / sqrt(std::norm(vec(0, 0))     + std::norm(vec(0, 1)));
-            output_state[element] += coeff;
+            output_state.add_state(std::make_pair(element, coeff));
         // otherwise, need to iterate through the vector and form the product state from the computational
         } else { 
             for (int j = 0; j < vec.cols(); ++j) {
@@ -152,7 +153,7 @@ void computational_to_elements(const DenseMatrix& vec, const std::vector<int>& t
                         int qubit = target_qubits[q];
                         element.second[qubit] = std::make_pair(theta, phi);
                     }
-                    output_state[element] += coeff;
+                    output_state.add_state(std::make_pair(element, coeff));
                 }
             }
         }
@@ -167,7 +168,8 @@ MatrixFreeState::MatrixFreeState(int n_qubits, bool density) {
         }
         zero_state.first.emplace_back(0.0, 0.0);
     }
-    state[zero_state] = 1.0;
+    // state[zero_state] = 1.0;
+    state.push_back(std::make_pair(zero_state, 1.0));
 }
 
 MatrixFreeState::MatrixFreeState(const SparseMatrix& initial_state) {
@@ -220,14 +222,14 @@ void MatrixFreeState::to_density_matrix() {
             const auto& ket = pair.first.first;
             std::complex<double> amplitude = pair.second;
             StateElement element = std::make_pair(ket, ket);
-            new_state.state[element] = amplitude * std::conj(amplitude);
+            new_state.state.push_back(std::make_pair(element, amplitude * std::conj(amplitude)));
         }
     } else if (is_bra()) {
         for (const auto& pair : state) {
             const auto& bra = pair.first.second;
             std::complex<double> amplitude = pair.second;
             StateElement element = std::make_pair(bra, bra);
-            new_state.state[element] = amplitude * std::conj(amplitude);
+            new_state.state.push_back(std::make_pair(element, amplitude * std::conj(amplitude)));
         }
     }
     state = new_state.state;
@@ -290,12 +292,24 @@ void MatrixFreeState::prune(double atol) {
     }
 }
 
-std::complex<double>& MatrixFreeState::operator[](const StateElement& key) {
-    return state[key];
-}
-const std::complex<double>& MatrixFreeState::operator[](const StateElement& key) const {
-    return state.at(key);
-}
+// std::complex<double>& MatrixFreeState::operator[](const StateElement& key) {
+//     for (auto& pair : state) {
+//         if (pair.first == key) {
+//             return pair.second;
+//         }
+//     }
+//     state.push_back(std::make_pair(key, std::complex<double>(0.0, 0.0)));
+//     return state.back().second;
+// }
+// const std::complex<double>& MatrixFreeState::operator[](const StateElement& key) const {
+//     for (const auto& pair : state) {
+//         if (pair.first == key) {
+//             return pair.second;
+//         }
+//     }
+//     static std::complex<double> zero(0.0, 0.0);
+//     return zero;
+// }
 
 std::map<std::string, int> MatrixFreeState::sample(int n_samples, int seed) const {
     // TODO (luke)
@@ -358,26 +372,30 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeState& mfs) {
 MatrixFreeState MatrixFreeState::operator+(const MatrixFreeState& other) const {
     MatrixFreeState result = *this;
     for (const auto& pair : other.state) {
-        result.state[pair.first] += pair.second;
+        // result.state[pair.first] += pair.second;
+        result.state.push_back(std::make_pair(pair.first, pair.second));
     }
     return result;
 }
 MatrixFreeState MatrixFreeState::operator-(const MatrixFreeState& other) const {
     MatrixFreeState result = *this;
     for (const auto& pair : other.state) {
-        result.state[pair.first] -= pair.second;
+        // result.state[pair.first] -= pair.second;
+        result.state.push_back(std::make_pair(pair.first, -pair.second));
     }
     return result;
 }
 MatrixFreeState& MatrixFreeState::operator+=(const MatrixFreeState& other) {
     for (const auto& pair : other.state) {
-        state[pair.first] += pair.second;
+        // state[pair.first] += pair.second;
+        state.push_back(std::make_pair(pair.first, pair.second));
     }
     return *this;
 }
 MatrixFreeState& MatrixFreeState::operator-=(const MatrixFreeState& other) {
     for (const auto& pair : other.state) {
-        state[pair.first] -= pair.second;
+        // state[pair.first] -= pair.second;
+        state.push_back(std::make_pair(pair.first, -pair.second));
     }
     return *this;
 }

@@ -24,7 +24,25 @@ typedef std::pair<ProductState, ProductState> StateElement;
 
 class MatrixFreeState {
     private:
-        std::map<StateElement, std::complex<double>> state;
+        // std::map<StateElement, std::complex<double>> state;
+        // std::vector<std::pair<StateElement, std::complex<double>>> state;
+
+        // state might look something like (1+2i)*z1*z1,3 |0+-1><0-+1|
+        // basis chars:
+        //  - |+> = (|0> + |1>) / sqrt(2)
+        //  - |-> = (|0> - |1>) / sqrt(2)
+        //  - |0>
+        //  - |1>
+        //  - |+s1> = (|00> + |11>) / sqrt(2)
+        //  - |+d1> = (|01> + |10>) / sqrt(2)
+        // coefficient chars:
+        //  - z1 = -1 if q[1], else 1
+        //  - z1,2 = -1 if q[1] and q[2], else 1
+        //  - i1 = i if q[1], else 1
+        //  - i1,2 = i if q[1] and q[2], else 1
+        typedef std::pair<std::vector<std::tuple<char, int, int>>, std::complex<double>> StateCoefficient;
+        typedef std::vector<std::tuple<char, int>> StateBasis;
+        std::vector<std::tuple<StateCoefficient, StateBasis, StateBasis>> state;
 
     public:
         
@@ -46,8 +64,9 @@ class MatrixFreeState {
         void normalize();
         void prune(double atol);
 
-        std::complex<double>& operator[](const StateElement& key);
-        const std::complex<double>& operator[](const StateElement& key) const;
+        void add_state(const std::pair<StateElement, std::complex<double>>& new_element) {
+            state.push_back(new_element);
+        }
 
         auto begin() { return state.begin(); }
         auto end() { return state.end(); }
