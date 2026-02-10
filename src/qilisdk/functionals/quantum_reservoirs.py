@@ -19,7 +19,7 @@ from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.types import RealNumber
-from qilisdk.digital import Circuit
+from qilisdk.digital import Circuit, M
 
 
 class ReservoirInput(Parameter):
@@ -42,43 +42,65 @@ class ReservoirInput(Parameter):
 class ReservoirPass(Parameterizable):
     def __init__(
         self,
-        evolution_schedule: Schedule,
+        reservoir_dynamics: Schedule | Circuit,
         measured_observables: list[QTensor | Hamiltonian | PauliOperator],
-        state_encoding: Circuit | None = None,
+        post_processing: Circuit | None = None,
+        pre_processing: Circuit | None = None,
         qubits_to_reset: list[int] | None = None,
     ) -> None:
-        self.state_encoding: Circuit | None = state_encoding
-        self.evlution_schedule: Schedule = evolution_schedule
-        self.qubits_to_reset: list[int] | None = qubits_to_reset
+
+        self._pre_processing: Circuit | None = pre_processing
+        self._reservoir_dynamics: Schedule = reservoir_dynamics
+        self._post_processing: Circuit | None = post_processing
+        self._qubits_to_reset: list[int] | None = qubits_to_reset
         super().__init__()
         self._full_param_list: dict[str, Parameter] = {}
-        self._nqubits = self.evlution_schedule.nqubits
-        if state_encoding:
-            if state_encoding.nqubits < self._nqubits:
-                self.state_encoding = Circuit(self._nqubits)
-                self.state_encoding.add(state_encoding.gates)
-            elif state_encoding.nqubits > self._nqubits:
-                raise ValueError(
-                    "Encoding Circuit acts on more qubits than the number of qubits specified by the evolution schedule."
-                )
-        self.measured_observables: list[QTensor | Hamiltonian | PauliOperator] = []
+        self._nqubits = self._reservoir_dynamics.nqubits
+
+        if pre_processing:
+            if any(isinstance(g, M) for g in pre_processing.gates):
+                raise ValueError("Pre-Processing Circuit can't contain measurements")
+            if pre_processing.nqubits > reservoir_dynamics.nqubits:
+                raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
+            if any(g.nqubits > 1 for g in pre_processing.gates):
+                raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
+            if pre_processing.nqubits < self.nqubits:
+                self._pre_processing = Circuit(self._nqubits)
+                self._pre_processing.add(pre_processing.gates)
+
+        if post_processing:
+            if any(isinstance(g, M) for g in post_processing.gates):
+                raise ValueError("Post-Processing Circuit can't contain measurements")
+            if post_processing.nqubits > reservoir_dynamics.nqubits:
+                raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
+            if any(g.nqubits > 1 for g in post_processing.gates):
+                raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
+            if post_processing.nqubits < self.nqubits:
+                self._post_processing = Circuit(self._nqubits)
+                self._post_processing.add(post_processing.gates)
+        self._qtensor_observables: list[QTensor] = []
         identity = QTensor(np.identity(2))
+
+        def _process_qtensor(observable: QTensor) -> QTensor:
+            if observable.nqubits < self._nqubits:
+                padding = [identity for _ in range(self._nqubits - observable.nqubits)]
+                full_list = [observable]
+                full_list.extend(padding)
+                _observable = tensor_prod(full_list)
+                return _observable
+            if observable.nqubits > self._nqubits:
+                raise ValueError("Observable acts on more qubits than the system contains")
+            return observable
+
         for observable in measured_observables:
             if isinstance(observable, PauliOperator):
-                self.measured_observables.append(observable.to_hamiltonian().to_qtensor(self._nqubits))
+                self._qtensor_observables.append(observable.to_hamiltonian().to_qtensor(self._nqubits))
             elif isinstance(observable, Hamiltonian):
-                self.measured_observables.append(observable.to_qtensor(self._nqubits))
+                self._qtensor_observables.append(observable.to_qtensor(self._nqubits))
             elif isinstance(observable, QTensor):
-                if observable.nqubits < self._nqubits:
-                    padding = [identity for _ in range(self._nqubits - observable.nqubits)]
-                    full_list = [observable]
-                    full_list.extend(padding)
-                    _observable = tensor_prod(full_list)
-                    self.measured_observables.append(_observable)
-                elif observable.nqubits > self._nqubits:
-                    raise ValueError("Observable acts on more qubits than the system contains")
-                else:
-                    self.measured_observables.append(observable)
+                self._qtensor_observables.append(_process_qtensor(observable))
+
+        self._measured_observables = measured_observables
 
     @property
     def input_parameter_names(self) -> list[str]:
@@ -87,35 +109,69 @@ class ReservoirPass(Parameterizable):
 
     @property
     def nparameters(self) -> int:
-        return (self.state_encoding.nparameters if self.state_encoding else 0) + self.evlution_schedule.nparameters
+        return (
+            (self._pre_processing.nparameters if self._pre_processing else 0)
+            + self._reservoir_dynamics.nparameters
+            + (self._post_processing.nparameters if self._post_processing else 0)
+        )
 
     @property
     def nqubits(self) -> int:
         return self._nqubits
 
+    @property
+    def pre_processing(self) -> Circuit | None:
+        return self._pre_processing
+
+    @property
+    def post_processing(self) -> Circuit | None:
+        return self._post_processing
+
+    @property
+    def observables_as_qtensor(self) -> list[QTensor]:
+        return self._qtensor_observables
+
+    @property
+    def qubits_to_reset(self) -> list[int] | None:
+        return self._qubits_to_reset
+
+    @property
+    def measured_observables(self) -> list[QTensor | Hamiltonian | PauliOperator] | None:
+        return self._measured_observables
+
+    @property
+    def reservoir_dynamics(self) -> Schedule | Circuit:
+        return self._reservoir_dynamics
+
     def get_parameter_values(self) -> list[float]:
         return (
-            self.state_encoding.get_parameter_values() if self.state_encoding else []
-        ) + self.evlution_schedule.get_parameter_values()
+            self._pre_processing.get_parameter_values() if self._pre_processing else []
+        ) + self._reservoir_dynamics.get_parameter_values()
 
     def get_parameter_names(self) -> list[str]:
         return (
-            self.state_encoding.get_parameter_names() if self.state_encoding else []
-        ) + self.evlution_schedule.get_parameter_names()
+            (self._pre_processing.get_parameter_names() if self._pre_processing else [])
+            + self._reservoir_dynamics.get_parameter_names()
+            + (self._post_processing.get_parameter_names() if self._post_processing else [])
+        )
 
     def get_trainable_parameter_names(self) -> list[str]:
         return (
-            self.state_encoding.get_trainable_parameter_names() if self.state_encoding else []
-        ) + self.evlution_schedule.get_trainable_parameter_names()
+            (self._pre_processing.get_trainable_parameter_names() if self._pre_processing else [])
+            + self._reservoir_dynamics.get_trainable_parameter_names()
+            + (self._post_processing.get_trainable_parameter_names() if self._post_processing else [])
+        )
 
     def get_parameters(self) -> dict[str, RealNumber]:
-        out = self.state_encoding.get_parameters() if self.state_encoding else {}
-        out.update(self.evlution_schedule.get_parameters())
+        out = self._pre_processing.get_parameters() if self._pre_processing else {}
+        out.update(self._reservoir_dynamics.get_parameters())
+        out.update(self._post_processing.get_parameters() if self._post_processing else {})
         return out
 
     def get_trainable_parameters(self) -> dict[str, RealNumber]:
-        out = self.state_encoding.get_trainable_parameters() if self.state_encoding else {}
-        out.update(self.evlution_schedule.get_trainable_parameters())
+        out = self._pre_processing.get_trainable_parameters() if self._pre_processing else {}
+        out.update(self._reservoir_dynamics.get_trainable_parameters())
+        out.update(self._post_processing.get_trainable_parameters() if self._post_processing else {})
         return out
 
     def set_parameter_values(self, values: list[float]) -> None:
@@ -126,32 +182,42 @@ class ReservoirPass(Parameterizable):
         self.set_parameters(value_dict)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
-        if self.state_encoding:
-            self.state_encoding.set_parameters(
-                {k: v for k, v in parameters.items() if k in self.state_encoding.get_parameter_names()}
+        if self._pre_processing:
+            self._pre_processing.set_parameters(
+                {k: v for k, v in parameters.items() if k in self._pre_processing.get_parameter_names()}
             )
-        self.evlution_schedule.set_parameters(
-            {k: v for k, v in parameters.items() if k in self.evlution_schedule.get_parameter_names()}
+        self._reservoir_dynamics.set_parameters(
+            {k: v for k, v in parameters.items() if k in self._reservoir_dynamics.get_parameter_names()}
         )
+        if self._post_processing:
+            self._post_processing.set_parameters(
+                {k: v for k, v in parameters.items() if k in self._post_processing.get_parameter_names()}
+            )
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        out = self.state_encoding.get_parameter_bounds() if self.state_encoding else {}
-        out.update(self.evlution_schedule.get_parameter_bounds())
+        out = self._pre_processing.get_parameter_bounds() if self._pre_processing else {}
+        out.update(self._reservoir_dynamics.get_parameter_bounds())
+        out.update(self._post_processing.get_parameter_bounds() if self._post_processing else {})
         return out
 
     def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        out = self.state_encoding.get_trainable_parameter_bounds() if self.state_encoding else {}
-        out.update(self.evlution_schedule.get_trainable_parameter_bounds())
+        out = self._pre_processing.get_trainable_parameter_bounds() if self._pre_processing else {}
+        out.update(self._reservoir_dynamics.get_trainable_parameter_bounds())
+        out.update(self._post_processing.get_trainable_parameter_bounds() if self._post_processing else {})
         return out
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        if self.state_encoding:
-            self.state_encoding.set_parameter_bounds(
-                {k: v for k, v in ranges.items() if k in self.state_encoding.get_parameter_names()}
+        if self._pre_processing:
+            self._pre_processing.set_parameter_bounds(
+                {k: v for k, v in ranges.items() if k in self._pre_processing.get_parameter_names()}
             )
-        self.evlution_schedule.set_parameter_bounds(
-            {k: v for k, v in ranges.items() if k in self.evlution_schedule.get_parameter_names()}
+        self._reservoir_dynamics.set_parameter_bounds(
+            {k: v for k, v in ranges.items() if k in self._reservoir_dynamics.get_parameter_names()}
         )
+        if self._post_processing:
+            self._post_processing.set_parameter_bounds(
+                {k: v for k, v in ranges.items() if k in self._post_processing.get_parameter_names()}
+            )
 
 
 class QuantumReservoir:
