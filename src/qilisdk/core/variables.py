@@ -26,7 +26,7 @@ from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupp
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import Number, QiliEnum, RealNumber
+from .types import Number, YamledEnum, RealNumber
 
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
@@ -165,7 +165,7 @@ def _assert_real(value: Number) -> RealNumber:
 
 
 @yaml.register_class(shared=True)
-class Domain(QiliEnum):
+class Domain(YamledEnum):
     INTEGER = "Integer Domain"
     POSITIVE_INTEGER = "Positive Integer Domain"
     REAL = "Real Domain"
@@ -219,7 +219,7 @@ class Domain(QiliEnum):
 
 
 @yaml.register_class
-class Operation(QiliEnum):
+class Operation(YamledEnum):
     MUL = "*"
     ADD = "+"
     DIV = "/"
@@ -228,7 +228,7 @@ class Operation(QiliEnum):
 
 
 @yaml.register_class
-class ComparisonOperation(QiliEnum):
+class ComparisonOperation(YamledEnum):
     LT = "<"
     LEQ = "<="
     EQ = "=="

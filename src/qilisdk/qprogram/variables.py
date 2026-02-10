@@ -18,7 +18,7 @@ import functools
 from typing import Any, Callable, ParamSpec, Self, TypeVar
 from uuid import UUID, uuid4
 
-from qilisdk.core.types import QiliEnum
+from qilisdk.core.types import YamledEnum
 from qilisdk.yaml import yaml
 
 P = ParamSpec("P")
@@ -26,7 +26,7 @@ R = TypeVar("R")
 
 
 @yaml.register_class
-class QProgramDomain(QiliEnum):
+class QProgramDomain(YamledEnum):
     """QProgramDomain class."""
 
     Scalar = "Scalar"

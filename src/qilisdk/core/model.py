@@ -22,7 +22,7 @@ from loguru import logger
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import QiliEnum
+from .types import YamledEnum
 from .variables import (
     GEQ,
     LEQ,
@@ -64,7 +64,7 @@ class SlackCounter:
 
 
 @yaml.register_class
-class ObjectiveSense(QiliEnum):
+class ObjectiveSense(YamledEnum):
     """An Enumeration of the Objective sense options."""
 
     MINIMIZE = "minimize"
