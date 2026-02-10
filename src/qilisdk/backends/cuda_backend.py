@@ -487,9 +487,9 @@ class CudaBackend(Backend):
         for term in operator_sum:
             if isinstance(term, SpinOperatorTerm) and not term.is_identity():
                 if new_operator_sum is None:
-                    new_operator_sum = term
+                    new_operator_sum = term.copy()
                 else:
-                    new_operator_sum += term
+                    new_operator_sum += term.copy()
         if new_operator_sum is None:
             new_operator_sum = ScalarOperator(0.0)
         return new_operator_sum
@@ -553,19 +553,30 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()],  # ty:ignore[possibly-missing-attribute]
+            [
+                exp_val.expectation()
+                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
+            ],
             dtype=_complex_dtype(),
         )
         expected_values = (
             np.array(
-                [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()],  # ty:ignore[possibly-missing-attribute]
+                [
+                    [val.expectation() for val in exp_vals]
+                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
+                ],
                 dtype=_complex_dtype(),
             )
-            if evolution_result.expectation_values() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
             else None
         )
         final_state = (
-            QTensor(np.array(evolution_result.final_state(), dtype=_complex_dtype()).reshape(-1, 1))  # ty:ignore[possibly-missing-attribute]
+            QTensor(
+                np.array(
+                    evolution_result.final_state(), dtype=_complex_dtype()  # ty:ignore[possibly-missing-attribute]
+                ).reshape(-1, 1)
+            )
             if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
             else None
         )
@@ -574,7 +585,8 @@ class CudaBackend(Backend):
                 QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
                 for state in evolution_result.intermediate_states()  # ty:ignore[possibly-missing-attribute]
             ]
-            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
             else None
         )
 
