@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from copy import copy
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
@@ -335,28 +336,33 @@ class CudaBackend(Backend):
     def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
         circuit_parameters = circuit.get_parameters()
         for parameter, perturbations in noise_model.global_perturbations.items():
-            parameter_name = parameter.label if not isinstance(parameter, str) else parameter
-            if parameter_name in circuit_parameters:
+            if parameter in circuit_parameters:
                 for perturbation in perturbations:
-                    circuit.set_parameters({parameter_name: perturbation.perturb(circuit_parameters[parameter_name])})
+                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+            else:
+                raise ValueError(f"Perturbing Parameter {parameter} that doesn't exist in the circuit.")
         for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
-                parameter_name = parameter.label if not isinstance(parameter, str) else parameter
-                true_name_to_gate_param_name = {str(param): param_name for param_name, param in gate.parameters.items()}
-                if isinstance(gate, gate_type) and parameter_name in true_name_to_gate_param_name:
-                    gate_parameters = gate.get_parameters()
-                    gate_param_name = true_name_to_gate_param_name[parameter_name]
-                    for perturbation in perturbations:
-                        gate.set_parameters({gate_param_name: perturbation.perturb(gate_parameters[gate_param_name])})
+                if isinstance(gate, gate_type):
+                    if parameter in gate.get_parameter_names():
+                        for perturbation in perturbations:
+                            gate.set_parameters({parameter: perturbation.perturb(gate.get_parameters()[parameter])})
+                    else:
+                        raise ValueError(
+                            "Invalid parameter name passed to gate."
+                            + "To perturb a parameter on a gate use the native theta, gamma, or phi depending on the gate not the Parameter object name."
+                        )
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
+        og_param = None
 
         # Apply parameter perturbations
         if self._noise_model:
+            og_param = copy(functional.get_parameters())
             self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
@@ -382,6 +388,8 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+        if og_param:
+            functional.set_parameters(og_param)
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     @staticmethod
@@ -498,9 +506,10 @@ class CudaBackend(Backend):
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
-
+        og_params = None
         # Apply parameter perturbations
         if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
             self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
 
         steps = functional.schedule.tlist
@@ -590,6 +599,9 @@ class CudaBackend(Backend):
             and functional.store_intermediate_results
             else None
         )
+
+        if og_params:
+            functional.set_parameters(og_params)
 
         return TimeEvolutionResult(
             final_expected_values=final_expected_values,
