@@ -26,7 +26,7 @@ from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupp
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import Number, YamledEnum, RealNumber
+from .types import Number, RealNumber, YamledEnum
 
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
