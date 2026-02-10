@@ -584,7 +584,8 @@ class CudaBackend(Backend):
         final_state = (
             QTensor(
                 np.array(
-                    evolution_result.final_state(), dtype=_complex_dtype()  # ty:ignore[possibly-missing-attribute]
+                    evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+                    dtype=_complex_dtype(),
                 ).reshape(-1, 1)
             )
             if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
