@@ -546,7 +546,6 @@ class CudaBackend(Backend):
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas
-        cuda_hamiltonian = self._remove_constant_terms(cuda_hamiltonian)
         for delta in hamiltonian_deltas:
             cuda_hamiltonian += delta
 
