@@ -20,7 +20,7 @@
 #include "utils/numpy.h"
 #include "utils/parsers.h"
 #include "noise/noise_model.h"
-#include "matrix_free/matrix_free.h"
+#include "stabilizer/affine_stabilizer.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -87,10 +87,10 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
-    if (config.get_matrix_free()) {
-        MatrixFreeState state;
-        MatrixFreeState initial_state_cpp_mf(initial_state_cpp);
-        sampling_matrix_free(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp_mf, noise_model_cpp, state, counts, config);
+    if (config.get_sampling_method() == "stabilizer") {
+        AffineStabilizerState state;
+        AffineStabilizerState initial_state_cpp_mf(initial_state_cpp);
+        sampling_stabilizer(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp_mf, noise_model_cpp, state, counts, config);
     } else {
         DenseMatrix state;
         sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);

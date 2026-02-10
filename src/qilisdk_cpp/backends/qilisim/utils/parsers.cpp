@@ -522,7 +522,10 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
         config.set_num_integrate_substeps(solver_params["num_integrate_substeps"].cast<int>());
     }
     if (solver_params.contains("evolution_method")) {
-        config.set_method(solver_params["evolution_method"].cast<std::string>());
+        config.set_time_evolution_method(solver_params["evolution_method"].cast<std::string>());
+    }
+    if (solver_params.contains("sampling_method")) {
+        config.set_sampling_method(solver_params["sampling_method"].cast<std::string>());
     }
     if (solver_params.contains("monte_carlo")) {
         config.set_monte_carlo(solver_params["monte_carlo"].cast<bool>());
@@ -535,9 +538,6 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);
-    }
-    if (solver_params.contains("matrix_free")) {
-        config.set_matrix_free(solver_params["matrix_free"].cast<bool>());
     }
     config.validate();
     return config;

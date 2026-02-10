@@ -19,7 +19,7 @@
 #include "../utils/random.h"
 #include "sampling.h"
 #include "../noise/noise_model.h"
-#include "../matrix_free/matrix_free.h"
+#include "../stabilizer/affine_stabilizer.h"
 
 #include <iostream> // TODO (luke) remove
 
@@ -281,13 +281,13 @@ omp_set_num_threads(config.get_num_threads());
 
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, 
+void sampling_stabilizer(const std::vector<Gate>& gates, 
                           const std::vector<bool>& qubits_to_measure, 
                           int n_qubits, 
                           int n_shots, 
-                          const MatrixFreeState& initial_state,
+                          const AffineStabilizerState& initial_state,
                           NoiseModelCpp& noise_model_cpp,
-                          MatrixFreeState& state,
+                          AffineStabilizerState& state,
                           std::map<std::string, int>& counts, 
                           const QiliSimConfig& config) {
     /*
@@ -298,9 +298,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
         qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
-        initial_state (MatrixFreeState&): The initial state of the system (statevector or density matrix).
+        initial_state (AffineStabilizerState&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
-        state (MatrixFreeState&): The final state after applying all gates (statevector or density matrix).
+        state (AffineStabilizerState&): The final state after applying all gates (statevector or density matrix).
         counts (std::map<std::string, int>&): A map to store the measurement counts.
         config (QiliSimConfig): The simulation configuration.
 
@@ -333,56 +333,23 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo() && !has_noise);
-    if (monte_carlo) {
-        // TODO (luke)
-    }
-
-    // std::cout << "State before circuit:\n" << state << std::endl; // TODO (luke) remove
+    std::cout << "State before circuit:\n" << state << std::endl;
 
     // Apply each gate
     for (const auto& gate : gates) {
 
-        // Convert gate to matrix-free operator
-        MatrixFreeOperator op(gate);
+        // Convert gate to a stabilizer operator
+        AffineStabilizerOperator op(gate);
 
         // Apply the gate
         state = op.apply(state);
 
-        // Apply any relevant Kraus operators
-        if (has_noise) {
-            std::vector<int> all_qubits(n_qubits);
-            for (int i = 0; i < n_qubits; ++i) {
-                all_qubits[i] = i;
-            }
-            for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), gate.get_target_qubits(), n_qubits)) {
-                MatrixFreeState new_state;
-                for (const auto& K : operator_set) {
-                    MatrixFreeOperator k_op(K);
-                    new_state += k_op.apply(state);
-                }
-                state = new_state;
-            }
-        }
-
-        // Prune the state
-        state.prune(config.get_atol());
-
-        // Renormalize the state
-        // state.normalize();
-
     }
 
     if (state.size() < 10) {
-        std::cout << "State after circuit:\n" << state << std::endl; // TODO (luke) remove
+        std::cout << "State after circuit:\n" << state << std::endl;
     }
-    std::cout << "State after circuit has size " << state.size() << " elements\n"; // TODO (luke) remove
-
-    // If we have statevector/s but we should return a density matrix
-    if (monte_carlo) {
-        // TODO (luke)
-    }
+    std::cout << "State after circuit has size " << state.size() << " elements\n";
 
     // Sample from the state
     counts = state.sample(n_shots, config.get_seed());

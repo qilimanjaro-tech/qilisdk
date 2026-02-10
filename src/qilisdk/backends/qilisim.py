@@ -50,7 +50,7 @@ class QiliSim(Backend):
         num_threads: int = 0,
         seed: int | None = None,
         atol: float = 1e-12,
-        matrix_free: bool = False,
+        sampling_method: str = "statevector",
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -67,7 +67,7 @@ class QiliSim(Backend):
             num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
             seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
             atol (float): Absolute tolerance for numerical methods.
-            matrix_free (bool): Whether to use matrix-free states and operators. Faster for sparse systems.
+            sampling_method (str): The method to use for sampling. Options are 'statevector' and 'stabilizer'.
 
         Raises:
             ValueError: If any of the parameters are invalid.
@@ -104,6 +104,7 @@ class QiliSim(Backend):
         self._noise_model = noise_model
         self.solver_params = {
             "evolution_method": evolution_method,
+            "sampling_method": sampling_method,
             "arnoldi_dim": arnoldi_dim,
             "num_arnoldi_substeps": num_arnoldi_substeps,
             "num_integrate_substeps": num_integrate_substeps,
@@ -113,7 +114,6 @@ class QiliSim(Backend):
             "num_threads": num_threads,
             "seed": seed,
             "atol": atol,
-            "matrix_free": matrix_free,
         }
 
     def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> SamplingResult:

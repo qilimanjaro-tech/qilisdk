@@ -152,11 +152,11 @@ void time_evolution(SparseMatrix rho_0,
         }
 
         // Perform the iteration depending on the method
-        if (config.get_method() == "integrate") {
+        if (config.get_time_evolution_method() == "integrate") {
             rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
-        } else if (config.get_method() == "direct") {
+        } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector, config.get_atol());
-        } else if (config.get_method() == "arnoldi") {
+        } else if (config.get_time_evolution_method() == "arnoldi") {
             rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
         }
 
