@@ -186,15 +186,73 @@ void AffineStabilizerState::prune(double atol) {
 }
 
 std::map<std::string, int> AffineStabilizerState::sample(int n_samples, int seed) const {
-    // TODO (luke)
+    
+    // Set up the random generator
     std::mt19937 gen(seed);
-    std::string zero_string = "";
-    for (int i = 0; i < n_qubits(); ++i) {
-        zero_string += "0";
-    }
+
+    // For each sample needed
     std::map<std::string, int> counts;
-    counts[zero_string] = n_samples;
+    for (int i = 0; i < n_samples; ++i) {
+
+        // Pick an element from the state with probability proportional to the square of its coefficient
+        std::discrete_distribution<> dist(state.size(), 0.0, 1.0, [&](size_t index) {
+            const auto& coeff = std::get<0>(state[index]);
+            return std::norm(coeff.first);
+        });
+        size_t index = dist(gen);
+        const auto& tuple = state[index];
+        auto ket = std::get<1>(tuple);
+        
+        // Keep evaluating the ket until all chars are 0 or 1, randomly breaking ties for +/-
+        bool things_to_do = true;
+        while (things_to_do) {
+            things_to_do = false;
+            for (auto& [char_, indices] : ket) {
+                if (char_ == '+' || char_ == '-') {
+                    if (std::bernoulli_distribution(0.5)(gen)) {
+                        char_ = '1';
+                    } else {
+                        char_ = '0';
+                    }
+                } else if (char_ == 's' || char_ == 'd') {
+                    for (int index : indices) {
+                        if (index != -1) {
+                            if (ket[index].first != '0' && ket[index].first != '1') {
+                                things_to_do = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (things_to_do) {
+                        continue;
+                    }
+                    if (char_ == 'd') {
+                        char_ = '1';
+                    } else {
+                        char_ = '0';
+                    }
+                    for (int index : indices) {
+                        if (index != -1) {
+                            if (ket[index].first == '1') {
+                                char_ = (char_ == '1') ? '0' : '1';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Convert the final ket to a bitstring and increment the count
+        std::string bitstring;
+        for (const auto& [char_, indices] : ket) {
+            bitstring += char_;
+        }
+        counts[bitstring]++;
+
+    }
+
     return counts;
+
 }
 
 std::ostream& operator<<(std::ostream& os, const StateBasis& basis) {
@@ -248,9 +306,9 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const AffineStabilizerState& mfs) {
-    std::cout << "State with " << mfs.n_qubits() << " qubits and " << mfs.size() << " terms:" << std::endl;
-    for (const auto& tuple : mfs.state) {
+std::ostream& operator<<(std::ostream& os, const AffineStabilizerState& state) {
+    std::cout << "State with " << state.n_qubits() << " qubits and " << state.size() << " terms:" << std::endl;
+    for (const auto& tuple : state.state) {
         const auto& coeff = std::get<0>(tuple);
         const auto& ket = std::get<1>(tuple);
         const auto& bra = std::get<2>(tuple);
@@ -351,132 +409,171 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             }
         }
 
-        // TODO(luke)
-
         // X
         if (name == "X") {
+            // X |0> = |1>
             if (target_char == '0') {
                 target_char = '1';
+            // X |1> = |0>
             } else if (target_char == '1') {
                 target_char = '0';
-            } else if (target_char == '-') {
-                coeff.first *= -1.0;
+            // X |si&j> = |di&j>
             } else if (target_char == 's') {
                 target_char = 'd';
+            // X |di&j> = |si&j>
             } else if (target_char == 'd') {
                 target_char = 's';
+            // X |+ s0> = |+ d0>
+            } else if (target_char == '+') {
+                // propogate bitflip TODO
             }
         // Y
         } else if (name == "Y") {
             coeff.first *= std::complex<double>(0.0, 1.0);
+            // Y |0> = i|1>
             if (target_char == '0') {
                 target_char = '1';
+            // Y |1> = -i|0>
             } else if (target_char == '1') {
+                coeff.first *= -1.0;
                 target_char = '0';
+            // Y |si&j> = z0 i|di&j>
+            // Y |di&j> = z0 i|si&j>
+            } else if (target_char == 's' || target_char == 'd') {
+                target_char = (target_char == 's') ? 'd' : 's';
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+            // Y |+> = z0 i|+>
             } else if (target_char == '+') {
-                target_char = '-';
-            } else if (target_char == '-') {
-                target_char = '+';
-            } else if (target_char == 's') {
-                target_char = 'd';
-            } else if (target_char == 'd') {
-                target_char = 's';
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+                // propogate bitflip TODO
             }
         // Z
         } else if (name == "Z") {
+            // Z |1> = -|1>
             if (target_char == '1') {
                 coeff.first *= -1.0;
-            } else if (target_char == '+') {                
-                target_char = '-';
-            } else if (target_char == '-') {
-                target_char = '+';
-            } else if (target_char == 's') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
-            } else if (target_char == 'd') {
+            // Z |+> = z0 |+>
+            // Z |si&j> = z0 |si&j>
+            // Z |di&j> = z0 |di&j>
+            } else if (target_char == '+' || target_char == 's' || target_char == 'd') {
                 coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
             }
-        // H (this one has kickback)
+        // H
         } else if (name == "H") {
+            // H |0> = |+>
             if (target_char == '0') {
                 target_char = '+';
+            // H |1> = z0 |+>
             } else if (target_char == '1') {
-                target_char = '-';
+                target_char = '+';
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+            // H |+> = |0>
+            // H z0 |+> = |1>
+            // H z0&1 |+ +> = |s1 +>
+            // H z0 |+ s0> = coeff |+ +>
             } else if (target_char == '+') {
-                target_char = '0';
-            } else if (target_char == '-') {
-                target_char = '1';
-            } else if (target_char == 's') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', all_affected_qubits));
-            } else if (target_char == 'd') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', all_affected_qubits));
+
+                // Check if anything references this plus
+                bool has_reference = false;
+                for (size_t i = 0; i < ket.size(); ++i) {
+                    auto& char_ = std::get<0>(ket[i]);
+                    auto& indices = std::get<1>(ket[i]);
+                    if (indices.find(target_qubit) != indices.end()) {
+                        char_ = '+';
+                        indices.clear();
+                        has_reference = true;
+                        break;
+                    }
+                }
+
+                // If it's not referenced anywhere, destroy it
+                if (!has_reference) {
+                    target_char = '0';
+                    target_indices.clear();
+                }
+
+            } else if (target_char == 's' || target_char == 'd') {
+                for (int index : target_indices) {
+                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{index}));
+                }
+                target_char = '+';
+                target_indices.clear();
             }
         // CNOT
         } else if (name == "CNOT") {
             auto& control_char = std::get<0>(ket[control_qubit]);
             auto& control_indices = std::get<1>(ket[control_qubit]);
             if (control_char == '1') {
+                // CNOT |1 0> = |1 1>
                 if (target_char == '0') {
                     target_char = '1';
+                // CNOT |1 1> = |1 0>
                 } else if (target_char == '1') {
                     target_char = '0';
-                } else if (target_char == '-') {
-                    coeff.first *= -1.0;
+                // CNOT |1 si&j> = |1 di&j>
                 } else if (target_char == 's') {
                     target_char = 'd';
+                // CNOT |1 di&j> = |1 si&j>
                 } else if (target_char == 'd') {
                     target_char = 's';
                 }
             } else if (control_char == '+') {
+                // CNOT |+ 0> = |+ s0>
                 if (target_char == '0') {
                     target_char = 's';
                     target_indices = std::set<int>{control_qubit};
+                // CNOT |+ 1> = |+ d0>
                 } else if (target_char == '1') {
                     target_char = 'd';
                     target_indices = std::set<int>{control_qubit};
-                } else if (target_char == '-') {
-                    control_char = '-';
-                } else if (target_char == 's') {
-                    handle_insert_basis(target_indices, control_qubit, target_char);
-                } else if (target_char == 'd') {
-                    handle_insert_basis(target_indices, control_qubit, target_char);
-                }
-            } else if (control_char == '-') {
-                if (target_char == '0') {
-                    target_char = 's';
-                    target_indices = std::set<int>{control_qubit};
-                } else if (target_char == '1') {
-                    target_char = 'd';
-                    target_indices = std::set<int>{control_qubit};
-                } else if (target_char == '-') {
-                    control_char = '+';
-                } else if (target_char == 's') {
-                    handle_insert_basis(target_indices, control_qubit, target_char);
-                } else if (target_char == 'd') {
+                // CNOT |+ s2 +> = |+ s0&2 +>
+                } else if (target_char == 's' || target_char == 'd') {
                     handle_insert_basis(target_indices, control_qubit, target_char);
                 }
             } else if (control_char == 's' || control_char == 'd') {
+                // CNOT |s2 0 +> = |s2 s0 +>
                 if (target_char == '0') {
-                    target_char = control_char;
+                    target_char = 's';
                     target_indices = control_indices;
+                // CNOT |s2 1 +> = |s2 d0 +>
                 } else if (target_char == '1') {
-                    target_char = (control_char == 's') ? 'd' : 's';
+                    target_char = 'd';
                     target_indices = control_indices;
+                // CNOT |s1 +> = |+ 0>
+                // CNOT |s1&2 + +> = |+ s2 +>
                 } else if (target_char == '+') {
                     for (int index : control_indices) {
                         if (index == target_qubit) {
-                            target_char = (control_char == 's') ? '0' : '1';
-                            target_indices.clear();
+                            
+                            // This is getting destroyed
+                            std::set<int> new_indices = control_indices;
+                            new_indices.erase(index);
+                            if (new_indices.empty()) {
+                                target_char = (control_char == 's') ? '0' : '1';
+                                target_indices.clear();
+                            } else {
+                                target_char = 's';
+                                target_indices = new_indices;
+                            }
+
+                            // Which means the control is now a plus
                             control_char = '+';
                             control_indices.clear();
+
+                            // Anything that referenced the target should now reference the control
+                            for (auto& [char_, indices] : ket) {
+                                if (indices.find(target_qubit) != indices.end()) {
+                                    indices.insert(control_qubit);
+                                }
+                            }
+
                             break;
+                            
                         }
                     }
-                } else if (target_char == '-') {
-                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', all_affected_qubits));
+                // CNOT |s2 s3 + +> = |s2 s0&3 + +>
                 } else if (target_char == 's' || target_char == 'd') {
-                    for (int index : control_indices) {
-                        handle_insert_basis(target_indices, index, target_char);
-                    }
+                    handle_insert_basis(target_indices, control_qubit, target_char);
                 }
             }
         // S
@@ -488,6 +585,36 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             }
         // T TODO
         } else if (name == "T") {
+        }
+
+        // Check to make sure we're still valid
+        for (size_t i = 0; i < ket.size(); ++i) {
+            auto& char_ = std::get<0>(ket[i]);
+            auto& indices = std::get<1>(ket[i]);
+            
+            // Ensure all s and d chars have at least one index, otherwise convert to 0 or 1
+            if ((char_ == 's' || char_ == 'd') && indices.empty()) {
+                char_ = (char_ == 's') ? '0' : '1';
+            }
+
+            // Ensure all s and d have indices pointing to chars that are not 0 or 1
+            if (char_ == 's' || char_ == 'd') {
+                char new_char = char_;
+                std::set<int> new_indices;
+                for (int index : indices) {
+                    if (index != -1) {
+                        auto& dependent_char = std::get<0>(ket[index]);
+                        if (dependent_char == '1') {
+                            new_char = (new_char == 's') ? 'd' : 's';
+                        } else {
+                            new_indices.insert(index);
+                        }
+                    }
+                }
+                char_ = new_char;
+                indices = new_indices;
+            }
+
         }
 
     }

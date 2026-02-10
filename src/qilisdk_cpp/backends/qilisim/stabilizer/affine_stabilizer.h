@@ -29,7 +29,6 @@ class AffineStabilizerState {
         // state might look something like (1+2i)*z1*z1,3 |0+-1s2><0-+1s1|
         // basis chars:
         //  - |+> = (|0> + |1>) / sqrt(2)
-        //  - |-> = (|0> - |1>) / sqrt(2)
         //  - |0>
         //  - |1>
         //  - |+s1> = (|00> + |11>) / sqrt(2)

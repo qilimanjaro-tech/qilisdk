@@ -333,7 +333,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates,
         is_statevector = false;
     }
 
-    std::cout << "State before circuit:\n" << state << std::endl;
+    std::cout << state << std::endl;
 
     // Apply each gate
     for (const auto& gate : gates) {
@@ -344,12 +344,14 @@ void sampling_stabilizer(const std::vector<Gate>& gates,
         // Apply the gate
         state = op.apply(state);
 
+        if (gates.size() < 10) {
+            std::cout << state << std::endl;
+        }
+
     }
 
-    if (state.size() < 10) {
-        std::cout << "State after circuit:\n" << state << std::endl;
-    }
-    std::cout << "State after circuit has size " << state.size() << " elements\n";
+    std::cout << state << std::endl;
+    // std::cout << "State after circuit:\n" << state << std::endl;
 
     // Sample from the state
     counts = state.sample(n_shots, config.get_seed());

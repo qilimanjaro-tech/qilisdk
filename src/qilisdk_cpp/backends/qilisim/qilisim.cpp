@@ -75,25 +75,30 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
     // The initial state
-    long dim = 1L << n_qubits;
-    SparseMatrix initial_state_cpp;
-    if (initial_state.is_none()) {
-        initial_state_cpp = SparseMatrix(dim, 1);
-        initial_state_cpp.coeffRef(0, 0) = 1.0;
-        initial_state_cpp.makeCompressed();
-    } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
-    }
-
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
     if (config.get_sampling_method() == "stabilizer") {
         AffineStabilizerState state;
-        AffineStabilizerState initial_state_cpp_mf(initial_state_cpp);
-        sampling_stabilizer(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp_mf, noise_model_cpp, state, counts, config);
+        AffineStabilizerState initial_state_stabilizer;
+        if (initial_state.is_none()) {
+            initial_state_stabilizer = AffineStabilizerState(n_qubits, false);
+        } else {
+            initial_state_stabilizer = AffineStabilizerState(parse_initial_state(initial_state, config.get_atol()));
+        }
+        sampling_stabilizer(gates, qubits_to_measure, n_qubits, n_shots, initial_state_stabilizer, noise_model_cpp, state, counts, config);
     } else {
+        SparseMatrix initial_state_cpp;
+        if (initial_state.is_none()) {
+            long dim = 1L << n_qubits;
+            initial_state_cpp = SparseMatrix(dim, 1);
+            initial_state_cpp.coeffRef(0, 0) = 1.0;
+            initial_state_cpp.makeCompressed();
+        } else {
+            initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
+        }
         DenseMatrix state;
         sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
+
     }
 
     // Convert counts to samples dict
