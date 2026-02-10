@@ -116,13 +116,42 @@ def test_parameter_perturbations():
     circuit.add(RX(0, theta=param2))
 
     perturb = OffsetPerturbation(offset=0.1)
-    noise_model.add(perturb, parameter=param1)
-    noise_model.add(perturb, parameter=param2, gate=RX)
+    noise_model.add(perturb, parameter="test1")
+    backend._handle_gate_parameter_perturbations(circuit, noise_model)
+    assert np.isclose(circuit.get_parameters()["test1"], 0.6)
+
+    noise_model.add(perturb, parameter="theta", gate=RX)
 
     backend._handle_gate_parameter_perturbations(circuit, noise_model)
 
-    assert np.isclose(circuit.get_parameters()["test1"], 0.6)
+    assert np.isclose(circuit.get_parameters()["test1"], 0.8)
     assert np.isclose(circuit.get_parameters()["test2"], 0.6)
+
+
+def test_parameter_perturbations_errors():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+
+    circuit = Circuit(1)
+    param1 = Parameter("test1", 0.5)
+    param2 = Parameter("test2", 0.5)
+    circuit.add(RX(0, theta=param1))
+    circuit.add(RX(0, theta=param2))
+
+    perturb = OffsetPerturbation(offset=0.1)
+    noise_model.add(perturb, parameter="test_1")
+
+    with pytest.raises(ValueError, match=r"Perturbing Parameter test_1 that doesn't exist in the circuit."):
+        backend._handle_gate_parameter_perturbations(circuit, noise_model)
+
+    noise_model = NoiseModel()
+    noise_model.add(perturb, gate=RX, parameter="test1")
+
+    with pytest.raises(ValueError, match=r"Invalid parameter name passed to gate."):
+        backend._handle_gate_parameter_perturbations(circuit, noise_model)
+
+    assert np.isclose(circuit.get_parameters()["test1"], 0.5)
+    assert np.isclose(circuit.get_parameters()["test2"], 0.5)
 
 
 def test_schedule_parameter_perturbations():
