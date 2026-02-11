@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from enum import Enum
+from typing import Generator, Iterator
 
 import numpy as np
 
@@ -227,6 +227,28 @@ class ReservoirPass(Parameterizable):
                 {k: v for k, v in ranges.items() if k in self._post_processing.get_parameter_names()}
             )
 
+    def __len__(self) -> int:
+        """
+        Get the total number of steps in the reservoir pass (maximum of 3)
+
+        Returns:
+            int: The number of steps in the reservoir pass.
+        """
+        return int(self._pre_processing is not None) + int(self._post_processing is not None) + 1
+
+    def __iter__(self) -> Iterator[Circuit | Schedule]:
+        """
+        Return an iterator over the steps in the reservoir pass.
+
+        Yields:
+            Iterator[Circuit | Schedule]: The steps in the pass
+        """
+        if self._pre_processing:
+            yield self._pre_processing
+        yield self._reservoir_dynamics
+        if self._post_processing:
+            yield self._post_processing
+
 
 class QuantumReservoir:
     def __init__(
@@ -276,3 +298,7 @@ class QuantumReservoir:
     @property
     def nshots(self) -> int:
         return self._nshots
+
+    @property
+    def input_parameter_names(self) -> list[str]:
+        return self._reservoir_pass.input_parameter_names

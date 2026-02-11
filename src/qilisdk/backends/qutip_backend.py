@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import copy
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
@@ -21,20 +22,27 @@ import qutip_qip.operations as QutipGates
 from loguru import logger
 from qutip import Qobj, basis, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
+from qutip_qip.operations import gate_sequence_product
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
+from qilisdk.analog import Schedule
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
+from qilisdk.core import expect_val, ket
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
+from qilisdk.functionals import TimeEvolution
+from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
+    from qilisdk.core.types import Number
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
     from qilisdk.functionals.sampling import Sampling
     from qilisdk.functionals.time_evolution import TimeEvolution
 
@@ -73,6 +81,24 @@ class QutipI(SingleQubitGate):
         return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
 
 
+def _reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
+    available_qubits = set(range(state.nqubits))
+    aux_state = copy(state)
+    zero = ket(0).to_density_matrix()
+    for qubit in qubits_to_reset:
+        part_1 = []
+        part_2 = []
+        for avail_qubit in available_qubits:
+            if qubit > avail_qubit:
+                part_1.append(avail_qubit)
+            elif qubit < avail_qubit:
+                part_2.append(avail_qubit)
+        state_part_1 = aux_state.ptrace(part_1)
+        state_part_2 = aux_state.ptrace(part_2)
+        aux_state = tensor_prod([state_part_1, zero, state_part_2])
+    return aux_state
+
+
 class QutipBackend(Backend):
     """
     Backend that runs both digital-circuit sampling and analog
@@ -106,6 +132,45 @@ class QutipBackend(Backend):
             SWAP: QutipBackend._handle_SWAP,
         }
         logger.success("QutipBackend initialised")
+
+    def _execute_process_tomography(self, circuit: Circuit) -> QTensor:
+        qutip_circuit = self._get_qutip_circuit(circuit)
+        U = gate_sequence_product(qutip_circuit.propagators(ignore_measurement=True))
+        return QTensor(U[:])
+
+    def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
+        state = copy(functional.initial_state).to_density_matrix()
+        expected_values: list[list[Number]] = []
+        intermediate_states: list[QTensor] = []
+        for input_dict in functional.input_per_layer:
+            functional.reservoir_pass.set_parameters(input_dict)
+            for step in functional.reservoir_pass:
+                if isinstance(step, Circuit):
+                    U = self._execute_process_tomography(step)
+                    state = U @ state @ U.adjoint()
+                elif isinstance(step, Schedule):
+                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots))
+                    if not res.final_state:
+                        raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
+                    state = res.final_state
+
+            if functional.store_intermideate_states:
+                intermediate_states.append(state)
+
+            if functional.reservoir_pass.qubits_to_reset:
+                state = _reset_qubits(state, functional.reservoir_pass.qubits_to_reset)
+            state = (state + state.adjoint()) * 0.5
+
+            expected_values.append(
+                [expect_val(operator=obs, state=state) for obs in functional.reservoir_pass.observables_as_qtensor]
+            )
+
+        return QuantumReservoirResult(
+            expected_values=np.array(expected_values),
+            final_expected_values=np.array(expected_values[-1]),
+            final_state=state if functional.store_final_state else None,
+            intermediate_states=intermediate_states if functional.store_intermideate_states else None,
+        )
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
