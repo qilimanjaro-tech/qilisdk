@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from copy import copy
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
@@ -335,27 +336,33 @@ class CudaBackend(Backend):
     def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
         circuit_parameters = circuit.get_parameters()
         for parameter, perturbations in noise_model.global_perturbations.items():
-            parameter_name = parameter.label if not isinstance(parameter, str) else parameter
-            if parameter_name in circuit_parameters:
+            if parameter in circuit_parameters:
                 for perturbation in perturbations:
-                    circuit.set_parameters({parameter_name: perturbation.perturb(circuit_parameters[parameter_name])})
+                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+            else:
+                raise ValueError(f"Perturbing Parameter {parameter} that doesn't exist in the circuit.")
         for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
-                true_name_to_gate_param_name = {param: param_name for param_name, param in gate.parameters.items()}
-                if isinstance(gate, gate_type) and parameter in true_name_to_gate_param_name:
-                    gate_parameters = gate.get_parameters()
-                    gate_param_name = true_name_to_gate_param_name[parameter]
-                    for perturbation in perturbations:
-                        gate.set_parameters({gate_param_name: perturbation.perturb(gate_parameters[gate_param_name])})
+                if isinstance(gate, gate_type):
+                    if parameter in gate.get_parameter_names():
+                        for perturbation in perturbations:
+                            gate.set_parameters({parameter: perturbation.perturb(gate.get_parameters()[parameter])})
+                    else:
+                        raise ValueError(
+                            "Invalid parameter name passed to gate."
+                            + "To perturb a parameter on a gate use the native theta, gamma, or phi depending on the gate not the Parameter object name."
+                        )
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
+        og_param = None
 
         # Apply parameter perturbations
         if self._noise_model:
+            og_param = copy(functional.get_parameters())
             self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
@@ -381,6 +388,8 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+        if og_param:
+            functional.set_parameters(og_param)
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     @staticmethod
@@ -487,9 +496,9 @@ class CudaBackend(Backend):
         for term in operator_sum:
             if isinstance(term, SpinOperatorTerm) and not term.is_identity():
                 if new_operator_sum is None:
-                    new_operator_sum = term
+                    new_operator_sum = term.copy()
                 else:
-                    new_operator_sum += term
+                    new_operator_sum += term.copy()
         if new_operator_sum is None:
             new_operator_sum = ScalarOperator(0.0)
         return new_operator_sum
@@ -497,9 +506,10 @@ class CudaBackend(Backend):
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
-
+        og_params = None
         # Apply parameter perturbations
         if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
             self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
 
         steps = functional.schedule.tlist
@@ -536,7 +546,6 @@ class CudaBackend(Backend):
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas
-        cuda_hamiltonian = self._remove_constant_terms(cuda_hamiltonian)
         for delta in hamiltonian_deltas:
             cuda_hamiltonian += delta
 
@@ -553,19 +562,31 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()],  # ty:ignore[possibly-missing-attribute]
+            [
+                exp_val.expectation()
+                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
+            ],
             dtype=_complex_dtype(),
         )
         expected_values = (
             np.array(
-                [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()],  # ty:ignore[possibly-missing-attribute]
+                [
+                    [val.expectation() for val in exp_vals]
+                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
+                ],
                 dtype=_complex_dtype(),
             )
-            if evolution_result.expectation_values() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
             else None
         )
         final_state = (
-            QTensor(np.array(evolution_result.final_state(), dtype=_complex_dtype()).reshape(-1, 1))  # ty:ignore[possibly-missing-attribute]
+            QTensor(
+                np.array(
+                    evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+                    dtype=_complex_dtype(),
+                ).reshape(-1, 1)
+            )
             if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
             else None
         )
@@ -574,9 +595,13 @@ class CudaBackend(Backend):
                 QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
                 for state in evolution_result.intermediate_states()  # ty:ignore[possibly-missing-attribute]
             ]
-            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
             else None
         )
+
+        if og_params:
+            functional.set_parameters(og_params)
 
         return TimeEvolutionResult(
             final_expected_values=final_expected_values,
