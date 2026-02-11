@@ -24,8 +24,11 @@ from cudaq import Schedule as CudaSchedule
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
+from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend import Backend
+from qilisdk.core import expect_val, reset_qubits
 from qilisdk.core.qtensor import QTensor
+from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (
@@ -49,7 +52,9 @@ from qilisdk.digital.gates import (
     Y,
     Z,
 )
+from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
 from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import (
     BitFlip,
@@ -67,10 +72,9 @@ from qilisdk.noise import (
 from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
-    from qilisdk.analog.schedule import Schedule
-    from qilisdk.digital.circuit import Circuit
+    from qilisdk.core.types import Number
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
     from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.time_evolution import TimeEvolution
     from qilisdk.noise import NoiseModel
 
 
@@ -608,6 +612,45 @@ class CudaBackend(Backend):
             expected_values=expected_values,
             final_state=final_state,
             intermediate_states=intermediate_states,
+        )
+
+    def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
+        state = copy(functional.initial_state).to_density_matrix()
+        expected_values: list[list[Number]] = []
+        intermediate_states: list[QTensor] = []
+        cache: dict[Circuit, QTensor] = {}
+        for input_dict in functional.input_per_layer:
+            functional.reservoir_pass.set_parameters(input_dict)
+            for step in functional.reservoir_pass:
+                if isinstance(step, Circuit):
+                    if step not in cache:
+                        U = step.to_qtensor()
+                        cache[step] = U
+                    else:
+                        U = cache[step]
+                    state = U @ state @ U.adjoint()
+                elif isinstance(step, Schedule):
+                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots))
+                    if not res.final_state:
+                        raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
+                    state = res.final_state
+
+            if functional.store_intermideate_states:
+                intermediate_states.append(state)
+
+            if functional.reservoir_pass.qubits_to_reset:
+                state = reset_qubits(state, functional.reservoir_pass.qubits_to_reset)
+            state = (state + state.adjoint()) * 0.5
+
+            expected_values.append(
+                [expect_val(operator=obs, state=state) for obs in functional.reservoir_pass.observables_as_qtensor]
+            )
+
+        return QuantumReservoirResult(
+            expected_values=np.array(expected_values),
+            final_expected_values=np.array(expected_values[-1]),
+            final_state=state if functional.store_final_state else None,
+            intermediate_states=intermediate_states if functional.store_intermideate_states else None,
         )
 
     def _handle_controlled(

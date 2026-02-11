@@ -22,13 +22,12 @@ import qutip_qip.operations as QutipGates
 from loguru import logger
 from qutip import Qobj, basis, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
-from qutip_qip.operations import gate_sequence_product
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog import Schedule
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.core import expect_val, ket
+from qilisdk.core import expect_val, reset_qubits
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
@@ -79,24 +78,6 @@ class QutipI(SingleQubitGate):
 
     def get_compact_qobj(self):  # noqa: ANN201, PLR6301
         return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
-
-
-def _reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
-    available_qubits = set(range(state.nqubits))
-    aux_state = copy(state)
-    zero = ket(0).to_density_matrix()
-    for qubit in qubits_to_reset:
-        part_1 = []
-        part_2 = []
-        for avail_qubit in available_qubits:
-            if qubit > avail_qubit:
-                part_1.append(avail_qubit)
-            elif qubit < avail_qubit:
-                part_2.append(avail_qubit)
-        state_part_1 = aux_state.ptrace(part_1)
-        state_part_2 = aux_state.ptrace(part_2)
-        aux_state = tensor_prod([state_part_1, zero, state_part_2])
-    return aux_state
 
 
 class QutipBackend(Backend):
@@ -158,7 +139,7 @@ class QutipBackend(Backend):
                 intermediate_states.append(state)
 
             if functional.reservoir_pass.qubits_to_reset:
-                state = _reset_qubits(state, functional.reservoir_pass.qubits_to_reset)
+                state = reset_qubits(state, functional.reservoir_pass.qubits_to_reset)
             state = (state + state.adjoint()) * 0.5
 
             expected_values.append(

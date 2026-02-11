@@ -76,7 +76,7 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
-        raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
+        raise NotImplementedError(f"{type(self).__qualname__} has no Quantum Reservoir implementation")
 
     def _execute_variational_program(
         self, functional: VariationalProgram[PrimitiveFunctional[TResult]]

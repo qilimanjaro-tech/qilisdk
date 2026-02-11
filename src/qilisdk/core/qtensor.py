@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import copy
 from typing import TYPE_CHECKING, Iterable, Literal
 
 import numpy as np
@@ -693,3 +694,21 @@ def expect_val(operator: QTensor, state: QTensor) -> Number:
         v = state.data @ operator.data  # (1,N)
         return _real_if_close((v @ state.data.getH()).toarray()[0, 0].tolist())
     raise ValueError("state is invalid for expect_val")
+
+
+def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
+    available_qubits = set(range(state.nqubits))
+    aux_state = copy(state)
+    zero = ket(0).to_density_matrix()
+    for qubit in qubits_to_reset:
+        part_1 = []
+        part_2 = []
+        for avail_qubit in available_qubits:
+            if qubit > avail_qubit:
+                part_1.append(avail_qubit)
+            elif qubit < avail_qubit:
+                part_2.append(avail_qubit)
+        state_part_1 = aux_state.ptrace(part_1)
+        state_part_2 = aux_state.ptrace(part_2)
+        aux_state = tensor_prod([state_part_1, zero, state_part_2])
+    return aux_state
