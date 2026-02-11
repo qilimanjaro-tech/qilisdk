@@ -17,6 +17,7 @@ from abc import ABC
 from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -25,6 +26,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+    from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -36,6 +38,7 @@ class Backend(ABC):
         self._handlers: dict[type[Functional], Callable[[Functional], FunctionalResult]] = {
             Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
+            QuantumReservoir: lambda f: self._execute_quantum_reservoir(cast("QuantumReservoir", f)),
             VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
         }
 
@@ -70,6 +73,9 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
+
+    def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_variational_program(

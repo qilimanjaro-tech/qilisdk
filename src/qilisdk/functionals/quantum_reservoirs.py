@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import Enum
+
 import numpy as np
 
 from qilisdk.analog import Hamiltonian, Schedule
@@ -229,22 +231,22 @@ class ReservoirPass(Parameterizable):
 class QuantumReservoir:
     def __init__(
         self,
-        intial_state: QTensor,
+        initial_state: QTensor,
         reservoir_pass: ReservoirPass,
         input_per_layer: list[dict[str, float]],
         store_final_state: bool = False,
         store_intermideate_states: bool = False,
         nshots: int = 0,
     ) -> None:
-        self._intial_state = intial_state
+        self._initial_state = initial_state
         self._reservoir_pass = reservoir_pass
         self._input_per_layer = input_per_layer
         self._store_final_state = store_final_state
         self._store_intermideate_states = store_intermideate_states
         self._nshots = nshots
-        if self._reservoir_pass.nqubits != self._intial_state.nqubits:
+        if self._reservoir_pass.nqubits != self._initial_state.nqubits:
             raise ValueError(
-                f"invalid initial state: the initial state acts on {self._intial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_pass.nqubits} qubits."
+                f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_pass.nqubits} qubits."
             )
 
     @property
@@ -252,8 +254,8 @@ class QuantumReservoir:
         return self._reservoir_pass.nqubits
 
     @property
-    def intial_state(self) -> QTensor:
-        return self._intial_state
+    def initial_state(self) -> QTensor:
+        return self._initial_state
 
     @property
     def reservoir_pass(self) -> ReservoirPass:

@@ -99,7 +99,7 @@ class ModelCostFunction(CostFunction):
                 )
                 variable_map = {v: int(state[i]) for i, v in enumerate(self.model.variables())}
                 evaluate_results = self.model.evaluate(variable_map)
-                total_cost += sum(v for v in evaluate_results.values()) * _prob
+                total_cost += sum(evaluate_results.values()) * _prob
             if abs(total_cost.imag) < get_settings().atol:
                 return total_cost.real
             return total_cost
@@ -119,7 +119,7 @@ class ModelCostFunction(CostFunction):
             state = [int(b) for b in f"{i:0{n}b}"]
             variable_map = {v: state[i] for i, v in enumerate(self.model.variables())}
             evaluate_results = self.model.evaluate(variable_map)
-            total_cost += sum(v for v in evaluate_results.values()) * np.abs(prob**2)
+            total_cost += sum(evaluate_results.values()) * np.abs(prob**2)
 
         total_cost = complex(np.real_if_close(total_cost, tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:

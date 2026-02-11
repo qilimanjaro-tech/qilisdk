@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ def _complex_dtype() -> np.dtype:
 
 
 @yaml.register_class
-class TimeEvolutionResult(FunctionalResult):
-    """Container for expectation values and states produced by a time-evolution simulation."""
+class QuantumReservoirResult(FunctionalResult):
+    """Container for expectation values and states produced by a reservoir simulation."""
 
     def __init__(
         self,
