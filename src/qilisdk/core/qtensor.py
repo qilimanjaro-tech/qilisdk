@@ -90,7 +90,7 @@ class QTensor:
             ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
         """
         if isinstance(data, np.ndarray):
-            if data.ndim != 2:  # noqa: PLR2004
+            if data.ndim != 2:
                 raise ValueError("Input ndarray must be 2D")
             self._data = csr_matrix(data)
         elif issparse(data):
@@ -255,7 +255,7 @@ class QTensor:
             N = _prod(dims)
             density = psi.nnz / N
             # Dense vector path is faster once the vector is reasonably filled
-            if density >= 0.05 or N <= (1 << 20):  # noqa: PLR2004
+            if density >= 0.05 or N <= (1 << 20):
                 psi1d = np.asarray(psi.toarray().reshape(-1))  # only vector, not matrix
                 psi_nd = psi1d.reshape(dims)
                 perm = keep_idx + drop_idx  # bring keep first
@@ -358,12 +358,12 @@ class QTensor:
                 # Only correct for Hermitian; otherwise, nuclear norm requires SVD
                 if self.is_hermitian():
                     r, _ = self.shape
-                    if r <= 1024:  # noqa: PLR2004
+                    if r <= 1024:
                         w = np.linalg.eigvalsh(self._data.toarray())
                         return float(np.sum(np.abs(w)))
                     raise ValueError("Trace norm for large Hermitian operators is not implemented without densifying.")
                 r, _ = self.shape
-                if r <= 1024:  # noqa: PLR2004
+                if r <= 1024:
                     s = np.linalg.svd(self._data.toarray(), compute_uv=False)
                     return float(np.sum(s))
                 raise ValueError(
@@ -473,7 +473,7 @@ class QTensor:
         except ArpackNoConvergence:
             # If ARPACK fails, fall back to dense only if small
             r, _ = self.shape
-            if r <= 2048:  # noqa: PLR2004
+            if r <= 2048:
                 lam_min = float(np.linalg.eigvalsh(self._data.toarray()).min())
             else:
                 # Conservative fallback: don't claim it's a DM if we can't certify PSD
@@ -538,7 +538,7 @@ class QTensor:
         r, c = self.shape
         nnz = self._data.nnz
         s = f"QTensor(shape={r}x{c}, nnz={nnz}, format='csr')"
-        if r * c <= 64:  # noqa: PLR2004
+        if r * c <= 64:
             s += f"\n{self._data.toarray()}"
         return s
 

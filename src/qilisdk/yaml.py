@@ -13,10 +13,11 @@
 # limitations under the License.
 
 # ruff: noqa: ANN001, ANN201 DOC201, S403
-
 import base64
 import types
 from collections import defaultdict, deque
+from typing import Any, Callable, TypeVar, overload
+from uuid import UUID
 
 import numpy as np
 from dill import dumps, loads
@@ -201,9 +202,18 @@ def deque_constructor(constructor, node):
     return deque(constructor.construct_sequence(node))
 
 
+Tcls = TypeVar("Tcls", bound=type)
+
+
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
-    def register_class(self, cls=None, *, shared: bool = False):
+    @overload
+    def register_class(self, cls: None = None, *, shared: bool = False) -> Callable[[Tcls], Tcls]: ...
+
+    @overload
+    def register_class(self, cls: Tcls, *, shared: bool = False) -> Tcls: ...
+
+    def register_class(self, cls: Tcls | None = None, *, shared: bool = False) -> Tcls | Callable[[Tcls], Tcls]:
         if cls is None:
 
             def decorator(target_cls):  # noqa: ANN202
@@ -211,11 +221,14 @@ class QiliYAML(YAML):
 
             return decorator
         if not cls.__dict__.get("yaml_tag", None):
-            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
-        return super().register_class(cls)
+            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"  # ty:ignore[unresolved-attribute]
+        super().register_class(cls)
+        return cls
 
 
 yaml = QiliYAML(typ="unsafe")
+
+yaml.register_class(UUID)
 
 # SciPy CSR
 yaml.representer.add_representer(sparse.csr_matrix, csr_representer)

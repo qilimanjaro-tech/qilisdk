@@ -145,7 +145,7 @@ class Interpolator(Parameterizable):
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
-                if len(time) != 2:  # noqa: PLR2004
+                if len(time) != 2:
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )

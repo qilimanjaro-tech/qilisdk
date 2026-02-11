@@ -25,7 +25,7 @@ Number: TypeAlias = int | float | complex
 RealNumber: TypeAlias = int | float
 
 
-class QiliEnum(str, Enum):
+class YamledEnum(str, Enum):
     yaml_tag: ClassVar[str]
 
     @classmethod
