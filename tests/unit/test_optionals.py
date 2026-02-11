@@ -22,8 +22,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from qilisdk._optionals import (
+    DependencyGroup,
     OptionalDependencyError,
     OptionalFeature,
+    RequirementMode,
     Symbol,
     _OptionalDependencyStub,
     import_optional_dependencies,
@@ -36,7 +38,10 @@ if TYPE_CHECKING:
 def test_optional_stub_raises_on_call() -> None:
     feature = OptionalFeature(
         name="speqtrum",
-        dependencies=["definitely-not-installed-dist-xyz"],
+        mode=RequirementMode.ALL,
+        dependency_groups=[
+            DependencyGroup(dists=["definitely-not-installed-dist-xyz"], extra="speqtrum"),
+        ],
         symbols=[Symbol(path="unused", name="SpeQtrum")],
     )
 
@@ -46,14 +51,17 @@ def test_optional_stub_raises_on_call() -> None:
     with pytest.raises(OptionalDependencyError) as excinfo:
         symbol()
 
-    assert "Using SpeQtrum requires installing the 'speqtrum' optional feature" in str(excinfo.value)
+    assert "Using SpeQtrum requires installing optional dependencies" in str(excinfo.value)
     assert "pip install qilisdk[speqtrum]" in str(excinfo.value)
 
 
 def test_optional_stub_raises_on_attribute_call() -> None:
     feature = OptionalFeature(
         name="speqtrum",
-        dependencies=["definitely-not-installed-dist-xyz"],
+        mode=RequirementMode.ALL,
+        dependency_groups=[
+            DependencyGroup(dists=["definitely-not-installed-dist-xyz"], extra="speqtrum"),
+        ],
         symbols=[Symbol(path="unused", name="SpeQtrum")],
     )
 
@@ -63,8 +71,31 @@ def test_optional_stub_raises_on_attribute_call() -> None:
     with pytest.raises(OptionalDependencyError) as excinfo:
         symbol.login()
 
-    assert "Using SpeQtrum.login requires installing the 'speqtrum' optional feature" in str(excinfo.value)
+    assert "Using SpeQtrum.login requires installing optional dependencies" in str(excinfo.value)
     assert "pip install qilisdk[speqtrum]" in str(excinfo.value)
+
+
+def test_optional_stub_any_generates_programmatic_hint() -> None:
+    feature = OptionalFeature(
+        name="cuda",
+        mode=RequirementMode.ANY,
+        dependency_groups=[
+            DependencyGroup(dists=["definitely-not-installed-cu12"], extra="cuda12"),
+            DependencyGroup(dists=["definitely-not-installed-cu13"], extra="cuda13"),
+        ],
+        symbols=[Symbol(path="unused", name="CudaBackend")],
+    )
+
+    imported = import_optional_dependencies(feature)
+    symbol = imported.symbols["CudaBackend"]
+
+    with pytest.raises(OptionalDependencyError) as excinfo:
+        symbol()
+
+    msg = str(excinfo.value)
+    assert "pip install qilisdk[cuda12]" in msg
+    assert "pip install qilisdk[cuda13]" in msg
+    assert " or " in msg
 
 
 def test_version_not_found(monkeypatch):
@@ -83,7 +114,12 @@ def test_version_not_found(monkeypatch):
 
 
 def test_optional_stub():
-    stub = _OptionalDependencyStub(symbol_name="SpeQtrum", feature_name="speqtrum", import_error="test")
+    stub = _OptionalDependencyStub(
+        symbol_name="SpeQtrum",
+        feature_name="speqtrum",
+        import_error=Exception("test"),
+        install_hint="`pip install qilisdk[speqtrum]`",
+    )
 
     with pytest.raises(OptionalDependencyError):
         stub()
@@ -97,7 +133,10 @@ def test_optional_stub():
 def test_import_optional_dependencies(monkeypatch):
     feature = OptionalFeature(
         name="dummy_feature",
-        dependencies=[],
+        mode=RequirementMode.ALL,
+        dependency_groups=[
+            DependencyGroup(dists=[], extra="dummy_feature"),
+        ],
         symbols=[
             Symbol(path="qilisdk._optionals", name="Dummy1"),
             Symbol(path="qilisdk.optional_modules.dummy", name="Dummy2"),
