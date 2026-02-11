@@ -20,8 +20,9 @@
 #include "../libs/eigen.h"
 #include "../digital/gate.h"
 
-typedef std::pair<std::complex<double>, std::set<std::pair<char, std::set<int>>>> StateCoefficient;
-typedef std::vector<std::pair<char, std::set<int>>> StateBasis;
+typedef std::set<int> IndexSet;
+typedef std::pair<std::complex<double>, std::set<std::pair<char, IndexSet>>> StateCoefficient;
+typedef std::vector<std::pair<char, IndexSet>> StateBasis;
 typedef std::vector<std::tuple<StateCoefficient, StateBasis, StateBasis>> State;
 
 class AffineStabilizerState {
@@ -83,7 +84,7 @@ class AffineStabilizerOperator {
         int control_qubit;
     public:
         AffineStabilizerOperator(const Gate& gate);
-        AffineStabilizerState apply(const AffineStabilizerState& input_state, bool only_multiply=false) const;
+        void apply(AffineStabilizerState& output_state) const;
         AffineStabilizerState operator*(const AffineStabilizerState& input_state) const;
         friend std::ostream& operator<<(std::ostream& os, const AffineStabilizerOperator& mfo);
 };

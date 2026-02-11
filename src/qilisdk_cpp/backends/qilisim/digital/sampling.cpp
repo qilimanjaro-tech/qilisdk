@@ -333,7 +333,12 @@ void sampling_stabilizer(const std::vector<Gate>& gates,
         is_statevector = false;
     }
 
+    #ifdef VERBOSE
+    std::cout << "--------------------------------" << std::endl;
     std::cout << state << std::endl;
+    std::cout << "--------------------------------" << std::endl;
+    int max_print_gates = 20;
+    #endif
 
     // Apply each gate
     for (const auto& gate : gates) {
@@ -342,16 +347,24 @@ void sampling_stabilizer(const std::vector<Gate>& gates,
         AffineStabilizerOperator op(gate);
 
         // Apply the gate
-        state = op.apply(state);
+        op.apply(state);
 
-        if (gates.size() < 10) {
+        #ifdef VERBOSE
+        if (int(gates.size()) <= max_print_gates) {
             std::cout << state << std::endl;
         }
+        #endif
 
     }
 
+    #ifdef VERBOSE
+    if (int(gates.size()) > max_print_gates) {
+        std::cout << "Too many gates to print" << std::endl;
+    }
+    std::cout << "--------------------------------" << std::endl;
     std::cout << state << std::endl;
-    // std::cout << "State after circuit:\n" << state << std::endl;
+    std::cout << "--------------------------------" << std::endl;
+    #endif
 
     // Sample from the state
     counts = state.sample(n_shots, config.get_seed());

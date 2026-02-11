@@ -14,15 +14,28 @@
 
 #include "affine_stabilizer.h"
 #include <random>
-#include <iostream> // TODO(luke) remove
+
+#ifdef VERBOSE
+#include <iostream>
+#endif
 
 // TODO(luke) docstrings
 
 AffineStabilizerState::AffineStabilizerState(int n_qubits, bool density) {
+    /* 
+    Create a new AffineStabilizerState in the |0...0> state.
+
+    Args:
+        n_qubits (int): The number of qubits in the state.
+        density (bool): Whether to create the state as a density matrix (default: false).
+
+    Returns:
+        AffineStabilizerState: The initialized state.
+    */
     StateCoefficient one_coeff = std::make_pair(std::complex<double>(1.0, 0.0), StateCoefficient::second_type());
     StateBasis zero_basis;
     for (int i = 0; i < n_qubits; ++i) {
-        zero_basis.push_back(std::make_pair('0', std::set<int>()));
+        zero_basis.push_back(std::make_pair('0', IndexSet()));
     }
     if (density) {
         state.push_back(std::make_tuple(one_coeff, zero_basis, zero_basis));
@@ -32,6 +45,15 @@ AffineStabilizerState::AffineStabilizerState(int n_qubits, bool density) {
 }
 
 AffineStabilizerState::AffineStabilizerState(const SparseMatrix& initial_state) {
+    /*
+    Create a new AffineStabilizerState from a sparse matrix (statevector or density matrix).
+
+    Args:
+        initial_state (SparseMatrix): The initial state as a sparse matrix.
+
+    Returns:
+        AffineStabilizerState: The initialized state.
+    */
     AffineStabilizerState new_state;
     int n_qubits = std::ceil(std::log2(initial_state.rows()));
     bool is_density = initial_state.rows() == initial_state.cols();
@@ -46,8 +68,8 @@ AffineStabilizerState::AffineStabilizerState(const SparseMatrix& initial_state) 
             for (int i = 0; i < n_qubits; ++i) {
                 char ket_char = ((row >> i) & 1) ? '1' : '0';
                 char bra_char = ((col >> i) & 1) ? '1' : '0';
-                ket_basis.push_back(std::make_pair(ket_char, std::set<int>()));
-                bra_basis.push_back(std::make_pair(bra_char, std::set<int>()));
+                ket_basis.push_back(std::make_pair(ket_char, IndexSet()));
+                bra_basis.push_back(std::make_pair(bra_char, IndexSet()));
             }
             if (is_density) {
                 new_state.state.push_back(std::make_tuple(coeff, ket_basis, bra_basis));
@@ -60,6 +82,15 @@ AffineStabilizerState::AffineStabilizerState(const SparseMatrix& initial_state) 
 }
 
 AffineStabilizerState& AffineStabilizerState::operator=(const AffineStabilizerState& other) {
+    /*
+    Assignment operator for AffineStabilizerState.
+
+    Args:
+        other (AffineStabilizerState): The state to copy from.
+
+    Returns:        
+        AffineStabilizerState&: A reference to this state after assignment.
+    */
     if (this != &other) {
         state = other.state;
     }
@@ -67,6 +98,12 @@ AffineStabilizerState& AffineStabilizerState::operator=(const AffineStabilizerSt
 }
 
 bool AffineStabilizerState::is_ket() const {
+    /*
+    Check if the state is a ket.
+
+    Returns:
+        bool: True if the state is a ket, False otherwise.
+    */
     if (state.empty()) {
         return false;
     }
@@ -74,6 +111,12 @@ bool AffineStabilizerState::is_ket() const {
 }
 
 bool AffineStabilizerState::is_bra() const {
+    /*
+    Check if the state is a bra.
+
+    Returns:
+        bool: True if the state is a bra, False otherwise.
+    */
     if (state.empty()) {
         return false;
     }
@@ -81,6 +124,12 @@ bool AffineStabilizerState::is_bra() const {
 }
 
 bool AffineStabilizerState::is_density_matrix() const {
+    /*
+    Check if the state is a density matrix.
+
+    Returns:
+        bool: True if the state is a density matrix, False otherwise.
+    */
     if (state.empty()) {
         return false;
     }
@@ -88,6 +137,9 @@ bool AffineStabilizerState::is_density_matrix() const {
 }
 
 void AffineStabilizerState::to_density_matrix() {
+    /*
+    Convert the state to a density matrix if it is currently a ket or bra.
+    */
     if (is_density_matrix()) {
         return;
     }
@@ -117,6 +169,15 @@ void AffineStabilizerState::to_density_matrix() {
 }
 
 bool AffineStabilizerState::is_pure(double atol) const {
+    /*
+    Check if the state is pure (only applies to density matrices).
+
+    Args:
+        atol (double): The absolute tolerance for checking purity (default: 1e-12).
+    
+    Returns:
+        bool: True if the state is pure, False otherwise.
+    */
     if (!is_density_matrix()) {
         return true;
     }
@@ -133,10 +194,19 @@ bool AffineStabilizerState::is_pure(double atol) const {
 }
 
 bool AffineStabilizerState::empty() const {
+    /*
+    Check if the state is empty (has no components).
+
+    Returns:
+        bool: True if the state is empty, False otherwise.
+    */
     return state.empty();
 }
 
 void AffineStabilizerState::normalize() {
+    /*
+    Normalize the state so that it has trace 1 if it's a density matrix, or norm 1 if it's a ket.
+    */
     if (is_density_matrix()) {
         double trace = 0.0;
         for (const auto& tuple : state) {
@@ -168,6 +238,12 @@ void AffineStabilizerState::normalize() {
 }
 
 int AffineStabilizerState::n_qubits() const {
+    /*
+    Get the number of qubits in the state.
+
+    Returns:
+        int: The number of qubits in the state.
+    */
     if (state.empty()) {
         return 0;
     }
@@ -175,6 +251,12 @@ int AffineStabilizerState::n_qubits() const {
 }
 
 void AffineStabilizerState::prune(double atol) {
+    /*
+    Prune components of the state that have coefficients with magnitude below the given absolute tolerance.
+
+    Args:
+        atol (double): The absolute tolerance for pruning components (default: 1e-12).
+    */
     State new_state;
     for (const auto& tuple : state) {
         const auto& coeff = std::get<0>(tuple);
@@ -186,6 +268,21 @@ void AffineStabilizerState::prune(double atol) {
 }
 
 std::map<std::string, int> AffineStabilizerState::sample(int n_samples, int seed) const {
+    /*
+    Sample from the state by randomly picking components with probability proportional to the 
+    square of their coefficients, and then randomly resolving any superposition characters in the resulting ket.
+
+    In the case of a sum of stabilizer states, we need to do two rounds of sampling, first to
+    get some evaulated states and their probabilities (which might be zero), and then to sample 
+    from those probabilities to get the final counts.
+
+    Args:
+        n_samples (int): The number of samples to draw from the state.
+        seed (int): The seed for the random number generator.
+
+    Returns:
+        std::map<std::string, int>: A map from bitstrings to their corresponding counts in the samples.
+    */
     
     // Set up the random generator
     std::mt19937 gen(seed);
@@ -216,11 +313,9 @@ std::map<std::string, int> AffineStabilizerState::sample(int n_samples, int seed
                     }
                 } else if (char_ == 's' || char_ == 'd') {
                     for (int index : indices) {
-                        if (index != -1) {
-                            if (ket[index].first != '0' && ket[index].first != '1') {
-                                things_to_do = true;
-                                break;
-                            }
+                        if (ket[index].first != '0' && ket[index].first != '1') {
+                            things_to_do = true;
+                            break;
                         }
                     }
                     if (things_to_do) {
@@ -232,10 +327,8 @@ std::map<std::string, int> AffineStabilizerState::sample(int n_samples, int seed
                         char_ = '0';
                     }
                     for (int index : indices) {
-                        if (index != -1) {
-                            if (ket[index].first == '1') {
-                                char_ = (char_ == '1') ? '0' : '1';
-                            }
+                        if (ket[index].first == '1') {
+                            char_ = (char_ == '1') ? '0' : '1';
                         }
                     }
                 }
@@ -256,18 +349,27 @@ std::map<std::string, int> AffineStabilizerState::sample(int n_samples, int seed
 }
 
 std::ostream& operator<<(std::ostream& os, const StateBasis& basis) {
+    /*
+    Print a StateBasis in a human-readable format, showing the characters and their corresponding indices.
+    e.g. std::cout << basis << std::endl;
+
+    Args:
+        os (std::ostream&): The output stream to write to.
+        basis (const StateBasis&): The StateBasis to print.
+
+    Returns:
+        std::ostream&: The output stream after writing the StateBasis.
+    */
     for (size_t i = 0; i < basis.size(); ++i) {
         const auto& [char_, indices] = basis[i];
         os << char_;
         int count = 0;
         for (int index : indices) {
-            if (index != -1) {
-                os << index;
-                if (count < static_cast<int>(indices.size()) - 1) {
-                    os << "&";
-                }
-                count++;
+            os << index;
+            if (count < static_cast<int>(indices.size()) - 1) {
+                os << "&";
             }
+            count++;
         }
         if (i != basis.size() - 1) {
             os << ", ";
@@ -277,24 +379,44 @@ std::ostream& operator<<(std::ostream& os, const StateBasis& basis) {
 }
 
 std::ostream& operator<<(std::ostream& os, const StateCoefficient& coeff) {
+    /*
+    Print a StateCoefficient in a human-readable format, showing the complex coefficient and its corresponding characters and indices.
+    e.g. std::cout << coeff << std::endl;
+
+    Args:
+        os (std::ostream&): The output stream to write to.
+        coeff (const StateCoefficient&): The StateCoefficient to print.
+
+    Returns:
+        std::ostream&: The output stream after writing the StateCoefficient.
+    */
     os << "(" << coeff.first.real() << " + " << coeff.first.imag() << "i)";
     for (const auto& [char_, indices] : coeff.second) {
         os << " * " << char_;
         int count = 0;
         for (int index : indices) {
-            if (index != -1) {
-                os << index;
-                if (count < static_cast<int>(indices.size()) - 1) {
-                    os << "&";
-                }
-                count++;
+            os << index;
+            if (count < static_cast<int>(indices.size()) - 1) {
+                os << "&";
             }
+            count++;
         }
     }
     return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
+    /*
+    Print a vector of integers in a human-readable format, showing the elements in square brackets.
+    e.g. std::cout << vec << std::endl;
+
+    Args:
+        os (std::ostream&): The output stream to write to.
+        vec (const std::vector<int>&): The vector of integers to print.
+
+    Returns:
+        std::ostream&: The output stream after writing the vector.
+    */
     os << "[";
     for (size_t i = 0; i < vec.size(); ++i) {
         os << vec[i];
@@ -306,8 +428,43 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const IndexSet& vec) {
+    /*
+    Print an IndexSet in a human-readable format, showing the elements in curly braces.
+    e.g. std::cout << index_set << std::endl;
+
+    Args:
+        os (std::ostream&): The output stream to write to.
+        vec (const IndexSet&): The IndexSet to print.
+
+    Returns:
+        std::ostream&: The output stream after writing the IndexSet.
+    */
+    os << "{";
+    size_t count = 0;
+    for (int value : vec) {
+        os << value;
+        if (count < vec.size() - 1) {
+            os << ", ";
+        }
+        count++;
+    }
+    os << "}";
+    return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const AffineStabilizerState& state) {
-    std::cout << "State with " << state.n_qubits() << " qubits and " << state.size() << " terms:" << std::endl;
+    /*
+    Print an AffineStabilizerState in a human-readable format, showing the coefficients and their corresponding kets and bras.
+    e.g. std::cout << state << std::endl;
+
+    Args:
+        os (std::ostream&): The output stream to write to.
+        state (const AffineStabilizerState&): The AffineStabilizerState to print.
+
+    Returns:
+        std::ostream&: The output stream after writing the AffineStabilizerState.
+    */
     for (const auto& tuple : state.state) {
         const auto& coeff = std::get<0>(tuple);
         const auto& ket = std::get<1>(tuple);
@@ -324,6 +481,15 @@ std::ostream& operator<<(std::ostream& os, const AffineStabilizerState& state) {
 }
 
 AffineStabilizerState AffineStabilizerState::operator+(const AffineStabilizerState& other) const {
+    /*
+    Add two AffineStabilizerStates together by concatenating their state vectors.
+
+    Args:
+        other (const AffineStabilizerState&): The state to add to this state.
+
+    Returns:
+        AffineStabilizerState: The resulting state after addition.
+    */
     AffineStabilizerState result = *this;
     for (const auto& pair : other.state) {
         result.state.push_back(pair);
@@ -331,6 +497,16 @@ AffineStabilizerState AffineStabilizerState::operator+(const AffineStabilizerSta
     return result;
 }
 AffineStabilizerState AffineStabilizerState::operator-(const AffineStabilizerState& other) const {
+    /*
+    Subtract one AffineStabilizerState from another by negating the coefficients 
+    of the second state and concatenating their state vectors.
+
+    Args:
+        other (const AffineStabilizerState&): The state to subtract from this state.
+
+    Returns:
+        AffineStabilizerState: The resulting state after subtraction.
+    */
     AffineStabilizerState result = *this;
     for (const auto& pair : other.state) {
         auto negated_pair = pair;
@@ -340,12 +516,31 @@ AffineStabilizerState AffineStabilizerState::operator-(const AffineStabilizerSta
     return result;
 }
 AffineStabilizerState& AffineStabilizerState::operator+=(const AffineStabilizerState& other) {
+    /*
+    Add another AffineStabilizerState to this state in-place by concatenating their state vectors.
+
+    Args:
+        other (const AffineStabilizerState&): The state to add to this state.
+
+    Returns:
+        AffineStabilizerState&: A reference to this state after addition.
+    */
     for (const auto& pair : other.state) {
         state.push_back(pair);
     }
     return *this;
 }
 AffineStabilizerState& AffineStabilizerState::operator-=(const AffineStabilizerState& other) {
+    /*
+    Subtract another AffineStabilizerState from this state in-place by negating the 
+    coefficients of the second state and concatenating their state vectors.
+
+    Args:
+        other (const AffineStabilizerState&): The state to subtract from this state.
+
+    Returns:
+        AffineStabilizerState&: A reference to this state after subtraction.
+    */
     for (const auto& pair : other.state) {
         auto negated_pair = pair;
         std::get<0>(negated_pair).first *= -1.0;
@@ -355,11 +550,28 @@ AffineStabilizerState& AffineStabilizerState::operator-=(const AffineStabilizerS
 }
 
 size_t AffineStabilizerState::size() const {
+    /*
+    Get the number of components in the state.
+
+    Returns:
+        size_t: The number of components in the state.
+    */
     return state.size();
 }
 
  
-void handle_insert_basis(std::set<int>& vec, int value, char& target_char) {
+void handle_insert_basis(IndexSet& vec, int value, char& target_char) {
+    /*
+    Handle inserting or removing an index from an IndexSet, and update the target character accordingly.
+    Rules:
+     - If the index to insert is not unique, remove both (i.e. inserting 0 to s0&1 -> s1).
+     - If we no longer have any indices, convert s->0 and d->1, and if we gain any indices, convert 0->s and 1->d.
+
+    Args:
+        vec (IndexSet&): The IndexSet to modify.
+        value (int): The index to insert or remove from the set.
+        target_char (char&): The character to update based on the presence of indices in the set.
+    */
     auto it = vec.find(value);
     if (it != vec.end()) {
         vec.erase(it);
@@ -372,16 +584,38 @@ void handle_insert_basis(std::set<int>& vec, int value, char& target_char) {
         } else if (target_char == 'd') {
             target_char = '1';
         }
+    } else {
+        if (target_char == '0') {
+            target_char = 's';
+        } else if (target_char == '1') {
+            target_char = 'd';
+        }
     }
 }
 
-std::complex<double> handle_insert_coeff(std::set<std::pair<char, std::set<int>>>& vec, const std::pair<char, std::set<int>>& value) {
+std::complex<double> handle_insert_coeff(std::set<std::pair<char, IndexSet>>& vec, const std::pair<char, IndexSet>& value) {
+    /*
+    Handle inserting a coefficient to the coefficient set and return any 
+    global coefficient that should be applied based on the rules.
+    Rules:
+     - If the coeff to insert is not unique, remove both 
+       (e.g. inserting z0&1 and we already have z0&1, removed both, since -1*-1 = 1).
+     - If we have a collision with an 'i', remove both and replace with a 'z' with the same indices
+       (e.g. inserting i1 to i1 -> remove both and add z1, since i1*i1 = z1).
+
+    Args:
+        vec (std::set<std::pair<char, IndexSet>>&): The set of characters and index sets to modify.
+        value (const std::pair<char, IndexSet>&): The character and index set to insert or remove from the set.
+
+    Returns:
+        std::complex<double>: The coefficient to apply based on the insertion of the coefficient.
+    */
     std::complex<double> result(1.0, 0.0);
     auto it = vec.find(value);
     if (it != vec.end()) {
         vec.erase(it);
         if (value.first == 'i') {
-            result *= handle_insert_coeff(vec, std::make_pair('i', value.second)); // i1*i1 = z1
+            result *= handle_insert_coeff(vec, std::make_pair('z', value.second)); // i1*i1 = z1
         }
     } else {
         vec.insert(value);
@@ -389,8 +623,18 @@ std::complex<double> handle_insert_coeff(std::set<std::pair<char, std::set<int>>
     return result;
 }
 
-AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerState& input_state, bool only_multiply) const {
-    AffineStabilizerState output_state = input_state;
+void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const {
+    /*
+    Apply the operator to an AffineStabilizerState by iterating through each component 
+    of the state and applying the transformation rules for the given operator name.
+    The specifics of this are quite complex, have a look at the list of rules in the implementation for details.
+
+    Args:
+        output_state (AffineStabilizerState&): The state to apply the operator to.
+
+    Raises:
+        std::runtime_error: If the operator name is unknown.
+    */
     for (auto& tuple : output_state) {
         
         // Get things as reference from the state element
@@ -399,33 +643,42 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
         auto& target_char = ket[target_qubit].first;
         auto& target_indices = ket[target_qubit].second;
 
-        // All qubits this that depends on (e.g. for kickback)
-        std::set<int> all_affected_qubits = {target_qubit};
-        for (const auto& [char_, indices] : ket) {
-            for (int index : indices) {
-                if (index != -1) {
-                    all_affected_qubits.insert(index);
-                }
-            }
-        }
-
         // X
         if (name == "X") {
             // X |0> = |1>
-            if (target_char == '0') {
-                target_char = '1';
             // X |1> = |0>
-            } else if (target_char == '1') {
-                target_char = '0';
+            if (target_char == '0' || target_char == '1') {
+                target_char = (target_char == '0') ? '1' : '0';
             // X |si&j> = |di&j>
-            } else if (target_char == 's') {
-                target_char = 'd';
             // X |di&j> = |si&j>
-            } else if (target_char == 'd') {
-                target_char = 's';
+            } else if (target_char == 's' || target_char == 'd') {
+                target_char = (target_char == 's') ? 'd' : 's';
             // X |+ s0> = |+ d0>
+            // X z0 |+> = - z0 |+>
+            // X z0&1 |+ s0> = z0&z1 z1 |+ s0>
             } else if (target_char == '+') {
-                // propogate bitflip TODO
+                // find anything in the basis that references this and swap it
+                for (size_t i = 0; i < ket.size(); ++i) {
+                    auto& char_ = std::get<0>(ket[i]);
+                    auto& indices = std::get<1>(ket[i]);
+                    if (indices.find(target_qubit) != indices.end()) {
+                        char_ = (char_ == 's') ? 'd' : 's';
+                    }
+                }
+                // add a global -1 for any linear phase that references this
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        coeff.first *= -1.0;
+                    }
+                }
+                // add a z(other) for any quadratic phase that references this
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (indices.size() == 2 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        IndexSet other_indices = indices;
+                        other_indices.erase(target_qubit);
+                        coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', other_indices));
+                    }
+                }
             }
         // Y
         } else if (name == "Y") {
@@ -441,11 +694,29 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             // Y |di&j> = z0 i|si&j>
             } else if (target_char == 's' || target_char == 'd') {
                 target_char = (target_char == 's') ? 'd' : 's';
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
             // Y |+> = z0 i|+>
+            // Y z0 |+> = i|+>
+            // Y z0 |+ s0> = i|+ d0>
+            // Y z0&1 |+ s0> = i|+ d0>
             } else if (target_char == '+') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
-                // propogate bitflip TODO
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
+                // find anything in the basis that references this and swap it
+                for (size_t i = 0; i < ket.size(); ++i) {
+                    auto& char_ = std::get<0>(ket[i]);
+                    auto& indices = std::get<1>(ket[i]);
+                    if (indices.find(target_qubit) != indices.end()) {
+                        char_ = (char_ == 's') ? 'd' : 's';
+                    }
+                }
+                // add a z(other) for any quadratic phase that references this
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (indices.size() == 2 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        IndexSet other_indices = indices;
+                        other_indices.erase(target_qubit);
+                        coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', other_indices));
+                    }
+                }
             }
         // Z
         } else if (name == "Z") {
@@ -456,7 +727,7 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             // Z |si&j> = z0 |si&j>
             // Z |di&j> = z0 |di&j>
             } else if (target_char == '+' || target_char == 's' || target_char == 'd') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
             }
         // H
         } else if (name == "H") {
@@ -466,12 +737,14 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             // H |1> = z0 |+>
             } else if (target_char == '1') {
                 target_char = '+';
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{target_qubit}));
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
             // H |+> = |0>
             // H z0 |+> = |1>
             // H z0&1 |+ +> = |s1 +>
-            // H z0 |+ s0> = coeff |+ +>
+            // H z0 |+ s0> = 
+            // H z0&1 |+ s0> = 
             } else if (target_char == '+') {
+                throw std::runtime_error("H on + not implemented yet");
 
                 // Check if anything references this plus
                 bool has_reference = false;
@@ -494,7 +767,7 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
 
             } else if (target_char == 's' || target_char == 'd') {
                 for (int index : target_indices) {
-                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', std::set<int>{index}));
+                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{index}));
                 }
                 target_char = '+';
                 target_indices.clear();
@@ -516,64 +789,139 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
                 // CNOT |1 di&j> = |1 si&j>
                 } else if (target_char == 'd') {
                     target_char = 's';
+                // CNOT |1 +> = |1 +>
+                // CNOT |1 + s1> = |1 + d1>
+                } else if (target_char == '+') {
+                    // find anything in the basis that references this and swap it
+                    for (size_t i = 0; i < ket.size(); ++i) {
+                        auto& char_ = std::get<0>(ket[i]);
+                        auto& indices = std::get<1>(ket[i]);
+                        if (indices.find(target_qubit) != indices.end()) {
+                            char_ = (char_ == 's') ? 'd' : 's';
+                        }
+                    }
+                    // add a global -1 for any linear phase that references this
+                    for (const auto& [char_, indices] : coeff.second) {
+                        if (indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                            coeff.first *= -1.0;
+                        }
+                    }
+                    // add a z(other) for any quadratic phase that references this
+                    for (const auto& [char_, indices] : coeff.second) {
+                        if (indices.size() == 2 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                            IndexSet other_indices = indices;
+                            other_indices.erase(target_qubit);
+                            coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', other_indices));
+                        }
+                    }
                 }
             } else if (control_char == '+') {
                 // CNOT |+ 0> = |+ s0>
                 if (target_char == '0') {
                     target_char = 's';
-                    target_indices = std::set<int>{control_qubit};
+                    target_indices = IndexSet{control_qubit};
                 // CNOT |+ 1> = |+ d0>
                 } else if (target_char == '1') {
                     target_char = 'd';
-                    target_indices = std::set<int>{control_qubit};
+                    target_indices = IndexSet{control_qubit};
                 // CNOT |+ s2 +> = |+ s0&2 +>
                 } else if (target_char == 's' || target_char == 'd') {
                     handle_insert_basis(target_indices, control_qubit, target_char);
-                }
-            } else if (control_char == 's' || control_char == 'd') {
-                // CNOT |s2 0 +> = |s2 s0 +>
-                if (target_char == '0') {
-                    target_char = 's';
-                    target_indices = control_indices;
-                // CNOT |s2 1 +> = |s2 d0 +>
-                } else if (target_char == '1') {
-                    target_char = 'd';
-                    target_indices = control_indices;
-                // CNOT |s1 +> = |+ 0>
-                // CNOT |s1&2 + +> = |+ s2 +>
+                // CNOT |+ +> = |+ +>
+                // CNOT |+ + s1> = |+ + s0&1>
                 } else if (target_char == '+') {
-                    for (int index : control_indices) {
-                        if (index == target_qubit) {
-                            
-                            // This is getting destroyed
-                            std::set<int> new_indices = control_indices;
-                            new_indices.erase(index);
-                            if (new_indices.empty()) {
-                                target_char = (control_char == 's') ? '0' : '1';
-                                target_indices.clear();
-                            } else {
-                                target_char = 's';
-                                target_indices = new_indices;
-                            }
-
-                            // Which means the control is now a plus
-                            control_char = '+';
-                            control_indices.clear();
-
-                            // Anything that referenced the target should now reference the control
-                            for (auto& [char_, indices] : ket) {
-                                if (indices.find(target_qubit) != indices.end()) {
-                                    indices.insert(control_qubit);
-                                }
-                            }
-
-                            break;
-                            
+                    // find anything in the basis that references this and add the control to it
+                    for (size_t i = 0; i < ket.size(); ++i) {
+                        auto& char_ = std::get<0>(ket[i]);
+                        auto& indices = std::get<1>(ket[i]);
+                        if ((char_ == 's' || char_ == 'd') && indices.find(target_qubit) != indices.end()) {
+                            handle_insert_basis(indices, control_qubit, char_);
                         }
                     }
-                // CNOT |s2 s3 + +> = |s2 s0&3 + +>
+                }
+            } else if (control_char == 's' || control_char == 'd') {
+                // CNOT |s2 0 +> = |s2 s2 +>
+                // CNOT |d2 0 +> = |d2 d2 +>
+                if (target_char == '0') {
+                    target_char = control_char;
+                    target_indices = control_indices;
+                // CNOT |s2 1 +> = |s2 d2 +>
+                // CNOT |d2 1 +> = |d2 s2 +>
+                } else if (target_char == '1') {
+                    target_char = (control_char == 's') ? 'd' : 's';
+                    target_indices = control_indices;
+                // CNOT |s1 +> = |+ 0>
+                // CNOT |s1 + s1> = |+ 0 s0>
+                // CNOT |s1&2 + +> = |+ s2 +>
+                // CNOT |d1 +> = |+ 0>
+                } else if (target_char == '+') {
+                    // TODO
+                    bool control_was_s = (control_char == 's');
+                    bool self_reference = control_indices.find(target_qubit) != control_indices.end();
+                    if (self_reference) {
+                        for (int index : control_indices) {
+                            if (index == target_qubit) {
+
+                                // This is getting destroyed
+                                IndexSet new_indices = control_indices;
+                                new_indices.erase(index);
+                                if (new_indices.empty()) {
+                                    target_char = (control_was_s) ? '0' : '1';
+                                    target_indices.clear();
+                                } else {
+                                    target_char = (control_was_s) ? 's' : 'd';
+                                    target_indices = new_indices;
+                                }
+
+                                // Which means the control is now a plus
+                                control_char = '+';
+                                control_indices.clear();
+
+                                // Anything that referenced the target should now reference the control
+                                for (auto& [char_, indices] : ket) {
+                                    if ((char_ == 's' || char_ == 'd') && indices.find(target_qubit) != indices.end()) {
+                                        // if (!control_was_s) {
+                                        //     char_ = (char_ == 's') ? 'd' : 's';
+                                        // }
+                                        // indices.erase(target_qubit);
+                                        handle_insert_basis(indices, control_qubit, char_);
+                                    }
+                                }
+
+                                break;
+                                
+                            }
+                        }
+                    } else {
+
+                        // Anything that references this should have the control qubits added
+                        for (auto& [char_, indices] : ket) {
+                            if ((char_ == 's' || char_ == 'd') && indices.find(target_qubit) != indices.end()) {
+                                if (!control_was_s) {
+                                    char_ = (char_ == 's') ? 'd' : 's';
+                                }
+                                for (int index : control_indices) {
+                                    handle_insert_basis(indices, index, char_);
+                                }
+                            }
+                        }
+
+                    }
+                // CNOT |s2 s2 +> = |s2 0 +>
+                // CNOT |s2 d2 +> = |s2 1 +>
+                // CNOT |d2 s2 +> = |d2 1 +>
+                // CNOT |d2 d2 +> = |d2 0 +>
+                // CNOT |s2 s3 + +> = |s2 s2&3 + +>
+                // CNOT |s2 d3 + +> = |s2 d2&3 + +>
+                // CNOT |d2 s3 + +> = |d2 d2&3 + +>
+                // CNOT |d2 d3 + +> = |d2 s2&3 + +>
                 } else if (target_char == 's' || target_char == 'd') {
-                    handle_insert_basis(target_indices, control_qubit, target_char);
+                    if (control_char == 'd') {
+                        target_char = (target_char == 's') ? 'd' : 's';
+                    }
+                    for (int index : control_indices) {
+                        handle_insert_basis(target_indices, index, target_char);
+                    }
                 }
             }
         // S
@@ -581,51 +929,73 @@ AffineStabilizerState AffineStabilizerOperator::apply(const AffineStabilizerStat
             if (target_char == '1') {
                 coeff.first *= std::complex<double>(0.0, 1.0);
             } else if (target_char == '+' || target_char == '-' || target_char == 's' || target_char == 'd') {
-                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('i', std::set<int>{target_qubit}));
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('i', IndexSet{target_qubit}));
             }
         // T TODO
         } else if (name == "T") {
+        } else {
+            throw std::runtime_error("Unknown operator name: " + name);
         }
 
         // Check to make sure we're still valid
-        for (size_t i = 0; i < ket.size(); ++i) {
-            auto& char_ = std::get<0>(ket[i]);
-            auto& indices = std::get<1>(ket[i]);
-            
-            // Ensure all s and d chars have at least one index, otherwise convert to 0 or 1
-            if ((char_ == 's' || char_ == 'd') && indices.empty()) {
-                char_ = (char_ == 's') ? '0' : '1';
-            }
+        bool consistent = false;
+        while (!consistent) {
+            consistent = true;
+            for (size_t i = 0; i < ket.size(); ++i) {
+                auto& char_ = std::get<0>(ket[i]);
+                auto& indices = std::get<1>(ket[i]);
+                
+                // Ensure all s and d chars have at least one index, otherwise convert to 0 or 1
+                if ((char_ == 's' || char_ == 'd') && indices.empty()) {
+                    char_ = (char_ == 's') ? '0' : '1';
+                    consistent = false;
+                }
 
-            // Ensure all s and d have indices pointing to chars that are not 0 or 1
-            if (char_ == 's' || char_ == 'd') {
-                char new_char = char_;
-                std::set<int> new_indices;
-                for (int index : indices) {
-                    if (index != -1) {
+                // Ensure all s and d have indices pointing to chars that are not 0 or 1
+                if (char_ == 's' || char_ == 'd') {
+                    char new_char = char_;
+                    IndexSet new_indices;
+                    for (int index : indices) {
                         auto& dependent_char = std::get<0>(ket[index]);
+                        auto& dependent_indices = std::get<1>(ket[index]);
                         if (dependent_char == '1') {
                             new_char = (new_char == 's') ? 'd' : 's';
-                        } else {
-                            new_indices.insert(index);
+                        } else if (dependent_char == 's' || dependent_char == 'd') {
+                            if (dependent_char == 'd') {
+                                new_char = (new_char == 's') ? 'd' : 's';
+                            }
+                            for (int dependent_index : dependent_indices) {
+                                handle_insert_basis(new_indices, dependent_index, new_char);
+                            }
+                        } else if (dependent_char != '0') {
+                            handle_insert_basis(new_indices, index, new_char);
                         }
                     }
+                    if (new_char != char_ || new_indices != indices) {
+                        char_ = new_char;
+                        indices = new_indices;
+                        consistent = false;
+                    }
                 }
-                char_ = new_char;
-                indices = new_indices;
             }
-
         }
 
     }
-    return output_state;
-}
-
-AffineStabilizerState AffineStabilizerOperator::operator*(const AffineStabilizerState& input_state) const {
-    return apply(input_state, true);
 }
 
 AffineStabilizerOperator::AffineStabilizerOperator(const Gate& gate) {
+    /*
+    Construct an AffineStabilizerOperator from a given gate by extracting the target and control qubits, and the name of the gate.
+
+    Args:
+        gate (const Gate&): The gate to construct the operator from.
+
+    Returns:
+        AffineStabilizerOperator: The resulting operator after construction.
+
+    Raises:
+        std::invalid_argument: If the gate has more than 1 control qubits or does not have exactly 1 target qubit.
+    */
     if (gate.get_control_qubits().size() > 1) {
         throw std::invalid_argument("AffineStabilizerOperator only supports gates with 1 or fewer total control qubits.");
     }
