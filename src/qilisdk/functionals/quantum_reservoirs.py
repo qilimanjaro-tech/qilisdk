@@ -58,39 +58,12 @@ class ReservoirPass(Parameterizable):
         self._nqubits = self._reservoir_dynamics.nqubits
 
         if pre_processing:
-            if any(isinstance(g, M) for g in pre_processing.gates):
-                raise ValueError("Pre-Processing Circuit can't contain measurements")
-            if pre_processing.nqubits > reservoir_dynamics.nqubits:
-                raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
-            if any(g.nqubits > 1 for g in pre_processing.gates):
-                raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
-            if pre_processing.nqubits < self.nqubits:
-                self._pre_processing = Circuit(self._nqubits)
-                self._pre_processing.add(pre_processing.gates)
+            self._validate_pre_processing(pre_processing)
 
         if post_processing:
-            if any(isinstance(g, M) for g in post_processing.gates):
-                raise ValueError("Post-Processing Circuit can't contain measurements")
-            if post_processing.nqubits > reservoir_dynamics.nqubits:
-                raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
-            if any(g.nqubits > 1 for g in post_processing.gates):
-                raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
-            if post_processing.nqubits < self.nqubits:
-                self._post_processing = Circuit(self._nqubits)
-                self._post_processing.add(post_processing.gates)
-        self._qtensor_observables: list[QTensor] = []
-        identity = QTensor(np.identity(2))
+            self._validate_post_processing(post_processing)
 
-        def _process_qtensor(observable: QTensor) -> QTensor:
-            if observable.nqubits < self._nqubits:
-                padding = [identity for _ in range(self._nqubits - observable.nqubits)]
-                full_list = [observable]
-                full_list.extend(padding)
-                _observable = tensor_prod(full_list)
-                return _observable
-            if observable.nqubits > self._nqubits:
-                raise ValueError("Observable acts on more qubits than the system contains")
-            return observable
+        self._qtensor_observables: list[QTensor] = []
 
         for observable in measured_observables:
             if isinstance(observable, PauliOperator):
@@ -98,9 +71,42 @@ class ReservoirPass(Parameterizable):
             elif isinstance(observable, Hamiltonian):
                 self._qtensor_observables.append(observable.to_qtensor(self._nqubits))
             elif isinstance(observable, QTensor):
-                self._qtensor_observables.append(_process_qtensor(observable))
+                self._qtensor_observables.append(self._process_qtensor(observable))
 
         self._measured_observables = measured_observables
+
+    def _validate_pre_processing(self, pre_processing: Circuit) -> None:
+        if any(isinstance(g, M) for g in pre_processing.gates):
+            raise ValueError("Pre-Processing Circuit can't contain measurements")
+        if pre_processing.nqubits > self._reservoir_dynamics.nqubits:
+            raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
+        if any(g.nqubits > 1 for g in pre_processing.gates):
+            raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
+        if pre_processing.nqubits < self.nqubits:
+            self._pre_processing = Circuit(self._nqubits)
+            self._pre_processing.add(pre_processing.gates)
+
+    def _validate_post_processing(self, post_processing: Circuit) -> None:
+        if any(isinstance(g, M) for g in post_processing.gates):
+            raise ValueError("Post-Processing Circuit can't contain measurements")
+        if post_processing.nqubits > self._reservoir_dynamics.nqubits:
+            raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
+        if any(g.nqubits > 1 for g in post_processing.gates):
+            raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
+        if post_processing.nqubits < self.nqubits:
+            self._post_processing = Circuit(self._nqubits)
+            self._post_processing.add(post_processing.gates)
+
+    def _process_qtensor(self, observable: QTensor) -> QTensor:
+        if observable.nqubits < self._nqubits:
+            padding = [QTensor(np.identity(2)) for _ in range(self._nqubits - observable.nqubits)]
+            full_list = [observable]
+            full_list.extend(padding)
+            _observable = tensor_prod(full_list)
+            return _observable
+        if observable.nqubits > self._nqubits:
+            raise ValueError("Observable acts on more qubits than the system contains")
+        return observable
 
     @property
     def input_parameter_names(self) -> list[str]:
