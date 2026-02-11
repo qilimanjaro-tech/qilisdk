@@ -133,20 +133,20 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_process_tomography(self, circuit: Circuit) -> QTensor:
-        qutip_circuit = self._get_qutip_circuit(circuit)
-        U = gate_sequence_product(qutip_circuit.propagators(ignore_measurement=True))
-        return QTensor(U[:])
-
     def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
         state = copy(functional.initial_state).to_density_matrix()
         expected_values: list[list[Number]] = []
         intermediate_states: list[QTensor] = []
+        cache: dict[Circuit, QTensor] = {}
         for input_dict in functional.input_per_layer:
             functional.reservoir_pass.set_parameters(input_dict)
             for step in functional.reservoir_pass:
                 if isinstance(step, Circuit):
-                    U = self._execute_process_tomography(step)
+                    if step not in cache:
+                        U = step.to_qtensor()
+                        cache[step] = U
+                    else:
+                        U = cache[step]
                     state = U @ state @ U.adjoint()
                 elif isinstance(step, Schedule):
                     res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots))

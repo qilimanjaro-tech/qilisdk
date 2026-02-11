@@ -20,9 +20,27 @@ import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
-from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
+from qilisdk.digital.exceptions import GateHasNoMatrixError, ParametersNotEqualError, QubitOutOfRangeError
 from qilisdk.digital.gates import Gate
+
+
+def _expand_gate_matrix(gate: Gate, nqubits: int) -> np.ndarray:
+    k = gate.nqubits
+    if k == nqubits and gate.qubits == tuple(range(nqubits)):
+        return gate.matrix
+
+    remaining = [q for q in range(nqubits) if q not in gate.qubits]
+    expanded = np.kron(gate.matrix, np.eye(2 ** (nqubits - k), dtype=gate.matrix.dtype))
+    order = list(gate.qubits) + remaining
+    tensor = expanded.reshape([2] * nqubits + [2] * nqubits)
+
+    out_pos = {q: i for i, q in enumerate(order)}
+    perm_out = [out_pos[q] for q in range(nqubits)]
+    perm_in = [nqubits + out_pos[q] for q in range(nqubits)]
+    perm = perm_out + perm_in
+
+    return np.transpose(tensor, axes=perm).reshape(2**nqubits, 2**nqubits)
 
 
 def test_circuit_initialization():
@@ -411,6 +429,37 @@ def test_circuit_draw_runs(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers, "MatplotlibCircuitRenderer", renderer)
     c.draw(filepath="some/path.png")
     assert renderer.called
+
+
+def test_to_matrix_single_qubit_sequence():
+    c = Circuit(nqubits=1)
+    g1 = X(0)
+    g2 = RZ(0, phi=np.pi / 3)
+    c.add([g1, g2])
+
+    expected = g2.matrix @ g1.matrix
+    assert np.allclose(c.to_matrix(), expected)
+    assert np.allclose(c.to_qtensor().dense(), expected)
+
+
+def test_to_matrix_multi_qubit_noncontiguous():
+    c = Circuit(nqubits=3)
+    g1 = CNOT(2, 0)
+    g2 = X(1)
+    c.add([g1, g2])
+
+    expected = _expand_gate_matrix(g2, 3) @ _expand_gate_matrix(g1, 3)
+    assert np.allclose(c.to_matrix(), expected)
+    assert np.allclose(c.to_qtensor().dense(), expected)
+
+
+def test_to_matrix_measurement_raises():
+    c = Circuit(nqubits=1)
+    c.add(M(0))
+    with pytest.raises(GateHasNoMatrixError):
+        c.to_matrix()
+    with pytest.raises(GateHasNoMatrixError):
+        c.to_qtensor()
 
 
 def test_prepend_circuit():
