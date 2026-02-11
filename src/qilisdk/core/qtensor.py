@@ -479,8 +479,7 @@ class QTensor:
                 # Conservative fallback: don't claim it's a DM if we can't certify PSD
                 return False
         except TypeError:
-            vals = eigsh(self.dense(), k=1, which="SA", return_eigenvectors=False, tol=1e-6)
-            lam_min = float(np.real(vals[0]))
+            lam_min = float(np.linalg.eigvalsh(self._data.toarray()).min())
         return lam_min >= -tol
 
     def is_hermitian(self, tol: float | None = None) -> bool:
