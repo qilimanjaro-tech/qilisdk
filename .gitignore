@@ -18,6 +18,7 @@ wheels/
 
 # Folder for storing user files
 .tmp
+.env
 
 # development environment files
 .vscode
