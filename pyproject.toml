@@ -32,7 +32,7 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
-    "mkl-service>=2.4.2; sys_platform != 'darwin'",
+    "mkl-service>=2.6.1; sys_platform != 'darwin'",
 ]
 
 [project.optional-dependencies]
@@ -69,8 +69,8 @@ all-cu13 = [
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.151.4",
-    "ipykernel>=7.1.0",
+    "hypothesis>=6.151.6",
+    "ipykernel>=7.2.0",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
@@ -78,7 +78,7 @@ dev = [
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
-    "ty>=0.0.14",
+    "ty>=0.0.16",
 ]
 docs = [
     "astroid<3.2",
