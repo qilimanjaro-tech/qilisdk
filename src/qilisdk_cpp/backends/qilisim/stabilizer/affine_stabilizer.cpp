@@ -742,7 +742,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0 |+> = |1>
             // H z0&1 |+ +> = |s1 +>
             // H |+ s0> = z0&1 |+ +>
-            // H |+ s0&1 +> = z0&1 z0&2 |+ + +>
+            // H |+ s0&2 +> = z0&1 z0&2 |+ + +>
             // H z0 |+ s0&2 +> = z1 z2 z0&1 z0&2 |+ + +>
             // H z2 |+ s0&2 +> = z2 z0&1 z0&2 |+ + +>
             // H z0&2 |+ s0&2 +> = z2 z0&1 z0&2 z1&2 |+ + +>
@@ -751,7 +751,6 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0&1 |+ s0> = z1 z0&1 |+ +> 
             } else if (target_char == '+') {
                 // TODO
-                throw std::runtime_error("H on + not implemented yet");
 
                 // Check if anything references this plus
                 bool has_reference = false;
@@ -768,8 +767,21 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
 
                 // If it's not referenced anywhere, destroy it
                 if (!has_reference) {
+
+                    bool should_be_zero = true;
+
+                    // Check for linear phases
+                    for (const auto& [char_, indices] : coeff.second) {
+                        if (indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                            should_be_zero = !should_be_zero;
+                        }
+                    }
+
+                    // Check for quadratic phases
+
                     target_char = '0';
                     target_indices.clear();
+
                 }
 
             // H |s1 +> = z1 |+ +>
