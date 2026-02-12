@@ -100,6 +100,94 @@ std::complex<double> trace(const SparseMatrix& matrix) {
     return tr;
 }
 
+SparseMatrix expand_operator(int qubit, int nqubits, const SparseMatrix& op) {
+    /*
+    Expand a single-qubit operator to act on the full n-qubit system.
+
+    Args:
+        qubit (int): The target qubit index.
+        nqubits (int): The total number of qubits.
+        op (SparseMatrix): The single-qubit operator.
+
+    Returns:
+        SparseMatrix: The expanded operator acting on the full system.
+    */
+    SparseMatrix result(1, 1);
+    result.insert(0, 0) = 1.0;
+    result.makeCompressed();
+    for (int q = 0; q < nqubits; ++q) {
+        if (q == qubit) {
+            result = Eigen::kroneckerProduct(result, op).eval();
+        } else {
+            result = Eigen::kroneckerProduct(result, I).eval();
+        }
+    }
+    return result;
+}
+
+SparseMatrix expand_operator(int nqubits, const SparseMatrix& op) {
+    /*
+    Expand an operator to act on the full n-qubit system.
+
+    Args:
+        nqubits (int): The total number of qubits.
+        op (SparseMatrix): The operator to expand.
+
+    Returns:
+        SparseMatrix: The expanded operator acting on the full system.
+        
+    Raises:
+        py::value_error: If the operator size is not compatible with the number of qubits.
+    */
+    int current_qubits = static_cast<int>(std::log2(op.rows()));
+    if (current_qubits == nqubits) {
+        return op;
+    }
+    SparseMatrix result(1, 1);
+    result.insert(0, 0) = 1.0;
+    result.makeCompressed();
+    if (nqubits % current_qubits != 0) {
+        throw py::value_error("The operator size is not compatible with the number of qubits.");
+    }
+    int repeats_needed = nqubits / current_qubits;
+    for (int q = 0; q < repeats_needed; ++q) {
+        result = Eigen::kroneckerProduct(result, op).eval();
+    }
+    return result;
+}
+
+SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits, const SparseMatrix& op) {
+    /*
+    Expand a multi-qubit operator to act on the full n-qubit system.
+
+    Args:
+        target_qubits (std::vector<int>): The list of target qubit indices.
+        nqubits (int): The total number of qubits.
+        op (SparseMatrix): The multi-qubit operator.
+
+    Returns:
+        SparseMatrix: The expanded operator acting on the full system.
+        
+    Raises:
+        py::value_error: If the operator size is not compatible with the number of target qubits.
+    */
+    int current_qubits = static_cast<int>(std::log2(op.rows()));
+    if (current_qubits == nqubits) {
+        return op;
+    }
+    SparseMatrix result(1, 1);
+    result.insert(0, 0) = 1.0;
+    result.makeCompressed();
+    for (int q = 0; q < nqubits; ++q) {
+        if (std::find(target_qubits.begin(), target_qubits.end(), q) != target_qubits.end()) {
+            result = Eigen::kroneckerProduct(result, op).eval();
+        } else {
+            result = Eigen::kroneckerProduct(result, I).eval();
+        }
+    }
+    return result;
+}
+
 SparseMatrix vectorize(const SparseMatrix& matrix, double atol) {
     /*
     Vectorize a matrix by stacking its columns.
