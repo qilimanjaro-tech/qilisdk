@@ -14,15 +14,17 @@
 #pragma once
 
 #include "../digital/gate.h"
-#include "../qilisim.h"
+#include "../libs/pybind.h"
+#include "../libs/eigen.h"
 #include "../config/qilisim_config.h"
+#include "../noise/noise_model.h"
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
-std::vector<SparseMatrix> parse_jump_operators(const py::object& jumps, double atol);
+NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
-std::vector<std::vector<double>> parse_parameters(const py::object& coeffs);
+std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, const py::list& hamiltonians_keys, const py::object& steps);
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol);
-std::vector<Gate> parse_gates(const py::object& circuit, double atol);
+std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 std::vector<bool> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
