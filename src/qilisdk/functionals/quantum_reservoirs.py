@@ -22,6 +22,7 @@ from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.types import RealNumber
 from qilisdk.digital import Circuit, M
+from qilisdk.functionals.functional import PrimitiveFunctional
 
 
 class ReservoirInput(Parameter):
@@ -52,7 +53,7 @@ class ReservoirPass(Parameterizable):
     ) -> None:
 
         self._pre_processing: Circuit | None = pre_processing
-        self._reservoir_dynamics: Schedule = reservoir_dynamics
+        self._reservoir_dynamics: Schedule | Circuit = reservoir_dynamics
         self._post_processing: Circuit | None = post_processing
         self._qubits_to_reset: list[int] | None = qubits_to_reset
         super().__init__()
@@ -250,7 +251,7 @@ class ReservoirPass(Parameterizable):
             yield self._post_processing
 
 
-class QuantumReservoir:
+class QuantumReservoir(PrimitiveFunctional):
     def __init__(
         self,
         initial_state: QTensor,

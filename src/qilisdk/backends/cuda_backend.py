@@ -523,10 +523,15 @@ class CudaBackend(Backend):
         def get_schedule(key: str) -> Callable[[complex], float]:
             return lambda t: functional.schedule.coefficients[key][t.real]
 
-        cuda_hamiltonian = sum(
-            ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
-            for key, ham in functional.schedule.hamiltonians.items()
-        )
+        cuda_hamiltonian = None
+        for key, ham in functional.schedule.hamiltonians.items():
+            term = ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
+            if cuda_hamiltonian is None:
+                cuda_hamiltonian = term
+            else:
+                cuda_hamiltonian += term
+        if cuda_hamiltonian is None:
+            raise ValueError("TimeEvolution requires at least one Hamiltonian in the schedule.")
 
         logger.trace("Hamiltonian compiled for evolution")
 
@@ -584,25 +589,32 @@ class CudaBackend(Backend):
             and functional.store_intermediate_results
             else None
         )
-        final_state = (
-            QTensor(
-                np.array(
-                    evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
-                    dtype=_complex_dtype(),
-                ).reshape(-1, 1)
+
+        if evolution_result.final_state() is not None:  # ty:ignore[possibly-missing-attribute]
+            final_state = np.array(
+                evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+                dtype=_complex_dtype(),
             )
-            if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
-            else None
-        )
-        intermediate_states = (
-            [
-                QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
-                for state in evolution_result.intermediate_states()  # ty:ignore[possibly-missing-attribute]
-            ]
-            if evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+            if len(final_state.shape) == 1:
+                final_state = final_state.reshape(-1, 1)
+            final_state = QTensor(final_state)
+
+        else:
+            final_state = None
+
+        if (
+            evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
             and functional.store_intermediate_results
-            else None
-        )
+        ):
+            intermediate_states = []
+            for state in evolution_result.intermediate_states():  # ty:ignore[possibly-missing-attribute]
+                _state = np.array(state, dtype=_complex_dtype())
+                if len(_state.shape) == 1:
+                    _state = _state.reshape(-1, 1)
+                intermediate_states.append(QTensor(_state))
+
+        else:
+            intermediate_states = None
 
         if og_params:
             functional.set_parameters(og_params)
@@ -640,7 +652,7 @@ class CudaBackend(Backend):
 
             if functional.reservoir_pass.qubits_to_reset:
                 state = reset_qubits(state, functional.reservoir_pass.qubits_to_reset)
-            state = (state + state.adjoint()) * 0.5
+            state = ((state + state.adjoint()) * 0.5).unit()
 
             expected_values.append(
                 [expect_val(operator=obs, state=state) for obs in functional.reservoir_pass.observables_as_qtensor]
