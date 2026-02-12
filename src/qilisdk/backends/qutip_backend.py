@@ -119,7 +119,7 @@ class QutipBackend(Backend):
         expected_values: list[list[Number]] = []
         intermediate_states: list[QTensor] = []
         cache: dict[Circuit, QTensor] = {}
-        for input_dict in functional.input_per_layer:
+        for input_dict in functional.input_per_pass:
             functional.reservoir_pass.set_parameters(input_dict)
             for step in functional.reservoir_pass:
                 if isinstance(step, Circuit):
