@@ -19,8 +19,6 @@
 #include <iostream>
 #endif
 
-// TODO(luke) docstrings
-
 AffineStabilizerState::AffineStabilizerState(int n_qubits, bool density) {
     /* 
     Create a new AffineStabilizerState in the |0...0> state.
@@ -496,6 +494,7 @@ AffineStabilizerState AffineStabilizerState::operator+(const AffineStabilizerSta
     }
     return result;
 }
+
 AffineStabilizerState AffineStabilizerState::operator-(const AffineStabilizerState& other) const {
     /*
     Subtract one AffineStabilizerState from another by negating the coefficients 
@@ -515,6 +514,7 @@ AffineStabilizerState AffineStabilizerState::operator-(const AffineStabilizerSta
     }
     return result;
 }
+
 AffineStabilizerState& AffineStabilizerState::operator+=(const AffineStabilizerState& other) {
     /*
     Add another AffineStabilizerState to this state in-place by concatenating their state vectors.
@@ -530,6 +530,7 @@ AffineStabilizerState& AffineStabilizerState::operator+=(const AffineStabilizerS
     }
     return *this;
 }
+
 AffineStabilizerState& AffineStabilizerState::operator-=(const AffineStabilizerState& other) {
     /*
     Subtract another AffineStabilizerState from this state in-place by negating the 
@@ -559,7 +560,6 @@ size_t AffineStabilizerState::size() const {
     return state.size();
 }
 
- 
 void handle_insert_basis(IndexSet& vec, int value, char& target_char) {
     /*
     Handle inserting or removing an index from an IndexSet, and update the target character accordingly.
@@ -741,9 +741,16 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H |+> = |0>
             // H z0 |+> = |1>
             // H z0&1 |+ +> = |s1 +>
-            // H z0 |+ s0> = 
-            // H z0&1 |+ s0> = 
+            // H |+ s0> = z0&1 |+ +>
+            // H |+ s0&1 +> = z0&1 z0&2 |+ + +>
+            // H z0 |+ s0&2 +> = z1 z2 z0&1 z0&2 |+ + +>
+            // H z2 |+ s0&2 +> = z2 z0&1 z0&2 |+ + +>
+            // H z0&2 |+ s0&2 +> = z2 z0&1 z0&2 z1&2 |+ + +>
+            // H z0 |+ s0> = z1 z0&1 |+ +>
+            // H z1 |+ s0> = z1 z0&1 |+ +>
+            // H z0&1 |+ s0> = z1 z0&1 |+ +> 
             } else if (target_char == '+') {
+                // TODO
                 throw std::runtime_error("H on + not implemented yet");
 
                 // Check if anything references this plus
@@ -765,6 +772,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                     target_indices.clear();
                 }
 
+            // H |s1 +> = z1 |+ +>
             } else if (target_char == 's' || target_char == 'd') {
                 for (int index : target_indices) {
                     coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{index}));
@@ -855,7 +863,6 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 // CNOT |s1&2 + +> = |+ s2 +>
                 // CNOT |d1 +> = |+ 0>
                 } else if (target_char == '+') {
-                    // TODO
                     bool control_was_s = (control_char == 's');
                     bool self_reference = control_indices.find(target_qubit) != control_indices.end();
                     if (self_reference) {
@@ -948,6 +955,12 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 // Ensure all s and d chars have at least one index, otherwise convert to 0 or 1
                 if ((char_ == 's' || char_ == 'd') && indices.empty()) {
                     char_ = (char_ == 's') ? '0' : '1';
+                    consistent = false;
+                }
+
+                // Ensure all other character have no indices
+                if (char_ != 's' && char_ != 'd' && !indices.empty()) {
+                    indices.clear(); 
                     consistent = false;
                 }
 
