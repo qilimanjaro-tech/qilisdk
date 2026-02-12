@@ -20,6 +20,7 @@ from qilisdk.yaml import yaml
 
 
 def _complex_dtype() -> np.dtype:
+    """Return the configured complex dtype for reservoir result arrays."""
     return get_settings().complex_precision.dtype
 
 
