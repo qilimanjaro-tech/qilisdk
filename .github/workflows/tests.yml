@@ -46,7 +46,7 @@ jobs:
         run: uv sync --group dev --extra all-cu13
 
       - name: Run tests
-        run: uv run pytest tests/unit/ --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests
+        run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit/
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.13' }}
