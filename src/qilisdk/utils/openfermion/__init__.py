@@ -13,14 +13,22 @@
 # limitations under the License.
 import sys
 
-from qilisdk._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
+from qilisdk._optionals import (
+    DependencyGroup,
+    ImportedFeature,
+    OptionalFeature,
+    RequirementMode,
+    Symbol,
+    import_optional_dependencies,
+)
 
 __all__ = []
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="openfermion",
-        dependencies=["openfermion"],
+        mode=RequirementMode.ALL,
+        dependency_groups=[DependencyGroup(dists=["openfermion"], extra="openfermion")],
         symbols=[
             Symbol(path="qilisdk.utils.openfermion.openfermion", name="openfermion_to_qilisdk"),
             Symbol(path="qilisdk.utils.openfermion.openfermion", name="qilisdk_to_openfermion"),

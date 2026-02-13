@@ -32,12 +32,18 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
-    "mkl-service>=2.4.2; sys_platform != 'darwin'",
+    "mkl-service>=2.6.1; sys_platform != 'darwin'",
 ]
 
 [project.optional-dependencies]
 cuda = [
+    "qilisdk[cuda12]"
+]
+cuda12 = [
     "cuda-quantum-cu12==0.13.0",
+]
+cuda13 = [
+    "cuda-quantum-cu13==0.13.0"
 ]
 speqtrum = [
     "httpx==0.28.1",
@@ -51,11 +57,29 @@ qutip = [
 openfermion = [
     "openfermion>=1.7.1",
 ]
+all = [
+    "qilisdk[cuda12]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
+all-cu12 = [
+    "qilisdk[cuda12]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
+all-cu13 = [
+    "qilisdk[cuda13]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.151.4",
-    "ipykernel>=7.1.0",
+    "hypothesis>=6.151.6",
+    "ipykernel>=7.2.0",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
@@ -63,7 +87,7 @@ dev = [
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
-    "ty>=0.0.14",
+    "ty>=0.0.16",
 ]
 docs = [
     "astroid<3.2",
@@ -80,6 +104,24 @@ docs = [
 
 [tool.uv]
 override-dependencies = ["nbconvert >= 7.17.0"]
+conflicts = [
+    [
+      { extra = "cuda12" },
+      { extra = "cuda13" },
+    ],
+    [
+      { extra = "cuda" },
+      { extra = "cuda13" },
+    ],
+    [
+      { extra = "all-cu12" },
+      { extra = "all-cu13" },
+    ],
+    [
+      { extra = "all" },
+      { extra = "all-cu13" },
+    ],
+]
 
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
