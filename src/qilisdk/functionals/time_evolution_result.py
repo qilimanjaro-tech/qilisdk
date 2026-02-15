@@ -15,7 +15,6 @@ from pprint import pformat
 
 import numpy as np
 
-from qilisdk.core.model import Model
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
@@ -86,6 +85,3 @@ class TimeEvolutionResult(FunctionalResult):
             )
             + ")"
         )
-
-    def compute_cost(self, cost_model: Model) -> float:
-        raise NotImplementedError

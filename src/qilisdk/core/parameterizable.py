@@ -43,9 +43,17 @@ class Parameterizable(ABC):
         """Return the ordered list of parameter labels."""
         return list(self._parameters.keys())
 
+    def get_trainable_parameter_names(self) -> list[str]:
+        """Return the ordered list of parameter labels."""
+        return [k for k, param in self._parameters.items() if param.is_trainable]
+
     def get_parameters(self) -> dict[str, RealNumber]:
         """Return a mapping from parameter labels to their current numerical values."""
         return {label: param.value for label, param in self._parameters.items()}
+
+    def get_trainable_parameters(self) -> dict[str, RealNumber]:
+        """Return a mapping from parameter labels to their current numerical values."""
+        return {label: param.value for label, param in self._parameters.items() if param.is_trainable}
 
     def set_parameter_values(self, values: list[float]) -> None:
         """
@@ -85,6 +93,10 @@ class Parameterizable(ABC):
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return the ``(lower, upper)`` bounds associated with each parameter."""
         return {label: param.bounds for label, param in self._parameters.items()}
+
+    def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return the ``(lower, upper)`` bounds associated with each parameter."""
+        return {label: param.bounds for label, param in self._parameters.items() if param.is_trainable}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """

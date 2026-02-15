@@ -2,10 +2,11 @@ Functionals
 ===========
 
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
-:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes two primitive functionals:
+:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes the following execution functionals:
 
 - :class:`~qilisdk.functionals.sampling.Sampling` — Executes repeated sampling of a digital quantum circuit.
 - :class:`~qilisdk.functionals.time_evolution.TimeEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
+- :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` — Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
 
 Moreover, it provides more complex functionals that are used to execute more complex algorithms:
 
@@ -35,6 +36,9 @@ Result Objects
 * :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
     contains expectation values, the terminal :class:`~qilisdk.core.qtensor.QTensor` state, and (optionally) the list
     of intermediate states when ``store_intermediate_results=True``.
+* :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`
+    extends :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult` with the same data model,
+    returning per-layer expectation values and optional intermediate/final states.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
@@ -197,6 +201,79 @@ we can execute it on the Qutip backend:
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]
     )
+
+
+Quantum Reservoirs
+------------------
+
+The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
+sequence of inputs. Each layer applies an optional pre-processing circuit, a reservoir dynamics block (either a
+digital :class:`~qilisdk.digital.circuit.Circuit` or analog :class:`~qilisdk.analog.schedule.Schedule`), and an optional
+post-processing circuit, followed by measurements of one or more observables. The optional ``qubits_to_reset`` list can
+be used to reset selected qubits between layers.
+
+The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
+These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
+be driven by input data sequences rather than optimization loops.
+Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_backend.CudaBackend` and
+:class:`~qilisdk.backends.qutip_backend.QutipBackend`.
+
+**Parameters**
+
+- **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the reservoir.
+- **reservoir_pass** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirPass`): Defines pre/post-processing,
+  reservoir dynamics, observables, and reset policy.
+- **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
+  (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
+- **store_final_state** (bool, optional): Store the final state after the last layer.
+- **store_intermideate_states** (bool, optional): Store the state after each layer.
+- **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
+
+**Returns**
+
+- :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`: Access per-layer expectation values via
+  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values`, plus optional states when
+  ``store_intermideate_states`` or ``store_final_state`` are enabled.
+
+**Usage Example**
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.backends import CudaBackend
+    from qilisdk.core import ket
+    from qilisdk.digital import Circuit, U2
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirPass
+    from qilisdk.analog import Schedule, X, Z
+
+    pre_processing = Circuit(2)
+    pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
+
+    res_pass = ReservoirPass(
+        reservoir_dynamics=Schedule(
+            hamiltonians={"h": Z(0) + Z(1) + Z(0) * Z(1) + 0.5 * (X(0) + X(1))},
+            total_time=1.0,
+            dt=0.1,
+        ),
+        measured_observables=[Z(0), Z(1), Z(0) * Z(1)],
+        pre_processing=pre_processing,
+        qubits_to_reset=[1],
+    )
+
+    reservoir = QuantumReservoir(
+        initial_state=(np.random.rand() * ket(0, 0) + np.random.rand() * ket(1, 1)).unit(),
+        reservoir_pass=res_pass,
+        input_per_layer=[
+            {"phi_1": 0.2, "gamma_1": 0.1},
+            {"phi_1": 0.3, "gamma_1": 0.2},
+            {"phi_1": 0.4, "gamma_1": 0.3},
+        ],
+        store_final_state=True,
+        store_intermideate_states=True,
+    )
+
+    results = CudaBackend().execute(reservoir)
+    print(results.expected_values)
 
 
 

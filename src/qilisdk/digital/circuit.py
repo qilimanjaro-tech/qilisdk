@@ -19,8 +19,10 @@ from typing import TYPE_CHECKING, Iterable
 import numpy as np
 from typing_extensions import Self
 
+from qilisdk.core import QTensor
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import Domain, Parameter
+from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -29,6 +31,33 @@ from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
+
+
+def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarray:
+    gate_matrix = gate.matrix
+    k = gate.nqubits
+    if k == 0:
+        return operator
+    if k == nqubits and gate.qubits == tuple(range(nqubits)):
+        return gate_matrix @ operator
+
+    op_tensor = operator.reshape([2] * nqubits + [2] * nqubits)
+    gate_tensor = gate_matrix.reshape([2] * k + [2] * k)
+
+    output_axes = list(gate.qubits)
+    contracted = np.tensordot(gate_tensor, op_tensor, axes=(list(range(k, 2 * k)), output_axes))
+
+    output_set = set(output_axes)
+    out_current = output_axes + [q for q in range(nqubits) if q not in output_set]
+    out_positions = {q: i for i, q in enumerate(out_current)}
+    perm_output = [out_positions[q] for q in range(nqubits)]
+    perm = perm_output + list(range(nqubits, 2 * nqubits))
+
+    return np.transpose(contracted, axes=perm).reshape(operator.shape)
 
 
 @yaml.register_class
@@ -249,6 +278,21 @@ class Circuit(Parameterizable):
 
         for i, g in enumerate(circuit.gates):
             self.insert(g, i)
+
+    def to_matrix(self) -> np.ndarray:
+        """Return the full unitary matrix representation of the circuit.
+
+        Raises:
+            GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).
+        """
+        dim = 1 << self.nqubits
+        operator = np.eye(dim, dtype=_complex_dtype())
+        for gate in self.gates:
+            operator = _apply_gate_left(operator, gate, self.nqubits)
+        return operator
+
+    def to_qtensor(self) -> QTensor:
+        return QTensor(self.to_matrix())
 
     def __add__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
         if not isinstance(other, (Circuit, Gate)):

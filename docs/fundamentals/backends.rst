@@ -75,21 +75,25 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
 
 .. list-table::
    :header-rows: 1
-   :widths: 35 20 20 25
+   :widths: 30 16 16 18 20
 
    * - Backend
      - Sampling
      - TimeEvolution
+     - QuantumReservoir
      - VariationalProgram
    * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
      - ✓
      - ✓
+     - No
      - ✓
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ✓
      - ✓
      - ✓
+     - ✓
    * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
+     - ✓
      - ✓
      - ✓
      - ✓
@@ -297,4 +301,3 @@ It is the most lightweight option, ideal for local development or environments w
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]
     )
-
