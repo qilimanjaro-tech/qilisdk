@@ -108,7 +108,9 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     weak_noise = NoiseModel()
     weak_noise.add(Dephasing(t_phi=1e6), qubits=[0])
     weak_backend = QiliSim(noise_model=weak_noise, seed=42, num_threads=1)
-    weak_result = weak_backend.execute(TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)]))
+    weak_result = weak_backend.execute(
+        TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
+    )
 
     strong_noise = NoiseModel()
     strong_noise.add(Dephasing(t_phi=10), qubits=[0])

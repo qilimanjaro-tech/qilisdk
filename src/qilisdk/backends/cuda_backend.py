@@ -439,9 +439,7 @@ class CudaBackend(Backend):
                 for qubit in range(nqubits):
                     jump_operators.append(operators.instantiate(op_id, degrees=qubit))
             else:
-                raise ValueError(
-                    "Global Lindblad jump operators must be either single-qubit or full-system operators."
-                )
+                raise ValueError("Global Lindblad jump operators must be either single-qubit or full-system operators.")
         if lindblad_generator.hamiltonian is not None:
             hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
 
