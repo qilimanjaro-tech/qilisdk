@@ -116,7 +116,7 @@ class Backend(ABC):
             raise ValueError(f"Unsupported result type {type(final_results)}.")
 
         if len(functional.functional.get_trainable_parameters()) == 0:
-            raise ValueError("Functional provided is does not contain trainable parameters.")
+            raise ValueError("Functional provided does not contain trainable parameters.")
 
         optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,

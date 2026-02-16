@@ -104,7 +104,7 @@ def test_non_parameterized_functional():
     func = Sampling(circuit=circ)
     var_prog = VariationalProgram(functional=func, optimizer=MagicMock(), cost_function=MagicMock())
 
-    with pytest.raises(ValueError, match="Functional provided is not parameterized"):
+    with pytest.raises(ValueError, match=r"Functional provided does not contain trainable parameters."):
         backend._execute_variational_program(
             functional=var_prog,
         )
