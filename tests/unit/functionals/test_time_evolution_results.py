@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-import pytest
 
 from qilisdk.core.qtensor import QTensor
-from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
