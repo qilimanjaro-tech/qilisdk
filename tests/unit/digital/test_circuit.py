@@ -23,7 +23,7 @@ from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, ParametersNotEqualError, QubitOutOfRangeError
-from qilisdk.digital.gates import Gate
+from qilisdk.digital.gates import BasicGate, Gate
 
 
 def _expand_gate_matrix(gate: Gate, nqubits: int) -> np.ndarray:
@@ -57,13 +57,17 @@ def test_circuit_initialization():
 
 
 def test_apply_gate_left_noop_for_zero_qubit_gate():
-    class ZeroQubitGate:
+    class ZeroQubitGate(BasicGate):
         nqubits = 0
         qubits = ()
         matrix = np.array([[1.0]], dtype=np.complex128)
+        name = "ZeroQubitGate"
+
+        def _generate_matrix(self):
+            return self.matrix
 
     operator = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.complex128)
-    out = _apply_gate_left(operator, ZeroQubitGate(), nqubits=1)
+    out = _apply_gate_left(operator, ZeroQubitGate([0]), nqubits=1)
     np.testing.assert_array_equal(out, operator)
 
 
