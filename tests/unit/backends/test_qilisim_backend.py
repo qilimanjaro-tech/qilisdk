@@ -14,6 +14,7 @@
 
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 
 import qilisdk
@@ -23,6 +24,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
 from qilisdk.functionals import Sampling, TimeEvolution
+from qilisdk.noise import Dephasing, NoiseModel
 
 
 def test_qilisim_init():
@@ -93,3 +95,28 @@ def test_time_dependent_hamiltonian_bad_observable():
 
     with pytest.raises(ValueError, match=r"Observable type not recognized."):
         backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+
+def test_qilisim_dephasing_strength_changes_dynamics():
+    initial_state = (ket(0) + ket(1)).unit()
+    schedule = Schedule(
+        dt=0.1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 20): 0}},
+    )
+
+    weak_noise = NoiseModel()
+    weak_noise.add(Dephasing(t_phi=1e6), qubits=[0])
+    weak_backend = QiliSim(noise_model=weak_noise, seed=42, num_threads=1)
+    weak_result = weak_backend.execute(TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)]))
+
+    strong_noise = NoiseModel()
+    strong_noise.add(Dephasing(t_phi=10), qubits=[0])
+    strong_backend = QiliSim(noise_model=strong_noise, seed=42, num_threads=1)
+    strong_result = strong_backend.execute(
+        TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
+    )
+
+    weak_exp = float(np.real(weak_result.final_expected_values[0]))
+    strong_exp = float(np.real(strong_result.final_expected_values[0]))
+    assert strong_exp < weak_exp

@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Parameter
-from qilisdk.core.qtensor import ket
+from qilisdk.core.qtensor import QTensor, ket
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
@@ -496,6 +496,38 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     assert isinstance(res, TimeEvolutionResult)
     assert dummy_evolve.called
     assert dummy_state.called
+
+
+def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
+        coefficients={"h1": {(0, 100): lambda t: 1 - t / 100}, "h2": {(0, 100): lambda t: t / 100}},
+    )
+    psi0 = ket(0)
+    obs = [QTensor(np.array([[1, 0], [0, -1]], dtype=np.complex128))]
+
+    backend = CudaBackend()
+    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+
+    assert isinstance(res, TimeEvolutionResult)
+    assert dummy_evolve.called
+    assert len(dummy_evolve.call_args.kwargs["observables"]) == 1
+
+
+def test_qtensor_observable_non_hermitian_raises():
+    backend = CudaBackend()
+    non_hermitian = QTensor(np.array([[0, 1], [0, 0]], dtype=np.complex128))
+
+    with pytest.raises(ValueError, match="must be Hermitian"):
+        backend._qtensor_observable_to_hamiltonian(non_hermitian, nqubits=1)
 
 
 def test_bad_observable_raises(monkeypatch):
