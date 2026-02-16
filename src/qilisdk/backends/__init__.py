@@ -13,7 +13,14 @@
 # limitations under the License.
 import sys
 
-from qilisdk._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
+from qilisdk._optionals import (
+    DependencyGroup,
+    ImportedFeature,
+    OptionalFeature,
+    RequirementMode,
+    Symbol,
+    import_optional_dependencies,
+)
 from qilisdk.backends.qilisim import QiliSim
 
 __all__ = ["QiliSim"]
@@ -21,7 +28,11 @@ __all__ = ["QiliSim"]
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="cuda",
-        dependencies=["cuda-quantum-cu12"],
+        mode=RequirementMode.ANY,
+        dependency_groups=[
+            DependencyGroup(dists=["cuda-quantum-cu12"], extra="cuda12"),
+            DependencyGroup(dists=["cuda-quantum-cu13"], extra="cuda13"),
+        ],
         symbols=[
             Symbol(path="qilisdk.backends.cuda_backend", name="CudaBackend"),
             Symbol(path="qilisdk.backends.cuda_backend", name="CudaSamplingMethod"),
@@ -29,12 +40,14 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
     ),
     OptionalFeature(
         name="qutip",
-        dependencies=["qutip", "qutip-qip", "matplotlib"],
-        symbols=[
-            Symbol(path="qilisdk.backends.qutip_backend", name="QutipBackend"),
+        mode=RequirementMode.ALL,
+        dependency_groups=[
+            DependencyGroup(dists=["qutip", "qutip-qip", "matplotlib"], extra="qutip"),
         ],
+        symbols=[Symbol(path="qilisdk.backends.qutip_backend", name="QutipBackend")],
     ),
 ]
+
 
 current_module = sys.modules[__name__]
 

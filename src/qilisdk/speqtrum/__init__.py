@@ -13,14 +13,22 @@
 # limitations under the License.
 import sys
 
-from qilisdk._optionals import ImportedFeature, OptionalFeature, Symbol, import_optional_dependencies
+from qilisdk._optionals import (
+    DependencyGroup,
+    ImportedFeature,
+    OptionalFeature,
+    RequirementMode,
+    Symbol,
+    import_optional_dependencies,
+)
 
 __all__ = []
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="speqtrum",
-        dependencies=["httpx", "keyring", "keyrings-alt"],
+        mode=RequirementMode.ALL,
+        dependency_groups=[DependencyGroup(dists=["httpx", "keyring", "keyrings-alt"], extra="speqtrum")],
         symbols=[
             Symbol(path="qilisdk.speqtrum.speqtrum", name="SpeQtrum"),
             Symbol(path="qilisdk.speqtrum.speqtrum_models", name="DeviceStatus"),
