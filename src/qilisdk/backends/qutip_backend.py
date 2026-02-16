@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from qilisdk.core.types import Number
     from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
     from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.time_evolution import TimeEvolution
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
