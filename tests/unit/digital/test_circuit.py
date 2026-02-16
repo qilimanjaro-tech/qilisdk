@@ -21,6 +21,7 @@ import pytest
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
+from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, ParametersNotEqualError, QubitOutOfRangeError
 from qilisdk.digital.gates import Gate
 
@@ -53,6 +54,17 @@ def test_circuit_initialization():
     assert c.get_parameter_values() == []
     assert c.gates == []
     assert c.get_parameter_names() == []
+
+
+def test_apply_gate_left_noop_for_zero_qubit_gate():
+    class ZeroQubitGate:
+        nqubits = 0
+        qubits = ()
+        matrix = np.array([[1.0]], dtype=np.complex128)
+
+    operator = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.complex128)
+    out = _apply_gate_left(operator, ZeroQubitGate(), nqubits=1)
+    np.testing.assert_array_equal(out, operator)
 
 
 def test_circuit_set_parameters_bad():

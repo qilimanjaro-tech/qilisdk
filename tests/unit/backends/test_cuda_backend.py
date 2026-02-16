@@ -19,7 +19,8 @@ import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Parameter
-from qilisdk.core.qtensor import ket
+from qilisdk.core.qtensor import QTensor, ket
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirPass
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
@@ -137,6 +138,33 @@ class DummyGate(BasicGate):
 
     def _generate_matrix(self) -> np.ndarray:
         return np.eye(2, dtype=COMPLEX_DTYPE)
+
+
+def _build_quantum_reservoir_functional() -> QuantumReservoir:
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    pre = Circuit(1)
+    pre.add(H(0))
+    post = Circuit(1)
+    post.add(X(0))
+    reservoir_pass = ReservoirPass(
+        reservoir_dynamics=schedule,
+        measured_observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        pre_processing=pre,
+        post_processing=post,
+        qubits_to_reset=[0],
+    )
+    return QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_pass=reservoir_pass,
+        input_per_pass=[{}, {}],
+        store_final_state=True,
+        store_intermideate_states=True,
+        nshots=10,
+    )
 
 
 # --- Parameterized test cases for basic gate handler ---
@@ -693,3 +721,15 @@ def test_get_cuda_hamiltonian_raises_with_empty_schedule():
 
     with pytest.raises(ValueError, match="TimeEvolution requires at least one Hamiltonian in the schedule"):
         backend._get_cuda_hamiltonian(schedule)
+
+
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+    backend = CudaBackend()
+    functional = _build_quantum_reservoir_functional()
+    monkeypatch.setattr(
+        "qilisdk.backends.cuda_backend.CudaBackend._execute_time_evolution",
+        lambda self, f: TimeEvolutionResult(final_state=None),
+    )
+
+    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
+        backend._execute_quantum_reservoir(functional)

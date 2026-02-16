@@ -19,7 +19,7 @@ from scipy.sparse.linalg import ArpackNoConvergence
 from scipy.sparse.linalg import norm as scipy_norm
 
 import qilisdk
-from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
+from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, reset_qubits, tensor_prod
 
 # --- Constructor Tests ---
 
@@ -535,6 +535,13 @@ def test_bad_partial_trace():
     qket._data = csr_matrix((big_dim, 1))
     assert qket.is_ket()
     qket.ptrace(keep=[], dims=[2 for _ in range(21)])
+
+
+def test_reset_qubits_resets_each_requested_qubit():
+    state = ket(1, 1).to_density_matrix()
+    reset_state = reset_qubits(state, [1, 0])
+    expected = ket(0, 0).to_density_matrix()
+    np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
 
 
 def test_large_trace_norm():

@@ -44,6 +44,10 @@ def test_backend_execute():
     with pytest.raises(NotImplementedError, match="has no TimeEvolution"):
         backend._execute_time_evolution(time_evo)
 
+    quantum_reservoir = MagicMock()
+    with pytest.raises(NotImplementedError, match="has no Quantum Reservoir"):
+        backend._execute_quantum_reservoir(quantum_reservoir)
+
 
 class MockSampleResult:
     def __init__(self, functional):

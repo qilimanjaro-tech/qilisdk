@@ -51,4 +51,7 @@ def test_time_evolution_properties():
     assert time_evolution.get_parameter_names() == ["theta"]
     assert time_evolution.get_parameter_bounds() == {"theta": (0.0, 2.0)}
     assert time_evolution.get_parameter_values() == [1.0]
+    assert time_evolution.get_trainable_parameter_names() == ["theta"]
+    assert time_evolution.get_trainable_parameters() == {"theta": 1.0}
+    assert time_evolution.get_trainable_parameter_bounds() == {"theta": (0.0, 2.0)}
     assert time_evolution.get_constraints() == []

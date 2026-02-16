@@ -14,9 +14,10 @@
 
 import numpy as np
 
-from qilisdk.functionals import TimeEvolutionResult
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
+
+from .time_evolution_result import TimeEvolutionResult
 
 
 def _complex_dtype() -> np.dtype:

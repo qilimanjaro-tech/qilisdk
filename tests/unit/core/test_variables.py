@@ -1500,3 +1500,14 @@ def test_assert_real():
     assert np.isclose(_assert_real(complex(3, 0)), 3.0)
     with pytest.raises(ValueError, match=r"Only Real values"):
         _ = _assert_real(complex(3, 2))
+
+
+def test_parameter_non_trainable_bounds_are_locked_to_value():
+    p = Parameter("p", value=1.0, bounds=(0.0, 2.0), trainable=False)
+    assert p.bounds == (1.0, 1.0)
+
+    p.set_value(1.5)
+    assert p.bounds == (1.5, 1.5)
+
+    p.set_bounds(0.0, 3.0)
+    assert p.bounds == (1.5, 1.5)
