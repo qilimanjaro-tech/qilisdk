@@ -26,6 +26,7 @@ from qilisdk.settings import get_settings
 def _isclose(lhs: float, rhs: float) -> bool:
     return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
 
+
 # --- Constructor and Property Tests ---
 
 

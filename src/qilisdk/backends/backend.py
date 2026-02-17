@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from copy import copy
 from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 import numpy as np
