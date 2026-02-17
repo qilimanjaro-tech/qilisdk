@@ -20,7 +20,7 @@ import pytest
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import QTensor, ket
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirPass
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
@@ -150,17 +150,17 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     pre.add(H(0))
     post = Circuit(1)
     post.add(X(0))
-    reservoir_pass = ReservoirPass(
-        reservoir_dynamics=schedule,
-        measured_observables=[QTensor(np.eye(2, dtype=np.complex128))],
-        pre_processing=pre,
-        post_processing=post,
+    reservoir_pass = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        input_encoding=pre,
+        output_encoding=post,
         qubits_to_reset=[0],
     )
     return QuantumReservoir(
         initial_state=ket(0),
-        reservoir_pass=reservoir_pass,
-        input_per_pass=[{}, {}],
+        reservoir_layer=reservoir_pass,
+        input_per_layer=[{}, {}],
         store_final_state=True,
         store_intermideate_states=True,
         nshots=10,

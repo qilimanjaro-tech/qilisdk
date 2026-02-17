@@ -17,6 +17,8 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
     from .types import RealNumber
@@ -30,32 +32,51 @@ class Parameterizable(ABC):
         self._parameters: dict[str, Parameter] = {}
         self._parameter_constraints: list[ComparisonTerm] = []
 
+    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
+        """Yield parameterizable children to compose this object's parameter interface.
+
+        Returns:
+            Iterable[Parameterizable]: Child objects that contribute parameters to this instance.
+        """
+        return ()
+
+    def _iter_parameter_items(self) -> Iterable[tuple[str, Parameter]]:
+        """Yield ``(label, parameter)`` items exposed by this object."""
+        local_params = getattr(self, "_parameters", {})
+        yield from local_params.items()
+        for child in self._iter_parameter_children():
+            yield from child._iter_parameter_items()  # noqa: SLF001
+
+    def _parameter_map(self) -> dict[str, Parameter]:
+        params: dict[str, Parameter] = {}
+        for label, parameter in self._iter_parameter_items():
+            params[label] = parameter
+        return params
+
+    def _filtered_parameter_map(self, trainable: bool | None = None) -> dict[str, Parameter]:
+        params = self._parameter_map()
+        if trainable is None:
+            return params
+        return {label: param for label, param in params.items() if param.is_trainable is trainable}
+
     @property
     def nparameters(self) -> int:
         """Number of tunable parameters defined by the object."""
-        return len(self._parameters)
+        return len(self._parameter_map())
 
-    def get_parameter_values(self) -> list[float]:
+    def get_parameter_values(self, trainable: bool | None = None) -> list[float]:
         """Return the current numerical values of the parameters."""
-        return [param.value for param in self._parameters.values()]
+        return list(self.get_parameters(trainable=trainable).values())
 
-    def get_parameter_names(self) -> list[str]:
+    def get_parameter_names(self, trainable: bool | None = None) -> list[str]:
         """Return the ordered list of parameter labels."""
-        return list(self._parameters.keys())
+        return list(self.get_parameters(trainable=trainable).keys())
 
-    def get_trainable_parameter_names(self) -> list[str]:
-        """Return the ordered list of parameter labels."""
-        return [k for k, param in self._parameters.items() if param.is_trainable]
-
-    def get_parameters(self) -> dict[str, RealNumber]:
+    def get_parameters(self, trainable: bool | None = None) -> dict[str, RealNumber]:
         """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items()}
+        return {label: param.value for label, param in self._filtered_parameter_map(trainable=trainable).items()}
 
-    def get_trainable_parameters(self) -> dict[str, RealNumber]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items() if param.is_trainable}
-
-    def set_parameter_values(self, values: list[float]) -> None:
+    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
         """
         Update all parameter values at once.
 
@@ -65,9 +86,9 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but this object has {self.nparameters} parameters.")
-        param_names = self.get_parameter_names()
+        param_names = self.get_parameter_names(trainable=trainable)
+        if len(values) != len(param_names):
+            raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
         value_dict = {param_names[i]: values[i] for i in range(len(values))}
         self.set_parameters(value_dict)
 
@@ -81,22 +102,19 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided or constraints are violated.
         """
+        available_parameters = self._parameter_map()
         if not self.check_constraints(parameters):
             raise ValueError(
                 f"New assignation of the parameters breaks the parameter constraints: \n{self.get_constraints()}"
             )
         for label, param in parameters.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(f"Parameter {label} is not defined for this object.")
-            self._parameters[label].set_value(param)
+            available_parameters[label].set_value(param)
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
+    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
         """Return the ``(lower, upper)`` bounds associated with each parameter."""
-        return {label: param.bounds for label, param in self._parameters.items()}
-
-    def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the ``(lower, upper)`` bounds associated with each parameter."""
-        return {label: param.bounds for label, param in self._parameters.items() if param.is_trainable}
+        return {label: param.bounds for label, param in self._filtered_parameter_map(trainable=trainable).items()}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
@@ -108,12 +126,13 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        available_parameters = self._parameter_map()
         for label, bound in ranges.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(
                     f"The provided parameter label {label} is not defined in the list of parameters in this object."
                 )
-            self._parameters[label].set_bounds(bound[0], bound[1])
+            available_parameters[label].set_bounds(bound[0], bound[1])
 
     def get_constraints(self) -> list[ComparisonTerm]:
         """Get all constraints on the parameters.
@@ -121,7 +140,10 @@ class Parameterizable(ABC):
         Returns:
             list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.
         """
-        return self._parameter_constraints
+        constraints = list(getattr(self, "_parameter_constraints", []))
+        for child in self._iter_parameter_children():
+            constraints.extend(child.get_constraints())
+        return constraints
 
     def check_constraints(self, parameters: dict[str, float]) -> bool:
         """Validate that proposed parameter updates satisfy all constraints.
@@ -135,11 +157,12 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        available_parameters = self._parameter_map()
         evaluate_dict: dict[BaseVariable, float] = {}
         for label, value in parameters.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(f"Parameter {label} is not defined for this object.")
-            evaluate_dict[self._parameters[label]] = value
+            evaluate_dict[available_parameters[label]] = value
         constraints = self.get_constraints()
         valid = all(con.evaluate(evaluate_dict) for con in constraints)
         return valid

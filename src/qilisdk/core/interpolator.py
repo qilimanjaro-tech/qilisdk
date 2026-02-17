@@ -421,7 +421,7 @@ class Interpolator(Parameterizable):
         self._time_dict[time / self._time_scale] = coeff
         self._delete_cache()
 
-    def set_parameter_values(self, values: list[float]) -> None:
+    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
         """
         Assign parameter values by position and clear caches.
 
@@ -429,7 +429,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
         """
         self._delete_cache()
-        super().set_parameter_values(values)
+        super().set_parameter_values(values=values, trainable=trainable)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """

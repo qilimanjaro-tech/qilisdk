@@ -42,7 +42,7 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedTimeEvolution
 from qilisdk.digital.gates import CNOT, Controlled
-from qilisdk.functionals import QuantumReservoir, ReservoirPass
+from qilisdk.functionals import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -79,11 +79,11 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     pre.add(H(0))
     post = Circuit(1)
     post.add(X(0))
-    reservoir_pass = ReservoirPass(
-        reservoir_dynamics=schedule,
-        measured_observables=[QTensor(np.eye(2, dtype=np.complex128))],
-        pre_processing=pre,
-        post_processing=post,
+    reservoir_pass = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        input_encoding=pre,
+        output_encoding=post,
         qubits_to_reset=[0],
     )
     return QuantumReservoir(

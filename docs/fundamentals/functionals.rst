@@ -221,7 +221,7 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
 **Parameters**
 
 - **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the reservoir.
-- **reservoir_pass** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirPass`): Defines pre/post-processing,
+- **reservoir_pass** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
   reservoir dynamics, observables, and reset policy.
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
   (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
@@ -243,26 +243,26 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
     from qilisdk.backends import CudaBackend
     from qilisdk.core import ket
     from qilisdk.digital import Circuit, U2
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirPass
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
     from qilisdk.analog import Schedule, X, Z
 
     pre_processing = Circuit(2)
     pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
 
-    res_pass = ReservoirPass(
-        reservoir_dynamics=Schedule(
+    res_layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
             hamiltonians={"h": Z(0) + Z(1) + Z(0) * Z(1) + 0.5 * (X(0) + X(1))},
             total_time=1.0,
             dt=0.1,
         ),
-        measured_observables=[Z(0), Z(1), Z(0) * Z(1)],
-        pre_processing=pre_processing,
+        observables=[Z(0), Z(1), Z(0) * Z(1)],
+        input_encoding=pre_processing,
         qubits_to_reset=[1],
     )
 
     reservoir = QuantumReservoir(
         initial_state=(np.random.rand() * ket(0, 0) + np.random.rand() * ket(1, 1)).unit(),
-        reservoir_pass=res_pass,
+        reservoir_layer=res_layer,
         input_per_layer=[
             {"phi_1": 0.2, "gamma_1": 0.1},
             {"phi_1": 0.3, "gamma_1": 0.2},

@@ -138,32 +138,32 @@ class Gate(Parameterizable, ABC):
         """
         return {}
 
-    def get_parameters(self) -> dict[str, float]:  # noqa: PLR6301
+    def get_parameters(self, trainable: bool | None = None) -> dict[str, float]:
         """
         Retrieve a mapping of parameter names to their corresponding values.
 
         Returns:
             dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
-        return {}
+        return super().get_parameters(trainable=trainable)
 
-    def get_parameter_names(self) -> list[str]:
+    def get_parameter_names(self, trainable: bool | None = None) -> list[str]:
         """
         Retrieve the symbolic names of the gate's parameters.
 
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return list(self.get_parameters())
+        return super().get_parameter_names(trainable=trainable)
 
-    def get_parameter_values(self) -> list[float]:
+    def get_parameter_values(self, trainable: bool | None = None) -> list[float]:
         """
         Retrieve the numerical values assigned to the gate's parameters.
 
         Returns:
             list[float]: A list containing the parameter values.
         """
-        return list(self.get_parameters().values())
+        return super().get_parameter_values(trainable=trainable)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -182,7 +182,7 @@ class Gate(Parameterizable, ABC):
         if any(name not in self.get_parameters() for name in parameters):
             raise InvalidParameterNameError
 
-    def set_parameter_values(self, values: list[float]) -> None:
+    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
         """
         Set the numerical values for the gate's parameters.
 
@@ -196,11 +196,11 @@ class Gate(Parameterizable, ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if len(values) != len(self.get_parameters()):
+        if len(values) != len(self.get_parameters(trainable=trainable)):
             raise ParametersNotEqualError
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:  # noqa: PLR6301
-        return {}
+    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
+        return super().get_parameter_bounds(trainable=trainable)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if not self.is_parameterized:
@@ -269,8 +269,8 @@ class BasicGate(Gate):
     def parameters(self) -> dict[str, Parameter]:
         return self._parameters
 
-    def get_parameters(self) -> dict[str, float]:
-        return {k: v.value for k, v in self._parameters.items()}
+    def get_parameters(self, trainable: bool | None = None) -> dict[str, float]:
+        return super().get_parameters(trainable=trainable)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -278,16 +278,15 @@ class BasicGate(Gate):
             self._parameters[k].set_value(v)
         self._matrix = self._generate_matrix()
 
-    def set_parameter_values(self, values: list[float]) -> None:
-        super().set_parameter_values(values=values)
-
-        for key, value in zip(self.get_parameters(), values):
+    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
+        super().set_parameter_values(values=values, trainable=trainable)
+        for key, value in zip(self.get_parameters(trainable=trainable), values):
             self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        return {k: v.bounds for k, v in self._parameters.items()}
+    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
+        return super().get_parameter_bounds(trainable=trainable)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
@@ -371,25 +370,25 @@ class Modified(Gate, Generic[TBasicGate]):
     def parameters(self) -> dict[str, Parameter]:
         return self._basic_gate.parameters
 
-    def get_parameters(self) -> dict[str, float]:
-        return self._basic_gate.get_parameters()
+    def get_parameters(self, trainable: bool | None = None) -> dict[str, float]:
+        return self._basic_gate.get_parameters(trainable=trainable)
 
-    def get_parameter_names(self) -> list[str]:
-        return self._basic_gate.get_parameter_names()
+    def get_parameter_names(self, trainable: bool | None = None) -> list[str]:
+        return self._basic_gate.get_parameter_names(trainable=trainable)
 
-    def get_parameter_values(self) -> list[float]:
-        return self._basic_gate.get_parameter_values()
+    def get_parameter_values(self, trainable: bool | None = None) -> list[float]:
+        return self._basic_gate.get_parameter_values(trainable=trainable)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
         self._matrix = self._generate_matrix()
 
-    def set_parameter_values(self, values: list[float]) -> None:
-        self._basic_gate.set_parameter_values(values=values)
+    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
+        self._basic_gate.set_parameter_values(values=values, trainable=trainable)
         self._matrix = self._generate_matrix()
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        return self._basic_gate.get_parameter_bounds()
+    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
+        return self._basic_gate.get_parameter_bounds(trainable=trainable)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         self._basic_gate.set_parameter_bounds(ranges)

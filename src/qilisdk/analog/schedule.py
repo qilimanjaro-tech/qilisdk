@@ -14,8 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
-from itertools import chain
-from typing import Mapping, TypeAlias, overload
+from typing import Iterator, Mapping, TypeAlias, overload
 
 from numpy import linspace
 
@@ -196,6 +195,15 @@ class Schedule(Parameterizable):
         """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
         return len(self._parameters)
 
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Expose hamiltonians and interpolators to the shared parameter interface.
+
+        Yields:
+            Iterator[Parameterizable]: Child parameterizable objects composing the schedule.
+        """
+        yield from self._hamiltonians.values()
+        yield from self._coefficients.values()
+
     def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
         if isinstance(value, (int, float)):
             return value
@@ -266,9 +274,7 @@ class Schedule(Parameterizable):
 
     def get_constraints(self) -> list[ComparisonTerm]:
         """Return the set of parameter constraints arising from all interpolators."""
-        const_lists = [coeff.get_constraints() for coeff in self._coefficients.values()]
-        combined_list = chain.from_iterable(const_lists)
-        return list(set(combined_list))
+        return list(set(super().get_constraints()))
 
     def scale_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
         """

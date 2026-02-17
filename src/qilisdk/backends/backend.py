@@ -148,7 +148,7 @@ class Backend(ABC):
         """
 
         def evaluate_sample(parameters: list[float]) -> float:
-            param_names = functional.functional.get_trainable_parameter_names()
+            param_names = functional.functional.get_parameter_names(trainable=True)
             param_bounds = functional.functional.get_parameter_bounds()
             new_param_dict = {}
             for i, param in enumerate(parameters):
@@ -168,17 +168,17 @@ class Backend(ABC):
                 return final_results.real
             raise ValueError(f"Unsupported result type {type(final_results)}.")
 
-        if len(functional.functional.get_trainable_parameters()) == 0:
+        if len(functional.functional.get_parameters(trainable=True)) == 0:
             raise ValueError("Functional provided does not contain trainable parameters.")
 
         optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,
-            init_parameters=list(functional.functional.get_trainable_parameters().values()),
-            bounds=list(functional.functional.get_trainable_parameter_bounds().values()),
+            init_parameters=list(functional.functional.get_parameters(trainable=True).values()),
+            bounds=list(functional.functional.get_parameter_bounds(trainable=True).values()),
             store_intermediate_results=functional.store_intermediate_results,
         )
 
-        param_names = functional.functional.get_trainable_parameter_names()
+        param_names = functional.functional.get_parameter_names(trainable=True)
         optimal_parameter_dict = {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
         err = functional.check_parameter_constraints(optimal_parameter_dict)
         if err > 0:

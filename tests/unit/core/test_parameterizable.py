@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Iterator
+
 import pytest
 from numpy import isclose
 
@@ -27,6 +29,25 @@ class DummyParameterizable(Parameterizable):
             "beta": Parameter("beta", 2.0, bounds=(1, 3)),
         }
         self._parameter_constraints = [LEQ(self._parameters["alpha"], self._parameters["beta"])]
+
+
+class LeafParameterizable(Parameterizable):
+    def __init__(self, label: str, value: float, *, trainable: bool = True) -> None:
+        super().__init__()
+        self._parameters = {
+            label: Parameter(label, value, bounds=(-10, 10), trainable=trainable),
+        }
+
+
+class CompositeParameterizable(Parameterizable):
+    def __init__(self, left: Parameterizable, right: Parameterizable) -> None:
+        super().__init__()
+        self._left = left
+        self._right = right
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self._left
+        yield self._right
 
 
 @pytest.fixture
@@ -99,3 +120,30 @@ def test_set_nonexistent_parameter(monkeypatch, parameterizable: DummyParameteri
 
     with pytest.raises(ValueError, match=r"not defined for this object"):
         parameterizable.set_parameters({"gamma": 1.0})
+
+
+def test_composite_parent_child_parameter_sync():
+    left = LeafParameterizable("left", 1.0, trainable=True)
+    right = LeafParameterizable("right", 2.0, trainable=False)
+    parent = CompositeParameterizable(left, right)
+
+    assert parent.get_parameters() == {"left": 1.0, "right": 2.0}
+    assert parent.get_parameters(trainable=True) == {"left": 1.0}
+    assert parent.get_parameters(trainable=False) == {"right": 2.0}
+
+    parent.set_parameters({"left": 1.5, "right": 2.5})
+    assert left.get_parameters()["left"] == 1.5
+    assert right.get_parameters()["right"] == 2.5
+
+    right.set_parameters({"right": 3.5})
+    assert parent.get_parameters()["right"] == 3.5
+
+    parent.set_parameter_values([4.0], trainable=True)
+    assert left.get_parameters()["left"] == 4.0
+
+    parent.set_parameter_bounds({"left": (-1.0, 5.0), "right": (0.0, 4.0)})
+    assert left.get_parameter_bounds()["left"] == (-1.0, 5.0)
+    assert right.get_parameter_bounds()["right"] == (3.5, 3.5)
+
+    left.set_parameter_bounds({"left": (-2.0, 5.0)})
+    assert parent.get_parameter_bounds()["left"] == (-2.0, 5.0)

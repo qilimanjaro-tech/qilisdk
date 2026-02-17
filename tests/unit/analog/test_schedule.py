@@ -102,6 +102,36 @@ def test_schedule_parameters():
         schedule.set_parameter_values([0] * 2)
 
 
+def test_schedule_parameter_sync_with_children():
+    h_param = Parameter("h_param", 0.5, bounds=(-2.0, 2.0))
+    c_param = Parameter("c_param", 0.1, bounds=(-1.0, 1.0))
+    hamiltonian = h_param * Z(0)
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        coefficients={"h": {0: c_param, 1: 1.0}},
+        dt=0.1,
+    )
+
+    schedule.set_parameters({"h_param": 0.8, "c_param": 0.2})
+    assert hamiltonian.get_parameters()["h_param"] == 0.8
+    assert schedule.coefficients["h"].get_parameters()["c_param"] == 0.2
+
+    hamiltonian.set_parameters({"h_param": 0.9})
+    schedule.coefficients["h"].set_parameters({"c_param": 0.3})
+    assert schedule.get_parameters() == {"h_param": 0.9, "c_param": 0.3}
+
+    schedule.set_parameter_values([1.1, 0.4])
+    assert hamiltonian.get_parameters()["h_param"] == 1.1
+    assert schedule.coefficients["h"].get_parameters()["c_param"] == 0.4
+
+    schedule.set_parameter_bounds({"h_param": (-3.0, 3.0), "c_param": (-0.5, 0.5)})
+    assert hamiltonian.get_parameter_bounds()["h_param"] == (-3.0, 3.0)
+    assert schedule.coefficients["h"].get_parameter_bounds()["c_param"] == (-0.5, 0.5)
+
+    hamiltonian.set_parameter_bounds({"h_param": (-4.0, 4.0)})
+    assert schedule.get_parameter_bounds()["h_param"] == (-4.0, 4.0)
+
+
 def test_schedule_constructor_with_hamiltonians_and_schedule():
     """When Hamiltonians and a partial schedule are provided, missing coefficients default to 0."""
     # H1 acts on qubit 0 (nqubits = 1); H2 acts on qubit 1 (nqubits = 2).

@@ -407,7 +407,7 @@ def test_repair_density_matrix_from_ket():
 
 def test_repair_density_matrix_operator():
     qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
-    repaired = qobj.repair_density_matrix()
+    repaired = qobj.repair_density_matrix(0.5)
     expected = ket(0).to_density_matrix()
     np.testing.assert_allclose(repaired.dense(), expected.dense(), atol=1e-8)
     assert repaired.is_density_matrix()

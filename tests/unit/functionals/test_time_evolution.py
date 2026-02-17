@@ -51,7 +51,27 @@ def test_time_evolution_properties():
     assert time_evolution.get_parameter_names() == ["theta"]
     assert time_evolution.get_parameter_bounds() == {"theta": (0.0, 2.0)}
     assert time_evolution.get_parameter_values() == [1.0]
-    assert time_evolution.get_trainable_parameter_names() == ["theta"]
-    assert time_evolution.get_trainable_parameters() == {"theta": 1.0}
-    assert time_evolution.get_trainable_parameter_bounds() == {"theta": (0.0, 2.0)}
+    assert time_evolution.get_parameter_names(trainable=True) == ["theta"]
+    assert time_evolution.get_parameters(trainable=True) == {"theta": 1.0}
+    assert time_evolution.get_parameter_bounds(trainable=True) == {"theta": (0.0, 2.0)}
     assert time_evolution.get_constraints() == []
+
+
+def test_time_evolution_parameter_sync_with_schedule_child():
+    theta = Parameter("theta", 0.5, bounds=(0.0, 2.0))
+    coeff = Parameter("coeff", 0.2, trainable=False)
+    hamiltonian = Hamiltonian({(PauliZ(0),): theta})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, coefficients={"h": {0: coeff, 1: 1.0}}, dt=0.1)
+    time_evolution = TimeEvolution(schedule=schedule, observables=[PauliZ(0)], initial_state=ket(0).unit())
+
+    time_evolution.set_parameters({"theta": 0.7, "coeff": 0.3})
+    assert schedule.get_parameters() == {"theta": 0.7, "coeff": 0.3}
+
+    schedule.set_parameters({"theta": 0.8, "coeff": 0.4})
+    assert time_evolution.get_parameters() == {"theta": 0.8, "coeff": 0.4}
+    assert time_evolution.get_parameters(trainable=True) == {"theta": 0.8}
+    assert time_evolution.get_parameters(trainable=False) == {"coeff": 0.4}
+
+    time_evolution.set_parameter_values([1.1], trainable=True)
+    assert schedule.get_parameters()["theta"] == 1.1
+    assert schedule.get_parameters()["coeff"] == 0.4

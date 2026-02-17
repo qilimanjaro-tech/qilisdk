@@ -37,3 +37,28 @@ def test_sampling():
     assert sampling.get_parameter_bounds() == {"theta": (0.0, 2.0)}
     assert sampling.get_parameter_values() == [1.0]
     assert sampling.get_constraints() == []
+
+
+def test_sampling_parameter_sync_with_circuit_child():
+    circuit = Circuit(1)
+    theta = Parameter("theta", 0.5, bounds=(0.0, 2.0))
+    phi_nt = Parameter("phi_nt", 0.2, trainable=False)
+    circuit.add(RZ(0, phi=theta))
+    circuit.add(RZ(0, phi=phi_nt))
+    sampling = Sampling(circuit=circuit, nshots=10)
+
+    sampling.set_parameters({"theta": 0.7, "phi_nt": 0.25})
+    assert circuit.get_parameters() == {"theta": 0.7, "phi_nt": 0.25}
+
+    circuit.set_parameters({"theta": 0.9, "phi_nt": 0.3})
+    assert sampling.get_parameters() == {"theta": 0.9, "phi_nt": 0.3}
+    assert sampling.get_parameters(trainable=True) == {"theta": 0.9}
+    assert sampling.get_parameters(trainable=False) == {"phi_nt": 0.3}
+
+    sampling.set_parameter_values([1.1], trainable=True)
+    assert circuit.get_parameters()["theta"] == 1.1
+    assert circuit.get_parameters()["phi_nt"] == 0.3
+
+    sampling.set_parameter_bounds({"theta": (-1.0, 2.0), "phi_nt": (0.3, 0.3)})
+    assert circuit.get_parameter_bounds()["theta"] == (-1.0, 2.0)
+    assert sampling.get_parameter_bounds(trainable=False) == {"phi_nt": (0.3, 0.3)}
