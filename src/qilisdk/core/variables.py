@@ -917,7 +917,7 @@ class BaseVariable(ABC):
 
     def __hash__(self) -> int:
         if self._hash_cache is None:
-            self._hash_cache = hash((self._label, self._domain.value, self._bounds))
+            self._hash_cache = hash((self._label))
         return self._hash_cache
 
     def __eq__(self, other: object) -> bool:

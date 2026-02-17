@@ -14,10 +14,17 @@
 from __future__ import annotations
 
 from abc import ABC
+from copy import copy
 from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
+import numpy as np
+
+from qilisdk.analog import Schedule
+from qilisdk.core import QTensor, expect_val, reset_qubits
+from qilisdk.digital import Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
+from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -25,8 +32,8 @@ from qilisdk.functionals.variational_program_result import VariationalProgramRes
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
+    from qilisdk.core.types import Number
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-    from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
@@ -76,7 +83,53 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
-        raise NotImplementedError(f"{type(self).__qualname__} has no Quantum Reservoir implementation")
+        state = copy(functional.initial_state).to_density_matrix()
+        expected_values: list[list[Number]] = []
+        intermediate_states: list[QTensor] = []
+        cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
+        for input_dict in functional.input_per_layer:
+            functional.reservoir_layer.set_parameters(input_dict)
+            for step in functional.reservoir_layer:
+                if isinstance(step, Circuit):
+                    param_signature = tuple(step.get_parameter_values())
+                    cached = cache.get(step)
+                    if cached is None or cached[0] != param_signature:
+                        U = step.to_qtensor()
+                        cache[step] = (param_signature, U)
+                    else:
+                        U = cached[1]
+                    state = U @ state @ U.adjoint()
+                elif isinstance(step, Schedule):
+                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots))
+                    if not res.final_state:
+                        raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
+                    state = res.final_state
+
+            if functional.store_intermideate_states:
+                intermediate_states.append(state)
+
+            try:
+                state = state.repair_density_matrix()
+            except ValueError as exc:
+                raise ValueError(
+                    "Reservoir Runtime Error: state repair failed before expectation value computation. "
+                    f"{exc} "
+                    "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
+                ) from exc
+
+            expected_values.append(
+                [expect_val(operator=obs, state=state) for obs in functional.reservoir_layer.observables_as_qtensor]
+            )
+
+            if functional.reservoir_layer.qubits_to_reset:
+                state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
+
+        return QuantumReservoirResult(
+            expected_values=np.array(expected_values),
+            final_expected_values=np.array(expected_values[-1]),
+            final_state=state if functional.store_final_state else None,
+            intermediate_states=intermediate_states if functional.store_intermideate_states else None,
+        )
 
     def _execute_variational_program(
         self, functional: VariationalProgram[PrimitiveFunctional[TResult]]

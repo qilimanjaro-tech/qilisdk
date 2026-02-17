@@ -54,50 +54,52 @@ class ReservoirInput(Parameter):
             trainable=False,
         )
 
+    __hash__ = Parameter.__hash__
 
-class ReservoirPass(Parameterizable):
+
+class ReservoirLayer(Parameterizable):
     """Single reservoir layer template.
 
-    A reservoir pass can contain up to three ordered stages:
+    A reservoir layer can contain up to three ordered stages:
     ``pre_processing -> reservoir_dynamics -> post_processing``.
-    It also stores the observables measured after each pass and optional qubits to reset.
+    It also stores the observables measured after each layer and optional qubits to reset.
     """
 
     def __init__(
         self,
-        reservoir_dynamics: Schedule,
-        measured_observables: list[QTensor | Hamiltonian | PauliOperator],
-        post_processing: Circuit | None = None,
-        pre_processing: Circuit | None = None,
+        evolution_dynamics: Schedule,
+        observables: list[QTensor | Hamiltonian | PauliOperator],
+        input_encoding: Circuit | None = None,
+        output_encoding: Circuit | None = None,
         qubits_to_reset: list[int] | None = None,
     ) -> None:
         """Build a reservoir pass description.
 
         Args:
-            reservoir_dynamics: Main dynamics block, either analog schedule or digital circuit.
-            measured_observables: Observables sampled at the end of the pass.
-            post_processing: Optional single-qubit post-processing circuit.
-            pre_processing: Optional single-qubit pre-processing circuit.
+            evolution_dynamics: Main dynamics block, either analog schedule or digital circuit.
+            observables: Observables sampled at the end of the pass.
+            input_encoding: Optional single-qubit pre-processing circuit.
+            output_encoding: Optional single-qubit post-processing circuit.
             qubits_to_reset: Optional qubits reset between consecutive layers.
         """
 
-        self._pre_processing: Circuit | None = pre_processing
-        self._reservoir_dynamics: Schedule = reservoir_dynamics
-        self._post_processing: Circuit | None = post_processing
-        self._qubits_to_reset: list[int] | None = qubits_to_reset
         super().__init__()
+        self._input_encoding: Circuit | None = input_encoding
+        self._evolution_dynamics: Schedule = evolution_dynamics
+        self._output_encoding: Circuit | None = output_encoding
+        self._qubits_to_reset: list[int] | None = qubits_to_reset
         self._full_param_list: dict[str, Parameter] = {}
-        self._nqubits = self._reservoir_dynamics.nqubits
+        self._nqubits = self._evolution_dynamics.nqubits
 
-        if pre_processing:
-            self._validate_pre_processing(pre_processing)
+        if input_encoding:
+            self._validate_input_encoding(input_encoding)
 
-        if post_processing:
-            self._validate_post_processing(post_processing)
+        if output_encoding:
+            self._validate_output_encoding(output_encoding)
 
         self._qtensor_observables: list[QTensor] = []
 
-        for observable in measured_observables:
+        for observable in observables:
             if isinstance(observable, PauliOperator):
                 self._qtensor_observables.append(observable.to_hamiltonian().to_qtensor(self._nqubits))
             elif isinstance(observable, Hamiltonian):
@@ -105,9 +107,9 @@ class ReservoirPass(Parameterizable):
             elif isinstance(observable, QTensor):
                 self._qtensor_observables.append(self._process_qtensor(observable))
 
-        self._measured_observables = measured_observables
+        self._observables = observables
 
-    def _validate_pre_processing(self, pre_processing: Circuit) -> None:
+    def _validate_input_encoding(self, pre_processing: Circuit) -> None:
         """Validate and normalize the optional pre-processing circuit.
 
         Raises:
@@ -116,15 +118,15 @@ class ReservoirPass(Parameterizable):
         """
         if any(isinstance(g, M) for g in pre_processing.gates):
             raise ValueError("Pre-Processing Circuit can't contain measurements")
-        if pre_processing.nqubits > self._reservoir_dynamics.nqubits:
+        if pre_processing.nqubits > self._evolution_dynamics.nqubits:
             raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in pre_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
         if pre_processing.nqubits < self.nqubits:
-            self._pre_processing = Circuit(self._nqubits)
-            self._pre_processing.add(pre_processing.gates)
+            self._input_encoding = Circuit(self._nqubits)
+            self._input_encoding.add(pre_processing.gates)
 
-    def _validate_post_processing(self, post_processing: Circuit) -> None:
+    def _validate_output_encoding(self, post_processing: Circuit) -> None:
         """Validate and normalize the optional post-processing circuit.
 
         Raises:
@@ -133,13 +135,13 @@ class ReservoirPass(Parameterizable):
         """
         if any(isinstance(g, M) for g in post_processing.gates):
             raise ValueError("Post-Processing Circuit can't contain measurements")
-        if post_processing.nqubits > self._reservoir_dynamics.nqubits:
+        if post_processing.nqubits > self._evolution_dynamics.nqubits:
             raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in post_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
         if post_processing.nqubits < self.nqubits:
-            self._post_processing = Circuit(self._nqubits)
-            self._post_processing.add(post_processing.gates)
+            self._output_encoding = Circuit(self._nqubits)
+            self._output_encoding.add(post_processing.gates)
 
     def _process_qtensor(self, observable: QTensor) -> QTensor:
         """Pad observable tensors with identities to match the reservoir width.
@@ -170,9 +172,9 @@ class ReservoirPass(Parameterizable):
     def nparameters(self) -> int:
         """Total parameter count across pre-processing, dynamics, and post-processing."""
         return (
-            (self._pre_processing.nparameters if self._pre_processing else 0)
-            + self._reservoir_dynamics.nparameters
-            + (self._post_processing.nparameters if self._post_processing else 0)
+            (self._input_encoding.nparameters if self._input_encoding else 0)
+            + self._evolution_dynamics.nparameters
+            + (self._output_encoding.nparameters if self._output_encoding else 0)
         )
 
     @property
@@ -181,14 +183,14 @@ class ReservoirPass(Parameterizable):
         return self._nqubits
 
     @property
-    def pre_processing(self) -> Circuit | None:
+    def input_encoding(self) -> Circuit | None:
         """Optional pre-processing stage."""
-        return self._pre_processing
+        return self._input_encoding
 
     @property
-    def post_processing(self) -> Circuit | None:
+    def output_encoding(self) -> Circuit | None:
         """Optional post-processing stage."""
-        return self._post_processing
+        return self._output_encoding
 
     @property
     def observables_as_qtensor(self) -> list[QTensor]:
@@ -201,49 +203,49 @@ class ReservoirPass(Parameterizable):
         return self._qubits_to_reset
 
     @property
-    def measured_observables(self) -> list[QTensor | Hamiltonian | PauliOperator] | None:
+    def observables(self) -> list[QTensor | Hamiltonian | PauliOperator] | None:
         """Original observable list provided by the user."""
-        return self._measured_observables
+        return self._observables
 
     @property
-    def reservoir_dynamics(self) -> Schedule:
+    def evolution_dynamics(self) -> Schedule:
         """Main dynamics stage for each pass."""
-        return self._reservoir_dynamics
+        return self._evolution_dynamics
 
     def get_parameter_values(self) -> list[float]:
         """Return current parameter values of the pre-processing and dynamics blocks."""
         return (
-            self._pre_processing.get_parameter_values() if self._pre_processing else []
-        ) + self._reservoir_dynamics.get_parameter_values()
+            self._input_encoding.get_parameter_values() if self._input_encoding else []
+        ) + self._evolution_dynamics.get_parameter_values()
 
     def get_parameter_names(self) -> list[str]:
         """Return parameter names in pass execution order."""
         return (
-            (self._pre_processing.get_parameter_names() if self._pre_processing else [])
-            + self._reservoir_dynamics.get_parameter_names()
-            + (self._post_processing.get_parameter_names() if self._post_processing else [])
+            (self._input_encoding.get_parameter_names() if self._input_encoding else [])
+            + self._evolution_dynamics.get_parameter_names()
+            + (self._output_encoding.get_parameter_names() if self._output_encoding else [])
         )
 
     def get_trainable_parameter_names(self) -> list[str]:
         """Return trainable parameter names in pass execution order."""
         return (
-            (self._pre_processing.get_trainable_parameter_names() if self._pre_processing else [])
-            + self._reservoir_dynamics.get_trainable_parameter_names()
-            + (self._post_processing.get_trainable_parameter_names() if self._post_processing else [])
+            (self._input_encoding.get_trainable_parameter_names() if self._input_encoding else [])
+            + self._evolution_dynamics.get_trainable_parameter_names()
+            + (self._output_encoding.get_trainable_parameter_names() if self._output_encoding else [])
         )
 
     def get_parameters(self) -> dict[str, RealNumber]:
         """Return current parameter mapping aggregated from all enabled stages."""
-        out = self._pre_processing.get_parameters() if self._pre_processing else {}
-        out.update(self._reservoir_dynamics.get_parameters())
-        out.update(self._post_processing.get_parameters() if self._post_processing else {})
+        out = self._input_encoding.get_parameters() if self._input_encoding else {}
+        out.update(self._evolution_dynamics.get_parameters())
+        out.update(self._output_encoding.get_parameters() if self._output_encoding else {})
         return out
 
     def get_trainable_parameters(self) -> dict[str, RealNumber]:
         """Return trainable parameter mapping aggregated from all enabled stages."""
-        out = self._pre_processing.get_trainable_parameters() if self._pre_processing else {}
-        out.update(self._reservoir_dynamics.get_trainable_parameters())
-        out.update(self._post_processing.get_trainable_parameters() if self._post_processing else {})
+        out = self._input_encoding.get_trainable_parameters() if self._input_encoding else {}
+        out.update(self._evolution_dynamics.get_trainable_parameters())
+        out.update(self._output_encoding.get_trainable_parameters() if self._output_encoding else {})
         return out
 
     def set_parameter_values(self, values: list[float]) -> None:
@@ -260,44 +262,44 @@ class ReservoirPass(Parameterizable):
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """Update stage parameters from a label-to-value mapping."""
-        if self._pre_processing:
-            self._pre_processing.set_parameters(
-                {k: v for k, v in parameters.items() if k in self._pre_processing.get_parameter_names()}
+        if self._input_encoding:
+            self._input_encoding.set_parameters(
+                {k: v for k, v in parameters.items() if k in self._input_encoding.get_parameter_names()}
             )
-        self._reservoir_dynamics.set_parameters(
-            {k: v for k, v in parameters.items() if k in self._reservoir_dynamics.get_parameter_names()}
+        self._evolution_dynamics.set_parameters(
+            {k: v for k, v in parameters.items() if k in self._evolution_dynamics.get_parameter_names()}
         )
-        if self._post_processing:
-            self._post_processing.set_parameters(
-                {k: v for k, v in parameters.items() if k in self._post_processing.get_parameter_names()}
+        if self._output_encoding:
+            self._output_encoding.set_parameters(
+                {k: v for k, v in parameters.items() if k in self._output_encoding.get_parameter_names()}
             )
 
     def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return parameter bounds aggregated from all enabled stages."""
-        out = self._pre_processing.get_parameter_bounds() if self._pre_processing else {}
-        out.update(self._reservoir_dynamics.get_parameter_bounds())
-        out.update(self._post_processing.get_parameter_bounds() if self._post_processing else {})
+        out = self._input_encoding.get_parameter_bounds() if self._input_encoding else {}
+        out.update(self._evolution_dynamics.get_parameter_bounds())
+        out.update(self._output_encoding.get_parameter_bounds() if self._output_encoding else {})
         return out
 
     def get_trainable_parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """Return trainable parameter bounds aggregated from all enabled stages."""
-        out = self._pre_processing.get_trainable_parameter_bounds() if self._pre_processing else {}
-        out.update(self._reservoir_dynamics.get_trainable_parameter_bounds())
-        out.update(self._post_processing.get_trainable_parameter_bounds() if self._post_processing else {})
+        out = self._input_encoding.get_trainable_parameter_bounds() if self._input_encoding else {}
+        out.update(self._evolution_dynamics.get_trainable_parameter_bounds())
+        out.update(self._output_encoding.get_trainable_parameter_bounds() if self._output_encoding else {})
         return out
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """Set parameter bounds in each stage for matching parameter names."""
-        if self._pre_processing:
-            self._pre_processing.set_parameter_bounds(
-                {k: v for k, v in ranges.items() if k in self._pre_processing.get_parameter_names()}
+        if self._input_encoding:
+            self._input_encoding.set_parameter_bounds(
+                {k: v for k, v in ranges.items() if k in self._input_encoding.get_parameter_names()}
             )
-        self._reservoir_dynamics.set_parameter_bounds(
-            {k: v for k, v in ranges.items() if k in self._reservoir_dynamics.get_parameter_names()}
+        self._evolution_dynamics.set_parameter_bounds(
+            {k: v for k, v in ranges.items() if k in self._evolution_dynamics.get_parameter_names()}
         )
-        if self._post_processing:
-            self._post_processing.set_parameter_bounds(
-                {k: v for k, v in ranges.items() if k in self._post_processing.get_parameter_names()}
+        if self._output_encoding:
+            self._output_encoding.set_parameter_bounds(
+                {k: v for k, v in ranges.items() if k in self._output_encoding.get_parameter_names()}
             )
 
     def __len__(self) -> int:
@@ -307,7 +309,7 @@ class ReservoirPass(Parameterizable):
         Returns:
             int: The number of steps in the reservoir pass.
         """
-        return int(self._pre_processing is not None) + int(self._post_processing is not None) + 1
+        return int(self._input_encoding is not None) + int(self._output_encoding is not None) + 1
 
     def __iter__(self) -> Iterator[Circuit | Schedule]:
         """
@@ -316,11 +318,11 @@ class ReservoirPass(Parameterizable):
         Yields:
             Iterator[Circuit | Schedule]: The steps in the pass
         """
-        if self._pre_processing:
-            yield self._pre_processing
-        yield self._reservoir_dynamics
-        if self._post_processing:
-            yield self._post_processing
+        if self._input_encoding:
+            yield self._input_encoding
+        yield self._evolution_dynamics
+        if self._output_encoding:
+            yield self._output_encoding
 
 
 class QuantumReservoir(PrimitiveFunctional):
@@ -333,8 +335,8 @@ class QuantumReservoir(PrimitiveFunctional):
     def __init__(
         self,
         initial_state: QTensor,
-        reservoir_pass: ReservoirPass,
-        input_per_pass: list[dict[str, float]],
+        reservoir_layer: ReservoirLayer,
+        input_per_layer: list[dict[str, float]],
         store_final_state: bool = False,
         store_intermideate_states: bool = False,
         nshots: int = 0,
@@ -343,8 +345,8 @@ class QuantumReservoir(PrimitiveFunctional):
 
         Args:
             initial_state: Initial state before the first layer.
-            reservoir_pass: Reservoir pass definition repeated at each layer.
-            input_per_pass: Input parameter assignments for each layer.
+            reservoir_layer: Reservoir pass definition repeated at each layer.
+            input_per_layer: Input parameter assignments for each layer.
             store_final_state: Whether to store the final state after the last layer.
             store_intermideate_states: Whether to store layer-by-layer intermediate states.
             nshots: Number of measurement shots for dynamics executions that use sampling.
@@ -352,21 +354,22 @@ class QuantumReservoir(PrimitiveFunctional):
         Raises:
             ValueError: If the initial state qubit count does not match the reservoir pass.
         """
+        super().__init__()
         self._initial_state = initial_state
-        self._reservoir_pass = reservoir_pass
-        self._input_per_pass = input_per_pass
+        self._reservoir_layer = reservoir_layer
+        self._input_per_layer = input_per_layer
         self._store_final_state = store_final_state
         self._store_intermideate_states = store_intermideate_states
         self._nshots = nshots
-        if self._reservoir_pass.nqubits != self._initial_state.nqubits:
+        if self._reservoir_layer.nqubits != self._initial_state.nqubits:
             raise ValueError(
-                f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_pass.nqubits} qubits."
+                f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_layer.nqubits} qubits."
             )
 
     @property
     def nqubits(self) -> int:
         """Number of qubits in the reservoir."""
-        return self._reservoir_pass.nqubits
+        return self._reservoir_layer.nqubits
 
     @property
     def initial_state(self) -> QTensor:
@@ -374,14 +377,14 @@ class QuantumReservoir(PrimitiveFunctional):
         return self._initial_state
 
     @property
-    def reservoir_pass(self) -> ReservoirPass:
+    def reservoir_layer(self) -> ReservoirLayer:
         """Reservoir pass definition applied at each layer."""
-        return self._reservoir_pass
+        return self._reservoir_layer
 
     @property
-    def input_per_pass(self) -> list[dict[str, float]]:
+    def input_per_layer(self) -> list[dict[str, float]]:
         """Layer-ordered input parameter assignments."""
-        return self._input_per_pass
+        return self._input_per_layer
 
     @property
     def store_final_state(self) -> bool:
@@ -401,4 +404,4 @@ class QuantumReservoir(PrimitiveFunctional):
     @property
     def input_parameter_names(self) -> list[str]:
         """Input-driven (non-trainable) parameter names expected per layer."""
-        return self._reservoir_pass.input_parameter_names
+        return self._reservoir_layer.input_parameter_names

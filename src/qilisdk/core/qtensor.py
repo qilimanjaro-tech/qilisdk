@@ -81,6 +81,8 @@ class QTensor:
             density = ket * ket.adjoint()
     """
 
+    _MAX_RESERVOIR_STATE_CORRECTION = 1e-2
+
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """
         Args:
@@ -444,6 +446,58 @@ class QTensor:
         if abs(tr) < get_settings().atol:
             raise ValueError("Cannot normalize density matrix with zero trace.")
         return QTensor(rho.data / tr)  # keep it sparse
+
+    def repair_density_matrix(self, max_relative_correction: float = _MAX_RESERVOIR_STATE_CORRECTION) -> QTensor:
+        """
+        Repair a state into a valid density matrix when numerical drift is present.
+
+        This method accepts ket/bra/operator states and attempts to return a valid
+        density matrix by:
+        1) converting kets/bras to density matrices,
+        2) enforcing Hermiticity via ``(rho + rho^dagger)/2``,
+        3) normalizing with ``unit(order='tr')``.
+
+        Args:
+            max_relative_correction (float | None): Optional upper bound on the
+                relative Frobenius correction applied to repair the state. If exceeded,
+                a ``ValueError`` is raised.
+
+        Raises:
+            ValueError: If the object cannot be interpreted as a state/operator.
+            ValueError: If repair fails, exceeds the allowed correction, or does not
+                produce a valid density matrix.
+
+        Returns:
+            QTensor: The repaired density matrix.
+        """
+        if self.is_ket() or self.is_bra():
+            return self.to_density_matrix()
+
+        if self.is_density_matrix():
+            return self
+
+        if not self.is_operator():
+            raise ValueError("Cannot repair density matrix from a non-operator object.")
+
+        try:
+            repaired_state = ((self + self.adjoint()) * 0.5).unit()
+        except ValueError as exc:
+            raise ValueError("Failed to repair density matrix from the provided state.") from exc
+
+        if max_relative_correction <= 0:
+            raise ValueError("max_relative_correction must be positive when provided.")
+        reference_norm = max(self.norm(order="fro"), get_settings().atol)
+        relative_correction = (repaired_state - self).norm(order="fro") / reference_norm
+        if relative_correction > max_relative_correction:
+            raise ValueError(
+                "Repairing the density matrix required a large correction "
+                f"(relative Frobenius correction={relative_correction:.3e})."
+            )
+
+        if not repaired_state.is_density_matrix():
+            raise ValueError("Repaired state is still not a valid density matrix.")
+
+        return repaired_state
 
     def is_density_matrix(self, tol: float | None = None) -> bool:
         """

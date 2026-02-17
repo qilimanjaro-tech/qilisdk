@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirPass
+from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from .quantum_reservoirs_result import QuantumReservoirResult
 from .sampling import Sampling
 from .sampling_result import SamplingResult

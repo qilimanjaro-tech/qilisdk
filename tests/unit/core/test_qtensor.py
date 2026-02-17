@@ -397,6 +397,41 @@ def test_to_dm_from_scalar():
         qscalar.to_density_matrix()
 
 
+def test_repair_density_matrix_from_ket():
+    qket_obj = ket(0)
+    repaired = qket_obj.repair_density_matrix()
+    expected = ket(0).to_density_matrix()
+    np.testing.assert_allclose(repaired.dense(), expected.dense(), atol=1e-8)
+    assert repaired.is_density_matrix()
+
+
+def test_repair_density_matrix_operator():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    repaired = qobj.repair_density_matrix()
+    expected = ket(0).to_density_matrix()
+    np.testing.assert_allclose(repaired.dense(), expected.dense(), atol=1e-8)
+    assert repaired.is_density_matrix()
+
+
+def test_repair_density_matrix_large_correction_raises():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    with pytest.raises(ValueError, match="large correction"):
+        qobj.repair_density_matrix(max_relative_correction=0.1)
+
+
+def test_repair_density_matrix_invalid_object_raises():
+    qobj = QTensor(np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.complex128))
+    qobj._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
+    with pytest.raises(ValueError, match="non-operator"):
+        qobj.repair_density_matrix()
+
+
+def test_repair_density_matrix_invalid_threshold_raises():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    with pytest.raises(ValueError, match="must be positive"):
+        qobj.repair_density_matrix(max_relative_correction=0.0)
+
+
 # --- Helper Function Tests ---
 
 
