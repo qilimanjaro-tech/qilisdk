@@ -353,23 +353,3 @@ class QuantumReservoir(PrimitiveFunctional):
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self._reservoir_layer
-
-
-class ReservoirPass(ReservoirLayer):
-    """Backward-compatible alias around :class:`ReservoirLayer`."""
-
-    def __init__(
-        self,
-        reservoir_dynamics: Schedule,
-        measured_observables: list[QTensor | Hamiltonian | PauliOperator],
-        pre_processing: Circuit | None = None,
-        post_processing: Circuit | None = None,
-        qubits_to_reset: list[int] | None = None,
-    ) -> None:
-        super().__init__(
-            evolution_dynamics=reservoir_dynamics,
-            observables=measured_observables,
-            input_encoding=pre_processing,
-            output_encoding=post_processing,
-            qubits_to_reset=qubits_to_reset,
-        )
