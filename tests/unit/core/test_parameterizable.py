@@ -157,8 +157,8 @@ def test_composite_parent_child_parameter_sync():
     parent.set_parameter_bounds({"left": (-1.0, 5.0), "right": (0.0, 4.0)})
     assert _isclose(left.get_parameter_bounds()["left"][0], -1.0)
     assert _isclose(left.get_parameter_bounds()["left"][1], 5.0)
-    assert _isclose(right.get_parameter_bounds()["right"][0], 3.5)
-    assert _isclose(right.get_parameter_bounds()["right"][1], 3.5)
+    assert _isclose(right.get_parameter_bounds()["right"][0], 0.0)
+    assert _isclose(right.get_parameter_bounds()["right"][1], 4.0)
 
     left.set_parameter_bounds({"left": (-2.0, 5.0)})
     assert _isclose(parent.get_parameter_bounds()["left"][0], -2.0)

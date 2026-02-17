@@ -35,22 +35,18 @@ class ReservoirInput(Parameter):
         self,
         label: str,
         value: RealNumber,
-        domain: Domain = Domain.REAL,
-        bounds: tuple[float | None, float | None] = (None, None),
     ) -> None:
         """Create a non-trainable reservoir input parameter.
 
         Args:
             label: Parameter label used to reference input values.
             value: Default numerical value.
-            domain: Allowed numeric domain.
-            bounds: Optional lower/upper parameter bounds.
         """
         super().__init__(
             label=label,
             value=value,
-            domain=domain,
-            bounds=bounds,
+            domain=Domain.REAL,
+            bounds=(None, None),
             trainable=False,
         )
 

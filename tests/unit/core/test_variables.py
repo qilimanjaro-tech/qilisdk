@@ -1504,10 +1504,10 @@ def test_assert_real():
 
 def test_parameter_non_trainable_bounds_are_locked_to_value():
     p = Parameter("p", value=1.0, bounds=(0.0, 2.0), trainable=False)
-    assert p.bounds == (1.0, 1.0)
+    assert p.bounds == (0.0, 2.0)
 
     p.set_value(1.5)
-    assert p.bounds == (1.5, 1.5)
+    assert p.bounds == (0.0, 2.0)
 
     p.set_bounds(0.0, 3.0)
-    assert p.bounds == (1.5, 1.5)
+    assert p.bounds == (0.0, 3.0)

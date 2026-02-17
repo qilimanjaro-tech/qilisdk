@@ -55,15 +55,15 @@ def _schedule_with_parameter(nqubits: int = 2) -> tuple[Schedule, Parameter]:
 
 
 def test_reservoir_input_is_non_trainable():
-    inp = ReservoirInput("u", 0.2, bounds=(-1.0, 1.0))
+    inp = ReservoirInput("u", 0.2)
     assert not inp.is_trainable
-    assert _isclose(inp.bounds[0], 0.2)
-    assert _isclose(inp.bounds[1], 0.2)
+    assert _isclose(inp.bounds[0], inp.domain.min())
+    assert _isclose(inp.bounds[1], inp.domain.max())
 
 
 def test_reservoir_pass_properties_and_parameter_interface():
     schedule, _ = _schedule_with_parameter(nqubits=2)
-    u = ReservoirInput("u", 0.2, bounds=(-1.0, 1.0))
+    u = ReservoirInput("u", 0.2)
     p = Parameter("p", 0.4, bounds=(0.0, 1.0))
 
     pre = Circuit(1)
