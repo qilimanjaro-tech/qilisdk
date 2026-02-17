@@ -25,7 +25,7 @@ __all__ = [
     "QuantumReservoir",
     "QuantumReservoirResult",
     "ReservoirInput",
-    "ReservoirPass",
+    "ReservoirLayer",
     "Sampling",
     "SamplingResult",
     "TimeEvolution",
