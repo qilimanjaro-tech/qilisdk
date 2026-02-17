@@ -83,7 +83,7 @@ class Backend(ABC):
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
-        state = copy(functional.initial_state).to_density_matrix()
+        state = functional.initial_state.to_density_matrix()
         expected_values: list[list[Number]] = []
         intermediate_states: list[QTensor] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}

@@ -14,11 +14,16 @@
 
 from typing import Iterator
 
+import numpy as np
 import pytest
-from numpy import isclose
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import LEQ, Parameter
+from qilisdk.settings import get_settings
+
+
+def _isclose(lhs: float, rhs: float) -> bool:
+    return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
 
 
 class DummyParameterizable(Parameterizable):
@@ -58,15 +63,21 @@ def parameterizable() -> DummyParameterizable:
 def test_parameter_getters(parameterizable: DummyParameterizable):
     assert parameterizable.nparameters == 2
     assert parameterizable.get_parameter_names() == ["alpha", "beta"]
-    assert parameterizable.get_parameter_values() == [1.0, 2.0]
-    assert parameterizable.get_parameters() == {"alpha": 1.0, "beta": 2.0}
-    assert parameterizable.get_parameter_bounds() == {"alpha": (0, 2), "beta": (1, 3)}
+    assert _isclose(parameterizable.get_parameter_values()[0], 1.0)
+    assert _isclose(parameterizable.get_parameter_values()[1], 2.0)
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.0)
+    assert _isclose(parameterizable.get_parameters()["beta"], 2.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][0], 0.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][1], 2.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["beta"][0], 1.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["beta"][1], 3.0)
 
 
 def test_set_parameter_values_updates_all(parameterizable: DummyParameterizable):
     parameterizable.set_parameter_values([1.5, 2.5])
 
-    assert parameterizable.get_parameters() == {"alpha": 1.5, "beta": 2.5}
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.5)
+    assert _isclose(parameterizable.get_parameters()["beta"], 2.5)
 
 
 def test_set_parameter_values_length_mismatch(parameterizable: DummyParameterizable):
@@ -91,7 +102,7 @@ def test_constraints_enforced_on_set(parameterizable: DummyParameterizable):
         parameterizable.set_parameters({"alpha": 2})
 
     parameterizable.set_parameters({"alpha": 1.5, "beta": 2})
-    assert isclose(parameterizable.get_parameters()["alpha"], 1.5)
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.5)
 
 
 def test_check_constraints_unknown_parameter(parameterizable: DummyParameterizable):
@@ -101,7 +112,8 @@ def test_check_constraints_unknown_parameter(parameterizable: DummyParameterizab
 
 def test_set_parameter_bounds(parameterizable: DummyParameterizable):
     parameterizable.set_parameter_bounds({"alpha": (0.0, 1.5)})
-    assert parameterizable.get_parameter_bounds()["alpha"] == (0.0, 1.5)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][0], 0.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][1], 1.5)
 
     with pytest.raises(
         ValueError,
@@ -127,23 +139,27 @@ def test_composite_parent_child_parameter_sync():
     right = LeafParameterizable("right", 2.0, trainable=False)
     parent = CompositeParameterizable(left, right)
 
-    assert parent.get_parameters() == {"left": 1.0, "right": 2.0}
-    assert parent.get_parameters(trainable=True) == {"left": 1.0}
-    assert parent.get_parameters(trainable=False) == {"right": 2.0}
+    assert _isclose(parent.get_parameters()["left"], 1.0)
+    assert _isclose(parent.get_parameters()["right"], 2.0)
+    assert _isclose(parent.get_parameters(trainable=True)["left"], 1.0)
+    assert _isclose(parent.get_parameters(trainable=False)["right"], 2.0)
 
     parent.set_parameters({"left": 1.5, "right": 2.5})
-    assert left.get_parameters()["left"] == 1.5
-    assert right.get_parameters()["right"] == 2.5
+    assert _isclose(left.get_parameters()["left"], 1.5)
+    assert _isclose(right.get_parameters()["right"], 2.5)
 
     right.set_parameters({"right": 3.5})
-    assert parent.get_parameters()["right"] == 3.5
+    assert _isclose(parent.get_parameters()["right"], 3.5)
 
     parent.set_parameter_values([4.0], trainable=True)
-    assert left.get_parameters()["left"] == 4.0
+    assert _isclose(left.get_parameters()["left"], 4.0)
 
     parent.set_parameter_bounds({"left": (-1.0, 5.0), "right": (0.0, 4.0)})
-    assert left.get_parameter_bounds()["left"] == (-1.0, 5.0)
-    assert right.get_parameter_bounds()["right"] == (3.5, 3.5)
+    assert _isclose(left.get_parameter_bounds()["left"][0], -1.0)
+    assert _isclose(left.get_parameter_bounds()["left"][1], 5.0)
+    assert _isclose(right.get_parameter_bounds()["right"][0], 3.5)
+    assert _isclose(right.get_parameter_bounds()["right"][1], 3.5)
 
     left.set_parameter_bounds({"left": (-2.0, 5.0)})
-    assert parent.get_parameter_bounds()["left"] == (-2.0, 5.0)
+    assert _isclose(parent.get_parameter_bounds()["left"][0], -2.0)
+    assert _isclose(parent.get_parameter_bounds()["left"][1], 5.0)

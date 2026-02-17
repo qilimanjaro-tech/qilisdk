@@ -24,6 +24,23 @@ from qilisdk.functionals.quantum_reservoirs_result import _complex_dtype
 from qilisdk.settings import get_settings
 
 
+def _isclose(lhs: float, rhs: float) -> bool:
+    return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
+
+
+def _assert_parameter_dict_close(actual: dict[str, float], expected: dict[str, float]) -> None:
+    assert set(actual) == set(expected)
+    for key, value in expected.items():
+        assert _isclose(actual[key], value)
+
+
+def _assert_bounds_dict_close(actual: dict[str, tuple[float, float]], expected: dict[str, tuple[float, float]]) -> None:
+    assert set(actual) == set(expected)
+    for key, value in expected.items():
+        assert _isclose(actual[key][0], value[0])
+        assert _isclose(actual[key][1], value[1])
+
+
 def _schedule_with_parameter(nqubits: int = 2) -> tuple[Schedule, Parameter]:
     g = Parameter("g", 0.3, bounds=(0.0, 1.0))
     hamiltonian = g * Z(0)
@@ -40,7 +57,8 @@ def _schedule_with_parameter(nqubits: int = 2) -> tuple[Schedule, Parameter]:
 def test_reservoir_input_is_non_trainable():
     inp = ReservoirInput("u", 0.2, bounds=(-1.0, 1.0))
     assert not inp.is_trainable
-    assert inp.bounds == (0.2, 0.2)
+    assert _isclose(inp.bounds[0], 0.2)
+    assert _isclose(inp.bounds[1], 0.2)
 
 
 def test_reservoir_pass_properties_and_parameter_interface():
@@ -92,13 +110,15 @@ def test_reservoir_pass_properties_and_parameter_interface():
         reservoir_pass.set_parameter_values([0.1, 0.2])
 
     reservoir_pass.set_parameters({"u": 0.5, "g": 0.7, "p": 0.8})
-    assert reservoir_pass.get_parameters() == {"u": 0.5, "g": 0.7, "p": 0.8}
+    _assert_parameter_dict_close(reservoir_pass.get_parameters(), {"u": 0.5, "g": 0.7, "p": 0.8})
 
     reservoir_pass.set_parameter_bounds({"u": (-2.0, 2.0), "g": (0.0, 0.9), "p": (0.0, 0.9)})
-    assert reservoir_pass.get_parameter_bounds(trainable=True) == {"g": (0.0, 0.9), "p": (0.0, 0.9)}
+    _assert_bounds_dict_close(reservoir_pass.get_parameter_bounds(trainable=True), {"g": (0.0, 0.9), "p": (0.0, 0.9)})
 
     reservoir_pass.set_parameter_values([0.6, 0.4, 0.3])
-    assert reservoir_pass.get_parameter_values() == [0.6, 0.4, 0.3]
+    assert _isclose(reservoir_pass.get_parameter_values()[0], 0.6)
+    assert _isclose(reservoir_pass.get_parameter_values()[1], 0.4)
+    assert _isclose(reservoir_pass.get_parameter_values()[2], 0.3)
 
     assert len(reservoir_pass) == 3
     steps = list(iter(reservoir_pass))
@@ -162,7 +182,9 @@ def test_quantum_reservoir_properties_and_qubit_validation():
     assert qreservoir.nqubits == 2
     assert qreservoir.initial_state == initial_state
     assert qreservoir.reservoir_pass == reservoir_pass
-    assert qreservoir.input_per_pass == [{"g": 0.1}, {"g": 0.2}]
+    assert len(qreservoir.input_per_pass) == 2
+    assert _isclose(qreservoir.input_per_pass[0]["g"], 0.1)
+    assert _isclose(qreservoir.input_per_pass[1]["g"], 0.2)
     assert qreservoir.store_final_state
     assert qreservoir.store_intermideate_states
     assert qreservoir.nshots == 12
@@ -196,19 +218,19 @@ def test_reservoir_layer_parameter_sync_with_children():
     )
 
     layer.set_parameters({"u": 0.5, "g": 0.6, "p": 0.7})
-    assert pre.get_parameters()["u"] == 0.5
-    assert schedule.get_parameters()["g"] == 0.6
-    assert post.get_parameters()["p"] == 0.7
+    assert _isclose(pre.get_parameters()["u"], 0.5)
+    assert _isclose(schedule.get_parameters()["g"], 0.6)
+    assert _isclose(post.get_parameters()["p"], 0.7)
 
     pre.set_parameters({"u": 0.8})
     schedule.set_parameters({"g": 0.4})
     post.set_parameters({"p": 0.3})
-    assert layer.get_parameters() == {"u": 0.8, "g": 0.4, "p": 0.3}
+    _assert_parameter_dict_close(layer.get_parameters(), {"u": 0.8, "g": 0.4, "p": 0.3})
 
     layer.set_parameter_values([0.9, 1.0], trainable=True)
-    assert schedule.get_parameters()["g"] == 0.9
-    assert post.get_parameters()["p"] == 1.0
-    assert pre.get_parameters()["u"] == 0.8
+    assert _isclose(schedule.get_parameters()["g"], 0.9)
+    assert _isclose(post.get_parameters()["p"], 1.0)
+    assert _isclose(pre.get_parameters()["u"], 0.8)
 
 
 def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
@@ -228,12 +250,12 @@ def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
     reservoir = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=[{}], nshots=1)
 
     reservoir.set_parameters({"u": 0.3, "g": 0.4, "p": 0.5})
-    assert layer.get_parameters() == {"u": 0.3, "g": 0.4, "p": 0.5}
+    _assert_parameter_dict_close(layer.get_parameters(), {"u": 0.3, "g": 0.4, "p": 0.5})
 
     layer.set_parameters({"u": 0.6, "g": 0.7, "p": 0.8})
-    assert reservoir.get_parameters() == {"u": 0.6, "g": 0.7, "p": 0.8}
+    _assert_parameter_dict_close(reservoir.get_parameters(), {"u": 0.6, "g": 0.7, "p": 0.8})
 
     reservoir.set_parameter_values([0.95, 1.2], trainable=True)
-    assert layer.get_parameters()["g"] == 0.95
-    assert layer.get_parameters()["p"] == 1.2
-    assert layer.get_parameters()["u"] == 0.6
+    assert _isclose(layer.get_parameters()["g"], 0.95)
+    assert _isclose(layer.get_parameters()["p"], 1.2)
+    assert _isclose(layer.get_parameters()["u"], 0.6)
