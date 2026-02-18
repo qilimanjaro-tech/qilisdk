@@ -415,18 +415,31 @@ class CudaBackend(Backend):
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
-            operators.define(
-                id=op_id,
-                expected_dimensions=[2 for _ in range(nqubits)],
-                create=lambda op_np=ops_numpy[-1]: op_np,
-                override=True,
-            )
             dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
             if dim == 2**nqubits:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2 for _ in range(nqubits)],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
                 jump_operators.append(operators.instantiate(op_id, degrees=list(range(nqubits))))
-            else:
+            elif operator_nqubits == 1:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
                 for qubit in range(nqubits):
                     jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+            else:
+                raise ValueError("Global Lindblad jump operators must be either single-qubit or full-system operators.")
         if lindblad_generator.hamiltonian is not None:
             hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
 
@@ -441,9 +454,17 @@ class CudaBackend(Backend):
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_q{qubit}_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+            dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
+            if operator_nqubits != 1:
+                raise ValueError("Per-qubit Lindblad jump operators must be single-qubit operators.")
             operators.define(
                 id=op_id,
-                expected_dimensions=[ops_numpy[-1].shape[0]],
+                expected_dimensions=[2],
                 create=lambda op_np=ops_numpy[-1]: op_np,
                 override=True,
             )
@@ -519,6 +540,19 @@ class CudaBackend(Backend):
             raise ValueError("TimeEvolution requires at least one Hamiltonian in the schedule.")
         return cuda_hamiltonian
 
+    @staticmethod
+    def _qtensor_observable_to_hamiltonian(observable: QTensor, nqubits: int) -> Hamiltonian:
+        if not observable.is_operator():
+            raise ValueError("QTensor observable must be an operator with shape (2**N, 2**N).")
+        if observable.nqubits != nqubits:
+            raise ValueError(
+                f"QTensor observable acts on {observable.nqubits} qubits but the schedule acts on {nqubits} qubits."
+            )
+        try:
+            return Hamiltonian.from_qtensor(observable)
+        except ValueError as exc:
+            raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
+
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
@@ -537,11 +571,17 @@ class CudaBackend(Backend):
         logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
-        for observable in functional.observables:
+        for index, observable in enumerate(functional.observables):
             if isinstance(observable, PauliOperator):
                 cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
             elif isinstance(observable, Hamiltonian):
                 cuda_observables.append(self._hamiltonian_to_cuda(observable))
+            elif isinstance(observable, QTensor):
+                cuda_observables.append(
+                    self._hamiltonian_to_cuda(
+                        self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+                    )
+                )
             else:
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")

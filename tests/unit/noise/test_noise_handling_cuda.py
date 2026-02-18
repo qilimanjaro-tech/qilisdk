@@ -193,3 +193,31 @@ def test_noise_model_to_cudaq_dynamics():
     cuda_noise_model = backend._noise_model_to_cudaq_dynamics(noise_model, nqubits=2, dt=1.0)
     assert len(cuda_noise_model[0]) == 7  # jump operators
     assert len(cuda_noise_model[1]) == 2  # hamiltonian deltas
+
+
+def test_global_single_qubit_lindblad_uses_single_degree_operator(monkeypatch):
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(Dephasing(t_phi=1.0))
+
+    expected_dimensions_per_id = {}
+    instantiate_calls = []
+
+    def fake_define(id, expected_dimensions, create, override):
+        expected_dimensions_per_id[id] = list(expected_dimensions)
+
+    def fake_instantiate(id, degrees):
+        degree_list = [degrees] if isinstance(degrees, int) else list(degrees)
+        assert len(expected_dimensions_per_id[id]) == len(degree_list)
+        instantiate_calls.append((id, degree_list))
+        return object()
+
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.define", fake_define)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.instantiate", fake_instantiate)
+
+    jump_operators, hamiltonian_deltas = backend._noise_model_to_cudaq_dynamics(noise_model, nqubits=2, dt=1.0)
+
+    assert len(jump_operators) == 2
+    assert len(hamiltonian_deltas) == 0
+    assert len(instantiate_calls) == 2
+    assert all(expected_dimensions == [2] for expected_dimensions in expected_dimensions_per_id.values())
