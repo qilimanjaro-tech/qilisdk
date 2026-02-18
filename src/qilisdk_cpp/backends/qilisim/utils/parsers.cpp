@@ -87,21 +87,37 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
         std::vector<SparseMatrix> jump_operators;
         if (py::isinstance(py_noise_pass, SupportsStaticLindblad)) {
             py::object as_lindblad = py_noise_pass.attr("as_lindblad")();
-            for (auto& lindblad_op : as_lindblad.attr("jump_operators")) {
+            for (auto& lindblad_op : as_lindblad.attr("jump_operators_with_rates")) {
                 py::object spm = lindblad_op.attr("data");
                 SparseMatrix L = from_spmatrix(spm, atol);
                 jump_operators.push_back(L);
             }
         } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedLindblad)) {
             py::object as_lindblad_from_duration = py_noise_pass.attr("as_lindblad_from_duration")("duration"_a=dt);
-            for (auto& lindblad_op : as_lindblad_from_duration.attr("jump_operators")) {
+            for (auto& lindblad_op : as_lindblad_from_duration.attr("jump_operators_with_rates")) {
                 py::object spm = lindblad_op.attr("data");
                 SparseMatrix L = from_spmatrix(spm, atol);
                 jump_operators.push_back(L);
             }
         }
         for (const auto& L : jump_operators) {
-            noise_model_cpp.add_jump_operator(expand_operator(nqubits, L));
+            if (L.rows() != L.cols()) {
+                throw py::value_error("Lindblad jump operators must be square.");
+            }
+            int L_qubits = static_cast<int>(std::log2(L.rows()));
+            if ((1 << L_qubits) != L.rows()) {
+                throw py::value_error("Lindblad jump operator dimensions must be powers of two.");
+            }
+
+            if (L_qubits == nqubits) {
+                noise_model_cpp.add_jump_operator(L);
+            } else if (L_qubits == 1) {
+                for (int q = 0; q < nqubits; ++q) {
+                    noise_model_cpp.add_jump_operator(expand_operator(q, nqubits, L));
+                }
+            } else {
+                noise_model_cpp.add_jump_operator(expand_operator(nqubits, L));
+            }
         }
 
         // Parse the readout error
@@ -145,14 +161,14 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             std::vector<SparseMatrix> jump_operators;
             if (py::isinstance(py_noise_pass, SupportsStaticLindblad)) {
                 py::object as_lindblad = py_noise_pass.attr("as_lindblad")();
-                for (auto& lindblad_op : as_lindblad.attr("jump_operators")) {
+                for (auto& lindblad_op : as_lindblad.attr("jump_operators_with_rates")) {
                     py::object spm = lindblad_op.attr("data");
                     SparseMatrix L = from_spmatrix(spm, atol);
                     jump_operators.push_back(L);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedLindblad)) {
                 py::object as_lindblad_from_duration = py_noise_pass.attr("as_lindblad_from_duration")("duration"_a=dt);
-                for (auto& lindblad_op : as_lindblad_from_duration.attr("jump_operators")) {
+                for (auto& lindblad_op : as_lindblad_from_duration.attr("jump_operators_with_rates")) {
                     py::object spm = lindblad_op.attr("data");
                     SparseMatrix L = from_spmatrix(spm, atol);
                     jump_operators.push_back(L);

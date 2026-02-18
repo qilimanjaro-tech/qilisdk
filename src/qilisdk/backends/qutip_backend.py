@@ -165,11 +165,11 @@ class QutipBackend(Backend):
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
     @staticmethod
-    def _to_qubip_observables(obs: Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
+    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
         """Convert a QiliSDK observable to a QuTiP Qobj.
 
         Args:
-            obs (Hamiltonian | PauliOperator): The observable to convert.
+            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
             nqubits (int): The total number of qubits in the system.
 
         Returns:
