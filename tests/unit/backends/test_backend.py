@@ -178,13 +178,18 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
         input_per_layer=[{"u": 0.1}, {"u": 0.2}],
     )
 
+    tracked_input_encoding = reservoir_layer.input_encoding
+    assert tracked_input_encoding is not None
+
     original_to_qtensor = Circuit.to_qtensor
     to_qtensor_calls = 0
+    signatures: list[tuple[float, ...]] = []
 
     def _counting_to_qtensor(self):
         nonlocal to_qtensor_calls
-        if self is pre_processing:
+        if self is tracked_input_encoding:
             to_qtensor_calls += 1
+            signatures.append(tuple(self.get_parameter_values()))
         return original_to_qtensor(self)
 
     monkeypatch.setattr(Circuit, "to_qtensor", _counting_to_qtensor)
@@ -192,6 +197,7 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
     backend._execute_quantum_reservoir(functional)
 
     assert to_qtensor_calls == 2
+    assert signatures == [(0.1,), (0.2,)]
 
 
 class _MockScaledStateReservoirBackend(Backend):

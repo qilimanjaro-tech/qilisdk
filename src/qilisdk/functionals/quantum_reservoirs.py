@@ -118,9 +118,8 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in pre_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
-        if pre_processing.nqubits < self.nqubits:
-            self._input_encoding = Circuit(self._nqubits)
-            self._input_encoding.add(pre_processing.gates)
+        self._input_encoding = Circuit(self._nqubits, parameter_prefix="input_encoding_")
+        self._input_encoding.add(pre_processing.gates)
 
     def _validate_output_encoding(self, post_processing: Circuit) -> None:
         """Validate and normalize the optional post-processing circuit.
@@ -135,9 +134,8 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in post_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
-        if post_processing.nqubits < self.nqubits:
-            self._output_encoding = Circuit(self._nqubits)
-            self._output_encoding.add(post_processing.gates)
+        self._output_encoding = Circuit(self._nqubits, parameter_prefix="output_encoding_")
+        self._output_encoding.add(post_processing.gates)
 
     def _process_qtensor(self, observable: QTensor) -> QTensor:
         """Pad observable tensors with identities to match the reservoir width.

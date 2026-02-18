@@ -62,18 +62,20 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
 
 @yaml.register_class
 class Circuit(Parameterizable):
-    def __init__(self, nqubits: int) -> None:
+    def __init__(self, nqubits: int, parameter_prefix: str | None = None) -> None:
         """
         Initialize a Circuit instance with a specified number of qubits.
 
         Args:
             nqubits (int): The number of qubits in the circuit.
+            parameter_prefix (str | None): Set a prefix to the automatically generated parameter names.
         """
         super(Circuit, self).__init__()
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
         self._parameters: dict[str, Parameter] = {}
+        self._parameter_prefix = parameter_prefix
 
     @property
     def nqubits(self) -> int:
@@ -179,6 +181,7 @@ class Circuit(Parameterizable):
         """
         if gate.is_parameterized:
             param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
+            param_base_label = self._parameter_prefix + param_base_label if self._parameter_prefix else param_base_label
             for label, parameter in gate.parameters.items():
                 if label == parameter.label and label in gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
