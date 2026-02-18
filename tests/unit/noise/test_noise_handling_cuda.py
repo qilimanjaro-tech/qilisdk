@@ -116,13 +116,42 @@ def test_parameter_perturbations():
     circuit.add(RX(0, theta=param2))
 
     perturb = OffsetPerturbation(offset=0.1)
-    noise_model.add(perturb, parameter=param1)
-    noise_model.add(perturb, parameter=param2, gate=RX)
+    noise_model.add(perturb, parameter="test1")
+    backend._handle_gate_parameter_perturbations(circuit, noise_model)
+    assert np.isclose(circuit.get_parameters()["test1"], 0.6)
+
+    noise_model.add(perturb, parameter="theta", gate=RX)
 
     backend._handle_gate_parameter_perturbations(circuit, noise_model)
 
-    assert np.isclose(circuit.get_parameters()["test1"], 0.6)
+    assert np.isclose(circuit.get_parameters()["test1"], 0.8)
     assert np.isclose(circuit.get_parameters()["test2"], 0.6)
+
+
+def test_parameter_perturbations_errors():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+
+    circuit = Circuit(1)
+    param1 = Parameter("test1", 0.5)
+    param2 = Parameter("test2", 0.5)
+    circuit.add(RX(0, theta=param1))
+    circuit.add(RX(0, theta=param2))
+
+    perturb = OffsetPerturbation(offset=0.1)
+    noise_model.add(perturb, parameter="test_1")
+
+    with pytest.raises(ValueError, match=r"Perturbing Parameter test_1 that doesn't exist in the circuit."):
+        backend._handle_gate_parameter_perturbations(circuit, noise_model)
+
+    noise_model = NoiseModel()
+    noise_model.add(perturb, gate=RX, parameter="test1")
+
+    with pytest.raises(ValueError, match=r"Invalid parameter name passed to gate."):
+        backend._handle_gate_parameter_perturbations(circuit, noise_model)
+
+    assert np.isclose(circuit.get_parameters()["test1"], 0.5)
+    assert np.isclose(circuit.get_parameters()["test2"], 0.5)
 
 
 def test_schedule_parameter_perturbations():
@@ -164,3 +193,31 @@ def test_noise_model_to_cudaq_dynamics():
     cuda_noise_model = backend._noise_model_to_cudaq_dynamics(noise_model, nqubits=2, dt=1.0)
     assert len(cuda_noise_model[0]) == 7  # jump operators
     assert len(cuda_noise_model[1]) == 2  # hamiltonian deltas
+
+
+def test_global_single_qubit_lindblad_uses_single_degree_operator(monkeypatch):
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(Dephasing(t_phi=1.0))
+
+    expected_dimensions_per_id = {}
+    instantiate_calls = []
+
+    def fake_define(id, expected_dimensions, create, override):
+        expected_dimensions_per_id[id] = list(expected_dimensions)
+
+    def fake_instantiate(id, degrees):
+        degree_list = [degrees] if isinstance(degrees, int) else list(degrees)
+        assert len(expected_dimensions_per_id[id]) == len(degree_list)
+        instantiate_calls.append((id, degree_list))
+        return object()
+
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.define", fake_define)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.instantiate", fake_instantiate)
+
+    jump_operators, hamiltonian_deltas = backend._noise_model_to_cudaq_dynamics(noise_model, nqubits=2, dt=1.0)
+
+    assert len(jump_operators) == 2
+    assert len(hamiltonian_deltas) == 0
+    assert len(instantiate_calls) == 2
+    assert all(expected_dimensions == [2] for expected_dimensions in expected_dimensions_per_id.values())
