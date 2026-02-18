@@ -175,7 +175,7 @@ def test_quantum_reservoir_properties_and_qubit_validation():
         reservoir_pass=reservoir_pass,
         input_per_pass=[{"g": 0.1}, {"g": 0.2}],
         store_final_state=True,
-        store_intermideate_states=True,
+        store_intermediate_states=True,
         nshots=12,
     )
 
@@ -186,7 +186,7 @@ def test_quantum_reservoir_properties_and_qubit_validation():
     assert _isclose(qreservoir.input_per_pass[0]["g"], 0.1)
     assert _isclose(qreservoir.input_per_pass[1]["g"], 0.2)
     assert qreservoir.store_final_state
-    assert qreservoir.store_intermideate_states
+    assert qreservoir.store_intermediate_states
     assert qreservoir.nshots == 12
     assert qreservoir.input_parameter_names == []
 

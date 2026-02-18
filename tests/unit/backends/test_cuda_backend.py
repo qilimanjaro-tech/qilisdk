@@ -162,7 +162,7 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
         reservoir_layer=reservoir_pass,
         input_per_layer=[{}, {}],
         store_final_state=True,
-        store_intermideate_states=True,
+        store_intermediate_states=True,
         nshots=10,
     )
 

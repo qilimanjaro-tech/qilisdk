@@ -17,7 +17,7 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
@@ -53,40 +53,87 @@ class Parameterizable(ABC):
             params[label] = parameter
         return params
 
-    def _filtered_parameter_map(self, trainable: bool | None = None) -> dict[str, Parameter]:
+    def _filtered_parameter_map(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, Parameter]:
         params = self._parameter_map()
         if trainable is None:
-            return params
-        return {label: param for label, param in params.items() if param.is_trainable is trainable}
+            filtered = params
+        else:
+            filtered = {label: param for label, param in params.items() if param.is_trainable is trainable}
+        if parameter_filter is None:
+            return filtered
+        return {label: param for label, param in filtered.items() if parameter_filter(param)}
 
     @property
     def nparameters(self) -> int:
         """Number of tunable parameters defined by the object."""
         return len(self._parameter_map())
 
-    def get_parameter_values(self, trainable: bool | None = None) -> list[float]:
-        """Return the current numerical values of the parameters."""
-        return list(self.get_parameters(trainable=trainable).values())
+    def get_parameter_values(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
+        """Return the current numerical values of the parameters.
 
-    def get_parameter_names(self, trainable: bool | None = None) -> list[str]:
-        """Return the ordered list of parameter labels."""
-        return list(self.get_parameters(trainable=trainable).keys())
+        Args:
+            trainable (bool | None): Optional trainable flag filter.
+            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return list(self.get_parameters(trainable=trainable, parameter_filter=parameter_filter).values())
 
-    def get_parameters(self, trainable: bool | None = None) -> dict[str, RealNumber]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._filtered_parameter_map(trainable=trainable).items()}
+    def get_parameter_names(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
+        """Return the ordered list of parameter labels.
 
-    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
+        Args:
+            trainable (bool | None): Optional trainable flag filter.
+            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return list(self.get_parameters(trainable=trainable, parameter_filter=parameter_filter).keys())
+
+    def get_parameters(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, RealNumber]:
+        """Return a mapping from parameter labels to their current numerical values.
+
+        Args:
+            trainable (bool | None): Optional trainable flag filter.
+            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return {
+            label: param.value
+            for label, param in self._filtered_parameter_map(
+                trainable=trainable, parameter_filter=parameter_filter
+            ).items()
+        }
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> None:
         """
         Update all parameter values at once.
 
         Args:
             values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.
+            trainable (bool | None): Optional trainable flag filter.
+            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
 
         Raises:
             ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
-        param_names = self.get_parameter_names(trainable=trainable)
+        param_names = self.get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)
         if len(values) != len(param_names):
             raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
         value_dict = {param_names[i]: values[i] for i in range(len(values))}
@@ -112,9 +159,23 @@ class Parameterizable(ABC):
                 raise ValueError(f"Parameter {label} is not defined for this object.")
             available_parameters[label].set_value(param)
 
-    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
-        """Return the ``(lower, upper)`` bounds associated with each parameter."""
-        return {label: param.bounds for label, param in self._filtered_parameter_map(trainable=trainable).items()}
+    def get_parameter_bounds(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        """Return the ``(lower, upper)`` bounds associated with each parameter.
+
+        Args:
+            trainable (bool | None): Optional trainable flag filter.
+            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return {
+            label: param.bounds
+            for label, param in self._filtered_parameter_map(
+                trainable=trainable, parameter_filter=parameter_filter
+            ).items()
+        }
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """

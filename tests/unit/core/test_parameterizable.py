@@ -163,3 +163,23 @@ def test_composite_parent_child_parameter_sync():
     left.set_parameter_bounds({"left": (-2.0, 5.0)})
     assert _isclose(parent.get_parameter_bounds()["left"][0], -2.0)
     assert _isclose(parent.get_parameter_bounds()["left"][1], 5.0)
+
+
+def test_parameter_filter_predicate_supports_custom_queries():
+    input_param = LeafParameterizable("input_encoding_theta", 0.1, trainable=False)
+    output_param = LeafParameterizable("output_encoding_theta", 0.9, trainable=True)
+    parent = CompositeParameterizable(input_param, output_param)
+
+    def starts_with_input(param: Parameter) -> bool:
+        return param.label.startswith("input_encoding_")
+
+    def value_in_range(param: Parameter) -> bool:
+        return 0.5 <= param.value <= 1.0
+
+    assert parent.get_parameter_names(parameter_filter=starts_with_input) == ["input_encoding_theta"]
+    assert parent.get_parameters(parameter_filter=value_in_range) == {"output_encoding_theta": 0.9}
+    assert parent.get_parameters(trainable=False, parameter_filter=starts_with_input) == {"input_encoding_theta": 0.1}
+
+    parent.set_parameter_values([0.7], parameter_filter=lambda param: param.label.startswith("output_encoding_"))
+    assert _isclose(parent.get_parameters()["input_encoding_theta"], 0.1)
+    assert _isclose(parent.get_parameters()["output_encoding_theta"], 0.7)

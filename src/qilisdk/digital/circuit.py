@@ -30,6 +30,8 @@ from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from qilisdk.core.types import RealNumber
 
 
@@ -107,34 +109,51 @@ class Circuit(Parameterizable):
         """
         return self._gates
 
-    def get_parameter_values(self, trainable: bool | None = None) -> list[float]:
+    def get_parameter_values(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
         """
         Retrieve the parameter values from all parameterized gates in the circuit.
 
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_values(trainable=trainable)
+        return super().get_parameter_values(trainable=trainable, parameter_filter=parameter_filter)
 
-    def get_parameter_names(self, trainable: bool | None = None) -> list[str]:
+    def get_parameter_names(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
         """
         Retrieve the parameter values from all parameterized gates in the circuit.
 
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_names(trainable=trainable)
+        return super().get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)
 
-    def get_parameters(self, trainable: bool | None = None) -> dict[str, float]:
+    def get_parameters(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, float]:
         """
         Retrieve the parameter names and values from all parameterized gates in the circuit.
 
         Returns:
             dict[str, float]: A dictionary of the parameters with their current values.
         """
-        return super().get_parameters(trainable=trainable)
+        return super().get_parameters(trainable=trainable, parameter_filter=parameter_filter)
 
-    def set_parameter_values(self, values: list[float], trainable: bool | None = None) -> None:
+    def set_parameter_values(
+        self,
+        values: list[float],
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> None:
         """
         Set new parameter values for all parameterized gates in the circuit.
 
@@ -144,9 +163,9 @@ class Circuit(Parameterizable):
         Raises:
             ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
-        if len(values) != len(self.get_parameter_names(trainable=trainable)):
+        if len(values) != len(self.get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)):
             raise ParametersNotEqualError
-        super().set_parameter_values(values=values, trainable=trainable)
+        super().set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
@@ -162,8 +181,12 @@ class Circuit(Parameterizable):
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
             self._parameters[label].set_value(param)
 
-    def get_parameter_bounds(self, trainable: bool | None = None) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(trainable=trainable)
+    def get_parameter_bounds(
+        self,
+        trainable: bool | None = None,
+        parameter_filter: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        return super().get_parameter_bounds(trainable=trainable, parameter_filter=parameter_filter)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():

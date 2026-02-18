@@ -226,14 +226,14 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
   (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
 - **store_final_state** (bool, optional): Store the final state after the last layer.
-- **store_intermideate_states** (bool, optional): Store the state after each layer.
+- **store_intermediate_states** (bool, optional): Store the state after each layer.
 - **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
 
 **Returns**
 
 - :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`: Access per-layer expectation values via
   :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values`, plus optional states when
-  ``store_intermideate_states`` or ``store_final_state`` are enabled.
+  ``store_intermediate_states`` or ``store_final_state`` are enabled.
 
 **Usage Example**
 
@@ -269,7 +269,7 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
             {"phi_1": 0.4, "gamma_1": 0.3},
         ],
         store_final_state=True,
-        store_intermideate_states=True,
+        store_intermediate_states=True,
     )
 
     results = CudaBackend().execute(reservoir)

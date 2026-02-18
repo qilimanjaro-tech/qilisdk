@@ -104,7 +104,7 @@ class Backend(ABC):
                         raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
                     state = res.final_state
 
-            if functional.store_intermideate_states:
+            if functional.store_intermediate_states:
                 intermediate_states.append(state)
 
             try:
@@ -127,7 +127,7 @@ class Backend(ABC):
             expected_values=np.array(expected_values),
             final_expected_values=np.array(expected_values[-1]),
             final_state=state if functional.store_final_state else None,
-            intermediate_states=intermediate_states if functional.store_intermideate_states else None,
+            intermediate_states=intermediate_states if functional.store_intermediate_states else None,
         )
 
     def _execute_variational_program(

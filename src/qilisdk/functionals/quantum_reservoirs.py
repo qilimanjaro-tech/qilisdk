@@ -23,6 +23,8 @@ from qilisdk.core.types import RealNumber
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 
+from .quantum_reservoirs_result import QuantumReservoirResult
+
 
 class ReservoirInput(Parameter):
     """Input-only parameter used to inject layer-wise data into a reservoir program.
@@ -159,8 +161,9 @@ class ReservoirLayer(Parameterizable):
     @property
     def input_parameter_names(self) -> list[str]:
         """Return parameter names that are input-driven (non-trainable)."""
-        trainable_params = self.get_parameter_names(trainable=True)
-        return [name for name in self.get_parameter_names() if name not in trainable_params]
+        return self.get_parameter_names(
+            trainable=False, parameter_filter=lambda param: isinstance(param, ReservoirInput)
+        )
 
     @property
     def nqubits(self) -> int:
@@ -242,7 +245,7 @@ class ReservoirLayer(Parameterizable):
             yield self._output_encoding
 
 
-class QuantumReservoir(PrimitiveFunctional):
+class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
     """Reservoir functional executed over a sequence of input layers.
 
     Each element in ``input_per_layer`` is applied to the underlying
@@ -255,7 +258,7 @@ class QuantumReservoir(PrimitiveFunctional):
         reservoir_layer: ReservoirLayer | None = None,
         input_per_layer: list[dict[str, float]] | None = None,
         store_final_state: bool = False,
-        store_intermideate_states: bool = False,
+        store_intermediate_states: bool = False,
         nshots: int = 0,
         reservoir_pass: ReservoirLayer | None = None,
         input_per_pass: list[dict[str, float]] | None = None,
@@ -267,7 +270,7 @@ class QuantumReservoir(PrimitiveFunctional):
             reservoir_layer: Reservoir pass definition repeated at each layer.
             input_per_layer: Input parameter assignments for each layer.
             store_final_state: Whether to store the final state after the last layer.
-            store_intermideate_states: Whether to store layer-by-layer intermediate states.
+            store_intermediate_states: Whether to store layer-by-layer intermediate states.
             nshots: Number of measurement shots for dynamics executions that use sampling.
             reservoir_pass: Backward-compatible alias for ``reservoir_layer``.
             input_per_pass: Backward-compatible alias for ``input_per_layer``.
@@ -292,7 +295,7 @@ class QuantumReservoir(PrimitiveFunctional):
         self._reservoir_layer = resolved_reservoir_layer
         self._input_per_layer = resolved_input_per_layer
         self._store_final_state = store_final_state
-        self._store_intermideate_states = store_intermideate_states
+        self._store_intermediate_states = store_intermediate_states
         self._nshots = nshots
         if self._reservoir_layer.nqubits != self._initial_state.nqubits:
             raise ValueError(
@@ -335,9 +338,9 @@ class QuantumReservoir(PrimitiveFunctional):
         return self._store_final_state
 
     @property
-    def store_intermideate_states(self) -> bool:
+    def store_intermediate_states(self) -> bool:
         """Whether to include intermediate per-layer states in the result."""
-        return self._store_intermideate_states
+        return self._store_intermediate_states
 
     @property
     def nshots(self) -> int:
