@@ -307,7 +307,7 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     pre.add(H(0))
     post = Circuit(1)
     post.add(X(0))
-    reservoir_pass = ReservoirLayer(
+    reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
         observables=[QTensor(np.eye(2, dtype=np.complex128))],
         input_encoding=pre,
@@ -316,7 +316,7 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     )
     return QuantumReservoir(
         initial_state=ket(0),
-        reservoir_layer=reservoir_pass,
+        reservoir_layer=reservoir_layer,
         input_per_layer=[{}, {}],
         store_final_state=True,
         store_intermediate_states=True,

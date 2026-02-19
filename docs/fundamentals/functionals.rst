@@ -228,8 +228,6 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
 - **store_intermediate_states** (bool, optional): Store the state after each layer.
 - **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
 
-The aliases ``reservoir_pass`` and ``input_per_pass`` are still accepted for backward compatibility.
-
 **Returns**
 
 - :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`: Access per-layer expectation values via

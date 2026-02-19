@@ -267,8 +267,6 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
         store_final_state: bool = False,
         store_intermediate_states: bool = False,
         nshots: int = 0,
-        reservoir_pass: ReservoirLayer | None = None,
-        input_per_pass: list[dict[str, float]] | None = None,
     ) -> None:
         """Construct a quantum reservoir functional.
 
@@ -279,30 +277,21 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
             store_final_state: Whether to store the final state after the last layer.
             store_intermediate_states: Whether to store layer-by-layer intermediate states.
             nshots: Number of measurement shots for dynamics executions that use sampling.
-            reservoir_pass: Backward-compatible alias for ``reservoir_layer``.
-            input_per_pass: Backward-compatible alias for ``input_per_layer``.
 
         Raises:
             ValueError: If the initial state qubit count does not match the reservoir pass.
         """
         super().__init__()
-        if reservoir_layer is not None and reservoir_pass is not None and reservoir_layer is not reservoir_pass:
-            raise ValueError("Received both `reservoir_layer` and `reservoir_pass` with different values.")
-        if input_per_layer is not None and input_per_pass is not None and input_per_layer is not input_per_pass:
-            raise ValueError("Received both `input_per_layer` and `input_per_pass` with different values.")
-
-        resolved_reservoir_layer = reservoir_layer if reservoir_layer is not None else reservoir_pass
-        resolved_input_per_layer = input_per_layer if input_per_layer is not None else input_per_pass
-        if resolved_reservoir_layer is None:
+        if reservoir_layer is None:
             raise ValueError("`reservoir_layer` must be provided.")
-        if resolved_input_per_layer is None:
+        if input_per_layer is None:
             raise ValueError("`input_per_layer` must be provided.")
-        if len(resolved_input_per_layer) == 0:
+        if len(input_per_layer) == 0:
             raise ValueError("`input_per_layer` must contain at least one layer.")
 
         self._initial_state = initial_state
-        self._reservoir_layer = resolved_reservoir_layer
-        self._input_per_layer = resolved_input_per_layer
+        self._reservoir_layer = reservoir_layer
+        self._input_per_layer = input_per_layer
         self._store_final_state = store_final_state
         self._store_intermediate_states = store_intermediate_states
         self._nshots = nshots
@@ -327,18 +316,8 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
         return self._reservoir_layer
 
     @property
-    def reservoir_pass(self) -> ReservoirLayer:
-        """Backward-compatible alias for ``reservoir_layer``."""
-        return self._reservoir_layer
-
-    @property
     def input_per_layer(self) -> list[dict[str, float]]:
         """Layer-ordered input parameter assignments."""
-        return self._input_per_layer
-
-    @property
-    def input_per_pass(self) -> list[dict[str, float]]:
-        """Backward-compatible alias for ``input_per_layer``."""
         return self._input_per_layer
 
     @property

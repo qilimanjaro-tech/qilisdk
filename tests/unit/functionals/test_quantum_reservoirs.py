@@ -61,7 +61,7 @@ def test_reservoir_input_is_non_trainable():
     assert _isclose(inp.bounds[1], inp.domain.max())
 
 
-def test_reservoir_pass_properties_and_parameter_interface():
+def test_reservoir_layer_properties_and_parameter_interface():
     schedule, _ = _schedule_with_parameter(nqubits=2)
     u = ReservoirInput("u", 0.2)
     p = Parameter("p", 0.4, bounds=(0.0, 1.0))
@@ -77,7 +77,7 @@ def test_reservoir_pass_properties_and_parameter_interface():
         Z(0),
         QTensor(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=np.complex128)),
     ]
-    reservoir_pass = ReservoirLayer(
+    reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
         observables=observables,
         input_encoding=pre,
@@ -85,50 +85,50 @@ def test_reservoir_pass_properties_and_parameter_interface():
         qubits_to_reset=[0],
     )
 
-    assert reservoir_pass.nqubits == 2
-    assert reservoir_pass.pre_processing is not None
-    assert reservoir_pass.pre_processing.nqubits == 2
-    assert reservoir_pass.post_processing is not None
-    assert reservoir_pass.post_processing.nqubits == 2
-    assert reservoir_pass.qubits_to_reset == [0]
-    assert reservoir_pass.observables == observables
-    assert reservoir_pass.reservoir_dynamics == schedule
-    assert len(reservoir_pass.observables_as_qtensor) == 3
-    assert all(obs.nqubits == 2 for obs in reservoir_pass.observables_as_qtensor)
+    assert reservoir_layer.nqubits == 2
+    assert reservoir_layer.pre_processing is not None
+    assert reservoir_layer.pre_processing.nqubits == 2
+    assert reservoir_layer.post_processing is not None
+    assert reservoir_layer.post_processing.nqubits == 2
+    assert reservoir_layer.qubits_to_reset == [0]
+    assert reservoir_layer.observables == observables
+    assert reservoir_layer.reservoir_dynamics == schedule
+    assert len(reservoir_layer.observables_as_qtensor) == 3
+    assert all(obs.nqubits == 2 for obs in reservoir_layer.observables_as_qtensor)
 
-    assert reservoir_pass.get_parameter_names() == ["u", "g", "p"]
-    assert reservoir_pass.get_parameter_names(trainable=True) == ["g", "p"]
-    assert reservoir_pass.input_parameter_names == ["u"]
-    assert reservoir_pass.nparameters == 3
+    assert reservoir_layer.get_parameter_names() == ["u", "g", "p"]
+    assert reservoir_layer.get_parameter_names(trainable=True) == ["g", "p"]
+    assert reservoir_layer.input_parameter_names == ["u"]
+    assert reservoir_layer.nparameters == 3
 
-    assert set(reservoir_pass.get_parameters()) == {"u", "g", "p"}
-    assert set(reservoir_pass.get_parameters(trainable=True)) == {"g", "p"}
-    assert set(reservoir_pass.get_parameter_bounds()) == {"u", "g", "p"}
-    assert set(reservoir_pass.get_parameter_bounds(trainable=True)) == {"g", "p"}
+    assert set(reservoir_layer.get_parameters()) == {"u", "g", "p"}
+    assert set(reservoir_layer.get_parameters(trainable=True)) == {"g", "p"}
+    assert set(reservoir_layer.get_parameter_bounds()) == {"u", "g", "p"}
+    assert set(reservoir_layer.get_parameter_bounds(trainable=True)) == {"g", "p"}
 
     with pytest.raises(ValueError, match="Provided 2 but this object has 3 parameters"):
-        reservoir_pass.set_parameter_values([0.1, 0.2])
+        reservoir_layer.set_parameter_values([0.1, 0.2])
 
-    reservoir_pass.set_parameters({"u": 0.5, "g": 0.7, "p": 0.8})
-    _assert_parameter_dict_close(reservoir_pass.get_parameters(), {"u": 0.5, "g": 0.7, "p": 0.8})
+    reservoir_layer.set_parameters({"u": 0.5, "g": 0.7, "p": 0.8})
+    _assert_parameter_dict_close(reservoir_layer.get_parameters(), {"u": 0.5, "g": 0.7, "p": 0.8})
 
-    reservoir_pass.set_parameter_bounds({"u": (-2.0, 2.0), "g": (0.0, 0.9), "p": (0.0, 0.9)})
-    _assert_bounds_dict_close(reservoir_pass.get_parameter_bounds(trainable=True), {"g": (0.0, 0.9), "p": (0.0, 0.9)})
+    reservoir_layer.set_parameter_bounds({"u": (-2.0, 2.0), "g": (0.0, 0.9), "p": (0.0, 0.9)})
+    _assert_bounds_dict_close(reservoir_layer.get_parameter_bounds(trainable=True), {"g": (0.0, 0.9), "p": (0.0, 0.9)})
 
-    reservoir_pass.set_parameter_values([0.6, 0.4, 0.3])
-    assert _isclose(reservoir_pass.get_parameter_values()[0], 0.6)
-    assert _isclose(reservoir_pass.get_parameter_values()[1], 0.4)
-    assert _isclose(reservoir_pass.get_parameter_values()[2], 0.3)
+    reservoir_layer.set_parameter_values([0.6, 0.4, 0.3])
+    assert _isclose(reservoir_layer.get_parameter_values()[0], 0.6)
+    assert _isclose(reservoir_layer.get_parameter_values()[1], 0.4)
+    assert _isclose(reservoir_layer.get_parameter_values()[2], 0.3)
 
-    assert len(reservoir_pass) == 3
-    steps = list(iter(reservoir_pass))
+    assert len(reservoir_layer) == 3
+    steps = list(iter(reservoir_layer))
     assert len(steps) == 3
     assert isinstance(steps[0], Circuit)
     assert isinstance(steps[1], Schedule)
     assert isinstance(steps[2], Circuit)
 
 
-def test_reservoir_pass_validation_errors():
+def test_reservoir_layer_validation_errors():
     schedule, _ = _schedule_with_parameter(nqubits=2)
 
     bad_pre_with_measure = Circuit(1)
@@ -174,12 +174,12 @@ def test_reservoir_pass_validation_errors():
 
 def test_quantum_reservoir_properties_and_qubit_validation():
     schedule, _ = _schedule_with_parameter(nqubits=2)
-    reservoir_pass = ReservoirLayer(schedule, [PauliZ(0)])
+    reservoir_layer = ReservoirLayer(schedule, [PauliZ(0)])
     initial_state = ket(0, 0)
     qreservoir = QuantumReservoir(
         initial_state=initial_state,
-        reservoir_pass=reservoir_pass,
-        input_per_pass=[{"g": 0.1}, {"g": 0.2}],
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{"g": 0.1}, {"g": 0.2}],
         store_final_state=True,
         store_intermediate_states=True,
         nshots=12,
@@ -187,10 +187,10 @@ def test_quantum_reservoir_properties_and_qubit_validation():
 
     assert qreservoir.nqubits == 2
     assert qreservoir.initial_state == initial_state
-    assert qreservoir.reservoir_pass == reservoir_pass
-    assert len(qreservoir.input_per_pass) == 2
-    assert _isclose(qreservoir.input_per_pass[0]["g"], 0.1)
-    assert _isclose(qreservoir.input_per_pass[1]["g"], 0.2)
+    assert qreservoir.reservoir_layer == reservoir_layer
+    assert len(qreservoir.input_per_layer) == 2
+    assert _isclose(qreservoir.input_per_layer[0]["g"], 0.1)
+    assert _isclose(qreservoir.input_per_layer[1]["g"], 0.2)
     assert qreservoir.store_final_state
     assert qreservoir.store_intermediate_states
     assert qreservoir.nshots == 12
@@ -199,15 +199,15 @@ def test_quantum_reservoir_properties_and_qubit_validation():
     with pytest.raises(ValueError, match="invalid initial state"):
         QuantumReservoir(
             initial_state=ket(0),
-            reservoir_pass=reservoir_pass,
-            input_per_pass=[{"g": 0.1}],
+            reservoir_layer=reservoir_layer,
+            input_per_layer=[{"g": 0.1}],
         )
 
     with pytest.raises(ValueError, match="must contain at least one layer"):
         QuantumReservoir(
             initial_state=initial_state,
-            reservoir_pass=reservoir_pass,
-            input_per_pass=[],
+            reservoir_layer=reservoir_layer,
+            input_per_layer=[],
         )
 
 
