@@ -773,8 +773,7 @@ def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
     invalid_qubits = [q for q in unique_qubits if q < 0 or q >= state.nqubits]
     if invalid_qubits:
         raise ValueError(
-            f"Invalid qubit indices in `qubits_to_reset`: {invalid_qubits}. "
-            f"Valid range is [0, {state.nqubits - 1}]."
+            f"Invalid qubit indices in `qubits_to_reset`: {invalid_qubits}. Valid range is [0, {state.nqubits - 1}]."
         )
 
     aux_state = copy(state)
