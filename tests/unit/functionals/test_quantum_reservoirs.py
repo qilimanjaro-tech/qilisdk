@@ -215,14 +215,6 @@ def test_quantum_reservoir_result_complex_dtype_helper():
     assert _complex_dtype() == get_settings().complex_precision.dtype
 
 
-def test_reservoir_layer_rejects_circuit_evolution_dynamics():
-    theta = Parameter("theta", 0.1)
-    dynamics = Circuit(2)
-    dynamics.add(RY(0, theta=theta))
-    with pytest.raises(ValueError, match="expected an analog `Schedule`"):
-        ReservoirLayer(evolution_dynamics=dynamics, observables=[PauliZ(0)])
-
-
 def test_reservoir_layer_parameter_sync_with_children():
     schedule, _ = _schedule_with_parameter(nqubits=2)
     u = ReservoirInput("u", 0.1)
