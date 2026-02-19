@@ -104,9 +104,6 @@ class Backend(ABC):
                         raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
                     state = res.final_state
 
-            if functional.store_intermediate_states:
-                intermediate_states.append(state)
-
             try:
                 state = state.repair_density_matrix()
             except ValueError as exc:
@@ -115,6 +112,9 @@ class Backend(ABC):
                     f"{exc} "
                     "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
                 ) from exc
+
+            if functional.store_intermediate_states:
+                intermediate_states.append(state)
 
             expected_values.append(
                 [expect_val(operator=obs, state=state) for obs in functional.reservoir_layer.observables_as_qtensor]
@@ -126,7 +126,7 @@ class Backend(ABC):
         return QuantumReservoirResult(
             expected_values=np.array(expected_values),
             final_expected_values=np.array(expected_values[-1]),
-            final_state=state if functional.store_final_state else None,
+            final_state=state.repair_density_matrix() if functional.store_final_state else None,
             intermediate_states=intermediate_states if functional.store_intermediate_states else None,
         )
 

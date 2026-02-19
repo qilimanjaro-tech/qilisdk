@@ -165,6 +165,12 @@ def test_reservoir_pass_validation_errors():
             [QTensor(np.eye(8, dtype=np.complex128))],
         )
 
+    with pytest.raises(ValueError, match="Unsupported observable type"):
+        ReservoirLayer(
+            schedule,
+            [object()],  # type: ignore[list-item]
+        )
+
 
 def test_quantum_reservoir_properties_and_qubit_validation():
     schedule, _ = _schedule_with_parameter(nqubits=2)
@@ -197,9 +203,24 @@ def test_quantum_reservoir_properties_and_qubit_validation():
             input_per_pass=[{"g": 0.1}],
         )
 
+    with pytest.raises(ValueError, match="must contain at least one layer"):
+        QuantumReservoir(
+            initial_state=initial_state,
+            reservoir_pass=reservoir_pass,
+            input_per_pass=[],
+        )
+
 
 def test_quantum_reservoir_result_complex_dtype_helper():
     assert _complex_dtype() == get_settings().complex_precision.dtype
+
+
+def test_reservoir_layer_rejects_circuit_evolution_dynamics():
+    theta = Parameter("theta", 0.1)
+    dynamics = Circuit(2)
+    dynamics.add(RY(0, theta=theta))
+    with pytest.raises(ValueError, match="expected an analog `Schedule`"):
+        ReservoirLayer(evolution_dynamics=dynamics, observables=[PauliZ(0)])
 
 
 def test_reservoir_layer_parameter_sync_with_children():

@@ -751,13 +751,38 @@ def expect_val(operator: QTensor, state: QTensor) -> Number:
 
 
 def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
-    available_qubits = set(range(state.nqubits))
+    """Reset selected qubits of a density matrix to ``|0><0|``.
+
+    Args:
+        state: Input density matrix.
+        qubits_to_reset: Qubit indices to reset.
+
+    Raises:
+        ValueError: If ``state`` is not a density matrix.
+        ValueError: If any requested qubit index is out of range.
+
+    Returns:
+        QTensor: The density matrix with the requested qubits reset to ``|0><0|``.
+    """
+    if len(qubits_to_reset) == 0:
+        return state
+    if not state.is_density_matrix():
+        raise ValueError("`reset_qubits` requires a density matrix input state.")
+
+    unique_qubits = list(dict.fromkeys(qubits_to_reset))
+    invalid_qubits = [q for q in unique_qubits if q < 0 or q >= state.nqubits]
+    if invalid_qubits:
+        raise ValueError(
+            f"Invalid qubit indices in `qubits_to_reset`: {invalid_qubits}. "
+            f"Valid range is [0, {state.nqubits - 1}]."
+        )
+
     aux_state = copy(state)
     zero = ket(0).to_density_matrix()
-    for qubit in qubits_to_reset:
+    for qubit in unique_qubits:
         part_1 = []
         part_2 = []
-        for avail_qubit in available_qubits:
+        for avail_qubit in range(aux_state.nqubits):
             if qubit > avail_qubit:
                 part_1.append(avail_qubit)
             elif qubit < avail_qubit:

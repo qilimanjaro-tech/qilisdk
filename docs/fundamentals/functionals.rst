@@ -207,10 +207,9 @@ Quantum Reservoirs
 ------------------
 
 The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
-sequence of inputs. Each layer applies an optional pre-processing circuit, a reservoir dynamics block (either a
-digital :class:`~qilisdk.digital.circuit.Circuit` or analog :class:`~qilisdk.analog.schedule.Schedule`), and an optional
-post-processing circuit, followed by measurements of one or more observables. The optional ``qubits_to_reset`` list can
-be used to reset selected qubits between layers.
+sequence of inputs. Each layer applies an optional pre-processing circuit, an analog reservoir dynamics block
+(:class:`~qilisdk.analog.schedule.Schedule`), and an optional post-processing circuit, followed by measurements of one
+or more observables. The optional ``qubits_to_reset`` list can be used to reset selected qubits between layers.
 
 The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
 These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
@@ -221,13 +220,15 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
 **Parameters**
 
 - **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the reservoir.
-- **reservoir_pass** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
+- **reservoir_layer** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
   reservoir dynamics, observables, and reset policy.
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
   (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
 - **store_final_state** (bool, optional): Store the final state after the last layer.
 - **store_intermediate_states** (bool, optional): Store the state after each layer.
 - **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
+
+The aliases ``reservoir_pass`` and ``input_per_pass`` are still accepted for backward compatibility.
 
 **Returns**
 

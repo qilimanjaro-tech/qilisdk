@@ -74,11 +74,14 @@ class ReservoirLayer(Parameterizable):
         """Build a reservoir pass description.
 
         Args:
-            evolution_dynamics: Main dynamics block, either analog schedule or digital circuit.
+            evolution_dynamics: Main analog schedule block.
             observables: Observables sampled at the end of the pass.
             input_encoding: Optional single-qubit pre-processing circuit.
             output_encoding: Optional single-qubit post-processing circuit.
             qubits_to_reset: Optional qubits reset between consecutive layers.
+
+        Raises:
+            ValueError: If an observable type is unsupported.
         """
 
         super().__init__()
@@ -86,7 +89,6 @@ class ReservoirLayer(Parameterizable):
         self._evolution_dynamics: Schedule = evolution_dynamics
         self._output_encoding: Circuit | None = output_encoding
         self._qubits_to_reset: list[int] | None = qubits_to_reset
-        self._full_param_list: dict[str, Parameter] = {}
         self._nqubits = self._evolution_dynamics.nqubits
 
         if input_encoding:
@@ -104,6 +106,11 @@ class ReservoirLayer(Parameterizable):
                 self._qtensor_observables.append(observable.to_qtensor(self._nqubits))
             elif isinstance(observable, QTensor):
                 self._qtensor_observables.append(self._process_qtensor(observable))
+            else:
+                raise ValueError(
+                    "Unsupported observable type. Expected QTensor, Hamiltonian, or PauliOperator, "
+                    f"received {type(observable).__name__}."
+                )
 
         self._observables = observables
 
@@ -290,6 +297,8 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
             raise ValueError("`reservoir_layer` must be provided.")
         if resolved_input_per_layer is None:
             raise ValueError("`input_per_layer` must be provided.")
+        if len(resolved_input_per_layer) == 0:
+            raise ValueError("`input_per_layer` must contain at least one layer.")
 
         self._initial_state = initial_state
         self._reservoir_layer = resolved_reservoir_layer

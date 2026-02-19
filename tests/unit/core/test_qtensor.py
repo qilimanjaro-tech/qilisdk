@@ -579,6 +579,19 @@ def test_reset_qubits_resets_each_requested_qubit():
     np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
 
 
+def test_reset_qubits_invalid_indices_raise():
+    state = ket(1, 0).to_density_matrix()
+    with pytest.raises(ValueError, match="Invalid qubit indices"):
+        reset_qubits(state, [2])
+    with pytest.raises(ValueError, match="Invalid qubit indices"):
+        reset_qubits(state, [-1])
+
+
+def test_reset_qubits_requires_density_matrix():
+    with pytest.raises(ValueError, match="requires a density matrix"):
+        reset_qubits(ket(0), [0])
+
+
 def test_large_trace_norm():
     qket = ket(*([0 for _ in range(21)]))
     rho = qket.to_density_matrix()
