@@ -227,20 +227,18 @@ class QiliYAML(YAML):
         if getattr(class_type, _HASH_CACHE_PATCH_FLAG, False):
             return
 
-        original_getstate = class_type.__getstate__
-
         def __getstate__(instance: object) -> object:
-            return _reset_hash_cache_state(original_getstate(instance))
+            return _reset_hash_cache_state(getattr(instance, "__dict__", None))
 
-        class_type.__getstate__ = __getstate__
+        setattr(class_type, "__getstate__", __getstate__)
         setattr(class_type, _HASH_CACHE_PATCH_FLAG, True)
 
     def register_class(
-        self, cls: type[object] | None = None, *, shared: bool = False
+        self, cls=None, *, shared: bool = False
     ) -> type[object] | Callable[[type[object]], type[object]]:
         if cls is None:
 
-            def decorator(target_cls: type[object]) -> type[object]:
+            def decorator(target_cls):  # noqa: ANN202
                 return self.register_class(target_cls, shared=shared)
 
             return decorator
