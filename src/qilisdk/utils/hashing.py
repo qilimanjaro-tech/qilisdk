@@ -45,28 +45,20 @@ def _encode_scalar(value: object) -> bytes:
         return b"bytes:" + value
     if isinstance(value, np.generic):
         return _encode_scalar(value.item())
-    if isinstance(value, bool):
-        return b"real:" + _encode_real_number(int(value))
-    if isinstance(value, int):
-        return b"real:" + _encode_real_number(value)
-    if isinstance(value, float):
+    if isinstance(value, (bool, float, int)):
         return b"real:" + _encode_real_number(value)
     if isinstance(value, complex):
         if value.imag == 0:
             return b"real:" + _encode_real_number(value.real)
         real_payload = _encode_real_number(value.real)
         imag_payload = _encode_real_number(value.imag)
-        return (
-            b"complex:"
-            + _length_prefix(real_payload)
-            + real_payload
-            + _length_prefix(imag_payload)
-            + imag_payload
-        )
+        return b"complex:" + _length_prefix(real_payload) + real_payload + _length_prefix(imag_payload) + imag_payload
     return b""
 
 
-def _encode_real_number(value: float) -> bytes:
+def _encode_real_number(value: float | bool) -> bytes:
+    if isinstance(value, bool):
+        value = int(value)
     if isinstance(value, int):
         return f"{value}/1".encode("utf-8")
 
@@ -98,7 +90,14 @@ def _encode_object(value: object) -> bytes:
         dtype_payload = str(value.dtype).encode("utf-8")
         shape_payload = ",".join(str(dim) for dim in value.shape).encode("utf-8")
         data_payload = value.tobytes()
-        return b"ndarray:" + _length_prefix(dtype_payload) + dtype_payload + _length_prefix(shape_payload) + shape_payload + data_payload
+        return (
+            b"ndarray:"
+            + _length_prefix(dtype_payload)
+            + dtype_payload
+            + _length_prefix(shape_payload)
+            + shape_payload
+            + data_payload
+        )
 
     if isinstance(value, Mapping):
         encoded_items = [_encode_object(key) + _encode_object(item) for key, item in value.items()]
