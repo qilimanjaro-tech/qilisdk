@@ -24,6 +24,23 @@ from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
 
+_HASH_CACHE_STATE_KEYS = "_hash_cache"
+_HASH_CACHE_PATCH_FLAG = "_qili_yaml_hash_cache_patched"
+
+
+def _reset_hash_cache_state(state):
+    if not isinstance(state, dict):
+        return state
+
+    if not any(key in state for key in _HASH_CACHE_STATE_KEYS):
+        return state
+
+    serialized_state = dict(state)
+    for key in _HASH_CACHE_STATE_KEYS:
+        if key in serialized_state:
+            serialized_state[key] = None
+    return serialized_state
+
 
 def csr_representer(representer, data: sparse.csr_matrix):
     """Representer for CSR matrix."""
@@ -203,6 +220,19 @@ def deque_constructor(constructor, node):
 
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
+    @staticmethod
+    def _patch_class_hash_cache_serialization(cls) -> None:
+        if getattr(cls, _HASH_CACHE_PATCH_FLAG, False):
+            return
+
+        original_getstate = cls.__getstate__
+
+        def __getstate__(instance):
+            return _reset_hash_cache_state(original_getstate(instance))
+
+        cls.__getstate__ = __getstate__
+        setattr(cls, _HASH_CACHE_PATCH_FLAG, True)
+
     def register_class(self, cls=None, *, shared: bool = False):
         if cls is None:
 
@@ -212,6 +242,7 @@ class QiliYAML(YAML):
             return decorator
         if not cls.__dict__.get("yaml_tag", None):
             cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        self._patch_class_hash_cache_serialization(cls)
         return super().register_class(cls)
 
 
