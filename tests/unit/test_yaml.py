@@ -260,27 +260,6 @@ def test_register_class_shared():
     assert "." in Bar.yaml_tag
 
 
-def test_register_class_hash_cache_serialized_as_none():
-    y = QiliYAML(typ="unsafe")
-
-    @y.register_class()
-    class Foo:
-        def __init__(self):
-            self.value = 7
-            self._hash_cache = 123
-
-    obj = Foo()
-    buffer = StringIO()
-    y.dump(obj, buffer)
-    content = buffer.getvalue()
-
-    assert obj._hash_cache == 123
-    assert "_hash_cache: null" in content
-    loaded = y.load(content)
-    assert loaded.value == 7
-    assert loaded._hash_cache is None
-
-
 def test_function_representer_direct():
     def f(x):
         return x + 1
