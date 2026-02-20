@@ -17,7 +17,6 @@
 import base64
 import types
 from collections import defaultdict, deque
-from collections.abc import Callable
 from typing import Final
 
 import numpy as np
@@ -233,9 +232,7 @@ class QiliYAML(YAML):
         setattr(class_type, "__getstate__", __getstate__)
         setattr(class_type, _HASH_CACHE_PATCH_FLAG, True)
 
-    def register_class(
-        self, cls=None, *, shared: bool = False
-    ) -> type[object] | Callable[[type[object]], type[object]]:
+    def register_class(self, cls=None, *, shared: bool = False):
         if cls is None:
 
             def decorator(target_cls):  # noqa: ANN202
