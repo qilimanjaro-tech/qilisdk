@@ -17,12 +17,30 @@
 import base64
 import types
 from collections import defaultdict, deque
+from typing import Final
 
 import numpy as np
 from dill import dumps, loads
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
+
+_IGNORED_ATTRIBUTES: Final[tuple[str, ...]] = ("_hash_cache",)
+_HASH_CACHE_PATCH_FLAG: Final[str] = "_qili_yaml_hash_cache_patched"
+
+
+def _reset_hash_cache_state(state: object) -> object:
+    if not isinstance(state, dict):
+        return state
+
+    if not any(key in state for key in _IGNORED_ATTRIBUTES):
+        return state
+
+    serialized_state = dict(state)
+    for key in _IGNORED_ATTRIBUTES:
+        if key in serialized_state:
+            serialized_state[key] = None
+    return serialized_state
 
 
 def csr_representer(representer, data: sparse.csr_matrix):
@@ -203,6 +221,17 @@ def deque_constructor(constructor, node):
 
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
+    @staticmethod
+    def _patch_class_hash_cache_serialization(class_type: type[object]) -> None:
+        if getattr(class_type, _HASH_CACHE_PATCH_FLAG, False):
+            return
+
+        def __getstate__(instance: object) -> object:
+            return _reset_hash_cache_state(getattr(instance, "__dict__", None))
+
+        setattr(class_type, "__getstate__", __getstate__)
+        setattr(class_type, _HASH_CACHE_PATCH_FLAG, True)
+
     def register_class(self, cls=None, *, shared: bool = False):
         if cls is None:
 
@@ -212,6 +241,7 @@ class QiliYAML(YAML):
             return decorator
         if not cls.__dict__.get("yaml_tag", None):
             cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        self._patch_class_hash_cache_serialization(cls)
         return super().register_class(cls)
 
 
