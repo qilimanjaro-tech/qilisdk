@@ -17,6 +17,8 @@
 import base64
 import types
 from collections import defaultdict, deque
+from collections.abc import Callable
+from typing import Final
 
 import numpy as np
 from dill import dumps, loads
@@ -24,19 +26,19 @@ from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
 
-_HASH_CACHE_STATE_KEYS = "_hash_cache"
-_HASH_CACHE_PATCH_FLAG = "_qili_yaml_hash_cache_patched"
+_IGNORED_ATTRIBUTES: Final[tuple[str, ...]] = ("_hash_cache",)
+_HASH_CACHE_PATCH_FLAG: Final[str] = "_qili_yaml_hash_cache_patched"
 
 
-def _reset_hash_cache_state(state):
+def _reset_hash_cache_state(state: object) -> object:
     if not isinstance(state, dict):
         return state
 
-    if not any(key in state for key in _HASH_CACHE_STATE_KEYS):
+    if not any(key in state for key in _IGNORED_ATTRIBUTES):
         return state
 
     serialized_state = dict(state)
-    for key in _HASH_CACHE_STATE_KEYS:
+    for key in _IGNORED_ATTRIBUTES:
         if key in serialized_state:
             serialized_state[key] = None
     return serialized_state
@@ -221,22 +223,24 @@ def deque_constructor(constructor, node):
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
     @staticmethod
-    def _patch_class_hash_cache_serialization(cls) -> None:
-        if getattr(cls, _HASH_CACHE_PATCH_FLAG, False):
+    def _patch_class_hash_cache_serialization(class_type: type[object]) -> None:
+        if getattr(class_type, _HASH_CACHE_PATCH_FLAG, False):
             return
 
-        original_getstate = cls.__getstate__
+        original_getstate = class_type.__getstate__
 
-        def __getstate__(instance):
+        def __getstate__(instance: object) -> object:
             return _reset_hash_cache_state(original_getstate(instance))
 
-        cls.__getstate__ = __getstate__
-        setattr(cls, _HASH_CACHE_PATCH_FLAG, True)
+        class_type.__getstate__ = __getstate__
+        setattr(class_type, _HASH_CACHE_PATCH_FLAG, True)
 
-    def register_class(self, cls=None, *, shared: bool = False):
+    def register_class(
+        self, cls: type[object] | None = None, *, shared: bool = False
+    ) -> type[object] | Callable[[type[object]], type[object]]:
         if cls is None:
 
-            def decorator(target_cls):  # noqa: ANN202
+            def decorator(target_cls: type[object]) -> type[object]:
                 return self.register_class(target_cls, shared=shared)
 
             return decorator
