@@ -45,7 +45,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
     def __init__(
         self,
         schedule: Schedule,
-        observables: list[PauliOperator | Hamiltonian],
+        observables: list[QTensor | PauliOperator | Hamiltonian],
         initial_state: QTensor,
         nshots: int = 1000,
         store_intermediate_results: bool = False,
@@ -53,7 +53,7 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            observables (list[PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.
+            observables (list[QTensor | PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.
             initial_state (QTensor): Quantum state used as the simulation starting point.
             nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.

@@ -15,6 +15,7 @@
 import importlib
 import importlib.metadata
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, NoReturn
 
 
@@ -26,6 +27,19 @@ class OptionalDependencyError(ImportError):
 class Symbol:
     path: str
     name: str
+
+
+class RequirementMode(str, Enum):
+    ALL = "all"  # all dependencies required
+    ANY = "any"  # any one dependency required
+
+
+@dataclass(frozen=True)
+class DependencyGroup:
+    """One alternative group of distributions that satisfies a feature."""
+
+    dists: list[str]
+    extra: str  # the extra the user should install if this group is missing
 
 
 @dataclass(frozen=True)
@@ -42,8 +56,10 @@ class OptionalFeature:
     """
 
     name: str
-    dependencies: list[str]
+    mode: RequirementMode
+    dependency_groups: list[DependencyGroup]
     symbols: list[Symbol]
+    install_hint: str | None = None
 
 
 @dataclass
@@ -70,15 +86,24 @@ class _OptionalDependencyStub:
     raise an informative OptionalDependencyError rather than AttributeError.
     """
 
-    def __init__(self, *, symbol_name: str, feature_name: str, import_error: Exception | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        symbol_name: str,
+        feature_name: str,
+        import_error: Exception | None = None,
+        install_hint: str | None = None,
+    ) -> None:
         self._symbol_name = symbol_name
         self._feature_name = feature_name
         self._import_error = import_error
         self.__name__ = symbol_name
         self.__qualname__ = symbol_name
+        self._install_hint = install_hint
 
     def _raise(self) -> NoReturn:
-        message = f"Using {self._symbol_name} requires installing the '{self._feature_name}' optional feature: `pip install qilisdk[{self._feature_name}]`\n"
+        hint = f"`pip install qilisdk[{self._feature_name}]`" if self._install_hint is None else self._install_hint
+        message = f"Using {self._symbol_name} requires installing optional dependencies: {hint}\n"
         if self._import_error is None:
             raise OptionalDependencyError(message)
         detail = f"{type(self._import_error).__name__}: {self._import_error}"
@@ -100,6 +125,35 @@ class _OptionalDependencyStub:
         return f"<missing optional dependency: {self._symbol_name} (extra '{self._feature_name}')>"
 
 
+def _group_installed(dists: list[str]) -> tuple[bool, list[str]]:
+    missing: list[str] = []
+    for dist in dists:
+        try:
+            importlib.metadata.version(dist)
+        except importlib.metadata.PackageNotFoundError:
+            missing.append(dist)
+    return (len(missing) == 0), missing
+
+
+def _default_install_hint(feature: OptionalFeature) -> str:
+    # Override wins
+    if feature.install_hint:
+        return feature.install_hint
+
+    # ANY: show all alternatives
+    if feature.mode is RequirementMode.ANY:
+        extras = [g.extra for g in feature.dependency_groups if g.extra]
+        # fallback if extras not set
+        if extras:
+            options = " or ".join(f"`pip install qilisdk[{e}]`" for e in extras)
+            return options
+        return f"`pip install qilisdk[{feature.name}]`"
+
+    # ALL: single extra name is typically the feature name
+    # If you use group.extra for ALL too, you can prefer it here.
+    return f"`pip install qilisdk[{feature.name}]`"
+
+
 def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     """Tries to import a submodule at `feature.import_path` along with the required
     distributions. If successful, returns a dict mapping each symbol to the
@@ -111,23 +165,44 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     Returns:
         Dict[str, Union[Any, Callable]]: A dict { symbol_name: symbol_or_stub }
     """
-    missing: list[str] = []
-    for dist in feature.dependencies:
-        try:
-            importlib.metadata.version(dist)
-        except importlib.metadata.PackageNotFoundError:
-            missing.append(dist)
 
     def make_stub(symbol_name: str, *, import_error: Exception | None = None) -> _OptionalDependencyStub:
-        return _OptionalDependencyStub(symbol_name=symbol_name, feature_name=feature.name, import_error=import_error)
+        return _OptionalDependencyStub(
+            symbol_name=symbol_name,
+            feature_name=feature.name,
+            import_error=import_error,
+            install_hint=_default_install_hint(feature),
+        )
 
-    if missing:
-        # Build stubs that raise a helpful error
-        stubs: dict[str, Any] = {symbol.name: make_stub(symbol.name) for symbol in feature.symbols}
-        return ImportedFeature(name=feature.name, symbols=stubs)
+    satisfied_group: DependencyGroup | None = None
+    missing_by_group: list[tuple[DependencyGroup, list[str]]] = []
 
-    # All dependencies are present => import the real module
-    symbols = {}
+    if feature.mode is RequirementMode.ALL:
+        # Treat as: must satisfy the (single) group; if multiple provided, require them all.
+        all_dists: list[str] = []
+        for g in feature.dependency_groups:
+            all_dists.extend(g.dists)
+        ok, missing = _group_installed(all_dists)
+        if not ok:
+            # stubs
+            stubs = {s.name: make_stub(s.name) for s in feature.symbols}
+            return ImportedFeature(name=feature.name, symbols=stubs)
+        satisfied_group = feature.dependency_groups[0] if feature.dependency_groups else None
+
+    else:  # ANY
+        for g in feature.dependency_groups:
+            ok, missing = _group_installed(g.dists)
+            if ok:
+                satisfied_group = g
+                break
+            missing_by_group.append((g, missing))
+
+        if satisfied_group is None:
+            stubs = {s.name: make_stub(s.name) for s in feature.symbols}
+            return ImportedFeature(name=feature.name, symbols=stubs)
+
+    # All good: import real symbols
+    symbols: dict[str, Any | Callable] = {}
     for symbol in feature.symbols:
         try:
             module = importlib.import_module(symbol.path)

@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from copy import copy
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
@@ -335,28 +336,33 @@ class CudaBackend(Backend):
     def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
         circuit_parameters = circuit.get_parameters()
         for parameter, perturbations in noise_model.global_perturbations.items():
-            parameter_name = parameter.label if not isinstance(parameter, str) else parameter
-            if parameter_name in circuit_parameters:
+            if parameter in circuit_parameters:
                 for perturbation in perturbations:
-                    circuit.set_parameters({parameter_name: perturbation.perturb(circuit_parameters[parameter_name])})
+                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+            else:
+                raise ValueError(f"Perturbing Parameter {parameter} that doesn't exist in the circuit.")
         for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
             for gate in circuit.gates:
-                parameter_name = parameter.label if not isinstance(parameter, str) else parameter
-                true_name_to_gate_param_name = {str(param): param_name for param_name, param in gate.parameters.items()}
-                if isinstance(gate, gate_type) and parameter_name in true_name_to_gate_param_name:
-                    gate_parameters = gate.get_parameters()
-                    gate_param_name = true_name_to_gate_param_name[parameter_name]
-                    for perturbation in perturbations:
-                        gate.set_parameters({gate_param_name: perturbation.perturb(gate_parameters[gate_param_name])})
+                if isinstance(gate, gate_type):
+                    if parameter in gate.get_parameter_names():
+                        for perturbation in perturbations:
+                            gate.set_parameters({parameter: perturbation.perturb(gate.get_parameters()[parameter])})
+                    else:
+                        raise ValueError(
+                            "Invalid parameter name passed to gate."
+                            + "To perturb a parameter on a gate use the native theta, gamma, or phi depending on the gate not the Parameter object name."
+                        )
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         logger.info("Executing Sampling (shots={})", functional.nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
+        og_param = None
 
         # Apply parameter perturbations
         if self._noise_model:
+            og_param = copy(functional.get_parameters())
             self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
@@ -382,6 +388,8 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
         logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+        if og_param:
+            functional.set_parameters(og_param)
         return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
     @staticmethod
@@ -407,18 +415,31 @@ class CudaBackend(Backend):
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
-            operators.define(
-                id=op_id,
-                expected_dimensions=[2 for _ in range(nqubits)],
-                create=lambda op_np=ops_numpy[-1]: op_np,
-                override=True,
-            )
             dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
             if dim == 2**nqubits:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2 for _ in range(nqubits)],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
                 jump_operators.append(operators.instantiate(op_id, degrees=list(range(nqubits))))
-            else:
+            elif operator_nqubits == 1:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
                 for qubit in range(nqubits):
                     jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+            else:
+                raise ValueError("Global Lindblad jump operators must be either single-qubit or full-system operators.")
         if lindblad_generator.hamiltonian is not None:
             hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
 
@@ -433,9 +454,17 @@ class CudaBackend(Backend):
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_q{qubit}_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+            dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
+            if operator_nqubits != 1:
+                raise ValueError("Per-qubit Lindblad jump operators must be single-qubit operators.")
             operators.define(
                 id=op_id,
-                expected_dimensions=[ops_numpy[-1].shape[0]],
+                expected_dimensions=[2],
                 create=lambda op_np=ops_numpy[-1]: op_np,
                 override=True,
             )
@@ -488,41 +517,71 @@ class CudaBackend(Backend):
         for term in operator_sum:
             if isinstance(term, SpinOperatorTerm) and not term.is_identity():
                 if new_operator_sum is None:
-                    new_operator_sum = term
+                    new_operator_sum = term.copy()
                 else:
-                    new_operator_sum += term
+                    new_operator_sum += term.copy()
         if new_operator_sum is None:
             new_operator_sum = ScalarOperator(0.0)
         return new_operator_sum
 
+    def _get_cuda_hamiltonian(self, schedule: Schedule) -> OperatorSum:
+
+        def get_schedule(key: str) -> Callable[[complex], float]:
+            return lambda t: schedule.coefficients[key][t.real]
+
+        cuda_hamiltonian = None
+        for key, ham in schedule.hamiltonians.items():
+            term = ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
+            if cuda_hamiltonian is None:
+                cuda_hamiltonian = term
+            else:
+                cuda_hamiltonian += term
+        if cuda_hamiltonian is None:
+            raise ValueError("TimeEvolution requires at least one Hamiltonian in the schedule.")
+        return cuda_hamiltonian
+
+    @staticmethod
+    def _qtensor_observable_to_hamiltonian(observable: QTensor, nqubits: int) -> Hamiltonian:
+        if not observable.is_operator():
+            raise ValueError("QTensor observable must be an operator with shape (2**N, 2**N).")
+        if observable.nqubits != nqubits:
+            raise ValueError(
+                f"QTensor observable acts on {observable.nqubits} qubits but the schedule acts on {nqubits} qubits."
+            )
+        try:
+            return Hamiltonian.from_qtensor(observable)
+        except ValueError as exc:
+            raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
+
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
-
+        og_params = None
         # Apply parameter perturbations
         if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
             self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
 
         steps = functional.schedule.tlist
 
         cuda_schedule = CudaSchedule(steps, ["t"])
 
-        def get_schedule(key: str) -> Callable[[complex], float]:
-            return lambda t: functional.schedule.coefficients[key][t.real]
-
-        cuda_hamiltonian = sum(
-            ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
-            for key, ham in functional.schedule.hamiltonians.items()
-        )
+        cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
 
         logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
-        for observable in functional.observables:
+        for index, observable in enumerate(functional.observables):
             if isinstance(observable, PauliOperator):
                 cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
             elif isinstance(observable, Hamiltonian):
                 cuda_observables.append(self._hamiltonian_to_cuda(observable))
+            elif isinstance(observable, QTensor):
+                cuda_observables.append(
+                    self._hamiltonian_to_cuda(
+                        self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+                    )
+                )
             else:
                 logger.error("Unsupported observable type {}", observable.__class__.__name__)
                 raise ValueError(f"unsupported observable type of {observable.__class__}")
@@ -537,7 +596,6 @@ class CudaBackend(Backend):
             )
 
         # Remove any constant terms from the Hamiltonian, also add the deltas
-        cuda_hamiltonian = self._remove_constant_terms(cuda_hamiltonian)
         for delta in hamiltonian_deltas:
             cuda_hamiltonian += delta
 
@@ -554,30 +612,53 @@ class CudaBackend(Backend):
         logger.success("TimeEvolution finished")
 
         final_expected_values = np.array(
-            [exp_val.expectation() for exp_val in evolution_result.final_expectation_values()],  # ty:ignore[possibly-missing-attribute]
+            [
+                exp_val.expectation()
+                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
+            ],
             dtype=_complex_dtype(),
         )
         expected_values = (
             np.array(
-                [[val.expectation() for val in exp_vals] for exp_vals in evolution_result.expectation_values()],  # ty:ignore[possibly-missing-attribute]
+                [
+                    [val.expectation() for val in exp_vals]
+                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
+                ],
                 dtype=_complex_dtype(),
             )
-            if evolution_result.expectation_values() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
             else None
         )
-        final_state = (
-            QTensor(np.array(evolution_result.final_state(), dtype=_complex_dtype()).reshape(-1, 1))  # ty:ignore[possibly-missing-attribute]
-            if evolution_result.final_state() is not None  # ty:ignore[possibly-missing-attribute]
-            else None
-        )
-        intermediate_states = (
-            [
-                QTensor(np.array(state, dtype=_complex_dtype()).reshape(-1, 1))
-                for state in evolution_result.intermediate_states()  # ty:ignore[possibly-missing-attribute]
-            ]
-            if evolution_result.intermediate_states() is not None and functional.store_intermediate_results  # ty:ignore[possibly-missing-attribute]
-            else None
-        )
+
+        if evolution_result.final_state() is not None:  # ty:ignore[possibly-missing-attribute]
+            final_state = np.array(
+                evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+                dtype=_complex_dtype(),
+            )
+            if len(final_state.shape) == 1:
+                final_state = final_state.reshape(-1, 1)
+            final_state = QTensor(final_state)
+
+        else:
+            final_state = None
+
+        if (
+            evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+            and functional.store_intermediate_results
+        ):
+            intermediate_states = []
+            for state in evolution_result.intermediate_states():  # ty:ignore[possibly-missing-attribute]
+                _state = np.array(state, dtype=_complex_dtype())
+                if len(_state.shape) == 1:
+                    _state = _state.reshape(-1, 1)
+                intermediate_states.append(QTensor(_state))
+
+        else:
+            intermediate_states = None
+
+        if og_params:
+            functional.set_parameters(og_params)
 
         return TimeEvolutionResult(
             final_expected_values=final_expected_values,

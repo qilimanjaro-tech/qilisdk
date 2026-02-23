@@ -74,8 +74,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
-    // The initial state
-    // Pass everything to the interal implementation
+    // Pass everything to the internal implementation
     std::map<std::string, int> counts;
     if (config.get_sampling_method() == "stabilizer") {
         AffineStabilizerState state;
@@ -98,7 +97,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         }
         DenseMatrix state;
         sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
-
     }
 
     // Convert counts to samples dict
