@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Iterator
+from __future__ import annotations
+
+from copy import copy
+from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 
@@ -19,11 +22,13 @@ from qilisdk.analog import Hamiltonian, Schedule
 from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.types import RealNumber
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 
 from .quantum_reservoirs_result import QuantumReservoirResult
+
+if TYPE_CHECKING:
+    from qilisdk.core.types import RealNumber
 
 
 class ReservoirInput(Parameter):
@@ -208,7 +213,7 @@ class ReservoirLayer(Parameterizable):
         return self._qubits_to_reset
 
     @property
-    def observables(self) -> list[QTensor | Hamiltonian | PauliOperator] | None:
+    def observables(self) -> list[QTensor | Hamiltonian | PauliOperator]:
         """Original observable list provided by the user."""
         return self._observables
 
@@ -250,6 +255,15 @@ class ReservoirLayer(Parameterizable):
         yield self._evolution_dynamics
         if self._output_encoding:
             yield self._output_encoding
+
+    def __copy__(self) -> ReservoirLayer:
+        return ReservoirLayer(
+            evolution_dynamics=copy(self.evolution_dynamics),
+            observables=copy(self.observables),
+            input_encoding=copy(self.input_encoding),
+            output_encoding=copy(self.output_encoding),
+            qubits_to_reset=copy(self.qubits_to_reset),
+        )
 
 
 class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
@@ -342,3 +356,32 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self._reservoir_layer
+
+    def set_inputs_per_layer(self, input_per_layer: list[dict[str, float]]) -> None:
+        """Sets the reservoir's input per layer.
+
+        Args:
+            input_per_layer (list[dict[str, float]]): the new list of inputs per-layers.
+        """
+        self._input_per_layer = input_per_layer
+
+    def add_inputs_per_layer(self, input_per_layer: list[dict[str, float]] | dict[str, float]) -> None:
+        """Add a list of per-layer inputs to the current list of inputs.
+
+        Args:
+            input_per_layer (list[dict[str, float]] | dict[str,float]): the new list of inputs to be added.
+        """
+        if isinstance(input_per_layer, list):
+            self._input_per_layer.extend(input_per_layer)
+        else:
+            self._input_per_layer.append(input_per_layer)
+
+    def __copy__(self) -> QuantumReservoir:
+        return QuantumReservoir(
+            initial_state=copy(self.initial_state),
+            reservoir_layer=copy(self.reservoir_layer),
+            input_per_layer=copy(self.input_per_layer),
+            store_final_state=copy(self.store_final_state),
+            store_intermediate_states=copy(self.store_intermediate_states),
+            nshots=copy(self.nshots),
+        )

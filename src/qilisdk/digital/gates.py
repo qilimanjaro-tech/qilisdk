@@ -897,6 +897,10 @@ class RX(BasicGate):
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
 
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
+
 
 @yaml.register_class
 class RY(BasicGate):
@@ -958,6 +962,10 @@ class RY(BasicGate):
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1027,6 +1035,10 @@ class RZ(BasicGate):
         phi = self.phi
         return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
 
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
+
 
 @yaml.register_class
 class U1(BasicGate):
@@ -1089,6 +1101,10 @@ class U1(BasicGate):
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1174,6 +1190,10 @@ class U2(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1280,6 +1300,10 @@ class U3(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
