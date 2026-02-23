@@ -740,48 +740,121 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
             // H |+> = |0>
             // H z0 |+> = |1>
+            // H z0 z0&1 |+ +> = |d1 +>
             // H z0&1 |+ +> = |s1 +>
+            // H z0&1 z0&2 |+ + +> = | s1&2 + +>
             // H |+ s0> = z0&1 |+ +>
             // H |+ s0&2 +> = z0&1 z0&2 |+ + +>
             // H z0 |+ s0&2 +> = z1 z2 z0&1 z0&2 |+ + +>
+
             // H z2 |+ s0&2 +> = z2 z0&1 z0&2 |+ + +>
-            // H z0&2 |+ s0&2 +> = z2 z0&1 z0&2 z1&2 |+ + +>
-            // H z0 |+ s0> = z1 z0&1 |+ +>
-            // H z1 |+ s0> = z1 z0&1 |+ +>
-            // H z0&1 |+ s0> = z1 z0&1 |+ +> 
+            // TODO H z0&2 |+ s0&2 +> = z2 z0&1 z0&2 z1&2 |+ + +>
+
+            // TODO H z0 |+ s0> = z1 z0&1 |+ +>
+            // TODO H z1 |+ s0> = z1 z0&1 |+ +>
+            // TODO H z0&1 |+ s0> = z1 z0&1 |+ +> 
             } else if (target_char == '+') {
-                // TODO
+
+                // Check if we have a linear z phase that references this
+                bool has_linear_phase = false;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.size() == 1 && indices.find(target_qubit) != indices.end()) {
+                        has_linear_phase = true;
+                        break;
+                    }
+                }
+
+                // Check if we have any quadratic z phase that references this
+                std::vector<int> quadratic_phase_other_qubits;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.size() == 2 && indices.find(target_qubit) != indices.end()) {
+                        IndexSet other_indices = indices;
+                        other_indices.erase(target_qubit);
+                        quadratic_phase_other_qubits.push_back(*other_indices.begin());
+                    }
+                }
+
+                // Keep track of the phases to add
+                std::vector<std::pair<char, IndexSet>> phases_to_add;
 
                 // Check if anything references this plus
                 bool has_reference = false;
                 for (size_t i = 0; i < ket.size(); ++i) {
                     auto& char_ = std::get<0>(ket[i]);
                     auto& indices = std::get<1>(ket[i]);
+                    
+                    // If so, it is now a plus too, and we add a phase
                     if (indices.find(target_qubit) != indices.end()) {
                         char_ = '+';
+                        phases_to_add.push_back(std::make_pair('z', IndexSet{target_qubit, int(i)}));
+                        if (has_linear_phase) {
+                            phases_to_add.push_back(std::make_pair('z', IndexSet{int(i)}));
+                        }
+                        for (int index : indices) {
+                            if (index != target_qubit) {
+                                phases_to_add.push_back(std::make_pair('z', IndexSet{target_qubit, index}));
+                                if (has_linear_phase) {
+                                    phases_to_add.push_back(std::make_pair('z', IndexSet{index}));
+                                }
+                            }
+                        }
                         indices.clear();
                         has_reference = true;
                         break;
                     }
+
                 }
 
                 // If it's not referenced anywhere, destroy it
                 if (!has_reference) {
-
                     bool should_be_zero = true;
-
+                    
                     // Check for linear phases
                     for (const auto& [char_, indices] : coeff.second) {
-                        if (indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        if (char_ == 'z' && indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
                             should_be_zero = !should_be_zero;
                         }
                     }
 
                     // Check for quadratic phases
+                    std::vector<int> other_qubits;
+                    for (const auto& [char_, indices] : coeff.second) {
+                        if (char_ == 'z' && indices.size() == 2 && indices.find(target_qubit) != indices.end()) {
+                            IndexSet other_indices = indices;
+                            other_indices.erase(target_qubit);
+                            other_qubits.push_back(*other_indices.begin());
+                        }
+                    }
 
-                    target_char = '0';
-                    target_indices.clear();
+                    // Set the target
+                    if (other_qubits.empty()) {
+                        if (should_be_zero) {
+                            target_char = '0';
+                        } else {
+                            target_char = '1';
+                        }
+                        target_indices.clear();
+                    } else {
+                        target_char = (should_be_zero) ? 's' : 'd';
+                        target_indices = IndexSet(other_qubits.begin(), other_qubits.end());
+                    }
 
+                }
+
+                // Remove any phases that reference this
+                std::vector<std::pair<char, IndexSet>> to_remove;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.find(target_qubit) != indices.end()) {
+                        to_remove.push_back(std::make_pair(char_, indices));
+                    }
+                }
+                for (const auto& pair : to_remove) {
+                    coeff.first *= handle_insert_coeff(coeff.second, pair);
+                }
+
+                // Add any new phases 
+                for (const auto& pair : phases_to_add) {
+                    coeff.first *= handle_insert_coeff(coeff.second, pair);
                 }
 
             // H |s1 +> = z1 |+ +>
@@ -792,6 +865,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 target_char = '+';
                 target_indices.clear();
             }
+
         // CNOT
         } else if (name == "CNOT") {
             auto& control_char = std::get<0>(ket[control_qubit]);
@@ -950,8 +1024,20 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             } else if (target_char == '+' || target_char == '-' || target_char == 's' || target_char == 'd') {
                 coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('i', IndexSet{target_qubit}));
             }
+        } else if (name == "CZ") {
+            auto& control_char = std::get<0>(ket[control_qubit]);
+            // CZ |1 1> = -|1 1>
+            if (target_char == '1' && control_char == '1') {
+                coeff.first *= -1.0;
+            // CZ |+ +> = z0&1 |+ +>
+            } else if (target_char != '0' && control_char != '0') {
+                coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit, control_qubit}));
+            }
         // T TODO
         } else if (name == "T") {
+        // Toffoli
+        // CZ
+        // Generic gate
         } else {
             throw std::runtime_error("Unknown operator name: " + name);
         }
