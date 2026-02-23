@@ -24,6 +24,7 @@ from loguru import logger
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .types import Number, QiliEnum, RealNumber
@@ -917,7 +918,7 @@ class BaseVariable(ABC):
 
     def __hash__(self) -> int:
         if self._hash_cache is None:
-            self._hash_cache = hash((self._label))
+            self._hash_cache = qili_hash(self._label)  # , self._domain.value, self._bounds[0], self._bounds[1])
         return self._hash_cache
 
     def __eq__(self, other: object) -> bool:
@@ -1779,7 +1780,7 @@ class Term:
         )
 
     def __hash__(self) -> int:
-        return hash((frozenset(self._elements.items()), self.operation))
+        return qili_hash(self.operation.value, self._elements)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Term):
@@ -1956,7 +1957,7 @@ class ComparisonTerm:
         )
 
     def __hash__(self) -> int:
-        return hash((hash(self._lhs), self.operation, hash(self._rhs)))
+        return qili_hash(self._lhs, self.operation.value, self._rhs)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ComparisonTerm):

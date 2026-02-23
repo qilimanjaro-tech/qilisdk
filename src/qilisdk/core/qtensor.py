@@ -23,6 +23,7 @@ from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -605,7 +606,11 @@ class QTensor:
 
     def __hash__(self) -> int:
         coo = self._data.tocoo()
-        return hash((self.shape, tuple(zip(coo.row, coo.col, coo.data))))
+        order = np.lexsort((coo.col, coo.row))
+        rows = np.asarray(coo.row[order], dtype=np.int64)
+        cols = np.asarray(coo.col[order], dtype=np.int64)
+        data = np.asarray(coo.data[order], dtype=np.complex128)
+        return qili_hash(self.shape, rows, cols, data)
 
 
 ###############################################################################

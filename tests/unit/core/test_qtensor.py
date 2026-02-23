@@ -14,7 +14,7 @@
 
 import numpy as np
 import pytest
-from scipy.sparse import csc_array, csr_matrix, issparse
+from scipy.sparse import coo_matrix, csc_array, csr_matrix, issparse
 from scipy.sparse.linalg import ArpackNoConvergence
 from scipy.sparse.linalg import norm as scipy_norm
 
@@ -723,3 +723,36 @@ def test_qtensor_hash():
 
     assert hash(q1) == hash(q2)
     assert hash(q1) != hash(q3)
+
+
+def test_qtensor_hash_stable_across_calls():
+    q = QTensor(np.array([[1, 0], [0, 1]]))
+    first = hash(q)
+    second = hash(q)
+    third = hash(q)
+
+    assert first == second == third
+
+
+def test_qtensor_hash_independent_of_sparse_input_order():
+    rows_a = np.array([1, 0, 1])
+    cols_a = np.array([0, 1, 1])
+    data_a = np.array([2.0, 3.0, 4.0], dtype=np.complex128)
+
+    rows_b = np.array([1, 1, 0])
+    cols_b = np.array([1, 0, 1])
+    data_b = np.array([4.0, 2.0, 3.0], dtype=np.complex128)
+
+    q1 = QTensor(coo_matrix((data_a, (rows_a, cols_a)), shape=(2, 2)))
+    q2 = QTensor(coo_matrix((data_b, (rows_b, cols_b)), shape=(2, 2)))
+
+    assert q1 == q2
+    assert hash(q1) == hash(q2)
+
+
+def test_qtensor_hash_changes_when_data_changes():
+    q1 = QTensor(np.array([[1, 0], [0, 1]]))
+    q2 = QTensor(np.array([[1, 0], [0, 2]]))
+
+    assert q1 != q2
+    assert hash(q1) != hash(q2)
