@@ -515,11 +515,11 @@
 </span><span id="line-165">        <span class="k">return</span> <span class="n">SamplingResult</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="n">functional</span><span class="o">.</span><span class="n">nshots</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">counts</span><span class="p">))</span>
 </span><span id="line-166">
 </span><span id="line-167">    <span class="nd">@staticmethod</span>
-</span><span id="line-168">    <span class="k">def</span><span class="w"> </span><span class="nf">_to_qubip_observables</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qobj</span><span class="p">:</span>
+</span><span id="line-168">    <span class="k">def</span><span class="w"> </span><span class="nf">_to_qubip_observables</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qobj</span><span class="p">:</span>
 </span><span id="line-169"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QiliSDK observable to a QuTiP Qobj.</span>
 </span><span id="line-170">
 </span><span id="line-171"><span class="sd">        Args:</span>
-</span><span id="line-172"><span class="sd">            obs (Hamiltonian | PauliOperator): The observable to convert.</span>
+</span><span id="line-172"><span class="sd">            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.</span>
 </span><span id="line-173"><span class="sd">            nqubits (int): The total number of qubits in the system.</span>
 </span><span id="line-174">
 </span><span id="line-175"><span class="sd">        Returns:</span>

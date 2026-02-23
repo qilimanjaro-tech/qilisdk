@@ -371,7 +371,7 @@
 </span><span id="line-45">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 </span><span id="line-46">        <span class="bp">self</span><span class="p">,</span>
 </span><span id="line-47">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
-</span><span id="line-48">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">],</span>
+</span><span id="line-48">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">],</span>
 </span><span id="line-49">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
 </span><span id="line-50">        <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 </span><span id="line-51">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -379,7 +379,7 @@
 </span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="line-54"><span class="sd">        Args:</span>
 </span><span id="line-55"><span class="sd">            schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.</span>
-</span><span id="line-56"><span class="sd">            observables (list[PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.</span>
+</span><span id="line-56"><span class="sd">            observables (list[QTensor | PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.</span>
 </span><span id="line-57"><span class="sd">            initial_state (QTensor): Quantum state used as the simulation starting point.</span>
 </span><span id="line-58"><span class="sd">            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.</span>
 </span><span id="line-59"><span class="sd">            store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.</span>
