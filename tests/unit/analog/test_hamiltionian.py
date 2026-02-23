@@ -254,6 +254,33 @@ def test_equality():
     assert pauli1 != 1
 
 
+def test_pauli_hash_consistency():
+    pauli1 = PauliZ(2)
+    pauli2 = PauliZ(2)
+    pauli3 = PauliX(2)
+
+    assert pauli1 == pauli2
+    assert hash(pauli1) == hash(pauli2)
+    assert pauli1 != pauli3
+    assert hash(pauli1) != hash(pauli3)
+
+
+def test_hamiltonian_hash_order_independent():
+    h1 = 2 * Z(0) + 3 * X(1) + 1j * Y(0)
+    h2 = 1j * Y(0) + 3 * X(1) + 2 * Z(0)
+
+    assert h1 == h2
+    assert hash(h1) == hash(h2)
+
+
+def test_hamiltonian_hash_changes_when_coefficients_change():
+    h1 = Z(0) + X(1)
+    h2 = Z(0) + 2 * X(1)
+
+    assert h1 != h2
+    assert hash(h1) != hash(h2)
+
+
 @pytest.mark.parametrize(
     ("pauli", "expected_output"),
     [
