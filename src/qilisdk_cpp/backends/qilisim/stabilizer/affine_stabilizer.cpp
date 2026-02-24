@@ -19,6 +19,8 @@
 #include <iostream>
 #endif
 
+const StateCoefficient one_coeff = std::make_pair(std::complex<double>(1.0, 0.0), StateCoefficient::second_type());
+
 AffineStabilizerState::AffineStabilizerState(int n_qubits, bool density) {
     /* 
     Create a new AffineStabilizerState in the |0...0> state.
@@ -30,15 +32,14 @@ AffineStabilizerState::AffineStabilizerState(int n_qubits, bool density) {
     Returns:
         AffineStabilizerState: The initialized state.
     */
-    StateCoefficient one_coeff = std::make_pair(std::complex<double>(1.0, 0.0), StateCoefficient::second_type());
     StateBasis zero_basis;
     for (int i = 0; i < n_qubits; ++i) {
         zero_basis.push_back(std::make_pair('0', IndexSet()));
     }
     if (density) {
-        state.push_back(std::make_tuple(one_coeff, zero_basis, zero_basis));
+        state.push_back(std::make_tuple(one_coeff, zero_basis, one_coeff, zero_basis));
     } else {
-        state.push_back(std::make_tuple(one_coeff, zero_basis, StateBasis()));
+        state.push_back(std::make_tuple(one_coeff, zero_basis, one_coeff, StateBasis()));
     }
 }
 
@@ -70,9 +71,9 @@ AffineStabilizerState::AffineStabilizerState(const SparseMatrix& initial_state) 
                 bra_basis.push_back(std::make_pair(bra_char, IndexSet()));
             }
             if (is_density) {
-                new_state.state.push_back(std::make_tuple(coeff, ket_basis, bra_basis));
+                new_state.state.push_back(std::make_tuple(coeff, ket_basis, one_coeff, bra_basis));
             } else {
-                new_state.state.push_back(std::make_tuple(coeff, ket_basis, StateBasis()));
+                new_state.state.push_back(std::make_tuple(coeff, ket_basis, one_coeff, StateBasis()));
             }
         }
     }
@@ -105,7 +106,7 @@ bool AffineStabilizerState::is_ket() const {
     if (state.empty()) {
         return false;
     }
-    return std::get<2>(*state.begin()).empty();
+    return std::get<3>(*state.begin()).empty();
 }
 
 bool AffineStabilizerState::is_bra() const {
@@ -131,7 +132,210 @@ bool AffineStabilizerState::is_density_matrix() const {
     if (state.empty()) {
         return false;
     }
-    return !std::get<1>(*state.begin()).empty() && !std::get<2>(*state.begin()).empty();
+    return !std::get<1>(*state.begin()).empty() && !std::get<3>(*state.begin()).empty();
+}
+
+AffineStabilizerState AffineStabilizerState::as_expanded() const {
+    /*
+    Expand each term in the stabilizer state, turning + into 0 and 1 etc. TODO
+    */
+    AffineStabilizerState expanded_state = *this;
+    AffineStabilizerState new_state;
+    
+    // While we still have plusses, keep expanding
+    bool has_plus = true;
+    while (has_plus) {
+        has_plus = false;
+        for (const auto& tuple : expanded_state.state) {
+            const auto& ket_coeff = std::get<0>(tuple);
+            const auto& ket = std::get<1>(tuple);
+            const auto& bra_coeff = std::get<2>(tuple);
+            const auto& bra = std::get<3>(tuple);
+            for (size_t i = 0; i < ket.size(); ++i) {
+                if (ket[i].first == '+') {
+                    has_plus = true;
+                    StateBasis ket_zero = ket;
+                    StateBasis ket_one = ket;
+                    ket_zero[i].first = '0';
+                    ket_one[i].first = '1';
+                    StateCoefficient new_coeff = std::make_pair(ket_coeff.first / std::sqrt(2.0), ket_coeff.second);
+                    new_state.state.push_back(std::make_tuple(new_coeff, ket_zero, bra_coeff, bra));
+                    new_state.state.push_back(std::make_tuple(new_coeff, ket_one, bra_coeff, bra));
+                    break;
+                }
+            }
+            if (!has_plus) {
+                for (size_t i = 0; i < bra.size(); ++i) {
+                    if (bra[i].first == '+') {
+                        has_plus = true;
+                        StateBasis bra_zero = bra;
+                        StateBasis bra_one = bra;
+                        bra_zero[i].first = '0';
+                        bra_one[i].first = '1';
+                        StateCoefficient new_coeff = std::make_pair(bra_coeff.first / std::sqrt(2.0), bra_coeff.second);
+                        new_state.state.push_back(std::make_tuple(new_coeff, ket, new_coeff, bra_zero));
+                        new_state.state.push_back(std::make_tuple(new_coeff, ket, new_coeff, bra_one));
+                        break;
+                    }
+                }
+            }
+        }
+        if (has_plus) {
+            expanded_state.state = new_state.state;
+            new_state.state.clear();
+        }
+    }
+
+    // Go through and evaluate all of the s and d's
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (auto& tuple : expanded_state.state) {
+            auto& ket_coeff = std::get<0>(tuple);
+            auto& ket = std::get<1>(tuple);
+            auto& bra_coeff = std::get<2>(tuple);
+            auto& bra = std::get<3>(tuple);
+            for (size_t i = 0; i < ket.size(); ++i) {
+                if (ket[i].first == 's' || ket[i].first == 'd') {
+                    changed = true;
+                    char new_char = (ket[i].first == 's') ? '0' : '1';
+                    for (int index : ket[i].second) {
+                        if (ket[index].first == '1') {
+                            new_char = (new_char == '0') ? '1' : '0';
+                        } else if (ket[index].first != '0') {
+                            new_char = ket[i].first;
+                            break;
+                        }
+                    }
+                    ket[i].first = new_char;
+                    if (new_char != 's' && new_char != 'd') {
+                        ket[i].second.clear();
+                    }
+                }
+            }
+            for (size_t i = 0; i < bra.size(); ++i) {
+                if (bra[i].first == 's' || bra[i].first == 'd') {
+                    changed = true;
+                    char new_char = (bra[i].first == 's') ? '0' : '1';
+                    for (int index : bra[i].second) {
+                        if (bra[index].first == '1') {
+                            new_char = (new_char == '0') ? '1' : '0';
+                        } else if (bra[index].first != '0') {
+                            new_char = bra[i].first;
+                            break;
+                        }
+                    }
+                    bra[i].first = new_char;
+                    if (new_char != 's' && new_char != 'd') {
+                        bra[i].second.clear();
+                    }
+                }
+            }
+        }
+    }
+    
+    // Evaluate all of the phases in the coeff
+    for (auto& tuple : expanded_state.state) {
+        auto& ket_coeff = std::get<0>(tuple);
+        auto& ket = std::get<1>(tuple);
+        auto& bra_coeff = std::get<2>(tuple);
+        auto& bra = std::get<3>(tuple);
+        for (const auto& [char_, indices] : ket_coeff.second) {
+            if (char_ == 'z') {
+                bool all_one = true;
+                for (int index : indices) {
+                    if (ket[index].first != '1') {
+                        all_one = false;
+                        break;
+                    }
+                }
+                if (all_one) {
+                    ket_coeff.first *= -1.0;
+                }
+            } else if (char_ == 'i') {
+                bool all_one = true;
+                for (int index : indices) {
+                    if (ket[index].first != '1') {
+                        all_one = false;
+                        break;
+                    }
+                }
+                if (all_one) {
+                    ket_coeff.first *= std::complex<double>(0.0, 1.0);
+                }
+            }
+        }
+        ket_coeff.second.clear();
+        bra_coeff.second.clear();
+    }
+    
+    return expanded_state;
+
+}
+
+DenseMatrix AffineStabilizerState::as_dense() const {
+    /*
+    Convert the state to a dense matrix representation.
+    
+    Returns:
+        DenseMatrix: The dense matrix representation of the state.
+
+    Raises:
+        std::runtime_error: If the state is neither a ket nor a density matrix.
+    */
+    int n_qubits = this->n_qubits();
+    int dim = 1 << n_qubits;
+    AffineStabilizerState expanded_state = as_expanded();
+    if (expanded_state.is_ket()) {
+        DenseMatrix result = DenseMatrix::Zero(dim, 1);
+        for (const auto& tuple : expanded_state.state) {
+            const auto& ket_coeff = std::get<0>(tuple);
+            const auto& ket = std::get<1>(tuple);
+            int index = 0;
+            for (size_t i = 0; i < ket.size(); ++i) {
+                if (ket[i].first == '1') {
+                    index |= (1 << (n_qubits - 1 - i));
+                }
+            }
+            result(index, 0) += ket_coeff.first;
+        }
+        return result;
+    } else if (expanded_state.is_bra()) {
+        DenseMatrix result = DenseMatrix::Zero(1, dim);
+        for (const auto& tuple : expanded_state.state) {
+            const auto& bra_coeff = std::get<2>(tuple);
+            const auto& bra = std::get<3>(tuple);
+            int index = 0;
+            for (size_t i = 0; i < bra.size(); ++i) {
+                if (bra[i].first == '1') {
+                    index |= (1 << (n_qubits - 1 - i));
+                }
+            }
+            result(0, index) += bra_coeff.first;
+        }
+        return result;
+    } else {
+        DenseMatrix result = DenseMatrix::Zero(dim, dim);
+        for (const auto& tuple : expanded_state.state) {
+            const auto& ket_coeff = std::get<0>(tuple);
+            const auto& ket = std::get<1>(tuple);
+            const auto& bra_coeff = std::get<2>(tuple);
+            const auto& bra = std::get<3>(tuple);
+            int ket_index = 0;
+            int bra_index = 0;
+            for (size_t i = 0; i < ket.size(); ++i) {
+                if (ket[i].first == '1') {
+                    ket_index |= (1 << (n_qubits - 1 - i));
+                }
+                if (bra[i].first == '1') {
+                    bra_index |= (1 << (n_qubits - 1 - i));
+                }
+            }
+            result(ket_index, bra_index) += ket_coeff.first * bra_coeff.first;
+        }
+        return result;
+    }
+
 }
 
 void AffineStabilizerState::to_density_matrix() {
@@ -144,23 +348,23 @@ void AffineStabilizerState::to_density_matrix() {
     AffineStabilizerState new_state;
     if (is_ket()) {
         for (const auto& tuple : state) {
-            const auto& coeff = std::get<0>(tuple);
+            const auto& ket_coeff = std::get<0>(tuple);
             const auto& ket = std::get<1>(tuple);
             StateBasis bra;
             for (const auto& [char_, indices] : ket) {
                 bra.push_back(std::make_pair(char_, indices));
             }
-            new_state.state.push_back(std::make_tuple(coeff, ket, bra));
+            new_state.state.push_back(std::make_tuple(ket_coeff, ket, one_coeff, bra));
         }
     } else if (is_bra()) {
         for (const auto& tuple : state) {
-            const auto& coeff = std::get<0>(tuple);
-            const auto& bra = std::get<2>(tuple);
+            const auto& bra_coeff = std::get<2>(tuple);
+            const auto& bra = std::get<3>(tuple);
             StateBasis ket;
             for (const auto& [char_, indices] : bra) {
                 ket.push_back(std::make_pair(char_, indices));
             }
-            new_state.state.push_back(std::make_tuple(coeff, ket, bra));
+            new_state.state.push_back(std::make_tuple(one_coeff, ket, bra_coeff, bra));
         }
     }
     state = new_state.state;
@@ -181,11 +385,12 @@ bool AffineStabilizerState::is_pure(double atol) const {
     }
     double trace_squared = 0.0;
     for (const auto& tuple : state) {
-        const auto& coeff = std::get<0>(tuple);
+        const auto& ket_coeff = std::get<0>(tuple);
         const auto& ket = std::get<1>(tuple);
-        const auto& bra = std::get<2>(tuple);
+        const auto& bra_coeff = std::get<2>(tuple);
+        const auto& bra = std::get<3>(tuple);
         if (ket == bra) {
-            trace_squared += std::norm(coeff.first);
+            trace_squared += std::norm(ket_coeff.first * bra_coeff.first);
         }
     }
     return std::abs(trace_squared - 1.0) < atol;
@@ -208,11 +413,12 @@ void AffineStabilizerState::normalize() {
     if (is_density_matrix()) {
         double trace = 0.0;
         for (const auto& tuple : state) {
-            const auto& coeff = std::get<0>(tuple);
+            const auto& ket_coeff = std::get<0>(tuple);
             const auto& ket = std::get<1>(tuple);
-            const auto& bra = std::get<2>(tuple);
+            const auto& bra_coeff = std::get<2>(tuple);
+            const auto& bra = std::get<3>(tuple);
             if (ket == bra) {
-                trace += std::norm(coeff.first);
+                trace += std::norm(ket_coeff.first * bra_coeff.first);
             }
         }
         if (trace > 0.0) {
@@ -220,16 +426,30 @@ void AffineStabilizerState::normalize() {
                 std::get<0>(tuple).first /= trace;
             }
         }
-    } else {
+    } else if (is_ket()) {
         double norm = 0.0;
         for (const auto& tuple : state) {
-            const auto& coeff = std::get<0>(tuple);
-            norm += std::norm(coeff.first);
+            const auto& ket_coeff = std::get<0>(tuple);
+            norm += std::norm(ket_coeff.first);
         }
         norm = std::sqrt(norm);
         if (norm > 0.0) {
             for (auto& tuple : state) {
-                std::get<0>(tuple).first /= norm;
+                auto& ket_coeff = std::get<0>(tuple);
+                ket_coeff.first /= norm;
+            }
+        }
+    } else if (is_bra()) {
+        double norm = 0.0;
+        for (const auto& tuple : state) {
+            const auto& bra_coeff = std::get<2>(tuple);
+            norm += std::norm(bra_coeff.first);
+        }
+        norm = std::sqrt(norm);
+        if (norm > 0.0) {
+            for (auto& tuple : state) {
+                auto& bra_coeff = std::get<2>(tuple);
+                bra_coeff.first /= norm;
             }
         }
     }
@@ -245,7 +465,7 @@ int AffineStabilizerState::n_qubits() const {
     if (state.empty()) {
         return 0;
     }
-    return std::max(std::get<1>(*state.begin()).size(), std::get<2>(*state.begin()).size());
+    return std::max(std::get<1>(*state.begin()).size(), std::get<3>(*state.begin()).size());
 }
 
 void AffineStabilizerState::prune(double atol) {
@@ -370,7 +590,7 @@ std::ostream& operator<<(std::ostream& os, const StateBasis& basis) {
             count++;
         }
         if (i != basis.size() - 1) {
-            os << ", ";
+            os << " ";
         }
     }
     return os;
@@ -390,7 +610,7 @@ std::ostream& operator<<(std::ostream& os, const StateCoefficient& coeff) {
     */
     os << "(" << coeff.first.real() << " + " << coeff.first.imag() << "i)";
     for (const auto& [char_, indices] : coeff.second) {
-        os << " * " << char_;
+        os << " " << char_;
         int count = 0;
         for (int index : indices) {
             os << index;
@@ -464,15 +684,20 @@ std::ostream& operator<<(std::ostream& os, const AffineStabilizerState& state) {
         std::ostream&: The output stream after writing the AffineStabilizerState.
     */
     for (const auto& tuple : state.state) {
-        const auto& coeff = std::get<0>(tuple);
+        const auto& ket_coeff = std::get<0>(tuple);
         const auto& ket = std::get<1>(tuple);
-        const auto& bra = std::get<2>(tuple);
-        os << coeff;
+        const auto& bra_coeff = std::get<2>(tuple);
+        const auto& bra = std::get<3>(tuple);
         if (!ket.empty()) {
+            os << ket_coeff;
             os << " |" << ket << ">";
         }
         if (!bra.empty()) {
+            os << bra_coeff;
             os << " <" << bra << "|";
+        }
+        if (&tuple != &state.state.back()) {
+            os << std::endl;
         }
     }
     return os;
@@ -745,14 +970,9 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0&1 z0&2 |+ + +> = | s1&2 + +>
             // H |+ s0> = z0&1 |+ +>
             // H |+ s0&2 +> = z0&1 z0&2 |+ + +>
-            // H z0 |+ s0&2 +> = z1 z2 z0&1 z0&2 |+ + +>
-
-            // H z2 |+ s0&2 +> = z2 z0&1 z0&2 |+ + +>
-            // TODO H z0&2 |+ s0&2 +> = z2 z0&1 z0&2 z1&2 |+ + +>
-
-            // TODO H z0 |+ s0> = z1 z0&1 |+ +>
-            // TODO H z1 |+ s0> = z1 z0&1 |+ +>
-            // TODO H z0&1 |+ s0> = z1 z0&1 |+ +> 
+            // H z0 |+ s0&2 +> = z1 z2 (z0&1 z0&2) |+ + +>
+            // H z2 |+ s0&2 +> = z2 (z0&1 z0&2) |+ + +>
+            // H z0&2 |+ s0&2 +> = z2 z1&2 (z0&1 z0&2) |+ + +>
             } else if (target_char == '+') {
 
                 // Check if we have a linear z phase that references this
@@ -790,6 +1010,10 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                         if (has_linear_phase) {
                             phases_to_add.push_back(std::make_pair('z', IndexSet{int(i)}));
                         }
+                        for (int other_index : quadratic_phase_other_qubits) {
+                            phases_to_add.push_back(std::make_pair('z', IndexSet{other_index}));
+                            phases_to_add.push_back(std::make_pair('z', IndexSet{other_index, int(i)}));
+                        }
                         for (int index : indices) {
                             if (index != target_qubit) {
                                 phases_to_add.push_back(std::make_pair('z', IndexSet{target_qubit, index}));
@@ -807,38 +1031,13 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
 
                 // If it's not referenced anywhere, destroy it
                 if (!has_reference) {
-                    bool should_be_zero = true;
-                    
-                    // Check for linear phases
-                    for (const auto& [char_, indices] : coeff.second) {
-                        if (char_ == 'z' && indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
-                            should_be_zero = !should_be_zero;
-                        }
-                    }
-
-                    // Check for quadratic phases
-                    std::vector<int> other_qubits;
-                    for (const auto& [char_, indices] : coeff.second) {
-                        if (char_ == 'z' && indices.size() == 2 && indices.find(target_qubit) != indices.end()) {
-                            IndexSet other_indices = indices;
-                            other_indices.erase(target_qubit);
-                            other_qubits.push_back(*other_indices.begin());
-                        }
-                    }
-
-                    // Set the target
-                    if (other_qubits.empty()) {
-                        if (should_be_zero) {
-                            target_char = '0';
-                        } else {
-                            target_char = '1';
-                        }
+                    if (quadratic_phase_other_qubits.empty()) {
+                        target_char = (has_linear_phase) ? '1' : '0';
                         target_indices.clear();
                     } else {
-                        target_char = (should_be_zero) ? 's' : 'd';
-                        target_indices = IndexSet(other_qubits.begin(), other_qubits.end());
+                        target_char = (has_linear_phase) ? 'd' : 's';
+                        target_indices = IndexSet(quadratic_phase_other_qubits.begin(), quadratic_phase_other_qubits.end());
                     }
-
                 }
 
                 // Remove any phases that reference this
@@ -858,12 +1057,45 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 }
 
             // H |s1 +> = z1 |+ +>
+            // H z0 |s1 +> = z0&1 z1 |+ +> TODO
+            // H z1 |s1 +> = z0&1 z1 |+ +> TODO
+            // H z0&1 |s1 +> = z0&1 z1 |+ +> TODO
+            // H z0 z1 |s1 +> = |+ +> TODO
+            // H |s1&2 + +> = (z0&1 z0&2) |+ + +> TODO
+            // H z2 |s1&2 + +> = z2 (z0&1 z0&2) |+ + +> TODO
+            // H z0 |s1&2 + +> = z1 z2 (z0&1 z0&2) |+ + +> TODO
+            // H z1&2 |s1&2 + +> = z1&2 (z0&1 z0&2) |+ + +> TODO
+            // H z0&2 |s1&2 + +> = z2 z1&2 (z0&1 z0&2) |+ + +> TODO
             } else if (target_char == 's' || target_char == 'd') {
+
+                // Check for linear phase
+                bool has_linear_phase = false;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.size() == 1 && indices.find(target_qubit) != indices.end()) {
+                        has_linear_phase = true;
+                        break;
+                    }
+                }
+
+                // Check for quadratic phases
+                std::vector<int> quadratic_phase_other_qubits;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.size() == 2 && indices.find(target_qubit) != indices.end()) {
+                        IndexSet other_indices = indices;
+                        other_indices.erase(target_qubit);
+                        quadratic_phase_other_qubits.push_back(*other_indices.begin());
+                    }
+                }
+
+                // Add the phase
                 for (int index : target_indices) {
                     coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{index}));
                 }
+
+                // It will always then be a free variable
                 target_char = '+';
                 target_indices.clear();
+
             }
 
         // CNOT
@@ -1035,9 +1267,9 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             }
         // T TODO
         } else if (name == "T") {
-        // Toffoli
-        // CZ
-        // Generic gate
+        // Toffoli TODO
+        } else if (name == "CCX") {
+        // Generic gate TODO
         } else {
             throw std::runtime_error("Unknown operator name: " + name);
         }

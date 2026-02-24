@@ -23,7 +23,7 @@
 typedef std::set<int> IndexSet;
 typedef std::pair<std::complex<double>, std::set<std::pair<char, IndexSet>>> StateCoefficient;
 typedef std::vector<std::pair<char, IndexSet>> StateBasis;
-typedef std::vector<std::tuple<StateCoefficient, StateBasis, StateBasis>> State;
+typedef std::vector<std::tuple<StateCoefficient, StateBasis, StateCoefficient, StateBasis>> State;
 
 class AffineStabilizerState {
     private:
@@ -32,13 +32,14 @@ class AffineStabilizerState {
         //  - |+> = (|0> + |1>) / sqrt(2)
         //  - |0>
         //  - |1>
-        //  - |+s1> = (|00> + |11>) / sqrt(2)
-        //  - |+d1> = (|01> + |10>) / sqrt(2)
+        //  - |+ s0> = (|00> + |11>) / sqrt(2)
+        //  - |+ d0> = (|01> + |10>) / sqrt(2)
+        //  - |+ s0&2 +> = (|000> + |011> + |101> + |110>) / 2
         // coefficient chars:
         //  - z1 = -1 if q[1], else 1
-        //  - z1,2 = -1 if q[1] and q[2], else 1
+        //  - z1&2 = -1 if q[1] and q[2], else 1
         //  - i1 = i if q[1], else 1
-        //  - i1,2 = i if q[1] and q[2], else 1
+        //  - i1&2 = i if q[1] and q[2], else 1
         State state;
 
     public:
@@ -56,6 +57,9 @@ class AffineStabilizerState {
         bool empty() const;
         int n_qubits() const;
         size_t size() const;
+
+        DenseMatrix as_dense() const;
+        AffineStabilizerState as_expanded() const;
 
         void to_density_matrix();
         void normalize();

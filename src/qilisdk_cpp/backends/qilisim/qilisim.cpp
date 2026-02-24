@@ -76,15 +76,19 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
 
     // Pass everything to the internal implementation
     std::map<std::string, int> counts;
+    DenseMatrix state_dense;
     if (config.get_sampling_method() == "stabilizer") {
-        AffineStabilizerState state;
+        AffineStabilizerState state_stabilizer;
         AffineStabilizerState initial_state_stabilizer;
         if (initial_state.is_none()) {
             initial_state_stabilizer = AffineStabilizerState(n_qubits, false);
         } else {
             initial_state_stabilizer = AffineStabilizerState(parse_initial_state(initial_state, config.get_atol()));
         }
-        sampling_stabilizer(gates, qubits_to_measure, n_qubits, n_shots, initial_state_stabilizer, noise_model_cpp, state, counts, config);
+        sampling_stabilizer(gates, qubits_to_measure, n_qubits, n_shots, initial_state_stabilizer, noise_model_cpp, state_stabilizer, counts, config);
+        if (n_qubits <= 5) {
+            state_dense = state_stabilizer.as_dense();
+        }
     } else {
         SparseMatrix initial_state_cpp;
         if (initial_state.is_none()) {
@@ -95,8 +99,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         } else {
             initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
         }
-        DenseMatrix state;
-        sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
+        sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
     }
 
     // Convert counts to samples dict
@@ -105,7 +108,11 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         samples[py::cast(pair.first)] = py::cast(pair.second);
     }
 
-    return SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
+    py::object result = SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
+    py::array final_state_numpy = to_numpy(state_dense);
+    result.attr("_state") = final_state_numpy;
+
+    return result;
 }
 
 // The public execute_time_evolution

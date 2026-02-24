@@ -23,3 +23,4 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol);
 py::array_t<double> to_numpy(const std::vector<double>& vec);
 py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs);
 py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix);
+py::array_t<std::complex<double>> to_numpy(const DenseMatrix& matrix);
