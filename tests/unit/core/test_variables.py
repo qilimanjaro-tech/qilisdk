@@ -1469,6 +1469,44 @@ def test_comparison_term_equality():
     assert comp1 != other
 
 
+def test_variable_hash_consistency():
+    x1 = Variable("x", Domain.REAL)
+    x2 = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    assert x1 == x2
+    assert hash(x1) == hash(x2)
+    assert hash(x1) == hash(x1)
+    assert x1 != y
+    assert hash(x1) != hash(y)
+
+
+def test_term_hash_consistency():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    term1 = x + y + 2
+    term2 = 2 + y + x
+    term3 = x + 2 * y + 2
+
+    assert term1 == term2
+    assert hash(term1) == hash(term2)
+    assert term1 != term3
+    assert hash(term1) != hash(term3)
+
+
+def test_comparison_term_hash_consistency():
+    x = Variable("x", Domain.REAL)
+    comp1 = EQ(x + 1, 2)
+    comp2 = EQ(x + 1, 2)
+    comp3 = EQ(x + 2, 2)
+
+    assert comp1 == comp2
+    assert hash(comp1) == hash(comp2)
+    assert comp1 != comp3
+    assert hash(comp1) != hash(comp3)
+
+
 def test_check_output():
     x = Variable("x", Domain.INTEGER, (0, 3))
     assert _check_output(x, 3) == 3

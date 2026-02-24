@@ -28,6 +28,7 @@ from qilisdk.core.qtensor import QTensor
 from qilisdk.core.types import Number
 from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -150,7 +151,7 @@ class PauliOperator(ABC):
         return Hamiltonian({(self,): 1})
 
     def __hash__(self) -> int:
-        return hash((self._NAME, self._qubit))
+        return qili_hash(self._NAME, self._qubit)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Hamiltonian):
@@ -480,8 +481,7 @@ class Hamiltonian(Parameterizable):
         return not self.__eq__(other)
 
     def __hash__(self) -> int:
-        items_frozen = frozenset(self._elements.items())
-        return hash(items_frozen)
+        return qili_hash(self._elements)
 
     def __copy__(self) -> Hamiltonian:
         return Hamiltonian(elements=self._elements.copy())

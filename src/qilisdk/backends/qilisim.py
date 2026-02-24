@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from qilisdk.functionals.sampling_result import SamplingResult
     from qilisdk.functionals.time_evolution import TimeEvolution
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.noise.noise_model import NoiseModel
 
 
 class QiliSim(Backend):
@@ -38,6 +39,7 @@ class QiliSim(Backend):
 
     def __init__(
         self,
+        noise_model: NoiseModel | None = None,
         evolution_method: str = "integrate",
         arnoldi_dim: int = 10,
         num_arnoldi_substeps: int = 1,
@@ -97,7 +99,7 @@ class QiliSim(Backend):
         # Initialize the backend and the class vars
         super().__init__()
         self.qili_sim = QiliSimCpp()
-        self._noise_model = None
+        self._noise_model = noise_model
         self.solver_params = {
             "evolution_method": evolution_method,
             "arnoldi_dim": arnoldi_dim,

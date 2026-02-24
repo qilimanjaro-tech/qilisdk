@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable, Literal
+from typing import TYPE_CHECKING, Iterable, Literal
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatrix
@@ -22,7 +22,11 @@ from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.core.types import Number
 
 Complex = int | float | complex
 
@@ -475,6 +479,8 @@ class QTensor:
             else:
                 # Conservative fallback: don't claim it's a DM if we can't certify PSD
                 return False
+        except TypeError:
+            lam_min = float(np.linalg.eigvalsh(self._data.toarray()).min())
         return lam_min >= -tol
 
     def is_hermitian(self, tol: float | None = None) -> bool:
@@ -545,7 +551,11 @@ class QTensor:
 
     def __hash__(self) -> int:
         coo = self._data.tocoo()
-        return hash((self.shape, tuple(zip(coo.row, coo.col, coo.data))))
+        order = np.lexsort((coo.col, coo.row))
+        rows = np.asarray(coo.row[order], dtype=np.int64)
+        cols = np.asarray(coo.col[order], dtype=np.int64)
+        data = np.asarray(coo.data[order], dtype=np.complex128)
+        return qili_hash(self.shape, rows, cols, data)
 
 
 ###############################################################################
@@ -651,7 +661,13 @@ def tensor_prod(operators: list[QTensor]) -> QTensor:
     return QTensor(out)
 
 
-def expect_val(operator: QTensor, state: QTensor) -> Complex:
+def _real_if_close(number: complex) -> Number:
+    if number.imag < get_settings().atol:
+        return float(number.real)
+    return complex(number)
+
+
+def expect_val(operator: QTensor, state: QTensor) -> Number:
     r"""
     Calculate the expectation value of an operator with respect to a quantum state.
 
@@ -673,12 +689,12 @@ def expect_val(operator: QTensor, state: QTensor) -> Complex:
         raise ValueError("operator must be square")
     # p case: tr(O p) = sum((O.T) ⊙ p)
     if state.is_density_matrix():
-        return complex((operator.data.T.multiply(state.data)).sum())
+        return _real_if_close((operator.data.T.multiply(state.data)).sum().tolist())
     # |ψ⟩ case: ⟨ψ| O |ψ⟩ = (ψ† (O ψ))
     if state.is_ket():
         v = operator.data @ state.data  # (N,1)
-        return complex((state.data.getH() @ v).toarray()[0, 0])
+        return _real_if_close((state.data.getH() @ v).toarray()[0, 0].tolist())
     if state.is_bra():
         v = state.data @ operator.data  # (1,N)
-        return complex((v @ state.data.getH()).toarray()[0, 0])
+        return _real_if_close((v @ state.data.getH()).toarray()[0, 0].tolist())
     raise ValueError("state is invalid for expect_val")

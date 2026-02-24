@@ -6,13 +6,26 @@ These noise models can be integrated into quantum simulations to account for rea
 decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can contains various types of noise, 
 each of which is then applied during simulation.
 
-Note: For now, only the :class:`~qilisdk.backends.cuda_backend.CudaBackend` supports noise models.
+.. table::
+   :align: left
+   :widths: auto
+
+   ========================================================================== ============================ 
+   Backend                                                                    Noise Models Supported
+   ========================================================================== ============================
+   :class:`~qilisdk.backends.qilisim.QiliSim`                                 ✔                                
+   -------------------------------------------------------------------------- ----------------------------
+   :class:`~qilisdk.backends.cuda_backend.CudaBackend`                        ✔                                
+   -------------------------------------------------------------------------- ---------------------------- 
+   :class:`~qilisdk.backends.qutip_backend.QutipBackend`                      ✕ 
+   ========================================================================== ============================ 
+
 
 Usage
 -----------
 
-Noise passes are added to a :class:`~qilisdk.noise.noise_model.NoiseModel`, which should then be included when executing a functional. 
-For example, to add a global bit-flip noise to a circuit and then execute it with the CUDA backend:
+Noise passes are added to a :class:`~qilisdk.noise.noise_model.NoiseModel`, which should then be included when creating a backend. 
+For example, to create a simple circuit and then simulate it with a CUDA backend containing a bit-flip noise model:
 
 .. code-block:: python
 
@@ -27,15 +40,13 @@ For example, to add a global bit-flip noise to a circuit and then execute it wit
     c.add(X(1))
     sampler = Sampling(c, nshots=1000)
 
-    # Define a simple noise model
-    nm = NoiseModel()
-
     # Apply bit-flip noise with 50% probability to X gates on qubit 1
+    nm = NoiseModel()
     nm.add(BitFlip(probability=0.5), gate=X, qubits=[1]) 
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend()
-    res = backend_cuda.execute(sampler, noise_model=nm)
+    backend_cuda = CudaBackend(noise_model=nm)
+    res = backend_cuda.execute(sampler)
     print(res)
 
 Summary of Noise Types
@@ -132,7 +143,7 @@ The class is initialized with a list of Kraus operators given as QTensors.
     kraus_noise = KrausChannel(operators=[K1, K2])
 
 LindbladGenerator
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.representations.LindbladGenerator` is a base class for analog noise models that use the Lindblad master equation 
 to represent quantum noise processes. The Lindblad master equation describes the time evolution of a density matrix :math:`\rho` under
@@ -250,6 +261,7 @@ where now :math:`\gamma` is the phase-flip rate.
 
 Depolarizing
 ^^^^^^^^^^^^^^^
+
 :class:`~qilisdk.noise.depolarizing.Depolarizing` represents a depolarizing error model 
 where each qubit has a certain probability of being replaced by the maximally mixed state.
 This corresponds to the following channel:
@@ -279,7 +291,8 @@ where :math:`\gamma` is the depolarizing rate.
     depolarizing_noise = Depolarizing(probability=0.1)
 
 AmplitudeDampingNoise
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 :class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` represents an amplitude damping error model 
 where each qubit has a certain probability of decaying from the excited state |1⟩ to the ground state |0⟩.
 This corresponds to the following channel:
@@ -355,7 +368,8 @@ where :math:`t` is the time duration over which the dephasing occurs.
 
 
 GaussianPerturbation
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+
 :class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation` represents a noise model that adds Gaussian-distributed perturbations
 to the parameters of gates or Hamiltonian terms in a quantum circuit or schedule. This simulates
 imperfections in control signals that can lead to deviations from the intended operations.
@@ -373,7 +387,7 @@ where :math:`\sigma` is the standard deviation of the perturbations and :math:`\
     gaussian_perturbation_noise = GaussianPerturbation(stddev=0.05, mean=0.0)
 
 OffsetPerturbation
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 :class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation` represents a noise model that adds fixed offset perturbations
 to the parameters of gates or Hamiltonian terms in a quantum circuit or schedule. This simulates
 systematic errors in control signals that consistently shift the intended operations.
@@ -385,7 +399,7 @@ The offsets are specified as fixed values for each parameter.
     offset_perturbation_noise = OffsetPerturbation(offset=1.3)
 
 ReadoutAssignment
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` represents a readout error model that simulates
 imperfections in the measurement process of qubits. It is defined by two probabilities: 
