@@ -16,7 +16,7 @@
 import base64
 import types
 from collections import defaultdict, deque
-from typing import Any, Callable, TypeVar, overload
+from typing import Callable, TypeVar, overload
 from uuid import UUID
 
 import numpy as np
