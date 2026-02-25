@@ -23,8 +23,8 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
 
     def __init__(self, *, p01: float, p10: float) -> None:
         """Args:
-            p01 (float): Probability to report "1" when the state is |0>.
-            p10 (float): Probability to report "0" when the state is |1>.
+            p01 (float): Probability to report "1" when the state is "0".
+            p10 (float): Probability to report "0" when the state is "1".
 
         Raises:
             ValueError: If any probability is outside [0, 1].
@@ -34,7 +34,7 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
 
     @property
     def p01(self) -> float:
-        """Return the probability of reporting "1" for a |0> state.
+        """Return the probability of reporting "1" for a "0" state.
 
         Returns:
             The p01 probability.
@@ -43,7 +43,7 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
 
     @property
     def p10(self) -> float:
-        """Return the probability of reporting "0" for a |1> state.
+        """Return the probability of reporting "0" for a "1" state.
 
         Returns:
             The p10 probability.
