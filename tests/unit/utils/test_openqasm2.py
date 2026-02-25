@@ -236,6 +236,38 @@ def test_two_qubit_parameterized_gate(monkeypatch):
     assert gate.get_parameter_values() == []
 
 
+def test_from_qasm2_parameter_expression_with_pi():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rz(1.8762128220396368*pi) q[0];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 1
+    assert len(circuit.gates) == 1
+    gate = circuit.gates[0]
+    assert gate.name == "RZ"
+    assert gate.qubits == (0,)
+    assert gate.get_parameter_values() == [pytest.approx(1.8762128220396368 * math.pi)]
+
+
+def test_from_qasm2_parameter_expression_with_function():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rx(sin(pi/2)) q[0];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert len(circuit.gates) == 1
+    gate = circuit.gates[0]
+    assert gate.name == "RX"
+    assert gate.get_parameter_values() == [pytest.approx(1.0)]
+
+
 def test_measurements_from_qasm():
     qasm_str = "\n".join(
         [

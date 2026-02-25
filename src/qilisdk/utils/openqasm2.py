@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import ast
+import math
 import re
 from pathlib import Path
 
@@ -34,6 +36,73 @@ OPENQASM2_MAP: dict[type[Gate], str] = {
     CNOT: "cx",
     CZ: "cz",
 }
+
+_ALLOWED_QASM2_FUNCTIONS = {
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "exp": math.exp,
+    "ln": math.log,
+    "sqrt": math.sqrt,
+}
+
+
+def _evaluate_qasm2_expression(expr: str) -> float:
+    """Safely evaluate a numeric OpenQASM 2.0 parameter expression."""
+    normalized_expr = expr.strip().replace("^", "**")
+    if not normalized_expr:
+        raise ValueError("Empty parameter expression.")
+    try:
+        parsed = ast.parse(normalized_expr, mode="eval")
+    except SyntaxError as error:
+        raise ValueError(f"Invalid parameter expression: {expr}") from error
+    return _evaluate_qasm2_ast(parsed.body, expr)
+
+
+def _evaluate_qasm2_ast(node: ast.AST, original_expr: str) -> float:
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+
+    if isinstance(node, ast.Name):
+        if node.id == "pi":
+            return math.pi
+        raise ValueError(f"Unsupported symbol in parameter expression: {original_expr}")
+
+    if isinstance(node, ast.BinOp):
+        left = _evaluate_qasm2_ast(node.left, original_expr)
+        right = _evaluate_qasm2_ast(node.right, original_expr)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        if isinstance(node.op, ast.Div):
+            return left / right
+        if isinstance(node.op, ast.Pow):
+            return left**right
+        raise ValueError(f"Unsupported operator in parameter expression: {original_expr}")
+
+    if isinstance(node, ast.UnaryOp):
+        operand = _evaluate_qasm2_ast(node.operand, original_expr)
+        if isinstance(node.op, ast.UAdd):
+            return operand
+        if isinstance(node.op, ast.USub):
+            return -operand
+        raise ValueError(f"Unsupported unary operator in parameter expression: {original_expr}")
+
+    if isinstance(node, ast.Call):
+        if not isinstance(node.func, ast.Name):
+            raise ValueError(f"Unsupported function in parameter expression: {original_expr}")
+        func = _ALLOWED_QASM2_FUNCTIONS.get(node.func.id)
+        if func is None:
+            raise ValueError(f"Unsupported function in parameter expression: {original_expr}")
+        if len(node.args) != 1 or node.keywords:
+            raise ValueError(f"Unsupported function signature in parameter expression: {original_expr}")
+        argument = _evaluate_qasm2_ast(node.args[0], original_expr)
+        return float(func(argument))
+
+    raise ValueError(f"Unsupported parameter expression: {original_expr}")
 
 
 def to_qasm2(circuit: Circuit) -> str:
@@ -154,7 +223,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
         #   Group 1: gate name (e.g., "h", "rx", "cx")
         #   Group 2: optional parameters (inside parentheses)
         #   Group 3: operand list (e.g., "q[0]" or "q[0], q[1]")
-        m = re.match(r"^(\w+)(?:\(([^)]*)\))?\s+(.+);", line)
+        m = re.match(r"^(\w+)(?:\((.*)\))?\s+(.+);", line)
         if m:
             qasm_gate_name = m.group(1)
             params_str = m.group(2)
@@ -172,7 +241,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
             # Parse parameters, if any.
             parameters = []
             if params_str:
-                parameters = [float(p.strip()) for p in params_str.split(",") if p.strip()]
+                parameters = [_evaluate_qasm2_expression(p) for p in params_str.split(",") if p.strip()]
 
             # Instantiate the gate based on the number of qubits.
             # For one-qubit gates.
