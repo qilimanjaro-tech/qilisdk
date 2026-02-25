@@ -307,9 +307,9 @@ class SpeQtrum:
         settings = get_settings()
         username = username or settings.speqtrum_username
         apikey = (
-            apikey or settings.speqtrum_apikey
-            if settings.speqtrum_apikey is None
-            else settings.speqtrum_apikey.get_secret_value()
+            apikey or settings.speqtrum_apikey.get_secret_value()
+            if settings.speqtrum_apikey is not None
+            else None
         )
 
         if not username or not apikey:
