@@ -48,7 +48,12 @@ _ALLOWED_QASM2_FUNCTIONS = {
 
 
 def _evaluate_qasm2_expression(expr: str) -> float:
-    """Safely evaluate a numeric OpenQASM 2.0 parameter expression."""
+    """Safely evaluate a numeric OpenQASM 2.0 parameter expression.
+    Raises:
+        ValueError: if the parameter expression in the input string is empty or the invalid.
+    Returns:
+        float: the parameter expression.
+    """
     normalized_expr = expr.strip().replace("^", "**")
     if not normalized_expr:
         raise ValueError("Empty parameter expression.")
@@ -57,6 +62,22 @@ def _evaluate_qasm2_expression(expr: str) -> float:
     except SyntaxError as error:
         raise ValueError(f"Invalid parameter expression: {expr}") from error
     return _evaluate_qasm2_ast(parsed.body, expr)
+
+
+def _evaluate_qasm2_ast_binary(node: ast.BinOp, original_expr: str) -> float:
+    left = _evaluate_qasm2_ast(node.left, original_expr)
+    right = _evaluate_qasm2_ast(node.right, original_expr)
+    if isinstance(node.op, ast.Add):
+        return left + right
+    if isinstance(node.op, ast.Sub):
+        return left - right
+    if isinstance(node.op, ast.Mult):
+        return left * right
+    if isinstance(node.op, ast.Div):
+        return left / right
+    if isinstance(node.op, ast.Pow):
+        return left**right
+    raise ValueError(f"Unsupported operator in parameter expression: {original_expr}")
 
 
 def _evaluate_qasm2_ast(node: ast.AST, original_expr: str) -> float:
@@ -69,19 +90,7 @@ def _evaluate_qasm2_ast(node: ast.AST, original_expr: str) -> float:
         raise ValueError(f"Unsupported symbol in parameter expression: {original_expr}")
 
     if isinstance(node, ast.BinOp):
-        left = _evaluate_qasm2_ast(node.left, original_expr)
-        right = _evaluate_qasm2_ast(node.right, original_expr)
-        if isinstance(node.op, ast.Add):
-            return left + right
-        if isinstance(node.op, ast.Sub):
-            return left - right
-        if isinstance(node.op, ast.Mult):
-            return left * right
-        if isinstance(node.op, ast.Div):
-            return left / right
-        if isinstance(node.op, ast.Pow):
-            return left**right
-        raise ValueError(f"Unsupported operator in parameter expression: {original_expr}")
+        return _evaluate_qasm2_ast_binary(node, original_expr)
 
     if isinstance(node, ast.UnaryOp):
         operand = _evaluate_qasm2_ast(node.operand, original_expr)
@@ -256,7 +265,9 @@ def from_qasm2(qasm_str: str) -> Circuit:
             elif len(qubits) == 2:  # noqa: PLR2004
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # ty: ignore[too-many-positional-arguments]
+                    gate_instance = gate_class(
+                        qubits[0], qubits[1], **param_dict
+                    )  # ty: ignore[too-many-positional-arguments]
                 else:
                     gate_instance = gate_class(qubits[0], qubits[1])  # ty: ignore[too-many-positional-arguments]
             else:
