@@ -1,3 +1,105 @@
+# qilisdk 0.1.9 (2026-02-25)
+
+## Features
+
+- Noise models are now supported in QiliSim. Usage is the same as with CudaBackend:
+  ```python
+  from qilisdk.digital import Circuit, X
+  from qilisdk.noise import NoiseModel, BitFlip
+  from qilisdk.functionals import Sampling
+  from qilisdk.backends import QiliSim
+
+  circuit = Circuit(nqubits=1)
+  circuit.add(X(0))
+
+  noise_model = NoiseModel()
+  noise_model.add(BitFlip(probability=0.5))
+
+  backend = QiliSim(noise_model=noise_model)
+  result = backend.execute(Sampling(circuit, nshots=100))
+  ``` ([PR #146](https://github.com/qilimanjaro-tech/qilisdk/pulls/146))
+- CUDA 13 is now officially supported alongside CUDA 12, and the optional dependency system has been refactored to support these mutually exclusive CUDA variants in a clean and explicit way. The internal optional-import mechanism now supports "ANY-of" dependency groups, allowing the `cuda` feature to be satisfied by either the CUDA 12 or CUDA 13 distribution. If neither is installed, CUDA symbols (e.g., `CudaBackend`) resolve to informative stubs that raise an `OptionalDependencyError` with clear installation instructions indicating the valid extras.
+
+  Two new mutually exclusive extras are introduced:
+
+  * `cuda12` → installs the CUDA 12 backend stack
+  * `cuda13` → installs the CUDA 13 backend stack
+
+  For convenience, aggregated extras are also provided:
+
+  * `all-cu12` → installs all optional features plus CUDA 12
+  * `all-cu13` → installs all optional features plus CUDA 13
+
+  For backwards compatibility, the legacy `cuda` and `all` specifiers are temporarily preserved and default to CUDA 12:
+
+  * `cuda` → aliases to `cuda12`
+  * `all` → equivalent to `all-cu12`
+
+  This ensures existing environments and CI pipelines continue to work unchanged while users transition to explicit CUDA version selection. Conflicts between incompatible extras (e.g., `cuda12` vs `cuda13`, `all-cu12` vs `all-cu13`) are enforced via `uv` configuration to prevent invalid combinations.
+
+  User installation examples:
+
+  * Core only (no CUDA):
+    `pip install qilisdk`
+
+  * CUDA 12 (explicit):
+    `pip install "qilisdk[cuda12]"`
+    or
+    `uv sync --extra cuda12`
+
+  * CUDA 13 (explicit):
+    `pip install "qilisdk[cuda13]"`
+    or
+    `uv sync --extra cuda13`
+
+  * Full stack with CUDA 12:
+    `pip install "qilisdk[all-cu12]"`
+    or
+    `uv sync --extra all-cu12`
+
+  * Full stack with CUDA 13:
+    `pip install "qilisdk[all-cu13]"`
+    or
+    `uv sync --extra all-cu13`
+
+  * Backwards-compatible installs (defaulting to CUDA 12):
+    `pip install "qilisdk[cuda]"`
+    `pip install "qilisdk[all]"`
+
+  Developer installation examples:
+
+  * Development + CUDA 12:
+    `uv sync --group dev --extra cuda12`
+    or
+    `pip install -e ".[dev,cuda12]"`
+
+  * Development + CUDA 13:
+    `uv sync --group dev --extra cuda13`
+    or
+    `pip install -e ".[dev,cuda13]"`
+
+  * Development without CUDA (CPU-only CI):
+    `uv sync --group dev`
+
+  ([PR #154](https://github.com/qilimanjaro-tech/qilisdk/pulls/154))
+
+## Bugfixes
+
+- Fixed a bug in the cuda backend with time evolution that was erasing information from the hamiltonian. ([PR #152](https://github.com/qilimanjaro-tech/qilisdk/pulls/152))
+- Fixed issues with empty elements in cuda hamiltonian that caused issues during simulation. ([PR #155](https://github.com/qilimanjaro-tech/qilisdk/pulls/155))
+- Fixed multiple backend issues in analog time evolution: CUDA now supports `QTensor` observables (via Hamiltonian conversion), CUDA Lindblad jump-operator dimension handling was corrected for global/per-qubit noise, and QiliSim now correctly applies Lindblad rates (`jump_operators_with_rates`) and expands global single-qubit jump operators per qubit so dephasing strength affects results as expected. ([PR #157](https://github.com/qilimanjaro-tech/qilisdk/pulls/157))
+- Fixed YAML serialization for `@yaml.register_class` objects so transient hash cache fields (`_hash_cache` and `_hash_chache`) are always dumped as `null` (`None`) without mutating the in-memory object state. ([PR #158](https://github.com/qilimanjaro-tech/qilisdk/pulls/158))
+- Reworked custom hashing to a deterministic `hashlib.blake2b`-based `qilisdk.utils.hashing.hash(...)` interface (no Python builtin hash dependency in the hashing pipeline), migrated Variable/Term/ComparisonTerm/QTensor/Hamiltonian/Pauli hashing to it, and added consistency tests for hashing behavior (stability, equality-consistency, and order-insensitive structures). ([PR #159](https://github.com/qilimanjaro-tech/qilisdk/pulls/159))
+
+## Improved Documentation
+
+- Fixed a bug in the documentation whereby titles could be hidden by a highlight after searching. ([PR #160](https://github.com/qilimanjaro-tech/qilisdk/pulls/160))
+
+## Misc
+
+- [PR #153](https://github.com/qilimanjaro-tech/qilisdk/pulls/153), [PR #161](https://github.com/qilimanjaro-tech/qilisdk/pulls/161)
+
+
 # qilisdk 0.1.8 (2026-02-03)
 
 ## Features
