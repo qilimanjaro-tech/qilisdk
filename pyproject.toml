@@ -78,12 +78,12 @@ all-cu13 = [
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.151.6",
+    "hypothesis>=6.151.9",
     "ipykernel>=7.2.0",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
-    "ruff>=0.15.0",
+    "ruff>=0.15.2",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
@@ -250,7 +250,7 @@ dummy-variable-rgx = "^_$"
 exclude = [".tmp", "docs/*"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
+"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012", "RUF069"]
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
