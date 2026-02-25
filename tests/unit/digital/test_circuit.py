@@ -22,7 +22,11 @@ import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
 from qilisdk.digital.circuit import _apply_gate_left
-from qilisdk.digital.exceptions import GateHasNoMatrixError, ParametersNotEqualError, QubitOutOfRangeError
+from qilisdk.digital.exceptions import (
+    GateHasNoMatrixError,
+    ParametersNotEqualError,
+    QubitOutOfRangeError,
+)
 from qilisdk.digital.gates import BasicGate, Gate
 
 
@@ -217,7 +221,7 @@ def test_set_parameter_values_incorrect():
     c.add(rz_gate)
 
     # circuit has 2 parameters total. Let's provide a list of length 3 instead.
-    with pytest.raises(ParametersNotEqualError):
+    with pytest.raises(ValueError, match=r"Provided 3 but this object has 2 parameters."):
         c.set_parameter_values([0.1, 0.2, 0.3])
 
 

@@ -570,6 +570,7 @@ class M(Gate):
             qubit (int): The qubit index to be measured.
         """
         self._target_qubits = qubits
+        super().__init__()
 
     @property
     def name(self) -> str:
