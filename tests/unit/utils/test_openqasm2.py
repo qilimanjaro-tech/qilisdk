@@ -277,7 +277,7 @@ def test_from_qasm2_rejects_deeper_parameter_nesting():
             "rx(sin(cos(pi))) q[0];",
         ]
     )
-    with pytest.raises(ValueError, match="nesting deeper than one level"):
+    with pytest.raises(ValueError, match=r"nesting deeper than 2 levels is not supported."):
         from_qasm2(qasm_str)
 
 
