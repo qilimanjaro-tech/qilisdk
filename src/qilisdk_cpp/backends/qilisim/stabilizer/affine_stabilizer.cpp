@@ -137,7 +137,7 @@ bool AffineStabilizerState::is_density_matrix() const {
 
 AffineStabilizerState AffineStabilizerState::as_expanded() const {
     /*
-    Expand each term in the stabilizer state, turning + into 0 and 1 etc. TODO
+    Expand each term in the stabilizer state, turning + into 0 and 1 etc.
     */
     AffineStabilizerState expanded_state = *this;
     AffineStabilizerState new_state;
@@ -191,9 +191,7 @@ AffineStabilizerState AffineStabilizerState::as_expanded() const {
     while (changed) {
         changed = false;
         for (auto& tuple : expanded_state.state) {
-            auto& ket_coeff = std::get<0>(tuple);
             auto& ket = std::get<1>(tuple);
-            auto& bra_coeff = std::get<2>(tuple);
             auto& bra = std::get<3>(tuple);
             for (size_t i = 0; i < ket.size(); ++i) {
                 if (ket[i].first == 's' || ket[i].first == 'd') {
@@ -262,6 +260,31 @@ AffineStabilizerState AffineStabilizerState::as_expanded() const {
                 }
                 if (all_one) {
                     ket_coeff.first *= std::complex<double>(0.0, 1.0);
+                }
+            }
+        }
+        for (const auto& [char_, indices] : bra_coeff.second) {
+            if (char_ == 'z') {
+                bool all_one = true;
+                for (int index : indices) {
+                    if (bra[index].first != '1') {
+                        all_one = false;
+                        break;
+                    }
+                }
+                if (all_one) {
+                    bra_coeff.first *= -1.0;
+                }
+            } else if (char_ == 'i') {
+                bool all_one = true;
+                for (int index : indices) {
+                    if (bra[index].first != '1') {
+                        all_one = false;
+                        break;
+                    }
+                }
+                if (all_one) {
+                    bra_coeff.first *= std::complex<double>(0.0, 1.0);
                 }
             }
         }
@@ -878,6 +901,20 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // X |di&j> = |si&j>
             } else if (target_char == 's' || target_char == 'd') {
                 target_char = (target_char == 's') ? 'd' : 's';
+                // add a global -1 for any linear phase that references this
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (indices.size() == 1 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        coeff.first *= -1.0;
+                    }
+                }
+                // add a z(other) for any quadratic phase that references this
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (indices.size() == 2 && indices.find(target_qubit) != indices.end() && char_ == 'z') {
+                        IndexSet other_indices = indices;
+                        other_indices.erase(target_qubit);
+                        coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', other_indices));
+                    }
+                }
             // X |+ s0> = |+ d0>
             // X z0 |+> = - z0 |+>
             // X z0&1 |+ s0> = z0&z1 z1 |+ s0>
@@ -969,6 +1006,8 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0&1 |+ +> = |s1 +>
             // H z0&1 z0&2 |+ + +> = | s1&2 + +>
             // H |+ s0> = z0&1 |+ +>
+            // H |+ d0> = z0 z0&1 |+ +> 
+            // H z0 |+ s0> = z0&1 z1 |+ +>
             // H |+ s0&2 +> = z0&1 z0&2 |+ + +>
             // H z0 |+ s0&2 +> = z1 z2 (z0&1 z0&2) |+ + +>
             // H z2 |+ s0&2 +> = z2 (z0&1 z0&2) |+ + +>
@@ -1005,10 +1044,12 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                     
                     // If so, it is now a plus too, and we add a phase
                     if (indices.find(target_qubit) != indices.end()) {
-                        char_ = '+';
                         phases_to_add.push_back(std::make_pair('z', IndexSet{target_qubit, int(i)}));
                         if (has_linear_phase) {
                             phases_to_add.push_back(std::make_pair('z', IndexSet{int(i)}));
+                            for (int other_qubit : quadratic_phase_other_qubits) {
+                                phases_to_add.push_back(std::make_pair('z', IndexSet{other_qubit, int(i)}));
+                            }
                         }
                         for (int other_index : quadratic_phase_other_qubits) {
                             phases_to_add.push_back(std::make_pair('z', IndexSet{other_index}));
@@ -1022,6 +1063,14 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                                 }
                             }
                         }
+                        // if it's a d, add a phase
+                        if (char_ == 'd') {
+                            phases_to_add.push_back(std::make_pair('z', IndexSet{int(target_qubit)}));
+                            if (has_linear_phase) {
+                                coeff.first *= -1.0;
+                            }
+                        }
+                        char_ = '+';
                         indices.clear();
                         has_reference = true;
                         break;
@@ -1057,16 +1106,23 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 }
 
             // H |s1 +> = z1 |+ +>
-            // H z0 |s1 +> = z0&1 z1 |+ +> TODO
-            // H z1 |s1 +> = z0&1 z1 |+ +> TODO
-            // H z0&1 |s1 +> = z0&1 z1 |+ +> TODO
-            // H z0 z1 |s1 +> = |+ +> TODO
-            // H |s1&2 + +> = (z0&1 z0&2) |+ + +> TODO
-            // H z2 |s1&2 + +> = z2 (z0&1 z0&2) |+ + +> TODO
-            // H z0 |s1&2 + +> = z1 z2 (z0&1 z0&2) |+ + +> TODO
-            // H z1&2 |s1&2 + +> = z1&2 (z0&1 z0&2) |+ + +> TODO
-            // H z0&2 |s1&2 + +> = z2 z1&2 (z0&1 z0&2) |+ + +> TODO
+            // H z0 |s1 +> = z0&1 z1 |+ +> 
+            // H z1 |s1 +> = z0&1 z1 |+ +> 
+            // H z0&1 |s1 +> = z0&1 z1 |+ +> 
+            // H z0 z1 |s1 +> = |+ +> 
+            // H |s1&2 + +> = (z0&1 z0&2) |+ + +>
+            // H z2 |s1&2 + +> = z2 (z0&1 z0&2) |+ + +>
+            // H z0 |s1&2 + +> = z1 z2 (z0&1 z0&2) |+ + +> 
+            // H z1&2 |s1&2 + +> = z1&2 (z0&1 z0&2) |+ + +> 
+            // H z0&2 |s1&2 + +> = z2 z1&2 (z0&1 z0&2) |+ + +>
+            // H z0&1 |s1&2 + +> = z1 z1&2 (z0&1 z0&2) |+ + +>
             } else if (target_char == 's' || target_char == 'd') {
+
+                // If acting on si, add zi
+                // If acting on si&j, add z0&i z0&j
+                // If acting on si&j and there is a linear phase on 0, add zi and zj
+                // If acting on si&j and there is a quadratic phase on k, add zk and zi&j
+                // If acting on si&j and there is a linear phase on i, add z0&i
 
                 // Check for linear phase
                 bool has_linear_phase = false;
@@ -1074,6 +1130,17 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                     if (char_ == 'z' && indices.size() == 1 && indices.find(target_qubit) != indices.end()) {
                         has_linear_phase = true;
                         break;
+                    }
+                }
+
+                // Check for linear phases on the referenced qubits
+                std::vector<int> linear_phase_other_qubits;
+                for (int index : target_indices) {
+                    for (const auto& [char_, indices] : coeff.second) {
+                        if (char_ == 'z' && indices.size() == 1 && indices.find(index) != indices.end()) {
+                            linear_phase_other_qubits.push_back(index);
+                            break;
+                        }
                     }
                 }
 
@@ -1087,10 +1154,35 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                     }
                 }
 
+                // Remove any phases that reference this
+                std::vector<std::pair<char, IndexSet>> to_remove;
+                for (const auto& [char_, indices] : coeff.second) {
+                    if (char_ == 'z' && indices.find(target_qubit) != indices.end()) {
+                        to_remove.push_back(std::make_pair(char_, indices));
+                    }
+                }
+                for (const auto& pair : to_remove) {
+                    coeff.first *= handle_insert_coeff(coeff.second, pair);
+                }
+
                 // Add the phase
                 for (int index : target_indices) {
-                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{index}));
+                    coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit, index}));
                 }
+                if (has_linear_phase) {
+                    for (int index : target_indices) {
+                        coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{index}));
+                    }
+                }
+                for (int other_qubit : quadratic_phase_other_qubits) {
+                    // coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{other_qubit}));
+                    for (int index : target_indices) {
+                        coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{other_qubit, index}));
+                    }
+                }
+                // for (int index : linear_phase_other_qubits) {
+                //     coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit, index}));
+                // }
 
                 // It will always then be a free variable
                 target_char = '+';
@@ -1154,6 +1246,8 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 } else if (target_char == 's' || target_char == 'd') {
                     handle_insert_basis(target_indices, control_qubit, target_char);
                 // CNOT |+ +> = |+ +>
+                // CNOT z1 |+ +> = z1 z0 z0&1 |+ +> TODO
+                // CNOT z0 |+ +> = z1 |+ +> TODO
                 // CNOT |+ + s1> = |+ + s0&1>
                 } else if (target_char == '+') {
                     // find anything in the basis that references this and add the control to it
@@ -1180,6 +1274,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                 // CNOT |s1 + s1> = |+ 0 s0>
                 // CNOT |s1&2 + +> = |+ s2 +>
                 // CNOT |d1 +> = |+ 0>
+                // CNOT z1 |s1 +> = z0 |s1 0>
                 } else if (target_char == '+') {
                     bool control_was_s = (control_char == 's');
                     bool self_reference = control_indices.find(target_qubit) != control_indices.end();
@@ -1205,11 +1300,12 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                                 // Anything that referenced the target should now reference the control
                                 for (auto& [char_, indices] : ket) {
                                     if ((char_ == 's' || char_ == 'd') && indices.find(target_qubit) != indices.end()) {
-                                        // if (!control_was_s) {
-                                        //     char_ = (char_ == 's') ? 'd' : 's';
-                                        // }
-                                        // indices.erase(target_qubit);
                                         handle_insert_basis(indices, control_qubit, char_);
+                                    }
+                                }
+                                for (const auto& [char_, indices] : coeff.second) {
+                                    if (indices.find(target_qubit) != indices.end()) {
+                                        handle_insert_coeff(coeff.second, std::make_pair(char_, IndexSet{control_qubit}));
                                     }
                                 }
 
@@ -1321,6 +1417,33 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
                     }
                 }
             }
+        }
+
+        // Make sure any phases that can evaluate, do
+        // e.g. z0 |1> should become -|1>
+        std::vector<std::pair<char, IndexSet>> to_remove;
+        for (const auto& [char_, indices] : coeff.second) {
+            if (char_ == 'z' || char_ == 'i') {
+                bool applies = true;
+                for (int index : indices) {
+                    auto& char_ = std::get<0>(ket[index]);
+                    if (char_ != '1') {
+                        applies = false;
+                        break;
+                    }
+                }
+                if (applies) {
+                    if (char_ == 'z') {
+                        coeff.first *= -1.0;
+                    } else {
+                        coeff.first *= std::complex<double>(0.0, 1.0);
+                    }
+                    to_remove.push_back(std::make_pair(char_, indices));
+                }
+            }
+        }
+        for (const auto& pair : to_remove) {
+            coeff.first *= handle_insert_coeff(coeff.second, pair);
         }
 
     }
