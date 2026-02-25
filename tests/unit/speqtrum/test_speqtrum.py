@@ -537,7 +537,9 @@ def test_login_http_error(monkeypatch) -> None:
     monkeypatch.setattr(
         speqtrum,
         "get_settings",
-        lambda: SimpleNamespace(speqtrum_api_url="https://mock.api", speqtrum_audience="audience"),
+        lambda: SimpleNamespace(
+            speqtrum_api_url="https://mock.api", speqtrum_audience="audience", speqtrum_apikey=None
+        ),
     )
 
     # httpsx.Client.post will raise HTTPStatusError
