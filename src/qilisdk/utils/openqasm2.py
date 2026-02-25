@@ -122,7 +122,7 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
         tuple[str, str | None, str] | None: the gate name, the string representing the parameter if available, and the rest.
 
     Raises:
-        ValueError: if the parameter expression is nested for deeper than one level, or the expression is invalid.
+        ValueError: if the parameter expression is nested for deeper than the max depth allowed, or the expression is invalid.
     """
     if not line.endswith(";"):
         return None
@@ -145,7 +145,7 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
             if char == "(":
                 depth += 1
                 if depth > _MAX_DEPTH:
-                    raise ValueError("Parameter expression nesting deeper than one level is not supported.")
+                    raise ValueError(f"Parameter expression nesting deeper than {_MAX_DEPTH} levels is not supported.")
             elif char == ")":
                 depth -= 1
                 if depth < 0:
@@ -312,7 +312,9 @@ def from_qasm2(qasm_str: str) -> Circuit:
             elif len(qubits) == 2:  # noqa: PLR2004
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # ty: ignore[too-many-positional-arguments]
+                    gate_instance = gate_class(
+                        qubits[0], qubits[1], **param_dict
+                    )  # ty: ignore[too-many-positional-arguments]
                 else:
                     gate_instance = gate_class(qubits[0], qubits[1])  # ty: ignore[too-many-positional-arguments]
             else:
