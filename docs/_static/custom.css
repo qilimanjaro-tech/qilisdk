@@ -14,6 +14,11 @@
   src: url("PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype-variations");
 }
 
+/* No search term highlighting of the titles */
+h1 span.highlighted, h2 span.highlighted, h3 span.highlighted, h4 span.highlighted, h5 span.highlighted, h6 span.highlighted {
+    background-color: transparent;
+}
+
 html, body {
   font-family: "Plus Jakarta Sans", sans-serif !important;
 }
