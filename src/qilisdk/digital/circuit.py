@@ -26,7 +26,7 @@ from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
+from .exceptions import QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
@@ -163,8 +163,6 @@ class Circuit(Parameterizable):
         Raises:
             ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
-        if len(values) != len(self.get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)):
-            raise ParametersNotEqualError
         super().set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:

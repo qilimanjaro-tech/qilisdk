@@ -82,7 +82,7 @@ class QTensor:
             density = ket * ket.adjoint()
     """
 
-    _MAX_RESERVOIR_STATE_CORRECTION = 1e-2
+    _MAX_STATE_CORRECTION = 1e-2
 
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """
@@ -448,7 +448,7 @@ class QTensor:
             raise ValueError("Cannot normalize density matrix with zero trace.")
         return QTensor(rho.data / tr)  # keep it sparse
 
-    def repair_density_matrix(self, max_relative_correction: float = _MAX_RESERVOIR_STATE_CORRECTION) -> QTensor:
+    def repair_density_matrix(self, max_relative_correction: float = _MAX_STATE_CORRECTION) -> QTensor:
         """
         Repair a state into a valid density matrix when numerical drift is present.
 

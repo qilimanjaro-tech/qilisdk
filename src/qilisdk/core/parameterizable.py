@@ -42,7 +42,7 @@ class Parameterizable(ABC):
 
     def _iter_parameter_items(self) -> Iterable[tuple[str, Parameter]]:
         """Yield ``(label, parameter)`` items exposed by this object."""
-        local_params = getattr(self, "_parameters", {})
+        local_params = self._parameters or {}
         yield from local_params.items()
         for child in self._iter_parameter_children():
             yield from child._iter_parameter_items()  # noqa: SLF001
@@ -201,7 +201,7 @@ class Parameterizable(ABC):
         Returns:
             list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.
         """
-        constraints = list(getattr(self, "_parameter_constraints", []))
+        constraints = list((self._parameter_constraints or []))
         for child in self._iter_parameter_children():
             constraints.extend(child.get_constraints())
         return constraints

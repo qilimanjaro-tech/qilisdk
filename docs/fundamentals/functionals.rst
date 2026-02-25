@@ -214,8 +214,6 @@ or more observables. The optional ``qubits_to_reset`` list can be used to reset 
 The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
 These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
 be driven by input data sequences rather than optimization loops.
-Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_backend.CudaBackend` and
-:class:`~qilisdk.backends.qutip_backend.QutipBackend`.
 
 **Parameters**
 
@@ -224,8 +222,8 @@ Quantum reservoir execution is supported by the :class:`~qilisdk.backends.cuda_b
   reservoir dynamics, observables, and reset policy.
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
   (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
-- **store_final_state** (bool, optional): Store the final state after the last layer.
-- **store_intermediate_states** (bool, optional): Store the state after each layer.
+- **store_final_state** (bool, optional): Whether to store the final state after the last layer. 
+- **store_intermediate_states** (bool, optional): Whether to store the state after each layer.  
 - **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
 
 **Returns**

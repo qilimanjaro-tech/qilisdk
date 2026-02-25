@@ -57,14 +57,12 @@ class ReservoirInput(Parameter):
             trainable=False,
         )
 
-    __hash__ = Parameter.__hash__
-
 
 class ReservoirLayer(Parameterizable):
     """Single reservoir layer template.
 
     A reservoir layer can contain up to three ordered stages:
-    ``pre_processing -> reservoir_dynamics -> post_processing``.
+    ``input_encoding -> evolution_dynamics -> output_encoding``.
     It also stores the observables measured after each layer and optional qubits to reset.
     """
 
