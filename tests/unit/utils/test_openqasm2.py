@@ -268,6 +268,18 @@ def test_from_qasm2_parameter_expression_with_function():
     assert gate.get_parameter_values() == [pytest.approx(1.0)]
 
 
+def test_from_qasm2_rejects_deeper_parameter_nesting():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rx(sin(cos(pi))) q[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="nesting deeper than one level"):
+        from_qasm2(qasm_str)
+
+
 def test_measurements_from_qasm():
     qasm_str = "\n".join(
         [

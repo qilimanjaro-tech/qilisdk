@@ -114,6 +114,55 @@ def _evaluate_qasm2_ast(node: ast.AST, original_expr: str) -> float:
     raise ValueError(f"Unsupported parameter expression: {original_expr}")
 
 
+def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
+    """Parse a QASM gate line with bounded parenthesis nesting.
+    Returns:
+        tuple[str, str | None, str] | None: the gate name, the string representing the parameter if available, and the rest.
+
+    Raises:
+        ValueError: if the parameter expression is nested for deeper than one level, or the expression is invalid.
+    """
+    if not line.endswith(";"):
+        return None
+
+    body = line[:-1].strip()
+    if not body:
+        return None
+
+    name_match = re.match(r"^(\w+)", body)
+    if name_match is None:
+        return None
+    gate_name = name_match.group(1)
+    rest = body[name_match.end() :].strip()
+
+    params_str = None
+    if rest.startswith("("):
+        depth = 0
+        closing_index = None
+        for index, char in enumerate(rest):
+            if char == "(":
+                depth += 1
+                if depth > 2:
+                    raise ValueError("Parameter expression nesting deeper than one level is not supported.")
+            elif char == ")":
+                depth -= 1
+                if depth < 0:
+                    raise ValueError(f"Invalid gate syntax: {line}")
+                if depth == 0:
+                    closing_index = index
+                    break
+
+        if closing_index is None:
+            raise ValueError(f"Unclosed parameter expression in gate: {line}")
+        params_str = rest[1:closing_index].strip()
+        rest = rest[closing_index + 1 :].strip()
+
+    if not rest:
+        return None
+
+    return gate_name, params_str, rest
+
+
 def to_qasm2(circuit: Circuit) -> str:
     """
     Convert the circuit to an OpenQASM 2.0 formatted string.
@@ -193,6 +242,8 @@ def from_qasm2(qasm_str: str) -> Circuit:
     lines = qasm_str.splitlines()
     for raw_line in lines:
         line = raw_line.strip()
+        if "//" in line:
+            line = line.split("//", 1)[0].strip()
         if not line or line.startswith("//"):
             continue
         # Skip header and include lines.
@@ -228,15 +279,9 @@ def from_qasm2(qasm_str: str) -> Circuit:
                     circuit.add(M(*list(range(circuit.nqubits))))
             continue
         # Process gate instructions.
-        # Pattern breakdown:
-        #   Group 1: gate name (e.g., "h", "rx", "cx")
-        #   Group 2: optional parameters (inside parentheses)
-        #   Group 3: operand list (e.g., "q[0]" or "q[0], q[1]")
-        m = re.match(r"^(\w+)(?:\((.*)\))?\s+(.+);", line)
-        if m:
-            qasm_gate_name = m.group(1)
-            params_str = m.group(2)
-            operands_str = m.group(3)
+        gate_data = _parse_qasm2_gate_line(line)
+        if gate_data:
+            qasm_gate_name, params_str, operands_str = gate_data
 
             # Convert QASM gate name to internal gate name.
             gate_class = reverse_qasm2_map.get(qasm_gate_name.lower())
@@ -265,7 +310,9 @@ def from_qasm2(qasm_str: str) -> Circuit:
             elif len(qubits) == 2:  # noqa: PLR2004
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # ty: ignore[too-many-positional-arguments]
+                    gate_instance = gate_class(
+                        qubits[0], qubits[1], **param_dict
+                    )  # ty: ignore[too-many-positional-arguments]
                 else:
                     gate_instance = gate_class(qubits[0], qubits[1])  # ty: ignore[too-many-positional-arguments]
             else:
