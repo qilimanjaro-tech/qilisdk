@@ -46,6 +46,8 @@ _ALLOWED_QASM2_FUNCTIONS = {
     "sqrt": math.sqrt,
 }
 
+_MAX_DEPTH = 2
+
 
 def _evaluate_qasm2_expression(expr: str) -> float:
     """Safely evaluate a numeric OpenQASM 2.0 parameter expression.
@@ -142,7 +144,7 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
         for index, char in enumerate(rest):
             if char == "(":
                 depth += 1
-                if depth > 2:
+                if depth > _MAX_DEPTH:
                     raise ValueError("Parameter expression nesting deeper than one level is not supported.")
             elif char == ")":
                 depth -= 1
@@ -310,9 +312,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
             elif len(qubits) == 2:  # noqa: PLR2004
                 if gate_class.PARAMETER_NAMES:
                     param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(
-                        qubits[0], qubits[1], **param_dict
-                    )  # ty: ignore[too-many-positional-arguments]
+                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # ty: ignore[too-many-positional-arguments]
                 else:
                     gate_instance = gate_class(qubits[0], qubits[1])  # ty: ignore[too-many-positional-arguments]
             else:
