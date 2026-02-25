@@ -24,7 +24,6 @@ from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import (
     GateHasNoMatrixError,
-    ParametersNotEqualError,
     QubitOutOfRangeError,
 )
 from qilisdk.digital.gates import BasicGate, Gate
