@@ -35,8 +35,8 @@ void QiliSimConfig::validate() const {
     if (time_evolution_method != "arnoldi" && time_evolution_method != "integrate" && time_evolution_method != "direct") {
         throw py::value_error("Evolution method must be one of 'arnoldi', 'integrate', or 'direct'.");
     }
-    if (sampling_method != "statevector" && sampling_method != "stabilizer") {
-        throw py::value_error("Sampling method must be one of 'statevector' or 'stabilizer'.");
+    if (sampling_method != "statevector" && sampling_method != "stabilizer" && sampling_method != "matrix_free") {
+        throw py::value_error("Sampling method must be one of 'statevector', 'stabilizer' or 'matrix_free'.");
     }
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");

@@ -89,6 +89,17 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         if (n_qubits <= 5) {
             state_dense = state_stabilizer.as_dense();
         }
+    } else if (config.get_sampling_method() == "matrix_free") {
+        SparseMatrix initial_state_cpp;
+        if (initial_state.is_none()) {
+            long dim = 1L << n_qubits;
+            initial_state_cpp = SparseMatrix(dim, 1);
+            initial_state_cpp.coeffRef(0, 0) = 1.0;
+            initial_state_cpp.makeCompressed();
+        } else {
+            initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
+        }
+        sampling_matrix_free(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
     } else {
         SparseMatrix initial_state_cpp;
         if (initial_state.is_none()) {

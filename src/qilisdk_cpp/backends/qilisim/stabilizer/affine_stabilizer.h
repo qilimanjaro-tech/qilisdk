@@ -41,6 +41,7 @@ class AffineStabilizerState {
         //  - i1 = i if q[1], else 1
         //  - i1&2 = i if q[1] and q[2], else 1
         State state;
+        std::unordered_map<std::string, int> basis_indices;
 
     public:
         
@@ -57,6 +58,9 @@ class AffineStabilizerState {
         bool empty() const;
         int n_qubits() const;
         size_t size() const;
+        void add_ket(const StateCoefficient& coeff, const StateBasis& ket);
+        void add_bra(const StateCoefficient& coeff, const StateBasis& bra);
+        void add_element(const StateCoefficient& coeff, const StateBasis& ket, const StateCoefficient& bra_coeff, const StateBasis& bra);
 
         DenseMatrix as_dense() const;
         AffineStabilizerState as_expanded() const;
@@ -86,9 +90,11 @@ class AffineStabilizerOperator {
         std::string name;
         int target_qubit;
         int control_qubit;
+        DenseMatrix base_matrix;
     public:
         AffineStabilizerOperator(const Gate& gate);
         void apply(AffineStabilizerState& output_state) const;
+        void apply(DenseMatrix& output_state) const;
         AffineStabilizerState operator*(const AffineStabilizerState& input_state) const;
         friend std::ostream& operator<<(std::ostream& os, const AffineStabilizerOperator& mfo);
 };
