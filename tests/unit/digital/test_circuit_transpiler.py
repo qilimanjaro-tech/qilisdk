@@ -13,15 +13,67 @@
 # limitations under the License.
 
 
-from qilisdk.digital import CNOT, Circuit
+from qilisdk.digital import CNOT, Circuit, X
 from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+from qilisdk.digital.circuit_transpiler_passes import CancelIdentityPairsPass
+from qilisdk.digital.gates import Controlled, Gate
+
+from .circuit_transpiler_passes.utils import _sequences_equivalent
 
 
-def test_circuit_transpiler_qaoa():
+def _describe_gate(gate: Gate) -> tuple[str, tuple[int, ...], tuple[float, ...]]:
+    return (type(gate).__name__, gate.qubits, tuple(gate.get_parameter_values()))
+
+
+def _describe_circuit(circuit: Circuit) -> list[tuple[str, tuple[int, ...], tuple[float, ...]]]:
+    return [_describe_gate(gate) for gate in circuit.gates]
+
+
+def test_circuit_transpiler_preserves_semantics_for_simple_circuit() -> None:
     circuit = Circuit(2)
     circuit.add(CNOT(0, 1))
+
     transpiler = CircuitTranspiler()
     transpiled_circuit = transpiler.transpile(circuit)
+
+    assert transpiled_circuit is not circuit
     assert transpiled_circuit.nqubits == circuit.nqubits
     assert len(transpiled_circuit.gates) == len(circuit.gates)
-    assert transpiled_circuit.gates[0] == circuit.gates[0]
+    assert type(transpiled_circuit.gates[0]) is type(circuit.gates[0])
+    assert transpiled_circuit.gates[0].qubits == circuit.gates[0].qubits
+    assert _sequences_equivalent(circuit.gates, transpiled_circuit.gates, circuit.nqubits)
+
+
+def test_circuit_transpiler_does_not_mutate_input_circuit() -> None:
+    circuit = Circuit(1)
+    circuit.add(X(0))
+    circuit.add(X(0))
+    original_snapshot = _describe_circuit(circuit)
+
+    transpiled_circuit = CircuitTranspiler().transpile(circuit)
+
+    assert _describe_circuit(circuit) == original_snapshot
+    assert transpiled_circuit.gates == []
+
+
+def test_circuit_transpiler_default_pipeline_decomposes_multi_controlled_gates() -> None:
+    circuit = Circuit(3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+
+    transpiled_circuit = CircuitTranspiler().transpile(circuit)
+
+    for gate in transpiled_circuit.gates:
+        if isinstance(gate, Controlled):
+            assert len(gate.control_qubits) <= 1
+    assert _sequences_equivalent(circuit.gates, transpiled_circuit.gates, circuit.nqubits)
+
+
+def test_circuit_transpiler_accepts_custom_pipeline() -> None:
+    circuit = Circuit(3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+
+    transpiled_circuit = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).transpile(circuit)
+
+    assert len(transpiled_circuit.gates) == 1
+    assert isinstance(transpiled_circuit.gates[0], Controlled)
+    assert len(transpiled_circuit.gates[0].control_qubits) == 2

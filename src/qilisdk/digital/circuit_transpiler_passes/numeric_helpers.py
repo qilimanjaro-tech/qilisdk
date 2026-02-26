@@ -84,3 +84,26 @@ def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
     ph = np.angle(w)
     sqrt_w = np.exp(0.5j * ph)
     return V @ np.diag(sqrt_w) @ np.linalg.inv(V)
+
+
+def _is_close_mod_2pi(a: float, b: float, eps: float = _EPS) -> bool:
+    return abs(_wrap_angle(a - b)) < eps
+
+
+def _mat_RZ(phi: float) -> np.ndarray:
+    return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
+
+
+def _mat_RY(theta: float) -> np.ndarray:
+    c, s = math.cos(theta / 2.0), math.sin(theta / 2.0)
+    return np.array([[c, -s], [s, c]], dtype=complex)
+
+
+def _mat_RX(theta: float) -> np.ndarray:
+    c, s = math.cos(theta / 2.0), -1j * math.sin(theta / 2.0)
+    return np.array([[c, s], [s, c]], dtype=complex)
+
+
+def _mat_U3(theta: float, phi: float, lam: float) -> np.ndarray:
+    # Convention: U3(θ, φ, λ) = RZ(φ) · RY(θ) · RZ(λ)
+    return _mat_RZ(phi) @ _mat_RY(theta) @ _mat_RZ(lam) * np.exp(0.5j * (phi + lam), dtype=complex)

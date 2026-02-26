@@ -132,6 +132,7 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
 
     # Self-inverse (involution) gate classes we recognize cheaply
     _INVOLUTION_TYPES: ClassVar[tuple[type[Gate], ...]] = (H, X, Y, Z, CNOT, CZ, SWAP)
+    _SYMMETRIC_TWO_QUBIT_ARITY: ClassVar[int] = 2
 
     def run(self, circuit: Circuit) -> Circuit:
         """Cancel inverse gate pairs until no more cancellations are possible.
@@ -195,7 +196,8 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
 
     # ----------------- key builders -----------------
 
-    def _qubits_key(self, g: Gate) -> tuple[int, ...]:
+    @staticmethod
+    def _qubits_key(g: Gate) -> tuple[int, ...]:
         """Build the qubit key used for candidate matching.
 
         Args:
@@ -207,7 +209,7 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
                 order is preserved.
         """
         qs = g.qubits
-        if isinstance(g, (CZ, SWAP)) and len(qs) == 2:
+        if isinstance(g, (CZ, SWAP)) and len(qs) == CancelIdentityPairsPass._SYMMETRIC_TWO_QUBIT_ARITY:
             a, b = qs
             return (a, b) if a < b else (b, a)
         # For Controlled (non-CZ), direction matters, so keep order (controls then targets)
@@ -280,7 +282,8 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
         f_inv = self._matrix_keys(g)
         return f_inv
 
-    def _matrix_keys(self, g: Gate) -> tuple[Any | None, Any | None]:
+    @staticmethod
+    def _matrix_keys(g: Gate) -> tuple[Any | None, Any | None]:
         """Build matrix-derived fallback keys for generic gates.
 
         Args:

@@ -38,7 +38,7 @@ class CircuitTranspiler:
     def __init__(self, pipeline: list[CircuitTranspilerPass] | None = None) -> None:
         self._pipeline: list[CircuitTranspilerPass] = pipeline or [
             CancelIdentityPairsPass(),
-            DecomposeMultiControlledGatesPass()
+            DecomposeMultiControlledGatesPass(),
         ]
 
         self._context = TranspilationContext()

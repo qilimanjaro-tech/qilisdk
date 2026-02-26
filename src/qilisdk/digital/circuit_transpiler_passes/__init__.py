@@ -17,4 +17,9 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
 from .transpilation_context import TranspilationContext
 
-__all__ = ["CancelIdentityPairsPass", "CircuitTranspilerPass", "DecomposeMultiControlledGatesPass", "TranspilationContext"]
+__all__ = [
+    "CancelIdentityPairsPass",
+    "CircuitTranspilerPass",
+    "DecomposeMultiControlledGatesPass",
+    "TranspilationContext",
+]
