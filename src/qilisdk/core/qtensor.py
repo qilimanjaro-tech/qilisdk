@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from copy import copy
 from typing import TYPE_CHECKING, Iterable, Literal
 
 import numpy as np
@@ -755,17 +754,34 @@ def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
             f"Invalid qubit indices in `qubits_to_reset`: {invalid_qubits}. Valid range is [0, {state.nqubits - 1}]."
         )
 
-    aux_state = copy(state)
-    zero = ket(0).to_density_matrix()
-    for qubit in unique_qubits:
-        part_1 = []
-        part_2 = []
-        for avail_qubit in range(aux_state.nqubits):
-            if qubit > avail_qubit:
-                part_1.append(avail_qubit)
-            elif qubit < avail_qubit:
-                part_2.append(avail_qubit)
-        state_part_1 = aux_state.ptrace(part_1)
-        state_part_2 = aux_state.ptrace(part_2)
-        aux_state = tensor_prod([state_part_1, zero, state_part_2])
-    return aux_state
+    full_nqubits = state.nqubits
+    qubits_to_reset_set = set(unique_qubits)
+    rest_qubits = [q for q in range(full_nqubits) if q not in qubits_to_reset_set]
+    rest_state = state.ptrace(keep=rest_qubits)
+
+    rest_coo = rest_state.data.tocoo()
+    out_dim = 1 << full_nqubits
+    if rest_coo.nnz == 0:
+        return QTensor(csr_matrix((out_dim, out_dim)))
+
+    if rest_qubits:
+        nnz = rest_coo.nnz
+        rest_dims = [2] * len(rest_qubits)
+        full_dims = [2] * full_nqubits
+
+        row_digits_rest = np.vstack(np.unravel_index(rest_coo.row, rest_dims))
+        col_digits_rest = np.vstack(np.unravel_index(rest_coo.col, rest_dims))
+        row_digits_full = np.zeros((full_nqubits, nnz), dtype=int)
+        col_digits_full = np.zeros((full_nqubits, nnz), dtype=int)
+        row_digits_full[rest_qubits, :] = row_digits_rest
+        col_digits_full[rest_qubits, :] = col_digits_rest
+
+        out_row = np.ravel_multi_index(row_digits_full, full_dims)
+        out_col = np.ravel_multi_index(col_digits_full, full_dims)
+    else:
+        out_row = np.zeros(rest_coo.nnz, dtype=int)
+        out_col = np.zeros(rest_coo.nnz, dtype=int)
+
+    out = coo_matrix((rest_coo.data, (out_row, out_col)), shape=(out_dim, out_dim))
+    out.sum_duplicates()
+    return QTensor(out.tocsr())

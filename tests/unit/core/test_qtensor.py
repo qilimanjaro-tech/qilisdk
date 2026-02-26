@@ -582,6 +582,16 @@ def test_reset_qubits_resets_each_requested_qubit():
     np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
 
 
+def test_reset_qubits_preserves_rest_qubits_coherence_and_order():
+    state = (ket(0, 1, 0) + ket(1, 1, 1)) * (1 / np.sqrt(2))
+    state = state.to_density_matrix()
+
+    reset_state = reset_qubits(state, [1])
+    expected = ((ket(0, 0, 0) + ket(1, 0, 1)) * (1 / np.sqrt(2))).to_density_matrix()
+
+    np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
+
+
 def test_reset_qubits_invalid_indices_raise():
     state = ket(1, 0).to_density_matrix()
     with pytest.raises(ValueError, match="Invalid qubit indices"):
