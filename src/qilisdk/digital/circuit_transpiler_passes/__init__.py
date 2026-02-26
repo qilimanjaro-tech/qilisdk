@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .cancel_identity_pairs_pass import CancelIdentityPairsPass
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
+from .transpilation_context import TranspilationContext
 
-__all__ = ["CircuitTranspilerPass", "DecomposeMultiControlledGatesPass"]
+__all__ = ["CancelIdentityPairsPass", "CircuitTranspilerPass", "DecomposeMultiControlledGatesPass", "TranspilationContext"]

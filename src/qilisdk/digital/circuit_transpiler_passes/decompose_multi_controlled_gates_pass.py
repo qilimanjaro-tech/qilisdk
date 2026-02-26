@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import math
-from typing import List, TypeGuard
+from typing import TypeGuard
 
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, Gate, H, I, S, T, X, Y, Z
 from qilisdk.digital.gates import BasicGate, Controlled
@@ -52,7 +52,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
 
         return out
 
-    def _rewrite_gate(self, gate: Gate) -> List[Gate]:  # noqa: PLR6301
+    def _rewrite_gate(self, gate: Gate) -> list[Gate]:  # noqa: PLR6301
         """Expand unsupported gates into equivalent elementary gates.
 
         Args:
@@ -72,7 +72,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
         return [gate]
 
 
-def _decompose(gate: Controlled) -> List[Gate]:
+def _decompose(gate: Controlled) -> list[Gate]:
     """Recursively decompose a multi-controlled single-qubit gate.
 
     Args:
@@ -89,7 +89,7 @@ def _decompose(gate: Controlled) -> List[Gate]:
     v = _sqrt_of(gate.basic_gate)
     v_adjoint = _adjoint_of(v)
 
-    seq: List[Gate] = []
+    seq: list[Gate] = []
     seq += _decompose(Controlled(c_last, basic_gate=v))
     seq += _decompose(X(c_last).controlled(*rest))
     seq += _decompose(Controlled(c_last, basic_gate=v_adjoint))

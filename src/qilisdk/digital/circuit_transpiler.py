@@ -13,7 +13,12 @@
 # limitations under the License.
 from qilisdk.digital import Circuit
 
-from .circuit_transpiler_passes import CircuitTranspilerPass, DecomposeMultiControlledGatesPass
+from .circuit_transpiler_passes import (
+    CancelIdentityPairsPass,
+    CircuitTranspilerPass,
+    DecomposeMultiControlledGatesPass,
+    TranspilationContext,
+)
 
 
 class CircuitTranspiler:
@@ -31,7 +36,15 @@ class CircuitTranspiler:
     """
 
     def __init__(self, pipeline: list[CircuitTranspilerPass] | None = None) -> None:
-        self._pipeline = pipeline or [DecomposeMultiControlledGatesPass()]
+        self._pipeline: list[CircuitTranspilerPass] = pipeline or [
+            CancelIdentityPairsPass(),
+            DecomposeMultiControlledGatesPass()
+        ]
+
+        self._context = TranspilationContext()
+
+        for p in self._pipeline:
+            p.attach_context(self._context)
 
     def transpile(self, circuit: Circuit) -> Circuit:
         """Run the configured pass pipeline over the provided circuit.

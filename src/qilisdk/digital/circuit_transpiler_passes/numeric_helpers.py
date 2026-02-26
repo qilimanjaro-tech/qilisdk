@@ -21,6 +21,10 @@ _EPS = 1e-12
 _SIG_DECIMALS = 12
 
 
+def _round_float(x: float, d: int = _SIG_DECIMALS) -> float:
+    return 0.0 if abs(x) < _EPS else round(x, d)
+
+
 def _wrap_angle(angle: float) -> float:
     """Wrap an angle to the (-pi, pi] range.
 
