@@ -33,6 +33,7 @@ dependencies = [
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
     "mkl-service>=2.6.1; sys_platform != 'darwin'",
+    "rustworkx>=0.17.1",
 ]
 
 [project.optional-dependencies]
