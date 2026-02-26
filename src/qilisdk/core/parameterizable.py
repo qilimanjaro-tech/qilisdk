@@ -58,7 +58,10 @@ class Parameterizable(ABC):
         Args:
             prefix (str): the prefix to be set.
         """
-        old_keys: list[str] = [key for key, value in self._parameters.items() if parameter_filter(value)]
+        if parameter_filter:
+            old_keys: list[str] = [key for key, value in self._parameters.items() if parameter_filter(value)]
+        else:
+            old_keys: list[str] = list(self._parameters.keys())
         for name in old_keys:
             if not name.startswith(prefix):
                 _name = name.removeprefix(self._prefix) if self._prefix and name.startswith(self._prefix) else name
