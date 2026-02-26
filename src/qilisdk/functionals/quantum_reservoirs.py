@@ -130,8 +130,9 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in pre_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
-        self._input_encoding = Circuit(self._nqubits, parameter_prefix="input_encoding_")
+        self._input_encoding = Circuit(self._nqubits)
         self._input_encoding.add(pre_processing.gates)
+        self._input_encoding.set_prefix("input_encoding_", parameter_filter=lambda p: not isinstance(p, ReservoirInput))
 
     def _validate_output_encoding(self, post_processing: Circuit) -> None:
         """Validate and normalize the optional post-processing circuit.
@@ -146,8 +147,11 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
         if any(g.nqubits > 1 for g in post_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
-        self._output_encoding = Circuit(self._nqubits, parameter_prefix="output_encoding_")
+        self._output_encoding = Circuit(self._nqubits)
         self._output_encoding.add(post_processing.gates)
+        self._output_encoding.set_prefix(
+            "output_encoding_", parameter_filter=lambda p: not isinstance(p, ReservoirInput)
+        )
 
     def _process_qtensor(self, observable: QTensor) -> QTensor:
         """Pad observable tensors with identities to match the reservoir width.
@@ -172,7 +176,7 @@ class ReservoirLayer(Parameterizable):
     def input_parameter_names(self) -> list[str]:
         """Return parameter names that are input-driven (non-trainable)."""
         return self.get_parameter_names(
-            trainable=False, parameter_filter=lambda param: isinstance(param, ReservoirInput)
+            parameter_filter=lambda param: isinstance(param, ReservoirInput) and not param.is_trainable
         )
 
     @property
@@ -186,18 +190,8 @@ class ReservoirLayer(Parameterizable):
         return self._input_encoding
 
     @property
-    def pre_processing(self) -> Circuit | None:
-        """Backward-compatible alias for ``input_encoding``."""
-        return self._input_encoding
-
-    @property
     def output_encoding(self) -> Circuit | None:
         """Optional post-processing stage."""
-        return self._output_encoding
-
-    @property
-    def post_processing(self) -> Circuit | None:
-        """Backward-compatible alias for ``output_encoding``."""
         return self._output_encoding
 
     @property

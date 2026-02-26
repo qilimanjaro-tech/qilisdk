@@ -64,20 +64,18 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
 
 @yaml.register_class
 class Circuit(Parameterizable):
-    def __init__(self, nqubits: int, parameter_prefix: str | None = None) -> None:
+    def __init__(self, nqubits: int) -> None:
         """
         Initialize a Circuit instance with a specified number of qubits.
 
         Args:
             nqubits (int): The number of qubits in the circuit.
-            parameter_prefix (str | None): Set a prefix to the automatically generated parameter names.
         """
         super(Circuit, self).__init__()
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
         self._parameters: dict[str, Parameter] = {}
-        self._parameter_prefix = parameter_prefix
 
     @property
     def nqubits(self) -> int:
@@ -111,7 +109,6 @@ class Circuit(Parameterizable):
 
     def get_parameter_values(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
         """
@@ -120,11 +117,10 @@ class Circuit(Parameterizable):
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_values(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_values(parameter_filter=parameter_filter)
 
     def get_parameter_names(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         """
@@ -133,11 +129,10 @@ class Circuit(Parameterizable):
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_names(parameter_filter=parameter_filter)
 
     def get_parameters(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
         """
@@ -146,12 +141,11 @@ class Circuit(Parameterizable):
         Returns:
             dict[str, float]: A dictionary of the parameters with their current values.
         """
-        return super().get_parameters(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameters(parameter_filter=parameter_filter)
 
     def set_parameter_values(
         self,
         values: list[float],
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
@@ -163,7 +157,7 @@ class Circuit(Parameterizable):
         Raises:
             ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
-        super().set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
+        super().set_parameter_values(values=values, parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
@@ -181,10 +175,9 @@ class Circuit(Parameterizable):
 
     def get_parameter_bounds(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_bounds(parameter_filter=parameter_filter)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():
@@ -201,8 +194,7 @@ class Circuit(Parameterizable):
             gate (Gate): The gate to be parsed.
         """
         if gate.is_parameterized:
-            param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
-            param_base_label = self._parameter_prefix + param_base_label if self._parameter_prefix else param_base_label
+            param_base_label = self.get_prefix() + f"{gate.name}({','.join(map(str, gate.qubits))})"
             for label, parameter in gate.parameters.items():
                 if label == parameter.label and label in gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"

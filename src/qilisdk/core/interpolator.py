@@ -136,8 +136,12 @@ class Interpolator(Parameterizable):
         for i in range(len(fixed_times) - 1):
             ti = fixed_times[i]
             tj = fixed_times[i + 1]
-            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
-            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
+            t0 = (
+                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
+            )
+            t1 = (
+                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
+            )
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:
@@ -424,7 +428,6 @@ class Interpolator(Parameterizable):
     def set_parameter_values(
         self,
         values: list[float],
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
@@ -434,7 +437,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
         """
         self._delete_cache()
-        super().set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
+        super().set_parameter_values(values=values, parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """

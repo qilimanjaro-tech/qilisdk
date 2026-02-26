@@ -143,7 +143,6 @@ class Gate(Parameterizable, ABC):
 
     def get_parameters(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
         """
@@ -152,11 +151,10 @@ class Gate(Parameterizable, ABC):
         Returns:
             dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
-        return super().get_parameters(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameters(parameter_filter=parameter_filter)
 
     def get_parameter_names(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         """
@@ -165,11 +163,10 @@ class Gate(Parameterizable, ABC):
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return super().get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_names(parameter_filter=parameter_filter)
 
     def get_parameter_values(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
         """
@@ -178,7 +175,7 @@ class Gate(Parameterizable, ABC):
         Returns:
             list[float]: A list containing the parameter values.
         """
-        return super().get_parameter_values(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_values(parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -200,7 +197,6 @@ class Gate(Parameterizable, ABC):
     def set_parameter_values(
         self,
         values: list[float],
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
@@ -216,15 +212,14 @@ class Gate(Parameterizable, ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if len(values) != len(self.get_parameters(trainable=trainable, parameter_filter=parameter_filter)):
+        if len(values) != len(self.get_parameters(parameter_filter=parameter_filter)):
             raise ParametersNotEqualError
 
     def get_parameter_bounds(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_bounds(parameter_filter=parameter_filter)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if not self.is_parameterized:
@@ -295,10 +290,9 @@ class BasicGate(Gate):
 
     def get_parameters(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
-        return super().get_parameters(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameters(parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -309,21 +303,19 @@ class BasicGate(Gate):
     def set_parameter_values(
         self,
         values: list[float],
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> None:
-        super().set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
-        for key, value in zip(self.get_parameters(trainable=trainable, parameter_filter=parameter_filter), values):
+        super().set_parameter_values(values=values, parameter_filter=parameter_filter)
+        for key, value in zip(self.get_parameters(parameter_filter=parameter_filter), values):
             self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
 
     def get_parameter_bounds(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(trainable=trainable, parameter_filter=parameter_filter)
+        return super().get_parameter_bounds(parameter_filter=parameter_filter)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
@@ -409,24 +401,21 @@ class Modified(Gate, Generic[TBasicGate]):
 
     def get_parameters(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
-        return self._basic_gate.get_parameters(trainable=trainable, parameter_filter=parameter_filter)
+        return self._basic_gate.get_parameters(parameter_filter=parameter_filter)
 
     def get_parameter_names(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
-        return self._basic_gate.get_parameter_names(trainable=trainable, parameter_filter=parameter_filter)
+        return self._basic_gate.get_parameter_names(parameter_filter=parameter_filter)
 
     def get_parameter_values(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
-        return self._basic_gate.get_parameter_values(trainable=trainable, parameter_filter=parameter_filter)
+        return self._basic_gate.get_parameter_values(parameter_filter=parameter_filter)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
@@ -435,18 +424,16 @@ class Modified(Gate, Generic[TBasicGate]):
     def set_parameter_values(
         self,
         values: list[float],
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> None:
-        self._basic_gate.set_parameter_values(values=values, trainable=trainable, parameter_filter=parameter_filter)
+        self._basic_gate.set_parameter_values(values=values, parameter_filter=parameter_filter)
         self._matrix = self._generate_matrix()
 
     def get_parameter_bounds(
         self,
-        trainable: bool | None = None,
         parameter_filter: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
-        return self._basic_gate.get_parameter_bounds(trainable=trainable, parameter_filter=parameter_filter)
+        return self._basic_gate.get_parameter_bounds(parameter_filter=parameter_filter)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         self._basic_gate.set_parameter_bounds(ranges)

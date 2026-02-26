@@ -141,8 +141,8 @@ def test_composite_parent_child_parameter_sync():
 
     assert _isclose(parent.get_parameters()["left"], 1.0)
     assert _isclose(parent.get_parameters()["right"], 2.0)
-    assert _isclose(parent.get_parameters(trainable=True)["left"], 1.0)
-    assert _isclose(parent.get_parameters(trainable=False)["right"], 2.0)
+    assert _isclose(parent.get_parameters(parameter_filter=lambda param: param.is_trainable)["left"], 1.0)
+    assert _isclose(parent.get_parameters(parameter_filter=lambda param: not param.is_trainable)["right"], 2.0)
 
     parent.set_parameters({"left": 1.5, "right": 2.5})
     assert _isclose(left.get_parameters()["left"], 1.5)
@@ -151,7 +151,7 @@ def test_composite_parent_child_parameter_sync():
     right.set_parameters({"right": 3.5})
     assert _isclose(parent.get_parameters()["right"], 3.5)
 
-    parent.set_parameter_values([4.0], trainable=True)
+    parent.set_parameter_values([4.0], parameter_filter=lambda param: param.is_trainable)
     assert _isclose(left.get_parameters()["left"], 4.0)
 
     parent.set_parameter_bounds({"left": (-1.0, 5.0), "right": (0.0, 4.0)})
@@ -178,7 +178,9 @@ def test_parameter_filter_predicate_supports_custom_queries():
 
     assert parent.get_parameter_names(parameter_filter=starts_with_input) == ["input_encoding_theta"]
     assert parent.get_parameters(parameter_filter=value_in_range) == {"output_encoding_theta": 0.9}
-    assert parent.get_parameters(trainable=False, parameter_filter=starts_with_input) == {"input_encoding_theta": 0.1}
+    assert parent.get_parameters(parameter_filter=lambda p: starts_with_input(p) and not p.is_trainable) == {
+        "input_encoding_theta": 0.1
+    }
 
     parent.set_parameter_values([0.7], parameter_filter=lambda param: param.label.startswith("output_encoding_"))
     assert _isclose(parent.get_parameters()["input_encoding_theta"], 0.1)
