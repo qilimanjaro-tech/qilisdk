@@ -105,7 +105,7 @@ class Backend(ABC):
                     state = res.final_state
 
             try:
-                state = state.repair_density_matrix()
+                state = state.to_density_matrix()
             except ValueError as exc:
                 raise ValueError(
                     "Reservoir Runtime Error: state repair failed before expectation value computation. "
@@ -126,7 +126,7 @@ class Backend(ABC):
         return QuantumReservoirResult(
             expected_values=np.array(expected_values),
             final_expected_values=np.array(expected_values[-1]),
-            final_state=state.repair_density_matrix() if functional.store_final_state else None,
+            final_state=state.to_density_matrix() if functional.store_final_state else None,
             intermediate_states=intermediate_states if functional.store_intermediate_states else None,
         )
 

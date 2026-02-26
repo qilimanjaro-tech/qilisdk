@@ -29,24 +29,6 @@ from qilisdk.digital.exceptions import (
 from qilisdk.digital.gates import BasicGate, Gate
 
 
-def _expand_gate_matrix(gate: Gate, nqubits: int) -> np.ndarray:
-    k = gate.nqubits
-    if k == nqubits and gate.qubits == tuple(range(nqubits)):
-        return gate.matrix
-
-    remaining = [q for q in range(nqubits) if q not in gate.qubits]
-    expanded = np.kron(gate.matrix, np.eye(2 ** (nqubits - k), dtype=gate.matrix.dtype))
-    order = list(gate.qubits) + remaining
-    tensor = expanded.reshape([2] * nqubits + [2] * nqubits)
-
-    out_pos = {q: i for i, q in enumerate(order)}
-    perm_out = [out_pos[q] for q in range(nqubits)]
-    perm_in = [nqubits + out_pos[q] for q in range(nqubits)]
-    perm = perm_out + perm_in
-
-    return np.transpose(tensor, axes=perm).reshape(2**nqubits, 2**nqubits)
-
-
 def test_circuit_initialization():
     """
     Test basic initialization of the Circuit class.
@@ -467,9 +449,22 @@ def test_to_matrix_multi_qubit_noncontiguous():
     g2 = X(1)
     c.add([g1, g2])
 
-    expected = _expand_gate_matrix(g2, 3) @ _expand_gate_matrix(g1, 3)
-    assert np.allclose(c.to_matrix(), expected)
-    assert np.allclose(c.to_qtensor().dense(), expected)
+    # Expected operator in computational basis ordering |q0 q1 q2>.
+    expected = np.array(
+        [
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=np.complex128,
+    )
+    np.testing.assert_array_equal(c.to_matrix(), expected)
+    np.testing.assert_array_equal(c.to_qtensor().dense(), expected)
 
 
 def test_to_matrix_measurement_raises():
