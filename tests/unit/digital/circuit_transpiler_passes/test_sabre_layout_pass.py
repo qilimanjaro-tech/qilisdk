@@ -1,10 +1,32 @@
 import math
 import random
+from itertools import starmap
 
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, SWAP, U3, Circuit, M
+from qilisdk.digital import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    Circuit,
+    Controlled,
+    Exponential,
+    H,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass import SabreLayoutPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -13,7 +35,7 @@ def make_graph(edges, nodes=None):
     graph = PyGraph()
     if nodes is None:
         if edges:
-            max_node = max(max(u, v) for u, v in edges)
+            max_node = max(starmap(max, edges))
             nodes = range(max_node + 1)
         else:
             nodes = []
@@ -24,7 +46,7 @@ def make_graph(edges, nodes=None):
 
 
 def test_sabre_layout_requires_pygraph():
-    with pytest.raises(TypeError, match="requires a rustworkx.PyGraph"):
+    with pytest.raises(TypeError, match=r"requires a rustworkx\.PyGraph"):
         SabreLayoutPass("not-a-graph")  # type: ignore[arg-type]
 
 
@@ -67,26 +89,42 @@ def test_sabre_layout_identity_when_no_two_qubit_gates():
     assert [gate.qubits for gate in circuit.gates] == [(0,), (1,)]
 
 
-def test_sabre_layout_retarges_all_gate_types_and_updates_diagnostics():
-    topology = make_graph([(0, 1), (1, 2), (2, 3)])
+def test_sabre_layout_retargets_generic_gate_set_and_updates_diagnostics():
+    topology = make_graph([(0, 1), (1, 2), (2, 3), (3, 4)])
     layout_pass = SabreLayoutPass(topology, num_trials=1, seed=7, lookahead_size=2)
     context = TranspilationContext()
     layout_pass.attach_context(context)
 
-    circuit = Circuit(3)
-    circuit.add(RX(0, theta=0.1))
-    circuit.add(RY(1, theta=0.2))
-    circuit.add(RZ(2, phi=0.3))
-    circuit.add(U3(0, theta=0.4, phi=0.5, gamma=0.6))
-    circuit.add(CZ(1, 2))
-    circuit.add(SWAP(0, 1))
-    circuit.add(M(0))
+    circuit = Circuit(4)
+    circuit.add(H(0))
+    circuit.add(S(1))
+    circuit.add(T(2))
+    circuit.add(X(3))
+    circuit.add(Y(0))
+    circuit.add(Z(1))
+    circuit.add(RX(2, theta=0.1))
+    circuit.add(RY(3, theta=0.2))
+    circuit.add(RZ(0, phi=0.3))
+    circuit.add(U1(1, phi=0.4))
+    circuit.add(U2(2, phi=0.5, gamma=0.6))
+    circuit.add(U3(3, theta=0.7, phi=0.8, gamma=0.9))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CZ(2, 3))
+    circuit.add(SWAP(1, 2))
+    circuit.add(Controlled(0, 2, basic_gate=RY(3, theta=1.1)))
+    circuit.add(Adjoint(RX(0, theta=1.2)))
+    circuit.add(Exponential(RZ(1, phi=1.3)))
+    circuit.add(M(3))
 
     out = layout_pass.run(circuit)
 
-    assert out.nqubits == 4
+    assert out.nqubits == 5
     assert len(out.gates) == len(circuit.gates)
     assert all(type(o) is type(i) for o, i in zip(out.gates, circuit.gates))
+    assert layout_pass.last_layout is not None
+    for in_gate, out_gate in zip(circuit.gates, out.gates):
+        mapped_qubits = tuple(layout_pass.last_layout[q] for q in in_gate.qubits)
+        assert out_gate.qubits == mapped_qubits
     assert layout_pass.last_layout is not None
     assert len(layout_pass.last_layout) == circuit.nqubits
     assert sorted(layout_pass.last_layout) == sorted(set(layout_pass.last_layout))
@@ -116,6 +154,7 @@ def test_sabre_layout_handles_sparse_physical_indices():
     assert set(layout_pass.last_layout).issubset({0, 2, 4})
     assert len(set(layout_pass.last_layout)) == circuit.nqubits
     assert all(q in {0, 2, 4} for gate in out.gates for q in gate.qubits)
+
 
 def _line_graph(num_nodes: int) -> PyGraph:
     graph = PyGraph()
