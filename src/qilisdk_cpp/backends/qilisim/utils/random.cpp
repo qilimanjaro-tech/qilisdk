@@ -77,12 +77,18 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
     std::default_random_engine generator;
     generator.seed(seed);
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
+
+    // Sample
+    #if defined(_OPENMP)
+    #pragma omp parallel for schedule(static)
+    #endif
     for (int shot = 0; shot < n_shots; ++shot) {
         double random_value = distribution(generator);
         double cumulative_prob = 0.0;
         for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
             cumulative_prob += probabilities[state_index];
             if (random_value <= cumulative_prob) {
+                #pragma omp atomic
                 counts[state_index]++;
                 break;
             }
@@ -101,6 +107,47 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         }
     }
     return result;
+}
+
+DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol) {
+    /*
+    Extract a state vector from a pure density matrix by finding a non-zero diagonal element.
+
+    Args:
+        rho_t (DenseMatrix): The density matrix.
+        atol (double): Absolute tolerance for considering elements as non-zero.
+
+    Returns:
+        DenseMatrix: The extracted state vector.
+
+    Raises:
+        py::value_error: If the density matrix has no non-zero diagonal elements.
+    */
+
+    // Find a non-zero diagonal element
+    int non_zero_col = -1;
+    for (int r = 0; r < rho_t.rows(); ++r) {
+        std::complex<double> val = rho_t(r, r);
+        if (std::abs(val) > atol) {
+            non_zero_col = r;
+            break;
+        }
+    }
+    if (non_zero_col == -1) {
+        throw py::value_error("Final density matrix has no non-zero diagonal elements.");
+    }
+
+    // Extract the corresponding state vector
+    DenseMatrix state_vec(rho_t.rows(), 1);
+    for (int r = 0; r < rho_t.rows(); ++r) {
+        std::complex<double> val = rho_t(r, non_zero_col);
+        if (std::abs(val) > atol) {
+            state_vec(r, 0) = val;
+        }
+    }
+    state_vec /= state_vec.norm();
+
+    return state_vec;
 }
 
 SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double atol) {
@@ -144,6 +191,92 @@ SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double at
     final_state_vec /= final_state_vec.norm();
 
     return final_state_vec;
+}
+
+// Sample from a density matrix
+DenseMatrix sample_from_density_matrix(const DenseMatrix& rho, int n_trajectories, int seed, double atol) {
+    /*
+    Get statevector samples from a density matrix, using the eigendecomposition.
+
+    Args:
+        rho (DenseMatrix): The input density matrix.
+        n_trajectories (int): Number of trajectories.
+        seed (int): Random seed for sampling.
+        atol (double): Absolute tolerance for considering eigenvalues as non-zero.
+
+    Returns:
+        DenseMatrix: A matrix who's columns are the sampled statevectors.
+    */
+
+    // Eigendecompose the density matrix
+    Eigen::SelfAdjointEigenSolver<DenseMatrix> es(rho);
+    DenseMatrix evals = es.eigenvalues();
+    DenseMatrix evecs = es.eigenvectors();
+    std::vector<std::tuple<int, double>> prob_entries;
+    double total_prob = 0.0;
+    for (int i = 0; i < evals.size(); ++i) {
+        double prob = evals(i).real();
+        if (prob > atol) {
+            prob_entries.emplace_back(i, prob);
+            total_prob += prob;
+        }
+    }
+
+    // Make sure probabilities sum to 1
+    if (std::abs(total_prob - 1.0) > atol) {
+        throw py::value_error("Probabilities from state do not sum to 1 (sum = " + std::to_string(total_prob) + ")");
+    }
+
+    // Sample from these probabilities
+    int n_qubits = static_cast<int>(std::log2(rho.rows()));
+    std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_trajectories, seed);
+
+    // Construct the sampled states matrix
+    long dim = 1L << n_qubits;
+    DenseMatrix sampled_states(dim, n_trajectories);
+    int traj_index = 0;
+    for (const auto& pair : counts) {
+        // Get the eigenvector corresponding to this bitstring
+        std::string bitstring = pair.first;
+        int count = pair.second;
+        int eigenvec_index = std::stoi(bitstring, nullptr, 2);
+        DenseMatrix state_vec = evecs.col(eigenvec_index);
+
+        // Normalize the state vector
+        double norm = std::sqrt(state_vec.squaredNorm());
+        if (norm > atol) {
+            state_vec /= norm;
+        }
+
+        // Add this state vector count times to the new matrix
+        for (int i = 0; i < count; ++i) {
+            sampled_states.col(traj_index) = state_vec;
+            traj_index++;
+        }
+    }
+
+    return sampled_states;
+
+}
+
+// Convert a matrix containing trajectories as columns to a density matrix
+DenseMatrix trajectories_to_density_matrix(const DenseMatrix& trajectories) {
+    /*
+    Convert a matrix containing statevector trajectories as columns to a density matrix.
+    If we have N trajectories |psi_i>, the density matrix is given by
+    rho = 1/N sum_i |psi_i><psi_i|. Or, in matrix form, if the trajectories are columns of a matrix T,
+    rho = 1/N T T^dagger.
+
+    Args:
+        trajectories (DenseMatrix): The input matrix with statevectors as columns.
+
+    Returns:
+        DenseMatrix: The corresponding density matrix.
+    */
+    DenseMatrix rho = trajectories * trajectories.adjoint();
+    rho /= static_cast<double>(trajectories.cols());
+    rho /= trace(rho);
+    return rho;
 }
 
 // Sample from a density matrix

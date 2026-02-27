@@ -20,7 +20,7 @@
 #include "utils/numpy.h"
 #include "utils/parsers.h"
 #include "noise/noise_model.h"
-#include "stabilizer/affine_stabilizer.h"
+#include "representations/affine_stabilizer.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -89,17 +89,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         if (n_qubits <= 5) {
             state_dense = state_stabilizer.as_dense();
         }
-    } else if (config.get_sampling_method() == "matrix_free") {
-        SparseMatrix initial_state_cpp;
-        if (initial_state.is_none()) {
-            long dim = 1L << n_qubits;
-            initial_state_cpp = SparseMatrix(dim, 1);
-            initial_state_cpp.coeffRef(0, 0) = 1.0;
-            initial_state_cpp.makeCompressed();
-        } else {
-            initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
-        }
-        sampling_matrix_free(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
     } else {
         SparseMatrix initial_state_cpp;
         if (initial_state.is_none()) {
@@ -110,7 +99,11 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         } else {
             initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
         }
-        sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
+        if (config.get_sampling_method() == "matrix_free") {
+            sampling_matrix_free(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
+        } else {
+            sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
+        }
     }
 
     // Convert counts to samples dict
@@ -118,12 +111,14 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     for (const auto& pair : counts) {
         samples[py::cast(pair.first)] = py::cast(pair.second);
     }
-
+    
+    // Construct the result object
     py::object result = SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
     py::array final_state_numpy = to_numpy(state_dense);
     result.attr("_state") = final_state_numpy;
 
     return result;
+
 }
 
 // The public execute_time_evolution

@@ -19,7 +19,6 @@
 #include "../utils/random.h"
 #include "sampling.h"
 #include "../noise/noise_model.h"
-#include "../stabilizer/affine_stabilizer.h"
 
 #include <iostream> // TODO (luke) remove
 
@@ -76,7 +75,7 @@ void sampling(const std::vector<Gate>& gates,
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
         if (std::abs(trace_squared - 1.0) < config.get_atol()) {
-            state = get_vector_from_density_matrix(state.sparseView());
+            state = get_vector_from_density_matrix(state);
             is_statevector = true;
         }
     }
@@ -91,9 +90,9 @@ void sampling(const std::vector<Gate>& gates,
     }
 
     // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo() && !has_noise);
+    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
     if (monte_carlo) {
-        state = sample_from_density_matrix(state.sparseView(), config.get_num_monte_carlo_trajectories(), config.get_seed());
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
     // Determine the start/end use of each gate
@@ -199,7 +198,7 @@ omp_set_num_threads(config.get_num_threads());
 
     // If we have statevector/s but we should return a density matrix
     if (monte_carlo) {
-        state = trajectories_to_density_matrix(state.sparseView());
+        state = trajectories_to_density_matrix(state);
     }
 
     // Get the probabilities
@@ -347,7 +346,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates,
     for (const auto& gate : gates) {
 
         // Convert gate to a stabilizer operator
-        AffineStabilizerOperator op(gate);
+        MatrixFreeOperator op(gate);
 
         // Apply the gate
         op.apply(state);
@@ -482,22 +481,158 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
         is_statevector = false;
     }
 
+    // Whether we should do monte-carlo sampling (only for density matrices)
+    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
+    if (monte_carlo) {
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+    }
+
+    // Combine single-qubit gates for speed if not using noise models
+    std::vector<Gate> combined_gates;
+    if (!has_noise && config.get_combine_single_qubit_gates()) {
+        std::vector<bool> already_used(gates.size(), false);
+        for (size_t i = 0; i < gates.size(); ++i) {
+            if (already_used[i]) {
+                continue;
+            }
+            auto& gate = gates[i];
+            if (gate.get_qubits().size() == 1) {
+                // Look ahead to see if we have more single-qubit gates on the same target qubit that we can combine
+                int qubit = gate.get_qubits()[0];
+                std::vector<Gate> gates_to_combine = {gate};
+                for (size_t j = i + 1; j < gates.size(); ++j) {
+                    const auto& next_gate = gates[j];
+                    std::vector<int> next_gate_qubits = next_gate.get_qubits();
+                    if (!already_used[j] && next_gate_qubits.size() == 1 && next_gate_qubits[0] == qubit) {
+                        gates_to_combine.push_back(next_gate);
+                    // Only break if there is a gate that acts on the same qubit but we can't combine
+                    } else if (next_gate_qubits.size() > 1 && std::find(next_gate_qubits.begin(), next_gate_qubits.end(), qubit) != next_gate_qubits.end()) {
+                        break;
+                    }
+                }
+                if (gates_to_combine.size() > 1) {
+                    // Combine the gates into one gate
+                    SparseMatrix combined_matrix = gates_to_combine[0].get_base_matrix();
+                    for (size_t j = 1; j < gates_to_combine.size(); ++j) {
+                        combined_matrix = gates_to_combine[j].get_base_matrix() * combined_matrix;
+                    }
+                    std::string combined_name = "";
+                    for (size_t j = 0; j < gates_to_combine.size(); ++j) {
+                        combined_name += gates_to_combine[j].get_name();
+                    }
+                    combined_gates.push_back(Gate(combined_name, combined_matrix, {}, gate.get_qubits(), {}));
+                    // Mark the gates we combined as already used
+                    for (size_t j = 0; j < gates_to_combine.size(); ++j) {
+                        already_used[i + j] = true;
+                    }
+                } else {
+                    combined_gates.push_back(gate);
+                }
+            } else {
+                combined_gates.push_back(gate);
+            }
+        }
+    } else {
+        combined_gates = gates;
+    }
+
     // Apply each gate
-    for (const auto& gate : gates) {
+    for (const auto& gate : combined_gates) {
 
         // Convert gate to a stabilizer operator
-        AffineStabilizerOperator op(gate);
+        MatrixFreeOperator op(gate);
 
         // Apply the gate
-        op.apply(state);
+        if (monte_carlo) {
+            for (int col = 0; col < state.cols(); ++col) {
+                DenseMatrix traj = state.col(col);
+                op.apply(traj, false);
+                state.col(col) = traj;
+            }
+        } else {
+            op.apply(state, !is_statevector);
+        }
 
+        // Apply noise if we have it
+        if (!noise_model_cpp.is_empty()) {
+            for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), gate.get_target_qubits(), n_qubits)) {
+                DenseMatrix new_state(state.rows(), state.cols());
+                new_state.setZero();
+                for (const auto& K : operator_set) {
+                    new_state += K * state * K.adjoint();
+                }
+                state = new_state;
+            }
+        }
+
+        // Normalize the list of statevectors
+        if (config.get_normalize_after_gate()) {
+            if (monte_carlo) {
+                #if defined(_OPENMP)
+                #pragma omp parallel for schedule(static)
+                #endif
+                for (int col = 0; col < state.cols(); ++col) {
+                    state.col(col) /= state.col(col).norm();
+                }
+            // Normalize the statevector
+            } else if (is_statevector) {
+                double sum = 0.0;
+                #if defined(_OPENMP)
+                #pragma omp parallel
+                #endif
+                {
+                    #if defined(_OPENMP)
+                    #pragma omp for reduction(+:sum) schedule(static)
+                    #endif
+                    for (int i = 0; i < state.rows(); ++i) {
+                        sum += std::norm(state(i, 0));
+                    }
+                    double norm = std::sqrt(sum);
+                    #if defined(_OPENMP)
+                    #pragma omp for schedule(static)
+                    #endif
+                    for (int i = 0; i < state.rows(); ++i) {
+                        state(i, 0) /= norm;
+                    }
+                }
+            // Normalize the density matrix
+            } else {
+                double sum = 0.0;
+                #if defined(_OPENMP)
+                #pragma omp parallel
+                #endif
+                {
+                    #if defined(_OPENMP)
+                    #pragma omp for reduction(+:sum) schedule(static)
+                    #endif
+                    for (int i = 0; i < state.rows(); ++i) {
+                        sum += state.coeff(i, i).real();
+                    }
+                    #if defined(_OPENMP)
+                    #pragma omp for schedule(static)
+                    #endif
+                    for (int i = 0; i < state.rows(); ++i) {
+                        state.coeffRef(i, i) /= sum;
+                    }
+                }
+            }
+        }
+
+    }
+
+    // If we have statevector/s but we should return a density matrix
+    if (monte_carlo) {
+        state = trajectories_to_density_matrix(state);
     }
 
     // Get the probabilities
     std::vector<double> probabilities(state.rows());
     double total_prob = 0.0;
-    double prob = 0.0;
+    #if defined(_OPENMP)
+    #pragma omp parallel for reduction(+:total_prob) schedule(static)
+    #endif
     for (int row = 0; row < state.rows(); ++row) {
+        double prob = 0.0;
         if (is_statevector) {
             prob = std::norm(state(row, 0));
         } else {

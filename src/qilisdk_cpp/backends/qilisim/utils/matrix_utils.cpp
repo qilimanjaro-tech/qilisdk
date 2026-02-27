@@ -80,6 +80,22 @@ std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
+std::complex<double> trace(const DenseMatrix& matrix) {
+    /*
+    Compute the trace of a square matrix.
+
+    Args:
+        matrix (DenseMatrix): The input square matrix.
+
+    Returns:
+        std::complex<double>: The trace of the matrix.
+    */
+    if (matrix.rows() != matrix.cols()) {
+        throw py::value_error("Matrix must be square to compute trace.");
+    }
+    return matrix.trace();
+}
+
 std::complex<double> trace(const SparseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.

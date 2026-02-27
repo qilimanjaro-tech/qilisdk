@@ -20,7 +20,8 @@
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
 #include "../libs/eigen.h"
-#include "../stabilizer/affine_stabilizer.h"
+#include "../representations/affine_stabilizer.h"
+#include "../representations/matrix_free_operator.h"
 
 void sampling(const std::vector<Gate>& gates, 
               const std::vector<bool>& qubits_to_measure, 

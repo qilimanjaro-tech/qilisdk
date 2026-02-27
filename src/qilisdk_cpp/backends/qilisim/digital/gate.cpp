@@ -281,6 +281,19 @@ int Gate::get_nqubits() const {
     return int(control_qubits.size()) + int(target_qubits.size());
 }
 
+std::vector<int> Gate::get_qubits() const {
+    /*
+    Get the list of all qubits the gate acts on (controls + targets).
+
+    Returns:
+        std::vector<int>: The qubit indices.
+    */
+    std::vector<int> all_qubits;
+    all_qubits.insert(all_qubits.end(), control_qubits.begin(), control_qubits.end());
+    all_qubits.insert(all_qubits.end(), target_qubits.begin(), target_qubits.end());
+    return all_qubits;
+}
+
 std::vector<int> Gate::get_target_qubits() const {
     /*
     Get the list of target qubits.

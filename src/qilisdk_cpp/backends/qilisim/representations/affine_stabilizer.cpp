@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "affine_stabilizer.h"
+#include "matrix_free_operator.h"
 #include <random>
 
 #ifdef VERBOSE
@@ -1006,7 +1007,7 @@ void AffineStabilizerState::add_element(const StateCoefficient& ket_coeff, const
     state.push_back(std::make_tuple(ket_coeff, ket, bra_coeff, bra));
 }
 
-void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const {
+void MatrixFreeOperator::apply(AffineStabilizerState& output_state) const {
     /*
     Apply the operator to an AffineStabilizerState by iterating through each component 
     of the state and applying the transformation rules for the given operator name.
@@ -1099,6 +1100,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // Y z0 |+ s0> = i|+ d0>
             // Y z0&1 |+ s0> = i|+ d0>
             } else if (target_char == '+') {
+                coeff.first *= -1.0;
                 coeff.first *= handle_insert_coeff(coeff.second, std::make_pair('z', IndexSet{target_qubit}));
                 // find anything in the basis that references this and swap it
                 for (size_t i = 0; i < ket.size(); ++i) {
@@ -1147,13 +1149,20 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0 |+ s0> = z0&1 z1 |+ +>
             // H |+ s0&2 +> = z0&1 z0&2 |+ + +>
             // H z0 |+ s0&2 +> = z1 z2 (z0&1 z0&2) |+ + +>
+            // H z0 |+ d0&2 +> = z0 z1 z0&1 |+ + +>
             // H z2 |+ s0&2 +> = z2 (z0&1 z0&2) |+ + +>
+            // H z2 |+ d0&2 +> = |0 1 +> TODO
             // H z0&2 |+ s0&2 +> = z2 z1&2 (z0&1 z0&2) |+ + +>
             // H z0&2 |+ s0 +> = z0&2 z1&2 |+ + +>
             // H z0&2 |+ d0 +> = z0 z2 z0&1 z1&2 |+ + +>
             // H z0 z0&2 |+ s0 +> = z1 z0&1 z1&2 |+ + +> TODO
             // H z0 z0&2 |+ d0 +> = - z0 z1 z2 z0&1 z1&2 |+ + +> TODO
             } else if (target_char == '+') {
+
+                // Rules:
+                // For any s0xj on qubit i, add z0&i and z0&j
+                // For any d0xj on qubit i, add z0&i and z0&j and a global -1
+                // If linear phase, for any s0xj on qubit i, add zi and zj
 
                 // Check if we have a linear z phase that references this
                 bool has_linear_phase = false;
@@ -1274,6 +1283,7 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
             // H z0&1 z0&2 |d1&2 + +> = z0 z0&1 z0&2 |+ + +>
             } else if (target_char == 's' || target_char == 'd') {
 
+                // Rules:
                 // If acting on sixj, add z0&i z0&j
                 // If acting on dixj, add z0 z0&i z0&j
                 // If acting on sixj and there is a linear phase on 0, add zi and zj
@@ -1616,201 +1626,3 @@ void AffineStabilizerOperator::apply(AffineStabilizerState& output_state) const 
 
 }
 
-void AffineStabilizerOperator::apply(DenseMatrix& output_state) const {
-    /*
-    Apply the operator to a dense state.
-
-    Args:
-        output_state (DenseMatrix&): The dense state to apply the operator to.
-    */
-
-    // If we have an X on qubit i, we swap the amplitudes of all basis states where qubit i is 0 with those where qubit i is 1
-    int num_qubits = static_cast<int>(std::log2(output_state.size()));
-    long long mask = 1LL << (num_qubits - 1 - target_qubit);
-    if (name == "X") {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                size_t j = i + stride;
-                std::swap(output_state(i), output_state(j));
-            }
-        }
-
-    // If we have a Y on qubit i, we swap the amplitudes of all basis states where qubit i is 0 with those where qubit i is 1, and multiply the amplitude of all basis states where qubit i is 1 by i or -i depending on whether it was originally 0 or 1
-    } else if (name == "Y") {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                size_t j = i + stride;
-                std::swap(output_state(i), output_state(j));
-                output_state(i) *= std::complex<double>(0.0, -1.0);
-                output_state(j) *= std::complex<double>(0.0, 1.0);
-            }
-        }
-
-    // If we have a Z on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by -1
-    } else if (name == "Z") {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                output_state(i + stride) *= -1.0;
-            }
-        }
-
-    // If we have a H on qubit i, we apply the transformation |0> -> (|0> + |1>)/sqrt(2), |1> -> (|0> - |1>)/sqrt(2) to all basis states
-    } else if (name == "H") {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                size_t j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
-                output_state(i) = (temp_i + temp_j) / std::sqrt(2.0);
-                output_state(j) = (temp_i - temp_j) / std::sqrt(2.0);
-            }
-        }
-
-    // If we have a S on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by i
-    } else if (name == "S") {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                output_state(i + stride) *= std::complex<double>(0.0, 1.0);
-            }
-        }
-
-    // If we have a T on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by exp(i*pi/4)
-    } else if (name == "T") {
-        std::complex<double> phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                output_state(i + stride) *= phase;
-            }
-        }
-
-    // If we have a CNOT with control qubit j and target qubit i, we swap the amplitudes of all basis states where qubit j is 1 and qubit i is 0 with those where qubit j is 1 and qubit i is 1
-    } else if (name == "CNOT") {
-        size_t N = output_state.size();
-        size_t control_mask = 1LL << (num_qubits - 1 - control_qubit);
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                if (i & control_mask) {
-                    size_t j = i ^ mask;
-                    if (i < j) {
-                        std::swap(output_state(i), output_state(j));
-                    }
-                }
-            }
-        }
-
-    // If we have a CZ with control qubit j and target qubit i, we multiply the amplitude of all basis states where qubit j is 1 and qubit i is 1 by -1
-    } else if (name == "CZ") {
-        size_t N = output_state.size();
-        size_t control_mask = 1LL << (num_qubits - 1 - control_qubit);
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                if (i & control_mask) {
-                    size_t j = i ^ mask;
-                    if (i < j) {
-                        output_state(j) *= -1.0;
-                    }
-                }
-            }
-        }
-
-    // If we have a 2x2 base matrix, we apply it by treating the target qubit as the least significant bit and iterating through pairs of basis states
-    } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2) {
-        size_t N = output_state.size();
-        size_t stride = mask;
-        size_t step = stride << 1;
-        #if defined(_OPENMP)
-        #pragma omp parallel for schedule(static)
-        #endif
-        for (size_t base = 0; base < N; base += step) {
-            for (size_t offset = 0; offset < stride; ++offset) {
-                size_t i = base + offset;
-                size_t j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
-                output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
-                output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
-            }
-        }
-    } else {
-        throw std::runtime_error("Unknown operator name: " + name);
-    }
-}
-
-AffineStabilizerOperator::AffineStabilizerOperator(const Gate& gate) {
-    /*
-    Construct an AffineStabilizerOperator from a given gate by extracting the target and control qubits, and the name of the gate.
-
-    Args:
-        gate (const Gate&): The gate to construct the operator from.
-
-    Returns:
-        AffineStabilizerOperator: The resulting operator after construction.
-
-    Raises:
-        std::invalid_argument: If the gate has more than 1 control qubits or does not have exactly 1 target qubit.
-    */
-    if (gate.get_control_qubits().size() > 1) {
-        throw std::invalid_argument("AffineStabilizerOperator only supports gates with 1 or fewer total control qubits.");
-    }
-    if (gate.get_target_qubits().size() != 1) {
-        throw std::invalid_argument("AffineStabilizerOperator requires a gate with exactly 1 target qubit.");
-    }
-    target_qubit = gate.get_target_qubits()[0];
-    control_qubit = gate.get_control_qubits().empty() ? -1 : gate.get_control_qubits()[0];
-    base_matrix = gate.get_base_matrix();
-    name = gate.get_name();
-}

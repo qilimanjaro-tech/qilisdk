@@ -30,6 +30,8 @@ class QiliSimConfig {
     int seed = 42;
     double atol = 1e-12;
     int max_cache_size = 1000;
+    bool combine_single_qubit_gates = true;
+    bool normalize_after_each_gate = false;
 
     public:
 
@@ -46,6 +48,8 @@ class QiliSimConfig {
     int get_seed() const { return seed; }
     double get_atol() const { return atol; }
     int get_max_cache_size() const { return max_cache_size; }
+    bool get_normalize_after_gate() const { return normalize_after_each_gate; }
+    bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -60,6 +64,8 @@ class QiliSimConfig {
     void set_seed(int value) { seed = value; }
     void set_atol(double value) { atol = value; }
     void set_max_cache_size(int value) { max_cache_size = value; }
+    void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
+    void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

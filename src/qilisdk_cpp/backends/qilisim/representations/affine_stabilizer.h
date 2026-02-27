@@ -84,17 +84,3 @@ class AffineStabilizerState {
         AffineStabilizerState& operator-=(const AffineStabilizerState& other);
 
 };
-
-class AffineStabilizerOperator {
-    private:
-        std::string name;
-        int target_qubit;
-        int control_qubit;
-        DenseMatrix base_matrix;
-    public:
-        AffineStabilizerOperator(const Gate& gate);
-        void apply(AffineStabilizerState& output_state) const;
-        void apply(DenseMatrix& output_state) const;
-        AffineStabilizerState operator*(const AffineStabilizerState& input_state) const;
-        friend std::ostream& operator<<(std::ostream& os, const AffineStabilizerOperator& mfo);
-};

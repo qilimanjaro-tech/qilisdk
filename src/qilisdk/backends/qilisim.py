@@ -50,7 +50,9 @@ class QiliSim(Backend):
         num_threads: int = 0,
         seed: int | None = None,
         atol: float = 1e-12,
-        sampling_method: str = "statevector",
+        sampling_method: str = "matrix_free",
+        normalize_after_each_gate: bool = False,
+        combine_single_qubit_gates: bool = True,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
@@ -68,6 +70,8 @@ class QiliSim(Backend):
             seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
             atol (float): Absolute tolerance for numerical methods.
             sampling_method (str): The method to use for sampling. Options are 'statevector' and 'stabilizer'.
+            normalize_after_each_gate (bool): Whether to normalize the state after each gate application. This can improve numerical stability at the cost of performance.
+            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single gate for improved performance. Ignored if noise model present.
 
         Raises:
             ValueError: If any of the parameters are invalid.
@@ -89,6 +93,8 @@ class QiliSim(Backend):
             raise ValueError("max_cache_size cannot be negative")
         if atol <= 0:
             raise ValueError("atol must be a positive float")
+        if sampling_method not in {"statevector", "matrix_free", "stabilizer"}:
+            raise ValueError(f"Unknown sampling method: {sampling_method}")
 
         # Set number of threads if non-positive
         if num_threads <= 0:
@@ -114,6 +120,8 @@ class QiliSim(Backend):
             "num_threads": num_threads,
             "seed": seed,
             "atol": atol,
+            "normalize_after_gate": normalize_after_each_gate,
+            "combine_single_qubit_gates": combine_single_qubit_gates,
         }
 
     def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> SamplingResult:

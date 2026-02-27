@@ -22,6 +22,7 @@ SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, cons
 SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt);
 std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2);
 std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2);
+std::complex<double> trace(const DenseMatrix& matrix);
 std::complex<double> trace(const SparseMatrix& matrix);
 SparseMatrix vectorize(const SparseMatrix& matrix, double atol);
 SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol);
