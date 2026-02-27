@@ -42,8 +42,7 @@ def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
         gate (Gate): Candidate gate.
 
     Returns:
-        TypeGuard[Controlled[BasicGate]]: ``True`` when ``gate`` is a
-            ``Controlled`` gate whose payload type is ``BasicGate``.
+        TypeGuard[Controlled[BasicGate]]: ``True`` when ``gate`` is a ``Controlled`` gate whose payload type is ``BasicGate``.
     """
     return isinstance(gate, Controlled)
 
@@ -57,8 +56,7 @@ def _is_adjoint_or_exponential(
         gate (Gate): Candidate gate.
 
     Returns:
-        TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]: ``True`` when
-            ``gate`` is either ``Adjoint`` or ``Exponential``.
+        TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]: ``True`` when ``gate`` is either ``Adjoint`` or ``Exponential``.
     """
     return isinstance(gate, (Adjoint, Exponential))
 
@@ -130,14 +128,12 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Initialize a SABRE layout pass.
 
         Args:
-            topology (PyGraph): Undirected coupling graph where node indices are
-                physical qubits.
+            topology (PyGraph): Undirected coupling graph where node indices are physical qubits.
             num_trials (int): Number of randomized layout trials.
             seed (int | None): RNG seed for reproducible trials.
             lookahead_size (int): Maximum number of gates in the look-ahead set.
             beta (float): Weight assigned to look-ahead cost.
-            decay_delta (float): Increment applied to decay on selected swap
-                endpoints.
+            decay_delta (float): Increment applied to decay on selected swap endpoints.
             decay_lambda (float): Per-iteration decay factor for penalties.
 
         Raises:
@@ -170,8 +166,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             Circuit: New circuit retargeted according to the selected layout.
 
         Raises:
-            ValueError: If the topology is empty or has fewer physical qubits
-                than required by ``circuit``.
+            ValueError: If the topology is empty or has fewer physical qubits than required by ``circuit``.
         """
         random_generator = random.Random(self.seed)
 
@@ -256,19 +251,15 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         Args:
             layout (list[int]): Initial logical-to-physical mapping.
-            distance_matrix (list[list[int]]): All-pairs shortest-path distance matrix for
-                physical qubits.
-            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interactions as
-                logical-qubit pairs.
-            gate_indices_per_qubit (list[list[int]]): For each logical qubit, indices of
-                ``two_qubit_pairs`` touching it.
+            distance_matrix (list[list[int]]): All-pairs shortest-path distance matrix for physical qubits.
+            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interactions as logical-qubit pairs.
+            gate_indices_per_qubit (list[list[int]]): For each logical qubit, indices of ``two_qubit_pairs`` touching it.
             random_generator (random.Random): Random generator used for tie-breaking.
             physical_nodes (list[int]): Physical node labels.
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
-            tuple[list[int], float]: Final mapping and heuristic score for this
-                trial.
+            tuple[list[int], float]: Final mapping and heuristic score for this trial.
         """
         num_logical_qubits = len(layout)
         num_physical_qubits = len(physical_nodes)
@@ -288,8 +279,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             """Move ``front_positions[logical_qubit]`` to the first unscheduled interaction.
 
             Args:
-                logical_qubit (int): Logical qubit index whose front pointer is
-                    advanced.
+                logical_qubit (int): Logical qubit index whose front pointer is advanced.
             """
             qubit_gate_indices = gate_indices_per_qubit[logical_qubit]
             cursor = front_positions[logical_qubit]
@@ -301,8 +291,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             """Build the current front layer of unscheduled interactions.
 
             Returns:
-                set[int]: Indices of first unscheduled 2-qubit interactions
-                    across all logical qubits.
+                set[int]: Indices of first unscheduled 2-qubit interactions across all logical qubits.
             """
             front_gate_indices: set[int] = set()
             for logical_qubit in range(num_logical_qubits):
@@ -481,8 +470,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Collect upcoming 2-qubit gates beyond the current front layer.
 
         Args:
-            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interaction
-                list.
+            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interaction list.
             gate_indices_per_qubit (list[list[int]]): Per-logical-qubit interaction indices.
             front_positions (list[int]): Current front pointers into ``gate_indices_per_qubit``.
             max_size (int): Maximum number of indices to include.
@@ -532,8 +520,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             layout (list[int]): Logical-to-physical mapping.
             two_qubit_pairs (list[tuple[int, int]]): Logical interaction pairs.
             distance_matrix (list[list[int]]): Physical shortest-path distance matrix.
-            decay (list[float] | None): Optional per-physical-node decay
-                penalties.
+            decay (list[float] | None): Optional per-physical-node decay penalties.
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
@@ -591,8 +578,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
-            list[int | None]: Inverse mapping where missing assignments are
-                represented by ``None``.
+            list[int | None]: Inverse mapping where missing assignments are represented by ``None``.
         """
         inverse_layout = [None] * len(physical_to_dense_index)
         for logical_qubit, physical_qubit in enumerate(layout):
@@ -615,15 +601,12 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         Args:
             layout (list[int]): Logical-to-physical mapping to mutate.
-            inverse_layout (list[int | None]): Inverse dense-physical mapping to
-                mutate.
+            inverse_layout (list[int | None]): Inverse dense-physical mapping to mutate.
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
             physical_node_a (int): First physical node label.
             physical_node_b (int): Second physical node label.
-            logical_at_a (int | None): Logical qubit currently at
-                ``physical_node_a``, if any.
-            logical_at_b (int | None): Logical qubit currently at
-                ``physical_node_b``, if any.
+            logical_at_a (int | None): Logical qubit currently at ``physical_node_a``, if any.
+            logical_at_b (int | None): Logical qubit currently at ``physical_node_b``, if any.
         """
         # Update inverse first
         dense_index_a = physical_to_dense_index[physical_node_a]
@@ -643,10 +626,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             circuit (Circuit): Input circuit in logical qubits.
 
         Returns:
-            tuple[list[int], list[tuple[int, int]], list[list[int]]]: Tuple with:
-                indices of 2-qubit gates in ``circuit.gates``, corresponding
-                logical-qubit pairs, and per-logical-qubit interaction index
-                lists.
+            tuple[list[int], list[tuple[int, int]], list[list[int]]]: Tuple with indices of 2-qubit gates in ``circuit.gates``, corresponding logical-qubit pairs, and per-logical-qubit interaction index lists.
         """
         num_logical_qubits = circuit.nqubits
         two_qubit_gate_indices: list[int] = []
@@ -676,8 +656,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
-            list[list[int]]: Dense distance matrix indexed by
-                ``physical_to_dense_index[label]``.
+            list[list[int]]: Dense distance matrix indexed by ``physical_to_dense_index[label]``.
         """
 
         inf_distance = SabreLayoutPass._UNREACHABLE_DISTANCE
@@ -708,8 +687,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         Args:
             circuit (Circuit): Input logical circuit.
             layout (list[int]): Logical-to-physical mapping.
-            max_physical_label_plus_one (int): Upper bound needed to keep output
-                qubit range valid for sparse physical labels.
+            max_physical_label_plus_one (int): Upper bound needed to keep output qubit range valid for sparse physical labels.
 
         Returns:
             Circuit: New circuit with all gates mapped to physical qubits.
@@ -730,18 +708,14 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """
         Recreate ``gate`` on ``mapped_qubits`` by deep-copying and remapping indices.
 
-        The method deep-copies the gate object to preserve concrete gate type and
-        all parameters, then updates control/target qubit tuples recursively
-        through wrapped gates.
+        The method deep-copies the gate object to preserve concrete gate type and all parameters, then updates control and target qubit tuples recursively through wrapped gates.
 
         Args:
             gate (Gate): Original gate to retarget.
-            mapped_qubits (tuple[int, ...]): Physical qubits where the gate should
-                act.
+            mapped_qubits (tuple[int, ...]): Physical qubits where the gate should act.
 
         Returns:
-            Gate: Retargeted gate equivalent to ``gate`` but acting on
-                ``mapped_qubits``.
+            Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.
         """
         retargeted = deepcopy(gate)
         qubit_map = dict(zip(gate.qubits, mapped_qubits, strict=True))
@@ -754,12 +728,10 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         Args:
             gate (Gate): Gate object to modify in place.
-            qubit_map (dict[int, int]): Logical-to-physical mapping for qubits
-                touched by ``gate``.
+            qubit_map (dict[int, int]): Logical-to-physical mapping for qubits touched by ``gate``.
 
         Raises:
-            NotImplementedError: If the gate type does not provide known
-                internal storage for control/target qubits.
+            NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
         """
         if isinstance(gate, (BasicGate, M)):
             gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # noqa: SLF001

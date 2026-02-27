@@ -51,7 +51,14 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
 
     @staticmethod
     def _try_single_qubit_unitary(gate: Gate) -> np.ndarray | None:
-        """Return the 2x2 unitary matrix for a 1-qubit gate, or None if unavailable."""
+        """Return a 2x2 unitary matrix for a single-qubit gate when available.
+
+        Args:
+            gate (Gate): Gate candidate to validate and convert to matrix form.
+
+        Returns:
+            np.ndarray | None: Complex 2x2 unitary matrix when ``gate`` is a valid one-qubit unitary; otherwise ``None``.
+        """
         if gate.nqubits != 1:
             return None
 
@@ -69,18 +76,26 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
         return unitary
 
     def run(self, circuit: Circuit) -> Circuit:
+        """Fuse adjacent one-qubit unitary sequences into canonical single gates.
+
+        Non-unitary or multi-qubit gates define boundaries and force flushing of pending fused unitaries on touched qubits.
+
+        Args:
+            circuit (Circuit): Input circuit to optimize.
+
+        Returns:
+            Circuit: New circuit with fused one-qubit runs and unchanged behavior.
+        """
         output_gates: list[Gate] = []
         pending: dict[int, np.ndarray] = {}
 
         def flush_pending_qubit(qubit: int) -> None:
             """Emit the fused gate accumulated for a qubit, if any.
 
-            This helper mutates `pending` and appends at most one gate to
-            `seq_out`.
+            This helper mutates ``pending`` and appends at most one canonical gate to ``output_gates``.
 
             Args:
-                qubit (int): Target qubit whose pending 1-qubit unitary should
-                    be converted back into a canonical gate.
+                qubit (int): Qubit whose pending fused unitary is materialized as ``RZ``, ``RY``, ``RX``, or ``U3``.
             """
             if qubit not in pending:
                 return
@@ -121,8 +136,8 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
             output_gates.append(gate)
 
         # flush any remaining
-        for qubit in list(pending):
-            flush_pending_qubit(qubit)
+        while pending:
+            flush_pending_qubit(next(iter(pending)))
 
         output_circuit = Circuit(circuit.nqubits)
         for gate in output_gates:
