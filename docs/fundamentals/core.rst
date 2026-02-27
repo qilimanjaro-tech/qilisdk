@@ -189,9 +189,15 @@ collect all the :class:`~qilisdk.core.variables.Parameter` instances they encoun
     print(circuit.get_parameter_values())  # [0.75]
     circuit.set_parameters({"RX(0)_theta_0": 0.9})
 
-Whenever you interact with one of these parameterizable objects, the helper
-methods let you list, bound, or update the symbolic degrees of freedom in a
-consistent way.
+All parameter helper methods accept an optional ``where`` predicate to filter
+the exposed parameters. This is useful when you want to update only a subset,
+such as trainable parameters.
+
+.. code-block:: python
+
+    trainable_values = circuit.get_parameter_values(where=lambda p: p.is_trainable)
+    circuit.set_parameter_values([0.3], where=lambda p: p.is_trainable)
+
 
 Mathematical Maps (sin, cos)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

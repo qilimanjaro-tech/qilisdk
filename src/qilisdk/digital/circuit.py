@@ -112,10 +112,13 @@ class Circuit(Parameterizable):
         where: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
         """
-        Retrieve the parameter values from all parameterized gates in the circuit.
+        Retrieve parameter values from gates in insertion order.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
-            list[float]: A list of parameter values from each parameterized gate.
+            list[float]: Parameter values matching the optional filter.
         """
         return super().get_parameter_values(where=where)
 
@@ -124,10 +127,13 @@ class Circuit(Parameterizable):
         where: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         """
-        Retrieve the parameter values from all parameterized gates in the circuit.
+        Retrieve parameter labels from gates in insertion order.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
-            list[float]: A list of parameter values from each parameterized gate.
+            list[str]: Parameter labels matching the optional filter.
         """
         return super().get_parameter_names(where=where)
 
@@ -136,10 +142,13 @@ class Circuit(Parameterizable):
         where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
         """
-        Retrieve the parameter names and values from all parameterized gates in the circuit.
+        Retrieve parameter labels and values from the circuit.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
-            dict[str, float]: A dictionary of the parameters with their current values.
+            dict[str, float]: Mapping of parameter labels to their current values.
         """
         return super().get_parameters(where=where)
 
@@ -153,9 +162,10 @@ class Circuit(Parameterizable):
 
         Args:
             values (list[float]): A list containing new parameter values to assign to the parameterized gates.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
 
         Raises:
-            ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
+            ParametersNotEqualError: If ``values`` length does not match the selected parameter count.
         """
         super().set_parameter_values(values=values, where=where)
 

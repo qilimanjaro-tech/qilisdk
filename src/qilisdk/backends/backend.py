@@ -133,17 +133,16 @@ class Backend(ABC):
     def _execute_variational_program(
         self, functional: VariationalProgram[PrimitiveFunctional[TResult]]
     ) -> VariationalProgramResult[TResult]:
-        """Optimize a Parameterized Program (:class:`~qilisdk.functionals.variational_program.VariationalProgram`)
-            and returns the optimal parameters and results.
+        """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
 
         Args:
-            functional (VariationalProgram): The variational program to be optimized.
+            functional (VariationalProgram): Variational program to optimize.
 
         Returns:
-            ParameterizedProgramResults: The final optimizer and functional results.
+            VariationalProgramResult[TResult]: Optimizer output and final functional execution.
 
         Raises:
-            ValueError: If the functional is not parameterized.
+            ValueError: If the wrapped functional has no trainable parameters.
         """
 
         def evaluate_sample(parameters: list[float]) -> float:

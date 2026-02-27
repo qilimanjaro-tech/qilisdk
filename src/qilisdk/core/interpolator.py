@@ -95,7 +95,7 @@ def _process_callable(
 
 @yaml.register_class
 class Interpolator(Parameterizable):
-    """It's a dictionary that can interpolate between defined indecies."""
+    """Mapping of time points to coefficients with optional interpolation."""
 
     def __init__(
         self,
@@ -435,6 +435,7 @@ class Interpolator(Parameterizable):
 
         Args:
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
         self._delete_cache()
         super().set_parameter_values(values=values, where=where)

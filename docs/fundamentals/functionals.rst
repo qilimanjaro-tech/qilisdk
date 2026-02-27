@@ -24,8 +24,10 @@ parameters consistently before execution.
 
 Each functional advertises a matching :attr:`result_type` pointing to a concrete
 :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass. When you call
-:meth:`~qilisdk.backends.backend.Backend.execute`, the backend inspects this attribute to decide which result object to
-construct and return.
+:meth:`~qilisdk.backends.backend.Backend.execute`, backends dispatch by functional type
+(:class:`Sampling <qilisdk.functionals.sampling.Sampling>`,
+:class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`, etc.) and return
+the corresponding result object.
 
 Result Objects
 --------------
@@ -399,6 +401,7 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
 Parameter constraints (inequalities/equalities on parameters) are attached at this level via the ``parameter_constraints``
 argument; this is the place to enforce relations like ``theta >= phi`` or cross-parameter bounds across all QiliSDK
 functionals.
+Only parameters marked as trainable are optimized during this loop.
 
 **Parameters**
 
@@ -407,7 +410,7 @@ functionals.
   :class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`).
 - **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): Classical optimizer that proposes new parameter
   values and optionally stores intermediate iterates.
-- **cost_model** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
+- **cost_function** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.

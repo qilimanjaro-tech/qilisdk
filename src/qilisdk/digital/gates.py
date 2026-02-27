@@ -137,7 +137,7 @@ class Gate(Parameterizable, ABC):
         """Returns the raw parameter objects stored in the gate.
 
         Returns:
-            dict[str, Parameter]: A dictionary mapping each Parameter object to its label.
+            dict[str, Parameter]: Mapping from parameter label to parameter object.
         """
         return {}
 
@@ -147,6 +147,9 @@ class Gate(Parameterizable, ABC):
     ) -> dict[str, float]:
         """
         Retrieve a mapping of parameter names to their corresponding values.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
             dict[str, float]: A dictionary mapping each parameter name to its numeric value.
@@ -160,6 +163,9 @@ class Gate(Parameterizable, ABC):
         """
         Retrieve the symbolic names of the gate's parameters.
 
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
+
         Returns:
             list[str]: A list containing the names of the parameters.
         """
@@ -171,6 +177,9 @@ class Gate(Parameterizable, ABC):
     ) -> list[float]:
         """
         Retrieve the numerical values assigned to the gate's parameters.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
             list[float]: A list containing the parameter values.
@@ -204,10 +213,11 @@ class Gate(Parameterizable, ABC):
 
         Args:
             values (list[float]): A list containing new parameter values.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
 
         Raises:
             GateNotParameterizedError: If gate is not parameterized.
-            ParametersNotEqualError: If the number of provided values does not match the expected parameter count.
+            ParametersNotEqualError: If ``values`` length does not match the selected parameter count.
         """
         if not self.is_parameterized:
             raise GateNotParameterizedError
@@ -219,6 +229,7 @@ class Gate(Parameterizable, ABC):
         self,
         where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
+        """Return parameter bounds, optionally filtered by predicate."""
         return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
@@ -247,6 +258,7 @@ class BasicGate(Gate):
         Args:
             target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
             parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
+            parameter_transforms (dict[str, Term] | None): Optional symbolic transforms keyed by parameter name.
 
         Raises:
             ValueError: if duplicate target qubits are found.
@@ -554,7 +566,7 @@ class M(Gate):
         Initialize a measurement operation.
 
         Args:
-            qubit (int): The qubit index to be measured.
+            qubits (int): One or more qubit indices to measure.
         """
         self._target_qubits = qubits
         super().__init__()
@@ -588,10 +600,10 @@ class I(BasicGate):
 
     def __init__(self, qubit: int) -> None:
         """
-        Initialize a Pauli-X gate.
+        Initialize an identity gate.
 
         Args:
-            qubit (int): The target qubit index for the X gate.
+            qubit (int): The target qubit index for the identity gate.
         """
         super().__init__(target_qubits=(qubit,))
 

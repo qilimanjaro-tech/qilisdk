@@ -25,7 +25,11 @@ if TYPE_CHECKING:
 
 
 class Parameterizable(ABC):
-    """Mixin for objects that expose tunable parameters and constraints."""
+    """Mixin for objects that expose tunable parameters and constraints.
+
+    Subclasses can compose parameter interfaces by yielding child
+    :class:`Parameterizable` instances from :meth:`_iter_parameter_children`.
+    """
 
     def __init__(self) -> None:
         super(Parameterizable, self).__init__()
@@ -42,7 +46,7 @@ class Parameterizable(ABC):
         return ()
 
     def _iter_parameter_items(self) -> Iterable[tuple[str, Parameter]]:
-        """Yield ``(label, parameter)`` items exposed by this object."""
+        """Yield ``(label, parameter)`` items from this object and its children."""
         local_params = self._parameters or {}
         yield from local_params.items()
         for child in self._iter_parameter_children():
@@ -53,10 +57,15 @@ class Parameterizable(ABC):
         prefix: str,
         where: Callable[[Parameter], bool] | None = None,
     ) -> None:
-        """Sets a prefix to all existing parameters in the object.
+        """Set a prefix on parameter labels.
 
         Args:
-            prefix (str): the prefix to be set.
+            prefix (str): Prefix to prepend to selected parameter labels.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting local parameters.
+
+        Notes:
+            The ``where`` predicate is applied to local parameters only. Child parameterizable
+            objects always receive the same prefix operation recursively.
         """
         if where:
             old_keys: list[str] = [key for key, value in self._parameters.items() if where(value)]
@@ -71,6 +80,7 @@ class Parameterizable(ABC):
         self._prefix = prefix
 
     def get_prefix(self) -> str:
+        """Return the currently configured parameter prefix for this object."""
         return self._prefix
 
     def _filtered_parameter_map(
@@ -132,7 +142,7 @@ class Parameterizable(ABC):
             where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
 
         Raises:
-            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
+            ValueError: If ``values`` does not match the number of parameters selected by ``where``.
         """
         param_names = self.get_parameter_names(where=where)
         if len(values) != len(param_names):
@@ -193,7 +203,7 @@ class Parameterizable(ABC):
         """Get all constraints on the parameters.
 
         Returns:
-            list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.
+            list[ComparisonTerm]: Comparison terms defined locally and by child parameterizable objects.
         """
         constraints = list((self._parameter_constraints or []))
         for child in self._iter_parameter_children():
@@ -204,7 +214,7 @@ class Parameterizable(ABC):
         """Validate that proposed parameter updates satisfy all constraints.
 
         Args:
-            parameters (dict[str, float]): Candidate parameter values keyed by label.
+            parameters (dict[str, float]): Candidate updates keyed by parameter label.
 
         Returns:
             bool: True if every constraint evaluates to True for the provided values.
