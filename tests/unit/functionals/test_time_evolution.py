@@ -58,14 +58,10 @@ def test_time_evolution_properties():
     assert _isclose(time_evolution.get_parameter_bounds()["theta"][0], 0.0)
     assert _isclose(time_evolution.get_parameter_bounds()["theta"][1], 2.0)
     assert _isclose(time_evolution.get_parameter_values()[0], 1.0)
-    assert time_evolution.get_parameter_names(parameter_filter=lambda param: param.is_trainable) == ["theta"]
-    assert _isclose(time_evolution.get_parameters(parameter_filter=lambda param: param.is_trainable)["theta"], 1.0)
-    assert _isclose(
-        time_evolution.get_parameter_bounds(parameter_filter=lambda param: param.is_trainable)["theta"][0], 0.0
-    )
-    assert _isclose(
-        time_evolution.get_parameter_bounds(parameter_filter=lambda param: param.is_trainable)["theta"][1], 2.0
-    )
+    assert time_evolution.get_parameter_names(where=lambda param: param.is_trainable) == ["theta"]
+    assert _isclose(time_evolution.get_parameters(where=lambda param: param.is_trainable)["theta"], 1.0)
+    assert _isclose(time_evolution.get_parameter_bounds(where=lambda param: param.is_trainable)["theta"][0], 0.0)
+    assert _isclose(time_evolution.get_parameter_bounds(where=lambda param: param.is_trainable)["theta"][1], 2.0)
     assert time_evolution.get_constraints() == []
 
 
@@ -83,9 +79,9 @@ def test_time_evolution_parameter_sync_with_schedule_child():
     schedule.set_parameters({"theta": 0.8, "coeff": 0.4})
     assert _isclose(time_evolution.get_parameters()["theta"], 0.8)
     assert _isclose(time_evolution.get_parameters()["coeff"], 0.4)
-    assert _isclose(time_evolution.get_parameters(parameter_filter=lambda param: param.is_trainable)["theta"], 0.8)
-    assert _isclose(time_evolution.get_parameters(parameter_filter=lambda param: not param.is_trainable)["coeff"], 0.4)
+    assert _isclose(time_evolution.get_parameters(where=lambda param: param.is_trainable)["theta"], 0.8)
+    assert _isclose(time_evolution.get_parameters(where=lambda param: not param.is_trainable)["coeff"], 0.4)
 
-    time_evolution.set_parameter_values([1.1], parameter_filter=lambda param: param.is_trainable)
+    time_evolution.set_parameter_values([1.1], where=lambda param: param.is_trainable)
     assert _isclose(schedule.get_parameters()["theta"], 1.1)
     assert _isclose(schedule.get_parameters()["coeff"], 0.4)

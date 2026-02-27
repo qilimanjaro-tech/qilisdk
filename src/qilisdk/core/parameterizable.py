@@ -51,15 +51,15 @@ class Parameterizable(ABC):
     def set_prefix(
         self,
         prefix: str,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """Sets a prefix to all existing parameters in the object.
 
         Args:
             prefix (str): the prefix to be set.
         """
-        if parameter_filter:
-            old_keys: list[str] = [key for key, value in self._parameters.items() if parameter_filter(value)]
+        if where:
+            old_keys: list[str] = [key for key, value in self._parameters.items() if where(value)]
         else:
             old_keys: list[str] = list(self._parameters.keys())
         for name in old_keys:
@@ -75,11 +75,11 @@ class Parameterizable(ABC):
 
     def _filtered_parameter_map(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, Parameter]:
-        if parameter_filter is None:
+        if where is None:
             return dict(self._iter_parameter_items())
-        return {label: param for label, param in self._iter_parameter_items() if parameter_filter(param)}
+        return {label: param for label, param in self._iter_parameter_items() if where(param)}
 
     @property
     def nparameters(self) -> int:
@@ -88,56 +88,53 @@ class Parameterizable(ABC):
 
     def get_parameter_values(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
         """Return the current numerical values of the parameters.
 
         Args:
-            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
         """
-        return list(self.get_parameters(parameter_filter=parameter_filter).values())
+        return list(self.get_parameters(where=where).values())
 
     def get_parameter_names(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         """Return the ordered list of parameter labels.
 
         Args:
-            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
         """
-        return list(self.get_parameters(parameter_filter=parameter_filter).keys())
+        return list(self.get_parameters(where=where).keys())
 
     def get_parameters(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, RealNumber]:
         """Return a mapping from parameter labels to their current numerical values.
 
         Args:
-            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
         """
-        return {
-            label: param.value
-            for label, param in self._filtered_parameter_map(parameter_filter=parameter_filter).items()
-        }
+        return {label: param.value for label, param in self._filtered_parameter_map(where=where).items()}
 
     def set_parameter_values(
         self,
         values: list[float],
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
         Update all parameter values at once.
 
         Args:
             values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.
-            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
 
         Raises:
             ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
         """
-        param_names = self.get_parameter_names(parameter_filter=parameter_filter)
+        param_names = self.get_parameter_names(where=where)
         if len(values) != len(param_names):
             raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
         value_dict = {param_names[i]: values[i] for i in range(len(values))}
@@ -165,17 +162,14 @@ class Parameterizable(ABC):
 
     def get_parameter_bounds(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
         """Return the ``(lower, upper)`` bounds associated with each parameter.
 
         Args:
-            parameter_filter (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
         """
-        return {
-            label: param.bounds
-            for label, param in self._filtered_parameter_map(parameter_filter=parameter_filter).items()
-        }
+        return {label: param.bounds for label, param in self._filtered_parameter_map(where=where).items()}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """

@@ -109,7 +109,7 @@ class Circuit(Parameterizable):
 
     def get_parameter_values(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> list[float]:
         """
         Retrieve the parameter values from all parameterized gates in the circuit.
@@ -117,11 +117,11 @@ class Circuit(Parameterizable):
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_values(parameter_filter=parameter_filter)
+        return super().get_parameter_values(where=where)
 
     def get_parameter_names(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         """
         Retrieve the parameter values from all parameterized gates in the circuit.
@@ -129,11 +129,11 @@ class Circuit(Parameterizable):
         Returns:
             list[float]: A list of parameter values from each parameterized gate.
         """
-        return super().get_parameter_names(parameter_filter=parameter_filter)
+        return super().get_parameter_names(where=where)
 
     def get_parameters(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
         """
         Retrieve the parameter names and values from all parameterized gates in the circuit.
@@ -141,12 +141,12 @@ class Circuit(Parameterizable):
         Returns:
             dict[str, float]: A dictionary of the parameters with their current values.
         """
-        return super().get_parameters(parameter_filter=parameter_filter)
+        return super().get_parameters(where=where)
 
     def set_parameter_values(
         self,
         values: list[float],
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
         Set new parameter values for all parameterized gates in the circuit.
@@ -157,7 +157,7 @@ class Circuit(Parameterizable):
         Raises:
             ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
         """
-        super().set_parameter_values(values=values, parameter_filter=parameter_filter)
+        super().set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
@@ -175,9 +175,9 @@ class Circuit(Parameterizable):
 
     def get_parameter_bounds(
         self,
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(parameter_filter=parameter_filter)
+        return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():

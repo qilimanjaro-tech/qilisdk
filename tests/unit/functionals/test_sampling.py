@@ -61,19 +61,15 @@ def test_sampling_parameter_sync_with_circuit_child():
     circuit.set_parameters({"theta": 0.9, "phi_nt": 0.3})
     assert _isclose(sampling.get_parameters()["theta"], 0.9)
     assert _isclose(sampling.get_parameters()["phi_nt"], 0.3)
-    assert _isclose(sampling.get_parameters(parameter_filter=lambda param: param.is_trainable)["theta"], 0.9)
-    assert _isclose(sampling.get_parameters(parameter_filter=lambda param: not param.is_trainable)["phi_nt"], 0.3)
+    assert _isclose(sampling.get_parameters(where=lambda param: param.is_trainable)["theta"], 0.9)
+    assert _isclose(sampling.get_parameters(where=lambda param: not param.is_trainable)["phi_nt"], 0.3)
 
-    sampling.set_parameter_values([1.1], parameter_filter=lambda param: param.is_trainable)
+    sampling.set_parameter_values([1.1], where=lambda param: param.is_trainable)
     assert _isclose(circuit.get_parameters()["theta"], 1.1)
     assert _isclose(circuit.get_parameters()["phi_nt"], 0.3)
 
     sampling.set_parameter_bounds({"theta": (-1.0, 2.0), "phi_nt": (0.3, 0.3)})
     assert _isclose(circuit.get_parameter_bounds()["theta"][0], -1.0)
     assert _isclose(circuit.get_parameter_bounds()["theta"][1], 2.0)
-    assert _isclose(
-        sampling.get_parameter_bounds(parameter_filter=lambda param: not param.is_trainable)["phi_nt"][0], 0.3
-    )
-    assert _isclose(
-        sampling.get_parameter_bounds(parameter_filter=lambda param: not param.is_trainable)["phi_nt"][1], 0.3
-    )
+    assert _isclose(sampling.get_parameter_bounds(where=lambda param: not param.is_trainable)["phi_nt"][0], 0.3)
+    assert _isclose(sampling.get_parameter_bounds(where=lambda param: not param.is_trainable)["phi_nt"][1], 0.3)

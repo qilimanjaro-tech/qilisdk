@@ -97,7 +97,7 @@ def test_reservoir_layer_properties_and_parameter_interface():
     assert all(obs.nqubits == 2 for obs in reservoir_layer.observables_as_qtensor)
 
     assert reservoir_layer.get_parameter_names() == ["u", "g", "output_encoding_p"]
-    assert reservoir_layer.get_parameter_names(parameter_filter=lambda param: param.is_trainable) == [
+    assert reservoir_layer.get_parameter_names(where=lambda param: param.is_trainable) == [
         "g",
         "output_encoding_p",
     ]
@@ -105,12 +105,12 @@ def test_reservoir_layer_properties_and_parameter_interface():
     assert reservoir_layer.nparameters == 3
 
     assert set(reservoir_layer.get_parameters()) == {"u", "g", "output_encoding_p"}
-    assert set(reservoir_layer.get_parameters(parameter_filter=lambda param: param.is_trainable)) == {
+    assert set(reservoir_layer.get_parameters(where=lambda param: param.is_trainable)) == {
         "g",
         "output_encoding_p",
     }
     assert set(reservoir_layer.get_parameter_bounds()) == {"u", "g", "output_encoding_p"}
-    assert set(reservoir_layer.get_parameter_bounds(parameter_filter=lambda param: param.is_trainable)) == {
+    assert set(reservoir_layer.get_parameter_bounds(where=lambda param: param.is_trainable)) == {
         "g",
         "output_encoding_p",
     }
@@ -123,7 +123,7 @@ def test_reservoir_layer_properties_and_parameter_interface():
 
     reservoir_layer.set_parameter_bounds({"u": (-2.0, 2.0), "g": (0.0, 0.9), "output_encoding_p": (0.0, 0.9)})
     _assert_bounds_dict_close(
-        reservoir_layer.get_parameter_bounds(parameter_filter=lambda param: param.is_trainable),
+        reservoir_layer.get_parameter_bounds(where=lambda param: param.is_trainable),
         {"g": (0.0, 0.9), "output_encoding_p": (0.0, 0.9)},
     )
 
@@ -252,7 +252,7 @@ def test_reservoir_layer_parameter_sync_with_children():
     post.set_parameters({"p": 0.3})
     _assert_parameter_dict_close(layer.get_parameters(), {"u": 0.8, "g": 0.4, "output_encoding_p": 0.3})
 
-    layer.set_parameter_values([0.9, 1.0], parameter_filter=lambda param: param.is_trainable)
+    layer.set_parameter_values([0.9, 1.0], where=lambda param: param.is_trainable)
     assert _isclose(schedule.get_parameters()["g"], 0.9)
     assert _isclose(post.get_parameters()["p"], 1.0)
     assert _isclose(pre.get_parameters()["u"], 0.8)
@@ -280,7 +280,7 @@ def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
     layer.set_parameters({"u": 0.6, "g": 0.7, "output_encoding_p": 0.8})
     _assert_parameter_dict_close(reservoir.get_parameters(), {"u": 0.6, "g": 0.7, "output_encoding_p": 0.8})
 
-    reservoir.set_parameter_values([0.95, 1.2], parameter_filter=lambda param: param.is_trainable)
+    reservoir.set_parameter_values([0.95, 1.2], where=lambda param: param.is_trainable)
     assert _isclose(layer.get_parameters()["g"], 0.95)
     assert _isclose(layer.get_parameters()["output_encoding_p"], 1.2)
     assert _isclose(layer.get_parameters()["u"], 0.6)

@@ -132,7 +132,7 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
         self._input_encoding = Circuit(self._nqubits)
         self._input_encoding.add(pre_processing.gates)
-        self._input_encoding.set_prefix("input_encoding_", parameter_filter=lambda p: not isinstance(p, ReservoirInput))
+        self._input_encoding.set_prefix("input_encoding_", where=lambda p: not isinstance(p, ReservoirInput))
 
     def _validate_output_encoding(self, post_processing: Circuit) -> None:
         """Validate and normalize the optional post-processing circuit.
@@ -149,9 +149,7 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
         self._output_encoding = Circuit(self._nqubits)
         self._output_encoding.add(post_processing.gates)
-        self._output_encoding.set_prefix(
-            "output_encoding_", parameter_filter=lambda p: not isinstance(p, ReservoirInput)
-        )
+        self._output_encoding.set_prefix("output_encoding_", where=lambda p: not isinstance(p, ReservoirInput))
 
     def _process_qtensor(self, observable: QTensor) -> QTensor:
         """Pad observable tensors with identities to match the reservoir width.
@@ -176,7 +174,7 @@ class ReservoirLayer(Parameterizable):
     def input_parameter_names(self) -> list[str]:
         """Return parameter names that are input-driven (non-trainable)."""
         return self.get_parameter_names(
-            parameter_filter=lambda param: isinstance(param, ReservoirInput) and not param.is_trainable
+            where=lambda param: isinstance(param, ReservoirInput) and not param.is_trainable
         )
 
     @property

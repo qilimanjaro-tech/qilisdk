@@ -428,7 +428,7 @@ class Interpolator(Parameterizable):
     def set_parameter_values(
         self,
         values: list[float],
-        parameter_filter: Callable[[Parameter], bool] | None = None,
+        where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         """
         Assign parameter values by position and clear caches.
@@ -437,7 +437,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
         """
         self._delete_cache()
-        super().set_parameter_values(values=values, parameter_filter=parameter_filter)
+        super().set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """
