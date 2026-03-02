@@ -85,7 +85,7 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
    * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
      - ✓
      - ✓
-     - No
+     - ✓
      - ✓
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - ✓
