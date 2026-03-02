@@ -32,11 +32,11 @@ void QiliSimConfig::validate() const {
     if (num_integrate_substeps <= 0) {
         throw py::value_error("Number of integration substeps must be positive.");
     }
-    if (time_evolution_method != "arnoldi" && time_evolution_method != "integrate" && time_evolution_method != "direct") {
-        throw py::value_error("Evolution method must be one of 'arnoldi', 'integrate', or 'direct'.");
+    if (time_evolution_method != "arnoldi" && time_evolution_method != "integrate" && time_evolution_method != "direct" && time_evolution_method != "integrate_matrix_free") {
+        throw py::value_error("Evolution method must be one of 'direct', 'arnoldi', 'integrate', or 'integrate_matrix_free'.");
     }
-    if (sampling_method != "statevector" && sampling_method != "stabilizer" && sampling_method != "matrix_free") {
-        throw py::value_error("Sampling method must be one of 'statevector', 'stabilizer' or 'matrix_free'.");
+    if (sampling_method != "statevector" && sampling_method != "statevector_matrix_free") {
+        throw py::value_error("Sampling method must be one of 'statevector' or 'statevector_matrix_free'.");
     }
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");

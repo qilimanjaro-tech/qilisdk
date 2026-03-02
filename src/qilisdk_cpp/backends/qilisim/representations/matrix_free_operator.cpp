@@ -20,7 +20,7 @@ const double inv_sqrt_2 = 1.0 / std::sqrt(2.0);
 const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
 const std::complex<double> t_phase_conj = std::conj(t_phase);
 
-void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix) const {
+void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
     Apply the operator to a dense state.
 
@@ -30,22 +30,16 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
     */
 
     // Precompute things that are used in all branches
-    int num_qubits = static_cast<int>(std::log2(output_state.size()));
-    if (as_density_matrix) {
-        num_qubits = static_cast<int>(std::log2(output_state.rows()));
-    }
+    int num_qubits = static_cast<int>(std::log2(output_state.rows()));
     long long mask = 1LL << (num_qubits - 1 - target_qubit);
-    size_t N = output_state.size();
-    if (as_density_matrix) {
-        N = output_state.rows();
-    }
+    size_t N = output_state.rows();
     size_t stride = mask;
     size_t half = N >> 1;
     size_t dim = static_cast<size_t>(1) << num_qubits;
 
     // If we have an X on qubit i, we swap the amplitudes of all basis states where qubit i is 0 with those where qubit i is 1
     if (name == "X") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -57,7 +51,31 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 size_t j = i + stride;
                 std::swap(output_state(i), output_state(j));
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block  = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t r0 = base + offset;
+                size_t r1 = r0 + stride;
+                output_state.row(r0).swap(output_state.row(r1));
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t c0 = base + offset;
+                size_t c1 = c0 + stride;
+                output_state.col(c0).swap(output_state.col(c1));
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -89,7 +107,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a Y on qubit i, we swap the amplitudes of all basis states where qubit i is 0 with those where qubit i is 1, and multiply the amplitude of all basis states where qubit i is 1 by i or -i depending on whether it was originally 0 or 1
     } else if (name == "Y") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -103,7 +121,55 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 output_state(i) = output_state(j) * imag_conj;
                 output_state(j) = temp * imag;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp parallel
+            #endif
+            {
+                #if defined(_OPENMP)
+                #pragma omp for schedule(static)
+                #endif
+                for (size_t k = 0; k < half; ++k) {
+                    size_t block = k / stride;
+                    size_t offset = k % stride;
+                    size_t base = block * (stride << 1);
+                    size_t r0 = base + offset;
+                    size_t r1 = r0 + stride;
+                    output_state.row(r0).swap(output_state.row(r1));
+                }
+                #if defined(_OPENMP)
+                #pragma omp for schedule(static)
+                #endif
+                for (size_t r = 0; r < dim; ++r) {
+                    bool bit = (r & mask);
+                    output_state.row(r) *= (bit ? imag_conj : imag);
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp parallel
+            #endif
+            {
+                #if defined(_OPENMP)
+                #pragma omp for schedule(static)
+                #endif
+                for (size_t k = 0; k < half; ++k) {
+                    size_t block = k / stride;
+                    size_t offset = k % stride;
+                    size_t base = block * (stride << 1);
+                    size_t c0 = base + offset;
+                    size_t c1 = c0 + stride;
+                    output_state.col(c0).swap(output_state.col(c1));
+                }
+                #if defined(_OPENMP)
+                #pragma omp for schedule(static)
+                #endif
+                for (size_t c = 0; c < dim; ++c) {
+                    bool bit = (c & mask);
+                    output_state.col(c) *= (bit ? imag : imag_conj);
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -149,7 +215,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a Z on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by -1
     } else if (name == "Z") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -160,7 +226,29 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 size_t i = base + offset;
                 output_state(i + stride) *= -1.0;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t r = 0; r < half; ++r) {
+                size_t block  = r / stride;
+                size_t offset = r % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.row(i + stride) *= -1.0;
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t c = 0; c < half; ++c) {
+                size_t block = c / stride;
+                size_t offset = c % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.col(i + stride) *= -1.0;
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -190,7 +278,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a H on qubit i, we apply the transformation |0> -> (|0> + |1>)/sqrt(2), |1> -> (|0> - |1>)/sqrt(2) to all basis states
     } else if (name == "H") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -205,7 +293,37 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 output_state(i) = (temp_i + temp_j) * inv_sqrt_2;
                 output_state(j) = (temp_i - temp_j) * inv_sqrt_2;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block  = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t r0 = base + offset;
+                size_t r1 = r0 + stride;
+                Eigen::RowVectorXcd temp0 = output_state.row(r0);
+                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                output_state.row(r0) = (temp0 + temp1) * inv_sqrt_2;
+                output_state.row(r1) = (temp0 - temp1) * inv_sqrt_2;
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t c0 = base + offset;
+                size_t c1 = c0 + stride;
+                Eigen::VectorXcd temp0 = output_state.col(c0);
+                Eigen::VectorXcd temp1 = output_state.col(c1);
+                output_state.col(c0) = (temp0 + temp1) * inv_sqrt_2;
+                output_state.col(c1) = (temp0 - temp1) * inv_sqrt_2;
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -243,7 +361,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a S on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by i
     } else if (name == "S") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -254,7 +372,29 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 size_t i = base + offset;
                 output_state(i + stride) *= imag;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t r = 0; r < half; ++r) {
+                size_t block  = r / stride;
+                size_t offset = r % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.row(i + stride) *= imag;
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t c = 0; c < half; ++c) {
+                size_t block = c / stride;
+                size_t offset = c % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.col(i + stride) *= imag_conj;
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -284,7 +424,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a T on qubit i, we multiply the amplitude of all basis states where qubit i is 1 by exp(i*pi/4)
     } else if (name == "T") {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -295,7 +435,29 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 size_t i = base + offset;
                 output_state(i + stride) *= t_phase;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t r = 0; r < half; ++r) {
+                size_t block  = r / stride;
+                size_t offset = r % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.row(i + stride) *= t_phase;
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t c = 0; c < half; ++c) {
+                size_t block = c / stride;
+                size_t offset = c % stride;
+                size_t base = block * (stride << 1);
+                size_t i = base + offset;
+                output_state.col(i + stride) *= t_phase_conj;
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -326,7 +488,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
     // If we have a CNOT with control qubit j and target qubit i, we swap the amplitudes of all basis states where qubit j is 1 and qubit i is 0 with those where qubit j is 1 and qubit i is 1
     } else if (name == "CNOT") {
         size_t control_mask = 1ULL << (num_qubits - 1 - control_qubit);
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -341,7 +503,31 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                     }
                 }
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t i = 0; i < dim; ++i) {
+                if (i & control_mask) {
+                    size_t j = i ^ mask;
+                    if (i < j) {
+                        output_state.row(i).swap(output_state.row(j));
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t i = 0; i < dim; ++i) {
+                if (i & control_mask) {
+                    size_t j = i ^ mask;
+                    if (i < j) {
+                        output_state.col(i).swap(output_state.col(j));
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -374,7 +560,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
     // If we have a CZ with control qubit j and target qubit i, we multiply the amplitude of all basis states where qubit j is 1 and qubit i is 1 by -1
     } else if (name == "CZ") {
         size_t control_mask = 1ULL << (num_qubits - 1 - control_qubit);
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -389,7 +575,31 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                     }
                 }
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t i = 0; i < dim; ++i) {
+                if (i & control_mask) {
+                    size_t j = i ^ mask;
+                    if (i < j) {
+                        output_state.row(j) *= -1.0;
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t i = 0; i < dim; ++i) {
+                if (i & control_mask) {
+                    size_t j = i ^ mask;
+                    if (i < j) {
+                        output_state.col(j) *= -1.0;
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             #if defined(_OPENMP)
             #pragma omp parallel
             #endif
@@ -421,7 +631,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
 
     // If we have a 2x2 base matrix, we apply it by treating the target qubit as the least significant bit and iterating through pairs of basis states
     } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2) {
-        if (!as_density_matrix) {
+        if (output_state.cols() == 1) {
             #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
             #endif
@@ -436,7 +646,37 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, bool as_density_matrix
                 output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
                 output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
             }
-        } else {
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block  = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t r0 = base + offset;
+                size_t r1 = r0 + stride;
+                Eigen::RowVectorXcd temp0 = output_state.row(r0);
+                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+            #if defined(_OPENMP)
+            #pragma omp for schedule(static)
+            #endif
+            for (size_t k = 0; k < half; ++k) {
+                size_t block  = k / stride;
+                size_t offset = k % stride;
+                size_t base = block * (stride << 1);
+                size_t c0 = base + offset;
+                size_t c1 = c0 + stride;
+                Eigen::VectorXcd temp0 = output_state.col(c0);
+                Eigen::VectorXcd temp1 = output_state.col(c1);
+                output_state.col(c0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                output_state.col(c1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             DenseMatrix base_matrix_conj = base_matrix.conjugate();
             #if defined(_OPENMP)
             #pragma omp parallel
@@ -500,4 +740,16 @@ MatrixFreeOperator::MatrixFreeOperator(const Gate& gate) {
     control_qubit = gate.get_control_qubits().empty() ? -1 : gate.get_control_qubits()[0];
     base_matrix = gate.get_base_matrix();
     name = gate.get_name();
+}
+
+//output
+std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {
+    os << op.name;
+    if (op.target_qubit != -1) {
+        os << "(" << op.target_qubit << ")";
+    }
+    if (op.control_qubit != -1) {
+        os << "_c" << op.control_qubit;
+    }
+    return os;
 }

@@ -25,8 +25,8 @@ void time_evolution(SparseMatrix rho_0,
                     NoiseModelCpp& noise_model_cpp,
                     const std::vector<SparseMatrix>& observable_matrices, 
                     QiliSimConfig& config, 
-                    SparseMatrix& rho_t, 
-                    std::vector<SparseMatrix>& intermediate_rhos, 
+                    DenseMatrix& rho_t, 
+                    std::vector<DenseMatrix>& intermediate_rhos, 
                     std::vector<double>& expectation_values, 
                     std::vector<std::vector<double>>& intermediate_expectation_values) {
     /*
@@ -40,8 +40,8 @@ void time_evolution(SparseMatrix rho_0,
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during evolution.
         observable_matrices (std::vector<SparseMatrix>): The list of observable matrices to measure.
         config (QiliSimConfig&): Configuration parameters for the time evolution.
-        rho_t (SparseMatrix&): Output parameter to hold the final state after evolution.
-        intermediate_rhos (std::vector<SparseMatrix>&): Output parameter to hold intermediate states if requested.
+        rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
+        intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
         intermediate_expectation_values (std::vector<std::vector<std::vector<double>>>&): Output parameter to hold expectation values at intermediate times.
 
@@ -116,7 +116,8 @@ void time_evolution(SparseMatrix rho_0,
 
     // If monte carlo, sample from rho_0 to get initial states
     // Then rho should be a collection of state vectors as columns
-    if (config.get_monte_carlo()) {
+    bool use_monte_carlo = config.get_monte_carlo();
+    if (use_monte_carlo) {
         rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
         is_unitary_on_statevector = true;
     }
@@ -155,14 +156,14 @@ void time_evolution(SparseMatrix rho_0,
         if (config.get_time_evolution_method() == "integrate") {
             rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
-            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector, config.get_atol());
+            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
             rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
         }
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
-            if (config.get_monte_carlo() || (!input_was_vector && rho_t.cols() == 1)) {
+            if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
                 intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
             } else {
                 intermediate_rhos.push_back(rho_t);
@@ -171,7 +172,7 @@ void time_evolution(SparseMatrix rho_0,
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (config.get_monte_carlo() || (!input_was_vector && rho_t.cols() == 1)) {
+    if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 
@@ -195,6 +196,161 @@ void time_evolution(SparseMatrix rho_0,
                 } else {
                     step_expectation_values.push_back(std::real(dot(O, rho_intermediate)));
                 }
+            }
+            intermediate_expectation_values.push_back(step_expectation_values);
+        }
+    }
+}
+
+void time_evolution_matrix_free(SparseMatrix rho_0, 
+                    const std::vector<MatrixFreeHamiltonian>& hamiltonians, 
+                    const std::vector<std::vector<double>>& parameters_list, 
+                    const std::vector<double>& step_list, 
+                    NoiseModelCpp& noise_model_cpp,
+                    const std::vector<MatrixFreeHamiltonian>& observables, 
+                    QiliSimConfig& config, 
+                    DenseMatrix& rho_t, 
+                    std::vector<DenseMatrix>& intermediate_rhos, 
+                    std::vector<double>& expectation_values, 
+                    std::vector<std::vector<double>>& intermediate_expectation_values) {
+    /*
+    Execute a time evolution functional.
+
+    Args:
+        rho_0 (SparseMatrix): The initial state (density matrix or state vector).
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonian terms.
+        parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
+        step_list (std::vector<double>): The list of time steps.
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during evolution.
+        observables (std::vector<MatrixFreeHamiltonian>): The list of observables to measure.
+        config (QiliSimConfig&): Configuration parameters for the time evolution.
+        rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
+        intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
+        expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
+        intermediate_expectation_values (std::vector<std::vector<std::vector<double>>>&): Output parameter to hold expectation values at intermediate times.
+
+    Returns:
+        TimeEvolutionResult: The results of the evolution.
+
+    Raises:
+        py::value_error: If the configuration is invalid.
+    */
+
+    // Make sure the config is valid
+    config.validate();
+
+    // Set the number of threads
+    #if defined(_OPENMP)
+        omp_set_num_threads(config.get_num_threads());
+        Eigen::setNbThreads(1);
+    #endif
+
+    // Get the jump operators from the noise model
+    std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
+
+    // Check if we have unitary dynamics
+    bool is_unitary_dynamics = (jump_operators.size() == 0);
+
+    // Determine if the input was a state vector
+    bool input_was_vector = false;
+    if (rho_0.rows() == 1 || rho_0.cols() == 1) {
+        input_was_vector = true;
+    }
+    if (rho_0.rows() == 1 && rho_0.cols() > 1) {
+        rho_0 = rho_0.adjoint();
+    }
+
+    // Determine if should treat it as unitary evolution on a statevector
+    // Note that this can change if the input was a density matrix but is actually pure
+    // Or similarly if we use monte-carlo, we treat it as statevector evolution
+    bool is_unitary_on_statevector = is_unitary_dynamics && input_was_vector;
+
+    // If we have unitary dynamics and the input was a pure state, convert to state vector
+    if (is_unitary_dynamics && !input_was_vector) {
+        double trace_rho2 = 0.0;
+        for (int k = 0; k < rho_0.outerSize(); ++k) {
+            for (SparseMatrix::InnerIterator it1(rho_0, k); it1; ++it1) {
+                trace_rho2 += std::pow(std::abs(it1.value()), 2);
+            }
+        }
+        if (std::abs(trace_rho2 - 1.0) < config.get_atol()) {
+            rho_0 = get_vector_from_density_matrix(rho_0);
+            is_unitary_on_statevector = true;
+        }
+    }
+
+    // If we were told to do monte carlo, but we already have unitary dynamics, don't bother
+    bool use_monte_carlo = config.get_monte_carlo();
+    if (is_unitary_on_statevector) {
+        use_monte_carlo = false;
+    }
+
+    // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
+    if (!is_unitary_dynamics && input_was_vector) {
+        if (rho_0.rows() == 1) {
+            rho_0 = rho_0.adjoint() * rho_0;
+            input_was_vector = true;
+        } else if (rho_0.cols() == 1) {
+            rho_0 = rho_0 * rho_0.adjoint();
+            input_was_vector = true;
+        }
+    }
+
+    // If monte carlo, sample from rho_0 to get initial states
+    // Then rho should be a collection of state vectors as columns
+    if (use_monte_carlo) {
+        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        is_unitary_on_statevector = true;
+    }
+
+    // Init rho_0
+    rho_t = rho_0;
+
+    // For each time step
+    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+
+        // Get the current Hamiltonian
+        MatrixFreeHamiltonian currentH;
+        for (size_t h = 0; h < hamiltonians.size(); ++h) {
+            double c = parameters_list[h][step_ind];
+            currentH += hamiltonians[h] * c;
+        }
+
+        // Determine the time step
+        double dt = step_list[step_ind];
+        if (step_ind > 0) {
+            dt = (step_list[step_ind] - step_list[step_ind - 1]);
+        }
+
+        // Perform the iteration depending on the method
+        iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+
+        // If we should store intermediates, do it here
+        if (config.get_store_intermediate_results()) {
+            if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+            } else {
+                intermediate_rhos.push_back(rho_t);
+            }
+        }
+    }
+
+    // If we have statevector/s but we should return a density matrix
+    if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+        rho_t = trajectories_to_density_matrix(rho_t);
+    }
+
+    // Apply the operators using the Born rule
+    for (const auto& O : observables) {
+        expectation_values.push_back(O.expectation_value(rho_t));
+    }
+
+    // If we have intermediates, process them too
+    if (config.get_store_intermediate_results()) {
+        for (const auto& rho_intermediate : intermediate_rhos) {
+            std::vector<double> step_expectation_values;
+            for (const auto& O : observables) {
+                step_expectation_values.push_back(O.expectation_value(rho_intermediate));
             }
             intermediate_expectation_values.push_back(step_expectation_values);
         }

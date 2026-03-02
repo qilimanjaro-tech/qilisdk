@@ -17,12 +17,12 @@
 #include "iterations.h"
 #include "lindblad.h"
 
-SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double atol) {
+DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
     /*
     Perform time evolution using direct matrix exponentiation.
 
     Args:
-        rho_0 (SparseMatrix): The initial density matrix, which should be vectorized.
+        rho_0 (DenseMatrix): The initial density matrix, which should be vectorized.
         dt (double): The total time step.
         currentH (SparseMatrix): The current Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
@@ -63,10 +63,10 @@ SparseMatrix iter_direct(const SparseMatrix& rho_0, double dt, const SparseMatri
 
         // If we have jump operators, need to form the full superoperator and act on the vectorized density matrix
     } else if (jump_operators.size() > 0) {
-        SparseMatrix rho_t = vectorize(rho_0, atol);
+        DenseMatrix rho_t = vectorize(rho_0);
         SparseMatrix L = create_superoperator(currentH, jump_operators);
         rho_t = exp_mat_action(L, dt, rho_t);
-        return devectorize(rho_t, atol);
+        return devectorize(rho_t);
 
         // Otherwise we just exponentiate the Hamiltonian
     } else {

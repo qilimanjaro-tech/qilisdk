@@ -69,7 +69,9 @@ if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     # Link libraries and include directories
     target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
     target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
-    if (OpenMP_CXX_FOUND)
+
+    # Don't use openmp in debug mode
+    if (OpenMP_CXX_FOUND AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "[QiliSim] Using OpenMP")
         target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
     endif()

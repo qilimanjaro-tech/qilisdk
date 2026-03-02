@@ -20,8 +20,6 @@
 #include "sampling.h"
 #include "../noise/noise_model.h"
 
-#include <iostream> // TODO (luke) remove
-
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -283,152 +281,6 @@ omp_set_num_threads(config.get_num_threads());
 
 }
 
-void sampling_stabilizer(const std::vector<Gate>& gates, 
-                          const std::vector<bool>& qubits_to_measure, 
-                          int n_qubits, 
-                          int n_shots, 
-                          const AffineStabilizerState& initial_state,
-                          NoiseModelCpp& noise_model_cpp,
-                          AffineStabilizerState& state,
-                          std::map<std::string, int>& counts, 
-                          const QiliSimConfig& config) {
-    /*
-    Execute a sampling functional using a simple statevector simulator.
-
-    Args:
-        gates (std::vector<Gate>&): The list of gates in the circuit.
-        qubits_to_measure (std::vector<bool>&): A list indicating which qubits to measure.
-        n_qubits (int): The number of qubits in the circuit.
-        n_shots (int): The number of shots to sample.
-        initial_state (AffineStabilizerState&): The initial state of the system (statevector or density matrix).
-        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
-        state (AffineStabilizerState&): The final state after applying all gates (statevector or density matrix).
-        counts (std::map<std::string, int>&): A map to store the measurement counts.
-        config (QiliSimConfig): The simulation configuration.
-
-    Returns:
-        SamplingResult: A result object containing the measurement samples and computed probabilities.
-
-    Raises:
-        py::value_error: If functional is not a Sampling instance.
-        py::value_error: If n_qubits is non-positive.
-        py::value_error: If shots is non-positive.
-    */
-
-    // Set the number of threads
-#if defined(_OPENMP)
-    omp_set_num_threads(config.get_num_threads());
-    Eigen::setNbThreads(config.get_num_threads());
-#endif
-
-    // Start with the zero state
-    state = initial_state;
-    bool is_statevector = (state.is_ket() || state.is_bra());
-    bool initially_was_statevector = is_statevector;
-
-    // Check if we have noise
-    bool has_noise = !noise_model_cpp.is_empty();
-    
-    // If we have noise but start with a statevector, convert to density matrix
-    if (has_noise && is_statevector) {
-        state.to_density_matrix();
-        is_statevector = false;
-    }
-
-    #ifdef VERBOSE
-    std::cout << "--------------------------------" << std::endl;
-    std::cout << state << std::endl;
-    std::cout << "--------------------------------" << std::endl;
-    int max_print_gates = 20;
-    #endif
-
-    // Apply each gate
-    for (const auto& gate : gates) {
-
-        // Convert gate to a stabilizer operator
-        MatrixFreeOperator op(gate);
-
-        // Apply the gate
-        op.apply(state);
-
-        #ifdef VERBOSE
-        if (int(gates.size()) <= max_print_gates && config.get_sampling_method() == "stabilizer") {
-            std::cout << state << std::endl;
-        }
-        #endif
-
-    }
-
-    #ifdef VERBOSE
-    if (int(gates.size()) > max_print_gates) {
-        std::cout << "Too many gates to print" << std::endl;
-    }
-    std::cout << "--------------------------------" << std::endl;
-    std::cout << state << std::endl;
-    std::cout << "--------------------------------" << std::endl;
-    #endif
-
-    // Sample from the state
-    counts = state.sample(n_shots, config.get_seed());
-
-    // Apply readout error to counts
-    if (has_noise) {
-        std::map<std::string, int> noisy_counts;
-        for (const auto& pair : counts) {
-            std::string bitstring = pair.first;
-            int count = pair.second;
-            // For each shot in the count, apply readout error
-            for (int shot = 0; shot < count; ++shot) {
-                std::string noisy_bitstring = "";
-                for (int q = 0; q < n_qubits; ++q) {
-                    char bit = bitstring[q];
-                    auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
-                    double p01 = readout_error.first;
-                    double p10 = readout_error.second;
-                    double rand_val = ((double) rand() / (RAND_MAX));
-                    if (bit == '0') {
-                        // 0 -> 1 with probability p01
-                        if (rand_val < p01) {
-                            noisy_bitstring += '1';
-                        } else {
-                            noisy_bitstring += '0';
-                        }
-                    } else {
-                        // 1 -> 0 with probability p10
-                        if (rand_val < p10) {
-                            noisy_bitstring += '0';
-                        } else {
-                            noisy_bitstring += '1';
-                        }
-                    }
-                }
-                noisy_counts[noisy_bitstring] += 1;
-            }
-        }
-        counts = noisy_counts;
-    }
-
-    // Only keep measured qubits in the counts
-    std::map<std::string, int> filtered_counts;
-    for (const auto& pair : counts) {
-        std::string bitstring = pair.first;
-        std::string filtered_bitstring = "";
-        for (int i = 0; i < n_qubits; ++i) {
-            if (qubits_to_measure[i]) {
-                filtered_bitstring += bitstring[i];
-            }
-        }
-        filtered_counts[filtered_bitstring] += pair.second;
-    }
-    counts = filtered_counts;
-
-    // If we started with a (pure) density matrix and ended with a statevector, convert back
-    if (!initially_was_statevector && is_statevector) {
-        state.to_density_matrix();
-    }
-
-}
-
 void sampling_matrix_free(const std::vector<Gate>& gates, 
                           const std::vector<bool>& qubits_to_measure, 
                           int n_qubits, 
@@ -546,11 +398,13 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
         if (monte_carlo) {
             for (int col = 0; col < state.cols(); ++col) {
                 DenseMatrix traj = state.col(col);
-                op.apply(traj, false);
+                op.apply(traj, MatrixFreeApplicationType::Left);
                 state.col(col) = traj;
             }
+        } else if (is_statevector) {
+            op.apply(state, MatrixFreeApplicationType::Left);
         } else {
-            op.apply(state, !is_statevector);
+            op.apply(state, MatrixFreeApplicationType::LeftAndRight);
         }
 
         // Apply noise if we have it

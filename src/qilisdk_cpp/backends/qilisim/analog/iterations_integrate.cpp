@@ -16,7 +16,7 @@
 #include "iterations.h"
 #include "lindblad.h"
 
-SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
@@ -98,5 +98,78 @@ SparseMatrix iter_integrate(const SparseMatrix& rho_0, double dt, const SparseMa
             rho /= tr;
         }
     }
-    return rho.sparseView();
+    return rho;
+}
+
+void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+    /*
+    4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
+
+    Args:
+        rho_t (DenseMatrix&): The density matrix to be evolved.
+        dt (double): The total time step.
+        currentH (MatrixFreeHamiltonian): The current Hamiltonian.
+        jump_operators (std::vector<SparseMatrix>): The list of jump operators.
+        num_substeps (int): Number of substeps to divide the time step into.
+        is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
+        atol (double): Absolute tolerance for numerical operations.
+
+    Raises:
+        py::value_error: If num_substeps is non-positive.
+        py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
+        py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
+        py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
+    */
+
+    // Sanity checks
+    if (rho_t.rows() != rho_t.cols() && !is_unitary_on_statevector) {
+        throw py::value_error("Initial density matrix must be square.");
+    }
+    long dim = long(rho_t.rows());
+    for (const auto& J : jump_operators) {
+        if (J.rows() != dim || J.cols() != dim) {
+            throw py::value_error("Jump operator dimension mismatch.");
+        }
+    }
+
+    long rho_rows = long(rho_t.rows());
+    long rho_cols = long(rho_t.cols());
+
+    // Standard RK4 loop
+    DenseMatrix k(rho_rows, rho_cols);
+    DenseMatrix rho_tmp(rho_rows, rho_cols);
+    DenseMatrix rho_old(rho_rows, rho_cols);
+    double dt_sub = dt / static_cast<double>(num_substeps);
+    for (int step = 0; step < num_substeps; ++step) {
+        rho_old = rho_t;
+
+        lindblad_rhs(k, rho_t, currentH, jump_operators, is_unitary_on_statevector);
+        rho_t += (dt_sub / 6.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += 0.5 * dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho_t += (dt_sub / 3.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += 0.5 * dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho_t += (dt_sub / 3.0) * k;
+
+        rho_tmp = rho_old;
+        rho_tmp += dt_sub * k;
+        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        rho_t += (dt_sub / 6.0) * k;
+
+        // Normalize the density matrix
+        if (is_unitary_on_statevector) {
+            rho_t /= rho_t.norm();
+        } else {
+            std::complex<double> tr = 0;
+            for (int i = 0; i < dim; ++i) {
+                tr += rho_t(i, i);
+            }
+            rho_t /= tr;
+        }
+    }
 }

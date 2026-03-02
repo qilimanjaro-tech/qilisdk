@@ -50,7 +50,7 @@ class QiliSim(Backend):
         num_threads: int = 0,
         seed: int | None = None,
         atol: float = 1e-12,
-        sampling_method: str = "matrix_free",
+        sampling_method: str = "statevector_matrix_free",
         normalize_after_each_gate: bool = False,
         combine_single_qubit_gates: bool = True,
     ) -> None:
@@ -59,7 +59,7 @@ class QiliSim(Backend):
         implemented in C++, using pybind11 for bindings.
 
         Args:
-            evolution_method (str): The solver method to use. Options are 'direct', 'arnoldi' and 'integrate'.
+            evolution_method (str): The solver method to use. Options are 'direct', 'arnoldi', 'integrate', and 'integrate_matrix_free'.
             arnoldi_dim (int): The dimension of the Arnoldi subspace to use for the 'arnoldi' method.
             num_arnoldi_substeps (int): The number of substeps to use when using the Arnoldi method.
             num_integrate_substeps (int): The number of substeps to use when using the Integrate method.
@@ -69,7 +69,7 @@ class QiliSim(Backend):
             num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
             seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
             atol (float): Absolute tolerance for numerical methods.
-            sampling_method (str): The method to use for sampling. Options are 'statevector' and 'stabilizer'.
+            sampling_method (str): The method to use for sampling. Options are 'statevector' and 'statevector_matrix_free'.
             normalize_after_each_gate (bool): Whether to normalize the state after each gate application. This can improve numerical stability at the cost of performance.
             combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single gate for improved performance. Ignored if noise model present.
 
@@ -79,7 +79,7 @@ class QiliSim(Backend):
 
         # Sanity checks on params
         # Note that these are also in the C++ code, so update there as well if changed here for consistency
-        if evolution_method not in {"direct", "arnoldi", "integrate"}:
+        if evolution_method not in {"direct", "arnoldi", "integrate", "integrate_matrix_free"}:
             raise ValueError(f"Unknown time evolution method: {evolution_method}")
         if arnoldi_dim <= 0:
             raise ValueError("arnoldi_dim must be a positive integer")
@@ -93,7 +93,7 @@ class QiliSim(Backend):
             raise ValueError("max_cache_size cannot be negative")
         if atol <= 0:
             raise ValueError("atol must be a positive float")
-        if sampling_method not in {"statevector", "matrix_free", "stabilizer"}:
+        if sampling_method not in {"statevector", "statevector_matrix_free"}:
             raise ValueError(f"Unknown sampling method: {sampling_method}")
 
         # Set number of threads if non-positive

@@ -19,18 +19,26 @@
 #include <complex>
 #include "../libs/eigen.h"
 #include "../digital/gate.h"
-#include "affine_stabilizer.h"
+
+enum class MatrixFreeApplicationType {
+    Left,
+    Right,
+    LeftAndRight
+};
 
 class MatrixFreeOperator {
     private:
         std::string name;
         int target_qubit;
-        int control_qubit;
+        int control_qubit = -1;
         DenseMatrix base_matrix;
     public:
         MatrixFreeOperator(const Gate& gate);
-        void apply(AffineStabilizerState& output_state) const;
-        void apply(DenseMatrix& output_state, bool as_density_matrix) const;
-        AffineStabilizerState operator*(const AffineStabilizerState& input_state) const;
+        MatrixFreeOperator(const std::string& name, int target_qubit) : name(name), target_qubit(target_qubit) {}
+        void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
         friend std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& mfo);
+        int get_target_qubit() const { return target_qubit; }
+        int get_control_qubit() const { return control_qubit; }
+        std::string get_name() const { return name; }
+        std::string get_id() const { return name + "_t" + std::to_string(target_qubit) + "_c" + std::to_string(control_qubit); }
 };

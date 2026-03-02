@@ -88,7 +88,9 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
             cumulative_prob += probabilities[state_index];
             if (random_value <= cumulative_prob) {
+                #if defined(_OPENMP)
                 #pragma omp atomic
+                #endif
                 counts[state_index]++;
                 break;
             }
