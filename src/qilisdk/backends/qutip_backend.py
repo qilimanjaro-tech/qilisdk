@@ -35,8 +35,8 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
+    from qilisdk.functionals import TimeEvolution
     from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.time_evolution import TimeEvolution
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)

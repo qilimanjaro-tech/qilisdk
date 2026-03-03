@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-import pytest
 
 from qilisdk.core.qtensor import QTensor
-from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 
@@ -68,16 +66,3 @@ def test_time_evolution_results_output():
     assert "expected_values=" in output
     assert "final_state=" in output
     assert "intermediate_states=" in output
-
-
-def test_time_evolution_results_compute_cost():
-    results = TimeEvolutionResult(
-        final_expected_values=np.array([1.0, 2.0, 3.0]),
-        expected_values=np.array([[1.0, 2.0, 3.0], [0.0, 0.0, 0.0]]),
-    )
-
-    class MockCostFunction(ModelCostFunction):
-        def __init__(self): ...
-
-    with pytest.raises(NotImplementedError):
-        results.compute_cost(MockCostFunction())

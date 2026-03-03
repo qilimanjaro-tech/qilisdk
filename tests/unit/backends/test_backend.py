@@ -17,11 +17,14 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.analog import Schedule, Z
 from qilisdk.backends.backend import Backend
-from qilisdk.core import LT, Parameter
+from qilisdk.core import LT, Parameter, QTensor, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import RZ, H
+from qilisdk.functionals import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.functionals.sampling import Sampling
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.functionals.variational_program import VariationalProgram
 
 
@@ -43,6 +46,22 @@ def test_backend_execute():
     time_evo = MagicMock()
     with pytest.raises(NotImplementedError, match="has no TimeEvolution"):
         backend._execute_time_evolution(time_evo)
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": Z(0)},
+        coefficients={"h": {(0, 1): 1.0}},
+    )
+    quantum_reservoir = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=ReservoirLayer(
+            evolution_dynamics=schedule,
+            observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        ),
+        input_per_layer=[{}],
+    )
+    with pytest.raises(NotImplementedError, match="has no TimeEvolution"):
+        backend._execute_quantum_reservoir(quantum_reservoir)
 
 
 class MockSampleResult:
@@ -104,7 +123,7 @@ def test_non_parameterized_functional():
     func = Sampling(circuit=circ)
     var_prog = VariationalProgram(functional=func, optimizer=MagicMock(), cost_function=MagicMock())
 
-    with pytest.raises(ValueError, match="Functional provided is not parameterized"):
+    with pytest.raises(ValueError, match=r"Functional provided does not contain trainable parameters."):
         backend._execute_variational_program(
             functional=var_prog,
         )
@@ -129,3 +148,79 @@ def test_variational_program_parameter_constraints(monkeypatch):
         backend._execute_variational_program(
             functional=var_prog,
         )
+
+
+class _MockReservoirBackend(Backend):
+    def _execute_time_evolution(self, functional):
+        return TimeEvolutionResult(final_state=functional.initial_state)
+
+
+def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkeypatch):
+    backend = _MockReservoirBackend()
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": Z(0)},
+        coefficients={"h": {(0, 1): 1.0}},
+    )
+    input_param = ReservoirInput("u", 0.0)
+    pre_processing = Circuit(1)
+    pre_processing.add(RZ(0, phi=input_param))
+
+    reservoir_layer = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        input_encoding=pre_processing,
+    )
+    functional = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{"u": 0.1}, {"u": 0.2}],
+    )
+
+    tracked_input_encoding = reservoir_layer.input_encoding
+    assert tracked_input_encoding is not None
+
+    original_to_qtensor = Circuit.to_qtensor
+    to_qtensor_calls = 0
+    signatures: list[tuple[float, ...]] = []
+
+    def _counting_to_qtensor(self):
+        nonlocal to_qtensor_calls
+        if self is tracked_input_encoding:
+            to_qtensor_calls += 1
+            signatures.append(tuple(self.get_parameter_values()))
+        return original_to_qtensor(self)
+
+    monkeypatch.setattr(Circuit, "to_qtensor", _counting_to_qtensor)
+
+    backend._execute_quantum_reservoir(functional)
+
+    assert to_qtensor_calls == 2
+    assert signatures == [(0.1,), (0.2,)]
+
+
+class _MockScaledStateReservoirBackend(Backend):
+    def _execute_time_evolution(self, functional):
+        return TimeEvolutionResult(final_state=functional.initial_state * 2.0)
+
+
+def test_quantum_reservoir_raises_if_state_repair_is_too_large():
+    backend = _MockScaledStateReservoirBackend()
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": Z(0)},
+        coefficients={"h": {(0, 1): 1.0}},
+    )
+    functional = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=ReservoirLayer(
+            evolution_dynamics=schedule,
+            observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        ),
+        input_per_layer=[{}],
+    )
+
+    with pytest.raises(ValueError, match="large correction"):
+        backend._execute_quantum_reservoir(functional)

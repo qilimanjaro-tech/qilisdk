@@ -1153,6 +1153,7 @@ class Parameter(BaseVariable):
         value: RealNumber,
         domain: Domain = Domain.REAL,
         bounds: tuple[float | None, float | None] = (None, None),
+        trainable: bool = True,
     ) -> None:
         super().__init__(label=label, domain=domain, bounds=bounds)
 
@@ -1161,11 +1162,16 @@ class Parameter(BaseVariable):
                 f"Parameter value provided ({value}) doesn't correspond to the parameter's domain ({self.domain.name})"
             )
         self._value = value
+        self._trainable = trainable
         self.set_bounds(bounds[0], bounds[1])
 
     @property
     def value(self) -> RealNumber:
         return self._value
+
+    @property
+    def is_trainable(self) -> bool:
+        return self._trainable
 
     def check_value(self, value: RealNumber) -> None:
         if not self.domain.check_value(value):

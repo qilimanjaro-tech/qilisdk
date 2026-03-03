@@ -21,7 +21,9 @@ import pytest
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import QTensor, tensor_prod
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -295,6 +297,33 @@ class TimeEvolutionMockResults:
         self.states = [self.final_state, self.final_state]
 
 
+def _build_quantum_reservoir_functional() -> QuantumReservoir:
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": PauliZ(0).to_hamiltonian()},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    pre = Circuit(1)
+    pre.add(H(0))
+    post = Circuit(1)
+    post.add(X(0))
+    reservoir_layer = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        input_encoding=pre,
+        output_encoding=post,
+        qubits_to_reset=[0],
+    )
+    return QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}, {}],
+        store_final_state=True,
+        store_intermediate_states=True,
+        nshots=10,
+    )
+
+
 # @pytest.mark.parametrize("initial_state", [ket(0), ket(0).to_density_matrix(), bra(0)])
 @pytest.mark.parametrize(
     "initial_state",
@@ -332,3 +361,15 @@ def test_time_evolution_bad_observable():
     func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
     with pytest.raises(ValueError, match="observable"):
         backend.execute(func)
+
+
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+    backend = QutipBackend()
+    functional = _build_quantum_reservoir_functional()
+    monkeypatch.setattr(
+        "qilisdk.backends.qutip_backend.QutipBackend._execute_time_evolution",
+        lambda self, f: TimeEvolutionResult(final_state=None),
+    )
+
+    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
+        backend._execute_quantum_reservoir(functional)
