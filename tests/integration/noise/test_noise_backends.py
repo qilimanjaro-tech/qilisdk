@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import random
 
 import numpy as np
 import pytest
+
+from qilisdk.backends.qilisim import ExecutionConfig
 
 pytest.importorskip(
     "cudaq",
@@ -47,7 +48,7 @@ from qilisdk.noise import (
 from qilisdk.noise.representations import KrausChannel, LindbladGenerator
 
 backends = [QiliSim, CudaBackend]
-args_per_backend = {QiliSim: {"seed": 42, "num_threads": 1}, CudaBackend: {}}
+args_per_backend = {QiliSim: {"execution_config": ExecutionConfig(seed=42, num_threads=1)}, CudaBackend: {}}
 
 
 @pytest.mark.parametrize("backend_class", backends)

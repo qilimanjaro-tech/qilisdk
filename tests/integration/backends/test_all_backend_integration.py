@@ -34,7 +34,7 @@ from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
-from qilisdk.backends.qilisim import QiliSim
+from qilisdk.backends.qilisim import ExecutionConfig, QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
@@ -58,14 +58,14 @@ pytest.importorskip(
 
 from qilisdk.backends.cuda_backend import CudaBackend
 
-backends = [QutipBackend(), QiliSim(seed=42, num_threads=1)]
+backends = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
 if pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
     exc_type=ImportError,
 ):
     backends.append(CudaBackend())
-backends_no_cuda = [QutipBackend(), QiliSim(seed=42, num_threads=1)]
+backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
 
 
 @pytest.mark.parametrize("backend", backends)
