@@ -20,6 +20,12 @@ from qilisdk.analog.hamiltonian import PauliX, PauliZ
 from qilisdk.analog.schedule import _TIME_PARAMETER_NAME
 from qilisdk.core.interpolator import Interpolation, Interpolator
 from qilisdk.core.variables import BinaryVariable, Domain, Parameter, Variable
+from qilisdk.settings import get_settings
+
+
+def _isclose(lhs: float, rhs: float) -> bool:
+    return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
+
 
 # --- Constructor and Property Tests ---
 
@@ -68,7 +74,7 @@ def test_schedule_parameters():
     assert p[3] in list(schedule._parameters.values())
     assert schedule.nparameters == 4
 
-    assert all(schedule.get_parameter_values()[i] == 0 for i in range(schedule.nparameters))
+    assert all(_isclose(schedule.get_parameter_values()[i], 0.0) for i in range(schedule.nparameters))
     assert all(list(schedule.get_parameter_bounds().values())[i] == (-10, 10) for i in range(schedule.nparameters))
     assert all(schedule.get_parameter_names()[i] == f"p({i})" for i in range(schedule.nparameters))
 
@@ -102,6 +108,40 @@ def test_schedule_parameters():
         schedule.set_parameter_values([0] * 2)
 
 
+def test_schedule_parameter_sync_with_children():
+    h_param = Parameter("h_param", 0.5, bounds=(-2.0, 2.0))
+    c_param = Parameter("c_param", 0.1, bounds=(-1.0, 1.0))
+    hamiltonian = h_param * Z(0)
+    schedule = Schedule(
+        hamiltonians={"h": hamiltonian},
+        coefficients={"h": {0: c_param, 1: 1.0}},
+        dt=0.1,
+    )
+
+    schedule.set_parameters({"h_param": 0.8, "c_param": 0.2})
+    assert _isclose(hamiltonian.get_parameters()["h_param"], 0.8)
+    assert _isclose(schedule.coefficients["h"].get_parameters()["c_param"], 0.2)
+
+    hamiltonian.set_parameters({"h_param": 0.9})
+    schedule.coefficients["h"].set_parameters({"c_param": 0.3})
+    assert _isclose(schedule.get_parameters()["h_param"], 0.9)
+    assert _isclose(schedule.get_parameters()["c_param"], 0.3)
+
+    schedule.set_parameter_values([1.1, 0.4])
+    assert _isclose(hamiltonian.get_parameters()["h_param"], 1.1)
+    assert _isclose(schedule.coefficients["h"].get_parameters()["c_param"], 0.4)
+
+    schedule.set_parameter_bounds({"h_param": (-3.0, 3.0), "c_param": (-0.5, 0.5)})
+    assert _isclose(hamiltonian.get_parameter_bounds()["h_param"][0], -3.0)
+    assert _isclose(hamiltonian.get_parameter_bounds()["h_param"][1], 3.0)
+    assert _isclose(schedule.coefficients["h"].get_parameter_bounds()["c_param"][0], -0.5)
+    assert _isclose(schedule.coefficients["h"].get_parameter_bounds()["c_param"][1], 0.5)
+
+    hamiltonian.set_parameter_bounds({"h_param": (-4.0, 4.0)})
+    assert _isclose(schedule.get_parameter_bounds()["h_param"][0], -4.0)
+    assert _isclose(schedule.get_parameter_bounds()["h_param"][1], 4.0)
+
+
 def test_schedule_constructor_with_hamiltonians_and_schedule():
     """When Hamiltonians and a partial schedule are provided, missing coefficients default to 0."""
     # H1 acts on qubit 0 (nqubits = 1); H2 acts on qubit 1 (nqubits = 2).
@@ -112,8 +152,8 @@ def test_schedule_constructor_with_hamiltonians_and_schedule():
     sch = {"H1": {0: 0.5}}
     sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
     # At t=0, H1 coefficient is set; H2 should be filled in with 0.
-    assert np.isclose(sched.coefficients["H1"][0], 0.5)
-    assert sched.coefficients["H2"][0] == 1
+    assert _isclose(sched.coefficients["H1"][0], 0.5)
+    assert _isclose(sched.coefficients["H2"][0], 1.0)
     # nqubits should be the maximum among Hamiltonians (here, 2 because H2 acts on qubit 1).
     assert sched.nqubits == 2
 
@@ -144,7 +184,7 @@ def test_add_schedule_step_valid():
     sched = Schedule(total_time=10, dt=1, hamiltonians=hams)
     # Add time step 2 with a new coefficient.
     sched.update_hamiltonian("H1", new_coefficients={2: 1.5})
-    assert np.isclose(sched.coefficients["H1"][2], 1.5)
+    assert _isclose(sched.coefficients["H1"][2], 1.5)
 
 
 def test_add_schedule_step_invalid_reference():
@@ -164,7 +204,7 @@ def test_update_hamiltonian_coefficient_valid():
     hams = {"H1": H1}
     sched = Schedule(dt=1, hamiltonians=hams)
     sched.update_hamiltonian("H1", new_coefficients={5: 3.0})
-    assert np.isclose(sched.coefficients["H1"][5], 3.0)
+    assert _isclose(sched.coefficients["H1"][5], 3.0)
 
 
 def test_add_hamiltonian_new():
@@ -179,7 +219,7 @@ def test_add_hamiltonian_new():
     sched.add_hamiltonian("H1", H1, coefficients={(0, 4): coeff_func})
     # For T=4, dt=1, time steps are 0,1,2,3,4; expect coefficient = 2*t.
     for t in range(int(sched.T / sched.dt)):
-        assert sched.coefficients["H1"][t] == 2 * t
+        assert _isclose(sched.coefficients["H1"][t], float(2 * t))
     # nqubits should update based on the new Hamiltonian.
     assert sched.nqubits >= 1
 
@@ -231,10 +271,10 @@ def test_get_coefficient():
     hams = {"H1": H1}
     sch = {"H1": {0: 0.5, 4: 1.0}}
     sched = Schedule(hamiltonians=hams, coefficients=sch, interpolation=Interpolation.STEP, dt=0.01)
-    assert np.isclose(sched.coefficients["H1"][0], 0.5)
-    assert np.isclose(sched.coefficients["H1"][2], 0.5)  # falls back to t=0
-    assert np.isclose(sched.coefficients["H1"][4], 1.0)
-    assert np.isclose(sched.coefficients["H1"][8], 1.0)  # falls back to t=4
+    assert _isclose(sched.coefficients["H1"][0], 0.5)
+    assert _isclose(sched.coefficients["H1"][2], 0.5)  # falls back to t=0
+    assert _isclose(sched.coefficients["H1"][4], 1.0)
+    assert _isclose(sched.coefficients["H1"][8], 1.0)  # falls back to t=4
     # For an undefined Hamiltonian key, get_coefficient returns 0.
 
     with pytest.raises(KeyError):
@@ -381,10 +421,10 @@ def test_add_schedule_through_function():
     # Add hz similarly
     schedule.add_hamiltonian(label="hz", hamiltonian=h_z, coefficients={(0, T): lambda t: t / T})
 
-    assert schedule.coefficients["hx"][0] == 1
-    assert schedule.coefficients["hz"][0] == 0
-    assert schedule.coefficients["hx"][T] == 0
-    assert schedule.coefficients["hz"][T] == 1
+    assert _isclose(schedule.coefficients["hx"][0], 1.0)
+    assert _isclose(schedule.coefficients["hz"][0], 0.0)
+    assert _isclose(schedule.coefficients["hx"][T], 0.0)
+    assert _isclose(schedule.coefficients["hz"][T], 1.0)
 
 
 def test_linear_schedule_interpolation():
@@ -394,19 +434,19 @@ def test_linear_schedule_interpolation():
     sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
 
     # At t=0, should be 0.0
-    assert np.isclose(sched.coefficients["H1"][0], 0.0)
+    assert _isclose(sched.coefficients["H1"][0], 0.0)
 
     # At t=5, should be 1.0
-    assert np.isclose(sched.coefficients["H1"][5], 1.0)
+    assert _isclose(sched.coefficients["H1"][5], 1.0)
     # At t=10, should be 2.0
-    assert np.isclose(sched.coefficients["H1"][10], 2.0)
+    assert _isclose(sched.coefficients["H1"][10], 2.0)
 
     # At t=2, should interpolate between 0 and 1
 
-    assert np.isclose(sched.coefficients["H1"][2], 0.4)
+    assert _isclose(sched.coefficients["H1"][2], 0.4)
     # At t=7, should interpolate between 1 and 2
 
-    assert np.isclose(sched.coefficients["H1"][7], 1.4)
+    assert _isclose(sched.coefficients["H1"][7], 1.4)
 
 
 def test_linear_schedule_edge_cases():
@@ -418,7 +458,7 @@ def test_linear_schedule_edge_cases():
     sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
     # All times should return 3.0
     for t in range(0, T + 1, dt):
-        assert np.isclose(sched.coefficients["H1"][t], 3.0)
+        assert _isclose(sched.coefficients["H1"][t], 3.0)
 
 
 def test_linear_schedule_expression():
@@ -430,7 +470,7 @@ def test_linear_schedule_expression():
     # At t=0, should be p
     assert sched.coefficients["H1"].get_coefficient_expression(0) == p
     # At t=10, should be 4.0
-    assert np.isclose(sched.coefficients["H1"].get_coefficient_expression(10), 4.0)
+    assert _isclose(sched.coefficients["H1"].get_coefficient_expression(10), 4.0)
     # At t=5, should interpolate between p and 4.0
     expr = sched.coefficients["H1"].get_coefficient(5)
     # Should be a linear combination of p and 4.0
@@ -445,9 +485,9 @@ def test_schedule_from_interpolator():
     inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR)
     sch = {"H1": inter}
     sched1 = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
-    assert np.isclose(sched1.coefficients["H1"][0], 0.0)
-    assert np.isclose(sched1.coefficients["H1"][10], 10.0)
-    assert np.isclose(sched1.coefficients["H1"][5], 5.0)
+    assert _isclose(sched1.coefficients["H1"][0], 0.0)
+    assert _isclose(sched1.coefficients["H1"][10], 10.0)
+    assert _isclose(sched1.coefficients["H1"][5], 5.0)
 
 
 def test_schedule_get_coeffs_dict():
@@ -470,7 +510,7 @@ def test_schedule_set_dt():
 
     new_dt = 0.5
     sched.set_dt(new_dt)
-    assert np.isclose(sched.dt, new_dt)
+    assert _isclose(sched.dt, new_dt)
 
     with pytest.raises(ValueError, match=r"only allowed to be a float"):
         sched.set_dt("test")
@@ -482,13 +522,13 @@ def test_schedule_get_value():
     sched = Schedule(dt=1)
     time = 1.0
     term = 2 * param + 3
-    assert np.isclose(sched._get_value(1.0, time), 1.0)
-    assert np.isclose(sched._get_value(1.0 + 0j, time), 1.0)
-    assert np.isclose(sched._get_value(param, time), 1.0)
-    assert np.isclose(sched._get_value(time_param, time), time)
+    assert _isclose(sched._get_value(1.0, time), 1.0)
+    assert _isclose(sched._get_value(1.0 + 0j, time), 1.0)
+    assert _isclose(sched._get_value(param, time), 1.0)
+    assert _isclose(sched._get_value(time_param, time), time)
     with pytest.raises(ValueError, match=r"time is not provided"):
         sched._get_value(time_param)
-    assert np.isclose(sched._get_value(term, time), 2 * 1.0 + 3)
+    assert _isclose(sched._get_value(term, time), 2 * 1.0 + 3)
     with pytest.raises(ValueError, match=r"Invalid value of type"):
         sched._get_value("bad type", time)
 
@@ -559,7 +599,7 @@ def test_scale_max_time_add_hamiltonian():
     sched = Schedule(dt=dt)
     sched.scale_max_time(20)
     sched.add_hamiltonian("H1", H1, coefficients=sch["H1"])
-    assert sched.T == 20
+    assert _isclose(sched.T, 20.0)
 
 
 def test_update_hamiltonian_from_interpolator():
@@ -569,9 +609,9 @@ def test_update_hamiltonian_from_interpolator():
     sched = Schedule(dt=dt, hamiltonians={"H1": H1})
     inter = Interpolator({0: 0, 5: param, 10: 2}, Interpolation.LINEAR)
     sched.update_hamiltonian("H1", new_coefficients=inter)
-    assert np.isclose(sched.coefficients["H1"][0], 0.0)
-    assert np.isclose(sched.coefficients["H1"][10], 2.0)
-    assert np.isclose(sched.coefficients["H1"][5], 1.0)
+    assert _isclose(sched.coefficients["H1"][0], 0.0)
+    assert _isclose(sched.coefficients["H1"][10], 2.0)
+    assert _isclose(sched.coefficients["H1"][5], 1.0)
 
 
 def test_bad_update_hamiltonian():

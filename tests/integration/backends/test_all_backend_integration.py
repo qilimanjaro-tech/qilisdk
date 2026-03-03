@@ -42,6 +42,7 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedTimeEvolution
 from qilisdk.digital.gates import CNOT, Controlled
+from qilisdk.functionals import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
@@ -66,6 +67,33 @@ if pytest.importorskip(
 ):
     backends.append(CudaBackend())
 backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
+
+
+def _build_quantum_reservoir_functional() -> QuantumReservoir:
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    pre = Circuit(1)
+    pre.add(H(0))
+    post = Circuit(1)
+    post.add(X(0))
+    reservoir_layer = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[QTensor(np.eye(2, dtype=np.complex128))],
+        input_encoding=pre,
+        output_encoding=post,
+        qubits_to_reset=[0],
+    )
+    return QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}, {}],
+        store_final_state=True,
+        store_intermediate_states=True,
+        nshots=10,
+    )
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -479,3 +507,37 @@ def test_time_dependent_hamiltonian_density_mat(backend):
     # check that it's hermitian
     final_rho = res.final_state.dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
+
+
+def test_execute_quantum_reservoir_cuda(monkeypatch):
+    backend = CudaBackend()
+    functional = _build_quantum_reservoir_functional()
+
+    final_density = ket(0).to_density_matrix()
+    monkeypatch.setattr(
+        "qilisdk.backends.cuda_backend.CudaBackend._execute_time_evolution",
+        lambda self, f: TimeEvolutionResult(final_state=final_density),
+    )
+
+    result = backend.execute(functional)
+
+    assert result.final_state is not None
+    assert len(result.expected_values) == 2
+    assert len(result.intermediate_states) == 2
+
+
+def test_execute_quantum_reservoir_qutip(monkeypatch):
+    backend = QutipBackend()
+    functional = _build_quantum_reservoir_functional()
+
+    final_density = ket(0).to_density_matrix()
+    monkeypatch.setattr(
+        "qilisdk.backends.qutip_backend.QutipBackend._execute_time_evolution",
+        lambda self, f: TimeEvolutionResult(final_state=final_density),
+    )
+
+    result = backend._execute_quantum_reservoir(functional)
+
+    assert result.final_state is not None
+    assert len(result.expected_values) == 2
+    assert len(result.intermediate_states) == 2

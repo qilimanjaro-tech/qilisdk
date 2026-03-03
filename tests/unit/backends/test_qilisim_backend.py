@@ -24,7 +24,8 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.qilisim import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig, QiliSim
 from qilisdk.core import ket
-from qilisdk.functionals import Sampling, TimeEvolution
+from qilisdk.functionals import QuantumReservoir, ReservoirLayer, Sampling, TimeEvolution
+from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import Dephasing, NoiseModel
 
 
@@ -170,3 +171,40 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     weak_exp = float(np.real(weak_result.final_expected_values[0]))
     strong_exp = float(np.real(strong_result.final_expected_values[0]))
     assert strong_exp < weak_exp
+
+
+def _build_quantum_reservoir_functional() -> QuantumReservoir:
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    reservoir_layer = ReservoirLayer(
+        evolution_dynamics=schedule,
+        observables=[pauli_z(0)],
+        qubits_to_reset=[0],
+    )
+    return QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}, {}],
+        store_final_state=True,
+        store_intermediate_states=True,
+        nshots=10,
+    )
+
+
+def test_execute_quantum_reservoir_qilisim(monkeypatch):
+    backend = QiliSim(seed=42, num_threads=1)
+    functional = _build_quantum_reservoir_functional()
+    final_density = ket(0).to_density_matrix()
+    monkeypatch.setattr(
+        "qilisdk.backends.qilisim.QiliSim._execute_time_evolution",
+        lambda self, f: TimeEvolutionResult(final_state=final_density),
+    )
+
+    result = backend.execute(functional)
+
+    assert result.final_state is not None
+    assert len(result.expected_values) == 2
+    assert len(result.intermediate_states) == 2
