@@ -14,14 +14,18 @@
 from __future__ import annotations
 
 from abc import ABC
+from copy import copy
 from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 
 import numpy as np
 
 from qilisdk.analog import Schedule
 from qilisdk.core import QTensor, expect_val, reset_qubits
+from qilisdk.core.qtensor import probabilities_from_state, samples_from_probabilities
 from qilisdk.digital import Circuit
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.digital_evolution import DigitalEvolution
+from qilisdk.functionals.functional_result import FunctionalResult, ReadoutResults
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
 from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
 from qilisdk.functionals.sampling import Sampling
@@ -32,8 +36,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-    from qilisdk.functionals.sampling_result import SamplingResult
+    from qilisdk.functionals.functional import Functional, PrimitiveFunctional, ReadoutMethod
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
@@ -46,24 +49,15 @@ class Backend(ABC):
             TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
             QuantumReservoir: lambda f: self._execute_quantum_reservoir(cast("QuantumReservoir", f)),
             VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
+            DigitalEvolution: lambda f: self._execute_digital_evolution(cast("DigitalEvolution", f)),
+            AnalogEvolution: lambda f: self._execute_analog_evolution(cast("AnalogEvolution", f)),
         }
 
     @overload
-    def execute(self, functional: Sampling) -> SamplingResult: ...
+    def execute(self, functional: VariationalProgram) -> VariationalProgramResult[FunctionalResult]: ...
 
     @overload
-    def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
-
-    @overload
-    def execute(self, functional: VariationalProgram[Sampling]) -> VariationalProgramResult[SamplingResult]: ...
-
-    @overload
-    def execute(
-        self, functional: VariationalProgram[TimeEvolution]
-    ) -> VariationalProgramResult[TimeEvolutionResult]: ...
-
-    @overload
-    def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
+    def execute(self, functional: PrimitiveFunctional) -> TResult: ...
 
     def execute(self, functional: Functional) -> FunctionalResult:
         try:
@@ -75,10 +69,16 @@ class Backend(ABC):
 
         return handler(functional)
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
+
+    def _execute_digital_evolution(self, functional: DigitalEvolution) -> FunctionalResult:
+        raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
+
+    def _execute_analog_evolution(self, functional: AnalogEvolution) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
@@ -187,3 +187,42 @@ class Backend(ABC):
         optimal_results: TResult = self.execute(functional.functional)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
+
+    @classmethod
+    def _construct_results_list(
+        cls, final_state: QTensor, readout_methods: list[ReadoutMethod], seed: int | None = None
+    ) -> list[ReadoutResults]:
+        results: list[ReadoutResults] = []
+        for readout in readout_methods:
+            if readout.is_state_tomography():
+                if readout.state_tomography_method != "exact":
+                    raise ValueError("State Tomography methods that are not exact are not supported yet.")
+                results.append(ReadoutResults(readout=copy(readout), final_state=final_state))
+            if readout.is_expectation_values():
+                if readout.observables is None:
+                    raise ValueError("Empty observables list in expectation value readout.")
+                results.append(
+                    ReadoutResults(
+                        readout=copy(readout),
+                        expected_values=[
+                            (
+                                expect_val(o, final_state)
+                                if isinstance(o, QTensor)
+                                else expect_val(o.to_qtensor(final_state.nqubits), final_state)
+                            )
+                            for o in readout.observables
+                        ],
+                    )
+                )
+            if readout.is_sample():
+                if readout.nshots is None:
+                    raise ValueError("nshots is None in a sampling readout.")
+                probabilities = probabilities_from_state(final_state)
+                results.append(
+                    ReadoutResults(
+                        readout=copy(readout),
+                        samples=samples_from_probabilities(probabilities, nshots=readout.nshots, seed=seed),
+                        probabilities=probabilities,
+                    )
+                )
+        return results

@@ -15,12 +15,12 @@ import heapq
 import operator
 from pprint import pformat
 
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class SamplingResult(FunctionalResult):
+class SamplingResult(Result):
     """Store shot counts and derived probabilities for a sampling experiment."""
 
     def __init__(self, nshots: int, samples: dict[str, int]) -> None:

@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,19 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import ClassVar
+from typing import Iterator
 
-from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.analog.schedule import Schedule
+from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
-from qilisdk.functionals.analog_evolution import AnalogEvolution
-from qilisdk.functionals.functional import ReadoutMethod
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional import PrimitiveFunctional, ReadoutMethod
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class TimeEvolution(AnalogEvolution):
+class AnalogEvolution(PrimitiveFunctional):
     """
     Simulate the dynamics induced by a time-dependent Hamiltonian schedule.
 
@@ -39,30 +37,31 @@ class TimeEvolution(AnalogEvolution):
             functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
     """
 
-    result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
-
     def __init__(
         self,
         schedule: Schedule,
-        observables: list[QTensor | Hamiltonian],
         initial_state: QTensor,
-        nshots: int = 0,
+        readout: ReadoutMethod,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            observables (list[QTensor | Hamiltonian]): Observables measured at the end of the evolution.
             initial_state (QTensor): Quantum state used as the simulation starting point.
-            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
             ValueError: if the number of qubits of the initial state doesn't match the number of qubits in the schedule.
         """
-        super().__init__(
-            initial_state=initial_state,
-            schedule=schedule,
-            store_intermediate_results=store_intermediate_results,
-            readout=ReadoutMethod.expectation_values(observables=observables, nshots=nshots),
-        )
+        super().__init__(readout)
+        self.initial_state = initial_state
+        self.schedule = schedule
+        self.store_intermediate_results = store_intermediate_results
+
+        if initial_state.nqubits != schedule.nqubits:
+            raise ValueError(
+                f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
+            )
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self.schedule

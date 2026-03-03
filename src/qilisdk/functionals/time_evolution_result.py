@@ -16,7 +16,7 @@ from pprint import pformat
 import numpy as np
 
 from qilisdk.core.qtensor import QTensor
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.core.result import Result
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
@@ -26,7 +26,7 @@ def _complex_dtype() -> np.dtype:
 
 
 @yaml.register_class
-class TimeEvolutionResult(FunctionalResult):
+class TimeEvolutionResult(Result):
     """Container for expectation values and states produced by a time-evolution simulation."""
 
     def __init__(

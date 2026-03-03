@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,16 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Iterator
+
+from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital.circuit import Circuit
-from qilisdk.functionals.digital_evolution import DigitalEvolution
-from qilisdk.functionals.functional import ReadoutMethod
+from qilisdk.functionals.functional import PrimitiveFunctional, ReadoutMethod
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class Sampling(DigitalEvolution):
+class DigitalEvolution(PrimitiveFunctional):
     """
-    Execute a digital circuit and collect bitstring samples.
+    Execute a digital circuit.
 
     Example:
         .. code-block:: python
@@ -30,13 +32,17 @@ class Sampling(DigitalEvolution):
 
             circuit = Circuit(nqubits=2)
             circuit.h(0)
-            sampler = Sampling(circuit, nshots=1024)
+            sampler = DigitalEvolution(circuit, readout=ReadoutMethod.sample(nshots=1024))
     """
 
-    def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
+    def __init__(self, circuit: Circuit, readout: ReadoutMethod | list[ReadoutMethod]) -> None:
         """
         Args:
             circuit (Circuit): Circuit to execute for sampling.
-            nshots (int, optional): Number of repetitions used to estimate probabilities. Defaults to 1000.
+            readout (ReadoutMethod | list[ReadoutMethod], optional): Readout method to be applied at the end of the execution.
         """
-        super().__init__(circuit=circuit, readout=ReadoutMethod.sample(nshots=nshots))
+        super().__init__(readout=readout)
+        self.circuit = circuit
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self.circuit

@@ -25,8 +25,8 @@ using namespace py::literals;
 // Get the Python functional classes
 const py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
 const py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
-const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
-const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling_result").attr("SamplingResult");
+const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution_result").attr("TimeEvolutionResult");
 const py::object numpy_array = py::module_::import("numpy").attr("array");
 const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
@@ -39,4 +39,8 @@ const py::object SupportsTimeDerivedKraus = py::module_::import("qilisdk.noise.p
 const py::object SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
 const py::object ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
 const py::object NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
+const py::object FunctionalResult = py::module_::import("qilisdk.functionals.functional_result").attr("FunctionalResult");
+const py::object ReadoutResults = py::module_::import("qilisdk.functionals.functional_result").attr("ReadoutResults");
+const py::object DigitalEvolution = py::module_::import("qilisdk.functionals.digital_evolution").attr("DigitalEvolution");
+const py::object AnalogEvolution = py::module_::import("qilisdk.functionals.analog_evolution").attr("AnalogEvolution");
 const py::dtype dtype = py::dtype("complex128");

@@ -49,7 +49,9 @@ from qilisdk.digital.gates import (
     Y,
     Z,
 )
-from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals import FunctionalResult
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.functional_result import ReadoutResults
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.noise import (
     BitFlip,
@@ -173,6 +175,281 @@ class CudaBackend(Backend):
             SimulationMethod: The simulation method to be used for circuit execution.
         """
         return self._sampling_method
+
+    def _execute_digital_evolution(self, functional: Sampling) -> FunctionalResult:
+        if any(not ro.is_sample() for ro in functional.readout):
+            raise ValueError(
+                "Currently only the sample readout method is supported with CUDA backend for digital simulation."
+            )
+        if len(functional.readout) > 1:
+            raise ValueError(
+                "Currently only a single sampling operation is supported with CUDA backend digital simulation."
+            )
+        nshots = functional.readout[0].nshots
+        logger.info("Executing Sampling (shots={})", nshots)
+        self._apply_digital_simulation_method()
+        kernel = cudaq.make_kernel()
+        qubits = kernel.qalloc(functional.circuit.nqubits)
+        og_param = None
+
+        # Apply parameter perturbations
+        if self._noise_model:
+            og_param = copy(functional.get_parameters())
+            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
+
+        # Transpile the circuit into CUDAQ format
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        for gate in transpiled_circuit.gates:
+            if isinstance(gate, Controlled):
+                self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
+            elif isinstance(gate, Adjoint):
+                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+            elif isinstance(gate, M):
+                self._handle_M(kernel, gate, transpiled_circuit, qubits)
+            else:
+                handler = self._basic_gate_handlers.get(type(gate), None)
+                if handler is None:
+                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
+                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
+
+        if self._noise_model:
+            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
+            cudaq_result = cudaq.sample(kernel, shots_count=nshots, noise_model=cuda_noise_model)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+        else:
+            cudaq_result = cudaq.sample(kernel, shots_count=nshots)
+
+        logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+        if og_param:
+            functional.set_parameters(og_param)
+        return FunctionalResult([ReadoutResults(readout=functional.readout[0], samples=dict(cudaq_result.items()))])
+
+    def _execute_analog_evolution(self, functional: AnalogEvolution) -> FunctionalResult:
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        cudaq.set_target("dynamics")
+        og_params = None
+        # Apply parameter perturbations
+        if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
+            self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
+
+        steps = functional.schedule.tlist
+
+        cuda_schedule = CudaSchedule(steps, ["t"])
+
+        cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
+
+        logger.trace("Hamiltonian compiled for evolution")
+
+        cuda_observables = []
+        # for index, observable in enumerate(functional.observables):
+        #     if isinstance(observable, PauliOperator):
+        #         cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
+        #     elif isinstance(observable, Hamiltonian):
+        #         cuda_observables.append(self._hamiltonian_to_cuda(observable))
+        #     elif isinstance(observable, QTensor):
+        #         cuda_observables.append(
+        #             self._hamiltonian_to_cuda(
+        #                 self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+        #             )
+        #         )
+        #     else:
+        #         logger.error("Unsupported observable type {}", observable.__class__.__name__)
+        #         raise ValueError(f"unsupported observable type of {observable.__class__}")
+        # logger.trace("Observables compiled for evolution")
+
+        # Add noise
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas: list[OperatorSum] = []
+        if self._noise_model:
+            jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
+                self._noise_model, functional.schedule.nqubits, functional.schedule.dt
+            )
+
+        # Remove any constant terms from the Hamiltonian, also add the deltas
+        for delta in hamiltonian_deltas:
+            cuda_hamiltonian += delta
+
+        evolution_result = evolve(
+            hamiltonian=cuda_hamiltonian,
+            dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
+            schedule=cuda_schedule,
+            initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
+            observables=cuda_observables,
+            collapse_operators=jump_operators,
+            store_intermediate_results=functional.store_intermediate_results,
+        )
+
+        logger.success("TimeEvolution finished")
+        final_state = np.array(
+            evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+            dtype=_complex_dtype(),
+        )
+        if len(final_state.shape) == 1:
+            final_state = final_state.reshape(-1, 1)
+        final_state = QTensor(final_state)
+
+        if og_params:
+            functional.set_parameters(og_params)
+
+        return FunctionalResult(
+            readout_results=CudaBackend._construct_results_list(
+                final_state=final_state, readout_methods=functional.readout
+            )
+        )
+
+    # def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
+    #     logger.info("Executing Sampling (shots={})", functional.nshots)
+    #     self._apply_digital_simulation_method()
+    #     kernel = cudaq.make_kernel()
+    #     qubits = kernel.qalloc(functional.circuit.nqubits)
+    #     og_param = None
+
+    #     # Apply parameter perturbations
+    #     if self._noise_model:
+    #         og_param = copy(functional.get_parameters())
+    #         self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
+
+    #     # Transpile the circuit into CUDAQ format
+    #     transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+    #     for gate in transpiled_circuit.gates:
+    #         if isinstance(gate, Controlled):
+    #             self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
+    #         elif isinstance(gate, Adjoint):
+    #             self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+    #         elif isinstance(gate, M):
+    #             self._handle_M(kernel, gate, transpiled_circuit, qubits)
+    #         else:
+    #             handler = self._basic_gate_handlers.get(type(gate), None)
+    #             if handler is None:
+    #                 raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
+    #             handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
+
+    #     if self._noise_model:
+    #         cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
+    #         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
+    #         cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+    #     else:
+    #         cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
+
+    #     logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+    #     if og_param:
+    #         functional.set_parameters(og_param)
+    #     return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
+
+    # def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    #     logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+    #     cudaq.set_target("dynamics")
+    #     og_params = None
+    #     # Apply parameter perturbations
+    #     if self._noise_model and self._noise_model.global_perturbations:
+    #         og_params = copy(functional.get_parameters())
+    #         self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
+
+    #     steps = functional.schedule.tlist
+
+    #     cuda_schedule = CudaSchedule(steps, ["t"])
+
+    #     cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
+
+    #     logger.trace("Hamiltonian compiled for evolution")
+
+    #     cuda_observables = []
+    #     for index, observable in enumerate(functional.observables):
+    #         if isinstance(observable, PauliOperator):
+    #             cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
+    #         elif isinstance(observable, Hamiltonian):
+    #             cuda_observables.append(self._hamiltonian_to_cuda(observable))
+    #         elif isinstance(observable, QTensor):
+    #             cuda_observables.append(
+    #                 self._hamiltonian_to_cuda(
+    #                     self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+    #                 )
+    #             )
+    #         else:
+    #             logger.error("Unsupported observable type {}", observable.__class__.__name__)
+    #             raise ValueError(f"unsupported observable type of {observable.__class__}")
+    #     logger.trace("Observables compiled for evolution")
+
+    #     # Add noise
+    #     jump_operators: list[OperatorSum] = []
+    #     hamiltonian_deltas: list[OperatorSum] = []
+    #     if self._noise_model:
+    #         jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
+    #             self._noise_model, functional.schedule.nqubits, functional.schedule.dt
+    #         )
+
+    #     # Remove any constant terms from the Hamiltonian, also add the deltas
+    #     for delta in hamiltonian_deltas:
+    #         cuda_hamiltonian += delta
+
+    #     evolution_result = evolve(
+    #         hamiltonian=cuda_hamiltonian,
+    #         dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
+    #         schedule=cuda_schedule,
+    #         initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
+    #         observables=cuda_observables,
+    #         collapse_operators=jump_operators,
+    #         store_intermediate_results=functional.store_intermediate_results,
+    #     )
+
+    #     logger.success("TimeEvolution finished")
+
+    #     final_expected_values = np.array(
+    #         [
+    #             exp_val.expectation()
+    #             for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
+    #         ],
+    #         dtype=_complex_dtype(),
+    #     )
+    #     expected_values = (
+    #         np.array(
+    #             [
+    #                 [val.expectation() for val in exp_vals]
+    #                 for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
+    #             ],
+    #             dtype=_complex_dtype(),
+    #         )
+    #         if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
+    #         and functional.store_intermediate_results
+    #         else None
+    #     )
+
+    #     if evolution_result.final_state() is not None:  # ty:ignore[possibly-missing-attribute]
+    #         final_state = np.array(
+    #             evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+    #             dtype=_complex_dtype(),
+    #         )
+    #         if len(final_state.shape) == 1:
+    #             final_state = final_state.reshape(-1, 1)
+    #         final_state = QTensor(final_state)
+
+    #     else:
+    #         final_state = None
+
+    #     if (
+    #         evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+    #         and functional.store_intermediate_results
+    #     ):
+    #         intermediate_states = []
+    #         for state in evolution_result.intermediate_states():  # ty:ignore[possibly-missing-attribute]
+    #             _state = np.array(state, dtype=_complex_dtype())
+    #             if len(_state.shape) == 1:
+    #                 _state = _state.reshape(-1, 1)
+    #             intermediate_states.append(QTensor(_state))
+
+    #     else:
+    #         intermediate_states = None
+
+    #     if og_params:
+    #         functional.set_parameters(og_params)
+
+    #     return TimeEvolutionResult(
+    #         final_expected_values=final_expected_values,
+    #         expected_values=expected_values,
+    #         final_state=final_state,
+    #         intermediate_states=intermediate_states,
+    #     )
 
     def _apply_digital_simulation_method(self) -> None:
         """
@@ -353,45 +630,6 @@ class CudaBackend(Backend):
                             + "To perturb a parameter on a gate use the native theta, gamma, or phi depending on the gate not the Parameter object name."
                         )
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
-        logger.info("Executing Sampling (shots={})", functional.nshots)
-        self._apply_digital_simulation_method()
-        kernel = cudaq.make_kernel()
-        qubits = kernel.qalloc(functional.circuit.nqubits)
-        og_param = None
-
-        # Apply parameter perturbations
-        if self._noise_model:
-            og_param = copy(functional.get_parameters())
-            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
-
-        # Transpile the circuit into CUDAQ format
-        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
-        for gate in transpiled_circuit.gates:
-            if isinstance(gate, Controlled):
-                self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
-            elif isinstance(gate, Adjoint):
-                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
-            elif isinstance(gate, M):
-                self._handle_M(kernel, gate, transpiled_circuit, qubits)
-            else:
-                handler = self._basic_gate_handlers.get(type(gate), None)
-                if handler is None:
-                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
-                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
-
-        if self._noise_model:
-            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
-            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
-        else:
-            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
-
-        logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
-        if og_param:
-            functional.set_parameters(og_param)
-        return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
-
     @staticmethod
     def _handle_schedule_parameter_perturbations(schedule: Schedule, noise_model: NoiseModel) -> None:
         if noise_model.global_perturbations:
@@ -552,120 +790,6 @@ class CudaBackend(Backend):
             return Hamiltonian.from_qtensor(observable)
         except ValueError as exc:
             raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
-
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        cudaq.set_target("dynamics")
-        og_params = None
-        # Apply parameter perturbations
-        if self._noise_model and self._noise_model.global_perturbations:
-            og_params = copy(functional.get_parameters())
-            self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
-
-        steps = functional.schedule.tlist
-
-        cuda_schedule = CudaSchedule(steps, ["t"])
-
-        cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
-
-        logger.trace("Hamiltonian compiled for evolution")
-
-        cuda_observables = []
-        for index, observable in enumerate(functional.observables):
-            if isinstance(observable, PauliOperator):
-                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
-            elif isinstance(observable, Hamiltonian):
-                cuda_observables.append(self._hamiltonian_to_cuda(observable))
-            elif isinstance(observable, QTensor):
-                cuda_observables.append(
-                    self._hamiltonian_to_cuda(
-                        self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
-                    )
-                )
-            else:
-                logger.error("Unsupported observable type {}", observable.__class__.__name__)
-                raise ValueError(f"unsupported observable type of {observable.__class__}")
-        logger.trace("Observables compiled for evolution")
-
-        # Add noise
-        jump_operators: list[OperatorSum] = []
-        hamiltonian_deltas: list[OperatorSum] = []
-        if self._noise_model:
-            jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
-                self._noise_model, functional.schedule.nqubits, functional.schedule.dt
-            )
-
-        # Remove any constant terms from the Hamiltonian, also add the deltas
-        for delta in hamiltonian_deltas:
-            cuda_hamiltonian += delta
-
-        evolution_result = evolve(
-            hamiltonian=cuda_hamiltonian,
-            dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
-            schedule=cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
-            observables=cuda_observables,
-            collapse_operators=jump_operators,
-            store_intermediate_results=functional.store_intermediate_results,
-        )
-
-        logger.success("TimeEvolution finished")
-
-        final_expected_values = np.array(
-            [
-                exp_val.expectation()
-                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
-            ],
-            dtype=_complex_dtype(),
-        )
-        expected_values = (
-            np.array(
-                [
-                    [val.expectation() for val in exp_vals]
-                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
-                ],
-                dtype=_complex_dtype(),
-            )
-            if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
-            and functional.store_intermediate_results
-            else None
-        )
-
-        if evolution_result.final_state() is not None:  # ty:ignore[possibly-missing-attribute]
-            final_state = np.array(
-                evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
-                dtype=_complex_dtype(),
-            )
-            if len(final_state.shape) == 1:
-                final_state = final_state.reshape(-1, 1)
-            final_state = QTensor(final_state)
-
-        else:
-            final_state = None
-
-        if (
-            evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
-            and functional.store_intermediate_results
-        ):
-            intermediate_states = []
-            for state in evolution_result.intermediate_states():  # ty:ignore[possibly-missing-attribute]
-                _state = np.array(state, dtype=_complex_dtype())
-                if len(_state.shape) == 1:
-                    _state = _state.reshape(-1, 1)
-                intermediate_states.append(QTensor(_state))
-
-        else:
-            intermediate_states = None
-
-        if og_params:
-            functional.set_parameters(og_params)
-
-        return TimeEvolutionResult(
-            final_expected_values=final_expected_values,
-            expected_values=expected_values,
-            final_state=final_state,
-            intermediate_states=intermediate_states,
-        )
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
