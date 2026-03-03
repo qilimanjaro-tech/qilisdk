@@ -14,6 +14,8 @@ endif()
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=OFF 
 # To enable debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=Debug
+# To run with clang-tidy:
+#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
 # To enable (very) verbose simulator output:
 #   uv pip install -v -e ./ -Ccmake.define.verbose=ON
 if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
@@ -54,10 +56,11 @@ if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 
     # Set compile options
-    set (CMAKE_CXX_STANDARD 14)
+    set (CMAKE_CXX_STANDARD 17)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
         target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(qilisim_module PRIVATE -std=c++17)
     endif()
 
     # If verbose is enabled, add a compile definition to enable verbose output in the code

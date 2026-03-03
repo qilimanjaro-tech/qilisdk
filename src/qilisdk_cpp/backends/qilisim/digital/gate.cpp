@@ -294,6 +294,21 @@ std::vector<int> Gate::get_qubits() const {
     return all_qubits;
 }
 
+bool Gate::is_normalized() const {
+    /*
+    Check if the gate's base matrix is normalized (i.e., unitary).
+
+    Returns:
+        bool: True if the matrix is normalized, False otherwise.
+    */
+    // We can check if the matrix is normalized by verifying that U * U^dagger = I
+    SparseMatrix base_matrix = get_base_matrix();
+    SparseMatrix identity(base_matrix.rows(), base_matrix.cols());
+    identity.setIdentity();
+    SparseMatrix product = base_matrix * base_matrix.adjoint();
+    return product.isApprox(identity);
+}
+
 std::vector<int> Gate::get_target_qubits() const {
     /*
     Get the list of target qubits.

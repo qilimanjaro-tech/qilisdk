@@ -16,22 +16,23 @@
 #include "matrix_free_operator.h"
 
 class MatrixFreeHamiltonian {
-    private:
-        std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> operators;
-    public:
-        MatrixFreeHamiltonian() {}
-        MatrixFreeHamiltonian(const MatrixFreeOperator& op) {
-            operators.push_back(std::make_pair(std::complex<double>(1.0, 0.0), std::vector<MatrixFreeOperator>{op}));
-        }
-        MatrixFreeHamiltonian(const std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>>& ops) : operators(ops) {}
-        void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
-        double expectation_value(const DenseMatrix& state) const;
-        MatrixFreeHamiltonian& operator*=(const std::complex<double>& scalar);
-        MatrixFreeHamiltonian operator*(const std::complex<double>& scalar) const;
-        MatrixFreeHamiltonian operator*(const double& scalar) const;
-        MatrixFreeHamiltonian& operator+=(const MatrixFreeHamiltonian& other);
-        void add(const std::complex<double>& coeff, const MatrixFreeOperator& op);
-        void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& op);
-        friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
+   private:
+    std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> operators;
+    mutable DenseMatrix m_temp_state;
+    mutable DenseMatrix m_new_state;
 
+   public:
+    MatrixFreeHamiltonian() {}
+    MatrixFreeHamiltonian(const MatrixFreeOperator& op) { operators.push_back(std::make_pair(std::complex<double>(1.0, 0.0), std::vector<MatrixFreeOperator>{op})); }
+    MatrixFreeHamiltonian(const std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>>& ops) : operators(ops) {}
+    void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
+    void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
+    double expectation_value(const DenseMatrix& state) const;
+    MatrixFreeHamiltonian& operator*=(const std::complex<double>& scalar);
+    MatrixFreeHamiltonian operator*(const std::complex<double>& scalar) const;
+    MatrixFreeHamiltonian operator*(const double& scalar) const;
+    MatrixFreeHamiltonian& operator+=(const MatrixFreeHamiltonian& other);
+    void add(const std::complex<double>& coeff, const MatrixFreeOperator& op);
+    void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& op);
+    friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
 };

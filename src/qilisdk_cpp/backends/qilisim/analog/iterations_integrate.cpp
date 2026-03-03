@@ -146,18 +146,15 @@ void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& 
         lindblad_rhs(k, rho_t, currentH, jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 6.0) * k;
 
-        rho_tmp = rho_old;
-        rho_tmp += 0.5 * dt_sub * k;
+        rho_tmp = rho_old + 0.5 * dt_sub * k;
         lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 3.0) * k;
 
-        rho_tmp = rho_old;
-        rho_tmp += 0.5 * dt_sub * k;
+        rho_tmp = rho_old + 0.5 * dt_sub * k;
         lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 3.0) * k;
 
-        rho_tmp = rho_old;
-        rho_tmp += dt_sub * k;
+        rho_tmp = rho_old + dt_sub * k;
         lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 6.0) * k;
 

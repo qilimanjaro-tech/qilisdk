@@ -33,8 +33,7 @@ class QiliSimConfig {
     bool combine_single_qubit_gates = true;
     bool normalize_after_each_gate = false;
 
-    public:
-
+   public:
     // Getters
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
@@ -72,5 +71,4 @@ class QiliSimConfig {
 
     // Can be called to validate the config and throw a py error if not
     void validate() const;
-
 };

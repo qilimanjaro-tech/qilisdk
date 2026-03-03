@@ -13,26 +13,97 @@
 // limitations under the License.
 
 #include <iomanip>
+#include <random>
 #include <sstream>
 
+#include "../digital/circuit_optimizations.h"
 #include "../libs/pybind.h"
+#include "../noise/noise_model.h"
+#include "../utils/matrix_utils.h"
 #include "../utils/random.h"
 #include "sampling.h"
-#include "../noise/noise_model.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-void sampling(const std::vector<Gate>& gates, 
-              const std::vector<bool>& qubits_to_measure, 
-              int n_qubits, 
-              int n_shots, 
-              const SparseMatrix& initial_state,
-              NoiseModelCpp& noise_model_cpp,
-              DenseMatrix& state,
-              std::map<std::string, int>& counts, 
-              const QiliSimConfig& config) {
+std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits) {
+    /*
+    Apply readout error to the measurement counts.
+
+    Args:
+        counts (std::map<std::string, int>&): The original measurement counts without readout error.
+        noise_model_cpp (NoiseModelCpp&): The noise model containing the readout error probabilities.
+        n_qubits (int): The number of qubits in the circuit.
+
+    Returns:
+        std::map<std::string, int>: The new measurement counts after applying readout error
+    */
+    std::default_random_engine generator;
+    generator.seed(42);
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    std::map<std::string, int> noisy_counts;
+    for (const auto& pair : counts) {
+        std::string bitstring = pair.first;
+        int count = pair.second;
+        // For each shot in the count, apply readout error
+        for (int shot = 0; shot < count; ++shot) {
+            std::string noisy_bitstring = "";
+            for (int q = 0; q < n_qubits; ++q) {
+                char bit = bitstring[q];
+                auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
+                double p01 = readout_error.first;
+                double p10 = readout_error.second;
+                double rand_val = distribution(generator);
+                if (bit == '0') {
+                    // 0 -> 1 with probability p01
+                    if (rand_val < p01) {
+                        noisy_bitstring += '1';
+                    } else {
+                        noisy_bitstring += '0';
+                    }
+                } else {
+                    // 1 -> 0 with probability p10
+                    if (rand_val < p10) {
+                        noisy_bitstring += '0';
+                    } else {
+                        noisy_bitstring += '1';
+                    }
+                }
+            }
+            noisy_counts[noisy_bitstring] += 1;
+        }
+    }
+    return noisy_counts;
+}
+
+std::map<std::string, int> filter_counts(const std::map<std::string, int>& counts, const std::vector<bool>& qubits_to_measure) {
+    /*
+    Filter the measurement counts to only include the measured qubits.
+
+    Args:
+        counts (std::map<std::string, int>&): The original measurement counts for all qubits.
+        qubits_to_measure (std::vector<bool>&): A list indicating which qubits were measured.
+
+    Returns:
+        std::map<std::string, int>: The filtered measurement counts only for the measured qubits.
+    */
+    std::map<std::string, int> filtered_counts;
+    for (const auto& pair : counts) {
+        std::string bitstring = pair.first;
+        int count = pair.second;
+        std::string filtered_bitstring = "";
+        for (size_t q = 0; q < qubits_to_measure.size(); ++q) {
+            if (qubits_to_measure[q]) {
+                filtered_bitstring += bitstring[q];
+            }
+        }
+        filtered_counts[filtered_bitstring] += count;
+    }
+    return filtered_counts;
+}
+
+void sampling(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -80,7 +151,7 @@ void sampling(const std::vector<Gate>& gates,
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
-    
+
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
         state = state * state.adjoint();
@@ -93,10 +164,16 @@ void sampling(const std::vector<Gate>& gates,
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
+    // Combine single-qubit gates for speed if not using noise models
+    std::vector<Gate> optimized_gates = gates;
+    if (!has_noise && config.get_combine_single_qubit_gates()) {
+        optimized_gates = combine_single_qubit_gates(optimized_gates);
+    }
+
     // Determine the start/end use of each gate
     std::map<std::string, std::pair<int, int>> gate_first_last_use;
-    for (int i = 0; i < int(gates.size()); ++i) {
-        std::string gate_id = gates[i].get_id();
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        std::string gate_id = optimized_gates[i].get_id();
         if (gate_first_last_use.find(gate_id) == gate_first_last_use.end()) {
             gate_first_last_use[gate_id] = std::make_pair(i, i);
         } else {
@@ -105,22 +182,22 @@ void sampling(const std::vector<Gate>& gates,
     }
 
     // Pre-cache up to the limit (in parallel)
-    int initial_cache_size = std::min(int(gates.size()), config.get_max_cache_size());
+    int initial_cache_size = std::min(int(optimized_gates.size()), config.get_max_cache_size());
     std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
-Eigen::setNbThreads(1);
-omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(1);
+    omp_set_num_threads(config.get_num_threads());
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
-        const auto& gate = gates[i];
+        const auto& gate = optimized_gates[i];
         std::string gate_id = gate.get_id();
         SparseMatrix gate_matrix = gate.get_full_matrix(n_qubits);
         precomputed_gates[i] = std::make_pair(gate_id, gate_matrix);
     }
 #if defined(_OPENMP)
-Eigen::setNbThreads(config.get_num_threads());
-omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+    omp_set_num_threads(config.get_num_threads());
 #endif
 
     // Convert pre-cached gates to a map for easier access (in serial)
@@ -136,7 +213,7 @@ omp_set_num_threads(config.get_num_threads());
     std::string gate_id = "";
     int gate_count = 0;
     bool gate_is_new = false;
-    for (const auto& gate : gates) {
+    for (const auto& gate : optimized_gates) {
         // Get the id of the gate
         gate_id = gate.get_id();
 
@@ -174,17 +251,8 @@ omp_set_num_threads(config.get_num_threads());
         }
 
         // Renormalize the state
-        if (monte_carlo) {
-            for (int col = 0; col < state.cols(); ++col) {
-                DenseMatrix traj = state.col(col);
-                traj /= traj.norm();
-                state.col(col) = traj;
-            }
-        } else if (is_statevector) {
-            state /= state.norm();
-        } else {
-            double trace = state.trace().real();
-            state /= trace;
+        if (config.get_normalize_after_gate()) {
+            normalize_state(state, is_statevector, monte_carlo);
         }
 
         // Clear the gate from the cache if this was its last use
@@ -225,71 +293,19 @@ omp_set_num_threads(config.get_num_threads());
 
     // Apply readout error to counts
     if (has_noise) {
-        std::map<std::string, int> noisy_counts;
-        for (const auto& pair : counts) {
-            std::string bitstring = pair.first;
-            int count = pair.second;
-            // For each shot in the count, apply readout error
-            for (int shot = 0; shot < count; ++shot) {
-                std::string noisy_bitstring = "";
-                for (int q = 0; q < n_qubits; ++q) {
-                    char bit = bitstring[q];
-                    auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
-                    double p01 = readout_error.first;
-                    double p10 = readout_error.second;
-                    double rand_val = ((double) rand() / (RAND_MAX));
-                    if (bit == '0') {
-                        // 0 -> 1 with probability p01
-                        if (rand_val < p01) {
-                            noisy_bitstring += '1';
-                        } else {
-                            noisy_bitstring += '0';
-                        }
-                    } else {
-                        // 1 -> 0 with probability p10
-                        if (rand_val < p10) {
-                            noisy_bitstring += '0';
-                        } else {
-                            noisy_bitstring += '1';
-                        }
-                    }
-                }
-                noisy_counts[noisy_bitstring] += 1;
-            }
-        }
-        counts = noisy_counts;
+        counts = apply_readout_error(counts, noise_model_cpp, n_qubits);
     }
 
     // Only keep measured qubits in the counts
-    std::map<std::string, int> filtered_counts;
-    for (const auto& pair : counts) {
-        std::string bitstring = pair.first;
-        std::string filtered_bitstring = "";
-        for (int i = 0; i < n_qubits; ++i) {
-            if (qubits_to_measure[i]) {
-                filtered_bitstring += bitstring[i];
-            }
-        }
-        filtered_counts[filtered_bitstring] += pair.second;
-    }
-    counts = filtered_counts;
+    counts = filter_counts(counts, qubits_to_measure);
 
     // If we started with a density matrix and ended with a statevector, convert back
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
     }
-
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, 
-                          const std::vector<bool>& qubits_to_measure, 
-                          int n_qubits, 
-                          int n_shots, 
-                          const SparseMatrix& initial_state,
-                          NoiseModelCpp& noise_model_cpp,
-                          DenseMatrix& state,
-                          std::map<std::string, int>& counts, 
-                          const QiliSimConfig& config) {
+void sampling_matrix_free(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -326,7 +342,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
-    
+
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
         state = state * state.adjoint();
@@ -340,57 +356,13 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
     }
 
     // Combine single-qubit gates for speed if not using noise models
-    std::vector<Gate> combined_gates;
+    std::vector<Gate> optimized_gates = gates;
     if (!has_noise && config.get_combine_single_qubit_gates()) {
-        std::vector<bool> already_used(gates.size(), false);
-        for (size_t i = 0; i < gates.size(); ++i) {
-            if (already_used[i]) {
-                continue;
-            }
-            auto& gate = gates[i];
-            if (gate.get_qubits().size() == 1) {
-                // Look ahead to see if we have more single-qubit gates on the same target qubit that we can combine
-                int qubit = gate.get_qubits()[0];
-                std::vector<Gate> gates_to_combine = {gate};
-                for (size_t j = i + 1; j < gates.size(); ++j) {
-                    const auto& next_gate = gates[j];
-                    std::vector<int> next_gate_qubits = next_gate.get_qubits();
-                    if (!already_used[j] && next_gate_qubits.size() == 1 && next_gate_qubits[0] == qubit) {
-                        gates_to_combine.push_back(next_gate);
-                    // Only break if there is a gate that acts on the same qubit but we can't combine
-                    } else if (next_gate_qubits.size() > 1 && std::find(next_gate_qubits.begin(), next_gate_qubits.end(), qubit) != next_gate_qubits.end()) {
-                        break;
-                    }
-                }
-                if (gates_to_combine.size() > 1) {
-                    // Combine the gates into one gate
-                    SparseMatrix combined_matrix = gates_to_combine[0].get_base_matrix();
-                    for (size_t j = 1; j < gates_to_combine.size(); ++j) {
-                        combined_matrix = gates_to_combine[j].get_base_matrix() * combined_matrix;
-                    }
-                    std::string combined_name = "";
-                    for (size_t j = 0; j < gates_to_combine.size(); ++j) {
-                        combined_name += gates_to_combine[j].get_name();
-                    }
-                    combined_gates.push_back(Gate(combined_name, combined_matrix, {}, gate.get_qubits(), {}));
-                    // Mark the gates we combined as already used
-                    for (size_t j = 0; j < gates_to_combine.size(); ++j) {
-                        already_used[i + j] = true;
-                    }
-                } else {
-                    combined_gates.push_back(gate);
-                }
-            } else {
-                combined_gates.push_back(gate);
-            }
-        }
-    } else {
-        combined_gates = gates;
+        optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 
     // Apply each gate
-    for (const auto& gate : combined_gates) {
-
+    for (const auto& gate : optimized_gates) {
         // Convert gate to a stabilizer operator
         MatrixFreeOperator op(gate);
 
@@ -419,59 +391,10 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
             }
         }
 
-        // Normalize the list of statevectors
+        // Renormalize the state
         if (config.get_normalize_after_gate()) {
-            if (monte_carlo) {
-                #if defined(_OPENMP)
-                #pragma omp parallel for schedule(static)
-                #endif
-                for (int col = 0; col < state.cols(); ++col) {
-                    state.col(col) /= state.col(col).norm();
-                }
-            // Normalize the statevector
-            } else if (is_statevector) {
-                double sum = 0.0;
-                #if defined(_OPENMP)
-                #pragma omp parallel
-                #endif
-                {
-                    #if defined(_OPENMP)
-                    #pragma omp for reduction(+:sum) schedule(static)
-                    #endif
-                    for (int i = 0; i < state.rows(); ++i) {
-                        sum += std::norm(state(i, 0));
-                    }
-                    double norm = std::sqrt(sum);
-                    #if defined(_OPENMP)
-                    #pragma omp for schedule(static)
-                    #endif
-                    for (int i = 0; i < state.rows(); ++i) {
-                        state(i, 0) /= norm;
-                    }
-                }
-            // Normalize the density matrix
-            } else {
-                double sum = 0.0;
-                #if defined(_OPENMP)
-                #pragma omp parallel
-                #endif
-                {
-                    #if defined(_OPENMP)
-                    #pragma omp for reduction(+:sum) schedule(static)
-                    #endif
-                    for (int i = 0; i < state.rows(); ++i) {
-                        sum += state.coeff(i, i).real();
-                    }
-                    #if defined(_OPENMP)
-                    #pragma omp for schedule(static)
-                    #endif
-                    for (int i = 0; i < state.rows(); ++i) {
-                        state.coeffRef(i, i) /= sum;
-                    }
-                }
-            }
+            normalize_state(state, is_statevector, monte_carlo);
         }
-
     }
 
     // If we have statevector/s but we should return a density matrix
@@ -482,9 +405,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
     // Get the probabilities
     std::vector<double> probabilities(state.rows());
     double total_prob = 0.0;
-    #if defined(_OPENMP)
-    #pragma omp parallel for reduction(+:total_prob) schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : total_prob) schedule(static)
+#endif
     for (int row = 0; row < state.rows(); ++row) {
         double prob = 0.0;
         if (is_statevector) {
@@ -508,54 +431,11 @@ void sampling_matrix_free(const std::vector<Gate>& gates,
 
     // Apply readout error to counts
     if (has_noise) {
-        std::map<std::string, int> noisy_counts;
-        for (const auto& pair : counts) {
-            std::string bitstring = pair.first;
-            int count = pair.second;
-            // For each shot in the count, apply readout error
-            for (int shot = 0; shot < count; ++shot) {
-                std::string noisy_bitstring = "";
-                for (int q = 0; q < n_qubits; ++q) {
-                    char bit = bitstring[q];
-                    auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
-                    double p01 = readout_error.first;
-                    double p10 = readout_error.second;
-                    double rand_val = ((double) rand() / (RAND_MAX));
-                    if (bit == '0') {
-                        // 0 -> 1 with probability p01
-                        if (rand_val < p01) {
-                            noisy_bitstring += '1';
-                        } else {
-                            noisy_bitstring += '0';
-                        }
-                    } else {
-                        // 1 -> 0 with probability p10
-                        if (rand_val < p10) {
-                            noisy_bitstring += '0';
-                        } else {
-                            noisy_bitstring += '1';
-                        }
-                    }
-                }
-                noisy_counts[noisy_bitstring] += 1;
-            }
-        }
-        counts = noisy_counts;
+        counts = apply_readout_error(counts, noise_model_cpp, n_qubits);
     }
 
     // Only keep measured qubits in the counts
-    std::map<std::string, int> filtered_counts;
-    for (const auto& pair : counts) {
-        std::string bitstring = pair.first;
-        std::string filtered_bitstring = "";
-        for (int i = 0; i < n_qubits; ++i) {
-            if (qubits_to_measure[i]) {
-                filtered_bitstring += bitstring[i];
-            }
-        }
-        filtered_counts[filtered_bitstring] += pair.second;
-    }
-    counts = filtered_counts;
+    counts = filter_counts(counts, qubits_to_measure);
 
     // If we started with a density matrix and ended with a statevector, convert back
     if (!initially_was_statevector && is_statevector) {

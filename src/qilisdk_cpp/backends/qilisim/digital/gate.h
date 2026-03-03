@@ -36,6 +36,7 @@ class Gate {
     std::vector<int> get_qubits() const;
     std::vector<int> get_target_qubits() const;
     std::vector<int> get_control_qubits() const;
+    bool is_normalized() const;
     std::vector<std::pair<std::string, double>> get_parameters() const;
     std::string get_name() const;
     std::string get_id() const;

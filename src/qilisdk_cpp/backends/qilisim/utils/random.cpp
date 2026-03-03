@@ -78,19 +78,19 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
     generator.seed(seed);
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
-    // Sample
-    #if defined(_OPENMP)
-    #pragma omp parallel for schedule(static)
-    #endif
+// Sample
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
     for (int shot = 0; shot < n_shots; ++shot) {
         double random_value = distribution(generator);
         double cumulative_prob = 0.0;
         for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
             cumulative_prob += probabilities[state_index];
             if (random_value <= cumulative_prob) {
-                #if defined(_OPENMP)
-                #pragma omp atomic
-                #endif
+#if defined(_OPENMP)
+#pragma omp atomic
+#endif
                 counts[state_index]++;
                 break;
             }
@@ -258,7 +258,6 @@ DenseMatrix sample_from_density_matrix(const DenseMatrix& rho, int n_trajectorie
     }
 
     return sampled_states;
-
 }
 
 // Convert a matrix containing trajectories as columns to a density matrix

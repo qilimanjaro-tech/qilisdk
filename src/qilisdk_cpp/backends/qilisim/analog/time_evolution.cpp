@@ -13,22 +13,12 @@
 // limitations under the License.
 
 #include "time_evolution.h"
+#include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
 #include "iterations.h"
-#include "../noise/noise_model.h"
 
-void time_evolution(SparseMatrix rho_0, 
-                    const std::vector<SparseMatrix>& hamiltonians, 
-                    const std::vector<std::vector<double>>& parameters_list, 
-                    const std::vector<double>& step_list, 
-                    NoiseModelCpp& noise_model_cpp,
-                    const std::vector<SparseMatrix>& observable_matrices, 
-                    QiliSimConfig& config, 
-                    DenseMatrix& rho_t, 
-                    std::vector<DenseMatrix>& intermediate_rhos, 
-                    std::vector<double>& expectation_values, 
-                    std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, const std::vector<SparseMatrix>& observable_matrices, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
     /*
     Execute a time evolution functional.
 
@@ -62,7 +52,7 @@ void time_evolution(SparseMatrix rho_0,
     Eigen::setNbThreads(config.get_num_threads());
 
     // Get the jump operators from the noise model
-    std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
+    const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
     // Dimensions of everything
     long dim = long(hamiltonians[0].rows());
@@ -202,17 +192,7 @@ void time_evolution(SparseMatrix rho_0,
     }
 }
 
-void time_evolution_matrix_free(SparseMatrix rho_0, 
-                    const std::vector<MatrixFreeHamiltonian>& hamiltonians, 
-                    const std::vector<std::vector<double>>& parameters_list, 
-                    const std::vector<double>& step_list, 
-                    NoiseModelCpp& noise_model_cpp,
-                    const std::vector<MatrixFreeHamiltonian>& observables, 
-                    QiliSimConfig& config, 
-                    DenseMatrix& rho_t, 
-                    std::vector<DenseMatrix>& intermediate_rhos, 
-                    std::vector<double>& expectation_values, 
-                    std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
     /*
     Execute a time evolution functional.
 
@@ -239,14 +219,14 @@ void time_evolution_matrix_free(SparseMatrix rho_0,
     // Make sure the config is valid
     config.validate();
 
-    // Set the number of threads
-    #if defined(_OPENMP)
-        omp_set_num_threads(config.get_num_threads());
-        Eigen::setNbThreads(1);
-    #endif
+// Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(1);
+#endif
 
     // Get the jump operators from the noise model
-    std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
+    const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
     // Check if we have unitary dynamics
     bool is_unitary_dynamics = (jump_operators.size() == 0);
@@ -308,7 +288,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0,
 
     // For each time step
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-
         // Get the current Hamiltonian
         MatrixFreeHamiltonian currentH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
@@ -347,12 +326,14 @@ void time_evolution_matrix_free(SparseMatrix rho_0,
 
     // If we have intermediates, process them too
     if (config.get_store_intermediate_results()) {
-        for (const auto& rho_intermediate : intermediate_rhos) {
-            std::vector<double> step_expectation_values;
-            for (const auto& O : observables) {
-                step_expectation_values.push_back(O.expectation_value(rho_intermediate));
+        intermediate_expectation_values.resize(intermediate_rhos.size());
+        for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
+            const auto& rho_intermediate = intermediate_rhos[step];
+            std::vector<double> step_expectation_values(observables.size());
+            for (size_t i = 0; i < observables.size(); ++i) {
+                step_expectation_values[i] = observables[i].expectation_value(rho_intermediate);
             }
-            intermediate_expectation_values.push_back(step_expectation_values);
+            intermediate_expectation_values[step] = step_expectation_values;
         }
     }
 }

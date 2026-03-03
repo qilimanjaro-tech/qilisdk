@@ -17,10 +17,10 @@
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
 #include "digital/sampling.h"
-#include "utils/numpy.h"
-#include "utils/parsers.h"
 #include "noise/noise_model.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "utils/numpy.h"
+#include "utils/parsers.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -74,6 +74,14 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
+    // If we have any exponential gates, we need to force renormalization
+    for (const auto& gate : gates) {
+        if (!gate.is_normalized()) {
+            config.set_normalize_after_gate(true);
+            break;
+        }
+    }
+
     // Pass everything to the internal implementation
     std::map<std::string, int> counts;
     DenseMatrix state_dense;
@@ -97,14 +105,13 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     for (const auto& pair : counts) {
         samples[py::cast(pair.first)] = py::cast(pair.second);
     }
-    
+
     // Construct the result object
     py::object result = SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
     py::array final_state_numpy = to_numpy(state_dense);
     result.attr("_state") = final_state_numpy;
 
     return result;
-
 }
 
 // The public execute_time_evolution
@@ -152,7 +159,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         schedule.attr("set_parameters")(schedule_parameters);
         schedule_parameters = schedule.attr("get_parameters")();
     }
-    
 
     // Pre-process the Python objects
     py::object initial_state = functional.attr("initial_state");
@@ -181,7 +187,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     std::vector<double> expectation_values;
     std::vector<std::vector<double>> intermediate_expectation_values;
     if (config.get_time_evolution_method() == "integrate_matrix_free") {
-
         // Parse the Hamiltonians
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
         if (hamiltonians.size() != parameters_list.size()) {
@@ -192,7 +197,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
                 throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
             }
         }
-        
+
         // Parse the observables
         std::vector<MatrixFreeHamiltonian> observable_matrices = parse_observables_matrix_free(observables);
 
@@ -200,7 +205,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
 
     } else {
-
         // Parse the Hamiltonians
         std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
         if (hamiltonians.size() != parameters_list.size()) {
@@ -211,13 +215,12 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
                 throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
             }
         }
-        
+
         // Parse the observables
         std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
 
         // Call the implementation
         time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
-
     }
 
     // Convert things to numpy arrays

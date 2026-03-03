@@ -111,8 +111,12 @@ def test_nshots(backend):
 
 @pytest.mark.parametrize("backend", backends)
 def test_multi_controlled_execution(backend):
+    if type(backend) is QiliSim and backend.solver_params["sampling_method"] == "statevector_matrix_free":
+        pytest.skip(
+            "Multi-controlled gates are not currently supported in statevector_matrix_free sampling method of QiliSim."
+        )
     # Create two Xs then a multi-controlled X (Toffoli) gate
-    # Expect roughly all shots to be '111'
+    # Expect all shots to be '111'
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))

@@ -166,7 +166,7 @@ SparseMatrix expand_operator(int nqubits, const SparseMatrix& op) {
 
     Returns:
         SparseMatrix: The expanded operator acting on the full system.
-        
+
     Raises:
         py::value_error: If the operator size is not compatible with the number of qubits.
     */
@@ -198,7 +198,7 @@ SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits,
 
     Returns:
         SparseMatrix: The expanded operator acting on the full system.
-        
+
     Raises:
         py::value_error: If the operator size is not compatible with the number of target qubits.
     */
@@ -311,4 +311,62 @@ DenseMatrix devectorize(const DenseMatrix& vec_matrix) {
         }
     }
     return mat;
+}
+
+void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) {
+    /*
+    Normalize the state after applying gates and noise.
+
+    Args:
+        state (DenseMatrix&): The state to normalize (statevector or density matrix).
+        is_statevector (bool): Whether the state is a statevector.
+        monte_carlo (bool): Whether we are doing monte-carlo sampling.
+    */
+    if (monte_carlo) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int col = 0; col < state.cols(); ++col) {
+            state.col(col) /= state.col(col).norm();
+        }
+    } else if (is_statevector) {
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+        {
+#if defined(_OPENMP)
+#pragma omp for reduction(+ : sum) schedule(static)
+#endif
+            for (int i = 0; i < state.rows(); ++i) {
+                sum += std::norm(state(i, 0));
+            }
+            double norm = std::sqrt(sum);
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (int i = 0; i < state.rows(); ++i) {
+                state(i, 0) /= norm;
+            }
+        }
+    } else {
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+        {
+#if defined(_OPENMP)
+#pragma omp for reduction(+ : sum) schedule(static)
+#endif
+            for (int i = 0; i < state.rows(); ++i) {
+                sum += state.coeff(i, i).real();
+            }
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (int i = 0; i < state.rows(); ++i) {
+                state.coeffRef(i, i) /= sum;
+            }
+        }
+    }
 }

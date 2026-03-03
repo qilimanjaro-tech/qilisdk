@@ -23,9 +23,4 @@ void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::
 DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector);
 DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol);
 DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector);
-void iter_integrate(DenseMatrix& rho_t, 
-                    double dt, 
-                    const MatrixFreeHamiltonian& currentH, 
-                    const std::vector<SparseMatrix>& jump_operators, 
-                    int num_substeps, 
-                    bool is_unitary_on_statevector);
+void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector);

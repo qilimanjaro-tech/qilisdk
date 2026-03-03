@@ -78,10 +78,10 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix&
         drho = H * rho;
         drho *= -imag;
     } else {
-        DenseMatrix temp = H * rho;
-        drho = -imag * temp;
-        temp = rho * H;
-        drho += imag * temp;
+        DenseMatrix Hrho = H * rho;
+        drho = Hrho;
+        drho -= Hrho.adjoint();
+        drho *= -imag;
         for (const auto& J : jumps) {
             SparseMatrix Jdag = J.adjoint();
             SparseMatrix JdagJ = Jdag * J;
@@ -104,20 +104,20 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
     */
     if (is_unitary_on_statevector) {
         drho = rho;
-        H.apply(drho, MatrixFreeApplicationType::Left);
+        drho.setZero();
+        H.apply(rho, MatrixFreeApplicationType::Left, drho);
         drho *= -imag;
     } else {
         DenseMatrix Hrho = rho;
         H.apply(Hrho, MatrixFreeApplicationType::Left);
-        drho = -imag * Hrho;
-        drho += imag * Hrho.conjugate().transpose();
+        drho = Hrho;
+        drho -= Hrho.adjoint();
+        drho *= -imag;
         for (const auto& J : jumps) {
             SparseMatrix Jdag = J.adjoint();
             SparseMatrix JdagJ = Jdag * J;
-            DenseMatrix JdagJ_rho = JdagJ * rho;
-            DenseMatrix rho_JdagJ = rho * JdagJ;
             drho += J * rho * Jdag;
-            drho -= 0.5 * (JdagJ_rho + rho_JdagJ);
+            drho -= 0.5 * (JdagJ * rho + rho * JdagJ);
         }
     }
 }
