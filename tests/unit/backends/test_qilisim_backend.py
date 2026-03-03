@@ -195,7 +195,7 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
 
 
 def test_execute_quantum_reservoir_qilisim(monkeypatch):
-    backend = QiliSim(seed=42, num_threads=1)
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     functional = _build_quantum_reservoir_functional()
     final_density = ket(0).to_density_matrix()
     monkeypatch.setattr(
