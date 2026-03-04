@@ -19,7 +19,8 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
-from qilisdk.backends.qilisim import AnalogMethod, ExecutionConfig, MonteCarloConfig, QiliSim
+from qilisdk.backends.backend_config import AnalogMethod, ExecutionConfig, MonteCarloConfig
+from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import ket
 from qilisdk.digital import Circuit, H, X
 from qilisdk.functionals.sampling import Sampling
@@ -29,23 +30,20 @@ from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 simulation_types = ["direct", "arnoldi", "integrate"]
 
-
-def _execution(seed: int | None) -> ExecutionConfig:
-    return ExecutionConfig(seed=seed, num_threads=1)
+_MONTE_CARLO_CONFIG = MonteCarloConfig(trajectories=100)
 
 
-def _analog_method(method: str, monte_carlo: bool = False) -> AnalogMethod:
-    monte_carlo_config = MonteCarloConfig(trajectories=100) if monte_carlo else None
+def _analog_method(method: str) -> AnalogMethod:
     if method == "direct":
-        return AnalogMethod.direct(monte_carlo=monte_carlo_config)
+        return AnalogMethod.direct()
     if method == "arnoldi":
-        return AnalogMethod.arnoldi(monte_carlo=monte_carlo_config)
-    return AnalogMethod.integrator(monte_carlo=monte_carlo_config)
+        return AnalogMethod.arnoldi()
+    return AnalogMethod.integrator()
 
 
 def test_seed_same():
-    backend1 = QiliSim(execution_config=_execution(seed=42))
-    backend2 = QiliSim(execution_config=_execution(seed=42))
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
     result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
@@ -54,7 +52,7 @@ def test_seed_same():
 
 
 def test_no_seed():
-    backend = QiliSim(execution_config=_execution(seed=None))
+    backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]
     assert isinstance(seed, int)
     assert 0 <= seed < 2**15
@@ -66,8 +64,8 @@ def test_monte_carlo_circuit():
     initial_state_2 = ket(1).unit()
     initial_state = (initial_state_1.to_density_matrix() * (1 - p) + initial_state_2.to_density_matrix() * p).unit()
     backend = QiliSim(
-        analog_simulation_method=AnalogMethod.integrator(monte_carlo=MonteCarloConfig(trajectories=100)),
-        execution_config=_execution(seed=42),
+        analog_simulation_method=AnalogMethod.integrator(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=100)),
     )
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
@@ -79,8 +77,8 @@ def test_monte_carlo_circuit():
 
 
 def test_seed_different():
-    backend1 = QiliSim(execution_config=_execution(seed=42))
-    backend2 = QiliSim(execution_config=_execution(seed=43))
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1))
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
     result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
@@ -108,7 +106,10 @@ def test_row_vec_ordering(method):
         pauli_y(0),  # measure y
     ]
 
-    backend = QiliSim(analog_simulation_method=_analog_method(method), execution_config=_execution(seed=42))
+    backend = QiliSim(
+        analog_simulation_method=_analog_method(method),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
+    )
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
     assert isinstance(res, TimeEvolutionResult)
@@ -141,8 +142,8 @@ def test_monte_carlo_time_evolution(method):
     ]
 
     backend = QiliSim(
-        analog_simulation_method=_analog_method(method, monte_carlo=True),
-        execution_config=_execution(seed=42),
+        analog_simulation_method=_analog_method(method),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
     )
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
 
@@ -154,7 +155,7 @@ def test_monte_carlo_time_evolution(method):
 
 
 def test_exponential_gates():
-    backend = QiliSim(execution_config=_execution(seed=42))
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     circuit = Circuit(nqubits=1)
     circuit.add(X(0).exponential())
     result = backend.execute(Sampling(circuit=circuit, nshots=100))

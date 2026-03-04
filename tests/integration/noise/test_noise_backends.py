@@ -16,7 +16,7 @@ import random
 import numpy as np
 import pytest
 
-from qilisdk.backends.qilisim import ExecutionConfig
+from qilisdk.backends.backend_config import ExecutionConfig
 
 pytest.importorskip(
     "cudaq",

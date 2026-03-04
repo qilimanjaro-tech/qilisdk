@@ -34,7 +34,8 @@ from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
-from qilisdk.backends.qilisim import ExecutionConfig, QiliSim
+from qilisdk.backends.backend_config import ExecutionConfig
+from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable

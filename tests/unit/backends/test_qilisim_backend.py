@@ -22,7 +22,8 @@ import qilisdk
 from qilisdk.analog import Hamiltonian, PauliZ, Schedule
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
-from qilisdk.backends.qilisim import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig, QiliSim
+from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
+from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
 from qilisdk.functionals import QuantumReservoir, ReservoirLayer, Sampling, TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
@@ -52,10 +53,9 @@ def test_qilisim_config_builders_and_validation():
     analog = AnalogMethod.arnoldi(
         dim=16,
         num_substeps=3,
-        monte_carlo=MonteCarloConfig(trajectories=250),
     )
     digital = DigitalMethod.state_vector(max_cache_size=2048)
-    execution = ExecutionConfig(seed=42, num_threads=2)
+    execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
 
     backend = QiliSim(
         analog_simulation_method=analog,

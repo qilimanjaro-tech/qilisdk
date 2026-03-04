@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig
 from .cuda_backend import CudaBackend, CudaSamplingMethod
-from .qilisim import AnalogMethod, DigitalMethod, ExecutionConfig, QiliSim
+from .qilisim import QiliSim
 from .qutip_backend import QutipBackend
 
 __all__ = [
