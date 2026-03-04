@@ -12,11 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Iterator
+
+import numpy as np
 import pytest
-from numpy import isclose
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import LEQ, Parameter
+from qilisdk.settings import get_settings
+
+
+def _isclose(lhs: float, rhs: float) -> bool:
+    return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
 
 
 class DummyParameterizable(Parameterizable):
@@ -29,6 +36,25 @@ class DummyParameterizable(Parameterizable):
         self._parameter_constraints = [LEQ(self._parameters["alpha"], self._parameters["beta"])]
 
 
+class LeafParameterizable(Parameterizable):
+    def __init__(self, label: str, value: float, *, trainable: bool = True) -> None:
+        super().__init__()
+        self._parameters = {
+            label: Parameter(label, value, bounds=(-10, 10), trainable=trainable),
+        }
+
+
+class CompositeParameterizable(Parameterizable):
+    def __init__(self, left: Parameterizable, right: Parameterizable) -> None:
+        super().__init__()
+        self._left = left
+        self._right = right
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self._left
+        yield self._right
+
+
 @pytest.fixture
 def parameterizable() -> DummyParameterizable:
     return DummyParameterizable()
@@ -37,15 +63,21 @@ def parameterizable() -> DummyParameterizable:
 def test_parameter_getters(parameterizable: DummyParameterizable):
     assert parameterizable.nparameters == 2
     assert parameterizable.get_parameter_names() == ["alpha", "beta"]
-    assert parameterizable.get_parameter_values() == [1.0, 2.0]
-    assert parameterizable.get_parameters() == {"alpha": 1.0, "beta": 2.0}
-    assert parameterizable.get_parameter_bounds() == {"alpha": (0, 2), "beta": (1, 3)}
+    assert _isclose(parameterizable.get_parameter_values()[0], 1.0)
+    assert _isclose(parameterizable.get_parameter_values()[1], 2.0)
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.0)
+    assert _isclose(parameterizable.get_parameters()["beta"], 2.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][0], 0.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][1], 2.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["beta"][0], 1.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["beta"][1], 3.0)
 
 
 def test_set_parameter_values_updates_all(parameterizable: DummyParameterizable):
     parameterizable.set_parameter_values([1.5, 2.5])
 
-    assert parameterizable.get_parameters() == {"alpha": 1.5, "beta": 2.5}
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.5)
+    assert _isclose(parameterizable.get_parameters()["beta"], 2.5)
 
 
 def test_set_parameter_values_length_mismatch(parameterizable: DummyParameterizable):
@@ -70,7 +102,7 @@ def test_constraints_enforced_on_set(parameterizable: DummyParameterizable):
         parameterizable.set_parameters({"alpha": 2})
 
     parameterizable.set_parameters({"alpha": 1.5, "beta": 2})
-    assert isclose(parameterizable.get_parameters()["alpha"], 1.5)
+    assert _isclose(parameterizable.get_parameters()["alpha"], 1.5)
 
 
 def test_check_constraints_unknown_parameter(parameterizable: DummyParameterizable):
@@ -80,7 +112,8 @@ def test_check_constraints_unknown_parameter(parameterizable: DummyParameterizab
 
 def test_set_parameter_bounds(parameterizable: DummyParameterizable):
     parameterizable.set_parameter_bounds({"alpha": (0.0, 1.5)})
-    assert parameterizable.get_parameter_bounds()["alpha"] == (0.0, 1.5)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][0], 0.0)
+    assert _isclose(parameterizable.get_parameter_bounds()["alpha"][1], 1.5)
 
     with pytest.raises(
         ValueError,
@@ -99,3 +132,56 @@ def test_set_nonexistent_parameter(monkeypatch, parameterizable: DummyParameteri
 
     with pytest.raises(ValueError, match=r"not defined for this object"):
         parameterizable.set_parameters({"gamma": 1.0})
+
+
+def test_composite_parent_child_parameter_sync():
+    left = LeafParameterizable("left", 1.0, trainable=True)
+    right = LeafParameterizable("right", 2.0, trainable=False)
+    parent = CompositeParameterizable(left, right)
+
+    assert _isclose(parent.get_parameters()["left"], 1.0)
+    assert _isclose(parent.get_parameters()["right"], 2.0)
+    assert _isclose(parent.get_parameters(where=lambda param: param.is_trainable)["left"], 1.0)
+    assert _isclose(parent.get_parameters(where=lambda param: not param.is_trainable)["right"], 2.0)
+
+    parent.set_parameters({"left": 1.5, "right": 2.5})
+    assert _isclose(left.get_parameters()["left"], 1.5)
+    assert _isclose(right.get_parameters()["right"], 2.5)
+
+    right.set_parameters({"right": 3.5})
+    assert _isclose(parent.get_parameters()["right"], 3.5)
+
+    parent.set_parameter_values([4.0], where=lambda param: param.is_trainable)
+    assert _isclose(left.get_parameters()["left"], 4.0)
+
+    parent.set_parameter_bounds({"left": (-1.0, 5.0), "right": (0.0, 4.0)})
+    assert _isclose(left.get_parameter_bounds()["left"][0], -1.0)
+    assert _isclose(left.get_parameter_bounds()["left"][1], 5.0)
+    assert _isclose(right.get_parameter_bounds()["right"][0], 0.0)
+    assert _isclose(right.get_parameter_bounds()["right"][1], 4.0)
+
+    left.set_parameter_bounds({"left": (-2.0, 5.0)})
+    assert _isclose(parent.get_parameter_bounds()["left"][0], -2.0)
+    assert _isclose(parent.get_parameter_bounds()["left"][1], 5.0)
+
+
+def test_parameter_filter_predicate_supports_custom_queries():
+    input_param = LeafParameterizable("input_encoding_theta", 0.1, trainable=False)
+    output_param = LeafParameterizable("output_encoding_theta", 0.9, trainable=True)
+    parent = CompositeParameterizable(input_param, output_param)
+
+    def starts_with_input(param: Parameter) -> bool:
+        return param.label.startswith("input_encoding_")
+
+    def value_in_range(param: Parameter) -> bool:
+        return 0.5 <= param.value <= 1.0
+
+    assert parent.get_parameter_names(where=starts_with_input) == ["input_encoding_theta"]
+    assert parent.get_parameters(where=value_in_range) == {"output_encoding_theta": 0.9}
+    assert parent.get_parameters(where=lambda p: starts_with_input(p) and not p.is_trainable) == {
+        "input_encoding_theta": 0.1
+    }
+
+    parent.set_parameter_values([0.7], where=lambda param: param.label.startswith("output_encoding_"))
+    assert _isclose(parent.get_parameters()["input_encoding_theta"], 0.1)
+    assert _isclose(parent.get_parameters()["output_encoding_theta"], 0.7)

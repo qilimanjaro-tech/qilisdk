@@ -20,9 +20,13 @@ import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, S, X
-from qilisdk.digital.exceptions import ParametersNotEqualError, QubitOutOfRangeError
-from qilisdk.digital.gates import Gate
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
+from qilisdk.digital.circuit import _apply_gate_left
+from qilisdk.digital.exceptions import (
+    GateHasNoMatrixError,
+    QubitOutOfRangeError,
+)
+from qilisdk.digital.gates import BasicGate, Gate
 
 
 def test_circuit_initialization():
@@ -35,6 +39,21 @@ def test_circuit_initialization():
     assert c.get_parameter_values() == []
     assert c.gates == []
     assert c.get_parameter_names() == []
+
+
+def test_apply_gate_left_noop_for_zero_qubit_gate():
+    class ZeroQubitGate(BasicGate):
+        nqubits = 0
+        qubits = ()
+        matrix = np.array([[1.0]], dtype=np.complex128)
+        name = "ZeroQubitGate"
+
+        def _generate_matrix(self):
+            return self.matrix
+
+    operator = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.complex128)
+    out = _apply_gate_left(operator, ZeroQubitGate([0]), nqubits=1)
+    np.testing.assert_array_equal(out, operator)
 
 
 def test_circuit_set_parameters_bad():
@@ -183,7 +202,7 @@ def test_set_parameter_values_incorrect():
     c.add(rz_gate)
 
     # circuit has 2 parameters total. Let's provide a list of length 3 instead.
-    with pytest.raises(ParametersNotEqualError):
+    with pytest.raises(ValueError, match=r"Provided 3 but this object has 2 parameters."):
         c.set_parameter_values([0.1, 0.2, 0.3])
 
 
@@ -411,6 +430,50 @@ def test_circuit_draw_runs(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers, "MatplotlibCircuitRenderer", renderer)
     c.draw(filepath="some/path.png")
     assert renderer.called
+
+
+def test_to_matrix_single_qubit_sequence():
+    c = Circuit(nqubits=1)
+    g1 = X(0)
+    g2 = RZ(0, phi=np.pi / 3)
+    c.add([g1, g2])
+
+    expected = g2.matrix @ g1.matrix
+    assert np.allclose(c.to_matrix(), expected)
+    assert np.allclose(c.to_qtensor().dense(), expected)
+
+
+def test_to_matrix_multi_qubit_noncontiguous():
+    c = Circuit(nqubits=3)
+    g1 = CNOT(2, 0)
+    g2 = X(1)
+    c.add([g1, g2])
+
+    # Expected operator in computational basis ordering |q0 q1 q2>.
+    expected = np.array(
+        [
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=np.complex128,
+    )
+    np.testing.assert_array_equal(c.to_matrix(), expected)
+    np.testing.assert_array_equal(c.to_qtensor().dense(), expected)
+
+
+def test_to_matrix_measurement_raises():
+    c = Circuit(nqubits=1)
+    c.add(M(0))
+    with pytest.raises(GateHasNoMatrixError):
+        c.to_matrix()
+    with pytest.raises(GateHasNoMatrixError):
+        c.to_qtensor()
 
 
 def test_prepend_circuit():
