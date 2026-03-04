@@ -50,6 +50,8 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             for rewritten_gate in self._rewrite_gate(gate):
                 output_circuit.add(rewritten_gate)
 
+        self.append_circuit_to_context(output_circuit)
+
         return output_circuit
 
     def _rewrite_gate(self, gate: Gate) -> list[Gate]:  # noqa: PLR6301

@@ -33,7 +33,7 @@ def test_circuit_transpiler_preserves_semantics_for_simple_circuit() -> None:
     circuit = Circuit(2)
     circuit.add(CNOT(0, 1))
 
-    transpiler = CircuitTranspiler()
+    transpiler = CircuitTranspiler.default()
     transpiled_circuit = transpiler.transpile(circuit)
 
     assert transpiled_circuit is not circuit
@@ -50,7 +50,7 @@ def test_circuit_transpiler_does_not_mutate_input_circuit() -> None:
     circuit.add(X(0))
     original_snapshot = _describe_circuit(circuit)
 
-    transpiled_circuit = CircuitTranspiler().transpile(circuit)
+    transpiled_circuit = CircuitTranspiler.default().transpile(circuit)
 
     assert _describe_circuit(circuit) == original_snapshot
     assert transpiled_circuit.gates == []
