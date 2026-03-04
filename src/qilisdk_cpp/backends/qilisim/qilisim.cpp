@@ -399,14 +399,14 @@ py::object QiliSimCpp::execute_digital_evolution(const py::object& functional, c
     for (auto readout_obj : readout_methods) {
         py::object readout = py::reinterpret_borrow<py::object>(readout_obj);
         if (readout.attr("is_state_tomography")().cast<bool>()) {
-            if (readout.attr("state_tomography_method").cast<std::string>() != "exact") {
+            if (readout.attr("readout_method").attr("state_tomography_method").cast<std::string>() != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-            readout_results.append(ReadoutResults("readout"_a = copy_readout(readout), "final_state"_a = final_state));
+            readout_results.append(StateTomographyReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")), "final_state"_a = final_state));
         }
         if (readout.attr("is_expectation_values")().cast<bool>()) {
             std::vector<SparseMatrix> observable_matrices =
-                parse_observables(readout.attr("observables"), n_qubits, config.get_atol());
+                parse_observables(readout.attr("readout_method").attr("observables"), n_qubits, config.get_atol());
             std::vector<double> expected_values;
             expected_values.reserve(observable_matrices.size());
             for (const auto& observable : observable_matrices) {
@@ -417,14 +417,14 @@ py::object QiliSimCpp::execute_digital_evolution(const py::object& functional, c
                 }
             }
             readout_results.append(
-                ReadoutResults("readout"_a = copy_readout(readout), "expected_values"_a = to_numpy(expected_values)));
+                ExpectationReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")), "expected_values"_a = to_numpy(expected_values)));
         }
         if (readout.attr("is_sample")().cast<bool>()) {
-            int n_shots = readout.attr("nshots").cast<int>();
+            int n_shots = readout.attr("readout_method").attr("nshots").cast<int>();
             py::dict samples =
                 samples_from_state(state, noise_model_cpp, n_qubits, n_shots, counts, qubits_to_measure, config);
             readout_results.append(
-                ReadoutResults("readout"_a = copy_readout(readout),
+                SamplingReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")),
                                "samples"_a = samples));
         }
     }
@@ -525,14 +525,14 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     for (auto readout_obj : readout_methods) {
         py::object readout = py::reinterpret_borrow<py::object>(readout_obj);
         if (readout.attr("is_state_tomography")().cast<bool>()) {
-            if (readout.attr("state_tomography_method").cast<std::string>() != "exact") {
+            if (readout.attr("readout_method").attr("state_tomography_method").cast<std::string>() != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-            readout_results.append(ReadoutResults("readout"_a = copy_readout(readout), "final_state"_a = final_state));
+            readout_results.append(StateTomographyReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")), "final_state"_a = final_state));
         }
         if (readout.attr("is_expectation_values")().cast<bool>()) {
             std::vector<SparseMatrix> observable_matrices =
-                parse_observables(readout.attr("observables"), nqubits, config.get_atol());
+                parse_observables(readout.attr("readout_method").attr("observables"), nqubits, config.get_atol());
             std::vector<double> expected_values;
             expected_values.reserve(observable_matrices.size());
             for (const auto& observable : observable_matrices) {
@@ -543,17 +543,17 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
                 }
             }
             readout_results.append(
-                ReadoutResults("readout"_a = copy_readout(readout), "expected_values"_a = to_numpy(expected_values)));
+                ExpectationReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")), "expected_values"_a = to_numpy(expected_values)));
         }
         if (readout.attr("is_sample")().cast<bool>()) {
-            int n_shots = readout.attr("nshots").cast<int>();
+            int n_shots = readout.attr("readout_method").attr("nshots").cast<int>();
             std::map<std::string, int> counts;
             std::vector<bool> qubits_to_measure(nqubits, true);
             DenseMatrix rho_t_dense = DenseMatrix(rho_t);
             py::dict samples = samples_from_state(
                 rho_t_dense, noise_model_cpp, nqubits, n_shots, counts, qubits_to_measure, config);
             readout_results.append(
-                ReadoutResults("readout"_a = copy_readout(readout),
+                SamplingReadoutResults("readout"_a = copy_readout(readout.attr("readout_method")),
                                "samples"_a = samples));
         }
     }

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC
 from copy import copy
-from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 import numpy as np
 
@@ -25,7 +25,13 @@ from qilisdk.core.qtensor import probabilities_from_state, samples_from_probabil
 from qilisdk.digital import Circuit
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_evolution import DigitalEvolution
-from qilisdk.functionals.functional_result import FunctionalResult, ReadoutResults
+from qilisdk.functionals.functional_result import (
+    ExpectationReadoutResults,
+    FunctionalResult,
+    ReadoutResult,
+    SamplingReadoutResults,
+    StateTomographyReadoutResults,
+)
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
 from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
 from qilisdk.functionals.sampling import Sampling
@@ -72,7 +78,7 @@ class Backend(ABC):
     def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
     def _execute_digital_evolution(self, functional: DigitalEvolution) -> FunctionalResult:
@@ -189,40 +195,58 @@ class Backend(ABC):
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
     @classmethod
+    def _construct_sampling_results(
+        cls, final_state: QTensor, readout: ReadoutMethod, seed: int | None = None, **kwarg: Any
+    ) -> SamplingReadoutResults:
+        probabilities = probabilities_from_state(final_state)
+        return SamplingReadoutResults(
+            readout=copy(readout.readout_method),
+            samples=samples_from_probabilities(probabilities, nshots=readout.readout_method.nshots, seed=seed),
+            probabilities=probabilities,
+        )
+
+    @classmethod
+    def _construct_expectation_results(
+        cls, final_state: QTensor, readout: ReadoutMethod, **kwarg: Any
+    ) -> ExpectationReadoutResults:
+        return ExpectationReadoutResults(
+            readout=copy(readout.readout_method),
+            expected_values=[
+                (
+                    expect_val(o, final_state)
+                    if isinstance(o, QTensor)
+                    else expect_val(o.to_qtensor(final_state.nqubits), final_state)
+                )
+                for o in readout.readout_method.observables
+            ],
+        )
+
+    @classmethod
+    def _construct_state_tomography_results(
+        cls, final_state: QTensor, readout: ReadoutMethod, **kwarg: Any
+    ) -> StateTomographyReadoutResults:
+        return StateTomographyReadoutResults(readout=copy(readout.readout_method), final_state=final_state)
+
+    @classmethod
     def _construct_results_list(
-        cls, final_state: QTensor, readout_methods: list[ReadoutMethod], seed: int | None = None
-    ) -> list[ReadoutResults]:
-        results: list[ReadoutResults] = []
+        cls, final_state: QTensor, readout_methods: list[ReadoutMethod], seed: int | None = None, **kwarg: Any
+    ) -> list[ReadoutResult]:
+        results: list[ReadoutResult] = []
         for readout in readout_methods:
             if readout.is_state_tomography():
-                if readout.state_tomography_method != "exact":
+                if readout.readout_method.state_tomography_method != "exact":
                     raise ValueError("State Tomography methods that are not exact are not supported yet.")
-                results.append(ReadoutResults(readout=copy(readout), final_state=final_state))
-            if readout.is_expectation_values():
-                if readout.observables is None:
-                    raise ValueError("Empty observables list in expectation value readout.")
                 results.append(
-                    ReadoutResults(
-                        readout=copy(readout),
-                        expected_values=[
-                            (
-                                expect_val(o, final_state)
-                                if isinstance(o, QTensor)
-                                else expect_val(o.to_qtensor(final_state.nqubits), final_state)
-                            )
-                            for o in readout.observables
-                        ],
-                    )
+                    cls._construct_state_tomography_results(final_state=final_state, readout=readout, **kwarg)
                 )
+            if readout.is_expectation_values():
+                if readout.readout_method.observables is None:
+                    raise ValueError("Empty observables list in expectation value readout.")
+                results.append(cls._construct_expectation_results(final_state=final_state, readout=readout, **kwarg))
             if readout.is_sample():
-                if readout.nshots is None:
+                if readout.readout_method.nshots is None:
                     raise ValueError("nshots is None in a sampling readout.")
-                probabilities = probabilities_from_state(final_state)
                 results.append(
-                    ReadoutResults(
-                        readout=copy(readout),
-                        samples=samples_from_probabilities(probabilities, nshots=readout.nshots, seed=seed),
-                        probabilities=probabilities,
-                    )
+                    cls._construct_sampling_results(final_state=final_state, readout=readout, seed=seed, **kwarg)
                 )
         return results

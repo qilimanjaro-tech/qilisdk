@@ -16,49 +16,54 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor  # noqa: TC001
 from qilisdk.core.parameterizable import Parameterizable
 
 
-class ReadoutMethod(BaseModel):
+class ReadoutBase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class SamplingReadout(ReadoutBase):
+    nshots: int | None = Field(default=None, ge=0)
+
+
+class ExpectationReadout(ReadoutBase):
     nshots: int | None = Field(default=None, ge=0)
     observables: list[Hamiltonian | QTensor] | None = Field(default=None)
+
+
+class StateTomographyReadout(ReadoutBase):
     state_tomography_method: Literal["exact"] | None = Field(default=None)
 
-    @model_validator(mode="after")
-    def _validate_mutual_exclusion(self) -> ReadoutMethod:
-        tomography_set = self.state_tomography_method is not None
-        expect_or_sampling_set = self.nshots is not None or self.observables is not None
 
-        if tomography_set and expect_or_sampling_set:
-            raise ValueError("state_tomography_method is mutually exclusive with " "nshots and observables.")
-
-        return self
+class ReadoutMethod(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    readout_method: ReadoutBase
 
     @classmethod
     def sample(cls, *, nshots: int = 100) -> ReadoutMethod:
-        return cls(nshots=nshots)
+        return cls(readout_method=SamplingReadout(nshots=nshots))
 
     def is_sample(self) -> bool:
-        return self.nshots is not None and self.observables is None and self.state_tomography_method is None
+        return isinstance(self.readout_method, SamplingReadout)
 
     @classmethod
     def expectation_values(cls, *, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> ReadoutMethod:
-        return cls(observables=observables, nshots=nshots)
+        return cls(readout_method=ExpectationReadout(observables=observables, nshots=nshots))
 
     def is_expectation_values(self) -> bool:
-        return self.observables is not None and self.state_tomography_method is None
+        return isinstance(self.readout_method, ExpectationReadout)
 
     @classmethod
     def state_tomography(cls, *, method: Literal["exact"] = "exact") -> ReadoutMethod:
-        return cls(state_tomography_method=method)
+        return cls(readout_method=StateTomographyReadout(state_tomography_method=method))
 
     def is_state_tomography(self) -> bool:
-        return self.observables is None and self.nshots is None and self.state_tomography_method is not None
+        return isinstance(self.readout_method, StateTomographyReadout)
 
 
 class Functional(ABC):
@@ -76,6 +81,20 @@ class PrimitiveFunctional(Parameterizable, Functional, ABC):
 
     @abstractmethod
     def __init__(self, readout: ReadoutMethod | list[ReadoutMethod]) -> None:
+        super().__init__()
         if not isinstance(readout, (list, ReadoutMethod)):
             raise ValueError("Invalid Readout method provided.")
-        self.readout = readout if isinstance(readout, list) else [readout]
+        self._readout = readout if isinstance(readout, list) else [readout]
+
+    @property
+    def readout(self) -> list[ReadoutMethod]:
+        return self._readout
+
+    def has_sampling_readout(self) -> bool:
+        return any(isinstance(ro.readout_method, SamplingReadout) for ro in self._readout)
+
+    def has_state_tomography_readout(self) -> bool:
+        return any(isinstance(ro.readout_method, StateTomographyReadout) for ro in self._readout)
+
+    def has_expectation_readout(self) -> bool:
+        return any(isinstance(ro.readout_method, ExpectationReadout) for ro in self._readout)
