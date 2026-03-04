@@ -20,6 +20,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatrix
 from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
+from sympy.stats.rv import probability
 
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
 Complex = int | float | complex
+NORMALIZATION_TOLERANCE = 1e-8
 
 
 def _complex_dtype() -> np.dtype:
@@ -785,3 +787,70 @@ def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
     out = coo_matrix((rest_coo.data, (out_row, out_col)), shape=(out_dim, out_dim))
     out.sum_duplicates()
     return QTensor(out.tocsr())
+
+
+def probabilities_from_state(state: QTensor, *, check_normalization: bool = True) -> dict[str, float]:
+    """
+    Return computational-basis probabilities for a QTensor state.
+
+    Returns:
+        dict[str, float]: a dictionary mapping every possible outcome to the probability of it appearing.
+
+    Raises:
+        TypeError: if the state provided is not a valid state.
+        ValueError: if the probabilities are not normalized and check_normalization is set to True.
+    """
+    atol = get_settings().atol
+
+    if state.is_ket():
+        psi = state.dense().reshape(-1)
+        probs = np.abs(psi) ** 2
+
+    elif state.is_bra():
+        psi = state.adjoint().dense().reshape(-1)
+        probs = np.abs(psi) ** 2
+
+    elif state.is_density_matrix():
+        rho = state.dense()
+        probs = np.real(np.diag(rho))
+
+        # Optional sanity: tiny negative values can happen from numerical noise
+        probs = np.where(np.abs(probs) < atol, 0.0, probs)
+        if np.any(probs < -atol):
+            raise ValueError(f"Density matrix has significantly negative diagonal entries (min={probs.min()}).")
+
+    else:
+        raise TypeError(
+            "QTensor must represent a ket, bra, or density matrix "
+            "(use state.is_ket(), state.is_bra(), state.is_density_matrix())."
+        )
+
+    if check_normalization:
+        s = float(np.sum(probs))
+        if not np.isfinite(s) or abs(s - 1.0) > NORMALIZATION_TOLERANCE:
+            # Up to you whether to error or renormalize; here we error by default.
+            raise ValueError(
+                f"Probabilities not normalized: sum={s}. "
+                "If expected (e.g. unnormalized state), set check_normalization=False."
+            )
+    n_qubits = state.nqubits
+    return {format(idx, f"0{n_qubits}b"): float(p) for idx, p in enumerate(probs)}
+
+
+def samples_from_state(state: QTensor, nshots: int = 100, seed: int | None = None) -> dict[str, int]:
+    probabilities = probabilities_from_state(state)
+    return samples_from_probabilities(probabilities=probabilities, nshots=nshots, seed=seed)
+
+
+def samples_from_probabilities(
+    probabilities: dict[str, float], nshots: int = 100, seed: int | None = None
+) -> dict[str, int]:
+    states = np.array(list(probabilities.keys()))
+    probs = np.array(list(probabilities.values()), dtype=np.float64)
+    probs /= probs.sum()
+
+    rng = np.random.default_rng(seed)
+    draws = rng.choice(len(states), size=nshots, p=probs)
+
+    counts = np.bincount(draws, minlength=len(states))
+    return {str(states[i]): int(counts[i]) for i in range(len(states)) if counts[i] > 0}

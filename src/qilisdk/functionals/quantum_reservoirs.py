@@ -23,7 +23,7 @@ from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital import Circuit, M
-from qilisdk.functionals.functional import PrimitiveFunctional
+from qilisdk.functionals.functional import PrimitiveFunctional, ReadoutMethod
 
 from .quantum_reservoirs_result import QuantumReservoirResult
 
@@ -256,7 +256,7 @@ class ReservoirLayer(Parameterizable):
         )
 
 
-class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
+class QuantumReservoir(PrimitiveFunctional):
     """Reservoir functional executed over a sequence of input layers.
 
     Each element in ``input_per_layer`` is applied to the underlying
@@ -266,6 +266,7 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
     def __init__(
         self,
         initial_state: QTensor,
+        readout: ReadoutMethod | list[ReadoutMethod],
         reservoir_layer: ReservoirLayer | None = None,
         input_per_layer: list[dict[str, float]] | None = None,
         store_final_state: bool = False,
@@ -285,7 +286,7 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
         Raises:
             ValueError: If the initial state qubit count does not match the reservoir pass.
         """
-        super().__init__()
+        super().__init__(readout=readout)
         if reservoir_layer is None:
             raise ValueError("`reservoir_layer` must be provided.")
         if input_per_layer is None:
@@ -369,6 +370,7 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
     def __copy__(self) -> QuantumReservoir:
         return QuantumReservoir(
             initial_state=copy(self.initial_state),
+            readout=copy(self.readout),
             reservoir_layer=copy(self.reservoir_layer),
             input_per_layer=copy(self.input_per_layer),
             store_final_state=copy(self.store_final_state),

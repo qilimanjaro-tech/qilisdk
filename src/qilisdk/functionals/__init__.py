@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .functional_result import FunctionalResult
 from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from .quantum_reservoirs_result import QuantumReservoirResult
 from .sampling import Sampling
@@ -22,6 +23,7 @@ from .variational_program import VariationalProgram
 from .variational_program_result import VariationalProgramResult
 
 __all__ = [
+    "FunctionalResult",
     "QuantumReservoir",
     "QuantumReservoirResult",
     "ReservoirInput",
