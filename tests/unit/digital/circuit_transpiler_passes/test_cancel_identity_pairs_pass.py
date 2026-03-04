@@ -57,7 +57,7 @@ class PhaseGate(Gate):
     def target_qubits(self) -> tuple[int, ...]:
         return self._target
 
-    def get_parameters(self) -> dict[str, float]:
+    def get_parameters(self, where=None) -> dict[str, float]:
         return {"phase": self._phase}
 
 
@@ -65,10 +65,11 @@ class NoMatrixGate(Gate):
     """Gate without a matrix to trigger the barrier path."""
 
     def __init__(self, qubit: int) -> None:
+        super().__init__()
         self._target = (qubit,)
 
     @property
-    def name(self) -> str:  # pragma: no cover - required by abstract base but unused
+    def name(self) -> str:
         return "NoMatrixGate"
 
     @property
