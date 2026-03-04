@@ -66,7 +66,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     _TWO_QUBIT_ARITY = 2
 
-    def __init__(self, topology: PyGraph[int, int], qubit_mapping: Mapping[int, int]) -> None:
+    def __init__(self, topology: PyGraph[int, None], qubit_mapping: Mapping[int, int]) -> None:
         """Initialize the pass with a fixed logical-to-physical layout.
 
         Args:
