@@ -266,7 +266,7 @@ class BasicGate(Gate):
             InvalidParameterNameError: if any parameter mentioned in parameter_transforms is not in parameters.
         """
         # Check for duplicate integers in target_qubits.
-        super(BasicGate, self).__init__()
+        super().__init__()
         if len(target_qubits) != len(set(target_qubits)):
             raise ValueError("Duplicate target qubits found.")
 

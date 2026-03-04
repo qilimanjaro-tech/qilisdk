@@ -85,11 +85,11 @@ dev = [
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
-    "ruff>=0.15.2",
+    "ruff>=0.15.4",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
-    "ty>=0.0.16",
+    "ty>=0.0.20",
 ]
 docs = [
     "astroid<3.2",

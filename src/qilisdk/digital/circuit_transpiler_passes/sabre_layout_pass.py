@@ -433,22 +433,22 @@ class SabreLayoutPass(CircuitTranspilerPass):
                         best_edge = (physical_a, physical_b)
 
             # Apply the chosen swap *to the mapping only* (layout-only SABRE).
-            # assert best_edge is not None
-            chosen_physical_a, chosen_physical_b = best_edge
-            logical_on_a = inverse_layout[physical_to_dense_index[chosen_physical_a]]
-            logical_on_b = inverse_layout[physical_to_dense_index[chosen_physical_b]]
-            self._swap_mapping(
-                layout,
-                inverse_layout,
-                physical_to_dense_index,
-                chosen_physical_a,
-                chosen_physical_b,
-                logical_on_a,
-                logical_on_b,
-            )
-            # Increase decay on touched physical qubits
-            decay[physical_to_dense_index[chosen_physical_a]] += self.decay_delta
-            decay[physical_to_dense_index[chosen_physical_b]] += self.decay_delta
+            if best_edge is not None:
+                chosen_physical_a, chosen_physical_b = best_edge
+                logical_on_a = inverse_layout[physical_to_dense_index[chosen_physical_a]]
+                logical_on_b = inverse_layout[physical_to_dense_index[chosen_physical_b]]
+                self._swap_mapping(
+                    layout,
+                    inverse_layout,
+                    physical_to_dense_index,
+                    chosen_physical_a,
+                    chosen_physical_b,
+                    logical_on_a,
+                    logical_on_b,
+                )
+                # Increase decay on touched physical qubits
+                decay[physical_to_dense_index[chosen_physical_a]] += self.decay_delta
+                decay[physical_to_dense_index[chosen_physical_b]] += self.decay_delta
 
         # Final diagnostic cost: re-evaluate sum of distances for the entire 2Q list under final layout
         final_distance_cost = self._cost_front(

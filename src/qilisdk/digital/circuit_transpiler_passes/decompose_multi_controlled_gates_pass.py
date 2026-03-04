@@ -25,7 +25,7 @@ from .numeric_helpers import (
 )
 
 
-def _is_controlled_basic(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
+def _is_controlled(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
     return isinstance(gate, Controlled)
 
 
@@ -62,7 +62,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             list[Gate]: Sequence of equivalent gates that rely on supported primitives.
         """
         # --- Multi-controlled gates ---
-        if _is_controlled_basic(gate):
+        if _is_controlled(gate):
             basic_gate: BasicGate = gate.basic_gate
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")

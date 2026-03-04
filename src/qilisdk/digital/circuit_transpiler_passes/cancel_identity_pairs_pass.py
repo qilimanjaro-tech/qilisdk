@@ -18,7 +18,7 @@ from __future__ import annotations
 import cmath
 import math
 from copy import deepcopy
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeGuard
 
 import numpy as np
 
@@ -32,6 +32,7 @@ from qilisdk.digital import (
     U1,
     U2,
     U3,
+    BasicGate,
     Circuit,
     Gate,
     H,
@@ -45,6 +46,14 @@ from qilisdk.digital.gates import Adjoint, Controlled, M
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .numeric_helpers import _EPS, _round_float, _wrap_angle
+
+
+def _is_controlled(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
+    return isinstance(gate, Controlled)
+
+
+def _is_adjoint(gate: Gate) -> TypeGuard[Adjoint[BasicGate]]:
+    return isinstance(gate, Adjoint)
 
 
 def _first_nonzero_phase(unitary: np.ndarray) -> float:
@@ -265,12 +274,12 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
             )
 
         # Adjoint wrapper: swap forward/inverse of the base
-        if isinstance(g, Adjoint):
+        if _is_adjoint(g):
             f, inv = self._forward_inverse_keys(g.basic_gate)
             return (inv, f)
 
         # Controlled: propagate keys with control count; direction matters
-        if isinstance(g, Controlled):
+        if _is_controlled(g):
             k = len(g.control_qubits)
             f_base, inv_base = self._forward_inverse_keys(g.basic_gate)
             if f_base is None:
