@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators);
 void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector);

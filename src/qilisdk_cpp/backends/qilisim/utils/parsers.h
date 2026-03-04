@@ -14,8 +14,8 @@
 #pragma once
 
 #include "../digital/gate.h"
-#include "../libs/pybind.h"
-#include "../libs/eigen.h"
+#include "../../../libs/pybind.h"
+#include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
 

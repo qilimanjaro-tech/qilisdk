@@ -16,7 +16,7 @@
 #include <complex>
 #include <vector>
 #include "../config/qilisim_config.h"
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1);
 SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt);

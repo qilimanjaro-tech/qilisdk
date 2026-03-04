@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 class Gate {
    private:

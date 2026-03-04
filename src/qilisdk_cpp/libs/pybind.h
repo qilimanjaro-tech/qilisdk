@@ -13,11 +13,16 @@
 // limitations under the License.
 #pragma once
 
-#include "../../libs/pybind.h"
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-};
+// Shorthand
+namespace py = pybind11;
+
+// Needed for _a literals
+using namespace py::literals;
+
+// Non-QiliSDK types
+const py::object numpy_array = py::module_::import("numpy").attr("array");
+const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
+const py::dtype dtype = py::dtype("complex128");

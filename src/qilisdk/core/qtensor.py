@@ -17,6 +17,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Iterable, Literal
 
 import numpy as np
+from qtensor_module import QTensorCpp  # ty:ignore
 from scipy.sparse import coo_matrix, csr_matrix, issparse, kron, sparray, spmatrix
 from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
 Complex = int | float | complex
+NormTypes = Literal["frobenius", "trace", "l1", "l2", "inf"]
 
 
 def _complex_dtype() -> np.dtype:
@@ -52,7 +54,7 @@ def _prod(xs: Iterable[int]) -> int:
 
 
 @yaml.register_class
-class QTensor:
+class QTensor:  # TODO(luke): remove
     """
     Lightweight wrapper around sparse matrices representing quantum states or operators.
 
@@ -698,3 +700,383 @@ def expect_val(operator: QTensor, state: QTensor) -> Number:
         v = state.data @ operator.data  # (1,N)
         return _real_if_close((v @ state.data.getH()).toarray()[0, 0].tolist())
     raise ValueError("state is invalid for expect_val")
+
+
+@yaml.register_class
+class QTensor2:  # TODO(luke): rename
+    """
+    Lightweight wrapper around sparse matrices representing quantum states or operators.
+
+    The QTensor class is a wrapper around sparse matrices (or NumPy arrays,
+    which are converted to sparse matrices) that represent quantum states (kets, bras, or density matrices)
+    or operators. It provides utility methods for common quantum operations such as
+    taking the adjoint (dagger), computing tensor products, partial traces, and norms.
+
+    The internal data is stored as an Eigen CSR (Compressed Sparse Row) matrix for
+    efficient arithmetic and manipulation. The expected shapes for the data are:
+    - (2**N, 2**N) for operators or density matrices (or scalars),
+    - (2**N, 1) for ket states,
+    - (1, 2**N) for bra states.
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from qilisdk.core import QTensor
+
+            ket = QTensor(np.array([[1.0], [0.0]]))
+            density = ket * ket.adjoint()
+    """
+
+    def __init__(self, other: np.ndarray | sparray | spmatrix | list[list[Number]] | QTensor2 | QTensorCpp) -> None:
+        """
+        Args:
+            other (np.ndarray | sparray | spmatrix | list[list[Number]] | QTensor2 | QTensorCpp): Dense or sparse matrix defining the quantum object. Expected
+                shapes are ``(2**N, 2**N)`` for operators, ``(2**N, 1)`` for kets, ``(1, 2**N)`` for bras, or ``(1, 1)`` for scalars.
+
+        Raises:
+            ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
+        """
+        if isinstance(other, QTensor2):
+            self._qtensor_cpp = other.qtensor_cpp
+        elif isinstance(other, QTensorCpp):
+            self._qtensor_cpp = other
+        else:
+            self._qtensor_cpp = QTensorCpp(other)
+
+    # ------------- Properties --------------
+
+    @property
+    def qtensor_cpp(self) -> QTensorCpp:
+        """
+        Access the underlying C++ QTensor object.
+
+        Returns:
+            QTensorCpp: The internal C++ representation of the QTensor.
+        """
+        return self._qtensor_cpp
+
+    @property
+    def data(self) -> csr_matrix:
+        """
+        Get the internal sparse matrix representation of the QTensor.
+
+        Returns:
+            csc_matrix: The internal representation as a CSR matrix.
+        """
+        return self._qtensor_cpp.get_data_as_scipy()
+
+    @property
+    def nqubits(self) -> int:
+        """
+        Compute the number of qubits represented by the QTensor.
+
+        Returns:
+            int: The number of qubits if determinable; otherwise, -1.
+        """
+        return self._qtensor_cpp.get_nqubits()
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """
+        Get the shape of the QTensor's internal matrix.
+
+        Returns:
+            tuple[int, ...]: The shape of the internal matrix.
+        """
+        return self._qtensor_cpp.get_shape()
+
+    def dense(self) -> np.ndarray:
+        """
+        Get the dense (NumPy array) representation of the QTensor.
+
+        Returns:
+            np.ndarray: The dense array representation.
+        """
+        return self._qtensor_cpp.get_data_as_numpy()
+
+    # ------------- Basic structural tests -------------
+
+    def is_ket(self) -> bool:
+        """
+        Check if the QTensor represents a ket state.
+
+        Returns:
+            bool: True if the QTensor is a ket state, False otherwise.
+        """
+        return self._qtensor_cpp.is_ket()
+
+    def is_bra(self) -> bool:
+        """
+        Check if the QTensor represents a bra state.
+
+        Returns:
+            bool: True if the QTensor is a bra state, False otherwise.
+        """
+        return self._qtensor_cpp.is_bra()
+
+    def is_scalar(self) -> bool:
+        """
+        Check if the QTensor represents a scalar.
+
+        Returns:
+            bool: True if the QTensor is a scalar, False otherwise.
+        """
+        return self._qtensor_cpp.is_scalar()
+
+    def is_operator(self) -> bool:
+        """
+        Check if the QTensor represents an operator (square matrix).
+
+        Returns:
+            bool: True if the QTensor is an operator, False otherwise.
+        """
+        return self._qtensor_cpp.is_operator()
+
+    def is_density_matrix(self, tol: float | None = None) -> bool:
+        """
+        Determine if the QTensor is a valid density matrix.
+
+        A valid density matrix must be square, Hermitian, positive semi-definite, and have a trace equal to 1.
+
+        Args:
+            tol (float, optional): The numerical tolerance for verifying Hermiticity,
+                eigenvalue non-negativity, and trace. Defaults to the global setting for zero tolerance.
+
+        Returns:
+            bool: True if the QTensor is a valid density matrix, False otherwise.
+        """
+        return self._qtensor_cpp.is_density_matrix(tol)
+
+    def is_hermitian(self, tol: float | None = None) -> bool:
+        """
+        Check if the QTensor is Hermitian.
+
+        Args:
+            tol (float, optional): The numerical tolerance for verifying Hermiticity.
+                Defaults to the global setting for zero tolerance.
+
+        Returns:
+            bool: True if the QTensor is Hermitian, False otherwise.
+        """
+        return self._qtensor_cpp.is_hermitian(tol)
+
+    # ----------- Matrix Operations ------------
+
+    def adjoint(self) -> QTensor2:
+        """
+        Compute the adjoint (conjugate transpose) of the QTensor.
+
+        Returns:
+            QTensor: A new QTensor that is the adjoint of this object.
+        """
+        return QTensor2(self._qtensor_cpp.adjoint())
+
+    def trace(self) -> complex:
+        """
+        Compute the trace of the QTensor.
+
+        Returns:
+            complex: The trace of the QTensor.
+        """
+        return self._qtensor_cpp.trace()
+
+    def ptrace(self, keep: list[int], dims: list[int] | None = None) -> QTensor2:
+        """
+        Wrapper for backwards compatibility: see partial_trace().
+
+        Args:
+            keep (list[int]): A list of indices corresponding to the subsystems to retain.
+            dims (list[int], optional): A list specifying the dimensions of each subsystem (ignored in this wrapper, as we assume qubits).
+
+        Returns:
+            QTensor: A new QTensor representing the reduced density matrix for the subsystems specified in 'keep'.
+        """
+        return self.partial_trace(set(keep))
+
+    def partial_trace(self, keep: set[int]) -> QTensor2:
+        """
+        Compute the partial trace over subsystems not in 'keep'.
+
+        This method calculates the reduced density matrix by tracing out
+        the subsystems that are not specified in the 'keep' parameter.
+
+        Args:
+            keep (set[int]): A set of indices corresponding to the subsystems to retain.
+
+        Raises:
+            ValueError: If the indices in 'keep' are out of range.
+
+        Returns:
+            QTensor: A new QTensor representing the reduced density matrix.
+        """
+        return QTensor2(self._qtensor_cpp.partial_trace(keep))
+
+    def norm(self, norm_type: NormTypes = "frobenius") -> float:
+        """
+        Compute the norm of the QTensor.
+
+        For density matrices, the norm order can be specified. For state vectors, the norm is computed accordingly.
+
+        Args:
+            norm_type (Literal["frobenius", "trace", "l1", "l2", "inf"], optional): The type of the norm. Defaults to "trace".
+
+        Returns:
+            float: The computed norm of the QTensor.
+        """
+        return self._qtensor_cpp.norm(norm_type)
+
+    def unit(self, order: NormTypes = "trace") -> QTensor2:
+        """
+        Wrapper for backwards compatibility: see normalized().
+
+        Args:
+            order (NormTypes, optional): The order of the norm to use for normalization.
+
+        Returns:
+            QTensor: A new QTensor that is the normalized version of this object.
+        """
+        return self.normalized(order)
+
+    def normalized(self, order: NormTypes = "trace") -> QTensor2:
+        """
+        Normalize the QTensor.
+
+        Scales the QTensor so that its norm becomes 1, according to the specified norm order.
+
+        Args:
+            order (NormTypes, optional): The order of the norm to use for normalization.
+
+        Raises:
+            ValueError: If the norm of the QTensor is 0, making normalization impossible.
+
+        Returns:
+            QTensor: A new QTensor that is the normalized version of this object.
+        """
+        return self._qtensor_cpp.normalize(order)
+
+    def expm(self) -> QTensor2:
+        """
+        Wrapper for backwards compatibility: see exponential().
+
+        Returns:
+            QTensor: A new QTensor representing the matrix exponential.
+        """
+        return self.exponential()
+
+    def exponential(self) -> QTensor2:
+        """
+        Compute the matrix exponential of the QTensor.
+
+        Returns:
+            QTensor: A new QTensor representing the matrix exponential.
+        """
+        return QTensor2(self._qtensor_cpp.exponential())
+
+    def to_density_matrix(self) -> QTensor2:
+        """
+        Convert the QTensor to a density matrix.
+
+        If the QTensor represents a state vector (ket or bra), this method
+        calculates the corresponding density matrix by taking the outer product.
+        If the QTensor is already a density matrix, it is returned unchanged.
+        The resulting density matrix is normalized.
+
+        Raises:
+            ValueError: If the QTensor is a scalar, as a density matrix cannot be derived.
+            ValueError: If the QTensor is an operator that is not a density matrix.
+
+        Returns:
+            QTensor: A new QTensor representing the density matrix.
+        """
+        return QTensor2(self._qtensor_cpp.to_density_matrix())
+
+    def __add__(self, other: QTensor2 | Number) -> QTensor2:
+        return QTensor2(self._qtensor_cpp.add_python(other))
+
+    def __radd__(self, other: QTensor2 | Number) -> QTensor2:
+        return self.__add__(other)
+
+    def __sub__(self, other: QTensor2) -> QTensor2:
+        return QTensor2(self._qtensor_cpp.sub_python(other))
+
+    def __mul__(self, other: QTensor2 | Number) -> QTensor2:
+        return QTensor2(self._qtensor_cpp.mul_python(other))
+
+    def __matmul__(self, other: QTensor2) -> QTensor2:
+        return QTensor2(self._qtensor_cpp.matmul_python(other))
+
+    def __rmul__(self, other: QTensor2 | Number) -> QTensor2:
+        return self.__mul__(other)
+
+    def __repr__(self) -> str:
+        return self._qtensor_cpp.as_string()
+
+    def __eq__(self, other: object) -> bool:
+        return self._qtensor_cpp.equals_python(other)
+
+    def __hash__(self) -> int:
+        return qili_hash(self.data, self.shape, self.nqubits)
+
+    @classmethod
+    def tensor_product(cls, others: list[QTensor2]) -> QTensor2:
+        """
+        Compute the tensor product of a list of QTensors.
+
+        Args:
+            others (list[QTensor2]): A list of QTensors to tensor product.
+
+        Returns:
+            QTensor2: A new QTensor2 representing the tensor product.
+        """
+        return QTensor2(QTensorCpp.tensor_product_python(QTensorCpp(), others))
+
+    @classmethod
+    def ket(cls, state: str | int) -> QTensor2:
+        """
+        Create a ket state vector for a given basis state.
+
+        Args:
+            state (str): A string representing the state of each qubit (e.g., "0101" for a 4-qubit state).
+
+        Returns:
+            QTensor2: A new QTensor2 representing the ket state.
+
+        Raises:
+            ValueError: If the input state is not a valid string of '0's and '1's, or if it's an integer that is not 0 or 1.
+        """
+        if isinstance(state, int):
+            if state == 0:
+                return QTensor2(QTensorCpp.ket(QTensorCpp(), "0"))
+            if state == 1:
+                return QTensor2(QTensorCpp.ket(QTensorCpp(), "1"))
+            raise ValueError(f"Invalid state {state} for single qubit ket; expected 0 or 1")
+        for c in state:
+            if c not in {"0", "1"}:
+                raise ValueError(f"Invalid character '{c}' in state string; expected only '0' and '1'")
+        return QTensor2(QTensorCpp.ket(QTensorCpp(), state))
+
+    @classmethod
+    def bra(cls, state: str | int) -> QTensor2:
+        """
+        Create a bra state vector for a given basis state.
+
+        Args:
+            state (str): A string representing the state of each qubit (e.g., "0101" for a 4-qubit state).
+
+        Returns:
+            QTensor2: A new QTensor2 representing the bra state.
+
+        Raises:
+            ValueError: If the input state is not a valid string of '0's and '1's, or if it's an integer that is not 0 or 1.
+        """
+        if isinstance(state, int):
+            if state == 0:
+                return QTensor2(QTensorCpp.bra(QTensorCpp(), "0"))
+            if state == 1:
+                return QTensor2(QTensorCpp.bra(QTensorCpp(), "1"))
+            raise ValueError(f"Invalid state {state} for single qubit bra; expected 0 or 1")
+        for c in state:
+            if c not in {"0", "1"}:
+                raise ValueError(f"Invalid character '{c}' in state string; expected only '0' and '1'")
+        return QTensor2(QTensorCpp.bra(QTensorCpp(), state))
