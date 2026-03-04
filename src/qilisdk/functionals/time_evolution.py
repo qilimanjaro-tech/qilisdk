@@ -11,13 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import ClassVar
+from typing import ClassVar, Iterator
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
+from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.types import RealNumber
-from qilisdk.core.variables import ComparisonTerm
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.yaml import yaml
@@ -73,39 +72,5 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
                 f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
             )
 
-    @property
-    def nparameters(self) -> int:
-        """Return the number of schedule parameters."""
-        return self.schedule.nparameters
-
-    def get_parameters(self) -> dict[str, RealNumber]:
-        """Return the schedule parameters and their current value."""
-        return self.schedule.get_parameters()
-
-    def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
-        """Update a subset of schedule parameters."""
-        self.schedule.set_parameters(parameters)
-
-    def get_parameter_names(self) -> list[str]:
-        """Return order-stable parameter labels from the schedule."""
-        return self.schedule.get_parameter_names()
-
-    def get_parameter_values(self) -> list[RealNumber]:
-        """Return parameter values in the order provided by ``get_parameter_names``."""
-        return self.schedule.get_parameter_values()
-
-    def set_parameter_values(self, values: list[float]) -> None:
-        """Assign all schedule parameters according to ``get_parameter_names`` order."""
-        self.schedule.set_parameter_values(values)
-
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return current bounds for schedule parameters."""
-        return self.schedule.get_parameter_bounds()
-
-    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """Update bounds for selected schedule parameters."""
-        self.schedule.set_parameter_bounds(ranges)
-
-    def get_constraints(self) -> list[ComparisonTerm]:
-        """Return the parameter constraints defined within the underlying schedule."""
-        return self.schedule.get_constraints()
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self.schedule

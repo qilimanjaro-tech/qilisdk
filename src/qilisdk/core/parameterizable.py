@@ -17,49 +17,136 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
     from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
 
     from .types import RealNumber
 
 
 class Parameterizable(ABC):
-    """Mixin for objects that expose tunable parameters and constraints."""
+    """Mixin for objects that expose tunable parameters and constraints.
+
+    Subclasses can compose parameter interfaces by yielding child
+    :class:`Parameterizable` instances from :meth:`_iter_parameter_children`.
+    """
 
     def __init__(self) -> None:
         super(Parameterizable, self).__init__()
         self._parameters: dict[str, Parameter] = {}
         self._parameter_constraints: list[ComparisonTerm] = []
+        self._prefix = ""
+
+    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
+        """Yield parameterizable children to compose this object's parameter interface.
+
+        Returns:
+            Iterable[Parameterizable]: Child objects that contribute parameters to this instance.
+        """
+        return ()
+
+    def _iter_parameter_items(self) -> Iterable[tuple[str, Parameter]]:
+        """Yield ``(label, parameter)`` items from this object and its children."""
+        local_params = self._parameters or {}
+        yield from local_params.items()
+        for child in self._iter_parameter_children():
+            yield from child._iter_parameter_items()  # noqa: SLF001
+
+    def set_prefix(
+        self,
+        prefix: str,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        """Set a prefix on parameter labels.
+
+        Args:
+            prefix (str): Prefix to prepend to selected parameter labels.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting local parameters.
+
+        Notes:
+            The ``where`` predicate is applied to local parameters only. Child parameterizable
+            objects always receive the same prefix operation recursively.
+        """
+        if where:
+            old_keys: list[str] = [key for key, value in self._parameters.items() if where(value)]
+        else:
+            old_keys: list[str] = list(self._parameters.keys())
+        for name in old_keys:
+            if not name.startswith(prefix):
+                _name = name.removeprefix(self._prefix) if self._prefix and name.startswith(self._prefix) else name
+                self._parameters[prefix + _name] = self._parameters.pop(name)
+        for child in self._iter_parameter_children():
+            child.set_prefix(prefix)
+        self._prefix = prefix
+
+    def get_prefix(self) -> str:
+        """Return the currently configured parameter prefix for this object."""
+        return self._prefix
+
+    def _filtered_parameter_map(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, Parameter]:
+        if where is None:
+            return dict(self._iter_parameter_items())
+        return {label: param for label, param in self._iter_parameter_items() if where(param)}
 
     @property
     def nparameters(self) -> int:
         """Number of tunable parameters defined by the object."""
-        return len(self._parameters)
+        return len(dict(self._iter_parameter_items()))
 
-    def get_parameter_values(self) -> list[float]:
-        """Return the current numerical values of the parameters."""
-        return [param.value for param in self._parameters.values()]
+    def get_parameter_values(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
+        """Return the current numerical values of the parameters.
 
-    def get_parameter_names(self) -> list[str]:
-        """Return the ordered list of parameter labels."""
-        return list(self._parameters.keys())
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return list(self.get_parameters(where=where).values())
 
-    def get_parameters(self) -> dict[str, RealNumber]:
-        """Return a mapping from parameter labels to their current numerical values."""
-        return {label: param.value for label, param in self._parameters.items()}
+    def get_parameter_names(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
+        """Return the ordered list of parameter labels.
 
-    def set_parameter_values(self, values: list[float]) -> None:
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return list(self.get_parameters(where=where).keys())
+
+    def get_parameters(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, RealNumber]:
+        """Return a mapping from parameter labels to their current numerical values.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return {label: param.value for label, param in self._filtered_parameter_map(where=where).items()}
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
         """
         Update all parameter values at once.
 
         Args:
             values (list[float]): New parameter values ordered consistently with ``get_parameter_names()``.
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
 
         Raises:
-            ValueError: If ``values`` does not contain exactly ``nparameters`` entries.
+            ValueError: If ``values`` does not match the number of parameters selected by ``where``.
         """
-        if len(values) != self.nparameters:
-            raise ValueError(f"Provided {len(values)} but this object has {self.nparameters} parameters.")
-        param_names = self.get_parameter_names()
+        param_names = self.get_parameter_names(where=where)
+        if len(values) != len(param_names):
+            raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
         value_dict = {param_names[i]: values[i] for i in range(len(values))}
         self.set_parameters(value_dict)
 
@@ -73,18 +160,26 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided or constraints are violated.
         """
+        available_parameters = self._filtered_parameter_map()
         if not self.check_constraints(parameters):
             raise ValueError(
                 f"New assignation of the parameters breaks the parameter constraints: \n{self.get_constraints()}"
             )
         for label, param in parameters.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(f"Parameter {label} is not defined for this object.")
-            self._parameters[label].set_value(param)
+            available_parameters[label].set_value(param)
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        """Return the ``(lower, upper)`` bounds associated with each parameter."""
-        return {label: param.bounds for label, param in self._parameters.items()}
+    def get_parameter_bounds(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        """Return the ``(lower, upper)`` bounds associated with each parameter.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate over ``Parameter`` objects.
+        """
+        return {label: param.bounds for label, param in self._filtered_parameter_map(where=where).items()}
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
@@ -96,26 +191,30 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        available_parameters = self._filtered_parameter_map()
         for label, bound in ranges.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(
                     f"The provided parameter label {label} is not defined in the list of parameters in this object."
                 )
-            self._parameters[label].set_bounds(bound[0], bound[1])
+            available_parameters[label].set_bounds(bound[0], bound[1])
 
     def get_constraints(self) -> list[ComparisonTerm]:
         """Get all constraints on the parameters.
 
         Returns:
-            list[ComparisonTerm]: A list of comparison terms involving the parameters of the Object.
+            list[ComparisonTerm]: Comparison terms defined locally and by child parameterizable objects.
         """
-        return self._parameter_constraints
+        constraints = list((self._parameter_constraints or []))
+        for child in self._iter_parameter_children():
+            constraints.extend(child.get_constraints())
+        return constraints
 
     def check_constraints(self, parameters: dict[str, float]) -> bool:
         """Validate that proposed parameter updates satisfy all constraints.
 
         Args:
-            parameters (dict[str, float]): Candidate parameter values keyed by label.
+            parameters (dict[str, float]): Candidate updates keyed by parameter label.
 
         Returns:
             bool: True if every constraint evaluates to True for the provided values.
@@ -123,11 +222,12 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        available_parameters = self._filtered_parameter_map()
         evaluate_dict: dict[BaseVariable, float] = {}
         for label, value in parameters.items():
-            if label not in self._parameters:
+            if label not in available_parameters:
                 raise ValueError(f"Parameter {label} is not defined for this object.")
-            evaluate_dict[self._parameters[label]] = value
+            evaluate_dict[available_parameters[label]] = value
         constraints = self.get_constraints()
         valid = all(con.evaluate(evaluate_dict) for con in constraints)
         return valid

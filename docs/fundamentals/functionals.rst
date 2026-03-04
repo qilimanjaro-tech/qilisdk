@@ -2,10 +2,11 @@ Functionals
 ===========
 
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
-:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes two primitive functionals:
+:mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes the following execution functionals:
 
 - :class:`~qilisdk.functionals.sampling.Sampling` — Executes repeated sampling of a digital quantum circuit.
 - :class:`~qilisdk.functionals.time_evolution.TimeEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
+- :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` — Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
 
 Moreover, it provides more complex functionals that are used to execute more complex algorithms:
 
@@ -23,8 +24,10 @@ parameters consistently before execution.
 
 Each functional advertises a matching :attr:`result_type` pointing to a concrete
 :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass. When you call
-:meth:`~qilisdk.backends.backend.Backend.execute`, the backend inspects this attribute to decide which result object to
-construct and return.
+:meth:`~qilisdk.backends.backend.Backend.execute`, backends dispatch by functional type
+(:class:`Sampling <qilisdk.functionals.sampling.Sampling>`,
+:class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`, etc.) and return
+the corresponding result object.
 
 Result Objects
 --------------
@@ -35,6 +38,9 @@ Result Objects
 * :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
     contains expectation values, the terminal :class:`~qilisdk.core.qtensor.QTensor` state, and (optionally) the list
     of intermediate states when ``store_intermediate_results=True``.
+* :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`
+    extends :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult` with the same data model,
+    returning per-layer expectation values and optional intermediate/final states.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
@@ -199,6 +205,190 @@ we can execute it on the Qutip backend:
     )
 
 
+Quantum Reservoirs
+------------------
+
+The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
+sequence of inputs. Each layer applies an optional pre-processing circuit, an analog reservoir dynamics block
+(:class:`~qilisdk.analog.schedule.Schedule`), and an optional post-processing circuit, followed by measurements of one
+or more observables. The optional ``qubits_to_reset`` list can be used to reset selected qubits between layers.
+
+The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
+These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
+be driven by input data sequences rather than optimization loops.
+
+**Parameters**
+
+- **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the reservoir.
+- **reservoir_layer** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
+  reservoir dynamics, observables, and reset policy.
+- **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
+  (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
+- **store_final_state** (bool, optional): Whether to store the final state after the last layer. 
+- **store_intermediate_states** (bool, optional): Whether to store the state after each layer.  
+- **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
+
+**Returns**
+
+- :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`: Access per-layer expectation values via
+  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values`, plus optional states when
+  ``store_intermediate_states`` or ``store_final_state`` are enabled.
+
+**Usage Example**
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.backends import CudaBackend
+    from qilisdk.core import ket
+    from qilisdk.digital import Circuit, U2
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.analog import Schedule, X, Z
+
+    pre_processing = Circuit(2)
+    pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
+
+    res_layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
+            hamiltonians={"h": Z(0) + Z(1) + Z(0) * Z(1) + 0.5 * (X(0) + X(1))},
+            total_time=1.0,
+            dt=0.1,
+        ),
+        observables=[Z(0), Z(1), Z(0) * Z(1)],
+        input_encoding=pre_processing,
+        qubits_to_reset=[1],
+    )
+
+    reservoir = QuantumReservoir(
+        initial_state=(np.random.rand() * ket(0, 0) + np.random.rand() * ket(1, 1)).unit(),
+        reservoir_layer=res_layer,
+        input_per_layer=[
+            {"phi_1": 0.2, "gamma_1": 0.1},
+            {"phi_1": 0.3, "gamma_1": 0.2},
+            {"phi_1": 0.4, "gamma_1": 0.3},
+        ],
+        store_final_state=True,
+        store_intermediate_states=True,
+    )
+
+    results = CudaBackend().execute(reservoir)
+    print(results.expected_values)
+
+
+Encoding Input Data
+^^^^^^^^^^^^^^^^^^^
+
+You can inject classical data into a reservoir layer in multiple places. The only requirement is that the keys in
+``input_per_layer`` match the labels of the :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects you
+place in the layer.
+
+**1. Encode with input and output circuits**
+
+.. code-block:: python
+
+    from qilisdk.analog import Schedule, X, Z
+    from qilisdk.core import ket
+    from qilisdk.digital import Circuit, RX, RY
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+
+    theta_in = ReservoirInput("theta_in", 0.0)
+    phi_out = ReservoirInput("phi_out", 0.0)
+
+    input_circuit = Circuit(2)
+    input_circuit.add(RX(0, theta=theta_in))
+
+    output_circuit = Circuit(2)
+    output_circuit.add(RY(1, theta=phi_out))
+
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
+            hamiltonians={"h": Z(0) * Z(1) + 0.3 * (X(0) + X(1))},
+            total_time=1.0,
+            dt=0.1,
+        ),
+        observables=[Z(0), Z(1)],
+        input_encoding=input_circuit,
+        output_encoding=output_circuit,
+    )
+
+    reservoir = QuantumReservoir(
+        initial_state=ket(0, 0),
+        reservoir_layer=layer,
+        input_per_layer=[
+            {"theta_in": 0.1, "phi_out": 0.0},
+            {"theta_in": 0.5, "phi_out": 0.4},
+        ],
+    )
+
+**2. Encode directly in Hamiltonian parameters**
+
+.. code-block:: python
+
+    from qilisdk.analog import Schedule, X, Z
+    from qilisdk.core import ket
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+
+    gain = ReservoirInput("gain", 0.2)
+    detuning = ReservoirInput("detuning", -0.1)
+
+    hamiltonian = gain * (X(0) + X(1)) + detuning * (Z(0) + Z(1)) + Z(0) * Z(1)
+
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
+            hamiltonians={"h": hamiltonian},
+            coefficients={"h": {(0.0, 1.0): 1.0}},
+            dt=0.05,
+        ),
+        observables=[Z(0)],
+    )
+
+    reservoir = QuantumReservoir(
+        initial_state=ket(0, 0),
+        reservoir_layer=layer,
+        input_per_layer=[
+            {"gain": 0.1, "detuning": -0.2},
+            {"gain": 0.7, "detuning": 0.0},
+            {"gain": 0.3, "detuning": 0.2},
+        ],
+    )
+
+**3. Encode in the schedule profile and duration**
+
+.. code-block:: python
+
+    from qilisdk.analog import Schedule, X, Z
+    from qilisdk.core import ket
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+
+    drive_amp = ReservoirInput("drive_amp", 1.0)
+    duration = ReservoirInput("duration", 1.0)
+
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
+            hamiltonians={
+                "drive": X(0) + X(1),
+                "problem": Z(0) * Z(1),
+            },
+            coefficients={
+                "drive": {(0.0, 1.0): drive_amp},
+                "problem": {(0.0, 1.0): lambda t: t},
+            },
+            total_time=duration,
+            dt=0.05,
+        ),
+        observables=[Z(0) * Z(1)],
+    )
+
+    reservoir = QuantumReservoir(
+        initial_state=ket(0, 0),
+        reservoir_layer=layer,
+        input_per_layer=[
+            {"drive_amp": 1.0, "duration": 0.6},
+            {"drive_amp": 0.3, "duration": 1.4},
+        ],
+    )
+
+
 
 Variational Programs
 ---------------------
@@ -211,6 +401,7 @@ cost function, and finally returns a :class:`~qilisdk.functionals.variational_pr
 Parameter constraints (inequalities/equalities on parameters) are attached at this level via the ``parameter_constraints``
 argument; this is the place to enforce relations like ``theta >= phi`` or cross-parameter bounds across all QiliSDK
 functionals.
+Only parameters marked as trainable are optimized during this loop.
 
 **Parameters**
 
@@ -219,7 +410,7 @@ functionals.
   :class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`).
 - **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): Classical optimizer that proposes new parameter
   values and optionally stores intermediate iterates.
-- **cost_model** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
+- **cost_function** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.

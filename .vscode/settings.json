@@ -21,5 +21,5 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "qilimanjaro",
         "projectKey": "qilimanjaro-tech_qilisdk"
-    },
+    }
 }
