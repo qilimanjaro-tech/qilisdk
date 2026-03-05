@@ -43,8 +43,6 @@ from qilisdk.digital.gates import (
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .numeric_helpers import (
-    _mat_U3,
-    _unitary_sqrt_2x2,
     _wrap_angle,
     _zyz_from_unitary,
 )
@@ -249,74 +247,13 @@ def _as_basis_1q(gate: Gate) -> Gate:
     raise NotImplementedError(f"Unsupported 1-qubit gate type {type(gate).__name__} in _as_basis_1q")
 
 
-def _sqrt_1q_gate_as_basis(gate: Gate) -> Gate:
-    """Return a canonical one-qubit square root gate.
-
-    Args:
-        gate (Gate): One-qubit gate whose principal square root is requested.
-
-    Returns:
-        Gate: Canonical one-qubit gate ``V`` such that ``V^2`` equals ``gate`` up to global phase.
-    """
-    qubit = gate.qubits[0]
-    # Fast paths
-    if isinstance(gate, RZ):
-        return RZ(qubit, phi=gate.phi / 2.0)
-    if isinstance(gate, RX):
-        return RX(qubit, theta=gate.theta / 2.0)
-    if isinstance(gate, RY):
-        return RY(qubit, theta=gate.theta / 2.0)
-    if isinstance(gate, Z):
-        return RZ(qubit, phi=math.pi / 2.0)
-    if isinstance(gate, X):
-        return RX(qubit, theta=math.pi / 2.0)
-    if isinstance(gate, Y):
-        return RY(qubit, theta=math.pi / 2.0)
-    if isinstance(gate, U1):
-        return RZ(qubit, phi=gate.phi / 2.0)
-
-    # General 1q unitary
-    if isinstance(gate, U2):
-        unitary_matrix = _mat_U3(math.pi / 2.0, gate.phi, gate.gamma)
-    elif isinstance(gate, U3):
-        unitary_matrix = _mat_U3(gate.theta, gate.phi, gate.gamma)
-    elif isinstance(gate, BasicGate) and gate.nqubits == 1:
-        unitary_matrix = gate.matrix
-    else:
-        return _sqrt_1q_gate_as_basis(_as_basis_1q(gate))
-
-    square_root_unitary = _unitary_sqrt_2x2(unitary_matrix)
-    theta, phi, lambda_angle = _zyz_from_unitary(square_root_unitary)
-    return U3(qubit, theta=theta, phi=phi, gamma=lambda_angle)
-
-
-def _adjoint_1q(gate: Gate) -> Gate:
-    """Return the adjoint of a one-qubit gate in canonical basis.
-
-    Args:
-        gate (Gate): One-qubit gate to invert.
-
-    Returns:
-        Gate: Adjoint gate expressed in canonical one-qubit basis.
-    """
-    qubit = gate.qubits[0]
-    if isinstance(gate, RX):
-        return RX(qubit, theta=-gate.theta)
-    if isinstance(gate, RY):
-        return RY(qubit, theta=-gate.theta)
-    if isinstance(gate, RZ):
-        return RZ(qubit, phi=-gate.phi)
-    if isinstance(gate, U3):
-        return U3(qubit, theta=-gate.theta, phi=-gate.gamma, gamma=-gate.phi)
-    return _adjoint_1q(_as_basis_1q(gate))
-
-
 class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
     """
     Map an arbitrary circuit to the circuit basis {U3, RX, RY, RZ, CZ} (+ M).
 
     - Eliminates CNOT / SWAP to CZ + 1Q.
-    - Controlled with any #controls (target 1-qubit) → ancilla-free recursive synthesis.
+    - Controlled with one control (target 1-qubit) → CZ + 1Q synthesis.
+    - Multi-controlled gates are intentionally out of scope for this pass.
     - Adjoint(g) → canonicalize(g) then reverse+invert.
     - Exponential(1q) → ZYZ → U3.
 
@@ -405,12 +342,17 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
                 + _CNOT_as_CZ_plus_1q(first_target_qubit, second_target_qubit)
             )
 
-        # Controlled (k controls) over a 1-qubit target
+        # Controlled (single control) over a 1-qubit target
         if _is_controlled(gate):
             control_qubits = list(gate.control_qubits)
             basic_gate: BasicGate = gate.basic_gate
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled of multi-qubit gates not supported.")
+            if len(control_qubits) != 1:
+                raise NotImplementedError(
+                    "CircuitToCanonicalBasisPass supports only single-control gates. "
+                    "Run DecomposeMultiControlledGatesPass first."
+                )
             target_qubit = basic_gate.qubits[0]
             basis_one_qubit_gate = _as_basis_1q(basic_gate)
             if basis_one_qubit_gate.qubits[0] != target_qubit:
@@ -427,7 +369,7 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
                     basis_one_qubit_gate = RY(target_qubit, theta=basis_one_qubit_gate.theta)
                 elif isinstance(basis_one_qubit_gate, RZ):
                     basis_one_qubit_gate = RZ(target_qubit, phi=basis_one_qubit_gate.phi)
-            return _multi_controlled(control_qubits, basis_one_qubit_gate)
+            return _single_controlled(control_qubits[0], basis_one_qubit_gate)
 
         # Adjoint
         if _is_adjoint(gate):
@@ -453,7 +395,7 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
 
         raise NotImplementedError(f"No canonicalization rule for {type(gate).__name__}")
 
-    # --- multi-control synthesis (uses helpers above) ---
+    # --- single-control synthesis ---
 
 
 def _single_controlled(control_qubit: int, target_gate: Gate) -> list[Gate]:
@@ -482,34 +424,3 @@ def _single_controlled(control_qubit: int, target_gate: Gate) -> list[Gate]:
             target_gate.gamma,
         )
     return _single_controlled(control_qubit, _as_basis_1q(target_gate))
-
-
-def _multi_controlled(control_qubits: list[int], base_one_qubit_gate: Gate) -> list[Gate]:
-    """Recursively synthesize a multi-controlled one-qubit gate.
-
-    Args:
-        control_qubits (list[int]): Ordered control qubit indices.
-        base_one_qubit_gate (Gate): One-qubit target gate in canonical one-qubit basis.
-
-    Returns:
-        list[Gate]: Canonical gate sequence implementing the same multi-controlled operation.
-    """
-    if not control_qubits:
-        return [base_one_qubit_gate]
-    if len(control_qubits) == 1:
-        return _single_controlled(control_qubits[0], base_one_qubit_gate)
-
-    last_control_qubit = control_qubits[-1]
-    remaining_control_qubits = control_qubits[:-1]
-
-    square_root_gate = _sqrt_1q_gate_as_basis(base_one_qubit_gate)
-    square_root_adjoint_gate = _adjoint_1q(square_root_gate)
-
-    target_qubit = base_one_qubit_gate.qubits[0]
-    decomposition_sequence: list[Gate] = []
-    decomposition_sequence += _multi_controlled(remaining_control_qubits, square_root_gate)
-    decomposition_sequence += _CNOT_as_CZ_plus_1q(last_control_qubit, target_qubit)
-    decomposition_sequence += _multi_controlled(remaining_control_qubits, square_root_adjoint_gate)
-    decomposition_sequence += _CNOT_as_CZ_plus_1q(last_control_qubit, target_qubit)
-    decomposition_sequence += _multi_controlled(remaining_control_qubits, square_root_gate)
-    return decomposition_sequence

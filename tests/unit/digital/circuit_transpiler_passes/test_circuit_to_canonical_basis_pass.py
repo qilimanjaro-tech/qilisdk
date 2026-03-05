@@ -8,12 +8,9 @@ import pytest
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass import (
     CircuitToCanonicalBasisPass,
-    _adjoint_1q,
     _as_basis_1q,
     _invert_basis_gate,
-    _multi_controlled,
     _single_controlled,
-    _sqrt_1q_gate_as_basis,
 )
 from qilisdk.digital.gates import (
     CNOT,
@@ -29,7 +26,6 @@ from qilisdk.digital.gates import (
     BasicGate,
     Controlled,
     Exponential,
-    Gate,
     H,
     I,
     M,
@@ -94,72 +90,7 @@ def test_as_basis_1q_handles_standard_and_basic():
         _as_basis_1q(Controlled(1, basic_gate=RX(0, theta=0.5)))
 
 
-def test_sqrt_gate_as_basis_and_adjoint_variants():
-    assert isinstance(_sqrt_1q_gate_as_basis(RZ(0, phi=math.pi)), RZ)
-    assert isinstance(_sqrt_1q_gate_as_basis(RX(0, theta=math.pi)), RX)
-    assert isinstance(_sqrt_1q_gate_as_basis(RY(0, theta=math.pi)), RY)
-    assert isinstance(_sqrt_1q_gate_as_basis(Z(0)), RZ)
-    assert isinstance(_sqrt_1q_gate_as_basis(X(0)), RX)
-    assert isinstance(_sqrt_1q_gate_as_basis(Y(0)), RY)
-    assert isinstance(_sqrt_1q_gate_as_basis(U1(0, phi=0.6)), RZ)
-    assert isinstance(_sqrt_1q_gate_as_basis(U2(0, phi=0.1, gamma=0.2)), U3)
-    assert isinstance(_sqrt_1q_gate_as_basis(U3(0, theta=0.2, phi=0.1, gamma=-0.4)), U3)
-    dummy = DummyBasicGate((0,), np.eye(2))
-    assert isinstance(_sqrt_1q_gate_as_basis(dummy), U3)
-    assert isinstance(_sqrt_1q_gate_as_basis(H(0)), U3)
-
-    assert isinstance(_adjoint_1q(RX(0, theta=0.5)), RX)
-    assert isinstance(_adjoint_1q(RY(0, theta=0.5)), RY)
-    assert isinstance(_adjoint_1q(RZ(0, phi=0.5)), RZ)
-    assert isinstance(_adjoint_1q(U3(0, theta=0.5, phi=0.2, gamma=-0.1)), U3)
-    assert isinstance(_adjoint_1q(H(0)), U3)
-
-
-def test_sqrt_gate_recurses_for_wrapper(monkeypatch):
-
-    class WrapperGate(Gate):
-        def __init__(self, qubit: int) -> None:
-            super().__init__()
-            self._qubits = (qubit,)
-
-        @property
-        def name(self) -> str:
-            return "Wrapper"
-
-        @property
-        def qubits(self) -> tuple[int, ...]:
-            return self._qubits
-
-        @property
-        def target_qubits(self) -> tuple[int, ...]:
-            return self._qubits
-
-        @property
-        def control_qubits(self) -> tuple[int, ...]:
-            return ()
-
-        @property
-        def matrix(self) -> np.ndarray:
-            return RX(self._qubits[0], theta=0.3).matrix
-
-        @property
-        def nqubits(self) -> int:
-            return 1
-
-    def patched_as_basis(gate):
-        if isinstance(gate, WrapperGate):
-            return RX(gate.qubits[0], theta=0.3)
-        return _as_basis_1q(gate)
-
-    monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._as_basis_1q",
-        patched_as_basis,
-    )
-    out = _sqrt_1q_gate_as_basis(WrapperGate(0))
-    assert isinstance(out, RX)
-
-
-def test_single_and_multi_controlled_paths():
+def test_single_controlled_paths():
     rz_seq = _single_controlled(1, RZ(0, phi=0.2))
     rx_seq = _single_controlled(1, RX(0, theta=0.2))
     ry_seq = _single_controlled(1, RY(0, theta=0.2))
@@ -172,15 +103,6 @@ def test_single_and_multi_controlled_paths():
     assert _count_gate_names(ry_seq)["CZ"] >= 1
     assert _count_gate_names(u3_seq)["CZ"] >= 1
     assert _count_gate_names(recursive_seq)["CZ"] >= 1
-
-    base_rotation = RX(3, theta=0.2)
-    no_ctrl = _multi_controlled([], base_rotation)
-    one_ctrl = _multi_controlled([1], base_rotation)
-    two_ctrls = _multi_controlled([1, 2], base_rotation)
-
-    assert no_ctrl == [base_rotation]
-    assert _count_gate_names(one_ctrl)["CZ"] >= 1
-    assert _count_gate_names(two_ctrls)["CZ"] >= 1
 
 
 def test_rewrite_gate_covers_various_cases():
@@ -290,13 +212,13 @@ def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
         fake_as_basis,
     )
 
-    def fake_multi(ctrls, base_1q):
+    def fake_single(ctrl, base_1q):
         captured["base"] = base_1q
         return ["sentinel"]
 
     monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._multi_controlled",
-        fake_multi,
+        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._single_controlled",
+        fake_single,
     )
 
     seq = pass_instance._rewrite_gate(controlled)
@@ -320,7 +242,7 @@ def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
         fake_as_basis,
     )
 
-    controlled = Controlled(0, 1, basic_gate=base_gate)
+    controlled = Controlled(0, basic_gate=base_gate)
     adjoint_gate = Adjoint(RX(0, theta=math.pi / 3))
     expo_gate = RX(0, theta=math.pi / 4).exponential()
     basic_gate = DummyBasicGate((0,), np.eye(2))
@@ -338,9 +260,12 @@ def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
     assert basic_seq[0].name == "U3"
     assert all(5 not in g.qubits for g in ctrl_seq)
 
+    multi_controlled = Controlled(0, 1, basic_gate=RX(2, theta=0.3))
     multi_qubit_controlled = Controlled(0, basic_gate=DummyBasicGate((1, 2), np.eye(4)))
     exponential_multi = Exponential(DummyBasicGate((0, 1), np.eye(4)))
 
+    with pytest.raises(NotImplementedError):
+        pass_instance._rewrite_gate(multi_controlled)
     with pytest.raises(NotImplementedError):
         pass_instance._rewrite_gate(multi_qubit_controlled)
     with pytest.raises(NotImplementedError):
