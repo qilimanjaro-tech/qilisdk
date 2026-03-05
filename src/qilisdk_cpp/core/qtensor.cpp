@@ -17,6 +17,7 @@
 #include "../libs/numpy.h"
 
 #include <sstream>
+#include <random>
 
 QTensorCpp::QTensorCpp(const py::object& data) {
     if (py::isinstance<QTensorCpp>(data)) {
@@ -47,26 +48,26 @@ QTensorCpp::QTensorCpp(const py::object& data) {
             }
             for (int j=0; j<cols; ++j) {
                 std::complex<double> val = row[j].cast<std::complex<double>>();
-                if (std::abs(val) > 1e-12) {
+                if (std::abs(val) > default_atol) {
                     _data.insert(i, j) = val;
                 }
             }
         }
         _data.makeCompressed();
     } else if (py::isinstance(data, csrmatrix)) {
-        _data = from_spmatrix(data, 1e-12);
-    } else if (py::isinstance(data, numpy_array)) {
-        _data = from_numpy(data.cast<py::buffer>(), 1e-12);
+        _data = from_spmatrix(data, default_atol);
+    } else if (py::isinstance(data, numpy_array_type)) {
+        _data = from_numpy(data.cast<py::buffer>(), default_atol);
     } else {
         throw std::invalid_argument("Data object must be a QTensor");
     }
 }
 
-py::object QTensorCpp::get_data_as_scipy() const {
+py::object QTensorCpp::as_scipy() const {
     return to_spmatrix(_data);
 }
 
-py::object QTensorCpp::get_data_as_numpy() const {
+py::object QTensorCpp::as_numpy() const {
     return to_numpy(_data);
 }
 
@@ -96,51 +97,118 @@ bool QTensorCpp::is_scalar() const {
 }
 
 
-bool QTensorCpp::is_self_adjoint(double atol) const {
+bool QTensorCpp::is_self_adjoint(double atol) {
     if (_data.rows() != _data.cols()) {
         return false;
     }
-    for (int k=0; k<_data.outerSize(); ++k) {
-        for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
-            int i = it.row();
-            int j = it.col();
-            std::complex<double> val = it.value();
-            std::complex<double> conj_val = std::conj(val);
-            std::complex<double> other_val = _data.coeff(j, i);
-            if (std::abs(conj_val - other_val) > atol) {
-                return false;
+    if (!_max_adjoint_diff_computed) {
+        for (int k=0; k<_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                int i = it.row();
+                int j = it.col();
+                std::complex<double> val = it.value();
+                std::complex<double> conj_val = std::conj(val);
+                std::complex<double> other_val = _data.coeff(j, i);
+                _max_adjoint_diff = std::max(_max_adjoint_diff, std::abs(conj_val - other_val));
             }
         }
+        _max_adjoint_diff_computed = true;
+    }
+    if (_max_adjoint_diff > atol) {
+        return false;
     }
     return true;
 }
 
-bool QTensorCpp::is_positive_semidefinite(double atol) const {
+bool QTensorCpp::is_positive_semidefinite(double atol) {
     if (_data.rows() != _data.cols()) {
         return false;
     }
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> es(_data);
-    auto& eigenvalues = es.eigenvalues();
-    for (const auto& ev : eigenvalues) {
-        if (ev < -atol) {
-            return false;
+    if (!_is_positive_computed || atol != _atol_used_for_positive) {
+        if (!_eigenvalues.empty()) {
+            for (const auto& eval : _eigenvalues) {
+                if (eval.real() < -atol) {
+                    _is_positive = false;
+                    _is_positive_computed = true;
+                    _atol_used_for_positive = atol;
+                    return _is_positive;
+                }
+            }
+            _is_positive = true;
+            _is_positive_computed = true;
+            _atol_used_for_positive = atol;
+            return _is_positive;
         }
+        SparseMatrix sparse_identity(_data.rows(), _data.cols());
+        sparse_identity.setIdentity();
+        Eigen::SimplicialLDLT<SparseMatrix> chol(_data + atol * sparse_identity);
+        _is_positive = (chol.info() == Eigen::Success);
+        _is_positive_computed = true;
+        _atol_used_for_positive = atol;
+    }
+    return _is_positive;
+}
+
+void QTensorCpp::compute_eigendecomposition() {
+    DenseMatrix dense_data = DenseMatrix(_data);
+    if (is_self_adjoint(default_atol)) {
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
+        _eigenvectors.clear();
+        auto evecs = es.eigenvectors();
+        for (int i = 0; i < evecs.cols(); ++i) {
+            SparseMatrix vec = evecs.col(i).sparseView();
+            _eigenvectors.emplace_back(vec);
+        }
+        _eigenvalues.clear();
+        auto evals = es.eigenvalues();
+        for (int i = 0; i < evals.size(); ++i) {
+            _eigenvalues.push_back(evals[i]);
+        }
+    } else {
+        Eigen::ComplexEigenSolver<DenseMatrix> es(dense_data);
+        _eigenvectors.clear();
+        auto evecs = es.eigenvectors();
+        for (int i = 0; i < evecs.cols(); ++i) {
+            SparseMatrix vec = evecs.col(i).sparseView();
+            _eigenvectors.emplace_back(vec);
+        }
+        _eigenvalues.clear();
+        auto evs = es.eigenvalues();
+        for (int i = 0; i < evs.size(); ++i) {
+            _eigenvalues.push_back(evs[i]);
+        }
+    }
+}
+
+bool QTensorCpp::is_density_matrix(double atol) {
+    if (!is_operator()) {
+        return false;
+    } else if (!is_self_adjoint(atol)) {
+        return false;
+    } else if (std::abs(trace().real() - 1.0) > atol) {
+        return false;
+    } else if (!is_positive_semidefinite(atol)) {
+        return false;
     }
     return true;
 }
 
-bool QTensorCpp::is_density_matrix(double atol) const {
-    if (!is_operator()) {
-        return false;
+bool QTensorCpp::is_pure(double atol) {
+    if (is_ket() || is_bra()) {
+        return true;
     }
-    if (!is_self_adjoint(atol)) {
-        return false;
-    }
-    if (!is_positive_semidefinite(atol)) {
+    if (!is_density_matrix(atol)) {
         return false;
     }
     double tr = trace().real();
-    return std::abs(tr - 1.0) < atol;
+    if (!_trace_squared_computed) {
+        _trace_squared = purity();
+        _trace_squared_computed = true;
+    }
+    if (std::abs(_trace_squared - tr*tr) < atol) {
+        return true;
+    }
+    return false;
 }
 
 QTensorCpp QTensorCpp::conjugate() const {
@@ -155,19 +223,31 @@ QTensorCpp QTensorCpp::adjoint() const {
     return QTensorCpp(_data.adjoint());
 }
 
-std::complex<double> QTensorCpp::trace() const {
-    std::complex<double> trace = 0.0;
+std::complex<double> QTensorCpp::trace() {
+    if (_trace_computed) {
+        return _trace;
+    }
+    _trace = 0.0;
     for (int k=0; k<_data.outerSize(); ++k) {
         for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
             if (it.row() == it.col()) {
-                trace += it.value();
+                _trace += it.value();
             }
         }
     }
-    return trace;
+    _trace_computed = true;
+    return _trace;
 }
 
-QTensorCpp QTensorCpp::partial_trace(const std::vector<int>& keep) const {
+QTensorCpp QTensorCpp::partial_trace_python(const py::list& keep) const {
+    std::set<int> keep_set;
+    for (const auto& item : keep) {
+        keep_set.insert(item.cast<int>());
+    }
+    return partial_trace(keep_set);
+}
+
+QTensorCpp QTensorCpp::partial_trace(const std::set<int>& keep) const {
 
     // Total number of qubits: matrix is 2^n x 2^n
     int total_dim = _data.rows();
@@ -257,7 +337,7 @@ QTensorCpp QTensorCpp::partial_trace(const std::vector<int>& keep) const {
 
 }
 
-double QTensorCpp::norm(const std::string& norm_type) const {
+double QTensorCpp::norm(const std::string& norm_type) {
     if (norm_type == "frobenius" || norm_type == "l2") {
         return _data.norm();
     } else if (norm_type == "l1") {
@@ -269,12 +349,17 @@ double QTensorCpp::norm(const std::string& norm_type) const {
         }
         return sum;
     } else if (norm_type == "trace") {
-        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> es(_data);
-        double trace_norm = 0.0;
-        for (int i=0; i<es.eigenvalues().size(); ++i) {
-            trace_norm += std::abs(es.eigenvalues()[i]);
+        if (!is_operator()) {
+            throw std::invalid_argument("Trace norm is only defined for operators");
         }
-        return trace_norm;
+        if (_eigenvalues.empty()) {
+            compute_eigendecomposition();
+        }
+        double sum = 0.0;
+        for (const auto& eval : _eigenvalues) {
+            sum += std::abs(eval);
+        }
+        return sum;
     } else if (norm_type == "inf") {
         double max_row_sum = 0.0;
         for (int i=0; i<_data.rows(); ++i) {
@@ -294,7 +379,7 @@ double QTensorCpp::norm(const std::string& norm_type) const {
     }
 }
 
-QTensorCpp QTensorCpp::normalized(const std::string& norm_type) const {
+QTensorCpp QTensorCpp::normalized(const std::string& norm_type) {
     double nrm = norm(norm_type);
     if (nrm == 0.0) {
         throw std::runtime_error("Cannot normalize a tensor with zero norm");
@@ -312,7 +397,7 @@ int bitstring_to_index(const std::string& bitstring) {
     return index;
 }
 
-QTensorCpp QTensorCpp::ket(const std::string& bitstring) const {
+QTensorCpp QTensorCpp::ket(const std::string& bitstring) {
     int dim = 1 << bitstring.size();
     QTensorCpp result(dim, 1);
     int one_index = bitstring_to_index(bitstring);
@@ -321,7 +406,7 @@ QTensorCpp QTensorCpp::ket(const std::string& bitstring) const {
     return result;
 }
 
-QTensorCpp QTensorCpp::bra(const std::string& bitstring) const {
+QTensorCpp QTensorCpp::bra(const std::string& bitstring) {
     int dim = 1 << bitstring.size();
     QTensorCpp result(1, dim);
     int one_index = bitstring_to_index(bitstring);
@@ -377,7 +462,7 @@ QTensorCpp QTensorCpp::add_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return add(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw std::invalid_argument("Other object must be a QTensor");
+        throw not_implemented();
     }
 }
 
@@ -391,7 +476,7 @@ QTensorCpp QTensorCpp::sub_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return sub(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw std::invalid_argument("Other object must be a QTensor");
+        throw not_implemented();
     }
 }
 
@@ -405,7 +490,7 @@ QTensorCpp QTensorCpp::mul_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return mul(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw std::invalid_argument("Other object must be a QTensor");
+        throw not_implemented();
     }
 }
 
@@ -419,7 +504,7 @@ QTensorCpp QTensorCpp::matmul_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return matmul(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw std::invalid_argument("Other object must be a QTensor");
+        throw not_implemented();
     }
 }
 
@@ -433,23 +518,27 @@ bool QTensorCpp::equals_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return equals(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw std::invalid_argument("Other object must be a QTensor");
+        return false;
     }
 }
 
 bool QTensorCpp::equals(const QTensorCpp& other) const {
+    if (_data.rows() != other.get_data().rows() || _data.cols() != other.get_data().cols()) {
+        return false;
+    }
     return other.get_data().isApprox(_data);
 }
 
 std::string QTensorCpp::as_string() const {
     DenseMatrix dense = _data;
     std::stringstream ss;
+    ss << "QTensor(shape=" << _data.rows() << "x" << _data.cols() << ", nnz=" << _data.nonZeros() << "):" << std::endl;
     ss << dense;
     return ss.str();
 }
 
 
-QTensorCpp QTensorCpp::identity(int dim) const {
+QTensorCpp QTensorCpp::identity(int dim) {
     SparseMatrix id(dim, dim);
     for (int i=0; i<dim; ++i) {
         id.insert(i, i) = 1.0;
@@ -458,19 +547,573 @@ QTensorCpp QTensorCpp::identity(int dim) const {
     return QTensorCpp(id);
 }
 
-QTensorCpp QTensorCpp::to_density_matrix() const {
+QTensorCpp QTensorCpp::as_density_matrix(double atol) {
     if (is_ket()) {
-        return QTensorCpp(_data * _data.adjoint());
+        QTensorCpp mat = QTensorCpp(_data * _data.adjoint());
+        return mat / mat.trace();
     } else if (is_bra()) {
-        return QTensorCpp(_data.adjoint() * _data);
+        QTensorCpp mat = QTensorCpp(_data.adjoint() * _data);
+        return mat / mat.trace();
+    } else if (is_operator() && is_density_matrix(atol)) {
+        return *this;
     } else {
         throw std::runtime_error("Only kets or bras can be converted to density matrix");
     }
 }
 
-QTensorCpp QTensorCpp::exponential() const {
+QTensorCpp QTensorCpp::exp() const {
+    // If we have already computed the eigendecomposition, we can compute the exponential more efficiently
+    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
+        SparseMatrix result(_data.rows(), _data.cols());
+        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+        for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+            std::complex<double> eval_exp = std::exp(_eigenvalues[i]);
+            const SparseMatrix& evec = _eigenvectors[i];
+            for (int k=0; k<evec.outerSize(); ++k) {
+                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
+                    int row = it.row();
+                    int col = it.col();
+                    std::complex<double> val = eval_exp * it.value();
+                    triplets.emplace_back(row, col, val);
+                }
+            }
+        }
+        result.setFromTriplets(triplets.begin(), triplets.end());
+        return QTensorCpp(result);
+    }
     Eigen::MatrixXcd dense = _data;
     Eigen::MatrixXcd exp_dense = dense.exp();
     SparseMatrix exp_sparse = exp_dense.sparseView();
     return QTensorCpp(exp_sparse);
+}
+
+QTensorCpp QTensorCpp::log() const {
+    // If we have already computed the eigendecomposition, we can compute the logarithm more efficiently
+    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
+        SparseMatrix result(_data.rows(), _data.cols());
+        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+        for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+            std::complex<double> eval_log = std::log(_eigenvalues[i]);
+            const SparseMatrix& evec = _eigenvectors[i];
+            for (int k=0; k<evec.outerSize(); ++k) {
+                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
+                    int row = it.row();
+                    int col = it.col();
+                    std::complex<double> val = eval_log * it.value();
+                    triplets.emplace_back(row, col, val);
+                }
+            }
+        }
+        result.setFromTriplets(triplets.begin(), triplets.end());
+        return QTensorCpp(result);
+    }
+    Eigen::MatrixXcd dense = _data;
+    Eigen::MatrixXcd log_dense = dense.log();
+    SparseMatrix log_sparse = log_dense.sparseView();
+    return QTensorCpp(log_sparse);
+}
+
+QTensorCpp QTensorCpp::sqrt() const {
+    // If we have already computed the eigendecomposition, we can compute the square root more efficiently
+    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
+        SparseMatrix result(_data.rows(), _data.cols());
+        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+        for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+            std::complex<double> eval_sqrt = std::sqrt(_eigenvalues[i]);
+            const SparseMatrix& evec = _eigenvectors[i];
+            for (int k=0; k<evec.outerSize(); ++k) {
+                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
+                    int row = it.row();
+                    int col = it.col();
+                    std::complex<double> val = eval_sqrt * it.value();
+                    triplets.emplace_back(row, col, val);
+                }
+            }
+        }
+        result.setFromTriplets(triplets.begin(), triplets.end());
+        return QTensorCpp(result);
+    }
+    Eigen::MatrixXcd dense = _data;
+    Eigen::MatrixXcd sqrt_dense = dense.sqrt();
+    SparseMatrix sqrt_sparse = sqrt_dense.sparseView();
+    return QTensorCpp(sqrt_sparse);
+}
+
+QTensorCpp QTensorCpp::pow(int n) const {
+    // If we have already computed the eigendecomposition, we can compute the power more efficiently
+    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
+        SparseMatrix result(_data.rows(), _data.cols());
+        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+        for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+            std::complex<double> eval_pow = std::pow(_eigenvalues[i], n);
+            const SparseMatrix& evec = _eigenvectors[i];
+            for (int k=0; k<evec.outerSize(); ++k) {
+                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
+                    int row = it.row();
+                    int col = it.col();
+                    std::complex<double> val = eval_pow * it.value();
+                    triplets.emplace_back(row, col, val);
+                }
+            }
+        }
+        result.setFromTriplets(triplets.begin(), triplets.end());
+        return QTensorCpp(result);
+    }
+    Eigen::MatrixXcd dense = _data;
+    Eigen::MatrixXcd pow_dense = dense.pow(n);
+    SparseMatrix pow_sparse = pow_dense.sparseView();
+    return QTensorCpp(pow_sparse);
+}
+
+std::vector<std::complex<double>> QTensorCpp::get_eigenvalues() const { 
+    if (_eigenvalues.empty() && _data.rows() > 0 && _data.cols() > 0) {
+        throw std::runtime_error("Eigenvalues have not been computed yet. Call compute_eigendecomposition() first.");
+    }
+    return _eigenvalues; 
+}
+
+std::vector<SparseMatrix> QTensorCpp::get_eigenvectors() const { 
+    if (_eigenvectors.empty() && _data.rows() > 0 && _data.cols() > 0) {
+        throw std::runtime_error("Eigenvectors have not been computed yet. Call compute_eigendecomposition() first.");
+    }
+    return _eigenvectors; 
+}
+
+void QTensorCpp::clear_cache() {
+    _is_self_adjoint_computed = false;
+    _is_positive_computed = false;
+    _trace_computed = false;
+    _trace_squared_computed = false;
+    _max_adjoint_diff_computed = false;
+    _max_unitary_diff_computed = false;
+    _trace_squared_computed = false;
+    _rank_computed = false;
+    _eigenvalues.clear();
+    _eigenvectors.clear();
+}
+
+std::complex<double> QTensorCpp::expectation_value_python(const py::object& other, int nshots) const {
+    if (py::isinstance<QTensorCpp>(other)) {
+        return expectation_value(other.cast<QTensorCpp>(), nshots);
+    } else if (py::hasattr(other, "_qtensor_cpp")) {
+        return expectation_value(other.attr("_qtensor_cpp").cast<QTensorCpp>(), nshots);
+    } else {
+        throw std::invalid_argument("Other object must be a QTensor");
+    }
+}
+
+std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const {
+    
+    // If nshots <= 0, compute the exact expectation value using the trace formula
+    if (nshots <= 0) {
+        if (!is_ket() && !is_bra()) {
+            return (adjoint() * other * (*this)).trace();
+        } else {
+            return (other * (*this)).trace();
+        }
+    } else {
+        
+        // Create the random device
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        // Get the eigenvalues and eigenvectors of the operator
+        if (_eigenvalues.empty() || _eigenvectors.empty()) {
+            throw std::runtime_error("Eigendecomposition must be computed before calling expectation_value with nshots > 0");
+        }
+        const std::vector<std::complex<double>>& evals = _eigenvalues;
+        const std::vector<SparseMatrix>& evecs = _eigenvectors;
+
+        // Compute the probabilities of each outcome
+        std::vector<double> probs(evals.size(), 0.0);
+        for (size_t i = 0; i < evals.size(); ++i) {
+            const SparseMatrix& evec = evecs[i];
+            std::complex<double> overlap = 0.0;
+            for (int k=0; k<evec.outerSize(); ++k) {
+                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
+                    int row = it.row();
+                    int col = it.col();
+                    std::complex<double> val = it.value();
+                    overlap += val * _data.coeff(row, col);
+                }
+            }
+            probs[i] = std::norm(overlap);
+        }
+
+        // Normalize probabilities
+        double sum_probs = std::accumulate(probs.begin(), probs.end(), 0.0);
+        if (sum_probs <= 0) {
+            throw std::runtime_error("Invalid state: non-positive measurement probability normalization");
+        }
+        for (double& p : probs) {
+            p /= sum_probs;
+        }
+
+        // Sample from the distribution
+        std::discrete_distribution<> dist(probs.begin(), probs.end());
+        double sampled_mean = 0.0;
+        for (int i = 0; i < nshots; ++i) {
+            int outcome = dist(gen);
+            sampled_mean += evals[outcome].real();
+        }
+        sampled_mean /= nshots;
+        return sampled_mean;
+
+    }
+}
+
+QTensorCpp QTensorCpp::random_sparse(int rows, int cols, double density) {
+    SparseMatrix random_matrix(rows, cols);
+    std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    int total_elements = rows * cols;
+    int nonzeros = static_cast<int>(total_elements * density);
+    for (int i = 0; i < nonzeros; ++i) {
+        int row = rand() % rows;
+        int col = rand() % cols;
+        std::complex<double> val(static_cast<double>(rand()) / RAND_MAX, static_cast<double>(rand()) / RAND_MAX);
+        triplets.emplace_back(row, col, val);
+    }
+    random_matrix.setFromTriplets(triplets.begin(), triplets.end());
+    return QTensorCpp(random_matrix);
+}
+
+QTensorCpp QTensorCpp::random(int rows, int cols) {
+    DenseMatrix random_matrix(rows, cols);
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            random_matrix(i, j) = std::complex<double>(static_cast<double>(rand()) / RAND_MAX, static_cast<double>(rand()) / RAND_MAX);
+        }
+    }
+    return QTensorCpp(random_matrix.sparseView());
+}
+
+QTensorCpp QTensorCpp::commutator_python(const py::object& other) const {
+    if (py::isinstance<QTensorCpp>(other)) {
+        return commutator(other.cast<QTensorCpp>());
+    } else if (py::hasattr(other, "_qtensor_cpp")) {
+        return commutator(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else {
+        throw std::invalid_argument("Other object must be a QTensor");
+    }
+}
+
+QTensorCpp QTensorCpp::commutator(const QTensorCpp& other) const {
+    return (*this * other) - (other * (*this));
+}
+
+QTensorCpp QTensorCpp::anticommutator_python(const py::object& other) const {
+    if (py::isinstance<QTensorCpp>(other)) {
+        return anticommutator(other.cast<QTensorCpp>());
+    } else if (py::hasattr(other, "_qtensor_cpp")) {
+        return anticommutator(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else {
+        throw std::invalid_argument("Other object must be a QTensor");
+    }
+}
+
+QTensorCpp QTensorCpp::anticommutator(const QTensorCpp& other) const {
+    return (*this * other) + (other * (*this));
+}
+
+std::vector<double> QTensorCpp::probabilities() const {
+    if (is_ket()) {
+        std::vector<double> probs(_data.rows(), 0.0);
+        for (int k=0; k<_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                int row = it.row();
+                std::complex<double> val = it.value();
+                probs[row] += std::norm(val);
+            }
+        }
+        return probs;
+    } else if (is_bra()) {
+        std::vector<double> probs(_data.cols(), 0.0);
+        for (int k=0; k<_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                int col = it.col();
+                std::complex<double> val = it.value();
+                probs[col] += std::norm(val);
+            }
+        }
+        return probs;
+    } else if (is_operator()) {
+        std::vector<double> probs(_data.rows(), 0.0);
+        for (int k=0; k<_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                if (it.row() == it.col()) {
+                    std::complex<double> val = it.value();
+                    probs[it.row()] += val.real();
+                }
+            }
+        }
+        return probs;
+    } else {
+        throw std::runtime_error("Probabilities can only be computed for kets, bras, or operators");
+    }
+}
+
+bool QTensorCpp::is_unitary(double atol) {
+    if (!is_operator()) {
+        return false;
+    }
+    if (!_max_unitary_diff_computed) {
+        QTensorCpp product = (*this * adjoint());
+        _max_unitary_diff = 0.0;
+        for (int k=0; k<product.get_data().outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(product.get_data(), k); it; ++it) {
+                int row = it.row();
+                int col = it.col();
+                std::complex<double> val = it.value();
+                std::complex<double> identity_val = (row == col) ? 1.0 : 0.0;
+                _max_unitary_diff = std::max(_max_unitary_diff, std::abs(val - identity_val));
+            }
+        }
+        _max_unitary_diff_computed = true;
+    }
+    return _max_unitary_diff <= atol;
+}
+
+double QTensorCpp::purity() {
+    if (!_trace_squared_computed) {
+        for (int k=0; k<_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                _trace_squared += std::norm(it.value());
+            }
+        }
+        _trace_squared_computed = true;
+    }
+    return _trace_squared;
+}
+
+std::complex<double> QTensorCpp::dot(const QTensorCpp& other) const {
+    std::complex<double> result = 0.0;
+    for (int k=0; k<_data.outerSize(); ++k) {
+        for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+            int row = it.row();
+            int col = it.col();
+            std::complex<double> val = it.value();
+            std::complex<double> other_val = other.get_data().coeff(row, col);
+            result += std::conj(val) * other_val;
+        }
+    }
+    return result;
+}
+
+std::complex<double> QTensorCpp::dot_python(const py::object& other) const {
+    if (py::isinstance<QTensorCpp>(other)) {
+        return dot(other.cast<QTensorCpp>());
+    } else if (py::hasattr(other, "_qtensor_cpp")) {
+        return dot(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else {
+        throw std::invalid_argument("Other object must be a QTensor");
+    }
+}
+
+double QTensorCpp::fidelity(const QTensorCpp& other) const {
+    if (is_ket() && other.is_ket()) {
+        return std::pow(std::abs(dot(other)), 2);
+    } else if (is_bra() && other.is_bra()) {
+        return std::pow(std::abs(dot(other)), 2);
+    } else if (is_operator() && other.is_operator()) {
+        QTensorCpp sqrt_self = sqrt();
+        QTensorCpp product = sqrt_self * other * sqrt_self;
+        QTensorCpp sqrt_product = product.sqrt();
+        return std::pow(sqrt_product.trace().real(), 2);
+    } else {
+        throw std::runtime_error("Fidelity can only be computed between states of the same type (ket, bra, or operator)");
+    }
+}
+
+double QTensorCpp::fidelity_python(const py::object& other) const {
+    if (py::isinstance<QTensorCpp>(other)) {
+        return fidelity(other.cast<QTensorCpp>());
+    } else if (py::hasattr(other, "_qtensor_cpp")) {
+        return fidelity(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else {
+        throw std::invalid_argument("Other object must be a QTensor");
+    }
+}
+
+double QTensorCpp::entropy_von_neumann() {
+    compute_eigendecomposition();
+    if (!is_density_matrix()) {
+        throw std::runtime_error("Von Neumann entropy can only be computed for density matrices");
+    }
+    double entropy = 0.0;
+    for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+        double p = std::abs(_eigenvalues[i]);
+        if (p > 0) {
+            entropy -= p * std::log(p);
+        }
+    }
+    return entropy;
+}
+
+double QTensorCpp::entropy_renyi(double alpha) {
+    compute_eigendecomposition();
+    if (!is_density_matrix()) {
+        throw std::runtime_error("Renyi entropy can only be computed for density matrices");
+    }
+    if (alpha <= 0) {
+        throw std::invalid_argument("Alpha must be greater than 0");
+    }
+    if (alpha == 1) {
+        throw std::invalid_argument("Alpha cannot be 1 for Renyi entropy (use von Neumann entropy instead)");
+    }
+    double sum = 0.0;
+    for (size_t i = 0; i < _eigenvalues.size(); ++i) {
+        double p = std::abs(_eigenvalues[i]);
+        sum += std::pow(p, alpha);
+    }
+    return (1.0 / (1.0 - alpha)) * std::log(sum);
+}
+
+DenseMatrix QTensorCpp::as_dense() const {
+    return DenseMatrix(_data);
+}
+
+int QTensorCpp::rank() {
+    if (!_rank_computed) {
+        if (is_ket() || is_bra()) {
+            _rank = 1;
+        } else if (!_eigenvalues.empty()) {
+            _rank = 0;
+            for (const auto& eval : _eigenvalues) {
+                if (std::abs(eval) > 0) {
+                    _rank++;
+                }
+            }
+        } else {
+            Eigen::MatrixXcd dense = _data;
+            Eigen::FullPivLU<Eigen::MatrixXcd> lu(dense);
+            _rank = lu.rank();
+        }
+        _rank_computed = true;
+    }
+    return _rank;
+}
+
+QTensorCpp QTensorCpp::inverse() const {
+    Eigen::MatrixXcd dense = _data;
+    Eigen::MatrixXcd inv_dense = dense.inverse();
+    SparseMatrix inv_sparse = inv_dense.sparseView();
+    return QTensorCpp(inv_sparse);
+}
+
+QTensorCpp QTensorCpp::ghz(int nqubits) {
+    int dim = 1 << nqubits;
+    QTensorCpp result(dim, 1);
+    int zero_index = 0;
+    int one_index = dim - 1;
+    result._data.insert(zero_index, 0) = 1.0 / std::sqrt(2.0);
+    result._data.insert(one_index, 0) = 1.0 / std::sqrt(2.0);
+    result._data.makeCompressed();
+    return result;
+}
+
+QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
+
+    // If not resetting any qubits, just return the original state
+    if (qubits.empty()) {
+        return *this;
+    }
+
+    // Check to make sure the input state is a density matrix and the qubits to reset are valid
+    if (!is_density_matrix()) {
+        throw std::runtime_error("`reset_qubits` requires a density matrix input state.");
+    }
+
+    // Validate qubit indices
+    for (int q : qubits) {
+        if (q < 0 || q >= get_nqubits()) {
+            throw std::invalid_argument("Invalid qubit index in `qubits`: " + std::to_string(q));
+        }
+    }
+
+    // Determine which qubits to keep and which to trace out
+    std::set<int> rest_qubits;
+    int nqubits = get_nqubits();
+    for (int q = 0; q < nqubits; ++q) {
+        if (qubits.find(q) == qubits.end()) {
+            rest_qubits.insert(q);
+        }
+    }
+
+    // Perform the partial trace over the qubits to be reset
+    QTensorCpp rest_state = partial_trace(rest_qubits);
+    int out_dim = 1 << nqubits;
+
+    // If the resulting state is zero, we can just return a zero matrix of the appropriate size
+    if (rest_state.get_data().nonZeros() == 0) {
+        return QTensorCpp(SparseMatrix(out_dim, out_dim));
+    }
+
+    // Now we need to embed the rest_state back into the full space of nqubits, filling in zeros for the reset qubits
+    if (!rest_qubits.empty()) {
+        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+        const SparseMatrix& rest_data = rest_state.get_data();
+        std::vector<int> rest_dims(rest_qubits.size(), 2);
+        std::vector<int> full_dims(nqubits, 2);
+        for (int k=0; k<rest_data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(rest_data, k); it; ++it) {
+                int row = it.row();
+                int col = it.col();
+                std::complex<double> val = it.value();
+
+                // Convert row and col to multi-dimensional indices in the rest subsystem
+                std::vector<int> row_digits_rest(rest_qubits.size());
+                std::vector<int> col_digits_rest(rest_qubits.size());
+                int temp_row = row;
+                int temp_col = col;
+                for (size_t i = 0; i < rest_qubits.size(); ++i) {
+                    row_digits_rest[i] = temp_row % 2;
+                    col_digits_rest[i] = temp_col % 2;
+                    temp_row /= 2;
+                    temp_col /= 2;
+                }
+
+                // Build full multi-dimensional indices with zeros for the reset qubits
+                std::vector<int> row_digits_full(nqubits, 0);
+                std::vector<int> col_digits_full(nqubits, 0);
+                size_t rest_idx = 0;
+                for (int q = 0; q < nqubits; ++q) {
+                    if (rest_qubits.find(q) != rest_qubits.end()) {
+                        row_digits_full[q] = row_digits_rest[rest_idx];
+                        col_digits_full[q] = col_digits_rest[rest_idx];
+                        rest_idx++;
+                    }
+                }
+
+                // Convert back to flat indices in the full space
+                int out_row = 0;
+                int out_col = 0;
+                for (int q = 0; q < nqubits; ++q) {
+                    out_row |= (row_digits_full[q] << q);
+                    out_col |= (col_digits_full[q] << q);
+                }
+
+                triplets.emplace_back(out_row, out_col, val);
+            }
+        }
+
+        // Construct the final sparse matrix in the full space
+        SparseMatrix result(out_dim, out_dim);
+        result.setFromTriplets(triplets.begin(), triplets.end());
+        return QTensorCpp(result);
+
+    } 
+
+    // If all qubits are reset, we just return a state with a single entry of 1 at the (0, 0) position
+    SparseMatrix result(out_dim, out_dim);
+    result.insert(0, 0) = 1.0;
+    result.makeCompressed();
+    return QTensorCpp(result);
+
+}
+
+QTensorCpp QTensorCpp::div(std::complex<double> scalar) const {
+    if (std::abs(scalar) <= default_atol) {
+        throw std::runtime_error("Cannot divide by zero");
+    }
+    return QTensorCpp(_data / scalar);
 }

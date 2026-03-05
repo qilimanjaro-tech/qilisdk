@@ -24,5 +24,7 @@ using namespace py::literals;
 
 // Non-QiliSDK types
 const py::object numpy_array = py::module_::import("numpy").attr("array");
+const py::object numpy_array_type = py::module_::import("numpy").attr("ndarray");
 const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
 const py::dtype dtype = py::dtype("complex128");
+const py::object not_implemented = py::module_::import("builtins").attr("NotImplemented");

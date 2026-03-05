@@ -15,38 +15,73 @@
 
 #include "../libs/pybind.h"
 #include "../libs/eigen.h"
+#include <set>
+
+const double default_atol = 1e-12;
 
 // The main QiliSim C++ class
 class QTensorCpp {
     private:
+        
+        // The main data of the class, an Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>
         SparseMatrix _data;
+
+        // Cache various things to faster reaccess
+        std::vector<std::complex<double>> _eigenvalues;
+        std::vector<SparseMatrix> _eigenvectors;
+        bool _is_positive_computed = false;
+        bool _is_positive = false;
+        double _atol_used_for_positive = 0.0;
+        std::complex<double> _trace = 0.0;
+        bool _trace_computed = false;
+        bool _is_self_adjoint_computed = false;
+        bool _is_self_adjoint = false;
+        bool _trace_squared_computed = false;
+        double _trace_squared = 0.0;
+        bool _max_adjoint_diff_computed = false;
+        double _max_adjoint_diff = 0.0;
+        bool _max_unitary_diff_computed = false;
+        double _max_unitary_diff = 0.0;
+        bool _rank_computed = false;
+        int _rank = 0;
+
     public:
+        
+        // Constructors and basic accessors
         QTensorCpp() {}
         QTensorCpp(const SparseMatrix& data) : _data(data) {}
         QTensorCpp(const py::object& data);
         QTensorCpp(int rows, int cols) : _data(rows, cols) {}
         const SparseMatrix& get_data() const { return _data; }
-        py::object get_data_as_scipy() const;
-        py::object get_data_as_numpy() const;
+        py::object as_scipy() const;
+        py::object as_numpy() const;
         int get_nqubits() const;
         std::pair<int, int> get_shape() const;
-        bool is_ket() const;
-        bool is_bra() const;
-        bool is_operator() const;
-        bool is_scalar() const;
-        bool is_density_matrix(double atol) const;
-        bool is_self_adjoint(double atol) const;
-        bool is_positive_semidefinite(double atol) const;
+        void clear_cache();
+        std::string as_string() const;
+        DenseMatrix as_dense() const;
+        std::complex<double> coeff(int row, int col) const { return _data.coeff(row, col); }
+
+        // Matrix arithmetic
+        double norm(const std::string& norm_type);
+        void compute_eigendecomposition();
+        bool equals_python(const py::object& other) const;
+        bool equals(const QTensorCpp& other) const;
+        std::complex<double> dot(const QTensorCpp& other) const;
+        std::complex<double> dot_python(const py::object& other) const;
+        QTensorCpp normalized(const std::string& norm_type);
+        QTensorCpp inverse() const;
+        QTensorCpp pow(int n) const;
+        QTensorCpp sqrt() const;
+        QTensorCpp log() const;
+        QTensorCpp exp() const;
+        int rank();
+        std::vector<std::complex<double>> get_eigenvalues() const;
+        std::vector<SparseMatrix> get_eigenvectors() const;
         QTensorCpp conjugate() const;
         QTensorCpp transpose() const;
         QTensorCpp adjoint() const;
-        QTensorCpp exponential() const;
-        std::complex<double> trace() const;
-        QTensorCpp partial_trace(const std::vector<int>& keep) const;
-        double norm(const std::string& norm_type) const;
-        QTensorCpp normalized(const std::string& norm_type) const;
-        QTensorCpp ket(const std::string& bitstring) const;
-        QTensorCpp bra(const std::string& bitstring) const;
+        std::complex<double> trace();
         QTensorCpp tensor_product_python(const py::list& others) const;
         QTensorCpp tensor_product(const std::vector<QTensorCpp>& others) const;
         QTensorCpp add_python(const py::object& other) const;
@@ -57,10 +92,58 @@ class QTensorCpp {
         QTensorCpp mul(const QTensorCpp& other) const;
         QTensorCpp matmul_python(const py::object& other) const;
         QTensorCpp matmul(const QTensorCpp& other) const;
-        QTensorCpp to_density_matrix() const;
-        QTensorCpp identity(int dim) const;
-        bool equals_python(const py::object& other) const;
-        bool equals(const QTensorCpp& other) const;
-        std::string as_string() const;
+        QTensorCpp div(std::complex<double> scalar) const;
+
+        // Cached checks
+        bool is_ket() const;
+        bool is_bra() const;
+        bool is_operator() const;
+        bool is_scalar() const;
+        bool is_pure(double atol = default_atol);
+        bool is_density_matrix(double atol = default_atol);
+        bool is_self_adjoint(double atol = default_atol);
+        bool is_positive_semidefinite(double atol = default_atol);
+        bool is_unitary(double atol = default_atol);
+        bool is_hermitian(double atol = default_atol) { return is_self_adjoint(atol); }
+        
+        // Specifically quantum things
+        QTensorCpp as_density_matrix(double atol = default_atol);
+        double entropy_von_neumann();
+        double entropy_renyi(double alpha);
+        double fidelity(const QTensorCpp& other) const;
+        double fidelity_python(const py::object& other) const;
+        double purity();
+        std::vector<double> probabilities() const;
+        std::complex<double> expectation_value(const QTensorCpp& other, int nshots=0) const;
+        std::complex<double> expectation_value_python(const py::object& other, int nshots=0) const;
+        QTensorCpp partial_trace_python(const py::list& keep) const;
+        QTensorCpp partial_trace(const std::set<int>& keep) const;
+        QTensorCpp commutator(const QTensorCpp& other) const;
+        QTensorCpp commutator_python(const py::object& other) const;
+        QTensorCpp anticommutator(const QTensorCpp& other) const;
+        QTensorCpp anticommutator_python(const py::object& other) const;
+        QTensorCpp reset_qubits(const std::set<int>& qubits);
+
+        // Static initializers for common states
+        static QTensorCpp identity(int dim);
+        static QTensorCpp ket(const std::string& bitstring);
+        static QTensorCpp bra(const std::string& bitstring);
+        static QTensorCpp random(int rows, int cols);
+        static QTensorCpp random_sparse(int rows, int cols, double density);
+        static QTensorCpp ghz(int nqubits);
+
+        // C++ specific overloads
+        QTensorCpp operator+(const QTensorCpp& other) const { return add(other); }
+        QTensorCpp operator-(const QTensorCpp& other) const { return sub(other); }
+        QTensorCpp operator*(const QTensorCpp& other) const { return matmul(other); }
+        friend std::ostream& operator<<(std::ostream& os, const QTensorCpp& qt) {
+            os << qt.as_string();
+            return os;
+        }
+        bool operator==(const QTensorCpp& other) const { return equals(other); }
+        bool operator!=(const QTensorCpp& other) const { return !equals(other); }
+        QTensorCpp operator/(std::complex<double> scalar) const { return div(scalar); }
+        QTensorCpp operator/(double scalar) const { return div(std::complex<double>(scalar, 0.0)); }
+        std::complex<double> operator[](const std::pair<int, int>& index) const { return coeff(index.first, index.second); }
 
 };
