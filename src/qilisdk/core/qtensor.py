@@ -22,6 +22,7 @@ from scipy.sparse.linalg import ArpackNoConvergence, eigsh, expm
 from scipy.sparse.linalg import norm as scipy_norm
 
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -79,6 +80,8 @@ class QTensor:
             ket = QTensor(np.array([[1.0], [0.0]]))
             density = ket * ket.adjoint()
     """
+
+    _MAX_STATE_CORRECTION = 1e-2
 
     def __init__(self, data: np.ndarray | sparray | spmatrix) -> None:
         """
@@ -410,7 +413,7 @@ class QTensor:
         """
         return QTensor(expm(self._data.tocsc()))
 
-    def to_density_matrix(self) -> QTensor:
+    def to_density_matrix(self, max_relative_correction: float = _MAX_STATE_CORRECTION) -> QTensor:
         """
         Convert the QTensor to a density matrix.
 
@@ -418,6 +421,15 @@ class QTensor:
         calculates the corresponding density matrix by taking the outer product.
         If the QTensor is already a density matrix, it is returned unchanged.
         The resulting density matrix is normalized.
+        If the QTensor is a 2**n x 2**n matrix then this method will attempt to convert it into a valid
+        density matrix by:
+        1) enforcing Hermiticity via ``(rho + rho^dagger)/2``,
+        2) normalizing with ``unit(order='tr')``.
+
+        Args:
+            max_relative_correction (float | None): Optional upper bound on the
+                relative Frobenius correction applied to repair the state. If exceeded,
+                a ``ValueError`` is raised.
 
         Raises:
             ValueError: If the QTensor is a scalar, as a density matrix cannot be derived.
@@ -435,7 +447,24 @@ class QTensor:
         elif self.is_bra():
             rho = self.adjoint() @ self
         elif self.is_operator():
-            raise ValueError("Operator is not a density matrix (trace≠1 or not Hermitian).")
+            try:
+                repaired_state = ((self + self.adjoint()) * 0.5).unit()
+            except ValueError as exc:
+                raise ValueError("Failed to repair density matrix from the provided state.") from exc
+
+            if max_relative_correction <= 0:
+                raise ValueError("max_relative_correction must be positive when provided.")
+            reference_norm = max(self.norm(order="fro"), get_settings().atol)
+            relative_correction = (repaired_state - self).norm(order="fro") / reference_norm
+            if relative_correction > max_relative_correction:
+                raise ValueError(
+                    "Repairing the density matrix required a large correction "
+                    f"(relative Frobenius correction={relative_correction:.3e})."
+                )
+            if not repaired_state.is_density_matrix():
+                raise ValueError("QTensor can not be converted into a density matrix (trace≠1 or not Hermitian).")
+
+            return repaired_state
         else:
             raise ValueError("Invalid object for density matrix conversion.")
 
@@ -550,7 +579,11 @@ class QTensor:
 
     def __hash__(self) -> int:
         coo = self._data.tocoo()
-        return hash((self.shape, tuple(zip(coo.row, coo.col, coo.data))))
+        order = np.lexsort((coo.col, coo.row))
+        rows = np.asarray(coo.row[order], dtype=np.int64)
+        cols = np.asarray(coo.col[order], dtype=np.int64)
+        data = np.asarray(coo.data[order], dtype=np.complex128)
+        return qili_hash(self.shape, rows, cols, data)
 
 
 ###############################################################################
@@ -693,3 +726,62 @@ def expect_val(operator: QTensor, state: QTensor) -> Number:
         v = state.data @ operator.data  # (1,N)
         return _real_if_close((v @ state.data.getH()).toarray()[0, 0].tolist())
     raise ValueError("state is invalid for expect_val")
+
+
+def reset_qubits(state: QTensor, qubits_to_reset: list[int]) -> QTensor:
+    """Reset selected qubits of a density matrix to ``|0><0|``.
+
+    Args:
+        state: Input density matrix.
+        qubits_to_reset: Qubit indices to reset.
+
+    Raises:
+        ValueError: If ``state`` is not a density matrix.
+        ValueError: If any requested qubit index is out of range.
+
+    Returns:
+        QTensor: The density matrix with the requested qubits reset to ``|0><0|``.
+    """
+    if len(qubits_to_reset) == 0:
+        return state
+    if not state.is_density_matrix():
+        raise ValueError("`reset_qubits` requires a density matrix input state.")
+
+    unique_qubits = list(dict.fromkeys(qubits_to_reset))
+    invalid_qubits = [q for q in unique_qubits if q < 0 or q >= state.nqubits]
+    if invalid_qubits:
+        raise ValueError(
+            f"Invalid qubit indices in `qubits_to_reset`: {invalid_qubits}. Valid range is [0, {state.nqubits - 1}]."
+        )
+
+    full_nqubits = state.nqubits
+    qubits_to_reset_set = set(unique_qubits)
+    rest_qubits = [q for q in range(full_nqubits) if q not in qubits_to_reset_set]
+    rest_state = state.ptrace(keep=rest_qubits)
+
+    rest_coo = rest_state.data.tocoo()
+    out_dim = 1 << full_nqubits
+    if rest_coo.nnz == 0:
+        return QTensor(csr_matrix((out_dim, out_dim)))
+
+    if rest_qubits:
+        nnz = rest_coo.nnz
+        rest_dims = [2] * len(rest_qubits)
+        full_dims = [2] * full_nqubits
+
+        row_digits_rest = np.vstack(np.unravel_index(rest_coo.row, rest_dims))
+        col_digits_rest = np.vstack(np.unravel_index(rest_coo.col, rest_dims))
+        row_digits_full = np.zeros((full_nqubits, nnz), dtype=int)
+        col_digits_full = np.zeros((full_nqubits, nnz), dtype=int)
+        row_digits_full[rest_qubits, :] = row_digits_rest
+        col_digits_full[rest_qubits, :] = col_digits_rest
+
+        out_row = np.ravel_multi_index(row_digits_full, full_dims)
+        out_col = np.ravel_multi_index(col_digits_full, full_dims)
+    else:
+        out_row = np.zeros(rest_coo.nnz, dtype=int)
+        out_col = np.zeros(rest_coo.nnz, dtype=int)
+
+    out = coo_matrix((rest_coo.data, (out_row, out_col)), shape=(out_dim, out_dim))
+    out.sum_duplicates()
+    return QTensor(out.tocsr())

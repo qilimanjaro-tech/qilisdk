@@ -19,16 +19,47 @@ from typing import TYPE_CHECKING, Iterable
 import numpy as np
 from typing_extensions import Self
 
+from qilisdk.core import QTensor
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import Domain, Parameter
+from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import ParametersNotEqualError, QubitOutOfRangeError
+from .exceptions import QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from qilisdk.core.types import RealNumber
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
+
+
+def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarray:
+    gate_matrix = gate.matrix
+    k = gate.nqubits
+    if k == 0:
+        return operator
+    if k == nqubits and gate.qubits == tuple(range(nqubits)):
+        return gate_matrix @ operator
+
+    op_tensor = operator.reshape([2] * nqubits + [2] * nqubits)
+    gate_tensor = gate_matrix.reshape([2] * k + [2] * k)
+
+    output_axes = list(gate.qubits)
+    contracted = np.tensordot(gate_tensor, op_tensor, axes=(list(range(k, 2 * k)), output_axes))
+
+    output_set = set(output_axes)
+    out_current = output_axes + [q for q in range(nqubits) if q not in output_set]
+    out_positions = {q: i for i, q in enumerate(out_current)}
+    perm_output = [out_positions[q] for q in range(nqubits)]
+    perm = perm_output + list(range(nqubits, 2 * nqubits))
+
+    return np.transpose(contracted, axes=perm).reshape(operator.shape)
 
 
 @yaml.register_class
@@ -76,47 +107,67 @@ class Circuit(Parameterizable):
         """
         return self._gates
 
-    def get_parameter_values(self) -> list[float]:
+    def get_parameter_values(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
         """
-        Retrieve the parameter values from all parameterized gates in the circuit.
+        Retrieve parameter values from gates in insertion order.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
-            list[float]: A list of parameter values from each parameterized gate.
+            list[float]: Parameter values matching the optional filter.
         """
-        return [param.value for param in self._parameters.values()]
+        return super().get_parameter_values(where=where)
 
-    def get_parameter_names(self) -> list[str]:
+    def get_parameter_names(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
         """
-        Retrieve the parameter values from all parameterized gates in the circuit.
+        Retrieve parameter labels from gates in insertion order.
 
-        Returns:
-            list[float]: A list of parameter values from each parameterized gate.
-        """
-        return list(self._parameters.keys())
-
-    def get_parameters(self) -> dict[str, float]:
-        """
-        Retrieve the parameter names and values from all parameterized gates in the circuit.
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
-            dict[str, float]: A dictionary of the parameters with their current values.
+            list[str]: Parameter labels matching the optional filter.
         """
-        return {label: param.value for label, param in self._parameters.items()}
+        return super().get_parameter_names(where=where)
 
-    def set_parameter_values(self, values: list[float]) -> None:
+    def get_parameters(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, float]:
+        """
+        Retrieve parameter labels and values from the circuit.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
+
+        Returns:
+            dict[str, float]: Mapping of parameter labels to their current values.
+        """
+        return super().get_parameters(where=where)
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
         """
         Set new parameter values for all parameterized gates in the circuit.
 
         Args:
             values (list[float]): A list containing new parameter values to assign to the parameterized gates.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
 
         Raises:
-            ParametersNotEqualError: If the number of provided values does not match the expected number of parameters.
+            ParametersNotEqualError: If ``values`` length does not match the selected parameter count.
         """
-        if len(values) != self.nparameters:
-            raise ParametersNotEqualError
-        for i, parameter in enumerate(self._parameters.values()):
-            parameter.set_value(values[i])
+        super().set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
@@ -132,8 +183,11 @@ class Circuit(Parameterizable):
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
             self._parameters[label].set_value(param)
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        return {k: v.bounds for k, v in self._parameters.items()}
+    def get_parameter_bounds(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():
@@ -150,7 +204,7 @@ class Circuit(Parameterizable):
             gate (Gate): The gate to be parsed.
         """
         if gate.is_parameterized:
-            param_base_label = f"{gate.name}({','.join(map(str, gate.qubits))})"
+            param_base_label = self.get_prefix() + f"{gate.name}({','.join(map(str, gate.qubits))})"
             for label, parameter in gate.parameters.items():
                 if label == parameter.label and label in gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
@@ -249,6 +303,21 @@ class Circuit(Parameterizable):
 
         for i, g in enumerate(circuit.gates):
             self.insert(g, i)
+
+    def to_matrix(self) -> np.ndarray:
+        """Return the full unitary matrix representation of the circuit.
+
+        Raises:
+            GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).
+        """
+        dim = 1 << self.nqubits
+        operator = np.eye(dim, dtype=_complex_dtype())
+        for gate in self.gates:
+            operator = _apply_gate_left(operator, gate, self.nqubits)
+        return operator
+
+    def to_qtensor(self) -> QTensor:
+        return QTensor(self.to_matrix())
 
     def __add__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
         if not isinstance(other, (Circuit, Gate)):

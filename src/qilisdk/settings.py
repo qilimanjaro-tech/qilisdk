@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -63,7 +63,7 @@ class QiliSDKSettings(BaseSettings):
         default=None,
         description="SpeQtrum username used for authentication. [env: QILISDK_SPEQTRUM_USERNAME]",
     )
-    speqtrum_apikey: str | None = Field(
+    speqtrum_apikey: SecretStr | None = Field(
         default=None,
         description="SpeQtrum API key associated with the user account. [env: QILISDK_SPEQTRUM_APIKEY]",
     )

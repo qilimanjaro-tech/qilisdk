@@ -75,13 +75,15 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
 
 .. list-table::
    :header-rows: 1
-   :widths: 35 20 20 25
+   :widths: 30 16 16 18 20
 
    * - Backend
      - Sampling
      - TimeEvolution
+     - QuantumReservoir
      - VariationalProgram
    * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
+     - ✓
      - ✓
      - ✓
      - ✓
@@ -89,7 +91,9 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
      - ✓
      - ✓
      - ✓
+     - ✓
    * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
+     - ✓
      - ✓
      - ✓
      - ✓
@@ -118,12 +122,26 @@ There is no need to install QiliSim separately, as it is included with the core 
 
 **Parameters**
 
-- ``evolution_method`` (str, optional): The method for simulating time evolution. Options include 'direct', 'arnoldi' and 'integrate'. Default is 'integrate'.
-- ``arnoldi_dim`` (int, optional): Dimension of the Krylov subspace for the Arnoldi method. Default is 10.
-- ``num_arnoldi_substeps`` (int, optional): Number of substeps for the Arnoldi method per timestep. Default is 1.
-- ``num_integration_substeps`` (int, optional): Number of integration steps for the integrate method per timestep. Default is 2.
-- ``monte_carlo`` (bool, optional): Whether to use the Monte Carlo wavefunction method. Default is False.
-- ``num_monte_carlo_trajectories`` (int, optional): Number of trajectories to simulate when using the Monte Carlo method. Default is 100.
+- ``noise_model`` (:class:`~qilisdk.noise.noise_model.NoiseModel`, optional): Noise model applied during simulation.
+- ``analog_simulation_method`` (:class:`~qilisdk.backends.backend_config.AnalogMethod`, optional): Analog simulation method and method-specific options.
+- ``digital_simulation_method`` (:class:`~qilisdk.backends.backend_config.DigitalMethod`, optional): Digital simulation options.
+- ``execution_config`` (:class:`~qilisdk.backends.backend_config.ExecutionConfig`, optional): Runtime execution options such as thread count and random seed.
+
+**Configuration example**
+
+.. code-block:: python
+
+    from qilisdk.backends import QiliSim
+    from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.arnoldi(
+            dim=16,
+            num_substeps=2
+        ),
+        digital_simulation_method=DigitalMethod.state_vector(max_cache_size=2_000),
+        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200)),
+    )
 
 **Example**
 
@@ -297,4 +315,3 @@ It is the most lightweight option, ideal for local development or environments w
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]
     )
-

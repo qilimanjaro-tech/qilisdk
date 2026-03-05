@@ -14,12 +14,12 @@
 
 import numpy as np
 import pytest
-from scipy.sparse import csc_array, csr_matrix, issparse
+from scipy.sparse import coo_matrix, csc_array, csr_matrix, issparse
 from scipy.sparse.linalg import ArpackNoConvergence
 from scipy.sparse.linalg import norm as scipy_norm
 
 import qilisdk
-from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, tensor_prod
+from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, reset_qubits, tensor_prod
 
 # --- Constructor Tests ---
 
@@ -397,6 +397,41 @@ def test_to_dm_from_scalar():
         qscalar.to_density_matrix()
 
 
+def test_repair_density_matrix_from_ket():
+    qket_obj = ket(0)
+    repaired = qket_obj.to_density_matrix()
+    expected = ket(0).to_density_matrix()
+    np.testing.assert_allclose(repaired.dense(), expected.dense(), atol=1e-8)
+    assert repaired.is_density_matrix()
+
+
+def test_repair_density_matrix_operator():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    repaired = qobj.to_density_matrix(0.5)
+    expected = ket(0).to_density_matrix()
+    np.testing.assert_allclose(repaired.dense(), expected.dense(), atol=1e-8)
+    assert repaired.is_density_matrix()
+
+
+def test_repair_density_matrix_large_correction_raises():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    with pytest.raises(ValueError, match="large correction"):
+        qobj.to_density_matrix(max_relative_correction=0.1)
+
+
+def test_repair_density_matrix_invalid_object_raises():
+    qobj = QTensor(np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.complex128))
+    qobj._data = csr_matrix(np.array([[1, 2, 3], [3, 4, 5]]))
+    with pytest.raises(ValueError, match=r"Invalid object for density matrix conversion."):
+        qobj.to_density_matrix()
+
+
+def test_repair_density_matrix_invalid_threshold_raises():
+    qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    with pytest.raises(ValueError, match="must be positive"):
+        qobj.to_density_matrix(max_relative_correction=0.0)
+
+
 # --- Helper Function Tests ---
 
 
@@ -489,7 +524,10 @@ def test_to_density_matrix():
     s = ket(0) + ket(1)
     qdm = s @ s.adjoint()
 
-    with pytest.raises(ValueError, match=r"Operator is not a density matrix \(trace\≠1 or not Hermitian\)."):
+    with pytest.raises(
+        ValueError,
+        match=r"Repairing the density matrix required a large correction \(relative Frobenius correction=5.000e-01\)",
+    ):
         qdm.to_density_matrix()
 
     s = ket(0)
@@ -535,6 +573,36 @@ def test_bad_partial_trace():
     qket._data = csr_matrix((big_dim, 1))
     assert qket.is_ket()
     qket.ptrace(keep=[], dims=[2 for _ in range(21)])
+
+
+def test_reset_qubits_resets_each_requested_qubit():
+    state = ket(1, 1).to_density_matrix()
+    reset_state = reset_qubits(state, [1, 0])
+    expected = ket(0, 0).to_density_matrix()
+    np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
+
+
+def test_reset_qubits_preserves_rest_qubits_coherence_and_order():
+    state = (ket(0, 1, 0) + ket(1, 1, 1)) * (1 / np.sqrt(2))
+    state = state.to_density_matrix()
+
+    reset_state = reset_qubits(state, [1])
+    expected = ((ket(0, 0, 0) + ket(1, 0, 1)) * (1 / np.sqrt(2))).to_density_matrix()
+
+    np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
+
+
+def test_reset_qubits_invalid_indices_raise():
+    state = ket(1, 0).to_density_matrix()
+    with pytest.raises(ValueError, match="Invalid qubit indices"):
+        reset_qubits(state, [2])
+    with pytest.raises(ValueError, match="Invalid qubit indices"):
+        reset_qubits(state, [-1])
+
+
+def test_reset_qubits_requires_density_matrix():
+    with pytest.raises(ValueError, match="requires a density matrix"):
+        reset_qubits(ket(0), [0])
 
 
 def test_large_trace_norm():
@@ -668,3 +736,36 @@ def test_qtensor_hash():
 
     assert hash(q1) == hash(q2)
     assert hash(q1) != hash(q3)
+
+
+def test_qtensor_hash_stable_across_calls():
+    q = QTensor(np.array([[1, 0], [0, 1]]))
+    first = hash(q)
+    second = hash(q)
+    third = hash(q)
+
+    assert first == second == third
+
+
+def test_qtensor_hash_independent_of_sparse_input_order():
+    rows_a = np.array([1, 0, 1])
+    cols_a = np.array([0, 1, 1])
+    data_a = np.array([2.0, 3.0, 4.0], dtype=np.complex128)
+
+    rows_b = np.array([1, 1, 0])
+    cols_b = np.array([1, 0, 1])
+    data_b = np.array([4.0, 2.0, 3.0], dtype=np.complex128)
+
+    q1 = QTensor(coo_matrix((data_a, (rows_a, cols_a)), shape=(2, 2)))
+    q2 = QTensor(coo_matrix((data_b, (rows_b, cols_b)), shape=(2, 2)))
+
+    assert q1 == q2
+    assert hash(q1) == hash(q2)
+
+
+def test_qtensor_hash_changes_when_data_changes():
+    q1 = QTensor(np.array([[1, 0], [0, 1]]))
+    q2 = QTensor(np.array([[1, 0], [0, 2]]))
+
+    assert q1 != q2
+    assert hash(q1) != hash(q2)

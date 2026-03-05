@@ -21,7 +21,8 @@ import pytest
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, CZ, RX, H, M
+from qilisdk.digital.gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.utils import openqasm2 as openqasm2_utils
 from qilisdk.utils.openqasm2 import from_qasm2, from_qasm2_file, to_qasm2, to_qasm2_file
 
 
@@ -236,6 +237,50 @@ def test_two_qubit_parameterized_gate(monkeypatch):
     assert gate.get_parameter_values() == []
 
 
+def test_from_qasm2_parameter_expression_with_pi():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rz(1.8762128220396368*pi) q[0];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 1
+    assert len(circuit.gates) == 1
+    gate = circuit.gates[0]
+    assert gate.name == "RZ"
+    assert gate.qubits == (0,)
+    assert gate.get_parameter_values() == [pytest.approx(1.8762128220396368 * math.pi)]
+
+
+def test_from_qasm2_parameter_expression_with_function():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rx(sin(pi/2)) q[0];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert len(circuit.gates) == 1
+    gate = circuit.gates[0]
+    assert gate.name == "RX"
+    assert gate.get_parameter_values() == [pytest.approx(1.0)]
+
+
+def test_from_qasm2_rejects_deeper_parameter_nesting():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "rx(sin(cos(pi))) q[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match=r"nesting deeper than 2 levels is not supported."):
+        from_qasm2(qasm_str)
+
+
 def test_measurements_from_qasm():
     qasm_str = "\n".join(
         [
@@ -273,3 +318,152 @@ def test_measure_all_without_qreg():
     )
     with pytest.raises(ValueError, match="must be declared"):
         from_qasm2(qasm_str)
+
+
+def test_to_qasm2_all_supported_gates():
+    circuit = Circuit(2)
+    circuit.add(X(0))
+    circuit.add(Y(0))
+    circuit.add(Z(0))
+    circuit.add(H(0))
+    circuit.add(S(0))
+    circuit.add(T(0))
+    circuit.add(RX(0, theta=0.1))
+    circuit.add(RY(0, theta=0.2))
+    circuit.add(RZ(0, phi=0.3))
+    circuit.add(U1(0, phi=0.4))
+    circuit.add(U2(0, phi=0.5, gamma=0.6))
+    circuit.add(U3(0, theta=0.7, phi=0.8, gamma=0.9))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CZ(0, 1))
+
+    qasm_str = to_qasm2(circuit)
+    expected_lines = [
+        "x q[0];",
+        "y q[0];",
+        "z q[0];",
+        "h q[0];",
+        "s q[0];",
+        "t q[0];",
+        "rx(0.1) q[0];",
+        "ry(0.2) q[0];",
+        "rz(0.3) q[0];",
+        "u1(0.4) q[0];",
+        "u2(0.5, 0.6) q[0];",
+        "u3(0.7, 0.8, 0.9) q[0];",
+        "cx q[0], q[1];",
+        "cz q[0], q[1];",
+    ]
+    for expected_line in expected_lines:
+        assert expected_line in qasm_str
+
+
+def test_from_qasm2_all_supported_gates():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            'include "qelib1.inc";',
+            "qreg q[2];",
+            "x q[0];",
+            "y q[0];",
+            "z q[0];",
+            "h q[0];",
+            "s q[0];",
+            "t q[0];",
+            "rx(0.1) q[0];",
+            "ry(0.2) q[0];",
+            "rz(0.3) q[0];",
+            "u1(0.4) q[0];",
+            "u2(0.5, 0.6) q[0];",
+            "u3(0.7, 0.8, 0.9) q[0];",
+            "cx q[0], q[1];",
+            "cz q[0], q[1];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert [gate.name for gate in circuit.gates] == [
+        "X",
+        "Y",
+        "Z",
+        "H",
+        "S",
+        "T",
+        "RX",
+        "RY",
+        "RZ",
+        "U1",
+        "U2",
+        "U3",
+        "CNOT",
+        "CZ",
+    ]
+    assert circuit.gates[6].get_parameter_values() == [pytest.approx(0.1)]
+    assert circuit.gates[7].get_parameter_values() == [pytest.approx(0.2)]
+    assert circuit.gates[8].get_parameter_values() == [pytest.approx(0.3)]
+    assert circuit.gates[9].get_parameter_values() == [pytest.approx(0.4)]
+    assert circuit.gates[10].get_parameter_values() == [pytest.approx(0.5), pytest.approx(0.6)]
+    assert circuit.gates[11].get_parameter_values() == [
+        pytest.approx(0.7),
+        pytest.approx(0.8),
+        pytest.approx(0.9),
+    ]
+
+
+def test_measure_all_from_qasm():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[2];",
+            "creg c[2];",
+            "measure q -> c;",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert len(circuit.gates) == 1
+    assert circuit.gates[0].name == "M"
+    assert circuit.gates[0].qubits == (0, 1)
+
+
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [
+        ("pi", math.pi),
+        ("+pi", math.pi),
+        ("-pi", -math.pi),
+        ("pi^2", math.pi**2),
+        ("sqrt(4)", 2.0),
+        ("ln(exp(1))", 1.0),
+        ("sin(pi/2)", 1.0),
+    ],
+)
+def test_evaluate_qasm2_expression_valid(expression: str, expected: float):
+    value = openqasm2_utils._evaluate_qasm2_expression(expression)
+    assert value == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    ("expression", "error_match"),
+    [
+        ("", "Empty parameter expression"),
+        ("pi/", "Invalid parameter expression"),
+        ("theta", "Unsupported symbol"),
+        ("foo(pi)", "Unsupported function"),
+        ("sin(pi, 1)", "Unsupported function signature"),
+        ("a.b(pi)", "Unsupported function"),
+    ],
+)
+def test_evaluate_qasm2_expression_invalid(expression: str, error_match: str):
+    with pytest.raises(ValueError, match=error_match):
+        openqasm2_utils._evaluate_qasm2_expression(expression)
+
+
+def test_parse_qasm2_gate_line_branches():
+    assert openqasm2_utils._parse_qasm2_gate_line("h q[0]") is None
+    assert openqasm2_utils._parse_qasm2_gate_line(";") is None
+    assert openqasm2_utils._parse_qasm2_gate_line("@@@;") is None
+    assert openqasm2_utils._parse_qasm2_gate_line("h;") is None
+    assert openqasm2_utils._parse_qasm2_gate_line("h q[0];") == ("h", None, "q[0]")
+    assert openqasm2_utils._parse_qasm2_gate_line("rx(pi/2) q[0];") == ("rx", "pi/2", "q[0]")
+
+    with pytest.raises(ValueError, match="Unclosed parameter expression"):
+        openqasm2_utils._parse_qasm2_gate_line("rx(pi/2 q[0];")

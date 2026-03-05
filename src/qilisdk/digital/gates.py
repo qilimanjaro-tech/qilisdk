@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import numpy as np
 from scipy.linalg import expm
@@ -31,6 +31,9 @@ from .exceptions import (
     InvalidParameterNameError,
     ParametersNotEqualError,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
@@ -134,36 +137,54 @@ class Gate(Parameterizable, ABC):
         """Returns the raw parameter objects stored in the gate.
 
         Returns:
-            dict[str, Parameter]: A dictionary mapping each Parameter object to its label.
+            dict[str, Parameter]: Mapping from parameter label to parameter object.
         """
         return {}
 
-    def get_parameters(self) -> dict[str, float]:  # noqa: PLR6301
+    def get_parameters(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, float]:
         """
         Retrieve a mapping of parameter names to their corresponding values.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
             dict[str, float]: A dictionary mapping each parameter name to its numeric value.
         """
-        return {}
+        return super().get_parameters(where=where)
 
-    def get_parameter_names(self) -> list[str]:
+    def get_parameter_names(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
         """
         Retrieve the symbolic names of the gate's parameters.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
             list[str]: A list containing the names of the parameters.
         """
-        return list(self.get_parameters())
+        return super().get_parameter_names(where=where)
 
-    def get_parameter_values(self) -> list[float]:
+    def get_parameter_values(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
         """
         Retrieve the numerical values assigned to the gate's parameters.
+
+        Args:
+            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
 
         Returns:
             list[float]: A list containing the parameter values.
         """
-        return list(self.get_parameters().values())
+        return super().get_parameter_values(where=where)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
@@ -182,25 +203,34 @@ class Gate(Parameterizable, ABC):
         if any(name not in self.get_parameters() for name in parameters):
             raise InvalidParameterNameError
 
-    def set_parameter_values(self, values: list[float]) -> None:
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
         """
         Set the numerical values for the gate's parameters.
 
         Args:
             values (list[float]): A list containing new parameter values.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
 
         Raises:
             GateNotParameterizedError: If gate is not parameterized.
-            ParametersNotEqualError: If the number of provided values does not match the expected parameter count.
+            ParametersNotEqualError: If ``values`` length does not match the selected parameter count.
         """
         if not self.is_parameterized:
             raise GateNotParameterizedError
 
-        if len(values) != len(self.get_parameters()):
+        if len(values) != len(self.get_parameters(where=where)):
             raise ParametersNotEqualError
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:  # noqa: PLR6301
-        return {}
+    def get_parameter_bounds(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        """Return parameter bounds, optionally filtered by predicate."""
+        return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if not self.is_parameterized:
@@ -228,6 +258,7 @@ class BasicGate(Gate):
         Args:
             target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
             parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
+            parameter_transforms (dict[str, Term] | None): Optional symbolic transforms keyed by parameter name.
 
         Raises:
             ValueError: if duplicate target qubits are found.
@@ -269,8 +300,11 @@ class BasicGate(Gate):
     def parameters(self) -> dict[str, Parameter]:
         return self._parameters
 
-    def get_parameters(self) -> dict[str, float]:
-        return {k: v.value for k, v in self._parameters.items()}
+    def get_parameters(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, float]:
+        return super().get_parameters(where=where)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -278,16 +312,22 @@ class BasicGate(Gate):
             self._parameters[k].set_value(v)
         self._matrix = self._generate_matrix()
 
-    def set_parameter_values(self, values: list[float]) -> None:
-        super().set_parameter_values(values=values)
-
-        for key, value in zip(self.get_parameters(), values):
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        super().set_parameter_values(values=values, where=where)
+        for key, value in zip(self.get_parameters(where=where), values):
             self._parameters[key].set_value(value)
 
         self._matrix = self._generate_matrix()
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        return {k: v.bounds for k, v in self._parameters.items()}
+    def get_parameter_bounds(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
@@ -371,25 +411,41 @@ class Modified(Gate, Generic[TBasicGate]):
     def parameters(self) -> dict[str, Parameter]:
         return self._basic_gate.parameters
 
-    def get_parameters(self) -> dict[str, float]:
-        return self._basic_gate.get_parameters()
+    def get_parameters(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, float]:
+        return self._basic_gate.get_parameters(where=where)
 
-    def get_parameter_names(self) -> list[str]:
-        return self._basic_gate.get_parameter_names()
+    def get_parameter_names(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[str]:
+        return self._basic_gate.get_parameter_names(where=where)
 
-    def get_parameter_values(self) -> list[float]:
-        return self._basic_gate.get_parameter_values()
+    def get_parameter_values(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> list[float]:
+        return self._basic_gate.get_parameter_values(where=where)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
         self._matrix = self._generate_matrix()
 
-    def set_parameter_values(self, values: list[float]) -> None:
-        self._basic_gate.set_parameter_values(values=values)
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        self._basic_gate.set_parameter_values(values=values, where=where)
         self._matrix = self._generate_matrix()
 
-    def get_parameter_bounds(self) -> dict[str, tuple[float, float]]:
-        return self._basic_gate.get_parameter_bounds()
+    def get_parameter_bounds(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, tuple[float, float]]:
+        return self._basic_gate.get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         self._basic_gate.set_parameter_bounds(ranges)
@@ -510,9 +566,10 @@ class M(Gate):
         Initialize a measurement operation.
 
         Args:
-            qubit (int): The qubit index to be measured.
+            qubits (int): One or more qubit indices to measure.
         """
         self._target_qubits = qubits
+        super().__init__()
 
     @property
     def name(self) -> str:
@@ -543,10 +600,10 @@ class I(BasicGate):
 
     def __init__(self, qubit: int) -> None:
         """
-        Initialize a Pauli-X gate.
+        Initialize an identity gate.
 
         Args:
-            qubit (int): The target qubit index for the X gate.
+            qubit (int): The target qubit index for the identity gate.
         """
         super().__init__(target_qubits=(qubit,))
 
@@ -840,6 +897,10 @@ class RX(BasicGate):
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
 
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
+
 
 @yaml.register_class
 class RY(BasicGate):
@@ -901,6 +962,10 @@ class RY(BasicGate):
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -970,6 +1035,10 @@ class RZ(BasicGate):
         phi = self.phi
         return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
 
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
+
 
 @yaml.register_class
 class U1(BasicGate):
@@ -1032,6 +1101,10 @@ class U1(BasicGate):
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1117,6 +1190,10 @@ class U2(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1223,6 +1300,10 @@ class U3(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return self._generate_matrix()
 
 
 @yaml.register_class
