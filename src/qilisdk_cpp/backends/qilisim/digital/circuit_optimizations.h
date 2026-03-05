@@ -1,4 +1,4 @@
-// Copyright 2025 Qilimanjaro Quantum Tech
+// Copyright 2026 Qilimanjaro Quantum Tech
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,6 @@
 // limitations under the License.
 #pragma once
 
-#include <complex>
-#include <vector>
-#include "../libs/eigen.h"
-#include "../libs/pybind.h"
+#include "gate.h"
 
-SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol);
-SparseMatrix from_spmatrix(const py::object& matrix, double atol);
-py::array_t<double> to_numpy(const std::vector<double>& vec);
-py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs);
-py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix);
-py::array_t<std::complex<double>> to_numpy(const DenseMatrix& matrix);
+std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates);

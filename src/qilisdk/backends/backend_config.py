@@ -93,9 +93,9 @@ class AnalogMethod(BaseSimulatorConfig):
         num_integrate_substeps: Number of integration substeps per schedule step for the Integrate method.
     """
 
-    evolution_method: Literal["direct", "arnoldi", "integrate"] = Field(
+    evolution_method: Literal["direct", "arnoldi", "integrate", "integrate_matrix_free"] = Field(
         default="integrate",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', or 'integrate'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate', or 'integrate_matrix_free'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -125,16 +125,20 @@ class AnalogMethod(BaseSimulatorConfig):
         return d
 
     @classmethod
-    def integrator(cls, *, num_substeps: int = 2, monte_carlo: MonteCarloConfig | None = None) -> AnalogMethod:
+    def integrator(
+        cls, *, num_substeps: int = 2, matrix_free: bool = False, monte_carlo: MonteCarloConfig | None = None
+    ) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
         Args:
             num_substeps: Number of integration substeps per schedule step when using the Integrate method.
+            matrix_free: Whether to use the matrix-free implementation for the Integrate method.
 
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
-        return cls(evolution_method="integrate", num_integrate_substeps=num_substeps)
+        evolution_method = "integrate_matrix_free" if matrix_free else "integrate"
+        return cls(evolution_method=evolution_method, num_integrate_substeps=num_substeps)
 
     @classmethod
     def arnoldi(
@@ -241,7 +245,7 @@ class DigitalMethod(BaseSimulatorConfig):
     """Configuration for digital-circuit simulation options.
 
     Preferred constructors:
-        - :meth:`state_vector` for standard state-vector simulation settings.
+        - :meth:`statevector` for standard state-vector simulation settings.
 
     Args:
         max_cache_size: Maximum number of cached gate representations used by the digital simulator.
@@ -252,21 +256,51 @@ class DigitalMethod(BaseSimulatorConfig):
         ge=0,
         description="Maximum number of cached gate representations used by the digital simulator.",
     )
+    normalize_after_each_gate: bool = Field(
+        default=True,
+        description="Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.",
+    )
+    combine_single_qubit_gates: bool = Field(
+        default=True,
+        description="Whether to combine consecutive single-qubit gates into a single operation to reduce overhead at the cost of increased memory usage.",
+    )
+    matrix_free: bool = Field(
+        default=True,
+        description="Whether to use the matrix-free implementation for statevector simulation.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
         return {
             "max_cache_size": self.max_cache_size,
+            "sampling_method": "statevector_matrix_free" if self.matrix_free else "statevector",
+            "normalize_after_each_gate": self.normalize_after_each_gate,
+            "combine_single_qubit_gates": self.combine_single_qubit_gates,
         }
 
     @classmethod
-    def state_vector(cls, *, max_cache_size: int = 1000) -> DigitalMethod:
-        """Build the standard state-vector simulation configuration.
+    def statevector(
+        cls,
+        *,
+        max_cache_size: int = 1000,
+        normalize_after_each_gate: bool = False,
+        matrix_free: bool = True,
+        combine_single_qubit_gates: bool = True,
+    ) -> DigitalMethod:
+        """Build the standard statevector simulation configuration.
 
         Args:
             max_cache_size: Maximum number of cached gate representations used by the digital simulator.
+            normalize_after_each_gate: Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.
+            matrix_free: Whether to use the matrix-free implementation for statevector simulation.
+            combine_single_qubit_gates: Whether to combine consecutive single-qubit gates into a single operation.
 
         Returns:
-            DigitalMethod: Configured state-vector digital configuration.
+            DigitalMethod: Configured statevector digital configuration.
         """
-        return cls(max_cache_size=max_cache_size)
+        return cls(
+            max_cache_size=max_cache_size,
+            normalize_after_each_gate=normalize_after_each_gate,
+            combine_single_qubit_gates=combine_single_qubit_gates,
+            matrix_free=matrix_free,
+        )
