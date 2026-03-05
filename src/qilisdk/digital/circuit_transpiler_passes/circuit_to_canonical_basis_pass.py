@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import math
+from enum import Enum
 from typing import TypeGuard
 
 from qilisdk.digital import Circuit
@@ -60,6 +61,13 @@ def _is_adjoint(gate: Gate) -> TypeGuard[Adjoint[BasicGate]]:
     return isinstance(gate, Adjoint)
 
 
+class TwoQubitGateBasis(Enum):
+    """Selectable two-qubit entangler used by canonicalization rewrites."""
+
+    CZ = "CZ"
+    CNOT = "CNOT"
+
+
 # ======================= Small basis building blocks =======================
 
 
@@ -90,7 +98,58 @@ def _CNOT_as_CZ_plus_1q(control_qubit: int, target_qubit: int) -> list[Gate]:
     return [*_H_as_U3(target_qubit), CZ(control_qubit, target_qubit), *_H_as_U3(target_qubit)]
 
 
-def _CRZ_using_CNOT(control_qubit: int, target_qubit: int, lambda_angle: float) -> list[Gate]:
+def _CZ_as_CNOT_plus_1q(control_qubit: int, target_qubit: int) -> list[Gate]:
+    """Return a CZ decomposition using CNOT and single-qubit gates.
+
+    Args:
+        control_qubit (int): Control qubit index.
+        target_qubit (int): Target qubit index.
+
+    Returns:
+        list[Gate]: Equivalent gate sequence in the canonical basis.
+    """
+    # CZ = (I ⊗ H) · CNOT · (I ⊗ H).
+    return [*_H_as_U3(target_qubit), CNOT(control_qubit, target_qubit), *_H_as_U3(target_qubit)]
+
+
+def _cnot_in_basis(control_qubit: int, target_qubit: int, basis: TwoQubitGateBasis) -> list[Gate]:
+    """Emit a CNOT in the selected two-qubit basis.
+
+    Args:
+        control_qubit (int): Control qubit index.
+        target_qubit (int): Target qubit index.
+        basis (TwoQubitGateBasis): Selected two-qubit basis.
+
+    Returns:
+        list[Gate]: Sequence implementing CNOT in the selected basis.
+    """
+    if basis == TwoQubitGateBasis.CNOT:
+        return [CNOT(control_qubit, target_qubit)]
+    return _CNOT_as_CZ_plus_1q(control_qubit, target_qubit)
+
+
+def _cz_in_basis(control_qubit: int, target_qubit: int, basis: TwoQubitGateBasis) -> list[Gate]:
+    """Emit a CZ in the selected two-qubit basis.
+
+    Args:
+        control_qubit (int): Control qubit index.
+        target_qubit (int): Target qubit index.
+        basis (TwoQubitGateBasis): Selected two-qubit basis.
+
+    Returns:
+        list[Gate]: Sequence implementing CZ in the selected basis.
+    """
+    if basis == TwoQubitGateBasis.CZ:
+        return [CZ(control_qubit, target_qubit)]
+    return _CZ_as_CNOT_plus_1q(control_qubit, target_qubit)
+
+
+def _CRZ_using_CNOT(
+    control_qubit: int,
+    target_qubit: int,
+    lambda_angle: float,
+    basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+) -> list[Gate]:
     """Return a controlled-RZ decomposition using CNOT-based primitives.
 
     Args:
@@ -104,13 +163,18 @@ def _CRZ_using_CNOT(control_qubit: int, target_qubit: int, lambda_angle: float) 
     # CRZ(λ) = (I ⊗ RZ(λ/2)) · CNOT · (I ⊗ RZ(-λ/2)) · CNOT.
     return [
         RZ(target_qubit, phi=_wrap_angle(lambda_angle / 2.0)),
-        *_CNOT_as_CZ_plus_1q(control_qubit, target_qubit),
+        *_cnot_in_basis(control_qubit, target_qubit, basis),
         RZ(target_qubit, phi=_wrap_angle(-lambda_angle / 2.0)),
-        *_CNOT_as_CZ_plus_1q(control_qubit, target_qubit),
+        *_cnot_in_basis(control_qubit, target_qubit, basis),
     ]
 
 
-def _CRX_using_CRZ(control_qubit: int, target_qubit: int, theta: float) -> list[Gate]:
+def _CRX_using_CRZ(
+    control_qubit: int,
+    target_qubit: int,
+    theta: float,
+    basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+) -> list[Gate]:
     """Return a controlled-RX decomposition via controlled-RZ.
 
     Args:
@@ -124,12 +188,17 @@ def _CRX_using_CRZ(control_qubit: int, target_qubit: int, theta: float) -> list[
     # RX(θ) = (I ⊗ RY(-π/2)) · CRZ(θ) · (I ⊗ RY(π/2)).
     return [
         RY(target_qubit, theta=-math.pi / 2.0),
-        *_CRZ_using_CNOT(control_qubit, target_qubit, theta),
+        *_CRZ_using_CNOT(control_qubit, target_qubit, theta, basis),
         RY(target_qubit, theta=math.pi / 2.0),
     ]
 
 
-def _CRY_using_CRZ(control_qubit: int, target_qubit: int, theta: float) -> list[Gate]:
+def _CRY_using_CRZ(
+    control_qubit: int,
+    target_qubit: int,
+    theta: float,
+    basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+) -> list[Gate]:
     """Return a controlled-RY decomposition via controlled-RZ.
 
     Args:
@@ -143,7 +212,7 @@ def _CRY_using_CRZ(control_qubit: int, target_qubit: int, theta: float) -> list[
     # RY(θ) = (I ⊗ RX(π/2)) · CRZ(θ) · (I ⊗ RX(-π/2)).
     return [
         RX(target_qubit, theta=math.pi / 2.0),
-        *_CRZ_using_CNOT(control_qubit, target_qubit, theta),
+        *_CRZ_using_CNOT(control_qubit, target_qubit, theta, basis),
         RX(target_qubit, theta=-math.pi / 2.0),
     ]
 
@@ -154,6 +223,7 @@ def _CU3_using_CNOT(
     theta: float,
     phi: float,
     lambda_angle: float,
+    basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
 ) -> list[Gate]:
     """Return a controlled-U3 decomposition using two CNOT skeletons.
 
@@ -171,9 +241,9 @@ def _CU3_using_CNOT(
     return [
         RZ(control_qubit, phi=_wrap_angle((lambda_angle + phi) / 2.0)),
         U3(target_qubit, theta=theta / 2.0, phi=phi, gamma=0.0),
-        *_CNOT_as_CZ_plus_1q(control_qubit, target_qubit),
+        *_cnot_in_basis(control_qubit, target_qubit, basis),
         U3(target_qubit, theta=-theta / 2.0, phi=0.0, gamma=_wrap_angle(-(lambda_angle + phi) / 2.0)),
-        *_CNOT_as_CZ_plus_1q(control_qubit, target_qubit),
+        *_cnot_in_basis(control_qubit, target_qubit, basis),
         RZ(target_qubit, phi=_wrap_angle((lambda_angle - phi) / 2.0)),
     ]
 
@@ -197,6 +267,8 @@ def _invert_basis_gate(gate: Gate) -> list[Gate]:
         return [RZ(gate.qubits[0], phi=-gate.phi)]
     if isinstance(gate, CZ):
         return [CZ(gate.control_qubits[0], gate.target_qubits[0])]
+    if isinstance(gate, CNOT):
+        return [CNOT(gate.control_qubits[0], gate.target_qubits[0])]
     if isinstance(gate, M):
         return [gate]
     if isinstance(gate, H):
@@ -249,16 +321,32 @@ def _as_basis_1q(gate: Gate) -> Gate:
 
 class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
     """
-    Map an arbitrary circuit to the circuit basis {U3, RX, RY, RZ, CZ} (+ M).
+    Map an arbitrary circuit to the circuit basis {U3, RX, RY, RZ, 2Q} (+ M).
 
-    - Eliminates CNOT / SWAP to CZ + 1Q.
-    - Controlled with one control (target 1-qubit) → CZ + 1Q synthesis.
+    The two-qubit basis gate is selectable via ``two_qubit_basis``:
+    ``TwoQubitGateBasis.CZ`` or ``TwoQubitGateBasis.CNOT``.
+
+    - Rewrites CNOT / CZ / SWAP to the selected two-qubit basis + 1Q gates.
+    - Controlled with one control (target 1-qubit) → selected two-qubit basis + 1Q synthesis.
     - Multi-controlled gates are intentionally out of scope for this pass.
     - Adjoint(g) → canonicalize(g) then reverse+invert.
     - Exponential(1q) → ZYZ → U3.
 
     NOTE: This pass does *not* perform any 1-qubit fusion/merging.
     """
+
+    def __init__(self, two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ) -> None:
+        if not isinstance(two_qubit_basis, TwoQubitGateBasis):
+            raise TypeError(
+                "two_qubit_basis must be a TwoQubitGateBasis value "
+                f"(got {type(two_qubit_basis).__name__})."
+            )
+        self._two_qubit_basis = two_qubit_basis
+
+    @property
+    def two_qubit_basis(self) -> TwoQubitGateBasis:
+        """Two-qubit basis gate used by this pass."""
+        return self._two_qubit_basis
 
     def run(self, circuit: Circuit) -> Circuit:
         """Rewrite a circuit into the canonical digital basis.
@@ -309,7 +397,11 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
             return [gate]
 
         # already basis
-        if isinstance(gate, (U3, RX, RY, RZ, CZ)):
+        if isinstance(gate, (U3, RX, RY, RZ)):
+            return [gate]
+        if self._two_qubit_basis == TwoQubitGateBasis.CZ and isinstance(gate, CZ):
+            return [gate]
+        if self._two_qubit_basis == TwoQubitGateBasis.CNOT and isinstance(gate, CNOT):
             return [gate]
 
         # simple 1q
@@ -333,13 +425,16 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
         # 2q
         if isinstance(gate, CNOT):
             control_qubit, target_qubit = gate.control_qubits[0], gate.target_qubits[0]
-            return _CNOT_as_CZ_plus_1q(control_qubit, target_qubit)
+            return _cnot_in_basis(control_qubit, target_qubit, self._two_qubit_basis)
+        if isinstance(gate, CZ):
+            control_qubit, target_qubit = gate.control_qubits[0], gate.target_qubits[0]
+            return _cz_in_basis(control_qubit, target_qubit, self._two_qubit_basis)
         if isinstance(gate, SWAP):
             first_target_qubit, second_target_qubit = gate.target_qubits
             return (
-                _CNOT_as_CZ_plus_1q(first_target_qubit, second_target_qubit)
-                + _CNOT_as_CZ_plus_1q(second_target_qubit, first_target_qubit)
-                + _CNOT_as_CZ_plus_1q(first_target_qubit, second_target_qubit)
+                _cnot_in_basis(first_target_qubit, second_target_qubit, self._two_qubit_basis)
+                + _cnot_in_basis(second_target_qubit, first_target_qubit, self._two_qubit_basis)
+                + _cnot_in_basis(first_target_qubit, second_target_qubit, self._two_qubit_basis)
             )
 
         # Controlled (single control) over a 1-qubit target
@@ -369,7 +464,7 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
                     basis_one_qubit_gate = RY(target_qubit, theta=basis_one_qubit_gate.theta)
                 elif isinstance(basis_one_qubit_gate, RZ):
                     basis_one_qubit_gate = RZ(target_qubit, phi=basis_one_qubit_gate.phi)
-            return _single_controlled(control_qubits[0], basis_one_qubit_gate)
+            return _single_controlled(control_qubits[0], basis_one_qubit_gate, self._two_qubit_basis)
 
         # Adjoint
         if _is_adjoint(gate):
@@ -398,7 +493,11 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
     # --- single-control synthesis ---
 
 
-def _single_controlled(control_qubit: int, target_gate: Gate) -> list[Gate]:
+def _single_controlled(
+    control_qubit: int,
+    target_gate: Gate,
+    basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+) -> list[Gate]:
     """Return a single-control decomposition for a one-qubit target gate.
 
     Args:
@@ -410,11 +509,11 @@ def _single_controlled(control_qubit: int, target_gate: Gate) -> list[Gate]:
     """
     target_qubit = target_gate.qubits[0]
     if isinstance(target_gate, RZ):
-        return _CRZ_using_CNOT(control_qubit, target_qubit, target_gate.phi)
+        return _CRZ_using_CNOT(control_qubit, target_qubit, target_gate.phi, basis)
     if isinstance(target_gate, RX):
-        return _CRX_using_CRZ(control_qubit, target_qubit, target_gate.theta)
+        return _CRX_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis)
     if isinstance(target_gate, RY):
-        return _CRY_using_CRZ(control_qubit, target_qubit, target_gate.theta)
+        return _CRY_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis)
     if isinstance(target_gate, U3):
         return _CU3_using_CNOT(
             control_qubit,
@@ -422,5 +521,6 @@ def _single_controlled(control_qubit: int, target_gate: Gate) -> list[Gate]:
             target_gate.theta,
             target_gate.phi,
             target_gate.gamma,
+            basis,
         )
-    return _single_controlled(control_qubit, _as_basis_1q(target_gate))
+    return _single_controlled(control_qubit, _as_basis_1q(target_gate), basis)

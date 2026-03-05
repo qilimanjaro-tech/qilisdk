@@ -8,6 +8,7 @@ import pytest
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass import (
     CircuitToCanonicalBasisPass,
+    TwoQubitGateBasis,
     _as_basis_1q,
     _invert_basis_gate,
     _single_controlled,
@@ -58,6 +59,7 @@ def test_invert_basis_gate_handles_known_types():
         RX(0, theta=0.4),
         RY(0, theta=-0.5),
         RZ(0, phi=0.7),
+        CNOT(0, 1),
         CZ(0, 1),
         M(0),
         H(0),
@@ -66,9 +68,9 @@ def test_invert_basis_gate_handles_known_types():
         Z(0),
     ]
     inverted = [_invert_basis_gate(g) for g in gates]
-    assert [seq[0].name for seq in inverted[:5]] == ["U3", "RX", "RY", "RZ", "CZ"]
-    assert inverted[5][0].name == "M"
-    assert [seq[0].name for seq in inverted[6:]] == ["U3", "RX", "RY", "RZ"]
+    assert [seq[0].name for seq in inverted[:6]] == ["U3", "RX", "RY", "RZ", "CNOT", "CZ"]
+    assert inverted[6][0].name == "M"
+    assert [seq[0].name for seq in inverted[7:]] == ["U3", "RX", "RY", "RZ"]
 
     dummy = DummyBasicGate((0,), np.eye(2))
     assert isinstance(_invert_basis_gate(dummy)[0], Adjoint)
@@ -103,6 +105,22 @@ def test_single_controlled_paths():
     assert _count_gate_names(ry_seq)["CZ"] >= 1
     assert _count_gate_names(u3_seq)["CZ"] >= 1
     assert _count_gate_names(recursive_seq)["CZ"] >= 1
+
+
+def test_single_controlled_paths_cnot_basis():
+    rz_seq = _single_controlled(1, RZ(0, phi=0.2), basis=TwoQubitGateBasis.CNOT)
+    rx_seq = _single_controlled(1, RX(0, theta=0.2), basis=TwoQubitGateBasis.CNOT)
+    ry_seq = _single_controlled(1, RY(0, theta=0.2), basis=TwoQubitGateBasis.CNOT)
+    u3_seq = _single_controlled(1, U3(0, theta=0.3, phi=0.2, gamma=-0.1), basis=TwoQubitGateBasis.CNOT)
+    dummy_gate = DummyBasicGate((5,), np.eye(2))
+    recursive_seq = _single_controlled(1, dummy_gate, basis=TwoQubitGateBasis.CNOT)
+
+    assert _count_gate_names(rz_seq)["CNOT"] >= 1
+    assert _count_gate_names(rx_seq)["CNOT"] >= 1
+    assert _count_gate_names(ry_seq)["CNOT"] >= 1
+    assert _count_gate_names(u3_seq)["CNOT"] >= 1
+    assert _count_gate_names(recursive_seq)["CNOT"] >= 1
+    assert _count_gate_names(rz_seq)["CZ"] == 0
 
 
 def test_rewrite_gate_covers_various_cases():
@@ -212,7 +230,7 @@ def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
         fake_as_basis,
     )
 
-    def fake_single(ctrl, base_1q):
+    def fake_single(ctrl, base_1q, _basis):
         captured["base"] = base_1q
         return ["sentinel"]
 
@@ -272,6 +290,26 @@ def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
         pass_instance._rewrite_gate(exponential_multi)
 
 
+def test_canonical_pass_supports_cnot_basis() -> None:
+    pass_instance = CircuitToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
+
+    cnot_rewritten = pass_instance._rewrite_gate(CNOT(0, 1))
+    cz_rewritten = pass_instance._rewrite_gate(CZ(0, 1))
+    swap_rewritten = pass_instance._rewrite_gate(SWAP(0, 1))
+
+    assert len(cnot_rewritten) == 1
+    assert cnot_rewritten[0].name == "CNOT"
+    assert _count_gate_names(cz_rewritten)["CNOT"] == 1
+    assert _count_gate_names(cz_rewritten)["CZ"] == 0
+    assert _count_gate_names(swap_rewritten)["CNOT"] == 3
+    assert _count_gate_names(swap_rewritten)["CZ"] == 0
+
+
+def test_canonical_pass_rejects_invalid_two_qubit_basis() -> None:
+    with pytest.raises(TypeError):
+        CircuitToCanonicalBasisPass(two_qubit_basis="CZ")  # type: ignore[arg-type]
+
+
 def test_canonical_pass_run_produces_basis_circuit():
     circuit = Circuit(3)
     circuit.add(CNOT(0, 1))
@@ -283,4 +321,18 @@ def test_canonical_pass_run_produces_basis_circuit():
     out = pass_instance.run(circuit)
 
     assert all(g.name in {"CZ", "U3", "RX", "RY", "RZ"} for g in out.gates)
+    assert len(out.gates) > 0
+
+
+def test_canonical_pass_run_produces_basis_circuit_for_cnot() -> None:
+    circuit = Circuit(3)
+    circuit.add(CZ(0, 1))
+    circuit.add(SWAP(1, 2))
+    circuit.add(Adjoint(RY(2, theta=0.5)))
+    circuit.add(RX(0, theta=0.3))
+
+    pass_instance = CircuitToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
+    out = pass_instance.run(circuit)
+
+    assert all(g.name in {"CNOT", "U3", "RX", "RY", "RZ"} for g in out.gates)
     assert len(out.gates) > 0

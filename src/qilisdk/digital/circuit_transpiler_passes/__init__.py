@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .cancel_identity_pairs_pass import CancelIdentityPairsPass
-from .circuit_to_canonical_basis_pass import CircuitToCanonicalBasisPass
+from .circuit_to_canonical_basis_pass import CircuitToCanonicalBasisPass, TwoQubitGateBasis
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .custom_layout_pass import CustomLayoutPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
@@ -31,5 +31,6 @@ __all__ = [
     "FuseSingleQubitGatesPass",
     "SabreLayoutPass",
     "SabreSwapPass",
+    "TwoQubitGateBasis",
     "TranspilationContext",
 ]
