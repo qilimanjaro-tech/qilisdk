@@ -68,6 +68,13 @@ class TwoQubitGateBasis(Enum):
     CNOT = "CNOT"
 
 
+class SingleQubitGateBasis(Enum):
+    """Selectable single-qubit basis used by canonicalization rewrites."""
+
+    RxRyRz = "RxRyRz"
+    U3 = "U3"
+
+
 # ======================= Small basis building blocks =======================
 
 
@@ -319,34 +326,110 @@ def _as_basis_1q(gate: Gate) -> Gate:
     raise NotImplementedError(f"Unsupported 1-qubit gate type {type(gate).__name__} in _as_basis_1q")
 
 
+def _normalize_single_qubit_gate(gate: Gate, basis: SingleQubitGateBasis) -> list[Gate]:
+    """Rewrite one-qubit gates to the selected single-qubit basis.
+
+    Args:
+        gate (Gate): Gate to normalize.
+        basis (SingleQubitGateBasis): Target single-qubit basis.
+
+    Raises:
+        TypeError: If an unsupported basis is given.
+
+    Returns:
+        list[Gate]: Equivalent sequence where one-qubit unitary gates are in ``basis``.
+    """
+    if gate.nqubits != 1 or isinstance(gate, M):
+        return [gate]
+
+    qubit = gate.qubits[0]
+
+    if basis == SingleQubitGateBasis.U3:
+        if isinstance(gate, U3):
+            return [gate]
+        if isinstance(gate, RX):
+            return [U3(qubit, theta=gate.theta, phi=-math.pi / 2.0, gamma=math.pi / 2.0)]
+        if isinstance(gate, RY):
+            return [U3(qubit, theta=gate.theta, phi=0.0, gamma=0.0)]
+        if isinstance(gate, RZ):
+            return [U3(qubit, theta=0.0, phi=gate.phi, gamma=0.0)]
+        return _normalize_single_qubit_gate(_as_basis_1q(gate), basis)
+
+    if basis == SingleQubitGateBasis.RxRyRz:
+        if isinstance(gate, (RX, RY, RZ)):
+            return [gate]
+        if isinstance(gate, U3):
+            return [
+                RZ(qubit, phi=_wrap_angle(gate.phi)),
+                RY(qubit, theta=_wrap_angle(gate.theta)),
+                RZ(qubit, phi=_wrap_angle(gate.gamma)),
+            ]
+        return _normalize_single_qubit_gate(_as_basis_1q(gate), basis)
+
+    raise TypeError(f"Unsupported single-qubit basis {basis}")
+
+
+def _normalize_single_qubit_sequence(gates: list[Gate], basis: SingleQubitGateBasis) -> list[Gate]:
+    """Normalize all one-qubit gates in a sequence to the selected basis.
+
+    Args:
+        gates (list[Gate]): Gate sequence to normalize.
+        basis (SingleQubitGateBasis): Target single-qubit basis.
+
+    Returns:
+        list[Gate]: Sequence where every one-qubit gate is expressed in ``basis``.
+    """
+    normalized: list[Gate] = []
+    for gate in gates:
+        normalized += _normalize_single_qubit_gate(gate, basis)
+    return normalized
+
+
 class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
     """
-    Map an arbitrary circuit to the circuit basis {U3, RX, RY, RZ, 2Q} (+ M).
+    Map an arbitrary circuit to the circuit basis {1Q, 2Q} (+ M).
 
     The two-qubit basis gate is selectable via ``two_qubit_basis``:
     ``TwoQubitGateBasis.CZ`` or ``TwoQubitGateBasis.CNOT``.
+    The one-qubit basis set is selectable via ``single_qubit_basis``:
+    ``SingleQubitGateBasis.RxRyRz`` or ``SingleQubitGateBasis.U3``.
 
     - Rewrites CNOT / CZ / SWAP to the selected two-qubit basis + 1Q gates.
     - Controlled with one control (target 1-qubit) → selected two-qubit basis + 1Q synthesis.
     - Multi-controlled gates are intentionally out of scope for this pass.
     - Adjoint(g) → canonicalize(g) then reverse+invert.
-    - Exponential(1q) → ZYZ → U3.
+    - Exponential(1q) → ZYZ, then normalized to the selected 1Q basis.
 
     NOTE: This pass does *not* perform any 1-qubit fusion/merging.
     """
 
-    def __init__(self, two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ) -> None:
+    def __init__(
+        self,
+        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+        single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
+    ) -> None:
         if not isinstance(two_qubit_basis, TwoQubitGateBasis):
             raise TypeError(
                 "two_qubit_basis must be a TwoQubitGateBasis value "
                 f"(got {type(two_qubit_basis).__name__})."
             )
+        if not isinstance(single_qubit_basis, SingleQubitGateBasis):
+            raise TypeError(
+                "single_qubit_basis must be a SingleQubitGateBasis value "
+                f"(got {type(single_qubit_basis).__name__})."
+            )
         self._two_qubit_basis = two_qubit_basis
+        self._single_qubit_basis = single_qubit_basis
 
     @property
     def two_qubit_basis(self) -> TwoQubitGateBasis:
         """Two-qubit basis gate used by this pass."""
         return self._two_qubit_basis
+
+    @property
+    def single_qubit_basis(self) -> SingleQubitGateBasis:
+        """Single-qubit basis set used by this pass."""
+        return self._single_qubit_basis
 
     def run(self, circuit: Circuit) -> Circuit:
         """Rewrite a circuit into the canonical digital basis.
@@ -398,7 +481,7 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
 
         # already basis
         if isinstance(gate, (U3, RX, RY, RZ)):
-            return [gate]
+            return _normalize_single_qubit_sequence([gate], self._single_qubit_basis)
         if self._two_qubit_basis == TwoQubitGateBasis.CZ and isinstance(gate, CZ):
             return [gate]
         if self._two_qubit_basis == TwoQubitGateBasis.CNOT and isinstance(gate, CNOT):
@@ -408,33 +491,43 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
         if isinstance(gate, I):
             return []
         if isinstance(gate, H):
-            return _H_as_U3(gate.qubits[0])
+            return _normalize_single_qubit_sequence(_H_as_U3(gate.qubits[0]), self._single_qubit_basis)
         if isinstance(gate, X):
-            return [RX(gate.qubits[0], theta=math.pi)]
+            return _normalize_single_qubit_sequence([RX(gate.qubits[0], theta=math.pi)], self._single_qubit_basis)
         if isinstance(gate, Y):
-            return [RY(gate.qubits[0], theta=math.pi)]
+            return _normalize_single_qubit_sequence([RY(gate.qubits[0], theta=math.pi)], self._single_qubit_basis)
         if isinstance(gate, Z):
-            return [RZ(gate.qubits[0], phi=math.pi)]
+            return _normalize_single_qubit_sequence([RZ(gate.qubits[0], phi=math.pi)], self._single_qubit_basis)
 
         # param 1q
         if isinstance(gate, U1):
-            return [RZ(gate.qubits[0], phi=gate.phi)]
+            return _normalize_single_qubit_sequence([RZ(gate.qubits[0], phi=gate.phi)], self._single_qubit_basis)
         if isinstance(gate, U2):
-            return [U3(gate.qubits[0], theta=math.pi / 2.0, phi=gate.phi, gamma=gate.gamma)]
+            return _normalize_single_qubit_sequence(
+                [U3(gate.qubits[0], theta=math.pi / 2.0, phi=gate.phi, gamma=gate.gamma)],
+                self._single_qubit_basis,
+            )
 
         # 2q
         if isinstance(gate, CNOT):
             control_qubit, target_qubit = gate.control_qubits[0], gate.target_qubits[0]
-            return _cnot_in_basis(control_qubit, target_qubit, self._two_qubit_basis)
+            return _normalize_single_qubit_sequence(
+                _cnot_in_basis(control_qubit, target_qubit, self._two_qubit_basis),
+                self._single_qubit_basis,
+            )
         if isinstance(gate, CZ):
             control_qubit, target_qubit = gate.control_qubits[0], gate.target_qubits[0]
-            return _cz_in_basis(control_qubit, target_qubit, self._two_qubit_basis)
+            return _normalize_single_qubit_sequence(
+                _cz_in_basis(control_qubit, target_qubit, self._two_qubit_basis),
+                self._single_qubit_basis,
+            )
         if isinstance(gate, SWAP):
             first_target_qubit, second_target_qubit = gate.target_qubits
-            return (
+            return _normalize_single_qubit_sequence(
                 _cnot_in_basis(first_target_qubit, second_target_qubit, self._two_qubit_basis)
                 + _cnot_in_basis(second_target_qubit, first_target_qubit, self._two_qubit_basis)
-                + _cnot_in_basis(first_target_qubit, second_target_qubit, self._two_qubit_basis)
+                + _cnot_in_basis(first_target_qubit, second_target_qubit, self._two_qubit_basis),
+                self._single_qubit_basis,
             )
 
         # Controlled (single control) over a 1-qubit target
@@ -464,7 +557,12 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
                     basis_one_qubit_gate = RY(target_qubit, theta=basis_one_qubit_gate.theta)
                 elif isinstance(basis_one_qubit_gate, RZ):
                     basis_one_qubit_gate = RZ(target_qubit, phi=basis_one_qubit_gate.phi)
-            return _single_controlled(control_qubits[0], basis_one_qubit_gate, self._two_qubit_basis)
+            return _single_controlled(
+                control_qubits[0],
+                basis_one_qubit_gate,
+                self._two_qubit_basis,
+                self._single_qubit_basis,
+            )
 
         # Adjoint
         if _is_adjoint(gate):
@@ -472,7 +570,7 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
             inverse_sequence: list[Gate] = []
             for base_gate in reversed(rewritten_base_sequence):
                 inverse_sequence += _invert_basis_gate(base_gate)
-            return inverse_sequence
+            return _normalize_single_qubit_sequence(inverse_sequence, self._single_qubit_basis)
 
         # Exponential(1q)
         if _is_exponential(gate):
@@ -481,12 +579,18 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
                 raise NotImplementedError("Exponential of multi-qubit gates not supported.")
             unitary_matrix = gate.matrix
             theta, phi, lambda_angle = _zyz_from_unitary(unitary_matrix)
-            return [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)]
+            return _normalize_single_qubit_sequence(
+                [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)],
+                self._single_qubit_basis,
+            )
 
         # generic 1q
         if isinstance(gate, BasicGate) and gate.nqubits == 1:
             theta, phi, lambda_angle = _zyz_from_unitary(gate.matrix)
-            return [U3(gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)]
+            return _normalize_single_qubit_sequence(
+                [U3(gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)],
+                self._single_qubit_basis,
+            )
 
         raise NotImplementedError(f"No canonicalization rule for {type(gate).__name__}")
 
@@ -497,30 +601,45 @@ def _single_controlled(
     control_qubit: int,
     target_gate: Gate,
     basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
+    single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
 ) -> list[Gate]:
     """Return a single-control decomposition for a one-qubit target gate.
 
     Args:
         control_qubit (int): Control qubit index.
         target_gate (Gate): One-qubit target gate to control.
+        basis (TwoQubitGateBasis): Selected two-qubit basis used in the decomposition.
+        single_qubit_basis (SingleQubitGateBasis): Selected one-qubit basis used to normalize emitted 1Q gates.
 
     Returns:
         list[Gate]: Equivalent sequence with canonical two-qubit primitives.
     """
     target_qubit = target_gate.qubits[0]
     if isinstance(target_gate, RZ):
-        return _CRZ_using_CNOT(control_qubit, target_qubit, target_gate.phi, basis)
-    if isinstance(target_gate, RX):
-        return _CRX_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis)
-    if isinstance(target_gate, RY):
-        return _CRY_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis)
-    if isinstance(target_gate, U3):
-        return _CU3_using_CNOT(
-            control_qubit,
-            target_qubit,
-            target_gate.theta,
-            target_gate.phi,
-            target_gate.gamma,
-            basis,
+        return _normalize_single_qubit_sequence(
+            _CRZ_using_CNOT(control_qubit, target_qubit, target_gate.phi, basis),
+            single_qubit_basis,
         )
-    return _single_controlled(control_qubit, _as_basis_1q(target_gate), basis)
+    if isinstance(target_gate, RX):
+        return _normalize_single_qubit_sequence(
+            _CRX_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis),
+            single_qubit_basis,
+        )
+    if isinstance(target_gate, RY):
+        return _normalize_single_qubit_sequence(
+            _CRY_using_CRZ(control_qubit, target_qubit, target_gate.theta, basis),
+            single_qubit_basis,
+        )
+    if isinstance(target_gate, U3):
+        return _normalize_single_qubit_sequence(
+            _CU3_using_CNOT(
+                control_qubit,
+                target_qubit,
+                target_gate.theta,
+                target_gate.phi,
+                target_gate.gamma,
+                basis,
+            ),
+            single_qubit_basis,
+        )
+    return _single_controlled(control_qubit, _as_basis_1q(target_gate), basis, single_qubit_basis)
