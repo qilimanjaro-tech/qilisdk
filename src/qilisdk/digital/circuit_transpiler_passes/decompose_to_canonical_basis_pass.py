@@ -408,6 +408,15 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
         two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT
     ) -> None:
+        """Initialize the canonical-basis decomposition pass.
+
+        Args:
+            single_qubit_basis (SingleQubitGateBasis): Single-qubit basis set used by this pass.
+            two_qubit_basis (TwoQubitGateBasis): Two-qubit entangler basis used by this pass.
+
+        Raises:
+            TypeError: If ``single_qubit_basis`` or ``two_qubit_basis`` is not a valid enum value.
+        """
         if not isinstance(single_qubit_basis, SingleQubitGateBasis):
             raise TypeError(
                 "single_qubit_basis must be a SingleQubitGateBasis value "
@@ -423,12 +432,20 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
 
     @property
     def single_qubit_basis(self) -> SingleQubitGateBasis:
-        """Single-qubit basis set used by this pass."""
+        """Return the single-qubit basis set used by this pass.
+
+        Returns:
+            SingleQubitGateBasis: Configured single-qubit basis.
+        """
         return self._single_qubit_basis
 
     @property
     def two_qubit_basis(self) -> TwoQubitGateBasis:
-        """Two-qubit basis gate used by this pass."""
+        """Return the two-qubit basis gate used by this pass.
+
+        Returns:
+            TwoQubitGateBasis: Configured two-qubit basis.
+        """
         return self._two_qubit_basis
 
     def run(self, circuit: Circuit) -> Circuit:
