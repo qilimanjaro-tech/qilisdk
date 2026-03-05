@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .cancel_identity_pairs_pass import CancelIdentityPairsPass
-from .circuit_to_canonical_basis_pass import CircuitToCanonicalBasisPass, SingleQubitGateBasis, TwoQubitGateBasis
+from .circuit_to_canonical_basis_pass import DecomposeToCanonicalBasisPass, SingleQubitGateBasis, TwoQubitGateBasis
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .custom_layout_pass import CustomLayoutPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass

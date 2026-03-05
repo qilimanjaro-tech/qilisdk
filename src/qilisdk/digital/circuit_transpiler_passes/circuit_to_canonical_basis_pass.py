@@ -154,7 +154,7 @@ def _cz_in_basis(control_qubit: int, target_qubit: int, basis: TwoQubitGateBasis
 def _CRZ_using_CNOT(
     control_qubit: int,
     target_qubit: int,
-    lambda_angle: float,
+    gamma: float,
     basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
 ) -> list[Gate]:
     """Return a controlled-RZ decomposition using CNOT-based primitives.
@@ -162,16 +162,16 @@ def _CRZ_using_CNOT(
     Args:
         control_qubit (int): Control qubit index.
         target_qubit (int): Target qubit index.
-        lambda_angle (float): RZ rotation angle.
+        gamma (float): RZ rotation angle.
 
     Returns:
         list[Gate]: Equivalent controlled-RZ sequence in canonical basis.
     """
     # CRZ(λ) = (I ⊗ RZ(λ/2)) · CNOT · (I ⊗ RZ(-λ/2)) · CNOT.
     return [
-        RZ(target_qubit, phi=_wrap_angle(lambda_angle / 2.0)),
+        RZ(target_qubit, phi=_wrap_angle(gamma / 2.0)),
         *_cnot_in_basis(control_qubit, target_qubit, basis),
-        RZ(target_qubit, phi=_wrap_angle(-lambda_angle / 2.0)),
+        RZ(target_qubit, phi=_wrap_angle(-gamma / 2.0)),
         *_cnot_in_basis(control_qubit, target_qubit, basis),
     ]
 
@@ -229,7 +229,7 @@ def _CU3_using_CNOT(
     target_qubit: int,
     theta: float,
     phi: float,
-    lambda_angle: float,
+    gamma: float,
     basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
 ) -> list[Gate]:
     """Return a controlled-U3 decomposition using two CNOT skeletons.
@@ -239,19 +239,19 @@ def _CU3_using_CNOT(
         target_qubit (int): Target qubit index.
         theta (float): U3 theta parameter.
         phi (float): U3 phi parameter.
-        lambda_angle (float): U3 gamma/lambda parameter.
+        gamma (float): U3 gamma/lambda parameter.
 
     Returns:
         list[Gate]: Equivalent controlled-U3 sequence in canonical basis.
     """
     # Two-CX synthesis with CX realized by H-CZ-H.
     return [
-        RZ(control_qubit, phi=_wrap_angle((lambda_angle + phi) / 2.0)),
+        RZ(control_qubit, phi=_wrap_angle((gamma + phi) / 2.0)),
         U3(target_qubit, theta=theta / 2.0, phi=phi, gamma=0.0),
         *_cnot_in_basis(control_qubit, target_qubit, basis),
-        U3(target_qubit, theta=-theta / 2.0, phi=0.0, gamma=_wrap_angle(-(lambda_angle + phi) / 2.0)),
+        U3(target_qubit, theta=-theta / 2.0, phi=0.0, gamma=_wrap_angle(-(gamma + phi) / 2.0)),
         *_cnot_in_basis(control_qubit, target_qubit, basis),
-        RZ(target_qubit, phi=_wrap_angle((lambda_angle - phi) / 2.0)),
+        RZ(target_qubit, phi=_wrap_angle((gamma - phi) / 2.0)),
     ]
 
 
@@ -321,8 +321,8 @@ def _as_basis_1q(gate: Gate) -> Gate:
     if isinstance(gate, Z):
         return RZ(qubit, phi=math.pi)
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        theta, phi, lambda_angle = _zyz_from_unitary(gate.matrix)
-        return U3(qubit, theta=theta, phi=phi, gamma=lambda_angle)
+        theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+        return U3(qubit, theta=theta, phi=phi, gamma=gamma)
     raise NotImplementedError(f"Unsupported 1-qubit gate type {type(gate).__name__} in _as_basis_1q")
 
 
@@ -385,7 +385,7 @@ def _normalize_single_qubit_sequence(gates: list[Gate], basis: SingleQubitGateBa
     return normalized
 
 
-class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
+class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
     """
     Map an arbitrary circuit to the circuit basis {1Q, 2Q} (+ M).
 
@@ -405,31 +405,31 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
 
     def __init__(
         self,
-        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CZ,
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
+        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT
     ) -> None:
-        if not isinstance(two_qubit_basis, TwoQubitGateBasis):
-            raise TypeError(
-                "two_qubit_basis must be a TwoQubitGateBasis value "
-                f"(got {type(two_qubit_basis).__name__})."
-            )
         if not isinstance(single_qubit_basis, SingleQubitGateBasis):
             raise TypeError(
                 "single_qubit_basis must be a SingleQubitGateBasis value "
                 f"(got {type(single_qubit_basis).__name__})."
             )
-        self._two_qubit_basis = two_qubit_basis
+        if not isinstance(two_qubit_basis, TwoQubitGateBasis):
+            raise TypeError(
+                "two_qubit_basis must be a TwoQubitGateBasis value "
+                f"(got {type(two_qubit_basis).__name__})."
+            )
         self._single_qubit_basis = single_qubit_basis
-
-    @property
-    def two_qubit_basis(self) -> TwoQubitGateBasis:
-        """Two-qubit basis gate used by this pass."""
-        return self._two_qubit_basis
+        self._two_qubit_basis = two_qubit_basis
 
     @property
     def single_qubit_basis(self) -> SingleQubitGateBasis:
         """Single-qubit basis set used by this pass."""
         return self._single_qubit_basis
+
+    @property
+    def two_qubit_basis(self) -> TwoQubitGateBasis:
+        """Two-qubit basis gate used by this pass."""
+        return self._two_qubit_basis
 
     def run(self, circuit: Circuit) -> Circuit:
         """Rewrite a circuit into the canonical digital basis.
@@ -578,17 +578,17 @@ class CircuitToCanonicalBasisPass(CircuitTranspilerPass):
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Exponential of multi-qubit gates not supported.")
             unitary_matrix = gate.matrix
-            theta, phi, lambda_angle = _zyz_from_unitary(unitary_matrix)
+            theta, phi, gamma = _zyz_from_unitary(unitary_matrix)
             return _normalize_single_qubit_sequence(
-                [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)],
+                [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
                 self._single_qubit_basis,
             )
 
         # generic 1q
         if isinstance(gate, BasicGate) and gate.nqubits == 1:
-            theta, phi, lambda_angle = _zyz_from_unitary(gate.matrix)
+            theta, phi, gamma = _zyz_from_unitary(gate.matrix)
             return _normalize_single_qubit_sequence(
-                [U3(gate.qubits[0], theta=theta, phi=phi, gamma=lambda_angle)],
+                [U3(gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
                 self._single_qubit_basis,
             )
 

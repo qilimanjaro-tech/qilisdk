@@ -19,7 +19,7 @@ from rustworkx import PyGraph
 
 from .circuit_transpiler_passes import (
     CancelIdentityPairsPass,
-    CircuitToCanonicalBasisPass,
+    DecomposeToCanonicalBasisPass,
     CircuitTranspilerPass,
     CustomLayoutPass,
     DecomposeMultiControlledGatesPass,
@@ -157,7 +157,7 @@ class CircuitTranspiler:
                 [
                     DecomposeMultiControlledGatesPass(),
                     CancelIdentityPairsPass(),
-                    CircuitToCanonicalBasisPass(),
+                    DecomposeToCanonicalBasisPass(),
                     FuseSingleQubitGatesPass(),
                 ]
             )
@@ -173,10 +173,10 @@ class CircuitTranspiler:
             [
                 DecomposeMultiControlledGatesPass(),
                 CancelIdentityPairsPass(),
-                CircuitToCanonicalBasisPass(),
+                DecomposeToCanonicalBasisPass(),
                 FuseSingleQubitGatesPass(),
                 *layout_routing_passes,
-                CircuitToCanonicalBasisPass(),
+                DecomposeToCanonicalBasisPass(),
                 FuseSingleQubitGatesPass(),
             ]
         )
