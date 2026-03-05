@@ -16,11 +16,13 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 import qilisdk
 from qilisdk.analog import Hamiltonian, PauliZ, Schedule
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
+from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
 from qilisdk.functionals import QuantumReservoir, ReservoirLayer, Sampling, TimeEvolution
@@ -30,22 +32,68 @@ from qilisdk.noise import Dephasing, NoiseModel
 
 def test_qilisim_init():
     backend = QiliSim()
-    assert backend.solver_params is not None
+    config = backend.get_config()
 
-    with pytest.raises(ValueError, match=r"Unknown time evolution method"):
-        QiliSim(evolution_method="invalid_method")
-    with pytest.raises(ValueError, match=r"arnoldi_dim must be a positive integer"):
-        QiliSim(arnoldi_dim=0)
-    with pytest.raises(ValueError, match=r"num_arnoldi_substeps must be a positive integer"):
-        QiliSim(num_arnoldi_substeps=-3)
-    with pytest.raises(ValueError, match=r"num_integrate_substeps must be a positive integer"):
-        QiliSim(num_integrate_substeps=0)
-    with pytest.raises(ValueError, match=r"num_monte_carlo_trajectories must be a positive integer"):
-        QiliSim(num_monte_carlo_trajectories=-10)
-    with pytest.raises(ValueError, match=r"max_cache_size cannot be negative"):
-        QiliSim(max_cache_size=-5)
-    with pytest.raises(ValueError, match=r"atol must be a positive float"):
-        QiliSim(atol=-1)
+    assert backend.solver_params is not None
+    assert config["evolution_method"] == "integrate"
+    assert config["num_integrate_substeps"] == 2
+    assert config["monte_carlo"] is False
+    assert config["num_monte_carlo_trajectories"] == 100
+    assert config["max_cache_size"] == 1000
+    assert config["num_threads"] >= 1
+    assert isinstance(config["seed"], int)
+    assert config["atol"] > 0
+
+    copied_config = backend.get_config()
+    copied_config["seed"] = -1
+    assert backend.get_config()["seed"] != -1
+
+
+def test_qilisim_config_builders_and_validation():
+    analog = AnalogMethod.arnoldi(
+        dim=16,
+        num_substeps=3,
+    )
+    digital = DigitalMethod.state_vector(max_cache_size=2048)
+    execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
+
+    backend = QiliSim(
+        analog_simulation_method=analog,
+        digital_simulation_method=digital,
+        execution_config=execution,
+    )
+    config = backend.get_config()
+
+    assert config["evolution_method"] == "arnoldi"
+    assert config["arnoldi_dim"] == 16
+    assert config["num_arnoldi_substeps"] == 3
+    assert config["monte_carlo"] is True
+    assert config["num_monte_carlo_trajectories"] == 250
+    assert config["max_cache_size"] == 2048
+    assert config["num_threads"] == 2
+    assert config["seed"] == 42
+
+    with pytest.raises(ValidationError):
+        AnalogMethod(evolution_method="invalid_method")
+    with pytest.raises(ValidationError):
+        AnalogMethod(arnoldi_dim=0)
+    with pytest.raises(ValidationError):
+        MonteCarloConfig(trajectories=0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(max_cache_size=-5)
+    with pytest.raises(ValidationError):
+        ExecutionConfig(seed=-1)
+    with pytest.raises(TypeError, match="does not accept positional arguments"):
+        ExecutionConfig(1)
+
+
+def test_qilisim_invalid_config_types():
+    with pytest.raises(ValueError, match="not a valid analog simulation method"):
+        QiliSim(analog_simulation_method=DigitalMethod())  # type:ignore[arg-type]
+    with pytest.raises(ValueError, match="not a valid digital simulation method"):
+        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type:ignore[arg-type]
+    with pytest.raises(ValueError, match="not a valid execution configuration"):
+        QiliSim(execution_config=AnalogMethod.integrator())  # type:ignore[arg-type]
 
 
 class QiliSimMock:
@@ -78,7 +126,7 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
 
 
 def test_time_dependent_hamiltonian_bad_observable():
-    backend = QiliSim(seed=42, num_threads=1)
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     o = 1.0
     dt = 0.5
     T = 100
@@ -108,14 +156,14 @@ def test_qilisim_dephasing_strength_changes_dynamics():
 
     weak_noise = NoiseModel()
     weak_noise.add(Dephasing(t_phi=1e6), qubits=[0])
-    weak_backend = QiliSim(noise_model=weak_noise, seed=42, num_threads=1)
+    weak_backend = QiliSim(noise_model=weak_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     weak_result = weak_backend.execute(
         TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
     )
 
     strong_noise = NoiseModel()
     strong_noise.add(Dephasing(t_phi=10), qubits=[0])
-    strong_backend = QiliSim(noise_model=strong_noise, seed=42, num_threads=1)
+    strong_backend = QiliSim(noise_model=strong_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     strong_result = strong_backend.execute(
         TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
     )
@@ -147,7 +195,7 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
 
 
 def test_execute_quantum_reservoir_qilisim(monkeypatch):
-    backend = QiliSim(seed=42, num_threads=1)
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     functional = _build_quantum_reservoir_functional()
     final_density = ket(0).to_density_matrix()
     monkeypatch.setattr(
