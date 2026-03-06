@@ -148,3 +148,35 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     mat.setFromTriplets(entries.begin(), entries.end());
     return mat;
 }
+
+py::object to_spmatrix(const SparseMatrix& matrix) {
+    /*
+    Convert a SparseMatrix to a SciPy sparse matrix.
+
+    Args:
+        matrix (SparseMatrix): The input sparse matrix.
+
+    Returns:
+        py::object: The corresponding SciPy sparse matrix.
+    */
+    int rows = int(matrix.rows());
+    int cols = int(matrix.cols());
+    std::vector<int> row_indices;
+    std::vector<int> col_indices;
+    std::vector<std::complex<double>> data_values;
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            std::complex<double> val = matrix.coeff(r, c);
+            if (std::abs(val) > 0.0) {
+                row_indices.push_back(r);
+                col_indices.push_back(c);
+                data_values.push_back(val);
+            }
+        }
+    }
+    py::array_t<int> row_array(row_indices.size(), row_indices.data());
+    py::array_t<int> col_array(col_indices.size(), col_indices.data());
+    py::array_t<std::complex<double>> data_array(data_values.size(), data_values.data());
+    py::object spmat = csrmatrix(std::make_pair(data_array, std::make_pair(row_array, col_array)), std::make_pair(rows, cols));
+    return spmat;
+}

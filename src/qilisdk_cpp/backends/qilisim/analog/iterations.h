@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H);
 void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk);

@@ -15,11 +15,12 @@
 
 #include <complex>
 #include <vector>
-#include "../libs/eigen.h"
-#include "../libs/pybind.h"
+#include "eigen.h"
+#include "pybind.h"
 
-SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol);
 SparseMatrix from_spmatrix(const py::object& matrix, double atol);
+py::object to_spmatrix(const SparseMatrix& matrix);
+SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol);
 py::array_t<double> to_numpy(const std::vector<double>& vec);
 py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs);
 py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix);

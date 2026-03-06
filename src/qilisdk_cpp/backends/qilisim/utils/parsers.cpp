@@ -14,9 +14,9 @@
 
 #include "parsers.h"
 #include "../digital/gate.h"
-#include "numpy.h"
+#include "../../../libs/numpy.h"
 #include "../utils/matrix_utils.h"
-#include <iostream> // TODO remove
+#include "../../../libs/pybind_types.h"
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) {
     /*

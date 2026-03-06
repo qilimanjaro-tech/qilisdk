@@ -17,14 +17,10 @@
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
 #include "digital/sampling.h"
-#include "utils/numpy.h"
+#include "../../libs/numpy.h"
 #include "utils/parsers.h"
 #include "noise/noise_model.h"
-
-// Make the QiliSimCpp class available in Python, as well as the two main methods
-PYBIND11_MODULE(qilisim_module, m) {
-    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_sampling", &QiliSimCpp::execute_sampling).def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
-}
+#include "../../libs/pybind_types.h"
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {

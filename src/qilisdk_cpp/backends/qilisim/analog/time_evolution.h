@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "../config/qilisim_config.h"
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 #include "../noise/noise_model.h"
 
 void time_evolution(SparseMatrix rho_0, 
