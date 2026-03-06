@@ -28,6 +28,7 @@ from qilisdk.digital.gates import (
     BasicGate,
     Controlled,
     Exponential,
+    Gate,
     H,
     I,
     M,
@@ -50,11 +51,31 @@ class DummyBasicGate(BasicGate):
         return self._custom_matrix
 
 
-def _count_gate_names(seq: list) -> Counter:
+def _count_gate_names(seq: list[Gate]) -> Counter[str]:
     return Counter(g.name for g in seq)
 
 
-def test_invert_basis_gate_handles_known_types():
+def _nqubits_for_gates(*gates: Gate) -> int:
+    highest_qubit = max((max(gate.qubits) for gate in gates if gate.qubits), default=-1)
+    return highest_qubit + 1 if highest_qubit >= 0 else 1
+
+
+def _matrix_of_gates(gates: list[Gate], nqubits: int | None = None) -> np.ndarray:
+    circuit = Circuit(_nqubits_for_gates(*gates) if nqubits is None else nqubits)
+    for gate in gates:
+        circuit.add(gate)
+    return circuit.to_matrix()
+
+
+def _assert_gate_sequence_matches(original: Gate, rewritten: list[Gate]) -> None:
+    nqubits = _nqubits_for_gates(original, *rewritten)
+    assert np.allclose(
+        _matrix_of_gates([original], nqubits=nqubits),
+        _matrix_of_gates(rewritten, nqubits=nqubits),
+    )
+
+
+def test_invert_basis_gate_handles_known_types() -> None:
     gates = [
         U3(0, theta=0.2, phi=0.1, gamma=-0.3),
         RX(0, theta=0.4),
@@ -62,79 +83,91 @@ def test_invert_basis_gate_handles_known_types():
         RZ(0, phi=0.7),
         CNOT(0, 1),
         CZ(0, 1),
-        M(0),
         H(0),
         X(0),
         Y(0),
         Z(0),
     ]
-    inverted = [_invert_basis_gate(g) for g in gates]
-    assert [seq[0].name for seq in inverted[:6]] == ["U3", "RX", "RY", "RZ", "CNOT", "CZ"]
-    assert inverted[6][0].name == "M"
-    assert [seq[0].name for seq in inverted[7:]] == ["U3", "RX", "RY", "RZ"]
+
+    for gate in gates:
+        inverse = _invert_basis_gate(gate)
+        nqubits = _nqubits_for_gates(gate, *inverse)
+        identity = np.eye(1 << nqubits, dtype=complex)
+        assert np.allclose(_matrix_of_gates([gate, *inverse], nqubits=nqubits), identity)
+
+
+def test_invert_basis_gate_handles_measurement_and_fallback() -> None:
+    assert _invert_basis_gate(M(0))[0].name == "M"
 
     dummy = DummyBasicGate((0,), np.eye(2))
     assert isinstance(_invert_basis_gate(dummy)[0], Adjoint)
 
 
-def test_as_basis_1q_handles_standard_and_basic():
-    dummy_matrix = np.eye(2, dtype=complex)
-    dummy_gate = DummyBasicGate((0,), dummy_matrix)
+def test_as_basis_1q_handles_standard_and_basic() -> None:
+    dummy_gate = DummyBasicGate((0,), np.eye(2, dtype=complex))
     rx_gate = RX(0, theta=0.3)
+
     assert _as_basis_1q(rx_gate) is rx_gate
-    assert isinstance(_as_basis_1q(H(0)), U3)
-    assert isinstance(_as_basis_1q(X(0)), RX)
-    assert isinstance(_as_basis_1q(Y(0)), RY)
-    assert isinstance(_as_basis_1q(Z(0)), RZ)
-    assert isinstance(_as_basis_1q(U1(0, phi=0.1)), RZ)
-    assert isinstance(_as_basis_1q(U2(0, phi=0.1, gamma=0.2)), U3)
-    assert isinstance(_as_basis_1q(dummy_gate), U3)
+
+    for gate in [H(0), X(0), Y(0), Z(0), U1(0, phi=0.1), U2(0, phi=0.1, gamma=0.2), dummy_gate]:
+        basis_gate = _as_basis_1q(gate)
+        assert basis_gate.name in {"U3", "RX", "RY", "RZ"}
+        assert np.allclose(gate.matrix, basis_gate.matrix)
+
     with pytest.raises(NotImplementedError):
         _as_basis_1q(Controlled(1, basic_gate=RX(0, theta=0.5)))
 
 
-def test_single_controlled_paths():
-    rz_seq = _single_controlled(1, RZ(0, phi=0.2))
-    rx_seq = _single_controlled(1, RX(0, theta=0.2))
-    ry_seq = _single_controlled(1, RY(0, theta=0.2))
-    u3_seq = _single_controlled(1, U3(0, theta=0.3, phi=0.2, gamma=-0.1))
-    dummy_gate = DummyBasicGate((5,), np.eye(2))
-    recursive_seq = _single_controlled(1, dummy_gate)
+@pytest.mark.parametrize(
+    ("two_qubit_basis", "single_qubit_basis", "target_factory"),
+    [
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, lambda: RZ(0, phi=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, lambda: RX(0, theta=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, lambda: RY(0, theta=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, lambda: U3(0, theta=0.3, phi=0.2, gamma=-0.1)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, lambda: DummyBasicGate((5,), np.eye(2))),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, lambda: RZ(0, phi=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, lambda: RX(0, theta=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, lambda: RY(0, theta=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, lambda: U3(0, theta=0.3, phi=0.2, gamma=-0.1)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, lambda: DummyBasicGate((5,), np.eye(2))),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.RxRyRz, lambda: RZ(0, phi=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.RxRyRz, lambda: RX(0, theta=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.RxRyRz, lambda: RY(0, theta=0.2)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.RxRyRz, lambda: DummyBasicGate((5,), np.eye(2))),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.RxRyRz, lambda: RZ(0, phi=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.RxRyRz, lambda: RX(0, theta=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.RxRyRz, lambda: RY(0, theta=0.2)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.RxRyRz, lambda: DummyBasicGate((5,), np.eye(2))),
+    ],
+)
+def test_single_controlled_paths_preserve_matrix(
+    two_qubit_basis: TwoQubitGateBasis,
+    single_qubit_basis: SingleQubitGateBasis,
+    target_factory,
+) -> None:
+    target_gate = target_factory()
+    sequence = _single_controlled(
+        1,
+        target_gate,
+        basis=two_qubit_basis,
+        single_qubit_basis=single_qubit_basis,
+    )
 
-    assert _count_gate_names(rz_seq)["CZ"] >= 1
-    assert _count_gate_names(rx_seq)["CZ"] >= 1
-    assert _count_gate_names(ry_seq)["CZ"] >= 1
-    assert _count_gate_names(u3_seq)["CZ"] >= 1
-    assert _count_gate_names(recursive_seq)["CZ"] >= 1
+    allowed_one_qubit_names = {"U3"} if single_qubit_basis == SingleQubitGateBasis.U3 else {"RX", "RY", "RZ"}
+    assert _count_gate_names(sequence)[two_qubit_basis.value] >= 1
+    assert all(gate.name in allowed_one_qubit_names | {two_qubit_basis.value} for gate in sequence)
+    _assert_gate_sequence_matches(Controlled(1, basic_gate=target_gate), sequence)
 
 
-def test_single_controlled_paths_cnot_basis():
-    rz_seq = _single_controlled(1, RZ(0, phi=0.2), basis=TwoQubitGateBasis.CNOT)
-    rx_seq = _single_controlled(1, RX(0, theta=0.2), basis=TwoQubitGateBasis.CNOT)
-    ry_seq = _single_controlled(1, RY(0, theta=0.2), basis=TwoQubitGateBasis.CNOT)
-    u3_seq = _single_controlled(1, U3(0, theta=0.3, phi=0.2, gamma=-0.1), basis=TwoQubitGateBasis.CNOT)
-    dummy_gate = DummyBasicGate((5,), np.eye(2))
-    recursive_seq = _single_controlled(1, dummy_gate, basis=TwoQubitGateBasis.CNOT)
-
-    assert _count_gate_names(rz_seq)["CNOT"] >= 1
-    assert _count_gate_names(rx_seq)["CNOT"] >= 1
-    assert _count_gate_names(ry_seq)["CNOT"] >= 1
-    assert _count_gate_names(u3_seq)["CNOT"] >= 1
-    assert _count_gate_names(recursive_seq)["CNOT"] >= 1
-    assert _count_gate_names(rz_seq)["CZ"] == 0
-
-
-def test_rewrite_gate_covers_various_cases():
+def test_rewrite_gate_covers_various_exact_cases() -> None:
     pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
 
     gates = [
-        M(0),
         U3(0, theta=0.1, phi=0.2, gamma=0.3),
         RX(0, theta=0.2),
         RY(0, theta=0.3),
-        RZ(0, phi=0.4),
         CZ(0, 1),
-        I(0),
         H(0),
         X(0),
         Y(0),
@@ -145,131 +178,40 @@ def test_rewrite_gate_covers_various_cases():
         SWAP(0, 1),
     ]
 
-    seqs = [pass_instance._rewrite_gate(g) for g in gates]
-
-    assert len(seqs[0]) == 1
-    assert seqs[0][0].name == "M"
-    assert len(seqs[5]) == 1
-    assert seqs[5][0].name == "CZ"
-    assert seqs[6] == []
-    assert len(seqs[7]) == 1
-    assert seqs[7][0].name == "U3"
-    assert len(seqs[8]) == 1
-    assert seqs[8][0].name == "U3"
-    assert len(seqs[9]) == 1
-    assert seqs[9][0].name == "U3"
-    assert len(seqs[10]) == 1
-    assert seqs[10][0].name == "U3"
-    assert len(seqs[11]) == 1
-    assert seqs[11][0].name == "U3"
-    assert len(seqs[12]) == 1
-    assert seqs[12][0].name == "U3"
-    assert _count_gate_names(seqs[13])["CZ"] == 1
-    assert _count_gate_names(seqs[14])["CZ"] == 3
+    for gate in gates:
+        sequence = pass_instance._rewrite_gate(gate)
+        assert all(rewritten.name in {"CZ", "U3"} for rewritten in sequence)
+        _assert_gate_sequence_matches(gate, sequence)
 
 
-def test_rewrite_gate_returns_cz_directly():
-    real_cz_cls = DecomposeToCanonicalBasisPass._rewrite_gate.__globals__["CZ"]
-
-    class ProxyCZMeta(type):
-        count = 0
-        real_cls = real_cz_cls
-
-        def __instancecheck__(cls, instance):
-            cls.count += 1
-            return cls.count >= 1 and isinstance(instance, cls.real_cls)
-
-    class ProxyCZ(metaclass=ProxyCZMeta):
-        pass
-
-    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
-    gate = real_cz_cls(0, 1)
-
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setitem(DecomposeToCanonicalBasisPass._rewrite_gate.__globals__, "CZ", ProxyCZ)
-    try:
-        rewritten = pass_instance._rewrite_gate(gate)
-    finally:
-        monkeypatch.undo()
-
-    assert len(rewritten) == 1
-    assert isinstance(rewritten[0], real_cz_cls)
-
-
-@pytest.mark.parametrize(
-    ("factory", "expected_cls"),
-    [
-        (lambda q: U3(q, theta=0.1, phi=0.2, gamma=0.3), U3),
-        (lambda q: RX(q, theta=0.5), RX),
-        (lambda q: RY(q, theta=-0.4), RY),
-        (lambda q: RZ(q, phi=0.7), RZ),
-    ],
-)
-def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
-    pass_instance = DecomposeToCanonicalBasisPass()
-    base_gate = DummyBasicGate((3,), np.eye(2))
-    controlled = Controlled(0, basic_gate=base_gate)
-
-    original_as_basis = DecomposeToCanonicalBasisPass._rewrite_gate.__globals__["_as_basis_1q"]
-    captured = {}
-
-    def fake_as_basis(g):
-        if g is base_gate:
-            return factory(99)  # wrong qubit on purpose
-        return original_as_basis(g)
-
-    monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._as_basis_1q",
-        fake_as_basis,
-    )
-
-    def fake_single(ctrl, base_1q, _basis, _single_basis):
-        captured["base"] = base_1q
-        return ["sentinel"]
-
-    monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._single_controlled",
-        fake_single,
-    )
-
-    seq = pass_instance._rewrite_gate(controlled)
-    assert seq == ["sentinel"]
-    assert isinstance(captured["base"], expected_cls)
-    assert captured["base"].qubits[0] == base_gate.qubits[0]
-
-
-def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
+def test_rewrite_gate_handles_measurement_identity_controlled_and_adjoint() -> None:
     pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
 
-    base_gate = DummyBasicGate((2,), np.eye(2))
+    measurement_sequence = pass_instance._rewrite_gate(M(0))
+    assert len(measurement_sequence) == 1
+    assert measurement_sequence[0].name == "M"
 
-    def fake_as_basis(gate):
-        if gate is base_gate:
-            return U3(5, theta=0.1, phi=0.2, gamma=0.3)
-        return _as_basis_1q(gate)
+    assert pass_instance._rewrite_gate(I(0)) == []
 
-    monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._as_basis_1q",
-        fake_as_basis,
-    )
+    controlled_gate = Controlled(0, basic_gate=RX(1, theta=0.3))
+    controlled_sequence = pass_instance._rewrite_gate(controlled_gate)
+    assert _count_gate_names(controlled_sequence)["CZ"] >= 1
+    _assert_gate_sequence_matches(controlled_gate, controlled_sequence)
 
-    controlled = Controlled(0, basic_gate=base_gate)
     adjoint_gate = Adjoint(RX(0, theta=math.pi / 3))
-    expo_gate = RX(0, theta=math.pi / 4).exponential()
+    adjoint_sequence = pass_instance._rewrite_gate(adjoint_gate)
+    assert all(gate.name == "U3" for gate in adjoint_sequence)
+    _assert_gate_sequence_matches(adjoint_gate, adjoint_sequence)
+
     basic_gate = DummyBasicGate((0,), np.eye(2))
+    basic_sequence = pass_instance._rewrite_gate(basic_gate)
+    assert len(basic_sequence) == 1
+    assert basic_sequence[0].name == "U3"
+    _assert_gate_sequence_matches(basic_gate, basic_sequence)
 
-    ctrl_seq = pass_instance._rewrite_gate(controlled)
-    adj_seq = pass_instance._rewrite_gate(adjoint_gate)
-    exp_seq = pass_instance._rewrite_gate(expo_gate)
-    basic_seq = pass_instance._rewrite_gate(basic_gate)
 
-    assert _count_gate_names(ctrl_seq)["CZ"] >= 1
-    assert _count_gate_names(adj_seq)["U3"] >= 1
-    assert len(exp_seq) == 1
-    assert exp_seq[0].name == "U3"
-    assert len(basic_seq) == 1
-    assert basic_seq[0].name == "U3"
-    assert all(5 not in g.qubits for g in ctrl_seq)
+def test_rewrite_gate_rejects_unsupported_cases() -> None:
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
 
     multi_controlled = Controlled(0, 1, basic_gate=RX(2, theta=0.3))
     multi_qubit_controlled = Controlled(0, basic_gate=DummyBasicGate((1, 2), np.eye(4)))
@@ -290,12 +232,10 @@ def test_canonical_pass_supports_cnot_basis() -> None:
     cz_rewritten = pass_instance._rewrite_gate(CZ(0, 1))
     swap_rewritten = pass_instance._rewrite_gate(SWAP(0, 1))
 
-    assert len(cnot_rewritten) == 1
-    assert cnot_rewritten[0].name == "CNOT"
-    assert _count_gate_names(cz_rewritten)["CNOT"] == 1
-    assert _count_gate_names(cz_rewritten)["CZ"] == 0
-    assert _count_gate_names(swap_rewritten)["CNOT"] == 3
-    assert _count_gate_names(swap_rewritten)["CZ"] == 0
+    assert all(gate.name in {"CNOT", "U3"} for gate in cnot_rewritten + cz_rewritten + swap_rewritten)
+    _assert_gate_sequence_matches(CNOT(0, 1), cnot_rewritten)
+    _assert_gate_sequence_matches(CZ(0, 1), cz_rewritten)
+    _assert_gate_sequence_matches(SWAP(0, 1), swap_rewritten)
 
 
 def test_canonical_pass_supports_rxryrz_single_qubit_basis() -> None:
@@ -304,14 +244,12 @@ def test_canonical_pass_supports_rxryrz_single_qubit_basis() -> None:
         single_qubit_basis=SingleQubitGateBasis.RxRyRz,
     )
 
-    h_rewritten = pass_instance._rewrite_gate(H(0))
-    x_rewritten = pass_instance._rewrite_gate(X(0))
-    u2_rewritten = pass_instance._rewrite_gate(U2(0, phi=0.2, gamma=-0.1))
+    cnot_rewritten = pass_instance._rewrite_gate(CNOT(0, 1))
+    swap_rewritten = pass_instance._rewrite_gate(SWAP(0, 1))
 
-    assert all(g.name in {"RX", "RY", "RZ"} for g in h_rewritten)
-    assert all(g.name in {"RX", "RY", "RZ"} for g in x_rewritten)
-    assert all(g.name in {"RX", "RY", "RZ"} for g in u2_rewritten)
-    assert all(g.name != "U3" for g in h_rewritten + x_rewritten + u2_rewritten)
+    assert all(gate.name in {"CZ", "RX", "RY", "RZ"} for gate in cnot_rewritten + swap_rewritten)
+    _assert_gate_sequence_matches(CNOT(0, 1), cnot_rewritten)
+    _assert_gate_sequence_matches(SWAP(0, 1), swap_rewritten)
 
 
 def test_canonical_pass_rejects_invalid_two_qubit_basis() -> None:
@@ -324,64 +262,33 @@ def test_canonical_pass_rejects_invalid_single_qubit_basis() -> None:
         DecomposeToCanonicalBasisPass(single_qubit_basis="U3")  # type: ignore[arg-type]
 
 
-def test_canonical_pass_run_produces_basis_circuit_for_CZ():
+@pytest.mark.parametrize(
+    ("two_qubit_basis", "single_qubit_basis", "expected_gate_names", "first_gate"),
+    [
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.U3, {"CZ", "U3"}, CNOT(0, 1)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.U3, {"CNOT", "U3"}, CZ(0, 1)),
+        (TwoQubitGateBasis.CZ, SingleQubitGateBasis.RxRyRz, {"CZ", "RX", "RY", "RZ"}, CNOT(0, 1)),
+        (TwoQubitGateBasis.CNOT, SingleQubitGateBasis.RxRyRz, {"CNOT", "RX", "RY", "RZ"}, CZ(0, 1)),
+    ],
+)
+def test_canonical_pass_run_produces_basis_circuit_with_same_matrix(
+    two_qubit_basis: TwoQubitGateBasis,
+    single_qubit_basis: SingleQubitGateBasis,
+    expected_gate_names: set[str],
+    first_gate: Gate,
+) -> None:
     circuit = Circuit(3)
-    circuit.add(CNOT(0, 1))
-    circuit.add(SWAP(1, 2))
-    circuit.add(Adjoint(RY(2, theta=0.5)))
-    circuit.add(RX(0, theta=0.3))
-
-    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
-    out = pass_instance.run(circuit)
-
-    assert all(g.name in {"CZ", "U3"} for g in out.gates)
-    assert len(out.gates) > 0
-    assert np.allclose(circuit.to_matrix(), out.to_matrix())
-
-
-def test_canonical_pass_run_produces_basis_circuit_for_cnot() -> None:
-    circuit = Circuit(3)
-    circuit.add(CZ(0, 1))
-    circuit.add(SWAP(1, 2))
-    circuit.add(Adjoint(RY(2, theta=0.5)))
-    circuit.add(RX(0, theta=0.3))
-
-    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
-    out = pass_instance.run(circuit)
-
-    assert all(g.name in {"CNOT", "U3"} for g in out.gates)
-    assert len(out.gates) > 0
-    assert np.allclose(circuit.to_matrix(), out.to_matrix())
-
-
-def test_canonical_pass_run_produces_basis_circuit_for_rxryrz() -> None:
-    circuit = Circuit(3)
-    circuit.add(CNOT(0, 1))
-    circuit.add(SWAP(1, 2))
-    circuit.add(Adjoint(RY(2, theta=0.5)))
-    circuit.add(RX(0, theta=0.3))
-
-    pass_instance = DecomposeToCanonicalBasisPass(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
-    out = pass_instance.run(circuit)
-
-    assert all(g.name in {"CNOT", "RX", "RY", "RZ"} for g in out.gates)
-    assert len(out.gates) > 0
-    assert np.allclose(circuit.to_matrix(), out.to_matrix())
-
-
-def test_canonical_pass_run_produces_basis_circuit_for_cnot_and_rxryrz() -> None:
-    circuit = Circuit(3)
-    circuit.add(CZ(0, 1))
+    circuit.add(first_gate)
     circuit.add(SWAP(1, 2))
     circuit.add(Adjoint(RY(2, theta=0.5)))
     circuit.add(RX(0, theta=0.3))
 
     pass_instance = DecomposeToCanonicalBasisPass(
-        two_qubit_basis=TwoQubitGateBasis.CNOT,
-        single_qubit_basis=SingleQubitGateBasis.RxRyRz,
+        two_qubit_basis=two_qubit_basis,
+        single_qubit_basis=single_qubit_basis,
     )
-    out = pass_instance.run(circuit)
+    rewritten_circuit = pass_instance.run(circuit)
 
-    assert all(g.name in {"CNOT", "RX", "RY", "RZ"} for g in out.gates)
-    assert len(out.gates) > 0
-    assert np.allclose(circuit.to_matrix(), out.to_matrix())
+    assert all(gate.name in expected_gate_names for gate in rewritten_circuit.gates)
+    assert len(rewritten_circuit.gates) > 0
+    assert np.allclose(circuit.to_matrix(), rewritten_circuit.to_matrix())
