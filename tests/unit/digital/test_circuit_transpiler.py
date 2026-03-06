@@ -103,13 +103,12 @@ def test_circuit_transpiler_transpile_returns_intermediate_results() -> None:
 
     transpilation_result = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).transpile(circuit)
 
-    assert transpilation_result.circuit is transpilation_result.final_circuit
-    assert transpilation_result.final_circuit.gates == []
+    assert transpilation_result.circuit.gates == []
     assert len(transpilation_result.intermediate_results) == 1
 
     intermediate_result = transpilation_result.intermediate_results[0]
     assert intermediate_result.name == "CancelIdentityPairsPass"
-    assert intermediate_result.circuit is transpilation_result.final_circuit
+    assert intermediate_result.circuit is transpilation_result.circuit
 
 
 def test_circuit_transpiler_transpile_reports_layout_result() -> None:

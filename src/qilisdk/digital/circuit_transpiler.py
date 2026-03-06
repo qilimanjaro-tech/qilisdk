@@ -83,11 +83,6 @@ class CircuitTranspilerResult:
         return self._circuit
 
     @property
-    def final_circuit(self) -> Circuit:
-        """Circuit returned by the last transpiler pass."""
-        return self._circuit
-
-    @property
     def intermediate_results(self) -> list[TranspilerPassResult]:
         """Ordered per-pass outputs."""
         return list(self._intermediate_results)
