@@ -67,8 +67,8 @@ def _first_nonzero_phase(unitary: np.ndarray) -> float:
             `_EPS`. Returns `0.0` when no such entry exists.
     """
     # phase of the first element with |.| > EPS
-    for z in np.nditer(unitary, flags=["refs_ok"]):
-        val = complex(z)  # type: ignore[call-overload]
+    for z in np.ravel(unitary, order="K"):
+        val = complex(z)
         if abs(val) > _EPS:
             return cmath.phase(val)
     return 0.0

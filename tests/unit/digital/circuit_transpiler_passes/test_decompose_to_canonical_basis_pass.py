@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from qilisdk.digital import Circuit
-from qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass import (
-    CircuitToCanonicalBasisPass,
+from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import (
+    DecomposeToCanonicalBasisPass,
     SingleQubitGateBasis,
     TwoQubitGateBasis,
     _as_basis_1q,
@@ -125,7 +125,7 @@ def test_single_controlled_paths_cnot_basis():
 
 
 def test_rewrite_gate_covers_various_cases():
-    pass_instance = CircuitToCanonicalBasisPass()
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
 
     gates = [
         M(0),
@@ -169,7 +169,7 @@ def test_rewrite_gate_covers_various_cases():
 
 
 def test_rewrite_gate_returns_cz_directly():
-    real_cz_cls = CircuitToCanonicalBasisPass._rewrite_gate.__globals__["CZ"]
+    real_cz_cls = DecomposeToCanonicalBasisPass._rewrite_gate.__globals__["CZ"]
 
     class ProxyCZMeta(type):
         count = 0
@@ -182,11 +182,11 @@ def test_rewrite_gate_returns_cz_directly():
     class ProxyCZ(metaclass=ProxyCZMeta):
         pass
 
-    pass_instance = CircuitToCanonicalBasisPass()
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
     gate = real_cz_cls(0, 1)
 
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setitem(CircuitToCanonicalBasisPass._rewrite_gate.__globals__, "CZ", ProxyCZ)
+    monkeypatch.setitem(DecomposeToCanonicalBasisPass._rewrite_gate.__globals__, "CZ", ProxyCZ)
     try:
         rewritten = pass_instance._rewrite_gate(gate)
     finally:
@@ -194,14 +194,6 @@ def test_rewrite_gate_returns_cz_directly():
 
     assert len(rewritten) == 1
     assert isinstance(rewritten[0], real_cz_cls)
-
-
-def test_rewrite_gate_default_cz_branch():
-    pass_instance = CircuitToCanonicalBasisPass()
-    gate = CZ(0, 1)
-    rewritten = pass_instance._rewrite_gate(gate)
-    assert len(rewritten) == 1
-    assert isinstance(rewritten[0], CZ)
 
 
 @pytest.mark.parametrize(
@@ -214,11 +206,11 @@ def test_rewrite_gate_default_cz_branch():
     ],
 )
 def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
-    pass_instance = CircuitToCanonicalBasisPass()
+    pass_instance = DecomposeToCanonicalBasisPass()
     base_gate = DummyBasicGate((3,), np.eye(2))
     controlled = Controlled(0, basic_gate=base_gate)
 
-    original_as_basis = CircuitToCanonicalBasisPass._rewrite_gate.__globals__["_as_basis_1q"]
+    original_as_basis = DecomposeToCanonicalBasisPass._rewrite_gate.__globals__["_as_basis_1q"]
     captured = {}
 
     def fake_as_basis(g):
@@ -227,7 +219,7 @@ def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
         return original_as_basis(g)
 
     monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._as_basis_1q",
+        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._as_basis_1q",
         fake_as_basis,
     )
 
@@ -236,7 +228,7 @@ def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
         return ["sentinel"]
 
     monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._single_controlled",
+        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._single_controlled",
         fake_single,
     )
 
@@ -247,7 +239,7 @@ def test_controlled_gate_qubit_alignment(monkeypatch, factory, expected_cls):
 
 
 def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
-    pass_instance = CircuitToCanonicalBasisPass()
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
 
     base_gate = DummyBasicGate((2,), np.eye(2))
 
@@ -257,7 +249,7 @@ def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
         return _as_basis_1q(gate)
 
     monkeypatch.setattr(
-        "qilisdk.digital.circuit_transpiler_passes.circuit_to_canonical_basis_pass._as_basis_1q",
+        "qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass._as_basis_1q",
         fake_as_basis,
     )
 
@@ -292,7 +284,7 @@ def test_rewrite_gate_handles_controlled_and_adjoint(monkeypatch):
 
 
 def test_canonical_pass_supports_cnot_basis() -> None:
-    pass_instance = CircuitToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
 
     cnot_rewritten = pass_instance._rewrite_gate(CNOT(0, 1))
     cz_rewritten = pass_instance._rewrite_gate(CZ(0, 1))
@@ -307,7 +299,7 @@ def test_canonical_pass_supports_cnot_basis() -> None:
 
 
 def test_canonical_pass_supports_rxryrz_single_qubit_basis() -> None:
-    pass_instance = CircuitToCanonicalBasisPass(
+    pass_instance = DecomposeToCanonicalBasisPass(
         two_qubit_basis=TwoQubitGateBasis.CZ,
         single_qubit_basis=SingleQubitGateBasis.RxRyRz,
     )
@@ -324,26 +316,27 @@ def test_canonical_pass_supports_rxryrz_single_qubit_basis() -> None:
 
 def test_canonical_pass_rejects_invalid_two_qubit_basis() -> None:
     with pytest.raises(TypeError):
-        CircuitToCanonicalBasisPass(two_qubit_basis="CZ")  # type: ignore[arg-type]
+        DecomposeToCanonicalBasisPass(two_qubit_basis="CZ")  # type: ignore[arg-type]
 
 
 def test_canonical_pass_rejects_invalid_single_qubit_basis() -> None:
     with pytest.raises(TypeError):
-        CircuitToCanonicalBasisPass(single_qubit_basis="U3")  # type: ignore[arg-type]
+        DecomposeToCanonicalBasisPass(single_qubit_basis="U3")  # type: ignore[arg-type]
 
 
-def test_canonical_pass_run_produces_basis_circuit():
+def test_canonical_pass_run_produces_basis_circuit_for_CZ():
     circuit = Circuit(3)
     circuit.add(CNOT(0, 1))
     circuit.add(SWAP(1, 2))
     circuit.add(Adjoint(RY(2, theta=0.5)))
     circuit.add(RX(0, theta=0.3))
 
-    pass_instance = CircuitToCanonicalBasisPass()
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CZ)
     out = pass_instance.run(circuit)
 
     assert all(g.name in {"CZ", "U3"} for g in out.gates)
     assert len(out.gates) > 0
+    assert np.allclose(circuit.to_matrix(), out.to_matrix())
 
 
 def test_canonical_pass_run_produces_basis_circuit_for_cnot() -> None:
@@ -353,11 +346,12 @@ def test_canonical_pass_run_produces_basis_circuit_for_cnot() -> None:
     circuit.add(Adjoint(RY(2, theta=0.5)))
     circuit.add(RX(0, theta=0.3))
 
-    pass_instance = CircuitToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
     out = pass_instance.run(circuit)
 
     assert all(g.name in {"CNOT", "U3"} for g in out.gates)
     assert len(out.gates) > 0
+    assert np.allclose(circuit.to_matrix(), out.to_matrix())
 
 
 def test_canonical_pass_run_produces_basis_circuit_for_rxryrz() -> None:
@@ -367,11 +361,12 @@ def test_canonical_pass_run_produces_basis_circuit_for_rxryrz() -> None:
     circuit.add(Adjoint(RY(2, theta=0.5)))
     circuit.add(RX(0, theta=0.3))
 
-    pass_instance = CircuitToCanonicalBasisPass(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
+    pass_instance = DecomposeToCanonicalBasisPass(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
     out = pass_instance.run(circuit)
 
-    assert all(g.name in {"CZ", "RX", "RY", "RZ"} for g in out.gates)
+    assert all(g.name in {"CNOT", "RX", "RY", "RZ"} for g in out.gates)
     assert len(out.gates) > 0
+    assert np.allclose(circuit.to_matrix(), out.to_matrix())
 
 
 def test_canonical_pass_run_produces_basis_circuit_for_cnot_and_rxryrz() -> None:
@@ -381,7 +376,7 @@ def test_canonical_pass_run_produces_basis_circuit_for_cnot_and_rxryrz() -> None
     circuit.add(Adjoint(RY(2, theta=0.5)))
     circuit.add(RX(0, theta=0.3))
 
-    pass_instance = CircuitToCanonicalBasisPass(
+    pass_instance = DecomposeToCanonicalBasisPass(
         two_qubit_basis=TwoQubitGateBasis.CNOT,
         single_qubit_basis=SingleQubitGateBasis.RxRyRz,
     )
@@ -389,3 +384,4 @@ def test_canonical_pass_run_produces_basis_circuit_for_cnot_and_rxryrz() -> None
 
     assert all(g.name in {"CNOT", "RX", "RY", "RZ"} for g in out.gates)
     assert len(out.gates) > 0
+    assert np.allclose(circuit.to_matrix(), out.to_matrix())

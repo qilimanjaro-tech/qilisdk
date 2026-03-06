@@ -19,14 +19,14 @@ from rustworkx import PyGraph
 
 from .circuit_transpiler_passes import (
     CancelIdentityPairsPass,
-    DecomposeToCanonicalBasisPass,
     CircuitTranspilerPass,
     CustomLayoutPass,
     DecomposeMultiControlledGatesPass,
+    DecomposeToCanonicalBasisPass,
     FuseSingleQubitGatesPass,
     SabreLayoutPass,
     SabreSwapPass,
-    TranspilationContext,
+    TranspilationContext, SingleQubitGateBasis, TwoQubitGateBasis,
 )
 
 if TYPE_CHECKING:
@@ -149,6 +149,8 @@ class CircuitTranspiler:
     @classmethod
     def default(
         cls,
+        single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
+        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT,
         topology: list[tuple[int, int]] | PyGraph[int, None] | None = None,
         qubit_mapping: dict[int, int] | None = None,
     ) -> Self:
@@ -157,7 +159,7 @@ class CircuitTranspiler:
                 [
                     DecomposeMultiControlledGatesPass(),
                     CancelIdentityPairsPass(),
-                    DecomposeToCanonicalBasisPass(),
+                    DecomposeToCanonicalBasisPass(single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis),
                     FuseSingleQubitGatesPass(),
                 ]
             )
