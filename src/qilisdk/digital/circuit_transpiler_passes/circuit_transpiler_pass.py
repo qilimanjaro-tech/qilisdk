@@ -16,6 +16,8 @@ from abc import ABC, abstractmethod
 
 from qilisdk.digital import Circuit
 
+from .transpilation_context import TranspilationContext
+
 
 class CircuitTranspilerPass(ABC):
     """Base class for non-mutating circuit transpiler passes.
@@ -23,6 +25,20 @@ class CircuitTranspilerPass(ABC):
     Returns:
         CircuitTranspilerPass: Instances expose the `run` API required by the transpiler.
     """
+
+    context: TranspilationContext | None = None
+
+    def attach_context(self, context: TranspilationContext) -> None:
+        self.context = context
+
+    def append_circuit_to_context(self, circuit: Circuit) -> None:
+        name = self.__class__.__name__
+        if self.context is not None:
+            key, i = name, 1
+            while key in self.context.circuits:
+                i += 1
+                key = f"{name}_{i}"
+            self.context.circuits[key] = circuit
 
     @abstractmethod
     def run(self, circuit: Circuit) -> Circuit:
