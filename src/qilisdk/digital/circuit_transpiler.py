@@ -26,7 +26,9 @@ from .circuit_transpiler_passes import (
     FuseSingleQubitGatesPass,
     SabreLayoutPass,
     SabreSwapPass,
-    TranspilationContext, SingleQubitGateBasis, TwoQubitGateBasis,
+    SingleQubitGateBasis,
+    TranspilationContext,
+    TwoQubitGateBasis,
 )
 
 if TYPE_CHECKING:
@@ -160,7 +162,7 @@ class CircuitTranspiler:
                     DecomposeMultiControlledGatesPass(),
                     CancelIdentityPairsPass(),
                     DecomposeToCanonicalBasisPass(single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis),
-                    FuseSingleQubitGatesPass(),
+                    FuseSingleQubitGatesPass(single_qubit_basis=single_qubit_basis),
                 ]
             )
 
@@ -175,11 +177,11 @@ class CircuitTranspiler:
             [
                 DecomposeMultiControlledGatesPass(),
                 CancelIdentityPairsPass(),
-                DecomposeToCanonicalBasisPass(),
-                FuseSingleQubitGatesPass(),
+                DecomposeToCanonicalBasisPass(single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis),
+                FuseSingleQubitGatesPass(single_qubit_basis=single_qubit_basis),
                 *layout_routing_passes,
-                DecomposeToCanonicalBasisPass(),
-                FuseSingleQubitGatesPass(),
+                DecomposeToCanonicalBasisPass(single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis),
+                FuseSingleQubitGatesPass(single_qubit_basis=single_qubit_basis),
             ]
         )
 

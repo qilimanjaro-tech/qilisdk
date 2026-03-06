@@ -15,7 +15,7 @@
 
 from qilisdk.digital import CNOT, Circuit, X
 from qilisdk.digital.circuit_transpiler import CircuitTranspiler
-from qilisdk.digital.circuit_transpiler_passes import CancelIdentityPairsPass
+from qilisdk.digital.circuit_transpiler_passes import CancelIdentityPairsPass, SingleQubitGateBasis
 from qilisdk.digital.gates import Controlled, Gate
 
 from .circuit_transpiler_passes.utils import _sequences_equivalent
@@ -63,6 +63,17 @@ def test_circuit_transpiler_default_pipeline_decomposes_multi_controlled_gates()
         if isinstance(gate, Controlled):
             assert len(gate.control_qubits) <= 1
     assert _sequences_equivalent(circuit.gates, transpiled_circuit.gates, circuit.nqubits)
+
+
+def test_circuit_transpiler_default_pipeline_passes_single_qubit_basis_to_fuse_passes() -> None:
+    transpiler = CircuitTranspiler.default(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
+
+    fuse_passes = [
+        transpiler_pass for transpiler_pass in transpiler._pipeline if transpiler_pass.__class__.__name__ == "FuseSingleQubitGatesPass"
+    ]
+
+    assert fuse_passes
+    assert all(pass_instance.single_qubit_basis == SingleQubitGateBasis.RxRyRz for pass_instance in fuse_passes)
 
 
 def test_circuit_transpiler_accepts_custom_pipeline() -> None:

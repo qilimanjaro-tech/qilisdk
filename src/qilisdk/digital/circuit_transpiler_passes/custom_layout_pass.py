@@ -19,7 +19,7 @@ from typing import Mapping
 
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 
@@ -265,6 +265,8 @@ class CustomLayoutPass(CircuitTranspilerPass):
             return U3(mapped_qubits[0], theta=gate.theta, phi=gate.phi, gamma=gate.gamma)
 
         # 2-qubit basics
+        if isinstance(gate, CNOT):
+            return CNOT(mapped_qubits[0], mapped_qubits[1])
         if isinstance(gate, CZ):
             return CZ(mapped_qubits[0], mapped_qubits[1])
         if isinstance(gate, SWAP):

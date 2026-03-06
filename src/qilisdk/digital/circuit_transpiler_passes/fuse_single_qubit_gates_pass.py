@@ -19,6 +19,7 @@ import math
 import numpy as np
 
 from qilisdk.digital import Circuit
+from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import SingleQubitGateBasis
 from qilisdk.digital.exceptions import GateHasNoMatrixError
 from qilisdk.digital.gates import (
     RX,
@@ -38,16 +39,28 @@ from .numeric_helpers import (
 
 class FuseSingleQubitGatesPass(CircuitTranspilerPass):
     """
-    Fuse maximal adjacent runs of 1-qubit unitary gates per wire into a single gate:
+    Fuse maximal adjacent runs of 1-qubit unitary gates per wire into a basis-respecting sequence:
 
-      - If the fused unitary is a pure Z: emit RZ(phi).
-      - Recognizable canonical forms: RY(theta) if (phi≈0, gamma≈0), RX(theta) if (phi≈-π/2, gamma≈π/2).
-      - Otherwise emit a single U3(theta, phi, gamma).
+      - For ``SingleQubitGateBasis.U3``: emit a single ``U3``.
+      - For ``SingleQubitGateBasis.RxRyRz``: emit ``RZ``, ``RY``, ``RX`` when recognizable, otherwise emit
+        the equivalent ``RZ(phi) · RY(theta) · RZ(gamma)`` sequence.
 
     Any gate that is not a 1-qubit unitary matrix (including measurements or
     unsupported/no-matrix gates) acts as a boundary for the touched qubits.
     Always returns a NEW circuit.
     """
+
+    def __init__(self, single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3) -> None:
+        if not isinstance(single_qubit_basis, SingleQubitGateBasis):
+            raise TypeError(
+                "single_qubit_basis must be a SingleQubitGateBasis value "
+                f"(got {type(single_qubit_basis).__name__})."
+            )
+        self._single_qubit_basis = single_qubit_basis
+
+    @property
+    def single_qubit_basis(self) -> SingleQubitGateBasis:
+        return self._single_qubit_basis
 
     @staticmethod
     def _try_single_qubit_unitary(gate: Gate) -> np.ndarray | None:
@@ -92,36 +105,15 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
         def flush_pending_qubit(qubit: int) -> None:
             """Emit the fused gate accumulated for a qubit, if any.
 
-            This helper mutates ``pending`` and appends at most one canonical gate to ``output_gates``.
+            This helper mutates ``pending`` and appends a basis-respecting canonical sequence to ``output_gates``.
 
             Args:
-                qubit (int): Qubit whose pending fused unitary is materialized as ``RZ``, ``RY``, ``RX``, or ``U3``.
+                qubit (int): Qubit whose pending fused unitary is materialized in the configured single-qubit basis.
             """
             if qubit not in pending:
                 return
             U = pending.pop(qubit)
-            theta, phi, gamma = _zyz_from_unitary(U)
-            theta, phi, gamma = float(theta), float(phi), float(gamma)
-            theta = _wrap_angle(theta)
-            phi = _wrap_angle(phi)
-            gamma = _wrap_angle(gamma)
-            if _is_close_mod_2pi(theta, 0.0):
-                # pure Z: RZ(ph + lam)
-                output_gates.append(RZ(qubit, phi=_wrap_angle(phi + gamma)))
-                return
-            if _is_close_mod_2pi(phi, 0.0) and _is_close_mod_2pi(gamma, 0.0):
-                output_gates.append(RY(qubit, theta=theta))
-                return
-            if _is_close_mod_2pi(phi, math.pi) and _is_close_mod_2pi(gamma, math.pi):
-                output_gates.append(RY(qubit, theta=-theta))
-                return
-            if _is_close_mod_2pi(phi, -math.pi / 2.0) and _is_close_mod_2pi(gamma, math.pi / 2.0):
-                output_gates.append(RX(qubit, theta=theta))
-                return
-            if _is_close_mod_2pi(phi, math.pi / 2.0) and _is_close_mod_2pi(gamma, -math.pi / 2.0):
-                output_gates.append(RX(qubit, theta=-theta))
-                return
-            output_gates.append(U3(qubit, theta=theta, phi=phi, gamma=gamma))
+            output_gates.extend(self._emit_fused_basis_gates(qubit, U))
 
         for gate in circuit.gates:
             unitary = self._try_single_qubit_unitary(gate)
@@ -145,3 +137,33 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
 
         self.append_circuit_to_context(output_circuit)
         return output_circuit
+
+    def _emit_fused_basis_gates(self, qubit: int, unitary: np.ndarray) -> list[Gate]:
+        theta, phi, gamma = _zyz_from_unitary(unitary)
+        theta, phi, gamma = float(theta), float(phi), float(gamma)
+        theta = _wrap_angle(theta)
+        phi = _wrap_angle(phi)
+        gamma = _wrap_angle(gamma)
+
+        if self._single_qubit_basis == SingleQubitGateBasis.U3:
+            return [U3(qubit, theta=theta, phi=phi, gamma=gamma)]
+
+        if self._single_qubit_basis == SingleQubitGateBasis.RxRyRz:
+            if _is_close_mod_2pi(theta, 0.0):
+                # pure Z: RZ(ph + lam)
+                return [RZ(qubit, phi=_wrap_angle(phi + gamma))]
+            if _is_close_mod_2pi(phi, 0.0) and _is_close_mod_2pi(gamma, 0.0):
+                return [RY(qubit, theta=theta)]
+            if _is_close_mod_2pi(phi, math.pi) and _is_close_mod_2pi(gamma, math.pi):
+                return [RY(qubit, theta=-theta)]
+            if _is_close_mod_2pi(phi, -math.pi / 2.0) and _is_close_mod_2pi(gamma, math.pi / 2.0):
+                return [RX(qubit, theta=theta)]
+            if _is_close_mod_2pi(phi, math.pi / 2.0) and _is_close_mod_2pi(gamma, -math.pi / 2.0):
+                return [RX(qubit, theta=-theta)]
+            return [
+                RZ(qubit, phi=gamma),
+                RY(qubit, theta=theta),
+                RZ(qubit, phi=phi),
+            ]
+
+        raise TypeError(f"Unsupported single-qubit basis {self._single_qubit_basis}")
