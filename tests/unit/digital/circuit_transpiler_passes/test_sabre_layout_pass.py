@@ -246,7 +246,7 @@ def test_sabre_layout_simulation_breaks_on_degenerate_no_candidate_case() -> Non
     )
 
     assert final_layout == [0, 0]
-    assert score == 0.0
+    assert math.isclose(score, 0.0)
 
 
 def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unavailable(
@@ -260,7 +260,7 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
     monkeypatch.setattr(
         layout_pass,
         "_cost_front",
-        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+        lambda *args, **kwargs: ().throw(SampledCandidateUsed()),
     )
 
     with pytest.raises(SampledCandidateUsed):
@@ -285,7 +285,7 @@ def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
         {0: 0, 1: 1},
     )
 
-    assert cost == 1e6
+    assert math.isclose(cost, 1e6)
 
 
 def test_sabre_layout_random_initial_layout_requires_enough_physical_nodes() -> None:

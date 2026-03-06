@@ -183,7 +183,7 @@ def test_first_nonzero_phase_and_dephased_signature() -> None:
 
 
 def test_first_nonzero_phase_returns_zero_for_zero_matrix() -> None:
-    assert _first_nonzero_phase(np.zeros((2, 2), dtype=complex)) == 0.0
+    assert np.isclose(_first_nonzero_phase(np.zeros((2, 2), dtype=complex)), 0.0)
 
 
 def test_try_matrix_handles_missing_matrix() -> None:
