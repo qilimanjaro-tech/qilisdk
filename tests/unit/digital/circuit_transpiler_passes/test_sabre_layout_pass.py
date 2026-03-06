@@ -260,7 +260,7 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
     monkeypatch.setattr(
         layout_pass,
         "_cost_front",
-        lambda *args, **kwargs: ().throw(SampledCandidateUsed()),
+        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
     )
 
     with pytest.raises(SampledCandidateUsed):
