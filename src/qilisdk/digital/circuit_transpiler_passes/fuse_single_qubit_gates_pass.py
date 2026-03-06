@@ -53,8 +53,7 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
     def __init__(self, single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3) -> None:
         if not isinstance(single_qubit_basis, SingleQubitGateBasis):
             raise TypeError(
-                "single_qubit_basis must be a SingleQubitGateBasis value "
-                f"(got {type(single_qubit_basis).__name__})."
+                f"single_qubit_basis must be a SingleQubitGateBasis value (got {type(single_qubit_basis).__name__})."
             )
         self._single_qubit_basis = single_qubit_basis
 

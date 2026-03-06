@@ -161,7 +161,9 @@ class CircuitTranspiler:
                 [
                     DecomposeMultiControlledGatesPass(),
                     CancelIdentityPairsPass(),
-                    DecomposeToCanonicalBasisPass(single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis),
+                    DecomposeToCanonicalBasisPass(
+                        single_qubit_basis=single_qubit_basis, two_qubit_basis=two_qubit_basis
+                    ),
                     FuseSingleQubitGatesPass(single_qubit_basis=single_qubit_basis),
                 ]
             )

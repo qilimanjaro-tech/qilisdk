@@ -69,7 +69,9 @@ def test_circuit_transpiler_default_pipeline_passes_single_qubit_basis_to_fuse_p
     transpiler = CircuitTranspiler.default(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
 
     fuse_passes = [
-        transpiler_pass for transpiler_pass in transpiler._pipeline if transpiler_pass.__class__.__name__ == "FuseSingleQubitGatesPass"
+        transpiler_pass
+        for transpiler_pass in transpiler._pipeline
+        if transpiler_pass.__class__.__name__ == "FuseSingleQubitGatesPass"
     ]
 
     assert fuse_passes

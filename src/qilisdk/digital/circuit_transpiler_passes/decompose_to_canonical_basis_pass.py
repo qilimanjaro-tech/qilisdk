@@ -416,7 +416,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
     def __init__(
         self,
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
-        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT
+        two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT,
     ) -> None:
         """Initialize the canonical-basis decomposition pass.
 
@@ -429,13 +429,11 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         """
         if not isinstance(single_qubit_basis, SingleQubitGateBasis):
             raise TypeError(
-                "single_qubit_basis must be a SingleQubitGateBasis value "
-                f"(got {type(single_qubit_basis).__name__})."
+                f"single_qubit_basis must be a SingleQubitGateBasis value (got {type(single_qubit_basis).__name__})."
             )
         if not isinstance(two_qubit_basis, TwoQubitGateBasis):
             raise TypeError(
-                "two_qubit_basis must be a TwoQubitGateBasis value "
-                f"(got {type(two_qubit_basis).__name__})."
+                f"two_qubit_basis must be a TwoQubitGateBasis value (got {type(two_qubit_basis).__name__})."
             )
         self._single_qubit_basis = single_qubit_basis
         self._two_qubit_basis = two_qubit_basis
