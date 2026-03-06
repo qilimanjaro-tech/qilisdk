@@ -36,93 +36,66 @@ if TYPE_CHECKING:
 
 
 def _is_topology_graph(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[PyGraph[int, None]]:
-    return isinstance(topology, PyGraph)
+    return isinstance(topology, PyGraph) and all(isinstance(node, int) for node in topology.nodes())
 
 
 LayoutMap: TypeAlias = dict[int, int]
 
 
-class TranspilationLayoutResult:
-    """Immutable-style view over layout diagnostics produced by transpiler passes."""
-
-    def __init__(self, initial_layout: LayoutMap | None = None, final_layout: LayoutMap | None = None) -> None:
-        self._initial_layout: LayoutMap | None = dict(initial_layout) if initial_layout else None
-        self._final_layout: LayoutMap | None = dict(final_layout) if final_layout else None
-
-    @property
-    def initial_layout(self) -> LayoutMap | None:
-        """Logical-to-physical mapping at the end of the layout stage, if available."""
-        return dict(self._initial_layout) if self._initial_layout is not None else None
-
-    @property
-    def final_layout(self) -> LayoutMap | None:
-        """Logical-to-physical mapping at the end of routing, if available."""
-        return dict(self._final_layout) if self._final_layout is not None else None
-
-
 class TranspilerPassResult:
     """Per-pass transpilation artifact containing pass identity and output circuit."""
 
-    def __init__(
-        self,
-        pass_name: str,
-        transpiled_circuit: Circuit,
-        layout: TranspilationLayoutResult | None = None,
-    ) -> None:
-        self._pass_name = pass_name
-        self._transpiled_circuit = transpiled_circuit
-        self._layout = layout if layout is not None else TranspilationLayoutResult()
+    def __init__(self, name: str, circuit: Circuit) -> None:
+        self._name = name
+        self._circuit = circuit
 
     @property
-    def pass_name(self) -> str:
-        """Concrete pass class name."""
-        return self._pass_name
+    def name(self) -> str:
+        """Pass class name."""
+        return self._name
 
     @property
-    def transpiled_circuit(self) -> Circuit:
+    def circuit(self) -> Circuit:
         """Circuit produced right after this pass."""
-        return self._transpiled_circuit
-
-    @property
-    def layout(self) -> TranspilationLayoutResult:
-        """Layout snapshot captured after this pass."""
-        return self._layout
+        return self._circuit
 
 
-class CircuitTranspilerRunResult:
+class CircuitTranspilerResult:
     """Result of a full transpiler run with pass-by-pass diagnostics."""
 
     def __init__(
         self,
-        final_circuit: Circuit,
-        pass_results: list[TranspilerPassResult] | None = None,
-        layout: TranspilationLayoutResult | None = None,
+        circuit: Circuit,
+        intermediate_results: list[TranspilerPassResult] | None = None,
+        layout: LayoutMap | None = None,
         metrics: dict[str, Any] | None = None,
     ) -> None:
-        self._final_circuit: Circuit = final_circuit
-        self._pass_results: list[TranspilerPassResult] = list(pass_results) if pass_results is not None else []
-        self._layout: TranspilationLayoutResult = layout if layout is not None else TranspilationLayoutResult()
+        self._circuit: Circuit = circuit
+        self._intermediate_results: list[TranspilerPassResult] = (
+            list(intermediate_results) if intermediate_results is not None else []
+        )
+        self._layout: LayoutMap | None = dict(layout) if layout is not None else None
         self._metrics: dict[str, Any] = dict(metrics) if metrics is not None else {}
 
     @property
     def circuit(self) -> Circuit:
         """Alias for the final transpiled circuit."""
-        return self._final_circuit
+        return self._circuit
 
     @property
     def final_circuit(self) -> Circuit:
         """Circuit returned by the last transpiler pass."""
-        return self._final_circuit
+        return self._circuit
 
     @property
-    def pass_results(self) -> list[TranspilerPassResult]:
+    def intermediate_results(self) -> list[TranspilerPassResult]:
         """Ordered per-pass outputs."""
-        return list(self._pass_results)
+        return list(self._intermediate_results)
 
     @property
-    def layout(self) -> TranspilationLayoutResult:
-        """Final layout snapshot captured after the pipeline finishes."""
-        return self._layout
+    def layout(self) -> LayoutMap | None:
+        """Final user-facing logical-to-physical mapping captured after the pipeline finishes."""
+        return dict(self._layout) if self._layout is not None else None
 
     @property
     def metrics(self) -> dict[str, Any]:
@@ -187,7 +160,7 @@ class CircuitTranspiler:
             ]
         )
 
-    def run(self, circuit: Circuit) -> CircuitTranspilerRunResult:
+    def transpile(self, circuit: Circuit) -> CircuitTranspilerResult:
         """Run the pipeline and return pass-by-pass transpilation diagnostics.
 
         Args:
@@ -204,28 +177,17 @@ class CircuitTranspiler:
             transpiled_circuit = transpiler_pass.run(transpiled_circuit)
             pass_results.append(
                 TranspilerPassResult(
-                    pass_name=transpiler_pass.__class__.__name__,
-                    transpiled_circuit=transpiled_circuit,
-                    layout=self._build_layout_result(),
+                    name=transpiler_pass.__class__.__name__,
+                    circuit=transpiled_circuit,
                 )
             )
 
-        return CircuitTranspilerRunResult(
-            final_circuit=transpiled_circuit,
-            pass_results=pass_results,
-            layout=self._build_layout_result(),
+        return CircuitTranspilerResult(
+            circuit=transpiled_circuit,
+            intermediate_results=pass_results,
+            layout=self._context.final_layout,
             metrics=self._context.metrics,
         )
-
-    def transpile(self, circuit: Circuit) -> Circuit:
-        """Run the configured pass pipeline over the provided circuit.
-
-        Args:
-            circuit (Circuit): Circuit to be rewritten by the transpiler passes.
-        Returns:
-            Circuit: The circuit returned by the last pass in the pipeline.
-        """
-        return self.run(circuit).final_circuit
 
     def _attach_context_to_pipeline(self) -> None:
         for transpiler_pass in self._pipeline:
@@ -234,23 +196,6 @@ class CircuitTranspiler:
     def _reset_context(self) -> None:
         self._context = TranspilationContext()
         self._attach_context_to_pipeline()
-
-    def _build_layout_result(self) -> TranspilationLayoutResult:
-        initial_layout = CircuitTranspiler._initial_layout_to_mapping(self._context.initial_layout)
-        final_layout = CircuitTranspiler._normalized_final_layout(self._context.final_layout)
-        return TranspilationLayoutResult(initial_layout=initial_layout, final_layout=final_layout)
-
-    @staticmethod
-    def _initial_layout_to_mapping(initial_layout: list[int]) -> LayoutMap | None:
-        if not initial_layout:
-            return None
-        return dict(enumerate(initial_layout))
-
-    @staticmethod
-    def _normalized_final_layout(final_layout: dict[int, int]) -> LayoutMap | None:
-        if not final_layout:
-            return None
-        return {int(logical_qubit): int(physical_qubit) for logical_qubit, physical_qubit in final_layout.items()}
 
     @staticmethod
     def _build_topology_graph(topology: list[tuple[int, int]]) -> PyGraph[int, None]:

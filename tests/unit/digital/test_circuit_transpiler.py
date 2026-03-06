@@ -15,7 +15,11 @@
 
 from qilisdk.digital import CNOT, Circuit, X
 from qilisdk.digital.circuit_transpiler import CircuitTranspiler
-from qilisdk.digital.circuit_transpiler_passes import CancelIdentityPairsPass, SingleQubitGateBasis
+from qilisdk.digital.circuit_transpiler_passes import (
+    CancelIdentityPairsPass,
+    CircuitTranspilerPass,
+    SingleQubitGateBasis,
+)
 from qilisdk.digital.gates import Controlled, Gate
 
 from .circuit_transpiler_passes.utils import _sequences_equivalent
@@ -34,7 +38,8 @@ def test_circuit_transpiler_preserves_semantics_for_simple_circuit() -> None:
     circuit.add(CNOT(0, 1))
 
     transpiler = CircuitTranspiler.default()
-    transpiled_circuit = transpiler.transpile(circuit)
+    transpilation_result = transpiler.transpile(circuit)
+    transpiled_circuit = transpilation_result.circuit
 
     assert transpiled_circuit is not circuit
     assert transpiled_circuit.nqubits == circuit.nqubits
@@ -47,17 +52,18 @@ def test_circuit_transpiler_does_not_mutate_input_circuit() -> None:
     circuit.add(X(0))
     original_snapshot = _describe_circuit(circuit)
 
-    transpiled_circuit = CircuitTranspiler.default().transpile(circuit)
+    transpilation_result = CircuitTranspiler.default().transpile(circuit)
 
     assert _describe_circuit(circuit) == original_snapshot
-    assert transpiled_circuit.gates == []
+    assert transpilation_result.circuit.gates == []
 
 
 def test_circuit_transpiler_default_pipeline_decomposes_multi_controlled_gates() -> None:
     circuit = Circuit(3)
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
 
-    transpiled_circuit = CircuitTranspiler.default().transpile(circuit)
+    transpilation_result = CircuitTranspiler.default().transpile(circuit)
+    transpiled_circuit = transpilation_result.circuit
 
     for gate in transpiled_circuit.gates:
         if isinstance(gate, Controlled):
@@ -82,37 +88,66 @@ def test_circuit_transpiler_accepts_custom_pipeline() -> None:
     circuit = Circuit(3)
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
 
-    transpiled_circuit = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).transpile(circuit)
+    transpilation_result = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).transpile(circuit)
+    transpiled_circuit = transpilation_result.circuit
 
     assert len(transpiled_circuit.gates) == 1
     assert isinstance(transpiled_circuit.gates[0], Controlled)
     assert len(transpiled_circuit.gates[0].control_qubits) == 2
 
 
-def test_circuit_transpiler_run_returns_per_pass_results() -> None:
+def test_circuit_transpiler_transpile_returns_intermediate_results() -> None:
     circuit = Circuit(1)
     circuit.add(X(0))
     circuit.add(X(0))
 
-    run_result = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).run(circuit)
+    transpilation_result = CircuitTranspiler(pipeline=[CancelIdentityPairsPass()]).transpile(circuit)
 
-    assert run_result.circuit is run_result.final_circuit
-    assert run_result.final_circuit.gates == []
-    assert len(run_result.pass_results) == 1
+    assert transpilation_result.circuit is transpilation_result.final_circuit
+    assert transpilation_result.final_circuit.gates == []
+    assert len(transpilation_result.intermediate_results) == 1
 
-    pass_result = run_result.pass_results[0]
-    assert pass_result.pass_name == "CancelIdentityPairsPass"
-    assert pass_result.transpiled_circuit is run_result.final_circuit
-    assert pass_result.layout.initial_layout is None
-    assert pass_result.layout.final_layout is None
+    intermediate_result = transpilation_result.intermediate_results[0]
+    assert intermediate_result.name == "CancelIdentityPairsPass"
+    assert intermediate_result.circuit is transpilation_result.final_circuit
 
 
-def test_circuit_transpiler_run_reports_layout_result() -> None:
+def test_circuit_transpiler_transpile_reports_layout_result() -> None:
     circuit = Circuit(2)
     circuit.add(CNOT(0, 1))
     mapping = {0: 0, 1: 1}
 
-    run_result = CircuitTranspiler.default(topology=[(0, 1)], qubit_mapping=mapping).run(circuit)
+    transpilation_result = CircuitTranspiler.default(topology=[(0, 1)], qubit_mapping=mapping).transpile(circuit)
 
-    assert run_result.layout.initial_layout == mapping
-    assert run_result.layout.final_layout == mapping
+    assert transpilation_result.layout == mapping
+
+
+class _RecordLayoutPass(CircuitTranspilerPass):
+    def run(self, circuit: Circuit) -> Circuit:
+        if self.context is not None:
+            self.context.initial_layout = [1, 0]
+            self.context.final_layout = {0: 0, 1: 1}
+        return circuit
+
+
+def test_circuit_transpiler_transpile_reports_only_final_layout() -> None:
+    circuit = Circuit(2)
+
+    transpilation_result = CircuitTranspiler(pipeline=[_RecordLayoutPass()]).transpile(circuit)
+
+    assert transpilation_result.layout == {0: 0, 1: 1}
+
+
+class _RecordInitialLayoutOnlyPass(CircuitTranspilerPass):
+    def run(self, circuit: Circuit) -> Circuit:
+        if self.context is not None:
+            self.context.initial_layout = [1, 0]
+        return circuit
+
+
+def test_circuit_transpiler_transpile_does_not_expose_initial_layout() -> None:
+    circuit = Circuit(2)
+
+    transpilation_result = CircuitTranspiler(pipeline=[_RecordInitialLayoutOnlyPass()]).transpile(circuit)
+
+    assert transpilation_result.layout == {}
