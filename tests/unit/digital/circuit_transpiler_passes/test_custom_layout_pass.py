@@ -176,7 +176,9 @@ def test_custom_layout_raises_for_multi_qubit_gate():
         (M(0), (1,), M),
     ],
 )
-def test_custom_layout_retarget_gate_supports_all_specialized_branches(gate: Gate, mapped_qubits, expected_type) -> None:
+def test_custom_layout_retarget_gate_supports_all_specialized_branches(
+    gate: Gate, mapped_qubits, expected_type
+) -> None:
     retargeted = CustomLayoutPass._retarget_gate(gate, mapped_qubits)
 
     assert isinstance(retargeted, expected_type)
