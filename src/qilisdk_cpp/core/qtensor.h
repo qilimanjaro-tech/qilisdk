@@ -77,7 +77,9 @@ class QTensorCpp {
         QTensorCpp exp() const;
         int rank();
         std::vector<std::complex<double>> get_eigenvalues() const;
+        py::object get_eigenvalues_python() const;
         std::vector<SparseMatrix> get_eigenvectors() const;
+        py::object get_eigenvectors_python() const;
         QTensorCpp conjugate() const;
         QTensorCpp transpose() const;
         QTensorCpp adjoint() const;
@@ -93,6 +95,7 @@ class QTensorCpp {
         QTensorCpp matmul_python(const py::object& other) const;
         QTensorCpp matmul(const QTensorCpp& other) const;
         QTensorCpp div(std::complex<double> scalar) const;
+        QTensorCpp mul(std::complex<double> scalar) const;
 
         // Cached checks
         bool is_ket() const;
@@ -107,7 +110,7 @@ class QTensorCpp {
         bool is_hermitian(double atol = default_atol) { return is_self_adjoint(atol); }
         
         // Specifically quantum things
-        QTensorCpp as_density_matrix(double atol = default_atol);
+        QTensorCpp as_density_matrix(double atol = default_atol, double max_relative_correction = 0.1);
         double entropy_von_neumann();
         double entropy_renyi(double alpha);
         double fidelity(const QTensorCpp& other) const;
@@ -116,18 +119,21 @@ class QTensorCpp {
         std::vector<double> probabilities() const;
         std::complex<double> expectation_value(const QTensorCpp& other, int nshots=0) const;
         std::complex<double> expectation_value_python(const py::object& other, int nshots=0) const;
-        QTensorCpp partial_trace_python(const py::list& keep) const;
+        QTensorCpp partial_trace_python(const py::object& keep) const;
         QTensorCpp partial_trace(const std::set<int>& keep) const;
         QTensorCpp commutator(const QTensorCpp& other) const;
         QTensorCpp commutator_python(const py::object& other) const;
         QTensorCpp anticommutator(const QTensorCpp& other) const;
         QTensorCpp anticommutator_python(const py::object& other) const;
+        QTensorCpp reset_qubits_python(const py::object& qubits);
         QTensorCpp reset_qubits(const std::set<int>& qubits);
 
         // Static initializers for common states
         static QTensorCpp identity(int dim);
-        static QTensorCpp ket(const std::string& bitstring);
-        static QTensorCpp bra(const std::string& bitstring);
+        static QTensorCpp ket_python(const py::object& state);
+        static QTensorCpp ket(const std::vector<int>& qubit_values);
+        static QTensorCpp bra_python(const py::object& state);
+        static QTensorCpp bra(const std::vector<int>& qubit_values);
         static QTensorCpp random(int rows, int cols);
         static QTensorCpp random_sparse(int rows, int cols, double density);
         static QTensorCpp ghz(int nqubits);
@@ -145,5 +151,7 @@ class QTensorCpp {
         QTensorCpp operator/(std::complex<double> scalar) const { return div(scalar); }
         QTensorCpp operator/(double scalar) const { return div(std::complex<double>(scalar, 0.0)); }
         std::complex<double> operator[](const std::pair<int, int>& index) const { return coeff(index.first, index.second); }
+        QTensorCpp operator*(std::complex<double> scalar) const { return mul(scalar); }
+        QTensorCpp operator*(double scalar) const { return mul(std::complex<double>(scalar, 0.0)); }
 
 };

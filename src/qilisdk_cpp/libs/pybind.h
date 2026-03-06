@@ -15,6 +15,8 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/eigen.h>
+#include <pybind11/complex.h>
 
 // Shorthand
 namespace py = pybind11;
@@ -26,5 +28,7 @@ using namespace py::literals;
 const py::object numpy_array = py::module_::import("numpy").attr("array");
 const py::object numpy_array_type = py::module_::import("numpy").attr("ndarray");
 const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
+const py::object cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
+const py::object coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
 const py::dtype dtype = py::dtype("complex128");
-const py::object not_implemented = py::module_::import("builtins").attr("NotImplemented");
+const py::object py_complex = py::module_::import("builtins").attr("complex");

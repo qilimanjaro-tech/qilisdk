@@ -54,12 +54,18 @@ QTensorCpp::QTensorCpp(const py::object& data) {
             }
         }
         _data.makeCompressed();
-    } else if (py::isinstance(data, csrmatrix)) {
+    } else if (py::isinstance(data, csrmatrix) || py::isinstance(data, cscmatrix) || py::isinstance(data, coomatrix)) {
         _data = from_spmatrix(data, default_atol);
     } else if (py::isinstance(data, numpy_array_type)) {
         _data = from_numpy(data.cast<py::buffer>(), default_atol);
     } else {
-        throw std::invalid_argument("Data object must be a QTensor");
+        throw std::invalid_argument("Data object must be a QTensor, a list of lists, a scipy sparse matrix, or a numpy array, got: " + std::string(py::str(data)));
+    }
+    if (_data.rows() == 0 || _data.cols() == 0) {
+        throw std::invalid_argument("A QTensor should be initialized with a non-empty 2D array; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
+    }
+    if (((_data.rows() & (_data.rows() - 1)) != 0) || ((_data.cols() & (_data.cols() - 1)) != 0)) {
+        throw std::invalid_argument("A QTensor should have dimensions that are powers of 2; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
     }
 }
 
@@ -239,9 +245,12 @@ std::complex<double> QTensorCpp::trace() {
     return _trace;
 }
 
-QTensorCpp QTensorCpp::partial_trace_python(const py::list& keep) const {
+QTensorCpp QTensorCpp::partial_trace_python(const py::object& keep) const {
     std::set<int> keep_set;
     for (const auto& item : keep) {
+        if (!py::isinstance<py::int_>(item)) {
+            throw std::invalid_argument("Keep set must be an iterable of integers");
+        }
         keep_set.insert(item.cast<int>());
     }
     return partial_trace(keep_set);
@@ -252,6 +261,13 @@ QTensorCpp QTensorCpp::partial_trace(const std::set<int>& keep) const {
     // Total number of qubits: matrix is 2^n x 2^n
     int total_dim = _data.rows();
     int n = static_cast<int>(std::log2(total_dim));
+
+    // Make sure keep set is valid
+    for (int q : keep) {
+        if (q < 0 || q >= n) {
+            throw std::invalid_argument("Keep set contains invalid qubit index: " + std::to_string(q));
+        }
+    }
 
     // Determine which qubits to trace out
     std::vector<bool> kept(n, false);
@@ -349,9 +365,6 @@ double QTensorCpp::norm(const std::string& norm_type) {
         }
         return sum;
     } else if (norm_type == "trace") {
-        if (!is_operator()) {
-            throw std::invalid_argument("Trace norm is only defined for operators");
-        }
         if (_eigenvalues.empty()) {
             compute_eigendecomposition();
         }
@@ -382,37 +395,77 @@ double QTensorCpp::norm(const std::string& norm_type) {
 QTensorCpp QTensorCpp::normalized(const std::string& norm_type) {
     double nrm = norm(norm_type);
     if (nrm == 0.0) {
-        throw std::runtime_error("Cannot normalize a tensor with zero norm");
+        throw py::value_error("Cannot normalize a tensor with zero norm");
     }
     return QTensorCpp(_data / nrm);
 }
 
-int bitstring_to_index(const std::string& bitstring) {
-    int index = 0;
-    for (size_t i = 0; i < bitstring.size(); ++i) {
-        if (bitstring[bitstring.size() - 1 - i] == '1') {
-            index |= (1 << i);
+QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
+    if (qubit_values.empty()) {
+        throw std::invalid_argument("Ket state cannot be empty");
+    }
+    for (int bit : qubit_values) {
+        if (bit != 0 && bit != 1) {
+            throw std::invalid_argument("Ket state must be a list of 0s and 1s");
         }
     }
-    return index;
-}
-
-QTensorCpp QTensorCpp::ket(const std::string& bitstring) {
-    int dim = 1 << bitstring.size();
+    int n = qubit_values.size();
+    int dim = 1 << n;
     QTensorCpp result(dim, 1);
-    int one_index = bitstring_to_index(bitstring);
+    int one_index = 0;
+    for (size_t i = 0; i < qubit_values.size(); ++i) {
+        if (qubit_values[qubit_values.size() - 1 - i] == 1) {
+            one_index |= (1 << i);
+        }
+    }
     result._data.insert(one_index, 0) = 1.0;
     result._data.makeCompressed();
     return result;
 }
 
-QTensorCpp QTensorCpp::bra(const std::string& bitstring) {
-    int dim = 1 << bitstring.size();
+QTensorCpp QTensorCpp::ket_python(const py::object& state) {
+    std::vector<int> qubit_values;
+    for (const auto& item : state) {
+        if (!py::isinstance<py::int_>(item)) {
+            throw std::invalid_argument("Ket state must be a list of integers");
+        }
+        qubit_values.push_back(item.cast<int>());
+    }
+    return ket(qubit_values);
+}
+
+QTensorCpp QTensorCpp::bra(const std::vector<int>& qubit_values) {
+    if (qubit_values.empty()) {
+        throw std::invalid_argument("Bra state cannot be empty");
+    }
+    for (int bit : qubit_values) {
+        if (bit != 0 && bit != 1) {
+            throw std::invalid_argument("Bra state must be a list of 0s and 1s");
+        }
+    }
+    int n = qubit_values.size();
+    int dim = 1 << n;
     QTensorCpp result(1, dim);
-    int one_index = bitstring_to_index(bitstring);
+    int one_index = 0;
+    for (size_t i = 0; i < qubit_values.size(); ++i) {
+        if (qubit_values[qubit_values.size() - 1 - i] == 1) {
+            one_index |= (1 << i);
+        }
+    }
     result._data.insert(0, one_index) = 1.0;
     result._data.makeCompressed();
     return result;
+}
+
+QTensorCpp QTensorCpp::bra_python(const py::object& state) {
+    std::vector<int> qubit_values;
+    for (const auto& item : state) {
+        if (!py::isinstance<py::int_>(item)) {
+            throw std::invalid_argument("Bra state must be a list of integers");
+        }
+        qubit_values.push_back(item.cast<int>());
+    }
+    return bra(qubit_values);
 }
 
 QTensorCpp QTensorCpp::tensor_product_python(const py::list& others) const {
@@ -430,6 +483,9 @@ QTensorCpp QTensorCpp::tensor_product_python(const py::list& others) const {
 }
 
 QTensorCpp QTensorCpp::tensor_product(const std::vector<QTensorCpp>& others) const {
+    if (others.empty()) {
+        throw std::invalid_argument("The tensor product requires at least one other tensor");
+    }
     Triplets triplets {{0, 0, 1.0}};
     int total_rows = 1;
     int total_cols = 1;
@@ -461,8 +517,20 @@ QTensorCpp QTensorCpp::add_python(const py::object& other) const {
         return add(other.cast<QTensorCpp>());
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return add(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else if (py::isinstance<py::int_>(other) || py::isinstance<py::float_>(other) || py::isinstance(other, py_complex)) {
+        if (is_scalar()) {
+            std::complex<double> scalar = other.cast<std::complex<double>>();
+            SparseMatrix scalar_matrix(_data.rows(), _data.cols());
+            for (int i=0; i<std::min(_data.rows(), _data.cols()); ++i) {
+                scalar_matrix.insert(i, i) = scalar;
+            }
+            scalar_matrix.makeCompressed();
+            return QTensorCpp(_data + scalar_matrix);
+        } else {
+            throw py::type_error("unsupported operand type(s) for addition: 'QTensor' and '" + std::string(py::str(other.get_type())) + "'. Addition of a scalar is only supported for 1x1 QTensors.");
+        }
     } else {
-        throw not_implemented();
+        throw py::type_error("Addition is only supported with another QTensors or a scalar");
     }
 }
 
@@ -476,7 +544,7 @@ QTensorCpp QTensorCpp::sub_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return sub(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw not_implemented();
+        throw py::type_error("Subtraction is only supported between QTensors");
     }
 }
 
@@ -489,9 +557,16 @@ QTensorCpp QTensorCpp::mul_python(const py::object& other) const {
         return mul(other.cast<QTensorCpp>());
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return mul(other.attr("_qtensor_cpp").cast<QTensorCpp>());
+    } else if (py::isinstance<py::int_>(other) || py::isinstance<py::float_>(other) || py::isinstance(other, py_complex)) {
+        std::complex<double> scalar = other.cast<std::complex<double>>();
+        return mul(scalar);
     } else {
-        throw not_implemented();
+        throw py::type_error("Multiplication is only supported between QTensors");
     }
+}
+
+QTensorCpp QTensorCpp::mul(std::complex<double> scalar) const {
+    return QTensorCpp(_data * scalar);
 }
 
 QTensorCpp QTensorCpp::mul(const QTensorCpp& other) const {
@@ -504,7 +579,7 @@ QTensorCpp QTensorCpp::matmul_python(const py::object& other) const {
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return matmul(other.attr("_qtensor_cpp").cast<QTensorCpp>());
     } else {
-        throw not_implemented();
+        throw py::type_error("Matrix multiplication is only supported between QTensors");
     }
 }
 
@@ -547,17 +622,51 @@ QTensorCpp QTensorCpp::identity(int dim) {
     return QTensorCpp(id);
 }
 
-QTensorCpp QTensorCpp::as_density_matrix(double atol) {
-    if (is_ket()) {
+QTensorCpp QTensorCpp::as_density_matrix(double atol, double max_relative_correction) {
+    if (is_scalar()) {
+        throw std::runtime_error("Cannot convert a scalar to a density matrix");
+    } else if (is_ket()) {
         QTensorCpp mat = QTensorCpp(_data * _data.adjoint());
         return mat / mat.trace();
     } else if (is_bra()) {
         QTensorCpp mat = QTensorCpp(_data.adjoint() * _data);
         return mat / mat.trace();
-    } else if (is_operator() && is_density_matrix(atol)) {
-        return *this;
+    // If an operator, try to repair it
+    } else if (is_operator()) {
+
+        // Make self-adjoint by averaging with its adjoint
+        QTensorCpp self_adjoint = (QTensorCpp(_data) + QTensorCpp(_data.adjoint())) * 0.5;
+
+        // Shift eigenvalues to make positive semidefinite if necessary
+        if (!self_adjoint.is_positive_semidefinite(atol)) {
+            if (_eigenvalues.empty()) {
+                self_adjoint.compute_eigendecomposition();
+            }
+            std::complex<double> min_eval = *std::min_element(_eigenvalues.begin(), _eigenvalues.end(), [](const std::complex<double>& a, const std::complex<double>& b) {
+                return a.real() < b.real();
+            });
+            double shift = std::max(0.0, -min_eval.real() + atol);
+            SparseMatrix shift_matrix(self_adjoint.get_data().rows(), self_adjoint.get_data().cols());
+            for (int i=0; i<std::min(self_adjoint.get_data().rows(), self_adjoint.get_data().cols()); ++i) {
+                shift_matrix.insert(i, i) = shift;
+            }
+            shift_matrix.makeCompressed();
+            self_adjoint = QTensorCpp(self_adjoint.get_data() + shift_matrix);
+        }
+
+        // Normalize to have trace 1
+        QTensorCpp return_tensor = self_adjoint / self_adjoint.trace();
+
+        // match=r"Repairing the density matrix required a large correction \(relative Frobenius correction=5.000e-01\)",
+        double correction = (return_tensor - self_adjoint).norm("frobenius") / self_adjoint.norm("frobenius");
+        if (correction > max_relative_correction) {
+            throw py::value_error("Repairing the density matrix required a large correction (relative Frobenius correction=" + std::to_string(correction) + "). This likely indicates that the original tensor is not close to a valid density matrix, and the result may not be meaningful.");
+        }
+
+        return return_tensor;
+
     } else {
-        throw std::runtime_error("Only kets or bras can be converted to density matrix");
+        throw std::runtime_error("Only kets, bras or operators can be converted to a density matrix");
     }
 }
 
@@ -672,11 +781,27 @@ std::vector<std::complex<double>> QTensorCpp::get_eigenvalues() const {
     return _eigenvalues; 
 }
 
+py::object QTensorCpp::get_eigenvalues_python() const {
+    py::list evals;
+    for (const auto& eval : get_eigenvalues()) {
+        evals.append(eval);
+    }
+    return evals;
+}
+
 std::vector<SparseMatrix> QTensorCpp::get_eigenvectors() const { 
     if (_eigenvectors.empty() && _data.rows() > 0 && _data.cols() > 0) {
         throw std::runtime_error("Eigenvectors have not been computed yet. Call compute_eigendecomposition() first.");
     }
     return _eigenvectors; 
+}
+
+py::object QTensorCpp::get_eigenvectors_python() const {
+    py::list evecs;
+    for (const auto& evec : get_eigenvectors()) {
+        evecs.append(to_spmatrix(evec));
+    }
+    return evecs;
 }
 
 void QTensorCpp::clear_cache() {
@@ -1011,6 +1136,14 @@ QTensorCpp QTensorCpp::ghz(int nqubits) {
     return result;
 }
 
+QTensorCpp QTensorCpp::reset_qubits_python(const py::object& qubits) {
+    std::set<int> qubits_set;
+    for (const auto& item : qubits) {
+        qubits_set.insert(item.cast<int>());
+    }
+    return reset_qubits(qubits_set);
+}
+
 QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
 
     // If not resetting any qubits, just return the original state
@@ -1020,13 +1153,13 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
 
     // Check to make sure the input state is a density matrix and the qubits to reset are valid
     if (!is_density_matrix()) {
-        throw std::runtime_error("`reset_qubits` requires a density matrix input state.");
+        throw py::value_error("reset_qubits requires a density matrix input state.");
     }
 
     // Validate qubit indices
     for (int q : qubits) {
         if (q < 0 || q >= get_nqubits()) {
-            throw std::invalid_argument("Invalid qubit index in `qubits`: " + std::to_string(q));
+            throw std::invalid_argument("Invalid qubit indices");
         }
     }
 
