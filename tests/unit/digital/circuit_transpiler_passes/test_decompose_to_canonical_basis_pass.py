@@ -5,13 +5,16 @@ from typing import Iterable
 import numpy as np
 import pytest
 
+import qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass as decompose_module
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import (
     DecomposeToCanonicalBasisPass,
     SingleQubitGateBasis,
     TwoQubitGateBasis,
     _as_basis_1q,
+    _cz_in_basis,
     _invert_basis_gate,
+    _normalize_single_qubit_gate,
     _single_controlled,
 )
 from qilisdk.digital.gates import (
@@ -116,6 +119,19 @@ def test_as_basis_1q_handles_standard_and_basic() -> None:
 
     with pytest.raises(NotImplementedError):
         _as_basis_1q(Controlled(1, basic_gate=RX(0, theta=0.5)))
+
+
+def test_cz_in_basis_returns_native_cz_when_requested() -> None:
+    sequence = _cz_in_basis(0, 1, TwoQubitGateBasis.CZ)
+
+    assert len(sequence) == 1
+    assert isinstance(sequence[0], CZ)
+    assert sequence[0].qubits == (0, 1)
+
+
+def test_normalize_single_qubit_gate_rejects_unknown_basis() -> None:
+    with pytest.raises(TypeError, match="Unsupported single-qubit basis"):
+        _normalize_single_qubit_gate(H(0), object())  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
@@ -262,6 +278,16 @@ def test_canonical_pass_rejects_invalid_single_qubit_basis() -> None:
         DecomposeToCanonicalBasisPass(single_qubit_basis="U3")  # type: ignore[arg-type]
 
 
+def test_canonical_pass_exposes_configured_basis_properties() -> None:
+    pass_instance = DecomposeToCanonicalBasisPass(
+        two_qubit_basis=TwoQubitGateBasis.CZ,
+        single_qubit_basis=SingleQubitGateBasis.RxRyRz,
+    )
+
+    assert pass_instance.single_qubit_basis == SingleQubitGateBasis.RxRyRz
+    assert pass_instance.two_qubit_basis == TwoQubitGateBasis.CZ
+
+
 @pytest.mark.parametrize(
     ("two_qubit_basis", "single_qubit_basis", "expected_gate_names", "first_gate"),
     [
@@ -292,3 +318,74 @@ def test_canonical_pass_run_produces_basis_circuit_with_same_matrix(
     assert all(gate.name in expected_gate_names for gate in rewritten_circuit.gates)
     assert len(rewritten_circuit.gates) > 0
     assert np.allclose(circuit.to_matrix(), rewritten_circuit.to_matrix())
+
+
+def test_rewrite_gate_handles_single_qubit_exponential() -> None:
+    anti_hermitian_gate = DummyBasicGate((0,), np.array([[0.0, 0.0], [0.0, 0.25j * math.pi]], dtype=complex))
+    pass_instance = DecomposeToCanonicalBasisPass()
+
+    rewritten = pass_instance._rewrite_gate(Exponential(anti_hermitian_gate))
+
+    assert len(rewritten) == 1
+    assert rewritten[0].name == "U3"
+    _assert_gate_sequence_matches(Exponential(anti_hermitian_gate), rewritten)
+
+
+@pytest.mark.parametrize(
+    ("returned_gate", "expected_name", "expected_values"),
+    [
+        (U3(9, theta=0.1, phi=0.2, gamma=0.3), "U3", (0.1, 0.2, 0.3)),
+        (RX(9, theta=0.4), "RX", (0.4,)),
+        (RY(9, theta=0.5), "RY", (0.5,)),
+        (RZ(9, phi=0.6), "RZ", (0.6,)),
+    ],
+)
+def test_rewrite_gate_retargets_single_control_basis_gate_to_original_target(
+    monkeypatch: pytest.MonkeyPatch,
+    returned_gate: Gate,
+    expected_name: str,
+    expected_values: tuple[float, ...],
+) -> None:
+    captured: dict[str, Gate] = {}
+
+    def fake_single_controlled(*, control_qubit, target_gate, basis, single_qubit_basis):  # type: ignore[no-untyped-def]
+        captured["target_gate"] = target_gate
+        return [target_gate]
+
+    monkeypatch.setattr(decompose_module, "_as_basis_1q", lambda gate: returned_gate)
+    monkeypatch.setattr(
+        decompose_module,
+        "_single_controlled",
+        lambda control_qubit, target_gate, basis, single_qubit_basis: fake_single_controlled(
+            control_qubit=control_qubit,
+            target_gate=target_gate,
+            basis=basis,
+            single_qubit_basis=single_qubit_basis,
+        ),
+    )
+
+    pass_instance = DecomposeToCanonicalBasisPass()
+    result = pass_instance._rewrite_gate(Controlled(0, basic_gate=H(1)))
+
+    assert result == [captured["target_gate"]]
+    assert captured["target_gate"].name == expected_name
+    assert captured["target_gate"].qubits == (1,)
+    assert tuple(captured["target_gate"].get_parameter_values()) == expected_values
+
+
+def test_rewrite_gate_rejects_unsupported_non_basic_gate() -> None:
+    class UnsupportedGate(Gate):
+        @property
+        def name(self) -> str:
+            return "Unsupported"
+
+        @property
+        def matrix(self) -> np.ndarray:
+            return np.eye(2, dtype=complex)
+
+        @property
+        def target_qubits(self) -> tuple[int, ...]:
+            return (0,)
+
+    with pytest.raises(NotImplementedError, match="Unsupported"):
+        DecomposeToCanonicalBasisPass()._rewrite_gate(UnsupportedGate())

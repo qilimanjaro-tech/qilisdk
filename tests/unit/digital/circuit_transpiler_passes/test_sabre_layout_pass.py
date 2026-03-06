@@ -19,6 +19,7 @@ from qilisdk.digital import (
     Circuit,
     Controlled,
     Exponential,
+    Gate,
     H,
     M,
     S,
@@ -204,3 +205,107 @@ def test_layout_tie_break(monkeypatch):
     layout_pass.run(circuit)
 
     assert layout_pass.last_layout is not None
+
+
+def test_sabre_layout_simulation_skips_stale_scheduled_front_entries() -> None:
+    graph = _line_graph(3)
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    physical_nodes = [0, 1, 2]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
+
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 1, 2],
+        distance_matrix,
+        [(0, 1), (1, 2)],
+        [[0], [0, 1], [0, 1]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert final_layout == [0, 1, 2]
+    assert score > 0.0
+
+
+def test_sabre_layout_simulation_breaks_on_degenerate_no_candidate_case() -> None:
+    graph = make_graph([], nodes=[0, 1])
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    physical_nodes = [0, 1]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
+
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 0],
+        distance_matrix,
+        [(0, 1)],
+        [[0], [0]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert final_layout == [0, 0]
+    assert score == 0.0
+
+
+def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SampledCandidateUsed(RuntimeError):
+        pass
+
+    graph = make_graph([], nodes=[0, 1])
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    monkeypatch.setattr(
+        layout_pass,
+        "_cost_front",
+        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+    )
+
+    with pytest.raises(SampledCandidateUsed):
+        layout_pass._sabre_simulate_layout(
+            [0, 1],
+            [[0, 2], [2, 0]],
+            [(0, 1)],
+            [[0], [0]],
+            random.Random(0),
+            [0, 1],
+            {0: 0, 1: 1},
+        )
+
+
+def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
+    cost = SabreLayoutPass._cost_front(
+        {0},
+        [0, 1],
+        [(0, 1)],
+        [[0, SabreLayoutPass._UNREACHABLE_DISTANCE], [SabreLayoutPass._UNREACHABLE_DISTANCE, 0]],
+        None,
+        {0: 0, 1: 1},
+    )
+
+    assert cost == 1e6
+
+
+def test_sabre_layout_random_initial_layout_requires_enough_physical_nodes() -> None:
+    with pytest.raises(ValueError, match="need ≥ 2"):
+        SabreLayoutPass._random_initial_layout(random.Random(0), 2, [0])
+
+
+def test_sabre_layout_remap_gate_qubits_rejects_unsupported_type() -> None:
+    class UnsupportedGate(Gate):
+        @property
+        def name(self) -> str:
+            return "Unsupported"
+
+        @property
+        def matrix(self):
+            return None
+
+        @property
+        def target_qubits(self) -> tuple[int, ...]:
+            return (0,)
+
+    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
+        SabreLayoutPass._remap_gate_qubits_inplace(UnsupportedGate(), {0: 1})

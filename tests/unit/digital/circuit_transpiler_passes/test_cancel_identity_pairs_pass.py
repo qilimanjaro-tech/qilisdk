@@ -182,9 +182,30 @@ def test_first_nonzero_phase_and_dephased_signature() -> None:
     assert _dephased_signature(np.array([])) == ()
 
 
+def test_first_nonzero_phase_returns_zero_for_zero_matrix() -> None:
+    assert _first_nonzero_phase(np.zeros((2, 2), dtype=complex)) == 0.0
+
+
 def test_try_matrix_handles_missing_matrix() -> None:
     assert isinstance(_try_matrix(CZ(0, 1)), np.ndarray)
     assert _try_matrix(M(0)) is None
+
+
+def test_controlled_gate_falls_back_to_matrix_signature_when_basic_key_is_unavailable() -> None:
+    class FallbackCancelIdentityPairsPass(CancelIdentityPairsPass):
+        def _forward_inverse_keys(self, gate: Gate) -> tuple[Any | None, Any | None]:
+            if isinstance(gate, RX):
+                return (None, None)
+            return super()._forward_inverse_keys(gate)
+
+    forward_key, inverse_key = FallbackCancelIdentityPairsPass()._forward_inverse_keys(
+        Controlled(1, basic_gate=RX(0, theta=0.3))
+    )
+
+    assert forward_key is not None
+    assert inverse_key is not None
+    assert forward_key[0] == "U"
+    assert inverse_key[0] == "U"
 
 
 def test_qubits_key_and_blocking() -> None:

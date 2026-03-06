@@ -4,7 +4,7 @@ import math
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, Circuit, M
+from qilisdk.digital import CZ, RX, RY, RZ, Adjoint, Circuit, Exponential, M
 from qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass import SabreSwapPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -257,3 +257,121 @@ def test_extended_set_zero_budget():
     per_qubit = [[0], [0]]
     pos = [0, 0]
     assert swap_pass._extended_set(per_qubit, pos, 0) == set()
+
+
+def test_sabre_swap_uses_context_layout_hint_when_no_explicit_layout() -> None:
+    topology = make_line_topology(2)
+    swap_pass = SabreSwapPass(topology, seed=5)
+    context = TranspilationContext()
+    context.initial_layout = [1, 0]
+    swap_pass.attach_context(context)
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=0.1))
+    circuit.add(CZ(0, 1))
+
+    out = swap_pass.run(circuit)
+
+    assert [gate.qubits for gate in out.gates] == [(1,), (1, 0)]
+    assert swap_pass.last_final_layout == [1, 0]
+    assert context.final_layout == {0: 1, 1: 0}
+
+
+def test_sabre_swap_rejects_multi_qubit_gate_after_entering_main_routing_loop() -> None:
+    class FakeGate:
+        def __init__(self, qubits):
+            self.qubits = qubits
+            self.nqubits = len(qubits)
+
+    topology = make_line_topology(3)
+    swap_pass = SabreSwapPass(topology)
+    circuit = Circuit(3)
+    circuit._gates = [FakeGate((0, 1, 2)), CZ(0, 2)]
+
+    with pytest.raises(NotImplementedError, match="FakeGate"):
+        swap_pass.run(circuit)
+
+
+def test_sabre_swap_fallback_samples_candidate_edge_when_no_neighbors_exist(monkeypatch: pytest.MonkeyPatch) -> None:
+    class SampledCandidateUsed(RuntimeError):
+        pass
+
+    graph = _empty_graph(2)
+    swap_pass = SabreSwapPass(graph, max_attempts=1)
+    circuit = _two_qubit_circuit()
+
+    monkeypatch.setattr(
+        swap_pass,
+        "_cost_set",
+        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+    )
+
+    with pytest.raises(SampledCandidateUsed):
+        swap_pass.run(circuit)
+
+
+def test_front_set_skips_already_scheduled_entries() -> None:
+    front_gate_indices = SabreSwapPass._front_set([[0, 1], [0], [1]], [0, 0, 0], [True, False])
+
+    assert front_gate_indices == {1}
+
+
+def test_extended_set_stops_when_budget_is_exhausted() -> None:
+    extended_gate_indices = SabreSwapPass._extended_set([[0, 1, 2], [0, 1]], [0, 0], 1)
+
+    assert extended_gate_indices == {1}
+
+
+def test_cost_set_penalizes_unreachable_pairs_without_decay() -> None:
+    cost = SabreSwapPass._cost_set(
+        {0},
+        [0, 1],
+        [(0, 1)],
+        [[0, SabreSwapPass._UNREACHABLE_DISTANCE], [SabreSwapPass._UNREACHABLE_DISTANCE, 0]],
+        None,
+        {0: 0, 1: 1},
+    )
+
+    assert cost == 1e6
+
+
+def test_init_layout_supports_active_only_hints() -> None:
+    layout = SabreSwapPass._init_layout(4, [0, 1, 2, 3], {1, 3}, [2, 0])
+
+    assert layout == [1, 2, 3, 0]
+
+
+def test_init_layout_supports_prefix_hints_and_placeholder_fill() -> None:
+    layout = SabreSwapPass._init_layout(3, [10, 11], {0, 1}, [11])
+
+    assert layout == [11, 10, 10]
+
+
+def test_init_layout_rejects_unknown_active_physical_nodes() -> None:
+    with pytest.raises(ValueError, match="not present in the coupling graph"):
+        SabreSwapPass._init_layout(2, [0, 1], {0, 1}, [0, 99])
+
+
+def test_init_layout_rejects_duplicate_active_targets() -> None:
+    with pytest.raises(ValueError, match="unique physical qubits"):
+        SabreSwapPass._init_layout(2, [0, 1], {0, 1}, [0, 0])
+
+
+def test_init_layout_returns_empty_layout_for_empty_identity_case() -> None:
+    assert SabreSwapPass._init_layout(0, [], set(), None) == []
+
+
+def test_init_layout_rejects_too_few_physical_nodes_without_hint() -> None:
+    with pytest.raises(ValueError, match="Coupling graph has 2 qubits but circuit needs 3"):
+        SabreSwapPass._init_layout(3, [0, 1], {2}, None)
+
+
+def test_remap_gate_qubits_inplace_handles_wrapped_gates() -> None:
+    adjoint_gate = Adjoint(RY(0, theta=0.3))
+    exponential_gate = Exponential(RZ(0, phi=0.2))
+
+    SabreSwapPass._remap_gate_qubits_inplace(adjoint_gate, {0: 2})
+    SabreSwapPass._remap_gate_qubits_inplace(exponential_gate, {0: 1})
+
+    assert adjoint_gate.qubits == (2,)
+    assert exponential_gate.qubits == (1,)

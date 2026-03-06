@@ -13,8 +13,15 @@
 # limitations under the License.
 
 
+from rustworkx import PyGraph
+
 from qilisdk.digital import CNOT, Circuit, X
-from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+from qilisdk.digital.circuit_transpiler import (
+    CircuitTranspiler,
+    CircuitTranspilerResult,
+    TranspilerPassResult,
+    _is_topology_graph,
+)
 from qilisdk.digital.circuit_transpiler_passes import (
     CancelIdentityPairsPass,
     CircuitTranspilerPass,
@@ -150,3 +157,40 @@ def test_circuit_transpiler_transpile_does_not_expose_initial_layout() -> None:
     transpilation_result = CircuitTranspiler(pipeline=[_RecordInitialLayoutOnlyPass()]).transpile(circuit)
 
     assert transpilation_result.layout == {}
+
+
+def test_circuit_transpiler_result_returns_defensive_copies() -> None:
+    circuit = Circuit(1)
+    pass_result = TranspilerPassResult(name="ExamplePass", circuit=circuit)
+    transpilation_result = CircuitTranspilerResult(
+        circuit=circuit,
+        intermediate_results=[pass_result],
+        layout={0: 2},
+        metrics={"swap_count": 3},
+    )
+
+    intermediate_results = transpilation_result.intermediate_results
+    layout = transpilation_result.layout
+    metrics = transpilation_result.metrics
+
+    intermediate_results.clear()
+    assert layout is not None
+    layout[0] = 1
+    metrics["swap_count"] = 0
+
+    assert len(transpilation_result.intermediate_results) == 1
+    assert transpilation_result.layout == {0: 2}
+    assert transpilation_result.metrics == {"swap_count": 3}
+
+
+def test_topology_helpers_validate_graph_nodes_and_prune_sparse_labels() -> None:
+    int_graph = PyGraph()
+    int_graph.add_nodes_from([0, 2])
+    string_graph = PyGraph()
+    string_graph.add_nodes_from(["q0"])
+
+    assert _is_topology_graph(int_graph)
+    assert not _is_topology_graph(string_graph)
+
+    built_graph = CircuitTranspiler._build_topology_graph([(0, 2)])
+    assert list(built_graph.nodes()) == [0, 2]

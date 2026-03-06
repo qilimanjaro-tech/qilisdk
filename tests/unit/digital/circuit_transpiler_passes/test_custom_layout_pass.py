@@ -1,7 +1,7 @@
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, Circuit, M
+from qilisdk.digital import CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
 from qilisdk.digital.circuit_transpiler_passes.custom_layout_pass import CustomLayoutPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -163,4 +163,63 @@ def test_custom_layout_raises_for_multi_qubit_gate():
     layout_pass = CustomLayoutPass(topology, {0: 0, 1: 1, 2: 2})
 
     with pytest.raises(NotImplementedError, match="FakeGate"):
+        layout_pass.run(circuit)
+
+
+@pytest.mark.parametrize(
+    ("gate", "mapped_qubits", "expected_type"),
+    [
+        (RY(0, theta=0.2), (2,), RY),
+        (RZ(0, phi=0.3), (1,), RZ),
+        (U3(0, theta=0.4, phi=0.5, gamma=0.6), (2,), U3),
+        (SWAP(0, 1), (2, 0), SWAP),
+        (M(0), (1,), M),
+    ],
+)
+def test_custom_layout_retarget_gate_supports_all_specialized_branches(gate: Gate, mapped_qubits, expected_type) -> None:
+    retargeted = CustomLayoutPass._retarget_gate(gate, mapped_qubits)
+
+    assert isinstance(retargeted, expected_type)
+    assert retargeted.qubits == mapped_qubits
+
+
+def test_custom_layout_retarget_gate_rejects_unsupported_type() -> None:
+    class UnsupportedGate(Gate):
+        @property
+        def name(self) -> str:
+            return "Unsupported"
+
+        @property
+        def matrix(self):
+            return None
+
+        @property
+        def target_qubits(self) -> tuple[int, ...]:
+            return (0, 1, 2)
+
+    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
+        CustomLayoutPass._retarget_gate(UnsupportedGate(), (0, 1, 2))
+
+
+def test_custom_layout_shortest_path_handles_identical_endpoints() -> None:
+    topology = _make_topology(2)
+    topology.add_edge(0, 1, None)
+
+    layout_pass = CustomLayoutPass(topology, {0: 0})
+
+    assert layout_pass._shortest_path(1, 1) == [1]
+
+
+def test_custom_layout_raises_when_swaps_fail_to_make_gate_adjacent(monkeypatch) -> None:
+    topology = _make_topology(3)
+    topology.add_edge(0, 1, None)
+    topology.add_edge(1, 2, None)
+
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    layout_pass = CustomLayoutPass(topology, {0: 0, 1: 2})
+    monkeypatch.setattr(layout_pass, "_shortest_path", lambda start, goal: [start, goal])
+
+    with pytest.raises(RuntimeError, match="still non-adjacent"):
         layout_pass.run(circuit)

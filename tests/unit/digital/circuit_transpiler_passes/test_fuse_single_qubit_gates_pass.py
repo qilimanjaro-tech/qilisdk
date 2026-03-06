@@ -152,3 +152,38 @@ def test_fusion_keeps_non_unitary_boundaries_untouched() -> None:
 def test_fuse_pass_rejects_invalid_single_qubit_basis() -> None:
     with pytest.raises(TypeError):
         FuseSingleQubitGatesPass(single_qubit_basis="U3")  # type: ignore[arg-type]
+
+
+def test_try_single_qubit_unitary_rejects_non_2x2_matrix() -> None:
+    class BadShapeGate(Gate):
+        @property
+        def name(self) -> str:
+            return "BadShape"
+
+        @property
+        def matrix(self) -> np.ndarray:
+            return np.eye(4, dtype=complex)
+
+        @property
+        def target_qubits(self) -> tuple[int, ...]:
+            return (0,)
+
+    assert FuseSingleQubitGatesPass._try_single_qubit_unitary(BadShapeGate()) is None
+
+
+def test_emit_fused_basis_gates_recognizes_pure_ry_rotations() -> None:
+    pass_instance = FuseSingleQubitGatesPass(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
+
+    fused = pass_instance._emit_fused_basis_gates(0, RY(0, theta=0.4).matrix)
+
+    assert len(fused) == 1
+    assert isinstance(fused[0], RY)
+    assert np.isclose(fused[0].theta, 0.4)
+
+
+def test_emit_fused_basis_gates_rejects_unknown_basis() -> None:
+    pass_instance = FuseSingleQubitGatesPass()
+    pass_instance._single_qubit_basis = "invalid"  # type: ignore[assignment]
+
+    with pytest.raises(TypeError, match="Unsupported single-qubit basis"):
+        pass_instance._emit_fused_basis_gates(0, np.eye(2, dtype=complex))
