@@ -332,7 +332,7 @@ def test_cost_set_penalizes_unreachable_pairs_without_decay() -> None:
         {0: 0, 1: 1},
     )
 
-    assert cost == 1e6
+    assert math.isclose(cost, 1e6)
 
 
 def test_init_layout_supports_active_only_hints() -> None:
