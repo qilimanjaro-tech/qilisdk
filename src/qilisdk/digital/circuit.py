@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
 from typing_extensions import Self
@@ -30,8 +30,6 @@ from .exceptions import QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from qilisdk.core.types import RealNumber
 
 
@@ -75,7 +73,7 @@ class Circuit(Parameterizable):
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
-        self._parameters: dict[str, Parameter] = {}
+        self._parameters_link: dict[str, tuple[str, Gate]] = {}
 
     @property
     def nqubits(self) -> int:
@@ -107,68 +105,6 @@ class Circuit(Parameterizable):
         """
         return self._gates
 
-    def get_parameter_values(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> list[float]:
-        """
-        Retrieve parameter values from gates in insertion order.
-
-        Args:
-            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
-
-        Returns:
-            list[float]: Parameter values matching the optional filter.
-        """
-        return super().get_parameter_values(where=where)
-
-    def get_parameter_names(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> list[str]:
-        """
-        Retrieve parameter labels from gates in insertion order.
-
-        Args:
-            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
-
-        Returns:
-            list[str]: Parameter labels matching the optional filter.
-        """
-        return super().get_parameter_names(where=where)
-
-    def get_parameters(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> dict[str, float]:
-        """
-        Retrieve parameter labels and values from the circuit.
-
-        Args:
-            where (Callable[[Parameter], bool] | None): Optional predicate used to filter parameters.
-
-        Returns:
-            dict[str, float]: Mapping of parameter labels to their current values.
-        """
-        return super().get_parameters(where=where)
-
-    def set_parameter_values(
-        self,
-        values: list[float],
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> None:
-        """
-        Set new parameter values for all parameterized gates in the circuit.
-
-        Args:
-            values (list[float]): A list containing new parameter values to assign to the parameterized gates.
-            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
-
-        Raises:
-            ParametersNotEqualError: If ``values`` length does not match the selected parameter count.
-        """
-        super().set_parameter_values(values=values, where=where)
-
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
@@ -178,16 +114,14 @@ class Circuit(Parameterizable):
         Raises:
             ValueError: if the label provided doesn't correspond to a parameter defined in this circuit.
         """
+        if not self.check_constraints(parameters):
+            raise ValueError(
+                f"New assignation of the parameters breaks the parameter constraints: \n{self.get_constraints()}"
+            )
         for label, param in parameters.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
-            self._parameters[label].set_value(param)
-
-    def get_parameter_bounds(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(where=where)
+            self._parameters_link[label][1].set_parameters({self._parameters_link[label][0]: param})
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():
@@ -195,7 +129,35 @@ class Circuit(Parameterizable):
                 raise ValueError(
                     f"The provided parameter label {label} is not defined in the list of parameters in this object."
                 )
-            self._parameters[label].set_bounds(bound[0], bound[1])
+            self._parameters_link[label][1].set_parameter_bounds({self._parameters_link[label][0]: bound})
+
+    def set_prefix(
+        self,
+        prefix: str,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        """Set a prefix on parameter labels.
+
+        Args:
+            prefix (str): Prefix to prepend to selected parameter labels.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting local parameters.
+
+        Notes:
+            The ``where`` predicate is applied to local parameters only. Child parameterizable
+            objects always receive the same prefix operation recursively.
+        """
+        if where:
+            old_keys: list[str] = [key for key, value in self._parameters.items() if where(value)]
+        else:
+            old_keys: list[str] = list(self._parameters.keys())
+        for name in old_keys:
+            if not name.startswith(prefix):
+                _name = name.removeprefix(self._prefix) if self._prefix and name.startswith(self._prefix) else name
+                self._parameters[prefix + _name] = self._parameters.pop(name)
+                self._parameters_link[prefix + _name] = self._parameters_link.pop(name)
+        for child in self._iter_parameter_children():
+            child.set_prefix(prefix)
+        self._prefix = prefix
 
     def _parse_params(self, gate: Gate) -> None:
         """Parse The parameters in the gate
@@ -205,12 +167,14 @@ class Circuit(Parameterizable):
         """
         if gate.is_parameterized:
             param_base_label = self.get_prefix() + f"{gate.name}({','.join(map(str, gate.qubits))})"
-            for label, parameter in gate.parameters.items():
-                if label == parameter.label and label in gate.PARAMETER_NAMES:
+            for label in gate.get_parameter_names():
+                _parameter_name = self._query_parameter_original_name(gate, label)
+                if label == _parameter_name and label in gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
                 else:
-                    parameter_label = parameter.label
-                self._parameters[parameter_label] = gate.parameters[label]
+                    parameter_label = _parameter_name
+                self._add_parameter_from(label, gate, new_label=parameter_label)
+                self._parameters_link[parameter_label] = (label, gate)
 
     def _add(self, gate: Gate) -> None:
         """

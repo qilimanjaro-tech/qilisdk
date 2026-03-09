@@ -209,3 +209,8 @@ later.
     schedule.set_parameters({"gamma": 0.7})
     print(schedule.get_parameter_names())   # ['gamma', 'T']
     print(schedule.get_constraints())       # [0 <= T]
+
+.. note::
+
+   For schedules, Hamiltonians, and interpolators, use ``get_parameters`` and
+   related accessor methods to inspect parameter state.
