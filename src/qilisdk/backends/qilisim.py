@@ -13,17 +13,18 @@
 # limitations under the License.
 from __future__ import annotations
 
-import os
-import secrets
 from typing import TYPE_CHECKING
 
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.backends.backend import Backend
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_evolution import DigitalEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.settings import get_settings
+
+from .backend import Backend
+from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
@@ -36,97 +37,98 @@ if TYPE_CHECKING:
 
 class QiliSim(Backend):
     """
-    Backend based that runs both digital-circuit sampling and analog
+    Backend that runs both digital-circuit sampling and analog
     time-evolution experiments using a custom C++ simulator.
+
+    Setup Example:
+    .. code-block:: python
+
+    from qilisdk.backends import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig,  QiliSim
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.arnoldi(
+            dim=16,
+            num_substeps=2
+        ),
+        digital_simulation_method=DigitalMethod.state_vector(max_cache_size=2_000),
+        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200),),
+    )
     """
 
     def __init__(
         self,
         noise_model: NoiseModel | None = None,
-        evolution_method: str = "integrate",
-        arnoldi_dim: int = 10,
-        num_arnoldi_substeps: int = 1,
-        num_integrate_substeps: int = 2,
-        monte_carlo: bool = False,
-        num_monte_carlo_trajectories: int = 100,
-        max_cache_size: int = 1000,
-        num_threads: int = 0,
-        seed: int | None = None,
-        atol: float = 1e-12,
+        analog_simulation_method: AnalogMethod | None = None,
+        digital_simulation_method: DigitalMethod | None = None,
+        execution_config: ExecutionConfig | None = None,
     ) -> None:
         """
         Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
         implemented in C++, using pybind11 for bindings.
 
         Args:
-            evolution_method (str): The solver method to use. Options are 'direct', 'arnoldi' and 'integrate'.
-            arnoldi_dim (int): The dimension of the Arnoldi subspace to use for the 'arnoldi' method.
-            num_arnoldi_substeps (int): The number of substeps to use when using the Arnoldi method.
-            num_integrate_substeps (int): The number of substeps to use when using the Integrate method.
-            monte_carlo (bool): Whether to use the Monte Carlo method for open systems.
-            num_monte_carlo_trajectories (int): The number of trajectories to use when using the Monte Carlo method.
-            max_cache_size (int): The maximum size of the internal cache for gate caching.
-            num_threads (int): The number of threads to use for parallel execution. If 0, uses all available cores.
-            seed (int | None): Seed for the random number generator. If None, a random seed is chosen.
-            atol (float): Absolute tolerance for numerical methods.
+            noise_model: Optional noise model applied during execution.
+            analog_simulation_method: Analog simulation configuration. Available options: :meth:`AnalogMethod.integrator`,
+                :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`. Defaults to
+                :meth:`AnalogMethod.integrator`.
+            digital_simulation_method: Digital simulation configuration. Available options: :meth:`DigitalMethod.state_vector`. Defaults to
+                :meth:`DigitalMethod.state_vector`.
+            execution_config: Execution-level configuration for threading, random seed and monte-carlo executions.
+                Defaults to the default configuration in :class:`ExecutionConfig`.
 
         Raises:
-            ValueError: If any of the parameters are invalid.
+            ValueError: If a configuration argument has an invalid type.
         """
-
-        # Sanity checks on params
-        # Note that these are also in the C++ code, so update there as well if changed here for consistency
-        if evolution_method not in {"direct", "arnoldi", "integrate"}:
-            raise ValueError(f"Unknown time evolution method: {evolution_method}")
-        if arnoldi_dim <= 0:
-            raise ValueError("arnoldi_dim must be a positive integer")
-        if num_arnoldi_substeps <= 0:
-            raise ValueError("num_arnoldi_substeps must be a positive integer")
-        if num_integrate_substeps <= 0:
-            raise ValueError("num_integrate_substeps must be a positive integer")
-        if num_monte_carlo_trajectories <= 0:
-            raise ValueError("num_monte_carlo_trajectories must be a positive integer")
-        if max_cache_size < 0:
-            raise ValueError("max_cache_size cannot be negative")
-        if atol <= 0:
-            raise ValueError("atol must be a positive float")
-
-        # Set number of threads if non-positive
-        if num_threads <= 0:
-            num_threads = os.cpu_count() or 1
-
-        # Set a random seed
-        if seed is None:
-            seed = secrets.randbelow(2**15)
 
         # Initialize the backend and the class vars
         super().__init__()
         self.qili_sim = QiliSimCpp()
         self._noise_model = noise_model
-        self.solver_params = {
-            "evolution_method": evolution_method,
-            "arnoldi_dim": arnoldi_dim,
-            "num_arnoldi_substeps": num_arnoldi_substeps,
-            "num_integrate_substeps": num_integrate_substeps,
-            "monte_carlo": monte_carlo,
-            "num_monte_carlo_trajectories": num_monte_carlo_trajectories,
-            "max_cache_size": max_cache_size,
-            "num_threads": num_threads,
-            "seed": seed,
-            "atol": atol,
-        }
+
+        analog_simulation_method: AnalogMethod = analog_simulation_method or AnalogMethod.integrator()
+        digital_simulation_method: DigitalMethod = digital_simulation_method or DigitalMethod.state_vector()
+        execution_config: ExecutionConfig = execution_config or ExecutionConfig()
+
+        if not isinstance(analog_simulation_method, AnalogMethod):
+            raise ValueError(
+                f"Analog simulation method provided ({analog_simulation_method.__class__}) is not a valid analog simulation method."
+            )
+
+        if not isinstance(digital_simulation_method, DigitalMethod):
+            raise ValueError(
+                f"Digital simulation method provided ({digital_simulation_method.__class__}) is not a valid digital simulation method."
+            )
+        if not isinstance(execution_config, ExecutionConfig):
+            raise ValueError(
+                f"Execution config provided ({execution_config.__class__}) is not a valid execution configuration."
+            )
+
+        self._solver_config = analog_simulation_method.get_config()
+        self._solver_config.update(execution_config.get_config())
+        self._solver_config.update(digital_simulation_method.get_config())
+        self._solver_config.update({"atol": get_settings().atol})
+
+    @property
+    def solver_params(self) -> SolverConfigDict:
+        """Backward-compatible alias for the backend configuration dictionary."""
+        return self._solver_config
+
+    def get_config(self) -> SolverConfigDict:
+        """Return the full flattened solver configuration used by the C++ backend."""
+        return dict(self._solver_config)
 
     def _execute_digital_evolution(
         self, functional: DigitalEvolution, initial_state: QTensor | None = None
     ) -> FunctionalResult:
         """
-        Execute a quantum circuit and return the measurement results.
+        Execute a digital-circuit sampling functional and return measurement results.
 
         Args:
-            functional (Sampling): The Sampling function to execute.
+            functional: Sampling functional to execute.
+            initial_state: Optional initial state to start the simulation from.
 
         Returns:
-            SamplingResult: A result object containing the measurement samples and computed probabilities.
+            SamplingResult: Measurement samples and computed probabilities.
 
         """
         result = self.qili_sim.execute_digital_evolution(
@@ -172,13 +174,13 @@ class QiliSim(Backend):
 
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         """
-        Computes the time evolution under of an initial state under the given schedule.
+        Compute analog time evolution for the provided schedule and initial state.
 
         Args:
-            functional (TimeEvolution): The TimeEvolution functional to execute.
+            functional: TimeEvolution functional to execute.
 
         Returns:
-            TimeEvolutionResult: The results of the evolution.
+            TimeEvolutionResult: Final state and requested observables.
         """
 
         # Get the time steps
