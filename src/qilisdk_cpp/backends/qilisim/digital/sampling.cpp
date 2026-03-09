@@ -16,25 +16,17 @@
 #include <sstream>
 
 #include "../../../libs/pybind.h"
+#include "../noise/noise_model.h"
 #include "../utils/random.h"
 #include "sampling.h"
-#include "../noise/noise_model.h"
 
-#include <iostream> // TODO remove
+#include <iostream>  // TODO remove
 
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-void sampling(const std::vector<Gate>& gates, 
-              const std::vector<bool>& qubits_to_measure, 
-              int n_qubits, 
-              int n_shots, 
-              const SparseMatrix& initial_state,
-              NoiseModelCpp& noise_model_cpp,
-              DenseMatrix& state,
-              std::map<std::string, int>& counts, 
-              const QiliSimConfig& config) {
+void sampling(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -82,7 +74,7 @@ void sampling(const std::vector<Gate>& gates,
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
-    
+
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
         state = state * state.adjoint();
@@ -110,8 +102,8 @@ void sampling(const std::vector<Gate>& gates,
     int initial_cache_size = std::min(int(gates.size()), config.get_max_cache_size());
     std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
-Eigen::setNbThreads(1);
-omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(1);
+    omp_set_num_threads(config.get_num_threads());
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
@@ -121,8 +113,8 @@ omp_set_num_threads(config.get_num_threads());
         precomputed_gates[i] = std::make_pair(gate_id, gate_matrix);
     }
 #if defined(_OPENMP)
-Eigen::setNbThreads(config.get_num_threads());
-omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+    omp_set_num_threads(config.get_num_threads());
 #endif
 
     // Convert pre-cached gates to a map for easier access (in serial)
@@ -236,7 +228,7 @@ omp_set_num_threads(config.get_num_threads());
                     auto readout_error = noise_model_cpp.get_relevant_readout_error(q);
                     double p01 = readout_error.first;
                     double p10 = readout_error.second;
-                    double rand_val = ((double) rand() / (RAND_MAX));
+                    double rand_val = ((double)rand() / (RAND_MAX));
                     if (bit == '0') {
                         // 0 -> 1 with probability p01
                         if (rand_val < p01) {
@@ -277,5 +269,4 @@ omp_set_num_threads(config.get_num_threads());
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
     }
-
 }

@@ -16,17 +16,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
-#include "../../../libs/eigen.h"
 
-void sampling(const std::vector<Gate>& gates, 
-              const std::vector<bool>& qubits_to_measure, 
-              int n_qubits, 
-              int n_shots, 
-              const SparseMatrix& initial_state,
-              NoiseModelCpp& noise_model_cpp,
-              DenseMatrix& state,
-              std::map<std::string, int>& counts,
-              const QiliSimConfig& config);
+void sampling(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config);

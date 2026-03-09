@@ -16,7 +16,6 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from qilisdk.analog.exceptions import InvalidHamiltonianOperation
 from qilisdk.analog.hamiltonian import (

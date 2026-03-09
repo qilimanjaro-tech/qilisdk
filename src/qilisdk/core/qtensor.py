@@ -15,20 +15,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from qtensor_module import QTensorCpp  # ty:ignore
 import numpy as np
+from qtensor_module import QTensorCpp  # ty:ignore
+from scipy.sparse import csr_matrix, sparray, spmatrix
 
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
-from scipy.sparse import csr_matrix, sparray, spmatrix
-
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
 Complex = int | float | complex
-NormTypes = Literal["frobenius", "trace", "l1", "l2", "inf"]
+NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
 
 
 @yaml.register_class
@@ -250,6 +249,9 @@ class QTensor:
 
         Returns:
             QTensor: A new QTensor representing the reduced density matrix for the subsystems specified in 'keep'.
+
+        Raises:
+            ValueError: If there are duplicate indices in the 'keep' list.
         """
         as_set = set(keep)
         if len(as_set) != len(keep):
@@ -274,14 +276,17 @@ class QTensor:
         """
         return QTensor(self._qtensor_cpp.partial_trace_python(list(keep)))
 
-    def norm(self, order: NormTypes | int = "frobenius") -> float:
+    def norm(self, order: NormTypes = "auto") -> float:
         """
         Compute the norm of the QTensor.
 
-        For density matrices, the norm order can be specified. For state vectors, the norm is computed accordingly.
+        If the order is left as "auto", the method will choose an appropriate norm based on the type of QTensor
+        (i.e., trace for operators, frobenius for state vectors).
+
+        Integers can also be supplied, where 1 corresponds to the L1 norm and 2 corresponds to the L2 (Frobenius) norm etc.
 
         Args:
-            order (Literal["frobenius", "trace", "l1", "l2", "inf"], optional): The order of the norm. Defaults to "trace".
+            order (Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "trace_division"], optional): The order of the norm. Defaults to "auto".
 
         Returns:
             float: The computed norm of the QTensor.
@@ -290,13 +295,9 @@ class QTensor:
             ValueError: If an unsupported norm order is specified.
         """
         if isinstance(order, int):
-            if order == 1:
-                return self._qtensor_cpp.norm("l1")
-            if order == 2:  # noqa: PLR2004
-                return self._qtensor_cpp.norm("l2")
-            raise ValueError(f"Unsupported norm order {order}; expected 1 or 2 if using integer, or a string literal")
+            return self._qtensor_cpp.norm("l" + str(order))
         if order == "tr":
-            return self._qtensor_cpp.norm("trace")
+            return self._qtensor_cpp.norm("nuclear")
         return self._qtensor_cpp.norm(order)
 
     def compute_eigendecomposition(self) -> None:
@@ -311,7 +312,7 @@ class QTensor:
         """
         self._qtensor_cpp.compute_eigendecomposition()
 
-    def unit(self, order: NormTypes = "frobenius") -> QTensor:
+    def unit(self, order: NormTypes = "auto") -> QTensor:
         """
         Wrapper for backwards compatibility: see normalized().
 
@@ -323,11 +324,12 @@ class QTensor:
         """
         return self.normalized(order)
 
-    def normalized(self, order: NormTypes = "frobenius") -> QTensor:
+    def normalized(self, order: NormTypes = "auto") -> QTensor:
         """
         Normalize the QTensor.
 
         Scales the QTensor so that its norm becomes 1, according to the specified norm order.
+        See the norm() method for details on the supported norm orders and their behavior.
 
         Args:
             order (NormTypes, optional): The order of the norm to use for normalization.
@@ -357,6 +359,34 @@ class QTensor:
             QTensor: A new QTensor representing the matrix exponential.
         """
         return QTensor(self._qtensor_cpp.exp())
+
+    def inverse(self) -> QTensor:
+        """
+        Compute the matrix inverse of the QTensor.
+
+        Returns:
+            QTensor: A new QTensor representing the matrix inverse.
+
+        Raises:
+            ValueError: If the QTensor is not invertible.
+        """
+        return QTensor(self._qtensor_cpp.inverse())
+
+    def fidelity(self, other: QTensor) -> float:
+        """
+        Compute the fidelity between this QTensor and another QTensor.
+
+        The fidelity is a measure of similarity between two quantum states or operators.
+        For state vectors, it is defined as F(psi, phi) = |⟨psi|phi⟩|^2.
+        For density matrices, it is defined as F(rho, sigma) = (Tr(sqrt(sqrt(rho) sigma sqrt(rho))))^2.
+
+        Args:
+            other (QTensor): The other QTensor to compute the fidelity with.
+
+        Returns:
+            float: The fidelity between this QTensor and the other QTensor, ranging from 0 to 1.
+        """
+        return self._qtensor_cpp.fidelity_python(other)
 
     def to_density_matrix(self, max_relative_correction: float = 0.1) -> QTensor:
         """
@@ -462,6 +492,20 @@ class QTensor:
         return QTensor(QTensorCpp.bra_python(state))
 
     @classmethod
+    def zero(cls, rows: int, cols: int) -> QTensor:
+        """
+        Create a QTensor representing the zero matrix of the specified shape.
+
+        Args:
+            rows (int): The number of rows in the zero matrix.
+            cols (int): The number of columns in the zero matrix.
+
+        Returns:
+            QTensor: A new QTensor representing the zero matrix.
+        """
+        return QTensor(QTensorCpp.zero(rows, cols))
+
+    @classmethod
     def identity(cls, dim: int) -> QTensor:
         """
         Create an identity of the specified dimension.
@@ -500,6 +544,17 @@ class QTensor:
             QTensor: A new QTensor representing the state after resetting the specified qubits.
         """
         return QTensor(self._qtensor_cpp.reset_qubits_python(qubits))
+
+    def probabilities(self) -> list[float]:
+        """
+        Compute the probabilities of measuring each basis state.
+
+        This method calculates the probabilities of obtaining each basis state upon measurement, which is given by the squared magnitudes of the coefficients in the state vector (for kets) or the diagonal elements (for density matrices).
+
+        Returns:
+            np.ndarray: A 1D array containing the probabilities of measuring each basis state.
+        """
+        return self._qtensor_cpp.probabilities_python()
 
     def entropy_von_neumann(self) -> float:
         """
@@ -624,7 +679,7 @@ class QTensor:
         """
         return self._qtensor_cpp.expectation_value_python(other, nshots)
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, csr_matrix]:
         """
         Get the state of the QTensor for pickling.
 
@@ -633,7 +688,7 @@ class QTensor:
         """
         return {"data": self.data}
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, csr_matrix]) -> None:
         """
         Set the state of the QTensor from a pickled state.
 
@@ -641,6 +696,7 @@ class QTensor:
             state (dict): A dictionary containing the state of the QTensor for deserialization.
         """
         self.__init__(state["data"])
+
 
 def ket(*state: int) -> QTensor:
     """
@@ -708,6 +764,21 @@ def reset_qubits(state: QTensor, qubits: list[int]) -> QTensor:
     """
     return state.reset_qubits(set(qubits))
 
+
+def zero(rows: int, cols: int) -> QTensor:
+    """
+    Wrapper for backwards compatibility: see QTensor.zero().
+
+    Args:
+        rows (int): The number of rows in the zero matrix.
+        cols (int): The number of columns in the zero matrix.
+
+    Returns:
+        QTensor: A new QTensor representing the zero matrix.
+    """
+    return QTensor.zero(rows, cols)
+
+
 def basis_state(n: int, N: int) -> QTensor:
     r"""
     Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
@@ -730,6 +801,7 @@ def basis_state(n: int, N: int) -> QTensor:
     mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
     return QTensor(mat)
 
+
 def identity(dim: int) -> QTensor:
     """
     Wrapper for QTensor.identity().
@@ -742,6 +814,7 @@ def identity(dim: int) -> QTensor:
     """
     return QTensor(QTensorCpp.identity(dim))
 
+
 def ghz(nqubits: int) -> QTensor:
     """
     Wrapper for QTensor.ghz().
@@ -753,4 +826,3 @@ def ghz(nqubits: int) -> QTensor:
         QTensor: A QTensor representing the GHZ state for the specified number of qubits.
     """
     return QTensor(QTensorCpp.ghz(nqubits))
-

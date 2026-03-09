@@ -30,8 +30,7 @@ class QiliSimConfig {
     double atol = 1e-12;
     int max_cache_size = 1000;
 
-    public:
-
+   public:
     // Getters
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }

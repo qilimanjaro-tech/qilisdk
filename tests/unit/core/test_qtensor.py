@@ -12,14 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import numpy as np
 import pytest
-from scipy.sparse import coo_matrix, csc_array, csr_matrix, issparse
-from scipy.sparse.linalg import ArpackNoConvergence
+from scipy.sparse import coo_matrix, csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
-import qilisdk
-from qilisdk.core.qtensor import QTensor, basis_state, bra, expect_val, ket, reset_qubits, tensor_prod
+from qilisdk.core.qtensor import (
+    QTensor,
+    basis_state,
+    bra,
+    expect_val,
+    ghz,
+    identity,
+    ket,
+    reset_qubits,
+    tensor_prod,
+    zero,
+)
 
 # --- Constructor Tests ---
 
@@ -192,6 +202,8 @@ def test_add_QTensor():
     q2 = QTensor(arr)
     result = q1 + q2
     np.testing.assert_array_equal(result.dense(), arr + arr)
+    result2 = q1.__radd__(q2)  # noqa: PLC2801
+    np.testing.assert_array_equal(result2.dense(), arr + arr)
 
 
 def test_add_invalid_type():
@@ -417,7 +429,6 @@ def test_repair_density_matrix_large_correction_raises():
         qobj.to_density_matrix(max_relative_correction=0.1)
 
 
-
 def test_repair_density_matrix_invalid_threshold_raises():
     qobj = QTensor(np.array([[2.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
     with pytest.raises(ValueError, match="large correction"):
@@ -584,12 +595,13 @@ def test_reset_qubits_requires_density_matrix():
         reset_qubits(ket(0), [0])
 
 
-
 def test_non_hermitian_trace_norm():
     arr = np.array([[0, 1], [0, 0]])
     qobj = QTensor(arr)
     norm = qobj.norm(order="tr")
-    assert np.isclose(norm, 0.0) # trace norm is the absolute value of the eigenvalues, which are both 0 for this matrix
+    assert np.isclose(
+        norm, 0.0
+    )  # trace norm is the absolute value of the eigenvalues, which are both 0 for this matrix
 
 
 def test_trace_norm_ket_bra():
@@ -599,13 +611,11 @@ def test_trace_norm_ket_bra():
     assert np.isclose(v_bra.norm(order="tr"), 1.0)
 
 
-
 def test_non_hermitian_is_dm():
     arr = np.array([[0, 1], [0, 1]])
     qobj = QTensor(arr)
     assert not qobj.is_density_matrix()
     assert not qobj.is_hermitian()
-
 
 
 def test_arithmetic():
@@ -680,3 +690,227 @@ def test_qtensor_hash_changes_when_data_changes():
 
     assert q1 != q2
     assert hash(q1) != hash(q2)
+
+
+def test_qtensor_normalized_matrix_is_trace():
+    arr = np.array([[0.2, 1.5], [1.5, 0.5]])
+    qobj_norm = QTensor(arr).normalized()
+    assert np.isclose(qobj_norm.trace(), 1.0)
+
+
+def test_qtensor_from_qtensor():
+    arr = np.array([[1, 0], [0, 1]])
+    qobj = QTensor(arr)
+    qobj2 = QTensor(qobj)
+    assert qobj == qobj2
+    assert qobj is not qobj2  # should be a different object in memory
+
+
+def test_qtensor_get_cpp_object():
+    arr = np.array([[1, 0], [0, 1]])
+    qobj = QTensor(arr)
+    cpp_obj = qobj.qtensor_cpp
+    assert cpp_obj is not None
+
+
+def test_qtensor_conjugate_adjoint_dagger():
+    arr = np.array([[1 + 2j, 3], [4, 5 - 1j]])
+    qobj = QTensor(arr)
+    conj = qobj.conjugate()
+    adj = qobj.adjoint()
+    dagger = qobj.dagger()
+    trans = qobj.transpose()
+    np.testing.assert_array_equal(conj.dense(), np.conj(arr))
+    np.testing.assert_array_equal(adj.dense(), arr.T.conj())
+    np.testing.assert_array_equal(dagger.dense(), np.conj(arr).T)
+    np.testing.assert_array_equal(trans.dense(), arr.T)
+
+
+def test_qtensor_dot():
+    arr1 = np.array([[1, 2], [3, 4]])
+    arr2 = np.array([[5, 6], [7, 8]])
+    arr3 = np.array([[1], [2]])
+    q1 = QTensor(arr1)
+    q2 = QTensor(arr2)
+    q3 = QTensor(arr3)
+
+    expected_q3_dot_q3 = (arr3 * arr3).sum()
+    assert np.isclose(q3.dot(q3), expected_q3_dot_q3)
+
+    expected_q1_dot_q2 = (arr1 * arr2).sum()
+    assert np.isclose(q1.dot(q2), expected_q1_dot_q2)
+
+
+def test_norm_with_int_order():
+    arr = np.array([[1, 2, 3, 4]])
+    qobj = QTensor(arr)
+    for order in range(1, 5):
+        expected = 0.0
+        for i in range(len(arr[0])):
+            expected += abs(arr[0, i]) ** order
+        expected = expected ** (1 / order)
+        assert np.isclose(qobj.norm(order=order), expected)
+
+
+def test_eigendecomp():
+    arr = np.array([[2, 1], [1, 2]])
+    qobj = QTensor(arr)
+    qobj.compute_eigendecomposition()
+    eigvals = qobj.eigenvalues
+    eigvecs = qobj.eigenvectors
+    expected_eigvals = np.array([1, 3])
+    expected_eigvecs = np.array([[-1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), 1 / np.sqrt(2)]])
+    np.testing.assert_allclose(eigvals, expected_eigvals, atol=1e-8)
+    for i in range(len(eigvecs)):
+        np.testing.assert_allclose(eigvecs[i].dense().flatten(), expected_eigvecs[:, i], atol=1e-8)
+
+
+def test_qtensor_access():
+    arr = np.array([[1, 2], [3, 4]])
+    qobj = QTensor(arr)
+    assert qobj[0, 0] == 1
+    assert qobj[0, 1] == 2
+    assert qobj[1, 0] == 3
+    assert qobj[1, 1] == 4
+
+
+def test_qtensor_divide():
+    arr = np.array([[2, 4], [6, 8]])
+    qobj = QTensor(arr)
+    result = qobj / 2
+    expected = np.array([[1, 2], [3, 4]])
+    np.testing.assert_array_equal(result.dense(), expected)
+
+    with pytest.raises(TypeError, match="unsupported operand"):
+        _ = qobj / "invalid"
+
+
+def test_qtensor_identity():
+    qid = QTensor.identity(2)
+    qid2 = identity(2)
+    expected = np.eye(2)
+    np.testing.assert_array_equal(qid.dense(), expected)
+    np.testing.assert_array_equal(qid2.dense(), expected)
+
+
+def test_qtensor_zero():
+    qzero = QTensor.zero(4, 4)
+    qzero2 = zero(4, 4)
+    expected = np.zeros((4, 4))
+    np.testing.assert_array_equal(qzero.dense(), expected)
+    np.testing.assert_array_equal(qzero2.dense(), expected)
+
+
+def test_qtensor_ghz():
+    qghz = QTensor.ghz(3)
+    qghz2 = ghz(3)
+    expected = (ket(0, 0, 0) + ket(1, 1, 1)) * (1 / np.sqrt(2))
+    np.testing.assert_allclose(qghz.dense(), expected.dense(), atol=1e-8)
+    np.testing.assert_allclose(qghz2.dense(), expected.dense(), atol=1e-8)
+
+
+def test_qtensor_entropies():
+    qket = ket(0, 1)
+    qdm = qket.to_density_matrix()
+    assert np.isclose(qdm.entropy_von_neumann(), 0)
+    assert np.isclose(qdm.entropy_renyi(alpha=0.5), 0)
+    with pytest.raises(ValueError, match="Alpha cannot be 1 for Renyi"):
+        qdm.entropy_renyi(alpha=1)
+
+
+def test_qtensor_commutators():
+    q1 = QTensor(np.array([[0, 1], [1, 0]]))  # X
+    q2 = QTensor(np.array([[0, -1j], [1j, 0]]))  # Y
+    q3 = QTensor(np.array([[1, 0], [0, -1]]))  # Z
+
+    commutator_12 = q1.commutator(q2)
+    expected_12 = 2j * q3
+    np.testing.assert_allclose(commutator_12.dense(), expected_12.dense(), atol=1e-8)
+
+    commutator_23 = q2.commutator(q3)
+    expected_23 = 2j * q1
+    np.testing.assert_allclose(commutator_23.dense(), expected_23.dense(), atol=1e-8)
+
+    commutator_31 = q3.commutator(q1)
+    expected_31 = 2j * q2
+    np.testing.assert_allclose(commutator_31.dense(), expected_31.dense(), atol=1e-8)
+
+
+def test_qtensor_anticommutators():
+    q1 = QTensor(np.array([[0, 1], [1, 0]]))  # X
+    q2 = QTensor(np.array([[0, -1j], [1j, 0]]))  # Y
+    q3 = QTensor(np.array([[1, 0], [0, -1]]))  # Z
+
+    anticommutator_12 = q1.anticommutator(q2)
+    expected_12 = np.zeros((2, 2))
+    np.testing.assert_allclose(anticommutator_12.dense(), expected_12, atol=1e-8)
+
+    anticommutator_23 = q2.anticommutator(q3)
+    expected_23 = np.zeros((2, 2))
+    np.testing.assert_allclose(anticommutator_23.dense(), expected_23, atol=1e-8)
+
+    anticommutator_31 = q3.anticommutator(q1)
+    expected_31 = np.zeros((2, 2))
+    np.testing.assert_allclose(anticommutator_31.dense(), expected_31, atol=1e-8)
+
+
+def test_qtensor_sqrt():
+    arr = np.array([[4, 0], [0, 9]])
+    qobj = QTensor(arr)
+    sqrt_qobj = qobj.sqrt()
+    expected = np.array([[2, 0], [0, 3]])
+    np.testing.assert_allclose(sqrt_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_rank():
+    arr = np.array([[1, 0], [0, 0]])
+    qobj = QTensor(arr)
+    assert qobj.rank() == 1
+
+
+def test_qtensor_log():
+    arr = np.array([[1, 0], [0, np.e]])
+    qobj = QTensor(arr)
+    log_qobj = qobj.log()
+    expected = np.array([[0, 0], [0, 1]])
+    np.testing.assert_allclose(log_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_pow():
+    arr = np.array([[2, 0], [0, 3]])
+    qobj = QTensor(arr)
+    pow_qobj = qobj.pow(2)
+    expected = np.array([[4, 0], [0, 9]])
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_exp():
+    arr = np.array([[0, 1], [0, 0]])
+    qobj = QTensor(arr)
+    exp_qobj = qobj.exp()
+    expected = np.array([[1, 1], [0, 1]])
+    np.testing.assert_allclose(exp_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_inverse():
+    arr = np.array([[1, 0], [0, 2]])
+    qobj = QTensor(arr)
+    inv_qobj = qobj.inverse()
+    expected = np.array([[1, 0], [0, 0.5]])
+    np.testing.assert_allclose(inv_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_fidelity():
+    q1 = ket(0).to_density_matrix()
+    q2 = ket(0).to_density_matrix()
+    q3 = ket(1).to_density_matrix()
+
+    assert np.isclose(q1.fidelity(q2), 1.0)
+    assert np.isclose(q1.fidelity(q3), 0.0)
+
+
+def test_qtensor_probabilities():
+    qket = (ket(0) + ket(1)) * (1 / np.sqrt(2))
+    probs = qket.probabilities()
+    expected = np.array([0.5, 0.5])
+    np.testing.assert_allclose(probs, expected, atol=1e-8)

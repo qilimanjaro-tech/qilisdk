@@ -13,14 +13,14 @@
 // limitations under the License.
 
 #include "qilisim.h"
+#include "../../libs/numpy.h"
+#include "../../libs/pybind_types.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
 #include "digital/sampling.h"
-#include "../../libs/numpy.h"
-#include "utils/parsers.h"
 #include "noise/noise_model.h"
-#include "../../libs/pybind_types.h"
+#include "utils/parsers.h"
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
@@ -139,7 +139,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         schedule.attr("set_parameters")(schedule_parameters);
         schedule_parameters = schedule.attr("get_parameters")();
     }
-    
 
     // Pre-process the Python objects
     py::object initial_state = functional.attr("initial_state");

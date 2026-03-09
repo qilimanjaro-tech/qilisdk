@@ -16,7 +16,6 @@
 #include "qtensor.h"
 
 PYBIND11_MODULE(qtensor_module, m) {
-
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)
@@ -39,6 +38,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("partial_trace_python", &QTensorCpp::partial_trace_python)
         .def("norm", &QTensorCpp::norm)
         .def("normalized", &QTensorCpp::normalized)
+        .def("zero", &QTensorCpp::zero)
         .def("ket_python", &QTensorCpp::ket_python)
         .def("bra_python", &QTensorCpp::bra_python)
         .def("expectation_value_python", &QTensorCpp::expectation_value_python)
@@ -60,6 +60,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("get_eigenvectors_python", &QTensorCpp::get_eigenvectors_python)
         .def("dot_python", &QTensorCpp::dot_python)
         .def("entropy_von_neumann", &QTensorCpp::entropy_von_neumann)
+        .def("entropy_renyi", &QTensorCpp::entropy_renyi)
         .def("fidelity_python", &QTensorCpp::fidelity_python)
         .def("purity", &QTensorCpp::purity)
         .def("div", &QTensorCpp::div)
@@ -70,13 +71,10 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("is_hermitian", &QTensorCpp::is_hermitian)
         .def("is_unitary", &QTensorCpp::is_unitary)
         .def("is_pure", &QTensorCpp::is_pure)
-        .def("random", &QTensorCpp::random)
-        .def("random_sparse", &QTensorCpp::random_sparse)
         .def("clear_cache", &QTensorCpp::clear_cache)
-        .def("probabilities", &QTensorCpp::probabilities)
+        .def("probabilities_python", &QTensorCpp::probabilities_python)
         .def("compute_eigendecomposition", &QTensorCpp::compute_eigendecomposition)
         .def("reset_qubits_python", &QTensorCpp::reset_qubits_python)
         .def(py::init<>())
         .def(py::init<const py::object&>());
-
 }

@@ -59,7 +59,6 @@ void NoiseModelCpp::add_kraus_operators_per_qubit(int qubit, const std::vector<S
     cached_kraus_operators_per_qubit[qubit].push_back(Ks);
 }
 
-
 void NoiseModelCpp::add_kraus_operators_per_gate(const std::string& gate_name, const std::vector<SparseMatrix>& Ks) {
     /*
     Add a Kraus operator for a specific gate to the cached map.
@@ -71,7 +70,6 @@ void NoiseModelCpp::add_kraus_operators_per_gate(const std::string& gate_name, c
     has_something = true;
     cached_kraus_operators_per_gate[gate_name].push_back(Ks);
 }
-
 
 void NoiseModelCpp::add_kraus_operators_per_gate_qubit(const std::string& gate_name, int qubit, const std::vector<SparseMatrix>& Ks) {
     /*
@@ -85,7 +83,6 @@ void NoiseModelCpp::add_kraus_operators_per_gate_qubit(const std::string& gate_n
     has_something = true;
     cached_kraus_operators_per_gate_qubit[std::make_pair(gate_name, qubit)].push_back(Ks);
 }
-
 
 std::vector<SparseMatrix>& NoiseModelCpp::get_jump_operators() {
     /*

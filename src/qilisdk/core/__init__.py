@@ -14,7 +14,7 @@
 
 from .interpolator import Interpolation, Interpolator
 from .model import Constraint, Model, Objective, ObjectiveSense
-from .qtensor import QTensor, basis_state, bra, expect_val, ket, reset_qubits, tensor_prod, ghz, identity
+from .qtensor import QTensor, basis_state, bra, expect_val, ghz, identity, ket, reset_qubits, tensor_prod, zero
 from .variables import (
     EQ,
     GEQ,
@@ -65,9 +65,10 @@ __all__ = [
     "basis_state",
     "bra",
     "expect_val",
+    "ghz",
+    "identity",
     "ket",
     "reset_qubits",
     "tensor_prod",
-    "ghz",
-    "identity",
+    "zero",
 ]

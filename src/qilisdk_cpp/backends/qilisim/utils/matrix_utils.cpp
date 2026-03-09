@@ -135,7 +135,7 @@ SparseMatrix expand_operator(int nqubits, const SparseMatrix& op) {
 
     Returns:
         SparseMatrix: The expanded operator acting on the full system.
-        
+
     Raises:
         py::value_error: If the operator size is not compatible with the number of qubits.
     */
@@ -167,7 +167,7 @@ SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits,
 
     Returns:
         SparseMatrix: The expanded operator acting on the full system.
-        
+
     Raises:
         py::value_error: If the operator size is not compatible with the number of target qubits.
     */
