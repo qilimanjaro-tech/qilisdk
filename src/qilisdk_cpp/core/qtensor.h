@@ -120,7 +120,7 @@ class QTensorCpp {
         std::complex<double> expectation_value(const QTensorCpp& other, int nshots=0) const;
         std::complex<double> expectation_value_python(const py::object& other, int nshots=0) const;
         QTensorCpp partial_trace_python(const py::object& keep) const;
-        QTensorCpp partial_trace(const std::set<int>& keep) const;
+        QTensorCpp partial_trace(const std::set<int>& keep) const; 
         QTensorCpp commutator(const QTensorCpp& other) const;
         QTensorCpp commutator_python(const py::object& other) const;
         QTensorCpp anticommutator(const QTensorCpp& other) const;

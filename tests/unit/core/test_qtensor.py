@@ -108,7 +108,6 @@ def test_ptrace_valid():
     # Different combinations of partial traces.
     reduced_single_qubit_ground = rho.ptrace(keep=[0])
     reduced_single_qubit_excited = rho.ptrace(keep=[1])
-    reduced_double_qubit_1 = rho.ptrace(keep=[2])
     reduced_double_qubit_2 = rho.ptrace(keep=[2, 3])
     reduced_double_qubit_3 = rho.ptrace(keep=[3, 2])
 
@@ -131,7 +130,6 @@ def test_ptrace_valid():
     # Checks:
     np.testing.assert_allclose(reduced_single_qubit_ground.dense(), expected_single_qubit_ground.dense(), atol=1e-8)
     np.testing.assert_allclose(reduced_single_qubit_excited.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
-    np.testing.assert_allclose(reduced_double_qubit_1.dense(), expected_double_qubit.dense(), atol=1e-8)
     np.testing.assert_allclose(reduced_double_qubit_2.dense(), expected_double_qubit.dense(), atol=1e-8)
     np.testing.assert_allclose(reduced_double_qubit_3.dense(), expected_double_qubit.dense(), atol=1e-8)
     np.testing.assert_allclose(reduced_ket_qubit_1.dense(), expected_single_qubit_excited.dense(), atol=1e-8)
@@ -160,7 +158,7 @@ def test_ptrace_works_for_operators_which_are_not_density_matrices():
     # Pick an out of order keep list:
     keep = [0, 2]  # subspace 2 *then* subspace 0
     expected_result = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 10, 0], [0, 0, 0, 12]])
-    np.testing.assert_allclose(q_obj.ptrace(keep, dims).dense(), expected_result, atol=1e-8)
+    np.testing.assert_allclose(q_obj.ptrace(keep).dense(), expected_result, atol=1e-8)
 
 
 def test_ptrace_invalid_keep():
@@ -297,7 +295,7 @@ def test_norm_density_matrix():
     s = ket(0) + ket(1)
     qdm = s @ s.adjoint()
 
-    assert qdm.norm("tr") == 2
+    assert np.isclose(qdm.norm("tr"), 2)
 
 
 def test_norm_ket():

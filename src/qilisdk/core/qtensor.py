@@ -311,7 +311,7 @@ class QTensor:
         """
         self._qtensor_cpp.compute_eigendecomposition()
 
-    def unit(self, order: NormTypes = "trace") -> QTensor:
+    def unit(self, order: NormTypes = "frobenius") -> QTensor:
         """
         Wrapper for backwards compatibility: see normalized().
 
@@ -323,7 +323,7 @@ class QTensor:
         """
         return self.normalized(order)
 
-    def normalized(self, order: NormTypes = "trace") -> QTensor:
+    def normalized(self, order: NormTypes = "frobenius") -> QTensor:
         """
         Normalize the QTensor.
 
@@ -407,6 +407,8 @@ class QTensor:
         return self._qtensor_cpp.as_string()
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, QTensor):
+            return NotImplemented
         return self._qtensor_cpp.equals_python(other)
 
     def __truediv__(self, other: Number) -> QTensor:
@@ -622,6 +624,23 @@ class QTensor:
         """
         return self._qtensor_cpp.expectation_value_python(other, nshots)
 
+    def __getstate__(self):
+        """
+        Get the state of the QTensor for pickling.
+
+        Returns:
+            dict: A dictionary containing the state of the QTensor for serialization.
+        """
+        return {"data": self.data}
+
+    def __setstate__(self, state):
+        """
+        Set the state of the QTensor from a pickled state.
+
+        Args:
+            state (dict): A dictionary containing the state of the QTensor for deserialization.
+        """
+        self.__init__(state["data"])
 
 def ket(*state: int) -> QTensor:
     """
@@ -710,4 +729,28 @@ def basis_state(n: int, N: int) -> QTensor:
     # one nonzero at (row=n, col=0), value=1.0
     mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
     return QTensor(mat)
+
+def identity(dim: int) -> QTensor:
+    """
+    Wrapper for QTensor.identity().
+
+    Args:
+        dim (int): The dimension of the identity operator.
+
+    Returns:
+        QTensor: A QTensor representing the identity operator of the specified dimension.
+    """
+    return QTensor(QTensorCpp.identity(dim))
+
+def ghz(nqubits: int) -> QTensor:
+    """
+    Wrapper for QTensor.ghz().
+
+    Args:
+        nqubits (int): The number of qubits in the GHZ state.
+
+    Returns:
+        QTensor: A QTensor representing the GHZ state for the specified number of qubits.
+    """
+    return QTensor(QTensorCpp.ghz(nqubits))
 

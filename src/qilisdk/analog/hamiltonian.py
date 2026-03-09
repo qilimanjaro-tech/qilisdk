@@ -614,8 +614,6 @@ class Hamiltonian(Parameterizable):
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
-        if 2**n != dim:
-            raise ValueError(f"Matrix dimension {dim} is not a power of two.")
         if not tensor.is_hermitian():
             raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
 

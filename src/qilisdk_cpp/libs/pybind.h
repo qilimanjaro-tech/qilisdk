@@ -30,5 +30,6 @@ const py::object numpy_array_type = py::module_::import("numpy").attr("ndarray")
 const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
 const py::object cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
 const py::object coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
+const py::object sparray = py::module_::import("scipy.sparse").attr("sparray");
 const py::dtype dtype = py::dtype("complex128");
 const py::object py_complex = py::module_::import("builtins").attr("complex");
