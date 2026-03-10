@@ -99,16 +99,18 @@ class CircuitTranspilerResult:
 
 
 class CircuitTranspiler:
-    """Apply an ordered pipeline of circuit transpilation passes.
+    """Orchestrate an ordered sequence of circuit transpilation passes.
 
-    The transpiler acts as a thin orchestrator: each pass receives the circuit from the previous
-    pass and must return a brand-new circuit, allowing both structural rewrites and device-specific
-    lowering steps to be chained deterministically. Without topology information, the default
-    pipeline applies decomposition and cheap local simplification passes. With topology
-    information, a richer hardware-aware pipeline can be built through :meth:`default`.
+    Instantiate this class directly when you need full control over the pass
+    pipeline. For common workflows, use :meth:`default` to build a standard
+    pipeline for basis conversion only or for topology-aware transpilation.
+
+    Each pass receives the circuit produced by the previous pass and must return
+    a new circuit, which makes the overall transpilation flow deterministic and
+    easy to inspect through :meth:`transpile`.
 
     Args:
-        pipeline (list[CircuitTranspilerPass]): Sequential list of passes to execute while transpiling.
+        pipeline (list[CircuitTranspilerPass]): Ordered passes to run during transpilation.
     """
 
     def __init__(self, pipeline: list[CircuitTranspilerPass]) -> None:
@@ -122,8 +124,36 @@ class CircuitTranspiler:
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
         two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT,
         topology: list[tuple[int, int]] | PyGraph[int, None] | None = None,
-        qubit_mapping: dict[int, int] | None = None,
+        qubit_mapping: LayoutMap | None = None,
     ) -> Self:
+        """Build the default transpiler pipeline.
+
+        Use this constructor for the standard transpilation flow. When
+        ``topology`` is omitted, the returned transpiler only performs generic
+        decomposition and simplification passes. When ``topology`` is provided,
+        the pipeline becomes hardware aware: it either computes a placement with
+        SABRE and routes the circuit automatically, or it enforces a
+        user-provided logical-to-physical layout through ``qubit_mapping``.
+
+        Args:
+            single_qubit_basis (SingleQubitGateBasis): Target single-qubit basis
+                used by canonical decomposition and final single-qubit fusion.
+            two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate
+                used by canonical decomposition.
+            topology (list[tuple[int, int]] | PyGraph[int, None] | None):
+                Optional hardware coupling map. It can be provided either as a
+                list of connected physical-qubit pairs or as a ``rustworkx``
+                ``PyGraph`` whose node indices are physical qubits.
+            qubit_mapping (LayoutMap | None): Optional logical-to-physical
+                qubit assignment. This argument is only used when ``topology`` is
+                provided. If omitted, the pipeline uses ``SabreLayoutPass`` and
+                ``SabreSwapPass``. If provided, the pipeline uses
+                ``CustomLayoutPass`` to preserve the requested mapping.
+
+        Returns:
+            CircuitTranspiler: A ``CircuitTranspiler`` instance configured with the default pass
+            sequence for the requested transpilation mode.
+        """
         if topology is None:
             return cls(
                 [
@@ -136,7 +166,7 @@ class CircuitTranspiler:
                 ]
             )
 
-        topology = CircuitTranspiler._build_topology_graph(topology)  # ty:ignore[invalid-argument-type]
+        topology = topology if _is_topology_graph(topology) else CircuitTranspiler._build_topology_graph(topology)  # ty:ignore[invalid-argument-type]
         layout_routing_passes: list[CircuitTranspilerPass] = (
             [SabreLayoutPass(topology), SabreSwapPass(topology)]
             if qubit_mapping is None

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
+    from qilisdk.digital.circuit_transpiler import LayoutMap
 
 
 @dataclass
@@ -27,6 +28,6 @@ class TranspilationContext:
 
     # Artifacts produced/consumed by passes:
     initial_layout: list[int] = field(default_factory=list)  # logical -> physical (after layout)
-    final_layout: dict[int, int] = field(default_factory=dict)  # logical -> physical (after router)
+    final_layout: LayoutMap = field(default_factory=dict)  # logical -> physical (after router)
     metrics: dict[str, Any] = field(default_factory=dict)
     circuits: dict[str, Circuit] = field(default_factory=dict)

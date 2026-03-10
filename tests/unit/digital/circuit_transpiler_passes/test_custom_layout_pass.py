@@ -34,7 +34,6 @@ def test_custom_layout_routing_inserts_swaps_when_needed():
     assert [type(g).__name__ for g in output.gates] == ["RX", "SWAP", "CZ", "SWAP", "M"]
     assert [gate.qubits for gate in output.gates] == [(2,), (1, 0), (2, 1), (1, 0), (0,)]
     assert [gate.qubits for gate in circuit.gates] == [(0,), (0, 1), (1,)]
-    assert layout_pass.last_layout == [2, 0]
     assert context.initial_layout == [2, 0]
     assert "CustomLayoutPass" in context.circuits
     assert context.circuits["CustomLayoutPass"] is output
@@ -57,7 +56,6 @@ def test_custom_layout_respects_adjacent_mapping_without_swaps():
 
     assert [type(g).__name__ for g in output.gates] == ["RX", "CZ", "M"]
     assert [gate.qubits for gate in output.gates] == [(0,), (0, 1), (1,)]
-    assert layout_pass.last_layout == [0, 1]
 
 
 def test_custom_layout_restores_mapping_after_two_qubit_gate():
@@ -76,7 +74,6 @@ def test_custom_layout_restores_mapping_after_two_qubit_gate():
 
     assert [type(g).__name__ for g in output.gates] == ["SWAP", "CZ", "SWAP", "RX"]
     assert [gate.qubits for gate in output.gates] == [(1, 0), (2, 1), (1, 0), (2,)]
-    assert layout_pass.last_layout == [2, 0]
 
 
 def test_custom_layout_mapping_requires_all_logical_qubits():

@@ -15,13 +15,16 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
 
 from rustworkx import PyGraph
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+
+if TYPE_CHECKING:
+    from qilisdk.digital.circuit_transpiler import LayoutMap
 
 
 class CustomLayoutPass(CircuitTranspilerPass):
@@ -35,7 +38,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
     topology : PyGraph
         Undirected coupling graph whose node indices represent *physical* qubits.
         Nodes should be 0..(n_physical-1). Edges indicate allowed 2Q interactions.
-    mapping : dict[int, int]
+    mapping : LayoutMap
         Logical→physical mapping provided by the user. For example, for a 2-qubit
         circuit: {0: 5, 1: 2} means logical q0→phys 5, logical q1→phys 2.
 
@@ -66,12 +69,12 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     _TWO_QUBIT_ARITY = 2
 
-    def __init__(self, topology: PyGraph[int, None], qubit_mapping: Mapping[int, int]) -> None:
+    def __init__(self, topology: PyGraph[int, None], layout: LayoutMap) -> None:
         """Initialize the pass with a fixed logical-to-physical layout.
 
         Args:
-            topology (PyGraph[int, int]): Undirected coupling graph whose node indices are physical qubits.
-            qubit_mapping (Mapping[int, int]): User-specified mapping ``logical -> physical``.
+            topology (PyGraph[int, None]): Undirected coupling graph whose node indices are physical qubits.
+            layout (LayoutMap): User-specified layout ``logical -> physical``.
 
         Raises:
             TypeError: If ``topology`` is not a ``rustworkx.PyGraph`` instance.
@@ -80,10 +83,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
             raise TypeError("CustomLayoutPass requires a rustworkx.PyGraph (undirected).")
         self.topology = topology
         # Store a copy with explicit int coercion
-        self._user_mapping: dict[int, int] = {int(k): int(v) for k, v in qubit_mapping.items()}
-        self.last_layout: list[int] | None = None
-
-    # --------- public API ---------
+        self._user_layout: LayoutMap = {int(k): int(v) for k, v in layout.items()}
 
     def run(self, circuit: Circuit) -> Circuit:
         """Retarget a circuit using the user layout, inserting temporary SWAPs when needed.
@@ -109,7 +109,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
         valid_physical_nodes = set(physical_nodes)
 
         # ---- validations on provided mapping ----
-        mapping_keys = set(self._user_mapping.keys())
+        mapping_keys = set(self._user_layout.keys())
         expected_logical_qubits = set(range(num_logical_qubits))
         if mapping_keys != expected_logical_qubits:
             missing_logical_qubits = sorted(expected_logical_qubits - mapping_keys)
@@ -123,7 +123,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                 "User mapping must map *every* logical qubit in the circuit exactly once; " + "; ".join(error_parts)
             )
 
-        mapped_physical_qubits = list(self._user_mapping.values())
+        mapped_physical_qubits = list(self._user_layout.values())
         if len(set(mapped_physical_qubits)) != len(mapped_physical_qubits):
             # find duplicates for a clearer error
             seen_physical_qubits: set[int] = set()
@@ -143,7 +143,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
             )
 
         # Build the layout list[int] where layout[logical] = physical and keep a copy for diagnostics
-        logical_to_physical_layout = [self._user_mapping[logical_qubit] for logical_qubit in range(num_logical_qubits)]
+        logical_to_physical_layout = [self._user_layout[logical_qubit] for logical_qubit in range(num_logical_qubits)]
         initial_layout = logical_to_physical_layout.copy()
 
         # Track which logical qubit currently occupies each physical node
@@ -227,12 +227,9 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     physical_node_b,
                 )
 
-        # Record diagnostics: final layout after routing and expose the user-requested layout in context.
-        self.last_layout = logical_to_physical_layout.copy()
-
         if self.context is not None:
             self.context.initial_layout = initial_layout
-            self.context.final_layout = self._user_mapping
+            self.context.final_layout = self._user_layout
 
         self.append_circuit_to_context(output_circuit)
 

@@ -18,7 +18,7 @@ import math
 import random
 from collections import deque
 from copy import deepcopy
-from typing import Iterable, TypeGuard
+from typing import TYPE_CHECKING, Iterable, TypeGuard
 
 from rustworkx import PyGraph
 
@@ -33,6 +33,9 @@ from qilisdk.digital import (
 from qilisdk.digital.gates import BasicGate
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+
+if TYPE_CHECKING:
+    from qilisdk.digital.circuit_transpiler import LayoutMap
 
 
 def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
@@ -718,17 +721,17 @@ class SabreLayoutPass(CircuitTranspilerPass):
             Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.
         """
         retargeted = deepcopy(gate)
-        qubit_map = dict(zip(gate.qubits, mapped_qubits, strict=True))
+        qubit_map: LayoutMap = dict(zip(gate.qubits, mapped_qubits, strict=True))
         self._remap_gate_qubits_inplace(retargeted, qubit_map)
         return retargeted
 
     @staticmethod
-    def _remap_gate_qubits_inplace(gate: Gate, qubit_map: dict[int, int]) -> None:
+    def _remap_gate_qubits_inplace(gate: Gate, qubit_map: LayoutMap) -> None:
         """Recursively remap control/target qubits of a copied gate.
 
         Args:
             gate (Gate): Gate object to modify in place.
-            qubit_map (dict[int, int]): Logical-to-physical mapping for qubits touched by ``gate``.
+            qubit_map (LayoutMap): Logical-to-physical mapping for qubits touched by ``gate``.
 
         Raises:
             NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
