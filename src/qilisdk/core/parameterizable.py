@@ -169,9 +169,7 @@ class Parameterizable(ABC):
             The ``where`` predicate is applied to local parameters only. Child parameterizable
             objects always receive the same prefix operation recursively.
         """
-        old_keys: list[str] = [
-            label for label, param in self._parameters.items() if where is None or where(param)
-        ]
+        old_keys: list[str] = [label for label, param in self._parameters.items() if where is None or where(param)]
         for name in old_keys:
             if not name.startswith(prefix):
                 _name = name.removeprefix(self._prefix) if self._prefix and name.startswith(self._prefix) else name
