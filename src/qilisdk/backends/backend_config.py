@@ -125,9 +125,7 @@ class AnalogMethod(BaseSimulatorConfig):
         return d
 
     @classmethod
-    def integrator(
-        cls, *, num_substeps: int = 2, matrix_free: bool = False
-    ) -> AnalogMethod:
+    def integrator(cls, *, num_substeps: int = 2, matrix_free: bool = False) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
         Args:
