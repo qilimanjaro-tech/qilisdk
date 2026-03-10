@@ -1,3 +1,179 @@
+# qilisdk 0.1.8 (2026-02-03)
+
+## Features
+
+- Users can now set the environment variable `QILISDK_COMPLEX_PRECISION` to either `COMPLEX_64` or `COMPLEX_128`, making it easy to globally select the complex dtype used across dense and sparse matrices; if the variable is unset we continue to default to the project-wide precision defined in `settings.py`. ([PR #98](https://github.com/qilimanjaro-tech/qilisdk/pulls/98))
+- Hamiltonian class now has a get_commuting_partitions() method, which generates partitions each containing only commuting Pauli strings. This is useful for time evolution, since each partition can then be trivially exponentiated without Trotterization. ([PR #113](https://github.com/qilimanjaro-tech/qilisdk/pulls/113))
+- All parameterizable gates (i.e. RX, RY, RZ, U1, U2, U3) now accept Terms rather than only Parameters, allowing for more general expressions. This is useful if one wants two gates in the same circuit parameterized by the same variable, but with different scaling, e.g. Rz(2*theta) and RZ(3*theta). ([PR #113](https://github.com/qilimanjaro-tech/qilisdk/pulls/113))
+- Added a QAOA ansatz, as well as corresponding documentation. This ansatz combines a problem Hamiltonian and a mixer Hamiltonian, performing the alternating time evolution of both, scaled by some parameters. By adjusting the values of said parameters using a Variational functional, the energy of the problem Hamiltonian is minimized thus a solution to the original problem is found. ([PR #113](https://github.com/qilimanjaro-tech/qilisdk/pulls/113))
+- HardwareEfficientAnsatz now supports explicit specification of connectivity via a list of tuples. ([PR #116](https://github.com/qilimanjaro-tech/qilisdk/pulls/116))
+- Added support for gates with multiple controls in QuTiP and CUDA backends. ([PR #117](https://github.com/qilimanjaro-tech/qilisdk/pulls/117))
+- Added method to generate a randomized circuit from a set of single- and two-qubit gates, providing a useful tool for benchmarking. Usage is as follows:
+  ```python
+  from qilisdk.digital import Circuit, X, H, CNOT
+  c = Circuit.random(
+      nqubits=3,
+      single_qubit_gates=[X, H],
+      two_qubit_gates=[CNOT],
+      ngates=10,
+  )
+  ```
+  ([PR #126](https://github.com/qilimanjaro-tech/qilisdk/pulls/126))
+- Added a new simulation backend: QiliSim. This is an internal simulator written in C++. It offers improved performance compared to the QuTiP CPU simulator and can even be faster than the CUDA backend for some small test cases. Both circuit simulation and time evolution are supported. There are a number of time evolution methods: direct exponention, Anrolid/Krylov exponentiation, RK4 integration, and Monte Carlo (which can be combined with any of the previous methods).
+
+  Circuit sampling with QiliSim can be done as follows:
+  ```python
+  from qilisdk.digital import Circuit, H, CNOT
+  from qilisdk.functionals import Sampling
+  from qilisdk.backends import QiliSim
+
+  # Create a 2‑qubit circuit
+  circuit = Circuit(2)
+  circuit.add(H(0))
+  circuit.add(CNOT(0, 1))
+
+  # Initialize the Sampling functional with 1000 shots
+  sampling = Sampling(circuit=circuit, nshots=1000)
+
+  # Use the QiliSim backend to execute the sampling
+  backend = QiliSim()
+  result = backend.execute(sampling)
+  print(result)
+  ```
+
+  Time evolution with QiliSim can be done as follows:
+  ```python
+  from qilisdk.analog import Schedule, X, Z, Y
+  from qilisdk.core import ket, tensor_prod
+  from qilisdk.core.interpolator import Interpolation
+  from qilisdk.backends import QiliSim
+  from qilisdk.functionals import TimeEvolution
+
+  # Define total time and timestep
+  T = 10.0
+  dt = 0.5
+  nqubits = 1
+
+  # Define Hamiltonians
+  Hx = sum(X(i) for i in range(nqubits))
+  Hz = sum(Z(i) for i in range(nqubits))
+
+  # Build a time‑dependent schedule
+  schedule = Schedule(
+      hamiltonians={"driver": Hx, "problem": Hz},
+      coefficients={
+          "driver": {(0.0, T): lambda t: 1 - t / T},
+          "problem": {(0.0, T): lambda t: t / T},
+      },
+      dt=dt,
+      interpolation=Interpolation.LINEAR,
+  )
+
+  # Prepare an equal superposition initial state
+  initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
+
+  # Create the TimeEvolution functional
+  time_evolution = TimeEvolution(
+      schedule=schedule,
+      initial_state=initial_state,
+      observables=[Z(0), X(0), Y(0)],
+      nshots=100,
+      store_intermediate_results=False,
+  )
+
+  # Execute on the QiliSim backend and inspect results
+  backend = QiliSim()
+  results = backend.execute(time_evolution)
+  print(results)
+  ```
+  ([PR #126](https://github.com/qilimanjaro-tech/qilisdk/pulls/126))
+- Introduced noise model abstractions with digital, analog, and parameter noise classes.
+
+  Example:
+  ```python
+  from qilisdk.noise_models import (
+      DissipationNoise,
+      KrausNoise,
+      NoiseModel,
+      ParameterNoise,
+  )
+  from qilisdk.digital import X
+  import numpy as np
+
+
+  op = QTensor(np.array([[1.0, 0.0], [0.0, 1.0]]))
+  model = NoiseModel()
+
+  model.add(KrausNoise(kraus_operators=[op], affected_qubits=[0], affected_gates=[X]))
+
+  # OR 
+  model.add(DissipationNoise(jump_operators=[op]))
+
+  # OR 
+  model.add(ParameterNoise(affected_parameters=["theta"], noise_std=0.05))
+  ```
+  ([PR #127](https://github.com/qilimanjaro-tech/qilisdk/pulls/127))
+- Noise model support added to the CudaBackend. Now, when executing a functional using the CudaBackend, the given noise model is used to perform a noisy simulation. ([PR #131](https://github.com/qilimanjaro-tech/qilisdk/pulls/131))
+- Added internal support for density matrix initial states when simulating circuits in QiliSim, as well as Monte-Carlo simulation. ([PR #141](https://github.com/qilimanjaro-tech/qilisdk/pulls/141))
+- Added TrotterizedTimeEvolution with state initialization, introduced reusable trotterization utilities, tightened time-evolution state validation. Circuit now supports list-based add/insert, circuit append/prepend, and gate/circuit addition operators with new tests and documentation for those behaviors. Expanded docs/tests for trotterization, QAOA behavior, and backends.
+
+  Examples:
+  ```python
+  from qilisdk.analog.hamiltonian import Z
+  from qilisdk.analog.schedule import Schedule
+  from qilisdk.digital import H
+  from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+
+  schedule = Schedule(
+      hamiltonians={"h": Z(0)},
+      coefficients={"h": {0.0: 1.0, 1.0: 1.0}},
+      dt=0.1,
+      total_time=1.0,
+  )
+  ansatz = TrotterizedTimeEvolution(
+      schedule=schedule,
+      trotter_steps=2,
+      state_initialization=[H(0)],
+  )
+  ansatz.draw()
+  ```
+
+  ```python
+  from qilisdk.analog.hamiltonian import X, Z
+  from qilisdk.utils.trotterization import trotter_evolution
+
+  hamiltonian = X(0) + 2 * Z(0)
+  gates = list(trotter_evolution(hamiltonian, time=0.5, trotter_steps=2))
+  ```
+  ([PR #193](https://github.com/qilimanjaro-tech/qilisdk/pulls/193))
+
+## Bugfixes
+
+- Fixed the Hamiltonian `to_matrix()` and `to_qtensor()` routines to skip unnecessary sparse→dense→sparse conversions by caching single-qubit factors, resulting in noticeably faster tensor construction for medium- and large-qubit systems. ([PR #98](https://github.com/qilimanjaro-tech/qilisdk/pulls/98))
+- Parameters with equal bounds (i.e. min == max) are no longer optimized. ([PR #113](https://github.com/qilimanjaro-tech/qilisdk/pulls/113))
+- Reworked analog schedule timing so `T` derives from coefficients or an explicit max time and `tlist` is generated from `dt`, with all backends/renderers consuming the same steps (and tests adjusted accordingly); the interpolator now validates overlapping intervals, keeps interval endpoints only, and is exported via `qilisdk.core`; QuTiP builds Hamiltonians via `to_qtensor(...).dense()` with correct dimensions ([PR #118](https://github.com/qilimanjaro-tech/qilisdk/pulls/118))
+- Fixed a bug in which the CUDA backend would throw an error if given a gate with an integer parameter, e.g. RX with theta=1. ([PR #120](https://github.com/qilimanjaro-tech/qilisdk/pulls/120))
+- Added a extra check at the end of the variational program evaluation to confirm that the parameters that are being passed to the functional are actually valid. Provide a more helpful error message in case the optimizers fail. ([PR #121](https://github.com/qilimanjaro-tech/qilisdk/pulls/121))
+- Optional dependency handling is now more robust: missing optional symbols are exported as attribute-aware stubs so both calling them and accessing members (e.g. `SpeQtrum.login()`) raises an informative `OptionalDependencyError` with the correct `pip install qilisdk[extra]` hint, and optional imports fall back to stubs even when a dependency is installed but fails during import. ([PR #125](https://github.com/qilimanjaro-tech/qilisdk/pulls/125))
+- The test suite no longer errors during collection when optional extras aren’t installed; optional-feature tests (CUDA, QuTiP, SpeQtrum, OpenFermion) are skipped via `pytest.importorskip(..., exc_type=ImportError)` unless their dependencies can be imported. ([PR #125](https://github.com/qilimanjaro-tech/qilisdk/pulls/125))
+- Fixed a Dependabot-reported vulnerability of `nbconvert` by updating the affected dependency to a safe version. ([PR #144](https://github.com/qilimanjaro-tech/qilisdk/pulls/144))
+
+## Improved Documentation
+
+- Added information about the C++ requirements to the README, as well as more informative error messages if a compiler is not available. This only concerns installing from source, when installing QiliSDK from pypi (i.e. "pip install qilisdk") a compiler will not be needed as there will be prebuild wheels available. ([PR #145](https://github.com/qilimanjaro-tech/qilisdk/pulls/145))
+- Updated TimeEvolution documentation examples (backends, functionals, cost_functions) to use the new Schedule signature with explicit driver/problem Hamiltonians, coefficient mappings, and linear interpolation import. ([PR #119](https://github.com/qilimanjaro-tech/qilisdk/pulls/119))
+- Documentation has been updated to include a section about noise models, detailing their usage in QiliSDK as well as a brief mathematical description of each supported noise type. ([PR #131](https://github.com/qilimanjaro-tech/qilisdk/pulls/131))
+- Fixed Time Evolution example in the code examples in the docs. ([PR #133](https://github.com/qilimanjaro-tech/qilisdk/pulls/133))
+
+## Deprecations and Removals
+
+- Removed `kwargs` from the constructors of the ``Schedule`` and ``Interpolator`` classes. ([PR #122](https://github.com/qilimanjaro-tech/qilisdk/pulls/122))
+
+## Misc
+
+- [PR #114](https://github.com/qilimanjaro-tech/qilisdk/pulls/114), [PR #115](https://github.com/qilimanjaro-tech/qilisdk/pulls/115), [PR #123](https://github.com/qilimanjaro-tech/qilisdk/pulls/123), [PR #126](https://github.com/qilimanjaro-tech/qilisdk/pulls/126), [PR #128](https://github.com/qilimanjaro-tech/qilisdk/pulls/128), [PR #129](https://github.com/qilimanjaro-tech/qilisdk/pulls/129), [PR #135](https://github.com/qilimanjaro-tech/qilisdk/pulls/135), [PR #136](https://github.com/qilimanjaro-tech/qilisdk/pulls/136), [PR #138](https://github.com/qilimanjaro-tech/qilisdk/pulls/138), [PR #139](https://github.com/qilimanjaro-tech/qilisdk/pulls/139), [PR #142](https://github.com/qilimanjaro-tech/qilisdk/pulls/142)
+
+
 # qilisdk 0.1.7 (2025-12-04)
 
 ## Features
@@ -346,7 +522,8 @@
 
   ## Print the probabilities
   print(results.get_probabilities())
-  ``` ([PR #42](https://github.com/qilimanjaro-tech/qilisdk/pulls/42))
+  ```
+  ([PR #42](https://github.com/qilimanjaro-tech/qilisdk/pulls/42))
 - The `VQEResult` object now reports, alongside the optimal cost, optimal parameters, and any intermediate data, the full statistics obtained by executing the ansatz with the optimal parameters on the backend. Two new fields are returned:
 
   * **`optimal_probabilities`** – the normalized probability of measuring each computational-basis bit-string when the circuit is executed with the optimizer’s best parameters (e.g., `'101': 0.248`, `'110': 0.243`, …).
@@ -394,7 +571,6 @@
    '110': 243,
    '111': 4})
   ```
-
   ([PR #43](https://github.com/qilimanjaro-tech/qilisdk/pulls/43))
 - Introduced various improvements in serialization and deserialization of objects to YAML. Changed QaaSBackend's models and methods to comply with new QaaS API. ([PR #47](https://github.com/qilimanjaro-tech/qilisdk/pulls/47))
 - You can now pass a custom callable to both `list_devices` and `list_jobs`, enabling flexible client‑side filtering without touching the server API. Two new convenience helpers extend the job‑handling workflow: `get_job_details` fetches a complete record (payload, results, logs, and error information) for a given job ID, while `wait_for_job` blocks the caller until that job reaches a terminal state—`COMPLETED`, `ERROR`, or `CANCELLED`. In addition, the execution helpers (`execute`, `evolve`, `run_vqe`, and `run_time_evolution`) have been streamlined to return only the integer job identifier, making immediate responses lighter and encouraging explicit follow‑up calls when you actually need detailed data. ([PR #48](https://github.com/qilimanjaro-tech/qilisdk/pulls/48))
@@ -406,7 +582,8 @@
   from qilisdk.extras.qutip import QutipBackend
 
   backend = QutipBackend()
-  ``` ([PR #49](https://github.com/qilimanjaro-tech/qilisdk/pulls/49))
+  ```
+  ([PR #49](https://github.com/qilimanjaro-tech/qilisdk/pulls/49))
 - Introducing **Functionals**, a unified abstraction for quantum work units. The library now includes two functional families: **`Sampling`**, which executes gate‑based circuits and returns shot counts, and **`TimeEvolution`**, which drives Hamiltonian schedules and yields evolved states or expectation values. All back‑ends have been consolidated into the `qilisdk.backends` module and are now Functional‑aware—each advertises the families it supports and executes them via `backend.execute(functional)`. Meanwhile, **QaaS** has been refactored into a standalone API client located in the `qilisdk.qaas` module, providing endpoints for submitting Functionals to remote devices, monitoring job status, and listing available jobs and hardware. ([PR #50](https://github.com/qilimanjaro-tech/qilisdk/pulls/50))
 - The QiliSDK settings system has been refactored to use Pydantic v2 and the `pydantic-settings` package, enabling centralized, validated configuration through environment variables. Each setting is defined in a structured `QiliSDKSettings` class, automatically loaded via a singleton `get_settings()` accessor. Environment variables follow a consistent `QILISDK_` prefix, and fields are now cleanly documented and type-safe. This change simplifies configuration management, eliminates scattered `os.environ` usage, and improves testability and documentation integration with AutoAPI. ([PR #55](https://github.com/qilimanjaro-tech/qilisdk/pulls/55))
 - The entire project now funnels its diagnostics through a single Loguru pipeline. On import, `qilisdk.__init__` invokes `_logging.configure_logging()`, which reads `logging_config.yaml` (or any file you point to) and installs sinks, colour schemes, and per-library filters before attaching an intercept handler that routes **all** standard-library loggers to Loguru. Back-end drivers and the synchronous QaaS client have been instrumented with rich, level-appropriate messages—`DEBUG` traces payloads and HTTP timings, `INFO` announces lifecycle events, `SUCCESS` confirms completed actions, while `WARNING` and `ERROR` expose anomalies and failures. Configuration is now entirely declarative and lives in one place, `_logging.py`; downstream projects that merely `import qilisdk` inherit the same configuration.  A new environment variable, **`QILISDK_LOGGING_CONFIG_PATH`**, has been added to `QiliSDKSettings`, letting users override the default YAML location without code changes. ([PR #58](https://github.com/qilimanjaro-tech/qilisdk/pulls/58))
@@ -719,7 +896,8 @@
 
   # Plot the experimental S21 response (amplitude vs. drive duration)
   results.plot()
-  ``` ([PR #76](https://github.com/qilimanjaro-tech/qilisdk/pulls/76))
+  ```
+  ([PR #76](https://github.com/qilimanjaro-tech/qilisdk/pulls/76))
 - Implemented schedule plotting with theme options consistent with those available for circuits, along with new schedule style classes to improve customization. A new `LinearSchedule` has been added, implementing linear interpolation between user-defined coefficients across the schedule. In addition, both `Schedule` and `LinearSchedule` now enforce that the total duration `T` must be divisible by the time step `dt`. ([PR #77](https://github.com/qilimanjaro-tech/qilisdk/pulls/77))
 
 ## Bugfixes

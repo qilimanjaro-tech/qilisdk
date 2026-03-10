@@ -273,7 +273,7 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("t2_experiment_result")
-    def _serialize_t2_experiment_resultt(self, t2_experiment_result: T2ExperimentResult, _info):
+    def _serialize_t2_experiment_result(self, t2_experiment_result: T2ExperimentResult, _info):
         return serialize(t2_experiment_result) if t2_experiment_result is not None else None
 
     @field_validator("t2_experiment_result", mode="before")

@@ -14,8 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
-from itertools import chain
-from typing import Mapping, overload
+from typing import Iterator, Mapping, TypeAlias, overload
 
 from numpy import linspace
 
@@ -28,7 +27,7 @@ from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
 
 _TIME_PARAMETER_NAME = "t"
-PARAMETERIZED_NUMBER = float | Parameter | Term
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 
 # type aliases just to keep this short
 CoeffDict = dict[str, TimeDict]
@@ -88,6 +87,7 @@ class Schedule(Parameterizable):
         """
         # THIS is the only runtime implementation
         super(Schedule, self).__init__()
+
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[str, Interpolator] = {}
         self._interpolation = None
@@ -170,6 +170,15 @@ class Schedule(Parameterizable):
         return self._dt
 
     def set_dt(self, dt: float) -> None:
+        """
+        Set the time resolution ``dt`` used for sampling callable/interval definitions and plotting.
+
+        Args:
+            dt (float): New time resolution. Must be positive.
+
+        Raises:
+            ValueError: If ``dt`` is not a positive float.
+        """
         if not isinstance(dt, float):
             raise ValueError(f"dt is only allowed to be a float but {type(dt)} was provided")
         self._dt = dt
@@ -185,6 +194,15 @@ class Schedule(Parameterizable):
     def nparameters(self) -> int:
         """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
         return len(self._parameters)
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Expose hamiltonians and interpolators to the shared parameter interface.
+
+        Yields:
+            Iterator[Parameterizable]: Child parameterizable objects composing the schedule.
+        """
+        yield from self._hamiltonians.values()
+        yield from self._coefficients.values()
 
     def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
         if isinstance(value, (int, float)):
@@ -256,9 +274,7 @@ class Schedule(Parameterizable):
 
     def get_constraints(self) -> list[ComparisonTerm]:
         """Return the set of parameter constraints arising from all interpolators."""
-        const_lists = [coeff.get_constraints() for coeff in self._coefficients.values()]
-        combined_list = chain.from_iterable(const_lists)
-        return list(set(combined_list))
+        return list(set(super().get_constraints()))
 
     def scale_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
         """
@@ -268,7 +284,7 @@ class Schedule(Parameterizable):
             ValueError: If the max time provided is zero.
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
-            raise ValueError("Setting the total time to zero.")
+            raise ValueError("Cannot set the total time to zero.")
         self._extract_parameters(max_time)
         self._max_time = max_time
         for ham in self._hamiltonians:

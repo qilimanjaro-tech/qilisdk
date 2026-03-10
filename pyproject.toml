@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.1.8"
+version = "0.1.9"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -23,8 +23,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "dill>=0.3.9",
-    "numpy>=2.4.1",
+    "dill>=0.4.1",
+    "numpy>=2.3,<2.4.1; sys_platform == 'darwin'",
+    "numpy>=2.4.1; sys_platform != 'darwin'",
     "ruamel-yaml>=0.18.16",
     "scipy>=1.16.3; sys_platform == 'darwin'",
     "scipy>=1.15,<1.16.3; sys_platform != 'darwin'",
@@ -32,15 +33,21 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
-    "mkl-service>=2.4.2; sys_platform != 'darwin'",
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
     "gputil>=1.4.0",
+    "mkl-service>=2.6.1; sys_platform != 'darwin'",
 ]
 
 [project.optional-dependencies]
 cuda = [
+    "qilisdk[cuda12]"
+]
+cuda12 = [
     "cuda-quantum-cu12==0.13.0",
+]
+cuda13 = [
+    "cuda-quantum-cu13==0.13.0"
 ]
 speqtrum = [
     "httpx==0.28.1",
@@ -48,37 +55,76 @@ speqtrum = [
     "keyrings-alt>=5.0.2",
 ]
 qutip = [
-    "qutip>=5.2.2",
+    "qutip>=5.2.3",
     "qutip-qip>=0.4.1",
 ]
 openfermion = [
     "openfermion>=1.7.1",
 ]
+all = [
+    "qilisdk[cuda12]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
+all-cu12 = [
+    "qilisdk[cuda12]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
+all-cu13 = [
+    "qilisdk[cuda13]",
+    "qilisdk[speqtrum]",
+    "qilisdk[qutip]",
+    "qilisdk[openfermion]",
+]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.150.1",
-    "ipykernel>=7.1.0",
+    "hypothesis>=6.151.9",
+    "ipykernel>=7.2.0",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-sugar>=1.1.1",
-    "ruff>=0.14.11",
+    "ruff>=0.15.2",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
-    "ty>=0.0.13",
+    "ty>=0.0.16",
 ]
 docs = [
     "astroid<3.2",
     "nbsphinx>=0.9.7",
     "pypandoc>=1.15",
-    "sphinx>=8.1.3",
-    "sphinx-autoapi==3.1.0",
+    "sphinx>=8.2.3",
+    "sphinx-autoapi>=3.4.0",
     "sphinx-automodapi>=0.20.0",
-    "sphinx-design>=0.6.1",
+    "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
     "sphinx-multiversion",
     "sphinxawesome-theme>=5.3.2",
+]
+
+[tool.uv]
+override-dependencies = ["nbconvert >= 7.17.0"]
+conflicts = [
+    [
+      { extra = "cuda12" },
+      { extra = "cuda13" },
+    ],
+    [
+      { extra = "cuda" },
+      { extra = "cuda13" },
+    ],
+    [
+      { extra = "all-cu12" },
+      { extra = "all-cu13" },
+    ],
+    [
+      { extra = "all" },
+      { extra = "all-cu13" },
+    ],
 ]
 
 [tool.uv.sources]
@@ -201,13 +247,14 @@ ignore = [
     "PLR0917",
     "PLR1702",
     "TD003",
+    "DOC502",
     "RUF067"
 ]
 dummy-variable-rgx = "^_$"
 exclude = [".tmp", "docs/*"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012"]
+"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012", "RUF069"]
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true

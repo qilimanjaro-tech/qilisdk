@@ -143,7 +143,7 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
         return RZ(q, phi=math.pi / 8.0)
 
     # Build the 2x2 unitary matrix for gate
-    if isinstance(gate, (U2, U3, H, BasicGate)):
+    if isinstance(gate, BasicGate) and gate.nqubits == 1:
         U = gate.matrix
     else:
         raise NotImplementedError(f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}")

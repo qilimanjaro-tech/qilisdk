@@ -19,6 +19,7 @@
 #include "digital/sampling.h"
 #include "utils/numpy.h"
 #include "utils/parsers.h"
+#include "noise/noise_model.h"
 
 // Make the QiliSimCpp class available in Python, as well as the two main methods
 PYBIND11_MODULE(qilisim_module, m) {
@@ -26,7 +27,7 @@ PYBIND11_MODULE(qilisim_module, m) {
 }
 
 // The public execute_sampling
-py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::dict& solver_params) {
+py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
     Execute a sampling functional using a simple statevector simulator.
     Note that this is just the wrapper mapping the Python objects to C++ objects.
@@ -35,6 +36,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     Args:
         functional (py::object): The Sampling functional to execute.
         noise_model (py::object): The noise model to apply during simulation.
+        initial_state (py::object): The initial state as a QTensor or none.
         solver_params (py::dict): Solver parameters, including 'max_cache_size'.
 
     Returns:
@@ -56,20 +58,7 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     int n_qubits = functional.attr("circuit").attr("nqubits").cast<int>();
 
     // Get parameters
-    QiliSimConfig config;
-    if (solver_params.contains("max_cache_size")) {
-        config.max_cache_size = solver_params["max_cache_size"].cast<int>();
-    }
-    if (solver_params.contains("num_threads")) {
-        config.num_threads = solver_params["num_threads"].cast<int>();
-    }
-    if (solver_params.contains("seed")) {
-        config.seed = solver_params["seed"].cast<int>();
-    }
-    if (solver_params.contains("atol")) {
-        config.atol = solver_params["atol"].cast<double>();
-    }
-    config.validate();
+    QiliSimConfig config = parse_solver_params(solver_params);
 
     // Sanity checks
     if (n_qubits <= 0) {
@@ -80,12 +69,25 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     }
 
     // Parse the Python objects into C++ objects
-    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.atol);
     std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
+
+    // The initial state
+    long dim = 1L << n_qubits;
+    SparseMatrix initial_state_cpp;
+    if (initial_state.is_none()) {
+        initial_state_cpp = SparseMatrix(dim, 1);
+        initial_state_cpp.coeffRef(0, 0) = 1.0;
+        initial_state_cpp.makeCompressed();
+    } else {
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
+    }
 
     // Pass everything to the interal implementation
     std::map<std::string, int> counts;
-    sampling(gates, qubits_to_measure, n_qubits, n_shots, config, counts);
+    DenseMatrix state;
+    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
 
     // Convert counts to samples dict
     py::dict samples;
@@ -123,70 +125,51 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         throw py::value_error("The provided functional is not a TimeEvolution instance");
     }
 
+    // Check if we need to perturb the parameters
+    py::object schedule = functional.attr("schedule");
+    if (!noise_model.is_none()) {
+        py::dict schedule_parameters = schedule.attr("get_parameters")();
+        py::dict global_noise_map = noise_model.attr("global_perturbations");
+        for (auto item : global_noise_map) {
+            py::handle param_name = item.first;
+            if (schedule_parameters.contains(param_name)) {
+                for (auto perturbation : global_noise_map[param_name]) {
+                    double original_value = schedule_parameters[param_name].cast<double>();
+                    double new_value = perturbation.attr("perturb")(original_value).cast<double>();
+                    schedule_parameters[param_name] = new_value;
+                }
+            }
+        }
+        schedule.attr("set_parameters")(schedule_parameters);
+        schedule_parameters = schedule.attr("get_parameters")();
+    }
+    
+
     // Pre-process the Python objects
     py::object initial_state = functional.attr("initial_state");
     py::object hamiltonians_full = functional.attr("schedule").attr("hamiltonians");
     py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
     py::list hamiltonians_values = hamiltonians_full.attr("values")();
     py::object steps = functional.attr("schedule").attr("tlist");
-    py::object coeffs_full = functional.attr("schedule").attr("coefficients");
-    py::list coeffs;
-    for (const auto& h_key : hamiltonians_keys) {
-        py::object h_coeffs = coeffs_full[h_key];
-        py::list coeffs_for_h;
-        for (const auto& t : steps) {
-            coeffs_for_h.append(h_coeffs[t]);
-        }
-        coeffs.append(coeffs_for_h);
-    }
     py::object observables = functional.attr("observables");
 
     // Get parameters
-    QiliSimConfig config;
-    if (solver_params.contains("arnoldi_dim")) {
-        config.arnoldi_dim = solver_params["arnoldi_dim"].cast<int>();
-    }
-    if (solver_params.contains("num_arnoldi_substeps")) {
-        config.num_arnoldi_substeps = solver_params["num_arnoldi_substeps"].cast<int>();
-    }
-    if (solver_params.contains("num_integrate_substeps")) {
-        config.num_integrate_substeps = solver_params["num_integrate_substeps"].cast<int>();
-    }
-    if (solver_params.contains("evolution_method")) {
-        config.method = solver_params["evolution_method"].cast<std::string>();
-    }
-    if (solver_params.contains("monte_carlo")) {
-        config.monte_carlo = solver_params["monte_carlo"].cast<bool>();
-    }
-    if (solver_params.contains("num_monte_carlo_trajectories")) {
-        config.num_monte_carlo_trajectories = solver_params["num_monte_carlo_trajectories"].cast<int>();
-    }
-    if (solver_params.contains("num_threads")) {
-        config.num_threads = solver_params["num_threads"].cast<int>();
-    }
-    if (solver_params.contains("seed")) {
-        config.seed = solver_params["seed"].cast<int>();
-    }
-    if (solver_params.contains("atol")) {
-        config.atol = solver_params["atol"].cast<double>();
-    }
-    // store_intermediate_results is in the functional
+    QiliSimConfig config = parse_solver_params(solver_params);
     if (functional.attr("store_intermediate_results").cast<bool>()) {
-        config.store_intermediate_results = true;
+        config.set_store_intermediate_results(true);
     }
-    config.validate();
 
     // Convert to C++ objects
-    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.atol);
+    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
     if (hamiltonians.size() == 0) {
         throw py::value_error("At least one Hamiltonian must be provided");
     }
     int nqubits = static_cast<int>(std::log2(hamiltonians[0].rows()));
-    std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.atol);
-    std::vector<std::vector<double>> parameters_list = parse_parameters(coeffs);
-    std::vector<SparseMatrix> jump_operators;
+    std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
+    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
     std::vector<double> step_list = parse_time_steps(steps);
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.atol);
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
 
     // Sanity checks
     if (step_list.size() == 0) {
@@ -206,7 +189,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     SparseMatrix rho_t;
     std::vector<double> expectation_values;
     std::vector<std::vector<double>> intermediate_expectation_values;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, jump_operators, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
 
     // Convert things to numpy arrays
     py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);
@@ -215,7 +198,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     // Also convert intermediates if needed
     py::list intermediate_rho_numpy;
     py::array_t<double> intermediate_expect_numpy;
-    if (config.store_intermediate_results) {
+    if (config.get_store_intermediate_results()) {
         for (const auto& rho_intermediate : intermediate_rhos) {
             py::array_t<std::complex<double>> rho_step_numpy = to_numpy(rho_intermediate);
             intermediate_rho_numpy.append(QTensor(rho_step_numpy));

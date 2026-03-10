@@ -32,11 +32,11 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
+    from qilisdk.functionals import TimeEvolution
     from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.time_evolution import TimeEvolution
-    from qilisdk.noise_models.noise_model import NoiseModel
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -44,6 +44,10 @@ BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[QubitCircuit, TBasic
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
 PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], Qobj]]
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
 
 
 class QutipI(SingleQubitGate):
@@ -103,7 +107,7 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling, noise_model: NoiseModel | None = None) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -151,7 +155,7 @@ class QutipBackend(Backend):
 
         bits_list = ["".join(map(str, cb)) for cb in bits]
 
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(42)
         samples = rng.choice(bits_list, size=functional.nshots, p=probs)
         samples_py = map(str, samples)
 
@@ -160,9 +164,45 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    def _execute_time_evolution(
-        self, functional: TimeEvolution, noise_model: NoiseModel | None = None
-    ) -> TimeEvolutionResult:
+    @staticmethod
+    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
+        """Convert a QiliSDK observable to a QuTiP Qobj.
+
+        Args:
+            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
+            nqubits (int): The total number of qubits in the system.
+
+        Returns:
+            Qobj: The corresponding QuTiP Qobj representation of the observable.
+
+        Raises:
+            ValueError: If the observable type is unsupported.
+        """
+        aux_obs = None
+        identity = QTensor(PauliI(0).matrix)
+        if isinstance(obs, PauliOperator):
+            for i in range(nqubits):
+                if aux_obs is None:
+                    aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
+                else:
+                    aux_obs = (
+                        tensor_prod([aux_obs, identity])
+                        if i != obs.qubit
+                        else tensor_prod([aux_obs, QTensor(obs.matrix)])
+                    )
+        elif isinstance(obs, Hamiltonian):
+            aux_obs = QTensor(obs.to_matrix())
+            if obs.nqubits < nqubits:
+                for _ in range(nqubits - obs.nqubits):
+                    aux_obs = tensor_prod([aux_obs, identity])
+        elif isinstance(obs, QTensor):
+            aux_obs = obs
+        if aux_obs is not None:
+            return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
+        logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        raise ValueError(f"unsupported observable type of {obs.__class__}")
+
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -174,6 +214,7 @@ class QutipBackend(Backend):
         Raises:
             ValueError: if the initial state provided is invalid.
         """
+
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         steps = functional.schedule.tlist
 
@@ -186,10 +227,13 @@ class QutipBackend(Backend):
                 )
             )
 
-        H_t = [
+        h_t = [
             [
                 qutip_hamiltonians[i],
-                np.array([functional.schedule.coefficients[h][t] for t in steps]),
+                np.array(
+                    [functional.schedule.coefficients[h][t] for t in steps],
+                    dtype=_complex_dtype(),
+                ),
             ]
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
@@ -207,37 +251,11 @@ class QutipBackend(Backend):
         qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
-
-        identity = QTensor(PauliI(0).matrix)
         for obs in functional.observables:
-            aux_obs = None
-            if isinstance(obs, PauliOperator):
-                for i in range(functional.schedule.nqubits):
-                    if aux_obs is None:
-                        aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
-                    else:
-                        aux_obs = (
-                            tensor_prod([aux_obs, identity])
-                            if i != obs.qubit
-                            else tensor_prod([aux_obs, QTensor(obs.matrix)])
-                        )
-            elif isinstance(obs, Hamiltonian):
-                aux_obs = QTensor(obs.to_matrix())
-                if obs.nqubits < functional.schedule.nqubits:
-                    for _ in range(functional.schedule.nqubits - obs.nqubits):
-                        aux_obs = tensor_prod([aux_obs, identity])
-            elif isinstance(obs, QTensor):
-                aux_obs = obs
-            else:
-                logger.error("Unsupported observable type {}", obs.__class__.__name__)
-                raise ValueError(f"unsupported observable type of {obs.__class__}")
-            if aux_obs is not None:
-                qutip_obs.append(
-                    Qobj(aux_obs.dense(), dims=[[2 for _ in range(functional.schedule.nqubits)] for _ in range(2)])
-                )
+            qutip_obs.append(self._to_qubip_observables(obs, functional.schedule.nqubits))
 
         results = mesolve(
-            H=H_t,
+            H=h_t,
             e_ops=qutip_obs,
             rho0=qutip_init_state,
             tlist=steps,
@@ -250,13 +268,17 @@ class QutipBackend(Backend):
 
         logger.success("TimeEvolution finished")
         return TimeEvolutionResult(
-            final_expected_values=np.array([results.expect[i][-1] for i in range(len(qutip_obs))]),  # ty:ignore[not-subscriptable]
+            final_expected_values=np.array(
+                [results.expect[i][-1] for i in range(len(qutip_obs))],  # ty:ignore[not-subscriptable]
+                dtype=_complex_dtype(),
+            ),
             expected_values=(
                 np.array(
                     [
                         [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
                         for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
-                    ]
+                    ],
+                    dtype=_complex_dtype(),
                 )
                 if len(results.expect) > 0 and functional.store_intermediate_results
                 else None
@@ -297,7 +319,8 @@ class QutipBackend(Backend):
                 if handler is None:
                     logger.error("Unsupported gate {}", type(gate).__name__)
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
-                handler(qutip_circuit, gate, *(qubit for qubit in gate.target_qubits))
+                qubits = gate.target_qubits
+                handler(qutip_circuit, gate, *qubits)
 
         no_measurement = True
 
@@ -418,17 +441,17 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _qutip_U1(phi: float) -> Qobj:
-        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=complex)
+        mat = np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
         return Qobj(mat, dims=[[2], [2]])
 
     @staticmethod
     def _handle_U1(circuit: QubitCircuit, gate: U1, qubit: int) -> None:
         """Handle an U1 gate operation."""
-        U1_label = "U1"
+        u1_label = "U1"
 
-        if U1_label not in circuit.user_gates:
-            circuit.user_gates[U1_label] = QutipBackend._qutip_U1
-        circuit.add_gate(U1_label, targets=qubit, arg_value=gate.phi)
+        if u1_label not in circuit.user_gates:
+            circuit.user_gates[u1_label] = QutipBackend._qutip_U1
+        circuit.add_gate(u1_label, targets=qubit, arg_value=gate.phi)
 
     @staticmethod
     def _qutip_U2(angles: list[float]) -> Qobj:
@@ -439,18 +462,18 @@ class QutipBackend(Backend):
                 [1, -np.exp(1j * gamma)],
                 [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
         return Qobj(mat, dims=[[2], [2]])
 
     @staticmethod
     def _handle_U2(circuit: QubitCircuit, gate: U2, qubit: int) -> None:
         """Handle an U2 gate operation."""
-        U2_label = "U2"
+        u2_label = "U2"
 
-        if U2_label not in circuit.user_gates:
-            circuit.user_gates[U2_label] = QutipBackend._qutip_U2
-        circuit.add_gate(U2_label, targets=qubit, arg_value=[gate.phi, gate.gamma])
+        if u2_label not in circuit.user_gates:
+            circuit.user_gates[u2_label] = QutipBackend._qutip_U2
+        circuit.add_gate(u2_label, targets=qubit, arg_value=[gate.phi, gate.gamma])
 
     @staticmethod
     def _qutip_U3(angles: list[float]) -> Qobj:
@@ -462,18 +485,18 @@ class QutipBackend(Backend):
                 [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
                 [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
             ],
-            dtype=complex,
+            dtype=_complex_dtype(),
         )
         return Qobj(mat, dims=[[2], [2]])
 
     @staticmethod
     def _handle_U3(circuit: QubitCircuit, gate: U3, qubit: int) -> None:
         """Handle an U3 gate operation."""
-        U3_label = "U3"
+        u3_label = "U3"
 
-        if U3_label not in circuit.user_gates:
-            circuit.user_gates[U3_label] = QutipBackend._qutip_U3
-        circuit.add_gate(U3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])
+        if u3_label not in circuit.user_gates:
+            circuit.user_gates[u3_label] = QutipBackend._qutip_U3
+        circuit.add_gate(u3_label, targets=qubit, arg_value=[gate.phi, gate.gamma, gate.theta])
 
     @staticmethod
     def _handle_SWAP(circuit: QubitCircuit, gate: SWAP, qubit_0: int, qubit_1: int) -> None:

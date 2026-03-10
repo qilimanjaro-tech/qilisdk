@@ -438,6 +438,11 @@ This section covers how to set up a local development environment for qilisdk, r
 - Python **3.10+** (we test against multiple versions, but 3.10 is the minimum for local dev).
 - [Git](https://git-scm.com/) for version control.
 - [uv](https://pypi.org/project/uv/) for dependency management.
+- A C++ compiler and CMake, which can be installed together on Ubuntu/Debian using:
+  ```bash
+  sudo apt install build-essential
+  ```
+  or on Windows via [this guide](https://code.visualstudio.com/docs/cpp/cmake-linux).
 
 ### Setup & Dependency Management
 
@@ -467,6 +472,10 @@ This section covers how to set up a local development environment for qilisdk, r
      you can also install all the optional dependencies and groups by running;
      ```bash
      uv sync --all-extras --all-groups
+     ```
+     If you don't want to install QiliSim (normally installed by default):
+     ```bash
+     uv sync -Ccmake.define.qilism=OFF
      ```
 
 4. **Activate the virtual environment**:

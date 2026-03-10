@@ -17,18 +17,18 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from functools import reduce
 from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
-from scipy.sparse import csr_matrix, identity, kron, spmatrix
+from scipy.sparse import csr_matrix, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.types import Number
 from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -41,6 +41,10 @@ _GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables th
 _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
 )
+
+
+def _complex_dtype() -> np.dtype:
+    return np.dtype(get_settings().complex_precision.dtype)
 
 
 ###############################################################################
@@ -109,6 +113,11 @@ class PauliOperator(ABC):
 
     _NAME: ClassVar[str]
     _MATRIX: ClassVar[np.ndarray]
+    _MATRIX_CACHE: ClassVar[dict[np.dtype, np.ndarray]]
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
         self._qubit = qubit
@@ -121,9 +130,17 @@ class PauliOperator(ABC):
     def name(self) -> str:
         return self._NAME
 
+    @classmethod
+    def matrix_for_dtype(cls, dtype: np.dtype) -> np.ndarray:
+        cached = cls._MATRIX_CACHE.get(dtype)
+        if cached is None:
+            cached = cls._MATRIX.astype(dtype, copy=False)
+            cls._MATRIX_CACHE[dtype] = cached
+        return cached
+
     @property
     def matrix(self) -> np.ndarray:
-        return self._MATRIX
+        return self.matrix_for_dtype(_complex_dtype())
 
     def to_hamiltonian(self) -> Hamiltonian:
         """Convert this single operator to a Hamiltonian with one term.
@@ -134,9 +151,11 @@ class PauliOperator(ABC):
         return Hamiltonian({(self,): 1})
 
     def __hash__(self) -> int:
-        return hash((self._NAME, self._qubit))
+        return qili_hash(self._NAME, self._qubit)
 
     def __eq__(self, other: object) -> bool:
+        if isinstance(other, Hamiltonian):
+            return other == self
         if not isinstance(other, PauliOperator):
             return False
         return (self._NAME == other._NAME) and (self._qubit == other._qubit)
@@ -186,25 +205,42 @@ class PauliOperator(ABC):
 @yaml.register_class
 class PauliZ(PauliOperator):
     _NAME: ClassVar[str] = "Z"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliX(PauliOperator):
     _NAME: ClassVar[str] = "X"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliY(PauliOperator):
     _NAME: ClassVar[str] = "Y"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
 
 
 @yaml.register_class
 class PauliI(PauliOperator):
     _NAME: ClassVar[str] = "I"
-    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=complex)
+    _MATRIX: ClassVar[np.ndarray] = np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
+
+
+_PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
+
+# Cache sparse single-qubit matrices once per dtype to avoid rebuilding them for every term.
+_SINGLE_QUBIT_SPARSE: dict[tuple[str, np.dtype], csr_matrix] = {}
+
+
+def _get_single_qubit_sparse_matrix(name: str) -> csr_matrix:
+    dtype = _complex_dtype()
+    key = (name, dtype)
+    cached = _SINGLE_QUBIT_SPARSE.get(key)
+    if cached is None:
+        pauli_cls = _PAULI_CLASS_BY_NAME[name]
+        cached = csr_matrix(pauli_cls.matrix_for_dtype(dtype), dtype=dtype)
+        _SINGLE_QUBIT_SPARSE[key] = cached
+    return cached
 
 
 @yaml.register_class
@@ -332,20 +368,39 @@ class Hamiltonian(Parameterizable):
 
         Returns:
             spmatrix: The full matrix representation of the term.
+
+        Raises:
+            ValueError: If multiple operators act on the same qubit.
         """
-        # Build a list of factors for each qubit
-        factors = []
-        for q in range(self.nqubits + padding):
-            # Look for an operator acting on qubit q
-            op = next((t for t in terms if t.qubit == q), None)
-            if op is not None:
-                # Wrap the operator's matrix as a sparse matrix.
-                factors.append(csr_matrix(np.array(op.matrix)))
+
+        total_qubits = self.nqubits + padding
+        if total_qubits == 0:
+            return csr_matrix((1, 1), dtype=_complex_dtype())
+
+        ordered_terms = sorted(terms, key=lambda op: op.qubit)
+
+        # Check we don't have multiple operators on the same qubit
+        qubit_indices = [op.qubit for op in ordered_terms]
+        if len(qubit_indices) != len(set(qubit_indices)):
+            raise ValueError("The list should not contain multiple operators acting on the same qubit.")
+
+        identity_single = _get_single_qubit_sparse_matrix("I")
+        idx = 0
+        next_op = ordered_terms[0] if ordered_terms else None
+        result: spmatrix | None = None
+
+        for qubit in range(total_qubits):
+            if next_op is not None and next_op.qubit == qubit:
+                single = _get_single_qubit_sparse_matrix(next_op.name)
+                idx += 1
+                next_op = ordered_terms[idx] if idx < len(ordered_terms) else None
             else:
-                factors.append(identity(2, format="csc"))
-        # Compute the tensor (Kronecker) product over all qubits.
-        full_matrix = reduce(lambda A, B: kron(A, B, format="csc"), factors)
-        return full_matrix
+                single = identity_single
+
+            result = single if result is None else kron(result, single, format="csr")
+
+        # Added for type safety, but should never occur
+        return result if result is not None else csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
 
     def to_matrix(self) -> spmatrix:
         """Return the full matrix representation of the Hamiltonian by summing over all terms.
@@ -355,7 +410,7 @@ class Hamiltonian(Parameterizable):
         """
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=complex)
+        result = csr_matrix((dim, dim), dtype=_complex_dtype())
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
         return result
@@ -383,7 +438,7 @@ class Hamiltonian(Parameterizable):
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
-        result = csr_matrix((dim, dim), dtype=complex)
+        result = csr_matrix((dim, dim), dtype=_complex_dtype())
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
@@ -416,6 +471,8 @@ class Hamiltonian(Parameterizable):
             )
         if isinstance(other, PauliOperator):
             other = other.to_hamiltonian()
+        if isinstance(other, QTensor):
+            other = Hamiltonian.from_qtensor(other)
         if not isinstance(other, Hamiltonian):
             return False
         return dict(self._elements) == dict(other._elements)
@@ -424,8 +481,7 @@ class Hamiltonian(Parameterizable):
         return not self.__eq__(other)
 
     def __hash__(self) -> int:
-        items_frozen = frozenset(self._elements.items())
-        return hash(items_frozen)
+        return qili_hash(self._elements)
 
     def __copy__(self) -> Hamiltonian:
         return Hamiltonian(elements=self._elements.copy())
@@ -643,14 +699,13 @@ class Hamiltonian(Parameterizable):
 
         def parse_token(token: str) -> tuple[complex, list[PauliOperator]]:
             def looks_like_number(text: str) -> bool:
-                # If it's empty, it's not a number
-                if not text:
-                    return False
-                # If the first char is digit, '(', '.', '+', '-', or '0',
-                # or if 'j' is present, assume it's numeric
-                first = text[0]
-                if first.isdigit() or first in {"(", ".", "+", "-"}:
-                    return True
+                # Make sure it's not empty
+                if text:
+                    # If the first char is digit, '(', '.', '+', '-', or '0',
+                    # or if 'j' is present, assume it's numeric
+                    first = text[0]
+                    if first.isdigit() or first in {"(", ".", "+", "-"}:
+                        return True
                 return "j" in text
 
             sign = 1
@@ -758,12 +813,14 @@ class Hamiltonian(Parameterizable):
         Returns:
             float: the trace of the hamiltonian.
         """
+        n = self.nqubits
+        d = 2**n
         t = self._elements.get((PauliI(0),), 0)
         if isinstance(t, Parameter):
-            return t.evaluate()
+            return t.evaluate() * d
         if isinstance(t, Term):
-            return t.evaluate({})
-        return t
+            return t.evaluate({}) * d
+        return t * d
 
     # ------- Internal multiplication helpers --------
 

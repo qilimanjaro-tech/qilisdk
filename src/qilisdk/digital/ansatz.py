@@ -294,8 +294,8 @@ class QAOA(Ansatz):
 
         nqubits = problem_hamiltonian.nqubits
 
-        if layers <= 0:
-            raise ValueError("layers must be >= 1")
+        if layers < 0:
+            raise ValueError("layers must be >= 0")
 
         if problem_hamiltonian.nqubits <= 0:
             raise ValueError("problem hamiltonian must have at least one qubit")
