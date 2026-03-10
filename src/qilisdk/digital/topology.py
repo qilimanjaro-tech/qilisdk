@@ -21,15 +21,21 @@ if TYPE_CHECKING:
     from .types import Topology
 
 
+_TOPOLOGY_TUPLE_ARITY = 2
+
+
 def _is_topology_graph(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[PyGraph[int, None]]:
     return isinstance(topology, PyGraph) and all(isinstance(node, int) for node in topology.nodes())
 
 
 def _is_topology_list(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[list[tuple[int, int]]]:
     return isinstance(topology, list) and all(
-        isinstance(element, tuple) and len(element) == 2 and isinstance(element[0], int) and isinstance(element[1], int)
+        isinstance(element, tuple)
+        and len(element) == _TOPOLOGY_TUPLE_ARITY
+        and isinstance(element[0], int)
+        and isinstance(element[1], int)
         for element in topology
-    )  # noqa: PLR2004
+    )
 
 
 def build_topology_graph(topology: Topology) -> PyGraph[int, None]:
