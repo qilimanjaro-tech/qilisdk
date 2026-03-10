@@ -87,36 +87,43 @@ def about() -> str:
     else:
         info += "GPU Info: Not Found\n"
 
-    # C++ compiler info
+    # Check for g++
+    has_gpp = False
     try:
         gpp_version = subprocess.check_output(["g++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"g++ Version: {gpp_version.splitlines()[0]}\n"
+        has_gpp = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         info += "g++ Version: Not Found\n"
+    if has_gpp:
+        try:
+            subprocess.check_output(
+                ["g++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
+                input="#include <omp.h>\nint main() { return 0; }".encode(),
+                stderr=subprocess.STDOUT,
+            ).decode()
+            info += "g++ OpenMP Support: Yes\n"
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            info += "g++ OpenMP Support: No\n"
+
+    # Check for clang
+    has_clang = False
     try:
         clang_version = subprocess.check_output(["clang++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
+        has_clang = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         info += "clang++ Version: Not Found\n"
-
-    # Check OpenMP support
-    try:
-        subprocess.check_output(
-            ["g++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
-            input="#include <omp.h>\nint main() { return 0; }".encode(),
-            stderr=subprocess.STDOUT,
-        ).decode()
-        info += "OpenMP Support: Yes (g++)\n"
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    if has_clang:
         try:
             subprocess.check_output(
                 ["clang++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
                 input="#include <omp.h>\nint main() { return 0; }".encode(),
                 stderr=subprocess.STDOUT,
             ).decode()
-            info += "OpenMP Support: Yes (clang++)\n"
+            info += "clang++ OpenMP Support: Yes\n"
         except (subprocess.CalledProcessError, FileNotFoundError):
-            info += "OpenMP Support: No\n"
+            info += "clang++ OpenMP Support: No\n"
 
     # Try importing QiliSim
     try:

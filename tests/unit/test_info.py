@@ -84,3 +84,64 @@ def test_about_bad_imports(monkeypatch):
     assert "SciPy Version: Not Found" in about_str
     assert "QuTiP Version: Not Found" in about_str
     assert "CUDA-Q Version: Not Found" in about_str
+
+
+# Try importing QiliSim
+# try:
+#     from .backends.qilisim import QiliSim
+
+#     _ = QiliSim()
+#     info += "QiliSim Import: Success\n"
+# except Exception as e:
+#     info += f"QiliSim Import: Failed with error: {e}\n"
+
+# # Try importing QTensor
+# try:
+#     from .core.qtensor import ket
+
+#     _ = ket(0)
+#     info += "QTensor Import: Success\n"
+# except Exception as e:
+#     info += f"QTensor Import: Failed with error: {e}\n"
+
+
+def test_about_qilisim_bad_init(monkeypatch):
+
+    _monkeypatch_all(monkeypatch)
+
+    fake_qilisim = MagicMock()
+    fake_qilisim.QiliSim.side_effect = Exception("Initialization failed")
+    fake_qtensor = MagicMock()
+    fake_qtensor.ket.side_effect = Exception("Import failed")
+
+    with patch.dict(
+        sys.modules,
+        {
+            "qilisdk.backends.qilisim": fake_qilisim,
+            "qilisdk.core.qtensor": fake_qtensor,
+        },
+    ):
+        import qilisdk  # noqa: PLC0415
+
+        importlib.reload(qilisdk)
+        from qilisdk import about  # noqa: PLC0415
+
+        about_str = about()
+    assert "QiliSim Import: Failed with error:" in about_str
+    assert "QTensor Import: Failed with error:" in about_str
+
+
+def test_about_gpp_but_no_openmp(monkeypatch):
+
+    _monkeypatch_all(monkeypatch)
+
+    # Simulate g++ present but no OpenMP support
+    def fake_check_output(args, **kwargs):
+        if "-fopenmp" in args:
+            raise subprocess.CalledProcessError(1, args)
+        return b"g++ (GCC) 9.3.0\n"
+
+    monkeypatch.setattr("subprocess.check_output", fake_check_output)
+
+    about_str = about()
+    assert "g++ OpenMP Support: No" in about_str
