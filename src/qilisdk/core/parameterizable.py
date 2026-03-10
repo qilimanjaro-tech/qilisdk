@@ -37,13 +37,13 @@ class Parameterizable(ABC):
         self._parameter_constraints: list[ComparisonTerm] = []
         self._prefix = ""
 
-    @property
-    def nparameters(self) -> int:
-        """Number of tunable parameters defined by the object."""
-        return len(dict(self._iter_parameter_items()))
+    # Private Methods
 
     def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
-        """Yield parameterizable children to compose this object's parameter interface.
+        """Yield child objects that compose this object's parameter interface.
+
+        Override this method in subclasses that expose nested
+        :class:`Parameterizable` objects.
 
         Returns:
             Iterable[Parameterizable]: Child objects that contribute parameters to this instance.
@@ -56,6 +56,84 @@ class Parameterizable(ABC):
         yield from local_params.items()
         for child in self._iter_parameter_children():
             yield from child._iter_parameter_items()  # noqa: SLF001
+
+    def _add_parameter(self, label: str, parameter: Parameter) -> None:
+        """Add a parameter under the current prefix.
+
+        Args:
+            label (str): Parameter label before prefixing.
+            parameter (Parameter): Parameter instance to register.
+        """
+        self._parameters[self._prefix + label] = parameter
+
+    def _add_parameter_from(self, parameter_label: str, other: Parameterizable, new_label: str | None = None) -> None:
+        """Add a parameter from another :class:`Parameterizable`.
+
+        Args:
+            parameter_label (str): Label of the source parameter in ``other``.
+            other (Parameterizable): Object to pull the parameter from.
+            new_label (str | None, optional): Optional label to use in this object.
+        """
+        if new_label:
+            self._parameters[self._prefix + new_label] = other._parameters[parameter_label]
+        else:
+            self._parameters[self._prefix + parameter_label] = other._parameters[parameter_label]
+
+    @staticmethod
+    def _query_parameter_original_name(parameterizable: Parameterizable, label: str) -> str:
+        """Return the underlying parameter label stored on the :class:`Parameter`.
+
+        Args:
+            parameterizable (Parameterizable): Object containing the parameter.
+            label (str): Parameter label used in ``parameterizable``.
+
+        Returns:
+            str: Original parameter label.
+        """
+        return parameterizable._parameters[label].label
+
+    def _update_parameters(self, parameters: dict[str, Parameter]) -> None:
+        """Update local parameters with the provided mapping.
+
+        Args:
+            parameters (dict[str, Parameter]): Parameters to merge into this object.
+        """
+        self._parameters.update(parameters)
+
+    def _link_parameters(self, other: Parameterizable) -> None:
+        """Link all parameters from another object into this one.
+
+        Parameters are shared by reference, so updates in this object
+        affect the same underlying :class:`Parameter` instances.
+
+        Args:
+            other (Parameterizable): Object to copy parameter references from.
+        """
+        for label, p in other._parameters.items():
+            self._add_parameter(label, p)
+
+    def _filtered_parameter_map(
+        self,
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> dict[str, Parameter]:
+        """Return parameters, optionally filtered by a predicate.
+
+        Args:
+            where (Callable[[Parameter], bool] | None, optional): Predicate applied to each parameter.
+
+        Returns:
+            dict[str, Parameter]: Filtered parameter mapping.
+        """
+        if where is None:
+            return dict(self._iter_parameter_items())
+        return {label: param for label, param in self._iter_parameter_items() if where(param)}
+
+    # Public Methods
+
+    @property
+    def nparameters(self) -> int:
+        """Number of tunable parameters defined by the object."""
+        return len(dict(self._iter_parameter_items()))
 
     def set_prefix(
         self,
@@ -85,32 +163,6 @@ class Parameterizable(ABC):
         """Return the currently configured parameter prefix for this object."""
         return self._prefix
 
-    def _add_parameter(self, label: str, parameter: Parameter) -> None:
-        """An interface to unify how parameters are added.
-
-        Args:
-            label (str): The label of the parameter. If the class has a prefix then the prefix is added.
-            parameter (Parameter): The parameter to be added.
-        """
-        self._parameters[self._prefix + label] = parameter
-
-    def _add_parameter_from(self, parameter_label: str, other: Parameterizable, new_label: str | None = None) -> None:
-        if new_label:
-            self._parameters[self._prefix + new_label] = other._parameters[parameter_label]
-        else:
-            self._parameters[self._prefix + parameter_label] = other._parameters[parameter_label]
-
-    @staticmethod
-    def _query_parameter_original_name(parameterizable: Parameterizable, label: str) -> str:
-        return parameterizable._parameters[label].label
-
-    def _update_parameters(self, parameters: dict[str, Parameter]) -> None:
-        self._parameters.update(parameters)
-
-    def _link_parameters(self, other: Parameterizable) -> None:
-        for label, p in other._parameters.items():
-            self._add_parameter(label, p)
-
     def add_parameter_constraint(self, constraint: ComparisonTerm) -> None:
         """Add a constraint on a single or a set of parameters
 
@@ -126,14 +178,6 @@ class Parameterizable(ABC):
             )
 
         self._parameter_constraints.append(constraint)
-
-    def _filtered_parameter_map(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> dict[str, Parameter]:
-        if where is None:
-            return dict(self._iter_parameter_items())
-        return {label: param for label, param in self._iter_parameter_items() if where(param)}
 
     def get_parameter_values(
         self,
