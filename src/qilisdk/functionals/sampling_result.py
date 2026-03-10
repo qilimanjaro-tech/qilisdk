@@ -34,7 +34,6 @@ class SamplingResult(FunctionalResult):
         """
         self._nshots = nshots
         self._samples = samples
-        self._state = None
 
         # Ensure samples is not empty and is correct.
         if not samples:

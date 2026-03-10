@@ -109,7 +109,6 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     // Construct the result object
     py::object result = SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
     py::array final_state_numpy = to_numpy(state_dense);
-    result.attr("_state") = final_state_numpy;
 
     return result;
 }

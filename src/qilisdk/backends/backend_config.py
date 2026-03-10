@@ -126,7 +126,7 @@ class AnalogMethod(BaseSimulatorConfig):
 
     @classmethod
     def integrator(
-        cls, *, num_substeps: int = 2, matrix_free: bool = False, monte_carlo: MonteCarloConfig | None = None
+        cls, *, num_substeps: int = 2, matrix_free: bool = False
     ) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
@@ -146,7 +146,6 @@ class AnalogMethod(BaseSimulatorConfig):
         *,
         num_substeps: int = 1,
         dim: int = 10,
-        monte_carlo: MonteCarloConfig | None = None,
     ) -> AnalogMethod:
         """Build an ``arnoldi`` analog method configuration.
 
