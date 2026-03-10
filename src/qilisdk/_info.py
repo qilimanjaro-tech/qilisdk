@@ -39,11 +39,6 @@ def about() -> str:
     ram = psutil.virtual_memory().total / (1024**3)
     ram = round(2 ** round(log2(ram)))
     gpus = GPUtil.getGPUs()
-    if gpus:
-        gpu = gpus[0]
-        gpu_name = gpu.name
-        gpu_mem = gpu.memoryTotal
-        gpu_mem = int(gpu_mem // 1024)
 
     # Python stuff
     info = ""
@@ -88,7 +83,7 @@ def about() -> str:
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
     if gpus:
-        info += f"GPU Info: {gpu_name} with {gpu_mem} GB VRAM\n"
+        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
     else:
         info += "GPU Info: Not Found\n"
 
