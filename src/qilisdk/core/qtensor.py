@@ -286,7 +286,7 @@ class QTensor:
         Integers can also be supplied, where 1 corresponds to the L1 norm and 2 corresponds to the L2 (Frobenius) norm etc.
 
         Args:
-            order (Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "trace_division"], optional): The order of the norm. Defaults to "auto".
+            order (Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"], optional): The order of the norm. Defaults to "auto".
 
         Returns:
             float: The computed norm of the QTensor.

@@ -33,8 +33,6 @@ class QTensorCpp {
     double _atol_used_for_positive = 0.0;
     std::complex<double> _trace = 0.0;
     bool _trace_computed = false;
-    bool _is_self_adjoint_computed = false;
-    bool _is_self_adjoint = false;
     bool _trace_squared_computed = false;
     double _trace_squared = 0.0;
     bool _max_adjoint_diff_computed = false;

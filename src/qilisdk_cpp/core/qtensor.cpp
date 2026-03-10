@@ -81,7 +81,7 @@ QTensorCpp::QTensorCpp(const py::object& data) {
         _data = data.attr("_qtensor_cpp").cast<QTensorCpp>().get_data();
     } else if (py::isinstance<py::list>(data)) {
         py::list data_list = data.cast<py::list>();
-        int rows = data_list.size();
+        int rows = int(data_list.size());
         if (rows == 0) {
             _data = SparseMatrix(0, 0);
             return;
@@ -90,7 +90,7 @@ QTensorCpp::QTensorCpp(const py::object& data) {
         if (!py::isinstance<py::list>(first_row)) {
             throw py::value_error("Data object must be a list of lists");
         }
-        int cols = first_row.cast<py::list>().size();
+        int cols = int(first_row.cast<py::list>().size());
         _data = SparseMatrix(rows, cols);
         for (int i = 0; i < rows; ++i) {
             py::object row_obj = data_list[i];
@@ -151,7 +151,7 @@ int QTensorCpp::get_nqubits() const {
     Returns:
         int: The number of qubits represented by the QTensor.
     */
-    int max_dim = std::max(_data.rows(), _data.cols());
+    int max_dim = int(std::max(_data.rows(), _data.cols()));
     return static_cast<int>(std::ceil(std::log2(max_dim)));
 }
 
@@ -162,7 +162,7 @@ std::pair<int, int> QTensorCpp::get_shape() const {
     Returns:
         std::pair<int, int>: A pair of integers representing the number of rows and columns in the QTensor.
     */
-    return std::make_pair(_data.rows(), _data.cols());
+    return std::make_pair(int(_data.rows()), int(_data.cols()));
 }
 
 bool QTensorCpp::is_ket() const {
@@ -221,8 +221,8 @@ bool QTensorCpp::is_self_adjoint(double atol) {
     if (!_max_adjoint_diff_computed) {
         for (int k = 0; k < _data.outerSize(); ++k) {
             for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
-                int i = it.row();
-                int j = it.col();
+                int i = int(it.row());
+                int j = int(it.col());
                 std::complex<double> val = it.value();
                 std::complex<double> conj_val = std::conj(val);
                 std::complex<double> other_val = _data.coeff(j, i);
@@ -287,7 +287,23 @@ void QTensorCpp::compute_eigendecomposition() {
     Uses Eigen's SelfAdjointEigenSolver if the matrix is self-adjoint, and ComplexEigenSolver otherwise.
     Caches the results for faster subsequent access.
     */
-    DenseMatrix dense_data = DenseMatrix(_data);
+    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
+        return;
+    }
+    if (is_ket()) {
+        _eigenvalues.push_back(1.0);
+        _eigenvectors.push_back(_data);
+        return;
+    }
+    if (is_bra()) {
+        _eigenvalues.push_back(1.0);
+        _eigenvectors.push_back(_data.transpose());
+        return;
+    }
+    if (_data.rows() != _data.cols()) {
+        throw py::value_error("Eigendecomposition is only defined for square matrices or vectors: got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
+    }
+    DenseMatrix dense_data(_data);
     if (is_self_adjoint(default_atol)) {
         Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
         _eigenvectors.clear();
@@ -329,13 +345,7 @@ bool QTensorCpp::is_density_matrix(double atol) {
     Returns:
         bool: True if the QTensor is a density matrix within the given tolerance, False otherwise.
     */
-    if (!is_operator()) {
-        return false;
-    } else if (!is_self_adjoint(atol)) {
-        return false;
-    } else if (std::abs(trace().real() - 1.0) > atol) {
-        return false;
-    } else if (!is_positive_semidefinite(atol)) {
+    if (!is_operator() || !is_self_adjoint(atol) || std::abs(trace().real() - 1.0) > atol || !is_positive_semidefinite(atol)) {
         return false;
     }
     return true;
@@ -518,8 +528,8 @@ QTensorCpp QTensorCpp::partial_trace(const std::set<int>& keep) const {
     accum.reserve(_data.nonZeros());
     for (int k = 0; k < _data.outerSize(); ++k) {
         for (SparseMatrix::InnerIterator it(_data, k); it; ++it) {
-            int row = it.row();
-            int col = it.col();
+            int row = int(it.row());
+            int col = int(it.col());
             if (idx_trace[row] == idx_trace[col]) {
                 accum[{idx_keep[row], idx_keep[col]}] += it.value();
             }
@@ -577,6 +587,9 @@ double QTensorCpp::norm(const std::string& norm_type) {
     } else if (norm_type == "trace") {
         return trace().real();
     } else if (norm_type == "nuclear") {
+        if (is_ket() || is_bra()) {
+            return 1.0;
+        }
         if (_eigenvalues.empty()) {
             compute_eigendecomposition();
         }
@@ -586,19 +599,13 @@ double QTensorCpp::norm(const std::string& norm_type) {
         }
         return sum;
     } else if (norm_type == "inf") {
-        double max_row_sum = 0.0;
-        for (int i = 0; i < _data.rows(); ++i) {
-            double row_sum = 0.0;
-            for (int k = 0; k < _data.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
-                    if (it.row() == i) {
-                        row_sum += std::abs(it.value());
-                    }
-                }
+        double max_abs_val = 0.0;
+        for (int k = 0; k < _data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                max_abs_val = std::max(max_abs_val, std::abs(it.value()));
             }
-            max_row_sum = std::max(max_row_sum, row_sum);
         }
-        return max_row_sum;
+        return max_abs_val;
     } else {
         throw py::value_error("Unsupported norm type: " + norm_type);
     }
@@ -639,7 +646,7 @@ QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
             throw py::value_error("Ket state must be a list of 0s and 1s");
         }
     }
-    int n = qubit_values.size();
+    int n = int(qubit_values.size());
     int dim = 1 << n;
     QTensorCpp result(dim, 1);
     int one_index = 0;
@@ -648,6 +655,7 @@ QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
             one_index |= (1 << i);
         }
     }
+    result._data.reserve(1);
     result._data.insert(one_index, 0) = 1.0;
     result._data.makeCompressed();
     return result;
@@ -705,7 +713,7 @@ QTensorCpp QTensorCpp::bra(const std::vector<int>& qubit_values) {
             throw py::value_error("Bra state must be a list of 0s and 1s");
         }
     }
-    int n = qubit_values.size();
+    int n = int(qubit_values.size());
     int dim = 1 << n;
     QTensorCpp result(1, dim);
     int one_index = 0;
@@ -714,6 +722,7 @@ QTensorCpp QTensorCpp::bra(const std::vector<int>& qubit_values) {
             one_index |= (1 << i);
         }
     }
+    result._data.reserve(1);
     result._data.insert(0, one_index) = 1.0;
     result._data.makeCompressed();
     return result;
@@ -780,15 +789,15 @@ QTensorCpp QTensorCpp::tensor_product(const std::vector<QTensorCpp>& others) con
     int total_cols = 1;
     for (const auto& other : others) {
         const SparseMatrix& B = other.get_data();
-        total_rows *= B.rows();
-        total_cols *= B.cols();
+        total_rows *= int(B.rows());
+        total_cols *= int(B.cols());
         Triplets new_triplets(triplets.size() * B.nonZeros());
         int index = 0;
         for (const auto& tA : triplets) {
             for (int k = 0; k < B.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(B, k); it; ++it) {
-                    int row = tA.row() * B.rows() + it.row();
-                    int col = tA.col() * B.cols() + it.col();
+                    int row = int(tA.row() * B.rows() + it.row());
+                    int col = int(tA.col() * B.cols() + it.col());
                     std::complex<double> val = tA.value() * it.value();
                     new_triplets[index++] = Triplet(row, col, val);
                 }
@@ -1105,8 +1114,8 @@ QTensorCpp QTensorCpp::exp() const {
             const SparseMatrix& evec = _eigenvectors[i];
             for (int k = 0; k < evec.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = it.row();
-                    int col = it.col();
+                    int row = int(it.row());
+                    int col = int(it.col());
                     std::complex<double> val = eval_exp * it.value();
                     triplets.emplace_back(row, col, val);
                 }
@@ -1138,8 +1147,8 @@ QTensorCpp QTensorCpp::log() const {
             const SparseMatrix& evec = _eigenvectors[i];
             for (int k = 0; k < evec.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = it.row();
-                    int col = it.col();
+                    int row = int(it.row());
+                    int col = int(it.col());
                     std::complex<double> val = eval_log * it.value();
                     triplets.emplace_back(row, col, val);
                 }
@@ -1171,8 +1180,8 @@ QTensorCpp QTensorCpp::sqrt() const {
             const SparseMatrix& evec = _eigenvectors[i];
             for (int k = 0; k < evec.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = it.row();
-                    int col = it.col();
+                    int row = int(it.row());
+                    int col = int(it.col());
                     std::complex<double> val = eval_sqrt * it.value();
                     triplets.emplace_back(row, col, val);
                 }
@@ -1211,8 +1220,8 @@ QTensorCpp QTensorCpp::pow(int n) const {
             const SparseMatrix& evec = _eigenvectors[i];
             for (int k = 0; k < evec.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = it.row();
-                    int col = it.col();
+                    int row = int(it.row());
+                    int col = int(it.col());
                     std::complex<double> val = eval_pow * it.value();
                     triplets.emplace_back(row, col, val);
                 }
@@ -1298,7 +1307,6 @@ void QTensorCpp::clear_cache() {
     /*
     Clear the cached properties of this QTensor, such as whether it is self-adjoint, positive semidefinite, its trace, eigenvalues, etc.
     */
-    _is_self_adjoint_computed = false;
     _is_positive_computed = false;
     _trace_computed = false;
     _trace_squared_computed = false;
@@ -1375,8 +1383,8 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
             std::complex<double> overlap = 0.0;
             for (int k = 0; k < evec.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = it.row();
-                    int col = it.col();
+                    int row = int(it.row());
+                    int col = int(it.col());
                     std::complex<double> val = it.value();
                     overlap += val * _data.coeff(row, col);
                 }
@@ -1563,8 +1571,8 @@ bool QTensorCpp::is_unitary(double atol) {
         _max_unitary_diff = 0.0;
         for (int k = 0; k < product.get_data().outerSize(); ++k) {
             for (typename SparseMatrix::InnerIterator it(product.get_data(), k); it; ++it) {
-                int row = it.row();
-                int col = it.col();
+                int row = int(it.row());
+                int col = int(it.col());
                 std::complex<double> val = it.value();
                 std::complex<double> identity_val = (row == col) ? 1.0 : 0.0;
                 _max_unitary_diff = std::max(_max_unitary_diff, std::abs(val - identity_val));
@@ -1607,8 +1615,8 @@ std::complex<double> QTensorCpp::dot(const QTensorCpp& other) const {
     std::complex<double> result = 0.0;
     for (int k = 0; k < _data.outerSize(); ++k) {
         for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
-            int row = it.row();
-            int col = it.col();
+            int row = int(it.row());
+            int col = int(it.col());
             std::complex<double> val = it.value();
             std::complex<double> other_val = other.get_data().coeff(row, col);
             result += std::conj(val) * other_val;
@@ -1662,9 +1670,7 @@ double QTensorCpp::fidelity(const QTensorCpp& other) const {
     Raises:
         py::value_error: If the two QTensors are not of the same type (both kets, both bras, or both operators).
     */
-    if (is_ket() && other.is_ket()) {
-        return std::pow(std::abs(dot(other.conjugate())), 2);
-    } else if (is_bra() && other.is_bra()) {
+    if ((is_ket() && other.is_ket()) || (is_bra() && other.is_bra())) {
         return std::pow(std::abs(dot(other.conjugate())), 2);
     } else if (is_operator() && other.is_operator()) {
         QTensorCpp sqrt_self = sqrt();
@@ -1791,7 +1797,7 @@ int QTensorCpp::rank() {
         } else {
             Eigen::MatrixXcd dense = _data;
             Eigen::FullPivLU<Eigen::MatrixXcd> lu(dense);
-            _rank = lu.rank();
+            _rank = int(lu.rank());
         }
         _rank_computed = true;
     }
@@ -1816,8 +1822,8 @@ QTensorCpp QTensorCpp::inverse() const {
                 const SparseMatrix& evec = _eigenvectors[i];
                 for (int k = 0; k < evec.outerSize(); ++k) {
                     for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                        int row = it.row();
-                        int col = it.col();
+                        int row = int(it.row());
+                        int col = int(it.col());
                         std::complex<double> val = eval_inv * it.value();
                         triplets.emplace_back(row, col, val);
                     }
@@ -1924,8 +1930,8 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
         std::vector<int> full_dims(nqubits, 2);
         for (int k = 0; k < rest_data.outerSize(); ++k) {
             for (typename SparseMatrix::InnerIterator it(rest_data, k); it; ++it) {
-                int row = it.row();
-                int col = it.col();
+                int row = int(it.row());
+                int col = int(it.col());
                 std::complex<double> val = it.value();
 
                 // Convert row and col to multi-dimensional indices in the rest subsystem

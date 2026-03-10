@@ -174,9 +174,9 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
             }
         }
     }
-    py::array_t<int> row_array(row_indices.size(), row_indices.data());
-    py::array_t<int> col_array(col_indices.size(), col_indices.data());
-    py::array_t<std::complex<double>> data_array(data_values.size(), data_values.data());
+    py::array_t<int> row_array(int(row_indices.size()), row_indices.data());
+    py::array_t<int> col_array(int(col_indices.size()), col_indices.data());
+    py::array_t<std::complex<double>> data_array(int(data_values.size()), data_values.data());
     py::object spmat = csrmatrix(std::make_pair(data_array, std::make_pair(row_array, col_array)), std::make_pair(rows, cols));
     return spmat;
 }
