@@ -60,25 +60,25 @@ def about() -> str:
 
         info += f"Numpy Version: {np.__version__}\n"
     except ImportError:
-        info += "Numpy Version: Not installed\n"
+        info += "Numpy Version: Not Found\n"
     try:
         import scipy  # noqa: PLC0415
 
         info += f"SciPy Version: {scipy.__version__}\n"
     except ImportError:
-        info += "SciPy Version: Not installed\n"
+        info += "SciPy Version: Not Found\n"
     try:
         import qutip  # noqa: PLC0415
 
         info += f"QuTiP Version: {qutip.__version__}\n"
     except ImportError:
-        info += "QuTiP Version: Not installed\n"
+        info += "QuTiP Version: Not Found\n"
     try:
         import cudaq  # noqa: PLC0415
 
-        info += f"cudaQ Version: {cudaq.__version__}\n"
+        info += f"CUDA-Q Version: {cudaq.__version__}\n"
     except ImportError:
-        info += "cudaQ Version: Not installed\n"
+        info += "CUDA-Q Version: Not Found\n"
 
     # System info
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
@@ -90,19 +90,19 @@ def about() -> str:
     if gpus:
         info += f"GPU Info: {gpu_name} with {gpu_mem} GB VRAM\n"
     else:
-        info += "GPU Info: None detected\n"
+        info += "GPU Info: Not Found\n"
 
     # C++ compiler info
     try:
         gpp_version = subprocess.check_output(["g++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"g++ Version: {gpp_version.splitlines()[0]}\n"
     except (subprocess.CalledProcessError, FileNotFoundError):
-        info += "g++ Version: Not found\n"
+        info += "g++ Version: Not Found\n"
     try:
         clang_version = subprocess.check_output(["clang++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
     except (subprocess.CalledProcessError, FileNotFoundError):
-        info += "clang++ Version: Not found\n"
+        info += "clang++ Version: Not Found\n"
 
     # Check OpenMP support
     try:
