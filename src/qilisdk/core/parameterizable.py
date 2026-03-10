@@ -128,6 +128,25 @@ class Parameterizable(ABC):
             return dict(self._iter_parameter_items())
         return {label: param for label, param in self._iter_parameter_items() if where(param)}
 
+    def _pop(self, label: str) -> Parameter:
+        """Remove parameter from the Parameterizable interface.
+
+        Args:
+            label (str): the label of the parameter as specified in the Parameterizable object.
+
+        Raises:
+            ValueError: If the label is not a valid label in the current Parameterizable object or any of its children.
+
+        Returns:
+            Parameter: the removed parameter.
+        """
+        if label in self._parameters:
+            return self._parameters.pop(label)
+        for child in self._iter_parameter_children():
+            if label in child.get_parameter_names():
+                return child._pop(label)  # noqa: SLF001
+        raise ValueError(f"Parameter {label} is not defined in the current object or any of its children.")
+
     # Public Methods
 
     @property
@@ -150,7 +169,9 @@ class Parameterizable(ABC):
             The ``where`` predicate is applied to local parameters only. Child parameterizable
             objects always receive the same prefix operation recursively.
         """
-        old_keys: list[str] = list(self._filtered_parameter_map(where=where))
+        old_keys: list[str] = [
+            label for label, param in self._parameters.items() if where is None or where(param)
+        ]
         for name in old_keys:
             if not name.startswith(prefix):
                 _name = name.removeprefix(self._prefix) if self._prefix and name.startswith(self._prefix) else name
