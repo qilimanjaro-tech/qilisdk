@@ -47,9 +47,10 @@ def about() -> str:
 
     # Python stuff
     info = ""
-    info += "------------------------------------------------------\n"
+    _DIVIDER = "-" * 54
+    info += f"{_DIVIDER}\n"
     info += "             Start of QiliSDK Debug Info\n"
-    info += "------------------------------------------------------\n"
+    info += f"{_DIVIDER}\n"
     info += f"QiliSDK Version: {__version__}\n"
     info += f"Python Version: {sys.version}\n"
 
@@ -140,9 +141,9 @@ def about() -> str:
     except Exception as e:  # noqa: BLE001
         info += f"QTensor Import: Failed with error: {e}\n"
 
-    info += "------------------------------------------------------\n"
+    info += f"{_DIVIDER}\n"
     info += "              End of QiliSDK Debug Info\n"
-    info += "------------------------------------------------------\n"
+    info += f"{_DIVIDER}\n"
 
     info = info.strip()
     return info.strip()
