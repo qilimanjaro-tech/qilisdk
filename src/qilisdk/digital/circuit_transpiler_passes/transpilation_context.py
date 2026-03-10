@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
-    from qilisdk.digital.circuit_transpiler import LayoutMap
+    from qilisdk.digital.types import LayoutMap
 
 
 @dataclass

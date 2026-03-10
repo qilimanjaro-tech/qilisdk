@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import pytest
 from rustworkx import PyGraph
 
 from qilisdk.digital import CNOT, Circuit, X
@@ -20,7 +21,6 @@ from qilisdk.digital.circuit_transpiler import (
     CircuitTranspiler,
     CircuitTranspilerResult,
     TranspilerPassResult,
-    _is_topology_graph,
 )
 from qilisdk.digital.circuit_transpiler_passes import (
     CancelIdentityPairsPass,
@@ -28,6 +28,7 @@ from qilisdk.digital.circuit_transpiler_passes import (
     SingleQubitGateBasis,
 )
 from qilisdk.digital.gates import Controlled, Gate
+from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_passes.utils import _sequences_equivalent
 
@@ -183,14 +184,17 @@ def test_circuit_transpiler_result_returns_defensive_copies() -> None:
     assert transpilation_result.metrics == {"swap_count": 3}
 
 
-def test_topology_helpers_validate_graph_nodes_and_prune_sparse_labels() -> None:
-    int_graph = PyGraph()
-    int_graph.add_nodes_from([0, 2])
-    string_graph = PyGraph()
-    string_graph.add_nodes_from(["q0"])
+def test_build_topology_graph_preserves_graph_input_and_prunes_sparse_labels() -> None:
+    graph = PyGraph()
+    graph.add_nodes_from(range(3))
+    graph.add_edge(0, 2, None)
 
-    assert _is_topology_graph(int_graph)
-    assert not _is_topology_graph(string_graph)
+    assert build_topology_graph(graph) is graph
 
-    built_graph = CircuitTranspiler._build_topology_graph([(0, 2)])
+    built_graph = build_topology_graph([(0, 2)])
     assert list(built_graph.nodes()) == [0, 2]
+
+
+def test_build_topology_graph_rejects_empty_edge_list() -> None:
+    with pytest.raises(ValueError, match="Topology edge list cannot be empty"):
+        build_topology_graph([])

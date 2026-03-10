@@ -592,7 +592,9 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         if _is_exponential(gate):
             basic_gate = gate.basic_gate
             if basic_gate.nqubits != 1:
-                raise NotImplementedError("Exponential of multi-qubit gates not supported.")
+                raise NotImplementedError(
+                    "Decomposing the exponential of a multi-qubit gate to a canonical basis is not supported."
+                )
             unitary_matrix = gate.matrix
             theta, phi, gamma = _zyz_from_unitary(unitary_matrix)
             return _normalize_single_qubit_sequence(

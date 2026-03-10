@@ -15,16 +15,17 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import TYPE_CHECKING, Mapping
-
-from rustworkx import PyGraph
+from typing import TYPE_CHECKING
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
+from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 
 if TYPE_CHECKING:
-    from qilisdk.digital.circuit_transpiler import LayoutMap
+    from rustworkx import PyGraph
+
+    from qilisdk.digital.types import LayoutMap, Topology
 
 
 class CustomLayoutPass(CircuitTranspilerPass):
@@ -35,9 +36,9 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     Parameters
     ----------
-    topology : PyGraph
-        Undirected coupling graph whose node indices represent *physical* qubits.
-        Nodes should be 0..(n_physical-1). Edges indicate allowed 2Q interactions.
+    topology : Topology
+        Coupling map provided either as an edge list or as an undirected
+        ``PyGraph`` whose node indices represent *physical* qubits.
     mapping : LayoutMap
         Logical→physical mapping provided by the user. For example, for a 2-qubit
         circuit: {0: 5, 1: 2} means logical q0→phys 5, logical q1→phys 2.
@@ -69,19 +70,14 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     _TWO_QUBIT_ARITY = 2
 
-    def __init__(self, topology: PyGraph[int, None], layout: LayoutMap) -> None:
+    def __init__(self, topology: Topology, layout: LayoutMap) -> None:
         """Initialize the pass with a fixed logical-to-physical layout.
 
         Args:
-            topology (PyGraph[int, None]): Undirected coupling graph whose node indices are physical qubits.
+            topology (Topology): Coupling map as an edge list or ``PyGraph``.
             layout (LayoutMap): User-specified layout ``logical -> physical``.
-
-        Raises:
-            TypeError: If ``topology`` is not a ``rustworkx.PyGraph`` instance.
         """
-        if not isinstance(topology, PyGraph):
-            raise TypeError("CustomLayoutPass requires a rustworkx.PyGraph (undirected).")
-        self.topology = topology
+        self.topology: PyGraph[int, None] = build_topology_graph(topology)
         # Store a copy with explicit int coercion
         self._user_layout: LayoutMap = {int(k): int(v) for k, v in layout.items()}
 

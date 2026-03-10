@@ -17,9 +17,15 @@ def make_line_topology(n: int) -> PyGraph:
     return graph
 
 
-def test_sabre_swap_requires_pygraph():
-    with pytest.raises(TypeError, match=r"requires a rustworkx.PyGraph"):
-        SabreSwapPass("not-a-graph")  # type: ignore[arg-type]
+def test_sabre_swap_accepts_edge_list_topology():
+    swap_pass = SabreSwapPass([(0, 1), (1, 2)], seed=0)
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    out = swap_pass.run(circuit)
+
+    assert [type(g).__name__ for g in out.gates] == ["CZ"]
+    assert [gate.qubits for gate in out.gates] == [(0, 1)]
 
 
 def test_sabre_swap_rejects_empty_topology_graph():

@@ -20,8 +20,6 @@ from collections import deque
 from copy import deepcopy
 from typing import TYPE_CHECKING, Iterable, TypeGuard
 
-from rustworkx import PyGraph
-
 from qilisdk.digital import (
     Adjoint,
     Circuit,
@@ -31,11 +29,14 @@ from qilisdk.digital import (
     M,
 )
 from qilisdk.digital.gates import BasicGate
+from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 
 if TYPE_CHECKING:
-    from qilisdk.digital.circuit_transpiler import LayoutMap
+    from rustworkx import PyGraph
+
+    from qilisdk.digital.types import LayoutMap, Topology
 
 
 def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
@@ -72,7 +73,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     Key features
     ------------
-    - Uses rustworkx PyGraph as the coupling graph (undirected, unweighted).
+    - Accepts either a topology edge list or a rustworkx ``PyGraph`` and
+      normalizes it to an undirected coupling graph internally.
     - Implements SABRE's heuristic:
         * Front layer (first unscheduled 2Q gates on each qubit).
         * Extended look-ahead set of upcoming 2Q gates.
@@ -82,9 +84,9 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     Parameters
     ----------
-    coupling : PyGraph
-        Undirected coupling graph whose node indices represent *physical* qubits.
-        Node labels need not form a contiguous range. Edges indicate allowed 2Q interactions.
+    topology : Topology
+        Coupling map provided either as an edge list or as an undirected
+        ``PyGraph`` whose node indices represent *physical* qubits.
     num_trials : int
         Number of random initializations to try (keeps the best).
     seed : int | None
@@ -119,7 +121,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     def __init__(
         self,
-        topology: PyGraph,
+        topology: Topology,
         *,
         num_trials: int = 8,
         seed: int | None = None,
@@ -131,18 +133,15 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Initialize a SABRE layout pass.
 
         Args:
-            topology (PyGraph): Undirected coupling graph where node indices are physical qubits.
+            topology (Topology): Coupling map as an edge list or ``PyGraph``.
             num_trials (int): Number of randomized layout trials.
             seed (int | None): RNG seed for reproducible trials.
             lookahead_size (int): Maximum number of gates in the look-ahead set.
             beta (float): Weight assigned to look-ahead cost.
             decay_delta (float): Increment applied to decay on selected swap endpoints.
             decay_lambda (float): Per-iteration decay factor for penalties.
-
-        Raises:
-            TypeError: If ``topology`` is not a ``rustworkx.PyGraph`` instance.
         """
-        self.topology = topology
+        self.topology: PyGraph[int, None] = build_topology_graph(topology)
         self.num_trials = max(1, int(num_trials))
         self.seed = seed
         self.lookahead_size = int(lookahead_size)
@@ -152,10 +151,6 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         self.last_layout: list[int] | None = None
         self.last_score: float | None = None
-
-        # Validate coupling graph is undirected PyGraph (rustworkx enforces this by type)
-        if not isinstance(topology, PyGraph):
-            raise TypeError("SabreLayoutPass requires a rustworkx.PyGraph (undirected).")
 
     # --------- public API ---------
 

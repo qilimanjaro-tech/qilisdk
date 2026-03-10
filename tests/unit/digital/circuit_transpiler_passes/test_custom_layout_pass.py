@@ -130,9 +130,16 @@ def test_custom_layout_raises_when_no_route_possible():
         layout_pass.run(circuit)
 
 
-def test_custom_layout_requires_pygraph_topology():
-    with pytest.raises(TypeError, match=r"requires a rustworkx.PyGraph"):
-        CustomLayoutPass("not a graph", {0: 0})
+def test_custom_layout_accepts_edge_list_topology():
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    layout_pass = CustomLayoutPass([(0, 1), (1, 2)], {0: 0, 1: 1})
+    output = layout_pass.run(circuit)
+
+    assert output.nqubits == 3
+    assert [type(g).__name__ for g in output.gates] == ["CZ"]
+    assert [gate.qubits for gate in output.gates] == [(0, 1)]
 
 
 def test_custom_layout_rejects_empty_topology():

@@ -20,8 +20,6 @@ from collections import deque
 from copy import deepcopy
 from typing import TYPE_CHECKING, Iterable, TypeGuard
 
-from rustworkx import PyGraph
-
 from qilisdk.digital import (
     SWAP,
     Adjoint,
@@ -32,11 +30,14 @@ from qilisdk.digital import (
     M,
 )
 from qilisdk.digital.gates import BasicGate
+from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 
 if TYPE_CHECKING:
-    from qilisdk.digital.circuit_transpiler import LayoutMap
+    from rustworkx import PyGraph
+
+    from qilisdk.digital.types import LayoutMap, Topology
 
 
 def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
@@ -71,8 +72,9 @@ class SabreSwapPass(CircuitTranspilerPass):
 
     Inputs
     ------
-    coupling : rustworkx.PyGraph
-        Undirected device graph. Node indices are physical qubits (labels need not be contiguous).
+    topology : Topology
+        Coupling map provided either as an edge list or as an undirected
+        ``PyGraph`` whose node indices are physical qubits.
     initial_layout : list[int] | None
         Logical -> physical mapping to start from (e.g., from SabreLayoutPass.last_layout).
         If None, uses the lowest-indexed physical qubits provided by the coupling graph.
@@ -91,7 +93,7 @@ class SabreSwapPass(CircuitTranspilerPass):
     Behavior
     --------
     - Returns a **new** Circuit with 1Q gates mapped and SWAPs inserted before each
-      non-adjacent 2Q gate so that every emitted 2Q gate acts on an edge of `coupling`.
+      non-adjacent 2Q gate so that every emitted 2Q gate acts on an edge of `topology`.
     - Preserves the original **gate order** (no reordering/commutation across the list).
 
     Notes
@@ -107,7 +109,7 @@ class SabreSwapPass(CircuitTranspilerPass):
 
     def __init__(
         self,
-        topology: PyGraph,
+        topology: Topology,
         *,
         initial_layout: list[int] | None = None,
         seed: int | None = None,
@@ -121,7 +123,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         """Configure SABRE swap routing behavior.
 
         Args:
-            topology (PyGraph): Undirected coupling graph for valid physical two-qubit connections.
+            topology (Topology): Coupling map as an edge list or ``PyGraph``.
             initial_layout (list[int] | None): Optional initial logical-to-physical mapping; uses identity-style mapping when omitted.
             seed (int | None): Base seed for stochastic swap scoring and retry attempts.
             lookahead_size (int): Number of future two-qubit gates used in the extended SABRE cost.
@@ -130,13 +132,8 @@ class SabreSwapPass(CircuitTranspilerPass):
             decay_lambda (float): Per-iteration multiplier that relaxes accumulated decay penalties.
             max_swaps_factor (float): Per-gate swap budget factor derived from current endpoint distance.
             max_attempts (int): Maximum number of independent routing attempts with varied seeds.
-
-        Raises:
-            TypeError: If ``topology`` is not a ``rustworkx.PyGraph`` instance.
         """
-        if not isinstance(topology, PyGraph):
-            raise TypeError("SabreSwapPass requires a rustworkx.PyGraph (undirected).")
-        self.topology = topology
+        self.topology: PyGraph[int, None] = build_topology_graph(topology)
         self.initial_layout = initial_layout
         self.seed = seed
         self.lookahead_size = int(lookahead_size)

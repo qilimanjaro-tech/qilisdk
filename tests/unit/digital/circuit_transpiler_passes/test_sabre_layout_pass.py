@@ -46,9 +46,16 @@ def make_graph(edges, nodes=None):
     return graph
 
 
-def test_sabre_layout_requires_pygraph():
-    with pytest.raises(TypeError, match=r"requires a rustworkx\.PyGraph"):
-        SabreLayoutPass("not-a-graph")  # type: ignore[arg-type]
+def test_sabre_layout_accepts_edge_list_topology():
+    layout_pass = SabreLayoutPass([(0, 1), (1, 2)], num_trials=1, seed=0)
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    out = layout_pass.run(circuit)
+
+    assert out.nqubits == 3
+    assert layout_pass.last_layout is not None
+    assert len(layout_pass.last_layout) == circuit.nqubits
 
 
 def test_sabre_layout_rejects_empty_topology():

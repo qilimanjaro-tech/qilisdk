@@ -13,9 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, TypeAlias, TypeGuard
-
-from rustworkx import PyGraph
+from typing import TYPE_CHECKING, Any, Self
 
 from .circuit_transpiler_passes import (
     CancelIdentityPairsPass,
@@ -30,16 +28,12 @@ from .circuit_transpiler_passes import (
     TranspilationContext,
     TwoQubitGateBasis,
 )
+from .topology import build_topology_graph
 
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
 
-
-def _is_topology_graph(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[PyGraph[int, None]]:
-    return isinstance(topology, PyGraph) and all(isinstance(node, int) for node in topology.nodes())
-
-
-LayoutMap: TypeAlias = dict[int, int]
+    from .types import LayoutMap, Topology
 
 
 class TranspilerPassResult:
@@ -123,7 +117,7 @@ class CircuitTranspiler:
         cls,
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
         two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT,
-        topology: list[tuple[int, int]] | PyGraph[int, None] | None = None,
+        topology: Topology | None = None,
         qubit_mapping: LayoutMap | None = None,
     ) -> Self:
         """Build the default transpiler pipeline.
@@ -140,10 +134,10 @@ class CircuitTranspiler:
                 used by canonical decomposition and final single-qubit fusion.
             two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate
                 used by canonical decomposition.
-            topology (list[tuple[int, int]] | PyGraph[int, None] | None):
-                Optional hardware coupling map. It can be provided either as a
-                list of connected physical-qubit pairs or as a ``rustworkx``
-                ``PyGraph`` whose node indices are physical qubits.
+            topology (Topology | None): Optional hardware coupling map. It can
+                be provided either as a list of connected physical-qubit pairs
+                or as a ``rustworkx`` ``PyGraph`` whose node indices are
+                physical qubits.
             qubit_mapping (LayoutMap | None): Optional logical-to-physical
                 qubit assignment. This argument is only used when ``topology`` is
                 provided. If omitted, the pipeline uses ``SabreLayoutPass`` and
@@ -166,7 +160,7 @@ class CircuitTranspiler:
                 ]
             )
 
-        topology = topology if _is_topology_graph(topology) else CircuitTranspiler._build_topology_graph(topology)  # ty:ignore[invalid-argument-type]
+        topology = build_topology_graph(topology)
         layout_routing_passes: list[CircuitTranspilerPass] = (
             [SabreLayoutPass(topology), SabreSwapPass(topology)]
             if qubit_mapping is None
@@ -221,22 +215,3 @@ class CircuitTranspiler:
     def _reset_context(self) -> None:
         self._context = TranspilationContext()
         self._attach_context_to_pipeline()
-
-    @staticmethod
-    def _build_topology_graph(topology: list[tuple[int, int]]) -> PyGraph[int, None]:
-        graph = PyGraph[int, None]()
-
-        # Collect the physical qubit labels that actually appear in the coupling map.
-        active_nodes = {int(qubit) for pair in topology for qubit in pair}
-        max_label = max(active_nodes)
-
-        # Add a dense block of nodes so that node indices match physical labels.
-        graph.add_nodes_from(range(max_label + 1))
-        for a, b in topology:
-            graph.add_edge(int(a), int(b), None)
-
-        # Remove any indices that are not populated in the topology. This keeps
-        # rustworkx node indices aligned with the real physical labels.
-        for missing in sorted({node for node in range(max_label + 1) if node not in active_nodes}, reverse=True):
-            graph.remove_node(missing)
-        return graph
