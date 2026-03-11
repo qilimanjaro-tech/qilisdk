@@ -69,3 +69,6 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
                 AttachmentScope.PER_GATE_TYPE_PER_QUBIT,
             }
         )
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(t1={self._t1})"

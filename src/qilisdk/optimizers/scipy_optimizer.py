@@ -116,3 +116,7 @@ class SciPyOptimizer(Optimizer):
             optimal_parameters=res.x.tolist(),
             intermediate_results=intermediate_results,
         )
+
+    def __repr__(self) -> str:
+        extra_args_str = ", ".join(f"{key}={value!r}" for key, value in self.extra_arguments.items())
+        return f"SciPyOptimizer(method={self.method!r}, {extra_args_str})"

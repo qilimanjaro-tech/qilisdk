@@ -420,3 +420,19 @@ class Schedule(Parameterizable):
             renderer.save(filepath)
         else:
             renderer.show()
+
+    def __repr__(self) -> str:
+        lines = [
+            f"{type(self).__qualname__}(",
+            "  hamiltonians={",
+            *(f"    '{label}': {ham!r}," for label, ham in self._hamiltonians.items()),
+            "  },",
+            "  coefficients={",
+            *(f"    '{label}': {coeff!r}," for label, coeff in self.coefficients_dict.items()),
+            "  },",
+            f"  dt={self.dt!r},",
+            f"  total_time={self._max_time!r},",
+            f"  interpolation={self._interpolation!r}",
+            ")",
+        ]
+        return "\n".join(lines)

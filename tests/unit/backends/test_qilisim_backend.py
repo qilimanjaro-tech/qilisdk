@@ -208,3 +208,9 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     assert result.final_state is not None
     assert len(result.expected_values) == 2
     assert len(result.intermediate_states) == 2
+
+
+def test_qilisim_repr():
+    backend = QiliSim()
+    repr_str = str(backend)
+    assert "QiliSim" in repr_str

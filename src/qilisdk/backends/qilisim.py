@@ -149,3 +149,14 @@ class QiliSim(Backend):
 
         logger.success("TimeEvolution finished")
         return result
+
+    def __repr__(self) -> str:
+        lines = [
+            f"{type(self).__qualname__}(",
+            f"  noise_model={self._noise_model!r},",
+            "  solver_config={",
+            *(f"    {key}: {value!r}," for key, value in self._solver_config.items()),
+            "  }",
+            ")",
+        ]
+        return "\n".join(lines)
