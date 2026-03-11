@@ -75,8 +75,8 @@ def about() -> str:
     nvidia_driver_version = "Not Found"
     try:
         nvidia_smi_output = subprocess.check_output(  # noqa: S602
-            ["nvidia-smi | grep 'Driver'"],
-            shell=True,  # noqa: S607
+            ["nvidia-smi | grep 'Driver'"],  # noqa: S607
+            shell=True,
             stderr=subprocess.STDOUT,
         ).decode()
         cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
@@ -121,8 +121,8 @@ def about() -> str:
     has_clang = False
     try:
         clang_command = (
-            subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()
-        )  # noqa: S607, S602
+            subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()  # noqa: S602, S607
+        )
         clang_version = subprocess.check_output([clang_command, "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S603
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
         has_clang = True
