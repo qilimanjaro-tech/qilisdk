@@ -291,20 +291,19 @@ class Hamiltonian(Parameterizable):
         Raises:
             ValueError: If the provided coefficients include generic variables instead of parameters.
         """
-        super(Hamiltonian, self).__init__()
+        super().__init__()
         self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
-        self._parameters: dict[str, Parameter] = {}
         if elements:
             for key, val in elements.items():
                 if isinstance(val, Term):
                     for v in val.variables():
                         if isinstance(v, Parameter):
-                            self._parameters[v.label] = v
+                            self._add_parameter(v.label, v)
                         else:
                             raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                 elif isinstance(val, BaseVariable):
                     if isinstance(val, Parameter):
-                        self._parameters[val.label] = val
+                        self._add_parameter(val.label, val)
 
                     else:
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
@@ -327,11 +326,6 @@ class Hamiltonian(Parameterizable):
             )
             for k, v in self._elements.items()
         }
-
-    @property
-    def parameters(self) -> dict[str, Parameter]:
-        """Return a mapping from parameter labels to their corresponding parameter objects."""
-        return self._parameters
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
@@ -952,7 +946,7 @@ class Hamiltonian(Parameterizable):
             for key, val in other._elements.items():  # noqa: SLF001
                 self._elements[key] += val
 
-            self._parameters.update(other.parameters)
+            self._update_parameters(other._parameters)  # noqa: SLF001
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
@@ -965,9 +959,9 @@ class Hamiltonian(Parameterizable):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
                     raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
+                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
             else:
-                self._parameters[other.label] = other
+                self._add_parameter(other.label, other)
             self._elements[PauliI(0),] += other
         else:
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
@@ -976,7 +970,7 @@ class Hamiltonian(Parameterizable):
         if isinstance(other, Hamiltonian):
             for key, val in other._elements.items():  # noqa: SLF001
                 self._elements[key] -= val
-            self._parameters.update(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # noqa: SLF001
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
@@ -987,9 +981,9 @@ class Hamiltonian(Parameterizable):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
                     raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
+                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
             else:
-                self._parameters[other.label] = other
+                self._add_parameter(other.label, other)
             self._elements[PauliI(0),] -= other
         else:
             raise InvalidHamiltonianOperation(
@@ -1015,9 +1009,9 @@ class Hamiltonian(Parameterizable):
             if isinstance(other, Term):
                 if not other.is_parameterized_term():
                     raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._parameters.update({v.label: v for v in other if isinstance(v, Parameter)})
+                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
             else:
-                self._parameters[other.label] = other
+                self._add_parameter(other.label, other)
             for k in self._elements:
                 self._elements[k] *= other
             return None
@@ -1049,7 +1043,7 @@ class Hamiltonian(Parameterizable):
                     phase, new_ops = self._multiply_sets(ops1, ops2)
                     new_dict[new_ops] += phase * c1 * c2
             self._elements = new_dict
-            self._parameters.update(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # noqa: SLF001
 
         else:
             raise InvalidHamiltonianOperation(

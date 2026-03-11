@@ -20,12 +20,10 @@ import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
+from qilisdk.core.variables import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
 from qilisdk.digital.circuit import _apply_gate_left
-from qilisdk.digital.exceptions import (
-    GateHasNoMatrixError,
-    QubitOutOfRangeError,
-)
+from qilisdk.digital.exceptions import GateHasNoMatrixError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
 
 
@@ -59,7 +57,7 @@ def test_apply_gate_left_noop_for_zero_qubit_gate():
 def test_circuit_set_parameters_bad():
     c = Circuit(nqubits=1)
     assert c.nparameters == 0
-    with pytest.raises(ValueError, match="not defined in this circuit"):
+    with pytest.raises(ValueError, match="not defined for this object"):
         c.set_parameters({"param1": 0.5})
     with pytest.raises(ValueError, match="not defined in the list of"):
         c.set_parameter_bounds({"param1": (0.0, np.pi)})
@@ -81,6 +79,35 @@ def test_circuit_set_parameters_values():
     assert c.nparameters == 1
     c.set_parameter_values([0.5])
     assert c.get_parameter_values() == [0.5]
+
+
+def test_circuit_set_prefix_keeps_parameter_links():
+    c = Circuit(nqubits=1)
+    c.add(RX(qubit=0, theta=np.pi / 4))
+
+    c.set_prefix("p_")
+    assert c.get_parameter_names() == ["p_RX(0)_theta_0"]
+
+    c.set_parameters({"p_RX(0)_theta_0": np.pi / 3})
+    assert np.isclose(c.get_parameter_values()[0], np.pi / 3)
+
+
+def test_circuit_constraints_are_enforced_on_set_parameters():
+    c = Circuit(nqubits=1)
+    left = Parameter("left", 0.1)
+    right = Parameter("right", 0.2)
+    c.add(RX(qubit=0, theta=left))
+    c.add(RY(qubit=0, theta=right))
+    c.add_parameter_constraint(LEQ(left, right))
+
+    with pytest.raises(
+        ValueError,
+        match=r"New assignation of the parameters breaks the parameter constraints:",
+    ):
+        c.set_parameters({"left": 0.9, "right": 0.1})
+
+    c.set_parameters({"left": 0.2, "right": 0.9})
+    assert c.get_parameters() == {"left": 0.2, "right": 0.9}
 
 
 def test_parameter_bounds():
@@ -244,7 +271,7 @@ def test_user_provides_custom_parameter():
     assert all(
         label in gate.PARAMETER_NAMES and parameter.label == angle.label and parameter.value == angle.value
         for gate in c.gates
-        for label, parameter in gate.parameters.items()
+        for label, parameter in gate._parameters.items()
     )
 
 
@@ -322,7 +349,7 @@ def test_add_operator_supports_gate_and_circuit():
     assert all(
         label in gate.PARAMETER_NAMES and parameter.label == angle.label and parameter.value == angle.value
         for gate in c.gates
-        for label, parameter in gate.parameters.items()
+        for label, parameter in gate._parameters.items()
     )
 
 
