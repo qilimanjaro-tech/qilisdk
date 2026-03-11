@@ -15,7 +15,7 @@
 import platform
 import subprocess  # noqa: S404
 import sys
-from math import log2
+from math import log2, ceil
 
 import cpuinfo
 import GPUtil
@@ -30,15 +30,6 @@ def about() -> str:
         str: A formatted string containing the QiliSDK version and relevant system information.
     """
     from . import __version__  # noqa: PLC0415
-
-    cpu_info = ""
-    info = cpuinfo.get_cpu_info()
-    brand = info.get("brand_raw", "")
-    brand = brand[: brand.find("w/")].strip() if "w/" in brand else brand.strip()
-    cpu_info += brand
-    ram = psutil.virtual_memory().total / (1024**3)
-    ram = round(2 ** round(log2(ram)))
-    gpus = GPUtil.getGPUs()
 
     # Python stuff
     info = ""
@@ -76,14 +67,34 @@ def about() -> str:
         info += "CUDA-Q Version: Not Found\n"
 
     # System info
+    cpu_info = cpuinfo.get_cpu_info()
+    ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
+    gpus = GPUtil.getGPUs()
+    nvidia_smi_output = None
+    cuda_version = None
+    nvidia_driver_version = None
+    try:
+        nvidia_smi_output = subprocess.check_output(  # noqa: S607
+            ["nvidia-smi | grep 'Driver'"], shell=True,
+            stderr=subprocess.STDOUT
+        ).decode()
+        cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
+        nvidia_driver_version = nvidia_smi_output.split("Driver Version:")[-1].split()[0]
+        nvidia_smi_output = nvidia_smi_output.replace("|", "")
+        nvidia_smi_output = nvidia_smi_output.strip()
+    except (subprocess.CalledProcessError):
+        pass
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
     info += f"Processor: {platform.processor()}\n"
-    info += f"CPU Info: {cpu_info}\n"
+    info += f"CPU Info: {cpu_info.get('brand_raw', 'Unknown')}\n"
     info += f"Number of CPU Cores: {psutil.cpu_count(logical=False)}\n"
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
     if gpus:
         info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
+        if nvidia_smi_output:
+            info += f"CUDA Version: {cuda_version}\n"
+            info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
         info += "GPU Info: Not Found\n"
 
@@ -93,7 +104,7 @@ def about() -> str:
         gpp_version = subprocess.check_output(["g++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"g++ Version: {gpp_version.splitlines()[0]}\n"
         has_gpp = True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         info += "g++ Version: Not Found\n"
     if has_gpp:
         try:
@@ -109,15 +120,16 @@ def about() -> str:
     # Check for clang
     has_clang = False
     try:
-        clang_version = subprocess.check_output(["clang++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
+        clang_command = subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()
+        clang_version = subprocess.check_output([f"{clang_command} --version"], shell=True, stderr=subprocess.STDOUT).decode()  # noqa: S607
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
         has_clang = True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         info += "clang++ Version: Not Found\n"
     if has_clang:
         try:
             subprocess.check_output(
-                ["clang++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
+                [f"{clang_command}", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
                 input="#include <omp.h>\nint main() { return 0; }".encode(),
                 stderr=subprocess.STDOUT,
             ).decode()

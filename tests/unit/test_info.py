@@ -86,25 +86,6 @@ def test_about_bad_imports(monkeypatch):
     assert "CUDA-Q Version: Not Found" in about_str
 
 
-# Try importing QiliSim
-# try:
-#     from .backends.qilisim import QiliSim
-
-#     _ = QiliSim()
-#     info += "QiliSim Import: Success\n"
-# except Exception as e:
-#     info += f"QiliSim Import: Failed with error: {e}\n"
-
-# # Try importing QTensor
-# try:
-#     from .core.qtensor import ket
-
-#     _ = ket(0)
-#     info += "QTensor Import: Success\n"
-# except Exception as e:
-#     info += f"QTensor Import: Failed with error: {e}\n"
-
-
 def test_about_qilisim_bad_init(monkeypatch):
 
     _monkeypatch_all(monkeypatch)
@@ -145,3 +126,25 @@ def test_about_gpp_but_no_openmp(monkeypatch):
 
     about_str = about()
     assert "g++ OpenMP Support: No" in about_str
+
+def test_gpu_but_no_nvidia_smi(monkeypatch):
+
+    _monkeypatch_all(monkeypatch)
+
+    fake_gpu = MagicMock()
+    fake_gpu.name = "Test GPU"
+    fake_gpu.memoryTotal = 8 * 1024
+    fake_getGPUs = MagicMock(return_value=[fake_gpu])
+    monkeypatch.setattr("GPUtil.getGPUs", fake_getGPUs)
+
+    # Simulate nvidia-smi command failing
+    def fake_check_output(args, **kwargs):
+        if "nvidia-smi" in args[0]:
+            raise subprocess.CalledProcessError(1, args)
+        return b""
+
+    monkeypatch.setattr("subprocess.check_output", fake_check_output)
+
+    about_str = about()
+    assert "GPU Info: Test GPU" in about_str
+    assert "nvidia-smi Output:" not in about_str

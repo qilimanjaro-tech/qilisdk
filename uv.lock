@@ -2766,16 +2766,16 @@ dependencies = [
     { name = "gputil" },
     { name = "loguru" },
     { name = "matplotlib" },
-    { name = "py-cpuinfo" },
-    { name = "setuptools" },
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.4.1", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "py-cpuinfo" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "ruamel-yaml" },
     { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "setuptools" },
 ]
 
 [package.optional-dependencies]
@@ -2856,10 +2856,10 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "gputil", specifier = ">=1.4.0" },
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda12'", specifier = "==0.13.0" },
     { name = "cuda-quantum-cu13", marker = "extra == 'cuda13'", specifier = "==0.13.0" },
     { name = "dill", specifier = ">=0.4.1" },
+    { name = "gputil", specifier = ">=1.4.0" },
     { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
