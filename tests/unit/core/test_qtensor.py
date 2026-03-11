@@ -706,7 +706,6 @@ def test_qtensor_from_qtensor():
     assert qobj is not qobj2  # should be a different object in memory
 
 
-
 def test_qtensor_conjugate_adjoint_dagger():
     arr = np.array([[1 + 2j, 3], [4, 5 - 1j]])
     qobj = QTensor(arr)
@@ -914,6 +913,7 @@ def test_qtensor_probabilities():
     probs = qket.probabilities()
     expected = np.array([0.5, 0.5])
     np.testing.assert_allclose(probs, expected, atol=1e-8)
+
 
 def test_qtensor_negative_norm():
     arr = np.array([[1, 2], [3, 4]])

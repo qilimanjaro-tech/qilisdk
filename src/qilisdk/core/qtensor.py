@@ -30,6 +30,7 @@ Complex = int | float | complex
 NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
 QTensorType = Literal["ket", "bra", "operator"]
 
+
 @yaml.register_class
 class QTensor:
     """
@@ -65,14 +66,8 @@ class QTensor:
         Raises:
             ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
         """
-        if isinstance(other, QTensor):
-            self._qtensor_cpp = other._qtensor_cpp
-        elif isinstance(other, QTensorCpp):
-            self._qtensor_cpp = other
-        elif isinstance(other, np.ndarray):
-            if other.dtype != np.complex128:
-                other = other.astype(np.complex128)
-            self._qtensor_cpp = QTensorCpp(other)
+        if isinstance(other, np.ndarray):
+            self._qtensor_cpp = QTensorCpp(np.array(other, dtype=np.complex128))
         else:
             self._qtensor_cpp = QTensorCpp(other)
 
