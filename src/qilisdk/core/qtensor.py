@@ -66,7 +66,7 @@ class QTensor:
             ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
         """
         if isinstance(other, QTensor):
-            self._qtensor_cpp = other.qtensor_cpp
+            self._qtensor_cpp = other._qtensor_cpp
         elif isinstance(other, QTensorCpp):
             self._qtensor_cpp = other
         elif isinstance(other, np.ndarray):
@@ -486,7 +486,7 @@ class QTensor:
         return QTensor(QTensorCpp.bra_python(state))
 
     @classmethod
-    def zero(cls, nqubits: int, qtensor_type: QTensorType) -> QTensor:
+    def zero(cls, nqubits: int, qtensor_type: QTensorType = "operator") -> QTensor:
         """
         Create a QTensor representing the zero matrix of the specified shape.
 
@@ -763,18 +763,18 @@ def reset_qubits(state: QTensor, qubits: list[int]) -> QTensor:
     return state.reset_qubits(set(qubits))
 
 
-def zero(rows: int, cols: int) -> QTensor:
+def zero(nqubits: int, qtensor_type: QTensorType = "operator") -> QTensor:
     """
     Wrapper for backwards compatibility: see QTensor.zero().
 
     Args:
-        rows (int): The number of rows in the zero matrix.
-        cols (int): The number of columns in the zero matrix.
+        nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).
+        qtensor_type (QTensorType): The type of QTensor to create ("ket", "bra", or "operator"), which determines the shape of the zero matrix.
 
     Returns:
         QTensor: A new QTensor representing the zero matrix.
     """
-    return QTensor.zero(rows, cols)
+    return QTensor.zero(nqubits, qtensor_type)
 
 
 def basis_state(n: int, N: int) -> QTensor:

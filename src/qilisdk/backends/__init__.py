@@ -22,8 +22,9 @@ from qilisdk._optionals import (
     import_optional_dependencies,
 )
 from qilisdk.backends.qilisim import QiliSim
+from qilisdk.backends.backend_config import DigitalMethod, ExecutionConfig, AnalogMethod
 
-__all__ = ["QiliSim"]
+__all__ = ["QiliSim", "DigitalMethod", "ExecutionConfig", "AnalogMethod"]
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(

@@ -22,7 +22,7 @@ find_package(pybind11 REQUIRED)
 find_package(OpenMP)
 
 # Fetch Eigen if not found (it's a header only library)
-find_package(Eigen3 QUIET)
+find_package(Eigen3 5 QUIET)
 if (NOT Eigen3_FOUND)
     message(STATUS "[QiliSDK C++] Eigen3 not found, fetching...")
     set(BUILD_TESTING OFF)
@@ -38,6 +38,9 @@ if (NOT Eigen3_FOUND)
     )
     FetchContent_MakeAvailable(eigen)
 endif()
+
+# Output the version of Eigen being used
+message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 
 # Assuming we have the core dependencies, prep the C++ backend
 message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")

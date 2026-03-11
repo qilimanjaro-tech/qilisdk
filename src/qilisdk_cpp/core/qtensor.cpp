@@ -848,7 +848,7 @@ QTensorCpp QTensorCpp::add_python(const py::object& other) const {
         } else if (std::abs(other.cast<std::complex<double>>()) < default_atol) {
             return *this;
         } else {
-            throw py::type_error("unsupported operand type(s) for addition: 'QTensor' and '" + std::string(py::str(other.get_type())) + "'. Addition of a scalar is only supported for 1x1 QTensors.");
+            throw py::type_error("unsupported operand type(s) for addition: 'QTensor' and '" + std::string(py::str(py::type::handle_of(other))) + "'. Addition of a scalar is only supported for 1x1 QTensors.");
         }
     } else {
         throw py::type_error("Addition is only supported with another QTensors or a scalar");

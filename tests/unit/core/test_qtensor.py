@@ -706,12 +706,6 @@ def test_qtensor_from_qtensor():
     assert qobj is not qobj2  # should be a different object in memory
 
 
-def test_qtensor_get_cpp_object():
-    arr = np.array([[1, 0], [0, 1]])
-    qobj = QTensor(arr)
-    cpp_obj = qobj.qtensor_cpp
-    assert cpp_obj is not None
-
 
 def test_qtensor_conjugate_adjoint_dagger():
     arr = np.array([[1 + 2j, 3], [4, 5 - 1j]])
@@ -755,7 +749,7 @@ def test_norm_with_int_order():
 def test_eigendecomp():
     arr = np.array([[2, 1], [1, 2]])
     qobj = QTensor(arr)
-    qobj.compute_eigendecomposition()
+    qobj.eig()
     eigvals = qobj.eigenvalues
     eigvecs = qobj.eigenvectors
     expected_eigvals = np.array([1, 3])
@@ -788,17 +782,23 @@ def test_qtensor_divide():
 def test_qtensor_identity():
     qid = QTensor.identity(2)
     qid2 = identity(2)
-    expected = np.eye(2)
+    expected = np.eye(4)
     np.testing.assert_array_equal(qid.dense(), expected)
     np.testing.assert_array_equal(qid2.dense(), expected)
 
 
 def test_qtensor_zero():
-    qzero = QTensor.zero(4, 4)
-    qzero2 = zero(4, 4)
+    qzero = QTensor.zero(2)
+    qzero2 = zero(2)
+    qzero_ket = QTensor.zero(2, "ket")
+    qzero_bra = QTensor.zero(2, "bra")
     expected = np.zeros((4, 4))
+    expected_ket = np.zeros((4, 1))
+    expected_bra = np.zeros((1, 4))
     np.testing.assert_array_equal(qzero.dense(), expected)
     np.testing.assert_array_equal(qzero2.dense(), expected)
+    np.testing.assert_array_equal(qzero_ket.dense(), expected_ket)
+    np.testing.assert_array_equal(qzero_bra.dense(), expected_bra)
 
 
 def test_qtensor_ghz():
@@ -918,7 +918,7 @@ def test_qtensor_probabilities():
 def test_qtensor_negative_norm():
     arr = np.array([[1, 2], [3, 4]])
     qobj = QTensor(arr)
-    with pytest.raises(ValueError, match="Norm order must be positive"):
+    with pytest.raises(ValueError, match="Norm order must be a positive"):
         qobj.norm(order=-1)
-    with pytest.raises(ValueError, match="Norm order must be positive"):
+    with pytest.raises(ValueError, match="Norm order must be a positive"):
         qobj.norm(order=0)
