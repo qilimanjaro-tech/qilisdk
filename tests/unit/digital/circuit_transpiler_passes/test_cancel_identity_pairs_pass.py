@@ -38,29 +38,6 @@ def describe_gates(circuit: Circuit) -> list[tuple[str, tuple[int, ...], tuple[f
     return snapshot
 
 
-class PhaseGate(Gate):
-    """Simple one-qubit gate used to exercise the matrix fallback."""
-
-    def __init__(self, qubit: int, phase: float) -> None:
-        self._target = (qubit,)
-        self._phase = phase
-
-    @property
-    def name(self) -> str:  # pragma: no cover - required by abstract base but unused
-        return "PhaseGate"
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return np.array([[1.0, 0.0], [0.0, np.exp(1j * self._phase)]], dtype=complex)
-
-    @property
-    def target_qubits(self) -> tuple[int, ...]:
-        return self._target
-
-    def get_parameters(self, where=None) -> dict[str, float]:
-        return {"phase": self._phase}
-
-
 class NoMatrixGate(Gate):
     """Gate without a matrix to trigger the barrier path."""
 
@@ -79,6 +56,30 @@ class NoMatrixGate(Gate):
     @property
     def target_qubits(self) -> tuple[int, ...]:
         return self._target
+
+
+class PhaseGate(Gate):
+    """Dummy gate used to exercise matrix-based cancellation fallback."""
+
+    def __init__(self, qubit: int, *, phase: float) -> None:
+        super().__init__()
+        self._target = (qubit,)
+        self._phase = phase
+
+    @property
+    def name(self) -> str:
+        return "PhaseGate"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return np.array([[1, 0], [0, np.exp(1j * self._phase)]], dtype=complex)
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        return self._target
+
+    def get_parameter_values(self) -> list[float]:
+        return [self._phase]
 
 
 def test_involutions_and_identity_are_removed() -> None:
