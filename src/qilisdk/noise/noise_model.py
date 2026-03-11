@@ -257,3 +257,30 @@ class NoiseModel:
             return
         self._check_scope_allowed(noise, AttachmentScope.PER_GATE_TYPE)
         self.per_gate_perturbations[gate, parameter].append(noise)
+
+    def __repr__(self) -> str:
+        noise_model_str = f"{type(self).__qualname__}(\n"
+        noise_model_str += f"  noise_config={self.noise_config},\n"
+        noise_model_str += f"  global_noise={self.global_noise},\n"
+        noise_model_str += "  per_qubit_noise={\n"
+        for qubit, noises in self.per_qubit_noise.items():
+            noise_model_str += f"    {qubit}: {noises},\n"
+        noise_model_str += "  },\n"
+        noise_model_str += "  per_gate_noise={\n"
+        for gate, noises in self.per_gate_noise.items():
+            noise_model_str += f"    {gate.__name__}: {noises},\n"
+        noise_model_str += "  },\n"
+        noise_model_str += "  per_gate_per_qubit_noise={\n"
+        for (gate, qubit), noises in self.per_gate_per_qubit_noise.items():
+            noise_model_str += f"    ({gate.__name__}, {qubit}): {noises},\n"
+        noise_model_str += "  },\n"
+        noise_model_str += "  global_perturbations={\n"
+        for param, perturbations in self.global_perturbations.items():
+            noise_model_str += f"    {param}: {perturbations},\n"
+        noise_model_str += "  },\n"
+        noise_model_str += "  per_gate_perturbations={\n"
+        for (gate, param), perturbations in self.per_gate_perturbations.items():
+            noise_model_str += f"    ({gate.__name__}, {param}): {perturbations},\n"
+        noise_model_str += "  },\n"
+        noise_model_str += ")"
+        return noise_model_str

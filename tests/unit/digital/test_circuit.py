@@ -547,3 +547,13 @@ def test_random_circuit_seedable():
         assert gate1.name == gate2.name
         assert gate1.qubits == gate2.qubits
         assert gate1.get_parameter_values() == gate2.get_parameter_values()
+
+
+def test_repr():
+    c = Circuit(nqubits=2)
+    x_gate = X(0)
+    c.add(x_gate)
+    repr_str = str(c)
+    assert "Circuit" in repr_str
+    assert "nqubits=2" in repr_str
+    assert "gates=[X(0)]" in repr_str

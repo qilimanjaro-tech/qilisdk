@@ -224,3 +224,9 @@ def test_quantum_reservoir_raises_if_state_repair_is_too_large():
 
     with pytest.raises(ValueError, match="large correction"):
         backend._execute_quantum_reservoir(functional)
+
+
+def test_print_backend():
+    backend = Backend()
+    as_str = str(backend)
+    assert "Backend" in as_str

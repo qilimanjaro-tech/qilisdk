@@ -107,3 +107,24 @@ def test_readout_assignment_properties_and_validation():
         ReadoutAssignment(p01=-0.1, p10=0.2)
     with pytest.raises(ValueError, match=r"p10 must be in \[0, 1\]."):
         ReadoutAssignment(p01=0.1, p10=1.2)
+
+
+def test_repr_readout():
+    assignment = ReadoutAssignment(p01=0.1, p10=0.2)
+    repr_str = str(assignment)
+    assert "ReadoutAssignment" in repr_str
+
+
+def test_repr_offset_perturbation():
+    perturbation = OffsetPerturbation(offset=0.5)
+    repr_str = str(perturbation)
+    assert "OffsetPerturbation" in repr_str
+    assert "offset=0.5" in repr_str
+
+
+def test_repr_gaussian_perturbation():
+    perturbation = GaussianPerturbation(mean=1.0, std=0.5)
+    repr_str = str(perturbation)
+    assert "GaussianPerturbation" in repr_str
+    assert "mean=1.0" in repr_str
+    assert "std=0.5" in repr_str
