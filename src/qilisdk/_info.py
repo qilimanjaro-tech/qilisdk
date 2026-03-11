@@ -15,7 +15,7 @@
 import platform
 import subprocess  # noqa: S404
 import sys
-from math import log2, ceil
+from math import ceil, log2
 
 import cpuinfo
 import GPUtil
@@ -71,18 +71,19 @@ def about() -> str:
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
     gpus = GPUtil.getGPUs()
     nvidia_smi_output = None
-    cuda_version = None
-    nvidia_driver_version = None
+    cuda_version = "Not Found"
+    nvidia_driver_version = "Not Found"
     try:
-        nvidia_smi_output = subprocess.check_output(  # noqa: S607
-            ["nvidia-smi | grep 'Driver'"], shell=True,
-            stderr=subprocess.STDOUT
+        nvidia_smi_output = subprocess.check_output(  # noqa: S602
+            ["nvidia-smi | grep 'Driver'"],
+            shell=True,  # noqa: S607
+            stderr=subprocess.STDOUT,
         ).decode()
         cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
         nvidia_driver_version = nvidia_smi_output.split("Driver Version:")[-1].split()[0]
         nvidia_smi_output = nvidia_smi_output.replace("|", "")
         nvidia_smi_output = nvidia_smi_output.strip()
-    except (subprocess.CalledProcessError):
+    except subprocess.CalledProcessError:
         pass
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
     info += f"Processor: {platform.processor()}\n"
@@ -92,9 +93,8 @@ def about() -> str:
     info += f"Available Memory: {ram} GB\n"
     if gpus:
         info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
-        if nvidia_smi_output:
-            info += f"CUDA Version: {cuda_version}\n"
-            info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
+        info += f"CUDA Version: {cuda_version}\n"
+        info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
         info += "GPU Info: Not Found\n"
 
@@ -120,16 +120,18 @@ def about() -> str:
     # Check for clang
     has_clang = False
     try:
-        clang_command = subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()
-        clang_version = subprocess.check_output([f"{clang_command} --version"], shell=True, stderr=subprocess.STDOUT).decode()  # noqa: S607
+        clang_command = (
+            subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()
+        )  # noqa: S607, S602
+        clang_version = subprocess.check_output([clang_command, "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S603
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
         has_clang = True
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         info += "clang++ Version: Not Found\n"
     if has_clang:
         try:
-            subprocess.check_output(
-                [f"{clang_command}", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
+            subprocess.check_output(  # noqa: S603
+                [f"{clang_command}", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],
                 input="#include <omp.h>\nint main() { return 0; }".encode(),
                 stderr=subprocess.STDOUT,
             ).decode()

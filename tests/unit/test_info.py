@@ -127,6 +127,7 @@ def test_about_gpp_but_no_openmp(monkeypatch):
     about_str = about()
     assert "g++ OpenMP Support: No" in about_str
 
+
 def test_gpu_but_no_nvidia_smi(monkeypatch):
 
     _monkeypatch_all(monkeypatch)
