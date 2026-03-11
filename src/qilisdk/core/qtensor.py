@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 Complex = int | float | complex
 NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
-
+QTensorType = Literal["ket", "bra", "operator"]
 
 @yaml.register_class
 class QTensor:
@@ -75,16 +75,6 @@ class QTensor:
             self._qtensor_cpp = QTensorCpp(other)
         else:
             self._qtensor_cpp = QTensorCpp(other)
-
-    @property
-    def qtensor_cpp(self) -> QTensorCpp:
-        """
-        Access the underlying C++ QTensor object.
-
-        Returns:
-            QTensorCpp: The internal C++ representation of the QTensor.
-        """
-        return self._qtensor_cpp
 
     @property
     def data(self) -> csr_matrix:
@@ -210,7 +200,7 @@ class QTensor:
 
     def dagger(self) -> QTensor:
         """
-        Overload for adjoint() to provide a more familiar method name for quantum objects.
+        Alias for adjoint() to provide a more familiar method name for quantum objects.
 
         Returns:
             QTensor: A new QTensor that is the adjoint of this object.
@@ -274,7 +264,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the reduced density matrix.
         """
-        return QTensor(self._qtensor_cpp.partial_trace_python(list(keep)))
+        return QTensor(self._qtensor_cpp.partial_trace_python(list(set(keep))))
 
     def norm(self, order: NormTypes = "auto") -> float:
         """
@@ -295,22 +285,26 @@ class QTensor:
             ValueError: If an unsupported norm order is specified.
         """
         if isinstance(order, int):
+            if order <= 0:
+                raise ValueError("Norm order must be a positive integer")
             return self._qtensor_cpp.norm("l" + str(order))
         if order == "tr":
             return self._qtensor_cpp.norm("nuclear")
         return self._qtensor_cpp.norm(order)
 
-    def compute_eigendecomposition(self) -> None:
+    def eig(self) -> tuple[list[complex], list[QTensor]]:
         """
-        Compute the eigendecomposition of the QTensor.
-
-        This method computes the eigenvalues and eigenvectors of the QTensor and stores them internally for later retrieval.
+        Compute the eigendecomposition of the QTensor and return the eigenvalues and eigenvectors.
         The eigendecomposition is only computed once and cached for future use.
+
+        Returns:
+            tuple[list[complex], list[QTensor]]: A tuple containing a list of eigenvalues and a list of corresponding eigenvectors as QTensors.
 
         Raises:
             ValueError: If the QTensor is not a square matrix (i.e., not an operator).
         """
         self._qtensor_cpp.compute_eigendecomposition()
+        return self.eigenvalues, self.eigenvectors
 
     def unit(self, order: NormTypes = "auto") -> QTensor:
         """
@@ -492,31 +486,31 @@ class QTensor:
         return QTensor(QTensorCpp.bra_python(state))
 
     @classmethod
-    def zero(cls, rows: int, cols: int) -> QTensor:
+    def zero(cls, nqubits: int, qtensor_type: QTensorType) -> QTensor:
         """
         Create a QTensor representing the zero matrix of the specified shape.
 
         Args:
-            rows (int): The number of rows in the zero matrix.
-            cols (int): The number of columns in the zero matrix.
+            nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).
+            qtensor_type (QTensorType): The type of QTensor to create ("ket", "bra", or "operator"), which determines the shape of the zero matrix.
 
         Returns:
             QTensor: A new QTensor representing the zero matrix.
         """
-        return QTensor(QTensorCpp.zero(rows, cols))
+        return QTensor(QTensorCpp.zero(nqubits, qtensor_type))
 
     @classmethod
-    def identity(cls, dim: int) -> QTensor:
+    def identity(cls, nqubits: int) -> QTensor:
         """
         Create an identity of the specified dimension.
 
         Args:
-            dim (int): The dimension of the identity.
+            nqubits (int): The number of qubits, which determines the size of the identity matrix (2^nqubits x 2^nqubits).
 
         Returns:
             QTensor: A new QTensor representing the identity.
         """
-        return QTensor(QTensorCpp.identity(dim))
+        return QTensor(QTensorCpp.identity(nqubits))
 
     @classmethod
     def ghz(cls, nqubits: int) -> QTensor:
@@ -647,21 +641,25 @@ class QTensor:
     @property
     def eigenvalues(self) -> list[Number]:
         """
-        Compute the eigenvalues of the QTensor.
+        Get the eigenvalues of the QTensor.
+        Note that this computes the eigendecomposition if it has not already been computed and cached.
 
         Returns:
             list[Number]: A list of eigenvalues of the QTensor.
         """
+        self._qtensor_cpp.compute_eigendecomposition()
         return self._qtensor_cpp.get_eigenvalues_python()
 
     @property
     def eigenvectors(self) -> list[QTensor]:
         """
-        Compute the eigenvectors of the QTensor.
+        Get the eigenvectors of the QTensor.
+        Note that this computes the eigendecomposition if it has not already been computed and cached.
 
         Returns:
             list[QTensor]: A list of QTensor objects representing the eigenvectors of the QTensor.
         """
+        self._qtensor_cpp.compute_eigendecomposition()
         return [QTensor(vec) for vec in self._qtensor_cpp.get_eigenvectors_python()]
 
     def expectation_value(self, other: QTensor, nshots: int = 0) -> complex:
@@ -802,17 +800,17 @@ def basis_state(n: int, N: int) -> QTensor:
     return QTensor(mat)
 
 
-def identity(dim: int) -> QTensor:
+def identity(nqubits: int) -> QTensor:
     """
     Wrapper for QTensor.identity().
 
     Args:
-        dim (int): The dimension of the identity operator.
+        nqubits (int): The number of qubits in the identity operator.
 
     Returns:
         QTensor: A QTensor representing the identity operator of the specified dimension.
     """
-    return QTensor(QTensorCpp.identity(dim))
+    return QTensor(QTensorCpp.identity(nqubits))
 
 
 def ghz(nqubits: int) -> QTensor:

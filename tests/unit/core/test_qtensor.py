@@ -914,3 +914,11 @@ def test_qtensor_probabilities():
     probs = qket.probabilities()
     expected = np.array([0.5, 0.5])
     np.testing.assert_allclose(probs, expected, atol=1e-8)
+
+def test_qtensor_negative_norm():
+    arr = np.array([[1, 2], [3, 4]])
+    qobj = QTensor(arr)
+    with pytest.raises(ValueError, match="Norm order must be positive"):
+        qobj.norm(order=-1)
+    with pytest.raises(ValueError, match="Norm order must be positive"):
+        qobj.norm(order=0)

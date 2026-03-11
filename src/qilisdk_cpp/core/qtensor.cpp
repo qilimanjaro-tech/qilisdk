@@ -661,18 +661,30 @@ QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
     return result;
 }
 
-QTensorCpp QTensorCpp::zero(int rows, int cols) {
+QTensorCpp QTensorCpp::zero(int nqubits, std::string qtensor_type) {
     /*
     Construct a QTensor of the given shape filled with zeros. The number of rows and columns must be powers of 2.
 
     Args:
-        rows (int): The number of rows in the tensor, must be a power of 2.
-        cols (int): The number of columns in the tensor, must be a power of 2.
+        nqubits (int): The number of qubits, which determines the shape of the QTensor. The number of rows and columns will be 2^nqubits.
+        qtensor_type (std::string): The type of QTensor to create, which can be "ket", "bra", or "operator".
 
     Returns:
         QTensorCpp: A QTensor of the specified shape filled with zeros.
     */
-    return QTensorCpp(rows, cols);
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
+    }
+    int dim = 1 << nqubits;
+    if (qtensor_type == "ket") {
+        return QTensorCpp(dim, 1);
+    } else if (qtensor_type == "bra") {
+        return QTensorCpp(1, dim);
+    } else if (qtensor_type == "operator") {
+        return QTensorCpp(dim, dim);
+    } else {
+        throw py::value_error("Invalid qtensor type: " + qtensor_type + ". Must be 'ket', 'bra', or 'operator'");
+    }
 }
 
 QTensorCpp QTensorCpp::ket_python(const py::object& state) {
@@ -1017,16 +1029,17 @@ std::string QTensorCpp::as_string() const {
     return ss.str();
 }
 
-QTensorCpp QTensorCpp::identity(int dim) {
+QTensorCpp QTensorCpp::identity(int nqubits) {
     /*
     Construct an identity operator QTensor of the given dimension.
 
     Args:
-        dim (int): The dimension of the identity operator, must be a power of 2.
+        nqubits (int): The number of qubits, which determines the size of the identity matrix (2^nqubits x 2^nqubits).
 
     Returns:
         QTensorCpp: A QTensor representing the identity operator of the specified dimension.
     */
+    int dim = 1 << nqubits;
     SparseMatrix id(dim, dim);
     for (int i = 0; i < dim; ++i) {
         id.insert(i, i) = 1.0;
