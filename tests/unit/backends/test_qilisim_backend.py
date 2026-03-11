@@ -54,7 +54,7 @@ def test_qilisim_config_builders_and_validation():
         dim=16,
         num_substeps=3,
     )
-    digital = DigitalMethod.state_vector(max_cache_size=2048)
+    digital = DigitalMethod.statevector(max_cache_size=2048)
     execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
 
     backend = QiliSim(
