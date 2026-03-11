@@ -49,6 +49,9 @@ class Gate(Parameterizable, ABC):
 
     PARAMETER_NAMES: ClassVar[list[str]] = []
 
+    def __init__(self) -> None:
+        super().__init__()
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -132,15 +135,6 @@ class Gate(Parameterizable, ABC):
         """
         return self.nparameters != 0
 
-    @property
-    def parameters(self) -> dict[str, Parameter]:
-        """Returns the raw parameter objects stored in the gate.
-
-        Returns:
-            dict[str, Parameter]: Mapping from parameter label to parameter object.
-        """
-        return {}
-
     def get_parameters(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -202,6 +196,7 @@ class Gate(Parameterizable, ABC):
 
         if any(name not in self.get_parameters() for name in parameters):
             raise InvalidParameterNameError
+        super().set_parameters(parameters=parameters)
 
     def set_parameter_values(
         self,
@@ -224,6 +219,7 @@ class Gate(Parameterizable, ABC):
 
         if len(values) != len(self.get_parameters(where=where)):
             raise ParametersNotEqualError
+        super().set_parameter_values(values=values, where=where)
 
     def get_parameter_bounds(
         self,
@@ -235,6 +231,7 @@ class Gate(Parameterizable, ABC):
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if not self.is_parameterized:
             raise GateNotParameterizedError
+        super().set_parameter_bounds(ranges=ranges)
 
     def __repr__(self) -> str:
         qubits_str = f"({self.qubits[0]})" if self.nqubits == 1 else str(self.qubits)
@@ -296,20 +293,8 @@ class BasicGate(Gate):
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
 
-    @property
-    def parameters(self) -> dict[str, Parameter]:
-        return self._parameters
-
-    def get_parameters(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> dict[str, float]:
-        return super().get_parameters(where=where)
-
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
-        for k, v in parameters.items():
-            self._parameters[k].set_value(v)
         self._matrix = self._generate_matrix()
 
     def set_parameter_values(
@@ -318,23 +303,11 @@ class BasicGate(Gate):
         where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         super().set_parameter_values(values=values, where=where)
-        for key, value in zip(self.get_parameters(where=where), values):
-            self._parameters[key].set_value(value)
-
         self._matrix = self._generate_matrix()
-
-    def get_parameter_bounds(
-        self,
-        where: Callable[[Parameter], bool] | None = None,
-    ) -> dict[str, tuple[float, float]]:
-        return super().get_parameter_bounds(where=where)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
-        for label, bound in ranges.items():
-            if label not in self._parameters:
-                raise InvalidParameterNameError
-            self._parameters[label].set_bounds(bound[0], bound[1])
+        self._matrix = self._generate_matrix()
 
     def controlled(self: Self, *control_qubits: int) -> Controlled[Self]:
         """
@@ -384,8 +357,10 @@ class BasicGate(Gate):
 @yaml.register_class
 class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
+        super().__init__()
         self._basic_gate: TBasicGate = basic_gate
         self._matrix: np.ndarray
+        self._link_parameters(self._basic_gate)
 
     @property
     def basic_gate(self) -> TBasicGate:
@@ -406,10 +381,6 @@ class Modified(Gate, Generic[TBasicGate]):
     @property
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
-
-    @property
-    def parameters(self) -> dict[str, Parameter]:
-        return self._basic_gate.parameters
 
     def get_parameters(
         self,

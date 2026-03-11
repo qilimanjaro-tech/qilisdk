@@ -87,6 +87,15 @@ def test_parameters():
     assert H.get_parameters() == {"z": 1.5}
 
 
+def test_hamiltonian_does_not_expose_public_parameters_attribute():
+    hamiltonian = Parameter("theta", 0.4) * Z(0)
+
+    with pytest.raises(AttributeError):
+        _ = hamiltonian.parameters
+
+    assert hamiltonian.get_parameters() == {"theta": 0.4}
+
+
 def test_get_pauli_returns_correct_instance():
     assert isinstance(_get_pauli("X", 0), PauliX)
     assert isinstance(_get_pauli("Y", 1), PauliY)

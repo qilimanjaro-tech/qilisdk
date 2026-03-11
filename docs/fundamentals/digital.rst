@@ -521,6 +521,12 @@ update them selectively:
 These helpers make it straightforward to plug the circuit into classical
 optimization loops while keeping parameter metadata synchronized.
 
+.. note::
+
+   Parameterized gates and circuits expose parameter information through
+   ``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, and
+   the matching ``set_*`` methods.
+
 Gate Modifiers and Measurement
 ------------------------------
 
