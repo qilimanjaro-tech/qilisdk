@@ -30,12 +30,13 @@ from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals.digital_evolution import DigitalEvolution
     from qilisdk.functionals.sampling import Sampling
 
 
@@ -107,12 +108,12 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_digital_evolution(self, functional: DigitalEvolution) -> FunctionalResult:
         """
         Execute a quantum circuit and return the measurement results.
 
         This method applies the selected simulation method, translates the circuit's gates into
-        CUDA operations via their respective handlers, runs the simulation, and returns the result
+        QuTip operations via their respective handlers, runs the simulation, and returns the result
         as a QutipDigitalResult.
 
         Args:
@@ -122,8 +123,6 @@ class QutipBackend(Backend):
             DigitalResult: A result object containing the measurement samples and computed probabilities.
 
         """
-        logger.info("Executing Sampling (shots={})", functional.nshots)
-
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
         measurements_set = set()
@@ -132,77 +131,30 @@ class QutipBackend(Backend):
                 measurements_set.update(list(m.target_qubits))
         measurements = sorted(measurements_set)
 
+        if len(measurements) == 0:
+            measurements = list(range(functional.circuit.nqubits))
+
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         qutip_circuit = self._get_qutip_circuit(transpiled_circuit)
         sim = CircuitSimulator(qutip_circuit)
 
         res = sim.run_statistics(init_state)  # runs the full circuit for one shot
-        _bits = res.cbits  # classical measurement bits
-        bits = []
-        probs = res.probabilities
+        final_state = QTensor(sum(res.get_final_states()).unit()[:])
 
-        if sum(probs) != 1:
-            probs /= sum(probs)
+        logger.success("Sampling finished; ")
+        if len(measurements) != functional.circuit.nqubits:
+            return FunctionalResult(
+                readout_results=QutipBackend._construct_results_list(
+                    final_state=final_state.ptrace(measurements), readout_methods=functional.readout
+                )
+            )
+        return FunctionalResult(
+            readout_results=QutipBackend._construct_results_list(
+                final_state=final_state, readout_methods=functional.readout
+            )
+        )
 
-        if len(measurements) > 0:
-            for b in _bits:
-                aux = []
-                for i in measurements:
-                    aux.append(b[i])
-                bits.append(aux)
-        else:
-            bits = _bits
-
-        bits_list = ["".join(map(str, cb)) for cb in bits]
-
-        rng = np.random.default_rng(42)
-        samples = rng.choice(bits_list, size=functional.nshots, p=probs)
-        samples_py = map(str, samples)
-
-        counts = Counter(samples_py)
-
-        logger.success("Sampling finished; {} distinct bitstrings", len(counts))
-        return SamplingResult(nshots=functional.nshots, samples=dict(counts))
-
-    @staticmethod
-    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
-        """Convert a QiliSDK observable to a QuTiP Qobj.
-
-        Args:
-            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
-            nqubits (int): The total number of qubits in the system.
-
-        Returns:
-            Qobj: The corresponding QuTiP Qobj representation of the observable.
-
-        Raises:
-            ValueError: If the observable type is unsupported.
-        """
-        aux_obs = None
-        identity = QTensor(PauliI(0).matrix)
-        if isinstance(obs, PauliOperator):
-            for i in range(nqubits):
-                if aux_obs is None:
-                    aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
-                else:
-                    aux_obs = (
-                        tensor_prod([aux_obs, identity])
-                        if i != obs.qubit
-                        else tensor_prod([aux_obs, QTensor(obs.matrix)])
-                    )
-        elif isinstance(obs, Hamiltonian):
-            aux_obs = QTensor(obs.to_matrix())
-            if obs.nqubits < nqubits:
-                for _ in range(nqubits - obs.nqubits):
-                    aux_obs = tensor_prod([aux_obs, identity])
-        elif isinstance(obs, QTensor):
-            aux_obs = obs
-        if aux_obs is not None:
-            return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
-        logger.error("Unsupported observable type {}", obs.__class__.__name__)
-        raise ValueError(f"unsupported observable type of {obs.__class__}")
-
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution) -> FunctionalResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -251,8 +203,11 @@ class QutipBackend(Backend):
         qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
-        for obs in functional.observables:
-            qutip_obs.append(self._to_qubip_observables(obs, functional.schedule.nqubits))
+
+        # for ro in functional.readout:
+        #     if ro.is_expectation_values():
+        #         for obs in ro.observables:
+        #             qutip_obs.append(self._to_qubip_observables(obs, functional.schedule.nqubits))
 
         results = mesolve(
             H=h_t,
@@ -267,29 +222,77 @@ class QutipBackend(Backend):
         )
 
         logger.success("TimeEvolution finished")
-        return TimeEvolutionResult(
-            final_expected_values=np.array(
-                [results.expect[i][-1] for i in range(len(qutip_obs))],  # ty:ignore[not-subscriptable]
-                dtype=_complex_dtype(),
-            ),
-            expected_values=(
-                np.array(
-                    [
-                        [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
-                        for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
-                    ],
-                    dtype=_complex_dtype(),
-                )
-                if len(results.expect) > 0 and functional.store_intermediate_results
-                else None
-            ),
-            final_state=(QTensor(results.final_state.full()) if results.final_state is not None else None),
-            intermediate_states=(
-                [QTensor(state.full()) for state in results.states]
-                if len(results.states) > 1 and functional.store_intermediate_results
-                else None
-            ),
+        return FunctionalResult(
+            readout_results=QutipBackend._construct_results_list(
+                final_state=QTensor(results.final_state.full()), readout_methods=functional.readout
+            )
         )
+
+    def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
+        """
+        Execute a quantum circuit and return the measurement results.
+
+        This method applies the selected simulation method, translates the circuit's gates into
+        QuTip operations via their respective handlers, runs the simulation, and returns the result
+        as a QutipDigitalResult.
+
+        Args:
+            functional (Sampling): The Sampling function to execute.
+
+        Returns:
+            DigitalResult: A result object containing the measurement samples and computed probabilities.
+
+        """
+        return self._execute_digital_evolution(functional=functional)
+
+    def _execute_time_evolution(self, functional: TimeEvolution) -> FunctionalResult:
+        """computes the time evolution under of an initial state under the given schedule.
+
+        Args:
+            functional (TimeEvolution): The TimeEvolution functional to execute.
+
+        Returns:
+            TimeEvolutionResult: The results of the evolution.
+        """
+        return self._execute_analog_evolution(functional=functional)
+
+    @staticmethod
+    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
+        """Convert a QiliSDK observable to a QuTiP Qobj.
+
+        Args:
+            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
+            nqubits (int): The total number of qubits in the system.
+
+        Returns:
+            Qobj: The corresponding QuTiP Qobj representation of the observable.
+
+        Raises:
+            ValueError: If the observable type is unsupported.
+        """
+        aux_obs = None
+        identity = QTensor(PauliI(0).matrix)
+        if isinstance(obs, PauliOperator):
+            for i in range(nqubits):
+                if aux_obs is None:
+                    aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
+                else:
+                    aux_obs = (
+                        tensor_prod([aux_obs, identity])
+                        if i != obs.qubit
+                        else tensor_prod([aux_obs, QTensor(obs.matrix)])
+                    )
+        elif isinstance(obs, Hamiltonian):
+            aux_obs = QTensor(obs.to_matrix())
+            if obs.nqubits < nqubits:
+                for _ in range(nqubits - obs.nqubits):
+                    aux_obs = tensor_prod([aux_obs, identity])
+        elif isinstance(obs, QTensor):
+            aux_obs = obs
+        if aux_obs is not None:
+            return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
+        logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        raise ValueError(f"unsupported observable type of {obs.__class__}")
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
         """_summary_

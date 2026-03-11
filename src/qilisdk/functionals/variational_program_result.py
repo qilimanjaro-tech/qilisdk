@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 from pprint import pformat
-from typing import Generic, TypeVar
+from typing import TypeVar
 
+from qilisdk.core.result import Result
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
@@ -24,10 +23,10 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 @yaml.register_class
-class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
+class VariationalProgramResult(Result):
     """Aggregate the optimizer summary and best functional result from a variational run."""
 
-    def __init__(self, optimizer_result: OptimizerResult, result: TResult_co) -> None:
+    def __init__(self, optimizer_result: OptimizerResult, result: FunctionalResult) -> None:
         """
         Args:
             optimizer_result (OptimizerResult): Summary produced by the optimiser.
@@ -43,7 +42,7 @@ class VariationalProgramResult(FunctionalResult, Generic[TResult_co]):
         return self._optimizer_result.optimal_cost
 
     @property
-    def optimal_execution_results(self) -> TResult_co:
+    def optimal_execution_results(self) -> FunctionalResult:
         """Return the functional result evaluated at the optimal parameters."""
         return self._result
 
