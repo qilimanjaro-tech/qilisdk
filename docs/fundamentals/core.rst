@@ -198,6 +198,15 @@ such as trainable parameters.
     trainable_values = circuit.get_parameter_values(where=lambda p: p.is_trainable)
     circuit.set_parameter_values([0.3], where=lambda p: p.is_trainable)
 
+.. note::
+
+    Parameterizable objects expose parameter state through
+    :meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`,
+    :meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,
+    :meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,
+    and the corresponding ``set_*`` methods. Accessing ``.parameters`` directly
+    is not part of the public API.
+
 
 Mathematical Maps (sin, cos)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
