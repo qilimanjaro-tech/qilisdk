@@ -76,11 +76,13 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         yield self.schedule
 
     def __repr__(self) -> str:
-        time_str = "TimeEvolution(\n"
-        time_str += f"  schedule={self.schedule},\n"
-        time_str += f"  observables={self.observables},\n"
-        time_str += f"  initial_state={self.initial_state},\n"
-        time_str += f"  nshots={self.nshots},\n"
-        time_str += f"  store_intermediate_results={self.store_intermediate_results},\n"
-        time_str += ")"
-        return time_str
+        lines = [
+            f"{type(self).__qualname__}(",
+            f"  schedule={self.schedule!r},",
+            f"  observables={self.observables!r},",
+            f"  initial_state={self.initial_state!r},",
+            f"  nshots={self.nshots!r},",
+            f"  store_intermediate_results={self.store_intermediate_results!r},",
+            ")",
+        ]
+        return "\n".join(lines)

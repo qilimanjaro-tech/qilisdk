@@ -422,17 +422,17 @@ class Schedule(Parameterizable):
             renderer.show()
 
     def __repr__(self) -> str:
-        schedule_str = "Schedule(\n"
-        schedule_str += "  hamiltonians={\n"
-        for label, ham in self._hamiltonians.items():
-            schedule_str += f"    '{label}': {ham},\n"
-        schedule_str += "  },\n"
-        schedule_str += "  coefficients={\n"
-        for label, coeff in self.coefficients_dict.items():
-            schedule_str += f"    '{label}': {coeff},\n"
-        schedule_str += "  },\n"
-        schedule_str += f"  dt={self.dt},\n"
-        schedule_str += f"  total_time={self._max_time},\n"
-        schedule_str += f"  interpolation={self._interpolation}\n"
-        schedule_str += ")"
-        return schedule_str
+        lines = [
+            f"{type(self).__qualname__}(",
+            "  hamiltonians={",
+            *(f"    '{label}': {ham!r}," for label, ham in self._hamiltonians.items()),
+            "  },",
+            "  coefficients={",
+            *(f"    '{label}': {coeff!r}," for label, coeff in self.coefficients_dict.items()),
+            "  },",
+            f"  dt={self.dt!r},",
+            f"  total_time={self._max_time!r},",
+            f"  interpolation={self._interpolation!r}",
+            ")",
+        ]
+        return "\n".join(lines)
