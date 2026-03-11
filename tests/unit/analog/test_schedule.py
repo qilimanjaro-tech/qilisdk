@@ -53,25 +53,25 @@ def test_schedule_parameters():
 
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
 
-    assert p[0] in list(schedule._parameters.values())
-    assert p[1] in list(schedule._parameters.values())
-    assert p[2] not in list(schedule._parameters.values())
+    assert p[0] in list(schedule._filtered_parameter_map().values())
+    assert p[1] in list(schedule._filtered_parameter_map().values())
+    assert p[2] not in list(schedule._filtered_parameter_map().values())
     assert schedule.nparameters == 2
 
     schedule = Schedule(
         hamiltonians={"H0": H0, "H1": H1}, coefficients={"H0": {(0, 10): 1 + p[2]}, "H1": {(0, 10): p[3]}}
     )
 
-    assert p[2] in list(schedule._parameters.values())
-    assert p[3] in list(schedule._parameters.values())
+    assert p[2] in list(schedule._filtered_parameter_map().values())
+    assert p[3] in list(schedule._filtered_parameter_map().values())
     assert schedule.nparameters == 4
 
     schedule = Schedule(hamiltonians={"H0": H0, "H1": H1})
     schedule.update_hamiltonian("H0", new_coefficients={0: 1 + p[2]})
     schedule.update_hamiltonian("H1", new_coefficients={0: p[3]})
 
-    assert p[2] in list(schedule._parameters.values())
-    assert p[3] in list(schedule._parameters.values())
+    assert p[2] in list(schedule._filtered_parameter_map().values())
+    assert p[3] in list(schedule._filtered_parameter_map().values())
     assert schedule.nparameters == 4
 
     assert all(_isclose(schedule.get_parameter_values()[i], 0.0) for i in range(schedule.nparameters))
@@ -97,7 +97,7 @@ def test_schedule_parameters():
 
     with pytest.raises(
         ValueError,
-        match=r"Parameter test is not defined in this Schedule.",
+        match=r"Parameter test is not defined for this object.",
     ):
         schedule.set_parameters({"test": 0})
 
@@ -541,11 +541,12 @@ def test_schedule_extract_parameters():
     term1 = 2 * param1 + 3
 
     sched._extract_parameters(term1)
-    assert param1 in sched._parameters.values()
-    sched._parameters.clear()
+    assert param1 in sched._filtered_parameter_map().values()
+    assert sched.get_parameter_names() == ["param1"]
 
+    sched = Schedule(dt=1)
     sched._extract_parameters(param1)
-    assert param1 in sched._parameters.values()
+    assert param1 in sched._filtered_parameter_map().values()
 
     var = Variable("var", Domain.REAL)
     bad_term = 2 * param2 + var
