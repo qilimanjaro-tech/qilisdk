@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, Parameter
+from qilisdk.core.variables import LEQ, Domain, Parameter, Variable
 from qilisdk.settings import get_settings
 
 
@@ -53,6 +53,23 @@ class CompositeParameterizable(Parameterizable):
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self._left
         yield self._right
+
+
+class EmptyParameterizable(Parameterizable):
+    pass
+
+
+class ParentWithLocalAndChild(Parameterizable):
+    def __init__(self) -> None:
+        super().__init__()
+        self._parameters = {
+            "local_trainable": Parameter("local_trainable", 0.5, trainable=True),
+            "local_fixed": Parameter("local_fixed", 0.25, trainable=False),
+        }
+        self.child = LeafParameterizable("child_theta", 0.1, trainable=False)
+
+    def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        yield self.child
 
 
 @pytest.fixture
@@ -185,3 +202,77 @@ def test_parameter_filter_predicate_supports_custom_queries():
     parent.set_parameter_values([0.7], where=lambda param: param.label.startswith("output_encoding_"))
     assert _isclose(parent.get_parameters()["input_encoding_theta"], 0.1)
     assert _isclose(parent.get_parameters()["output_encoding_theta"], 0.7)
+
+
+def test_private_helpers_add_and_query_parameter_names():
+    source = DummyParameterizable()
+    target = EmptyParameterizable()
+    target.set_prefix("pref_")
+
+    target._add_parameter("gamma", Parameter("gamma", 3.0))
+    target._add_parameter_from("alpha", source)
+    target._add_parameter_from("beta", source, new_label="beta_alias")
+
+    assert "pref_gamma" in target.get_parameter_names()
+    assert target._parameters["pref_alpha"] is source._parameters["alpha"]
+    assert target._parameters["pref_beta_alias"] is source._parameters["beta"]
+    assert target._query_parameter_original_name(target, "pref_beta_alias") == "beta"
+
+
+def test_private_helpers_update_and_link_share_parameter_references():
+    source = DummyParameterizable()
+    linked = LeafParameterizable("theta", 0.4)
+    target = EmptyParameterizable()
+
+    target._update_parameters({"alpha_copy": source._parameters["alpha"]})
+    target._link_parameters(linked)
+
+    assert target.get_parameter_names() == ["alpha_copy", "theta"]
+    assert target._parameters["theta"] is linked._parameters["theta"]
+
+    target.set_parameters({"theta": 0.9})
+    assert _isclose(linked.get_parameters()["theta"], 0.9)
+
+
+def test_set_prefix_where_is_local_only_but_children_are_recursive():
+    parent = ParentWithLocalAndChild()
+
+    parent.set_prefix("p_", where=lambda param: param.is_trainable)
+    assert parent.get_parameter_names() == ["local_fixed", "p_local_trainable", "p_child_theta"]
+    assert parent.get_prefix() == "p_"
+    assert parent.child.get_prefix() == "p_"
+
+    parent.set_prefix("q_", where=lambda _: True)
+    assert set(parent.get_parameter_names()) == {"q_local_trainable", "q_local_fixed", "q_child_theta"}
+    assert parent.child.get_parameter_names() == ["q_child_theta"]
+    assert parent.get_prefix() == "q_"
+    assert parent.child.get_prefix() == "q_"
+
+
+def test_add_parameter_constraint_rejects_non_parameter_variables():
+    parameterizable = DummyParameterizable()
+    generic_variable = Variable("x", domain=Domain.REAL, bounds=(0.0, 1.0))
+
+    with pytest.raises(
+        ValueError,
+        match=r"The constraint should only contain parameters and having generic variables is not allowed.",
+    ):
+        parameterizable.add_parameter_constraint(LEQ(parameterizable._parameters["alpha"], generic_variable))
+
+
+def test_pop_removes_local_or_child_parameters_and_errors_on_unknown_label():
+    parent = ParentWithLocalAndChild()
+
+    popped_local = parent._pop("local_fixed")
+    assert popped_local.label == "local_fixed"
+    assert "local_fixed" not in parent.get_parameter_names()
+
+    popped_child = parent._pop("child_theta")
+    assert popped_child.label == "child_theta"
+    assert "child_theta" not in parent.child.get_parameter_names()
+
+    with pytest.raises(
+        ValueError,
+        match=r"Parameter unknown is not defined in the current object or any of its children.",
+    ):
+        parent._pop("unknown")

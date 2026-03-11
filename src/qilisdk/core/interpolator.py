@@ -307,16 +307,6 @@ class Interpolator(Parameterizable):
         """
         return [self._get_value(self[t]) for t in self.fixed_tlist]
 
-    @property
-    def parameters(self) -> dict[str, Parameter]:
-        """
-        Return the parameters discovered while building the interpolator.
-
-        Returns:
-            dict[str, Parameter]: Parameters collected from time points and coefficients.
-        """
-        return self._parameters
-
     def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
         """
         Rescale all time points to a new maximum duration while keeping relative spacing.
@@ -383,7 +373,7 @@ class Interpolator(Parameterizable):
             ValueError: If the element contains variables that are not parameters.
         """
         if isinstance(element, Parameter) and element.label != _TIME_PARAMETER_NAME:
-            self._parameters[element.label] = element
+            self._add_parameter(element.label, element)
         elif isinstance(element, Term):
             if not element.is_parameterized_term():
                 raise ValueError(
@@ -391,7 +381,7 @@ class Interpolator(Parameterizable):
                 )
             for p in element.variables():
                 if isinstance(p, Parameter) and p.label != _TIME_PARAMETER_NAME:
-                    self._parameters[p.label] = p
+                    self._add_parameter(p.label, p)
 
     def add_time_point(
         self,
@@ -415,7 +405,7 @@ class Interpolator(Parameterizable):
             coeff, _params = _process_callable(coeff, self._current_time)  # ty:ignore[invalid-argument-type]
             self._extract_parameters(coeff)
             if len(_params) > 0:
-                self._parameters.update(_params)
+                self._update_parameters(_params)
         elif isinstance(coeff, (int, float, Parameter, Term)):
             self._extract_parameters(coeff)
         else:

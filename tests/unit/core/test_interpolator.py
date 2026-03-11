@@ -211,9 +211,18 @@ def test_interpolator_parameters():
         points,
         Interpolation.LINEAR,
     )
-    parameters = interp.parameters
+    parameters = interp._parameters
     expected_parameters = {"a": Parameter("a", 1.0), "b": Parameter("b", 2.0)}
     assert parameters == expected_parameters
+
+
+def test_interpolator_does_not_expose_public_parameters_attribute():
+    interp = Interpolator({0: Parameter("a", 1.0), 1: 2.0}, Interpolation.LINEAR)
+
+    with pytest.raises(AttributeError):
+        _ = interp.parameters
+
+    assert interp.get_parameters() == {"a": 1.0}
 
 
 def test_interpolator_set_bad_max_time():
@@ -259,7 +268,7 @@ def test_interpolar_set_parameter_bounds():
         Interpolation.LINEAR,
     )
     interp.set_parameter_bounds({"a": (0.5, 1.5)})
-    param_a = interp.parameters["a"]
+    param_a = interp._parameters["a"]
     assert np.isclose(param_a.lower_bound, 0.5)
     assert np.isclose(param_a.upper_bound, 1.5)
 
