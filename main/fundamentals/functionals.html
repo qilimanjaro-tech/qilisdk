@@ -117,6 +117,7 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend_config/index.html">qilisdk.backends.backend_config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
@@ -156,6 +157,8 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html">qilisdk.functionals.quantum_reservoirs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html">qilisdk.functionals.quantum_reservoirs_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
@@ -263,10 +266,11 @@
 <section id="functionals">
 <h1>Functionals<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functionals"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <p>The <a class="reference internal" href="../code/api/qilisdk/functionals/index.html#module-qilisdk.functionals" title="qilisdk.functionals"><code class="xref py py-mod docutils literal notranslate"><span class="pre">functionals</span></code></a> module provides high-level quantum execution procedures by combining tools from the
-<a class="reference internal" href="../code/api/qilisdk/analog/index.html#module-qilisdk.analog" title="qilisdk.analog"><code class="xref py py-mod docutils literal notranslate"><span class="pre">analog</span></code></a>, <a class="reference internal" href="../code/api/qilisdk/digital/index.html#module-qilisdk.digital" title="qilisdk.digital"><code class="xref py py-mod docutils literal notranslate"><span class="pre">digital</span></code></a>, and <a class="reference internal" href="../code/api/qilisdk/core/index.html#module-qilisdk.core" title="qilisdk.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core</span></code></a> modules. Currently, it includes two primitive functionals:</p>
+<a class="reference internal" href="../code/api/qilisdk/analog/index.html#module-qilisdk.analog" title="qilisdk.analog"><code class="xref py py-mod docutils literal notranslate"><span class="pre">analog</span></code></a>, <a class="reference internal" href="../code/api/qilisdk/digital/index.html#module-qilisdk.digital" title="qilisdk.digital"><code class="xref py py-mod docutils literal notranslate"><span class="pre">digital</span></code></a>, and <a class="reference internal" href="../code/api/qilisdk/core/index.html#module-qilisdk.core" title="qilisdk.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core</span></code></a> modules. Currently, it includes the following execution functionals:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> — Executes repeated sampling of a digital quantum circuit.</p></li>
 <li><p><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a> — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.</p></li>
+<li><p><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir" title="qilisdk.functionals.quantum_reservoirs.QuantumReservoir"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoir</span></code></a> — Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.</p></li>
 </ul>
 <p>Moreover, it provides more complex functionals that are used to execute more complex algorithms:</p>
 <ul class="simple">
@@ -282,8 +286,10 @@ functionals such as <a class="reference internal" href="../code/api/qilisdk/func
 parameters consistently before execution.</p>
 <p>Each functional advertises a matching <code class="xref py py-attr docutils literal notranslate"><span class="pre">result_type</span></code> pointing to a concrete
 <a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult" title="qilisdk.functionals.functional_result.FunctionalResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalResult</span></code></a> subclass. When you call
-<a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>, the backend inspects this attribute to decide which result object to
-construct and return.</p>
+<a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>, backends dispatch by functional type
+(<a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a>,
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>, etc.) and return
+the corresponding result object.</p>
 </section>
 <section id="result-objects">
 <h2>Result Objects<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#result-objects" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#result-objects'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -297,6 +303,12 @@ construct and return.</p>
 <li><dl class="simple">
 <dt><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a></dt><dd><p>contains expectation values, the terminal <a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> state, and (optionally) the list
 of intermediate states when <code class="docutils literal notranslate"><span class="pre">store_intermediate_results=True</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html#qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult" title="qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoirResult</span></code></a></dt><dd><p>extends <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolutionResult</span></code></a> with the same data model,
+returning per-layer expectation values and optional intermediate/final states.</p>
 </dd>
 </dl>
 </li>
@@ -324,7 +336,7 @@ bitstrings:</p>
 <p>The <a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling" title="qilisdk.functionals.sampling.Sampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></a> functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes. Because it subclasses
 <a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>, any symbolic parameters exposed by the underlying
 <a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a> can be queried or updated through helper methods such as
-<a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html#qilisdk.functionals.sampling.Sampling.get_parameter_names" title="qilisdk.functionals.sampling.Sampling.get_parameter_names"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_names()</span></code></a>.</p>
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_names()</span></code>.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><strong>circuit</strong> (<a class="reference internal" href="../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit" title="qilisdk.digital.circuit.Circuit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code></a>): Circuit to be sampled.</p></li>
@@ -447,6 +459,177 @@ classical optimizers.</p>
 </span></code></pre></div>
 </div>
 </section>
+<section id="quantum-reservoirs">
+<h2>Quantum Reservoirs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quantum-reservoirs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quantum-reservoirs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>The <a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir" title="qilisdk.functionals.quantum_reservoirs.QuantumReservoir"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoir</span></code></a> functional executes a reservoir pipeline over a
+sequence of inputs. Each layer applies an optional pre-processing circuit, an analog reservoir dynamics block
+(<a class="reference internal" href="../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a>), and an optional post-processing circuit, followed by measurements of one
+or more observables. The optional <code class="docutils literal notranslate"><span class="pre">qubits_to_reset</span></code> list can be used to reset selected qubits between layers.</p>
+<p>The reservoir inputs are represented using <a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirInput" title="qilisdk.functionals.quantum_reservoirs.ReservoirInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReservoirInput</span></code></a> parameters.
+These behave like standard <a class="reference internal" href="../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> objects but are marked as non-trainable so they can
+be driven by input data sequences rather than optimization loops.</p>
+<p><strong>Parameters</strong></p>
+<ul class="simple">
+<li><p><strong>initial_state</strong> (<a class="reference internal" href="../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>): Initial state of the reservoir.</p></li>
+<li><p><strong>reservoir_layer</strong> (<a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirLayer" title="qilisdk.functionals.quantum_reservoirs.ReservoirLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReservoirLayer</span></code></a>): Defines pre/post-processing,
+reservoir dynamics, observables, and reset policy.</p></li>
+<li><p><strong>input_per_layer</strong> (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
+(typically the labels of <a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirInput" title="qilisdk.functionals.quantum_reservoirs.ReservoirInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReservoirInput</span></code></a>).</p></li>
+<li><p><strong>store_final_state</strong> (bool, optional): Whether to store the final state after the last layer.</p></li>
+<li><p><strong>store_intermediate_states</strong> (bool, optional): Whether to store the state after each layer.</p></li>
+<li><p><strong>nshots</strong> (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.</p></li>
+</ul>
+<p><strong>Returns</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html#qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult" title="qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoirResult</span></code></a>: Access per-layer expectation values via
+<a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution_result/index.html#qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values" title="qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values"><code class="xref py py-attr docutils literal notranslate"><span class="pre">expected_values</span></code></a>, plus optional states when
+<code class="docutils literal notranslate"><span class="pre">store_intermediate_states</span></code> or <code class="docutils literal notranslate"><span class="pre">store_final_state</span></code> are enabled.</p></li>
+</ul>
+<p><strong>Usage Example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">U2</span>
+</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.quantum_reservoirs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">ReservoirInput</span><span class="p">,</span> <span class="n">ReservoirLayer</span>
+</span><span id="line-6"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">pre_processing</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-9"><span class="n">pre_processing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">U2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"phi_1"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">gamma</span><span class="o">=</span><span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"gamma_1"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)))</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="n">res_layer</span> <span class="o">=</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
+</span><span id="line-12">    <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-13">        <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))},</span>
+</span><span id="line-14">        <span class="n">total_time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="line-15">        <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="line-16">    <span class="p">),</span>
+</span><span id="line-17">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span>
+</span><span id="line-18">    <span class="n">input_encoding</span><span class="o">=</span><span class="n">pre_processing</span><span class="p">,</span>
+</span><span id="line-19">    <span class="n">qubits_to_reset</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+</span><span id="line-20"><span class="p">)</span>
+</span><span id="line-21">
+</span><span id="line-22"><span class="n">reservoir</span> <span class="o">=</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
+</span><span id="line-23">    <span class="n">initial_state</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unit</span><span class="p">(),</span>
+</span><span id="line-24">    <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">res_layer</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">input_per_layer</span><span class="o">=</span><span class="p">[</span>
+</span><span id="line-26">        <span class="p">{</span><span class="s2">"phi_1"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">"gamma_1"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+</span><span id="line-27">        <span class="p">{</span><span class="s2">"phi_1"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s2">"gamma_1"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
+</span><span id="line-28">        <span class="p">{</span><span class="s2">"phi_1"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span> <span class="s2">"gamma_1"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
+</span><span id="line-29">    <span class="p">],</span>
+</span><span id="line-30">    <span class="n">store_final_state</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-31">    <span class="n">store_intermediate_states</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-32"><span class="p">)</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="n">results</span> <span class="o">=</span> <span class="n">CudaBackend</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">reservoir</span><span class="p">)</span>
+</span><span id="line-35"><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">expected_values</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<section id="encoding-input-data">
+<h3>Encoding Input Data<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#encoding-input-data" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#encoding-input-data'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<p>You can inject classical data into a reservoir layer in multiple places. The only requirement is that the keys in
+<code class="docutils literal notranslate"><span class="pre">input_per_layer</span></code> match the labels of the <a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirInput" title="qilisdk.functionals.quantum_reservoirs.ReservoirInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReservoirInput</span></code></a> objects you
+place in the layer.</p>
+<p><strong>1. Encode with input and output circuits</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">RX</span><span class="p">,</span> <span class="n">RY</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.quantum_reservoirs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">ReservoirInput</span><span class="p">,</span> <span class="n">ReservoirLayer</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">theta_in</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"theta_in"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">phi_out</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"phi_out"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="n">input_circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-10"><span class="n">input_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta_in</span><span class="p">))</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="n">output_circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-13"><span class="n">output_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RY</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">phi_out</span><span class="p">))</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="n">layer</span> <span class="o">=</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
+</span><span id="line-16">    <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-17">        <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))},</span>
+</span><span id="line-18">        <span class="n">total_time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="line-19">        <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="line-20">    <span class="p">),</span>
+</span><span id="line-21">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span>
+</span><span id="line-22">    <span class="n">input_encoding</span><span class="o">=</span><span class="n">input_circuit</span><span class="p">,</span>
+</span><span id="line-23">    <span class="n">output_encoding</span><span class="o">=</span><span class="n">output_circuit</span><span class="p">,</span>
+</span><span id="line-24"><span class="p">)</span>
+</span><span id="line-25">
+</span><span id="line-26"><span class="n">reservoir</span> <span class="o">=</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
+</span><span id="line-27">    <span class="n">initial_state</span><span class="o">=</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+</span><span id="line-28">    <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span>
+</span><span id="line-29">    <span class="n">input_per_layer</span><span class="o">=</span><span class="p">[</span>
+</span><span id="line-30">        <span class="p">{</span><span class="s2">"theta_in"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">"phi_out"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+</span><span id="line-31">        <span class="p">{</span><span class="s2">"theta_in"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"phi_out"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">},</span>
+</span><span id="line-32">    <span class="p">],</span>
+</span><span id="line-33"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>2. Encode directly in Hamiltonian parameters</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.quantum_reservoirs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">ReservoirInput</span><span class="p">,</span> <span class="n">ReservoirLayer</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">gain</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"gain"</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">detuning</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"detuning"</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">hamiltonian</span> <span class="o">=</span> <span class="n">gain</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">detuning</span> <span class="o">*</span> <span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="n">layer</span> <span class="o">=</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
+</span><span id="line-11">    <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-12">        <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="n">hamiltonian</span><span class="p">},</span>
+</span><span id="line-13">        <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span> <span class="mf">1.0</span><span class="p">}},</span>
+</span><span id="line-14">        <span class="n">dt</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+</span><span id="line-15">    <span class="p">),</span>
+</span><span id="line-16">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span>
+</span><span id="line-17"><span class="p">)</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="n">reservoir</span> <span class="o">=</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
+</span><span id="line-20">    <span class="n">initial_state</span><span class="o">=</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+</span><span id="line-21">    <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span>
+</span><span id="line-22">    <span class="n">input_per_layer</span><span class="o">=</span><span class="p">[</span>
+</span><span id="line-23">        <span class="p">{</span><span class="s2">"gain"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">"detuning"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">},</span>
+</span><span id="line-24">        <span class="p">{</span><span class="s2">"gain"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s2">"detuning"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+</span><span id="line-25">        <span class="p">{</span><span class="s2">"gain"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s2">"detuning"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
+</span><span id="line-26">    <span class="p">],</span>
+</span><span id="line-27"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>3. Encode in the schedule profile and duration</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.quantum_reservoirs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">ReservoirInput</span><span class="p">,</span> <span class="n">ReservoirLayer</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">drive_amp</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"drive_amp"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">duration</span> <span class="o">=</span> <span class="n">ReservoirInput</span><span class="p">(</span><span class="s2">"duration"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="n">layer</span> <span class="o">=</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
+</span><span id="line-9">    <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-10">        <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-11">            <span class="s2">"drive"</span><span class="p">:</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+</span><span id="line-12">            <span class="s2">"problem"</span><span class="p">:</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+</span><span id="line-13">        <span class="p">},</span>
+</span><span id="line-14">        <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-15">            <span class="s2">"drive"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span> <span class="n">drive_amp</span><span class="p">},</span>
+</span><span id="line-16">            <span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">},</span>
+</span><span id="line-17">        <span class="p">},</span>
+</span><span id="line-18">        <span class="n">total_time</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+</span><span id="line-19">        <span class="n">dt</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+</span><span id="line-20">    <span class="p">),</span>
+</span><span id="line-21">    <span class="n">observables</span><span class="o">=</span><span class="p">[</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span>
+</span><span id="line-22"><span class="p">)</span>
+</span><span id="line-23">
+</span><span id="line-24"><span class="n">reservoir</span> <span class="o">=</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
+</span><span id="line-25">    <span class="n">initial_state</span><span class="o">=</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+</span><span id="line-26">    <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span>
+</span><span id="line-27">    <span class="n">input_per_layer</span><span class="o">=</span><span class="p">[</span>
+</span><span id="line-28">        <span class="p">{</span><span class="s2">"drive_amp"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"duration"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+</span><span id="line-29">        <span class="p">{</span><span class="s2">"drive_amp"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s2">"duration"</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">},</span>
+</span><span id="line-30">    <span class="p">],</span>
+</span><span id="line-31"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
+</section>
 <section id="variational-programs">
 <h2>Variational Programs<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#variational-programs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#variational-programs'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>The <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> functional gathers the pieces required for a
@@ -456,7 +639,8 @@ parameters, feeds the resulting <a class="reference internal" href="../code/api/
 cost function, and finally returns a <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult" title="qilisdk.functionals.variational_program_result.VariationalProgramResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgramResult</span></code></a>.
 Parameter constraints (inequalities/equalities on parameters) are attached at this level via the <code class="docutils literal notranslate"><span class="pre">parameter_constraints</span></code>
 argument; this is the place to enforce relations like <code class="docutils literal notranslate"><span class="pre">theta</span> <span class="pre">&gt;=</span> <span class="pre">phi</span></code> or cross-parameter bounds across all QiliSDK
-functionals.</p>
+functionals.
+Only parameters marked as trainable are optimized during this loop.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><strong>functional</strong> (<a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional" title="qilisdk.functionals.functional.PrimitiveFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrimitiveFunctional</span></code></a>): Parameterized primitive to optimize
@@ -464,7 +648,7 @@ functionals.</p>
 <a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html#qilisdk.functionals.time_evolution.TimeEvolution" title="qilisdk.functionals.time_evolution.TimeEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeEvolution</span></code></a>).</p></li>
 <li><p><strong>optimizer</strong> (<a class="reference internal" href="../code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer" title="qilisdk.optimizers.optimizer.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>): Classical optimizer that proposes new parameter
 values and optionally stores intermediate iterates.</p></li>
-<li><p><strong>cost_model</strong> (<a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code></a>): Object that maps the functional results
+<li><p><strong>cost_function</strong> (<a class="reference internal" href="../code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction" title="qilisdk.cost_functions.cost_function.CostFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostFunction</span></code></a>): Object that maps the functional results
 to a scalar cost; frequently constructed from a <a class="reference internal" href="../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>.</p></li>
 <li><p><strong>store_intermediate_results</strong> (bool, optional): When True, the optimizer keeps the intermediate steps, which are
 exposed through <a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results" title="qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">intermediate_results</span></code></a>.</p></li>
@@ -649,6 +833,10 @@ This example optimizes a variational schedule under some parameter constraints.<
 <li><a :data-current="activeSection === '#result-objects'" class="reference internal" href="#result-objects">Result Objects</a></li>
 <li><a :data-current="activeSection === '#sampling'" class="reference internal" href="#sampling">Sampling</a></li>
 <li><a :data-current="activeSection === '#time-evolution'" class="reference internal" href="#time-evolution">Time Evolution</a></li>
+<li><a :data-current="activeSection === '#quantum-reservoirs'" class="reference internal" href="#quantum-reservoirs">Quantum Reservoirs</a><ul>
+<li><a :data-current="activeSection === '#encoding-input-data'" class="reference internal" href="#encoding-input-data">Encoding Input Data</a></li>
+</ul>
+</li>
 <li><a :data-current="activeSection === '#variational-programs'" class="reference internal" href="#variational-programs">Variational Programs</a></li>
 </ul>
 </div>

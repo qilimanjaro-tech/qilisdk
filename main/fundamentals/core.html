@@ -117,6 +117,7 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/backends/index.html">qilisdk.backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/backend_config/index.html">qilisdk.backends.backend_config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
@@ -156,6 +157,8 @@
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/functionals/index.html">qilisdk.functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs/index.html">qilisdk.functionals.quantum_reservoirs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html">qilisdk.functionals.quantum_reservoirs_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
@@ -432,9 +435,22 @@ collect all the <a class="reference internal" href="../code/api/qilisdk/core/var
 </span><span id="line-8"><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="s2">"RX(0)_theta_0"</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>
 </span></code></pre></div>
 </div>
-<p>Whenever you interact with one of these parameterizable objects, the helper
-methods let you list, bound, or update the symbolic degrees of freedom in a
-consistent way.</p>
+<p>All parameter helper methods accept an optional <code class="docutils literal notranslate"><span class="pre">where</span></code> predicate to filter
+the exposed parameters. This is useful when you want to update only a subset,
+such as trainable parameters.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">trainable_values</span> <span class="o">=</span> <span class="n">circuit</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">is_trainable</span><span class="p">)</span>
+</span><span id="line-2"><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">([</span><span class="mf">0.3</span><span class="p">],</span> <span class="n">where</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">is_trainable</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Parameterizable objects expose parameter state through
+<a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameters" title="qilisdk.core.parameterizable.Parameterizable.get_parameters"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameters()</span></code></a>,
+<a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_names" title="qilisdk.core.parameterizable.Parameterizable.get_parameter_names"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_names()</span></code></a>,
+<a class="reference internal" href="../code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_values" title="qilisdk.core.parameterizable.Parameterizable.get_parameter_values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_parameter_values()</span></code></a>,
+and the corresponding <code class="docutils literal notranslate"><span class="pre">set_*</span></code> methods. Accessing <code class="docutils literal notranslate"><span class="pre">.parameters</span></code> directly
+is not part of the public API.</p>
+</div>
 </section>
 <section id="mathematical-maps-sin-cos">
 <h3>Mathematical Maps (sin, cos)<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#mathematical-maps-sin-cos" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#mathematical-maps-sin-cos'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>

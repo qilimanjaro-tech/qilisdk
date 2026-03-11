@@ -148,6 +148,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html">qilisdk.backends.backend_config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
@@ -187,6 +188,8 @@
 <li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/quantum_reservoirs/index.html">qilisdk.functionals.quantum_reservoirs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html">qilisdk.functionals.quantum_reservoirs_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
@@ -339,7 +342,7 @@
 </span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 </span><span id="line-18">
 </span><span id="line-19"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span>
 </span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSettings</span><span class="p">,</span> <span class="n">SettingsConfigDict</span>
 </span><span id="line-22">
 </span><span id="line-23">
@@ -416,7 +419,7 @@
 
 <div class="viewcode-block" id="QiliSDKSettings.speqtrum_apikey">
 <a class="viewcode-back" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.speqtrum_apikey">[docs]</a>
-</span><span id="line-66">    <span class="n">speqtrum_apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-66">    <span class="n">speqtrum_apikey</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
 </span><span id="line-67">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 </span><span id="line-68">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;SpeQtrum API key associated with the user account. [env: QILISDK_SPEQTRUM_APIKEY]&quot;</span><span class="p">,</span>
 </span><span id="line-69">    <span class="p">)</span></div>
