@@ -33,6 +33,9 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
+    "py-cpuinfo>=9.0.0",
+    "setuptools>=82.0.1",
+    "gputil>=1.4.0",
     "mkl-service>=2.6.1; sys_platform != 'darwin'",
 ]
 
