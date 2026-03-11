@@ -371,7 +371,7 @@ class Circuit(Parameterizable):
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
                 if len(qubits) < nqubits:
-                    possible_new_qubits = [q for q in range(nqubits) if q not in qubits]
+                    possible_new_qubits: list[int] = [q for q in range(nqubits) if q not in qubits]
                     new_qubit = random.choice(possible_new_qubits)
                     qubits = (new_qubit, *qubits[1:])
 
@@ -393,6 +393,6 @@ class Circuit(Parameterizable):
                     )
 
             # Add the gate to the circuit
-            new_circuit.add(gate_class(*qubits, **params))
+            new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
