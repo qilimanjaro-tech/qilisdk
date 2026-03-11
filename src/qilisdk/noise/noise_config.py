@@ -75,3 +75,6 @@ class NoiseConfig:
         if time <= 0:
             raise ValueError("Default execution time must be positive.")
         self._default_gate_time = time
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(default_gate_time={self._default_gate_time}, gate_times={self._gate_times})"

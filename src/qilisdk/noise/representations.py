@@ -62,6 +62,9 @@ class KrausChannel(Noise):
             }
         )
 
+    def __repr__(self) -> str:
+        return f"KrausChannel(operators={self._operators})"
+
 
 class LindbladGenerator(Noise):
     """Lindblad generator representation for Markovian noise."""
@@ -147,3 +150,6 @@ class LindbladGenerator(Noise):
             frozenset[AttachmentScope]: Allowed attachment scopes.
         """
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
+
+    def __repr__(self) -> str:
+        return f"LindbladGenerator(jump_operators={self._jump_operators}, rates={self._rates}, hamiltonian={self._hamiltonian})"

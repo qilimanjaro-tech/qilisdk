@@ -67,3 +67,6 @@ class GaussianPerturbation(ParameterPerturbation):
     def perturb(self, value: float) -> float:
         delta = self._rng.normal(self._mean, self._std)
         return value + delta
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(mean={self._mean}, std={self._std})"

@@ -67,3 +67,6 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(t_phi={self._t_phi})"

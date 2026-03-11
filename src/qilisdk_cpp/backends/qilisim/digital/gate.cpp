@@ -244,6 +244,16 @@ std::string Gate::get_id() const {
     return oss.str();
 }
 
+SparseMatrix Gate::get_base_matrix() const {
+    /*
+    Get the base matrix of the gate.
+
+    Returns:
+        SparseMatrix: The base matrix of the gate.
+    */
+    return base_matrix;
+}
+
 SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     /*
     Get the full matrix representation of the gate on the entire qubit register.
@@ -269,6 +279,34 @@ int Gate::get_nqubits() const {
         int: The total number of qubits.
     */
     return int(control_qubits.size()) + int(target_qubits.size());
+}
+
+std::vector<int> Gate::get_qubits() const {
+    /*
+    Get the list of all qubits the gate acts on (controls + targets).
+
+    Returns:
+        std::vector<int>: The qubit indices.
+    */
+    std::vector<int> all_qubits;
+    all_qubits.insert(all_qubits.end(), control_qubits.begin(), control_qubits.end());
+    all_qubits.insert(all_qubits.end(), target_qubits.begin(), target_qubits.end());
+    return all_qubits;
+}
+
+bool Gate::is_normalized() const {
+    /*
+    Check if the gate's base matrix is normalized (i.e., unitary).
+
+    Returns:
+        bool: True if the matrix is normalized, False otherwise.
+    */
+    // We can check if the matrix is normalized by verifying that U * U^dagger = I
+    SparseMatrix base_matrix = get_base_matrix();
+    SparseMatrix identity(base_matrix.rows(), base_matrix.cols());
+    identity.setIdentity();
+    SparseMatrix product = base_matrix * base_matrix.adjoint();
+    return product.isApprox(identity);
 }
 
 std::vector<int> Gate::get_target_qubits() const {

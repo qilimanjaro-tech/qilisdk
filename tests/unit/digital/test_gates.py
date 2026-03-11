@@ -68,7 +68,7 @@ def test_non_parameterized_gate(gate_class: type, expected_name: str, expected_m
     assert gate.is_parameterized is False
     assert gate.nparameters == 0
     assert gate.get_parameter_names() == []
-    assert gate.parameters == {}
+    assert gate._parameters == {}
 
     # Check target qubits
     assert gate.target_qubits == (qubit,)
@@ -102,6 +102,15 @@ def test_measurement_gate():
     # The base Gate sets `_matrix` to an empty array by default (since M has no matrix).
     with pytest.raises(GateHasNoMatrixError):
         gate.matrix
+
+
+def test_gate_does_not_expose_public_parameters_attribute():
+    gate = RX(0, theta=np.pi / 4)
+
+    with pytest.raises(AttributeError):
+        _ = gate.parameters
+
+    assert gate.get_parameters() == {"theta": np.pi / 4}
 
 
 # ------------------------------------------------------------------------------
@@ -606,7 +615,7 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
     gate.set_parameters(valid_dict)
     # Verify the gate's 'parameters' match the new values
     for param_name, param_value in valid_dict.items():
-        assert gate.parameters[param_name].value == param_value, (
+        assert gate._parameters[param_name].value == param_value, (
             f"Parameter '{param_name}' not updated to {param_value}"
         )
 
@@ -618,7 +627,7 @@ def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dic
     gate.set_parameter_values(valid_list)
     param_names = gate.get_parameter_names()
     for i, val in enumerate(valid_list):
-        assert gate.parameters[param_names[i]].value == val, f"Parameter '{param_names[i]}' not updated to {val}"
+        assert gate._parameters[param_names[i]].value == val, f"Parameter '{param_names[i]}' not updated to {val}"
 
     # 4) set_parameter_values() with an invalid list (length mismatch)
     with pytest.raises(ParametersNotEqualError):
@@ -839,7 +848,7 @@ def test_base_gate_class():
     assert gate.nqubits == 0
     assert gate.target_qubits == ()
     assert gate.control_qubits == ()
-    assert gate.parameters == {}
+    assert gate._parameters == {}
     assert gate.get_parameter_bounds() == {}
     assert gate.is_parameterized is False
     assert gate.get_parameter_names() == []
@@ -933,7 +942,10 @@ def test_parameterized_custom_gate():
     gate.set_parameter_bounds({"param": (0.0, 2 * np.pi)})
     assert gate.get_parameter_bounds() == {"param": (0.0, 2 * np.pi)}
 
-    with pytest.raises(InvalidParameterNameError):
+    with pytest.raises(
+        ValueError,
+        match=r"The provided parameter label unknown_param is not defined in the list of parameters in this object.",
+    ):
         gate.set_parameter_bounds({"unknown_param": (0.0, 1.0)})
 
 
@@ -950,7 +962,7 @@ def test_modified_parameterized_gate():
     assert gate_mod.control_qubits == (control_qubit,)
     assert gate_mod.is_parameterized is True
     assert gate_mod.nparameters == 1
-    assert gate_mod.parameters == {"theta": np.pi / 2}
+    assert gate_mod.basic_gate._parameters == {"theta": np.pi / 2}
     assert gate_mod.get_parameter_names() == ["theta"]
     assert gate_mod.get_parameters() == {"theta": np.pi / 2}
     assert gate_mod.get_parameter_values() == [np.pi / 2]
@@ -1007,3 +1019,20 @@ def test_complex_transform():
     assert abs(u3.theta) < 1e-5
     assert abs(u3.phi) < 1e-5
     assert abs(u3.gamma) < 1e-5
+
+
+def test_repr_basic_gate():
+    qubit = 0
+    gate = H(qubit)
+    repr_str = repr(gate)
+    assert "H" in repr_str
+    assert str(qubit) in repr_str
+
+
+def test_repr_parameterized_gate():
+    qubit = 0
+    gate = RX(qubit, theta=np.pi / 2)
+    repr_str = repr(gate)
+    assert "RX" in repr_str
+    assert "1.57" in repr_str
+    assert str(np.pi / 2) in repr_str

@@ -21,7 +21,7 @@ from numpy import linspace
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, ComparisonTerm, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Domain, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
@@ -86,12 +86,11 @@ class Schedule(Parameterizable):
             ValueError: if the coefficients reference an undefined hamiltonian.
         """
         # THIS is the only runtime implementation
-        super(Schedule, self).__init__()
+        super().__init__()
 
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[str, Interpolator] = {}
         self._interpolation = None
-        self._parameters: dict[str, Parameter] = {}
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
         self._max_time: PARAMETERIZED_NUMBER | None = None
@@ -106,10 +105,6 @@ class Schedule(Parameterizable):
             raise ValueError(f"Missing keys in hamiltonians: {missing}")
 
         for ham, hamiltonian in self._hamiltonians.items():
-            # Gather Hamiltonian parameters and nqubits
-            for param in hamiltonian.parameters.values():
-                self._parameters[param.label] = param
-
             # Build hamiltonian schedule
             if ham not in coefficients:
                 self._coefficients[ham] = Interpolator({0: 1}, interpolation=interpolation, nsamples=int(1 / dt))
@@ -119,9 +114,6 @@ class Schedule(Parameterizable):
                 self._coefficients[ham] = coeff
             elif isinstance(coeff, dict):
                 self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt))
-
-            for p_name, p_value in self._coefficients[ham].parameters.items():
-                self._parameters[p_name] = p_value
 
         if total_time is not None:
             self.scale_max_time(total_time)
@@ -190,11 +182,6 @@ class Schedule(Parameterizable):
             return 0
         return max(self._hamiltonians.values(), key=lambda v: v.nqubits).nqubits
 
-    @property
-    def nparameters(self) -> int:
-        """Number of symbolic parameters introduced by the Hamiltonians or coefficients."""
-        return len(self._parameters)
-
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Expose hamiltonians and interpolators to the shared parameter interface.
 
@@ -224,7 +211,7 @@ class Schedule(Parameterizable):
 
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
         if isinstance(element, Parameter):
-            self._parameters[element.label] = element
+            self._add_parameter(element.label, element)
         elif isinstance(element, Term):
             if not element.is_parameterized_term():
                 raise ValueError(
@@ -232,49 +219,7 @@ class Schedule(Parameterizable):
                 )
             for p in element.variables():
                 if isinstance(p, Parameter):
-                    self._parameters[p.label] = p
-
-    def set_parameters(self, parameters: dict[str, int | float]) -> None:
-        """Update parameter values across all Hamiltonian coefficient interpolators.
-
-        Args:
-            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label in parameters:
-            if label not in self._parameters:
-                raise ValueError(f"Parameter {label} is not defined in this Schedule.")
-        for h in self._hamiltonians:
-            self._coefficients[h].set_parameters(
-                {p: parameters[p] for p in self._coefficients[h].get_parameter_names() if p in parameters}
-            )
-        super().set_parameters(parameters)
-
-    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
-        """Propagate bound updates to all interpolators and cached parameters.
-
-        Args:
-            ranges (dict[str, tuple[float, float]]): Mapping of parameter label to ``(lower, upper)`` bounds.
-
-        Raises:
-            ValueError: If an unknown parameter label is provided.
-        """
-        for label in ranges:
-            if label not in self._parameters:
-                raise ValueError(
-                    f"The provided parameter label {label} is not defined in the list of parameters in this object."
-                )
-        for h in self._hamiltonians:
-            self._coefficients[h].set_parameter_bounds(
-                {p: ranges[p] for p in self._coefficients[h].get_parameter_names() if p in ranges}
-            )
-        super().set_parameter_bounds(ranges)
-
-    def get_constraints(self) -> list[ComparisonTerm]:
-        """Return the set of parameter constraints arising from all interpolators."""
-        return list(set(super().get_constraints()))
+                    self._add_parameter(p.label, p)
 
     def scale_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
         """
@@ -302,9 +247,6 @@ class Schedule(Parameterizable):
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self.dt))
 
-        for p_name, p_value in self._coefficients[label].parameters.items():
-            self._parameters[p_name] = p_value
-
     def _add_hamiltonian_from_interpolator(
         self, label: str, hamiltonian: Hamiltonian, coefficients: Interpolator
     ) -> None:
@@ -312,9 +254,6 @@ class Schedule(Parameterizable):
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = coefficients
-
-        for p_name, p_value in self._coefficients[label].parameters.items():
-            self._parameters[p_name] = p_value
 
     @overload
     def add_hamiltonian(
@@ -362,15 +301,9 @@ class Schedule(Parameterizable):
                 new_coefficients, interpolation, nsamples=int(1 / self.dt)
             )  # TODO (ameer): allow for partial updates of the coefficients
 
-            for p_name, p_value in self._coefficients[label].parameters.items():
-                self._parameters[p_name] = p_value
-
     def _update_hamiltonian_from_interpolator(self, label: str, new_coefficients: Interpolator | None = None) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = new_coefficients
-
-            for p_name, p_value in self._coefficients[label].parameters.items():
-                self._parameters[p_name] = p_value
 
     @overload
     def update_hamiltonian(
@@ -487,3 +420,19 @@ class Schedule(Parameterizable):
             renderer.save(filepath)
         else:
             renderer.show()
+
+    def __repr__(self) -> str:
+        lines = [
+            f"{type(self).__qualname__}(",
+            "  hamiltonians={",
+            *(f"    '{label}': {ham!r}," for label, ham in self._hamiltonians.items()),
+            "  },",
+            "  coefficients={",
+            *(f"    '{label}': {coeff!r}," for label, coeff in self.coefficients_dict.items()),
+            "  },",
+            f"  dt={self.dt!r},",
+            f"  total_time={self._max_time!r},",
+            f"  interpolation={self._interpolation!r}",
+            ")",
+        ]
+        return "\n".join(lines)
