@@ -530,6 +530,13 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             targets.push_back(py_target.cast<int>());
         }
 
+        // If we have controls, only get the bottom right part of the matrix
+        if (!controls.empty() && !targets.empty() && base_matrix.rows() > 2) {
+            int dim = 1 << targets.size();
+            SparseMatrix controlled_matrix = base_matrix.bottomRightCorner(dim, dim);
+            base_matrix = controlled_matrix;
+        }
+
         // Get the parameter names
         std::vector<std::pair<std::string, double>> parameters;
         py::dict py_parameters = py_gate.attr("get_parameters")();

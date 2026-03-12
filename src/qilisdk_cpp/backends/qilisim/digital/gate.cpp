@@ -92,9 +92,11 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
         if (q < min_qubit)
             min_qubit = q;
     }
-    int base_gate_qubits = int(target_qubits.size()) + int(control_qubits.size());
+    int base_gate_qubits = std::ceil(std::log2(base_gate.cols()));
+    int total_qubits_needed = int(target_qubits.size()) + int(control_qubits.size());
+    int missing_controls = total_qubits_needed - base_gate_qubits;
     int needed_before = min_qubit;
-    int needed_after = num_qubits - needed_before - base_gate_qubits;
+    int needed_after = num_qubits - needed_before - total_qubits_needed;
 
     // Do everything in tuple form for easier manipulation
     Triplets out_entries;
@@ -113,10 +115,8 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
     // 0 1 0 0
     // 0 0 G G
     // 0 0 G G
-    int base_gate_actual_qubits = std::ceil(std::log2(base_gate.cols()));
-    int missing_controls = base_gate_actual_qubits - base_gate_qubits;
     for (int i = 0; i < missing_controls; ++i) {
-        int delta = 1 << (target_qubits.size());
+        int delta = 1 << (base_gate_qubits + i);
         Triplets new_entries;
         for (const auto& entry : out_entries) {
             int row = int(entry.row());
