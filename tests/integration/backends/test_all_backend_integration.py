@@ -575,3 +575,14 @@ def test_swap(backend):
     result = backend.execute(Sampling(circuit=circuit, nshots=10))
     assert isinstance(result, SamplingResult)
     assert result.samples == {"01": 10}
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_toffoli(backend):
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    circuit.add(X(1))
+    circuit.add(X(2).controlled(0, 1))
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.samples == {"111": 10}

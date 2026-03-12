@@ -32,7 +32,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 
     // Precompute things that are used in all branches
     int num_qubits = static_cast<int>(std::log2(output_state.rows()));
-    long long mask = 1LL << (num_qubits - 1 - target_qubit);
+    long long mask = 1LL << (num_qubits - 1 - target_qubits[0]);
     long N = output_state.rows();
     long stride = mask;
     long half = N >> 1;
@@ -487,8 +487,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         }
 
         // If we have a SWAP between qubits i and j, we swap the amplitudes of all basis states where qubit i is 0 and qubit j is 1 with those where qubit i is 1 and qubit j is 0
-    } else if (name == "SWAP") {
-        long other_mask = 1L << (num_qubits - 1 - control_qubit);
+    } else if (name == "SWAP" && target_qubits.size() == 2) {
+        long other_mask = 1L << (num_qubits - 1 - target_qubits[1]);
         long swap_mask = mask | other_mask;
         if (output_state.cols() == 1) {
 #if defined(_OPENMP)
@@ -551,8 +551,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         }
 
         // If we have a CNOT with control qubit j and target qubit i, we swap the amplitudes of all basis states where qubit j is 1 and qubit i is 0 with those where qubit j is 1 and qubit i is 1
-    } else if (name == "CNOT") {
-        long control_mask = 1L << (num_qubits - 1 - control_qubit);
+    } else if ((name == "CNOT" || name == "CX") && control_qubits.size() == 1) {
+        long control_mask = 1L << (num_qubits - 1 - control_qubits[0]);
         if (output_state.cols() == 1) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -622,9 +622,84 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         }
 
+        // If we have a Toffoli with control qubits j and k and target qubit i, we swap the amplitudes of all basis states where qubits j and k are 1 and qubit i is 0 with those where qubits j and k are 1 and qubit i is 1
+    } else if ((name == "Toffoli" || name == "CCNOT" || name == "CCX") && control_qubits.size() == 2) {
+        long control_mask = 0;
+        for (int control_qubit : control_qubits) {
+            control_mask |= 1L << (num_qubits - 1 - control_qubit);
+        }
+        if (output_state.cols() == 1) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long k = 0; k < half; ++k) {
+                long block = k / stride;
+                long offset = k % stride;
+                long i = block * (stride << 1) + offset;
+                if ((i & control_mask) == control_mask) {
+                    long j = i ^ mask;
+                    if (i < j) {
+                        std::swap(output_state(i), output_state(j));
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < long(dim); ++i) {
+                if ((i & control_mask) == control_mask) {
+                    long j = i ^ mask;
+                    if (i < j) {
+                        output_state.row(i).swap(output_state.row(j));
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < dim; ++i) {
+                if ((i & control_mask) == control_mask) {
+                    long j = i ^ mask;
+                    if (i < j) {
+                        output_state.col(i).swap(output_state.col(j));
+                    }
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+            {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < long(dim); ++i) {
+                    if ((i & control_mask) == control_mask) {
+                        long j = i ^ mask;
+                        if (i < j) {
+                            output_state.row(i).swap(output_state.row(j));
+                        }
+                    }
+                }
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < dim; ++i) {
+                    if ((i & control_mask) == control_mask) {
+                        long j = i ^ mask;
+                        if (i < j) {
+                            output_state.col(i).swap(output_state.col(j));
+                        }
+                    }
+                }
+            }
+        }
+
         // If we have a CZ with control qubit j and target qubit i, we multiply the amplitude of all basis states where qubit j is 1 and qubit i is 1 by -1
     } else if (name == "CZ") {
-        long control_mask = 1L << (num_qubits - 1 - control_qubit);
+        long control_mask = 1L << (num_qubits - 1 - control_qubits[0]);
         if (output_state.cols() == 1) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -695,8 +770,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         }
 
         // If we have a 2x2 base matrix and a control qubit
-    } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2 && control_qubit != -1) {
-        long control_mask = 1L << (num_qubits - 1 - control_qubit);
+    } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2 && control_qubits.size() == 1) {
+        long control_mask = 1L << (num_qubits - 1 - control_qubits[0]);
         if (output_state.cols() == 1) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -858,7 +933,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 
     } else {
         std::stringstream ss;
-        ss << "Unknown operator: " << name << " with base matrix:\n" << base_matrix << "\n and control qubit: " << control_qubit;
+        ss << "Unknown operator: " << get_id();
         throw std::invalid_argument(ss.str());
     }
 }
@@ -876,19 +951,16 @@ MatrixFreeOperator::MatrixFreeOperator(const Gate& gate) {
     Raises:
         std::invalid_argument: If the gate has more than 1 control qubits or does not have exactly 1 target qubit.
     */
-    if (gate.get_control_qubits().size() > 1) {
+    if (gate.get_control_qubits().size() > 1 && gate.get_name() != "Toffoli" && gate.get_name() != "CCNOT" && gate.get_name() != "CCX") {
         throw std::invalid_argument("MatrixFreeOperator only supports gates with 1 or fewer total control qubits.");
     }
     if (gate.get_target_qubits().size() != 1 && gate.get_name() != "SWAP") {
         throw std::invalid_argument("MatrixFreeOperator requires a gate with exactly 1 target qubit.");
     }
-    target_qubit = gate.get_target_qubits()[0];
-    control_qubit = gate.get_control_qubits().empty() ? -1 : gate.get_control_qubits()[0];
+    target_qubits = gate.get_target_qubits();
+    control_qubits = gate.get_control_qubits();
     base_matrix = gate.get_base_matrix();
     name = gate.get_name();
-    if (name == "SWAP") {
-        control_qubit = gate.get_target_qubits()[1];
-    }
 }
 
 std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {
@@ -903,12 +975,28 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {
     Returns:
         std::ostream&: The output stream after writing the operator to it.
     */
-    os << op.name;
-    if (op.target_qubit != -1) {
-        os << "(" << op.target_qubit << ")";
+    os << op.name << "(";
+    for (size_t i = 0; i < op.target_qubits.size(); ++i) {
+        os << op.target_qubits[i];
+        if (i < op.target_qubits.size() - 1) {
+            os << ",";
+        }
     }
-    if (op.control_qubit != -1) {
-        os << "_c" << op.control_qubit;
+    os << ")";
+    for (size_t i = 0; i < op.control_qubits.size(); ++i) {
+        os << "_c" << op.control_qubits[i];
     }
     return os;
+}
+
+std::string MatrixFreeOperator::get_id() const {
+    /*
+    Get a unique string identifier for the operator based on its name, target qubits and control qubits.
+
+    Returns:
+        std::string: The unique identifier for the operator.
+    */
+    std::stringstream id;
+    id << *this;
+    return id.str();
 }

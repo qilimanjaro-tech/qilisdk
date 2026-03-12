@@ -116,7 +116,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
     // 0 0 G G
     // 0 0 G G
     for (int i = 0; i < missing_controls; ++i) {
-        int delta = 1 << (target_qubits.size());
+        int delta = 1 << (base_gate_qubits + i);
         Triplets new_entries;
         for (const auto& entry : out_entries) {
             int row = int(entry.row());
