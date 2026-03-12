@@ -19,6 +19,69 @@
 #include <random>
 #include <sstream>
 
+DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {
+    /*
+    Convert a vector of sparse matrices representing eigenvectors into a single dense matrix where each column is an eigenvector.
+
+    Args:
+        evecs (std::vector<SparseMatrix>): A vector of sparse matrices representing the eigenvectors.
+
+    Returns:
+        DenseMatrix: A dense matrix where each column is an eigenvector from the input vector.
+    */
+    if (evecs.empty()) {
+        return DenseMatrix();
+    }
+    int nrows = int(evecs[0].rows());
+    int ncols = int(evecs.size());
+    DenseMatrix evecs_dense(nrows, ncols);
+    for (int i = 0; i < ncols; ++i) {
+        evecs_dense.col(i) = DenseMatrix(evecs[i]);
+    }
+    return evecs_dense;
+}
+
+QTensorCpp _reconstruct_from_diag(const Eigen::VectorXcd& evals_scaled, const std::vector<SparseMatrix>& evecs) {
+    /*
+    Reconstruct a dense matrix from a diagonal matrix of eigenvalues and a set of eigenvectors.
+
+    Args:
+        evals_scaled (Eigen::VectorXcd): A vector containing the scaled eigenvalues.
+        evecs (std::vector<SparseMatrix>): A vector of sparse matrices representing the eigenvectors.
+
+    Returns:
+        DenseMatrix: The reconstructed dense matrix.
+    */
+    DenseMatrix evecs_dense = _get_dense_eigenvectors(evecs);
+    DenseMatrix result_dense = evecs_dense * evals_scaled.asDiagonal() * evecs_dense.adjoint();
+    return QTensorCpp(result_dense.sparseView());
+}
+
+void _validate_shape(const SparseMatrix& data) {
+    /*
+    Given a matrix, check it has a valid quantum shape, that is:
+     - all dimensions are powers of two
+     - it is either square or a vector
+
+    Args:
+        data (Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>): The matrix to validate.
+
+    Raises:
+        py::value_error: If the input matrix is empty.
+        py::value_error: If the input matrix does not have dimensions that are powers of 2.
+        py::value_error: If the input matrix is not square and not a vector.
+    */
+    if (data.rows() == 0 || data.cols() == 0) {
+        throw py::value_error("A QTensor should be initialized with a non-empty 2D array; got shape (" + std::to_string(data.rows()) + ", " + std::to_string(data.cols()) + ")");
+    }
+    if (((data.rows() & (data.rows() - 1)) != 0) || ((data.cols() & (data.cols() - 1)) != 0)) {
+        throw py::value_error("A QTensor should have dimensions that are powers of 2; got shape (" + std::to_string(data.rows()) + ", " + std::to_string(data.cols()) + ")");
+    }
+    if (data.rows() != data.cols() && data.rows() != 1 && data.cols() != 1) {
+        throw py::value_error("A QTensor should be either square or a vector; got shape (" + std::to_string(data.rows()) + ", " + std::to_string(data.cols()) + ")");
+    }
+}
+
 QTensorCpp::QTensorCpp(int rows, int cols) {
     /*
     Construct a QTensor from the given number of rows and columns, which must be powers of 2.
@@ -31,13 +94,8 @@ QTensorCpp::QTensorCpp(int rows, int cols) {
         py::value_error: If rows or cols are not positive.
         py::value_error: If rows or cols are not powers of 2.
     */
-    if (rows <= 0 || cols <= 0) {
-        throw py::value_error("Number of rows and columns must be positive");
-    }
-    if (((rows & (rows - 1)) != 0) || ((cols & (cols - 1)) != 0)) {
-        throw py::value_error("Number of rows and columns must be powers of 2");
-    }
     _data = SparseMatrix(rows, cols);
+    _validate_shape(_data);
 }
 
 QTensorCpp::QTensorCpp(const SparseMatrix& data) : _data(data) {
@@ -46,17 +104,8 @@ QTensorCpp::QTensorCpp(const SparseMatrix& data) : _data(data) {
 
     Args:
         data (Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>): The sparse matrix data for the tensor.
-
-    Raises:
-        py::value_error: If the input matrix is empty.
-        py::value_error: If the input matrix does not have dimensions that are powers of 2.
     */
-    if (_data.rows() == 0 || _data.cols() == 0) {
-        throw py::value_error("A QTensor should be initialized with a non-empty 2D array; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
-    }
-    if (((_data.rows() & (_data.rows() - 1)) != 0) || ((_data.cols() & (_data.cols() - 1)) != 0)) {
-        throw py::value_error("A QTensor should have dimensions that are powers of 2; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
-    }
+    _validate_shape(_data);
 }
 
 QTensorCpp::QTensorCpp(const py::object& data) {
@@ -70,10 +119,6 @@ QTensorCpp::QTensorCpp(const py::object& data) {
 
     Args:
         data (py::object): The input data to construct the QTensor from.
-
-    Raises:
-        py::value_error: If the input data is not one of the accepted types.
-        py::value_error: If the resulting matrix is empty or does not have dimensions that are powers of 2.
     */
     if (py::isinstance<QTensorCpp>(data)) {
         _data = data.cast<QTensorCpp>().get_data();
@@ -116,12 +161,7 @@ QTensorCpp::QTensorCpp(const py::object& data) {
     } else {
         throw py::value_error("Data object must be a QTensor, a list of lists, a scipy sparse matrix, or a numpy array, got: " + std::string(py::str(data)));
     }
-    if (_data.rows() == 0 || _data.cols() == 0) {
-        throw py::value_error("A QTensor should be initialized with a non-empty 2D array; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
-    }
-    if (((_data.rows() & (_data.rows() - 1)) != 0) || ((_data.cols() & (_data.cols() - 1)) != 0)) {
-        throw py::value_error("A QTensor should have dimensions that are powers of 2; got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
-    }
+    _validate_shape(_data);
 }
 
 py::object QTensorCpp::as_scipy() const {
@@ -205,9 +245,43 @@ bool QTensorCpp::is_scalar() const {
     return _data.rows() == 1 && _data.cols() == 1;
 }
 
+bool QTensorCpp::is_symmetric(double atol) {
+    /*
+    Check if the QTensor is symmetric within a given absolute tolerance.
+    This means A == A^T within the specified tolerance, where A^T is the transpose of A.
+
+    Args:
+        atol (double): The absolute tolerance for checking symmetry.
+
+    Returns:
+        bool: True if the QTensor is symmetric within the given tolerance, False otherwise
+    */
+    if (_data.rows() != _data.cols()) {
+        return false;
+    }
+    if (!_symmetric_diff_computed) {
+        for (int k = 0; k < _data.outerSize(); ++k) {
+            for (typename SparseMatrix::InnerIterator it(_data, k); it; ++it) {
+                int i = int(it.row());
+                int j = int(it.col());
+                std::complex<double> val = it.value();
+                std::complex<double> other_val = _data.coeff(j, i);
+                _max_symmetric_diff = std::max(_max_symmetric_diff, std::abs(val - other_val));
+            }
+        }
+        _symmetric_diff_computed = true;
+    }
+    if (_max_symmetric_diff > atol) {
+        return false;
+    }
+    return true;
+
+}
+
 bool QTensorCpp::is_self_adjoint(double atol) {
     /*
     Check if the QTensor is self-adjoint (Hermitian) within a given absolute tolerance.
+    This means A == A^† within the specified tolerance, where A^† is the conjugate transpose of A.
 
     Args:
         atol (double): The absolute tolerance for checking self-adjointness.
@@ -587,17 +661,10 @@ double QTensorCpp::norm(const std::string& norm_type) {
     } else if (norm_type == "trace") {
         return trace().real();
     } else if (norm_type == "nuclear") {
-        if (is_ket() || is_bra()) {
-            return 1.0;
-        }
-        if (_eigenvalues.empty()) {
-            compute_eigendecomposition();
-        }
-        double sum = 0.0;
-        for (const auto& eval : _eigenvalues) {
-            sum += std::abs(eval);
-        }
-        return sum;
+        DenseMatrix dense_data(_data);
+        Eigen::BDCSVD<DenseMatrix> svd(DenseMatrix(dense_data), Eigen::ComputeThinU | Eigen::ComputeThinV);
+        double sum_singular_values = svd.singularValues().array().abs().sum();
+        return sum_singular_values;
     } else if (norm_type == "inf") {
         double max_abs_val = 0.0;
         for (int k = 0; k < _data.outerSize(); ++k) {
@@ -1110,7 +1177,7 @@ QTensorCpp QTensorCpp::as_density_matrix(double atol, double max_relative_correc
     }
 }
 
-QTensorCpp QTensorCpp::exp() const {
+QTensorCpp QTensorCpp::exp() {
     /*
     Compute the matrix exponential of this QTensor, returning a new QTensor as the result.
     If the eigendecomposition of this QTensor has already been computed, the exponential
@@ -1118,24 +1185,22 @@ QTensorCpp QTensorCpp::exp() const {
 
     Returns:
         QTensorCpp: A new QTensor that is the matrix exponential of this QTensor.
+
+    Raises:
+        ValueError: If this QTensor is not an operator, since the matrix exponential is only defined for operators.
     */
-    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
-        SparseMatrix result(_data.rows(), _data.cols());
-        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    if (!is_operator()) {
+        throw py::value_error("Matrix exponential is only defined for operators");
+    }
+    if (!_eigenvalues.empty() && !_eigenvectors.empty() && is_symmetric()) {
+        Eigen::VectorXcd new_evals(_eigenvalues.size());
+        new_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
-            std::complex<double> eval_exp = std::exp(_eigenvalues[i]);
-            const SparseMatrix& evec = _eigenvectors[i];
-            for (int k = 0; k < evec.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = int(it.row());
-                    int col = int(it.col());
-                    std::complex<double> val = eval_exp * it.value();
-                    triplets.emplace_back(row, col, val);
-                }
+            if (std::abs(_eigenvalues[i]) > 0) {
+                new_evals(i) = std::exp(_eigenvalues[i]);
             }
         }
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
+        return _reconstruct_from_diag(new_evals, _eigenvectors);
     }
     Eigen::MatrixXcd dense = _data;
     Eigen::MatrixXcd exp_dense = dense.exp();
@@ -1143,7 +1208,7 @@ QTensorCpp QTensorCpp::exp() const {
     return QTensorCpp(exp_sparse);
 }
 
-QTensorCpp QTensorCpp::log() const {
+QTensorCpp QTensorCpp::log() {
     /*
     Compute the matrix logarithm of this QTensor, returning a new QTensor as the result.
     If the eigendecomposition of this QTensor has already been computed, the logarithm
@@ -1151,24 +1216,22 @@ QTensorCpp QTensorCpp::log() const {
 
     Returns:
         QTensorCpp: A new QTensor that is the matrix logarithm of this QTensor.
+
+    Raises:
+        ValueError: If this QTensor is not an operator, since the matrix logarithm is only defined for operators.
     */
-    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
-        SparseMatrix result(_data.rows(), _data.cols());
-        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    if (!is_operator()) {
+        throw py::value_error("Matrix logarithm is only defined for operators");
+    }
+    if (!_eigenvalues.empty() && !_eigenvectors.empty() && is_symmetric()) {
+        Eigen::VectorXcd new_evals(_eigenvalues.size());
+        new_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
-            std::complex<double> eval_log = std::log(_eigenvalues[i]);
-            const SparseMatrix& evec = _eigenvectors[i];
-            for (int k = 0; k < evec.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = int(it.row());
-                    int col = int(it.col());
-                    std::complex<double> val = eval_log * it.value();
-                    triplets.emplace_back(row, col, val);
-                }
+            if (std::abs(_eigenvalues[i]) > 0) {
+                new_evals(i) = std::log(_eigenvalues[i]);
             }
         }
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
+        return _reconstruct_from_diag(new_evals, _eigenvectors);
     }
     Eigen::MatrixXcd dense = _data;
     Eigen::MatrixXcd log_dense = dense.log();
@@ -1176,7 +1239,7 @@ QTensorCpp QTensorCpp::log() const {
     return QTensorCpp(log_sparse);
 }
 
-QTensorCpp QTensorCpp::sqrt() const {
+QTensorCpp QTensorCpp::sqrt() {
     /*
     Compute the matrix square root of this QTensor, returning a new QTensor as the result.
     If the eigendecomposition of this QTensor has already been computed, the square root
@@ -1184,24 +1247,22 @@ QTensorCpp QTensorCpp::sqrt() const {
 
     Returns:
         QTensorCpp: A new QTensor that is the matrix square root of this QTensor.
+
+    Raises:
+        ValueError: If this QTensor is not an operator, since the matrix square root is only defined for operators.
     */
-    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
-        SparseMatrix result(_data.rows(), _data.cols());
-        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    if (!is_operator()) {
+        throw py::value_error("Matrix square root is only defined for operators");
+    }
+    if (!_eigenvalues.empty() && !_eigenvectors.empty() && is_self_adjoint()) {
+        Eigen::VectorXcd new_evals(_eigenvalues.size());
+        new_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
-            std::complex<double> eval_sqrt = std::sqrt(_eigenvalues[i]);
-            const SparseMatrix& evec = _eigenvectors[i];
-            for (int k = 0; k < evec.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = int(it.row());
-                    int col = int(it.col());
-                    std::complex<double> val = eval_sqrt * it.value();
-                    triplets.emplace_back(row, col, val);
-                }
+            if (std::abs(_eigenvalues[i]) > 0) {
+                new_evals(i) = std::sqrt(_eigenvalues[i]);
             }
         }
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
+        return _reconstruct_from_diag(new_evals, _eigenvectors);
     }
     // Handle if all zero (would give NaN in Eigen's sqrt)
     if (_data.nonZeros() == 0) {
@@ -1213,35 +1274,33 @@ QTensorCpp QTensorCpp::sqrt() const {
     return QTensorCpp(sqrt_sparse);
 }
 
-QTensorCpp QTensorCpp::pow(int n) const {
+QTensorCpp QTensorCpp::pow(double n) {
     /*
     Compute the matrix power of this QTensor to the integer n, returning a new QTensor as the result.
     If the eigendecomposition of this QTensor has already been computed, the power is computed
     more efficiently using the eigenvalues and eigenvectors.
 
     Args:
-        n (int): The integer power to which to raise this QTensor.
+        n (float): The power to which to raise this QTensor.
 
     Returns:
         QTensorCpp: A new QTensor that is this QTensor raised to the power of n.
+
+    Raises:
+        ValueError: If this QTensor is not an operator, since the matrix power is only defined for operators.
     */
-    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
-        SparseMatrix result(_data.rows(), _data.cols());
-        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    if (!is_operator()) {
+        throw py::value_error("Matrix power is only defined for operators");
+    }
+    if (!_eigenvalues.empty() && !_eigenvectors.empty() && is_self_adjoint()) {
+        Eigen::VectorXcd new_evals(_eigenvalues.size());
+        new_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
-            std::complex<double> eval_pow = std::pow(_eigenvalues[i], n);
-            const SparseMatrix& evec = _eigenvectors[i];
-            for (int k = 0; k < evec.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = int(it.row());
-                    int col = int(it.col());
-                    std::complex<double> val = eval_pow * it.value();
-                    triplets.emplace_back(row, col, val);
-                }
+            if (std::abs(_eigenvalues[i]) > 0) {
+                new_evals(i) = std::pow(_eigenvalues[i], n);
             }
         }
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
+        return _reconstruct_from_diag(new_evals, _eigenvectors);
     }
     Eigen::MatrixXcd dense = _data;
     Eigen::MatrixXcd pow_dense = dense.pow(n);
@@ -1664,9 +1723,7 @@ std::complex<double> QTensorCpp::dot_python(const py::object& other) const {
     }
 }
 
-#include <iostream>  // TODO remove
-
-double QTensorCpp::fidelity(const QTensorCpp& other) const {
+double QTensorCpp::fidelity(const QTensorCpp& other) {
     /*
     Compute the fidelity between this QTensor and another QTensor, which is a measure of how close the two QTensors are to each other.
 
@@ -1684,21 +1741,18 @@ double QTensorCpp::fidelity(const QTensorCpp& other) const {
         py::value_error: If the two QTensors are not of the same type (both kets, both bras, or both operators).
     */
     if ((is_ket() && other.is_ket()) || (is_bra() && other.is_bra())) {
-        return std::pow(std::abs(dot(other.conjugate())), 2);
+        return std::pow(std::abs(dot(other)), 2);
     } else if (is_operator() && other.is_operator()) {
         QTensorCpp sqrt_self = sqrt();
-        std::cout << "sqrt_self:\n" << sqrt_self << std::endl;
         QTensorCpp product = sqrt_self * other * sqrt_self;
-        std::cout << "product:\n" << product << std::endl;
         QTensorCpp sqrt_product = product.sqrt();
-        std::cout << "sqrt_product:\n" << sqrt_product << std::endl;
         return std::pow(sqrt_product.trace().real(), 2);
     } else {
         throw py::value_error("Fidelity can only be computed between states of the same type (ket, bra, or operator)");
     }
 }
 
-double QTensorCpp::fidelity_python(const py::object& other) const {
+double QTensorCpp::fidelity_python(const py::object& other) {
     /*
     Compute the fidelity between this QTensor and another QTensor, which is a measure of how close the two QTensors are to each other.
 
@@ -1817,34 +1871,34 @@ int QTensorCpp::rank() {
     return _rank;
 }
 
-QTensorCpp QTensorCpp::inverse() const {
+QTensorCpp QTensorCpp::inverse() {
     /*
     Compute the matrix inverse of this QTensor, returning a new QTensor as the result.
+
     If the eigendecomposition of this QTensor has already been computed, the inverse
     is computed more efficiently using the eigenvalues and eigenvectors.
 
+    If the matrix is singular, this function will return a pseudo-inverse where the 
+    inverse of zero eigenvalues is treated as zero.
+
     Returns:
         QTensorCpp: A new QTensor that is the matrix inverse of this QTensor.
+
+    Raises:
+        py::value_error: If this QTensor is not an operator.
     */
-    if (!_eigenvalues.empty() && !_eigenvectors.empty()) {
-        SparseMatrix result(_data.rows(), _data.cols());
-        std::vector<Eigen::Triplet<std::complex<double>>> triplets;
+    if (!is_operator()) {
+        throw py::value_error("Inverse can only be computed for operators");
+    }
+    if (!_eigenvalues.empty() && !_eigenvectors.empty() && is_self_adjoint()) {
+        Eigen::VectorXcd inv_evals(_eigenvalues.size());
+        inv_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
             if (std::abs(_eigenvalues[i]) > 0) {
-                std::complex<double> eval_inv = 1.0 / _eigenvalues[i];
-                const SparseMatrix& evec = _eigenvectors[i];
-                for (int k = 0; k < evec.outerSize(); ++k) {
-                    for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                        int row = int(it.row());
-                        int col = int(it.col());
-                        std::complex<double> val = eval_inv * it.value();
-                        triplets.emplace_back(row, col, val);
-                    }
-                }
+                inv_evals(i) = 1.0 / _eigenvalues[i];
             }
         }
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
+        return _reconstruct_from_diag(inv_evals, _eigenvectors);
     }
     Eigen::MatrixXcd dense = _data;
     Eigen::MatrixXcd inv_dense = dense.inverse();

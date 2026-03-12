@@ -57,10 +57,10 @@ class QTensor:
             density = ket * ket.adjoint()
     """
 
-    def __init__(self, other: np.ndarray | sparray | spmatrix | list[list[Number]] | QTensor | QTensorCpp) -> None:
+    def __init__(self, other: np.ndarray | sparray | spmatrix | list[list[Number]]) -> None:
         """
         Args:
-            other (np.ndarray | sparray | spmatrix | list[list[Number]] | QTensor | QTensorCpp): Dense or sparse matrix defining the quantum object. Expected
+            other (np.ndarray | sparray | spmatrix | list[list[Number]]): Dense or sparse matrix defining the quantum object. Expected
                 shapes are ``(2**N, 2**N)`` for operators, ``(2**N, 1)`` for kets, ``(1, 2**N)`` for bras, or ``(1, 1)`` for scalars.
 
         Raises:
@@ -152,19 +152,65 @@ class QTensor:
 
         A valid density matrix must be square, Hermitian, positive semi-definite, and have a trace equal to 1.
 
+        Args:
+            tol (float, optional): The absolute tolerance for checking density matrix properties. Defaults to the global setting.
+
         Returns:
             bool: True if the QTensor is a valid density matrix, False otherwise.
         """
         return self._qtensor_cpp.is_density_matrix(tol)
 
-    def is_hermitian(self) -> bool:
+    def is_hermitian(self, tol: float = get_settings().atol) -> bool:
         """
         Check if the QTensor is Hermitian.
+
+        Args:
+            tol (float, optional): The absolute tolerance for checking Hermitian property. Defaults to the global setting.
 
         Returns:
             bool: True if the QTensor is Hermitian, False otherwise.
         """
-        return self._qtensor_cpp.is_hermitian(get_settings().atol)
+        return self._qtensor_cpp.is_hermitian(tol)
+
+    def is_unitary(self, tol: float = get_settings().atol) -> bool:
+        """
+        Check if the QTensor is unitary.
+
+        Args:
+            tol (float, optional): The absolute tolerance for checking unitarity. Defaults to the global setting.
+
+        Returns:
+            bool: True if the QTensor is unitary, False otherwise.
+        """
+        return self._qtensor_cpp.is_unitary(tol)
+
+    def is_symmetric(self, tol: float = get_settings().atol) -> bool:
+        """
+        Check if the QTensor is symmetric.
+
+        A matrix is symmetric if it is equal to its transpose (A == A^T) within a specified tolerance.
+
+        Args:
+            tol (float, optional): The absolute tolerance for checking symmetry. Defaults to the global setting.
+
+        Returns:
+            bool: True if the QTensor is symmetric, False otherwise.
+        """
+        return self._qtensor_cpp.is_symmetric(tol)
+
+    def is_self_adjoint(self, tol: float = get_settings().atol) -> bool:
+        """
+        Check if the QTensor is self-adjoint (Hermitian).
+
+        A matrix is self-adjoint if it is equal to its conjugate transpose (A == A^†) within a specified tolerance.
+
+        Args:
+            tol (float, optional): The absolute tolerance for checking self-adjointness. Defaults to the global setting.
+
+        Returns:
+            bool: True if the QTensor is self-adjoint, False otherwise.
+        """
+        return self._qtensor_cpp.is_self_adjoint(tol)
 
     def adjoint(self) -> QTensor:
         """
@@ -594,16 +640,21 @@ class QTensor:
         """
         return QTensor(self._qtensor_cpp.anticommutator_python(other))
 
-    def pow(self, exponent: int) -> QTensor:
+    def pow(self, exponent: float) -> QTensor:
         """
         Compute the integer power of the QTensor.
 
         Args:
-            exponent (int): The exponent to raise the QTensor to.
+            exponent (float): The exponent to raise the QTensor to.
 
         Returns:
             QTensor: A new QTensor representing the result of raising this QTensor to the given power.
+
+        Raises:
+            ValueError: If the exponent is not a real number.
         """
+        if not isinstance(exponent, (int, float)):
+            raise ValueError("Exponent must be a real number")
         return QTensor(self._qtensor_cpp.pow(exponent))
 
     def sqrt(self) -> QTensor:

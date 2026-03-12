@@ -41,6 +41,8 @@ class QTensorCpp {
     double _max_unitary_diff = 0.0;
     bool _rank_computed = false;
     int _rank = 0;
+    bool _symmetric_diff_computed = false;
+    double _max_symmetric_diff = 0.0;
 
    public:
     // Constructors and basic accessors
@@ -66,11 +68,11 @@ class QTensorCpp {
     std::complex<double> dot(const QTensorCpp& other) const;
     std::complex<double> dot_python(const py::object& other) const;
     QTensorCpp normalized(const std::string& norm_type);
-    QTensorCpp inverse() const;
-    QTensorCpp pow(int n) const;
-    QTensorCpp sqrt() const;
-    QTensorCpp log() const;
-    QTensorCpp exp() const;
+    QTensorCpp inverse();
+    QTensorCpp pow(double n);
+    QTensorCpp sqrt();
+    QTensorCpp log();
+    QTensorCpp exp();
     int rank();
     std::vector<std::complex<double>> get_eigenvalues() const;
     py::object get_eigenvalues_python() const;
@@ -100,6 +102,7 @@ class QTensorCpp {
     bool is_scalar() const;
     bool is_pure(double atol = default_atol);
     bool is_density_matrix(double atol = default_atol);
+    bool is_symmetric(double atol = default_atol);
     bool is_self_adjoint(double atol = default_atol);
     bool is_positive_semidefinite(double atol = default_atol);
     bool is_unitary(double atol = default_atol);
@@ -109,8 +112,8 @@ class QTensorCpp {
     QTensorCpp as_density_matrix(double atol = default_atol, double max_relative_correction = 0.1);
     double entropy_von_neumann();
     double entropy_renyi(double alpha);
-    double fidelity(const QTensorCpp& other) const;
-    double fidelity_python(const py::object& other) const;
+    double fidelity(const QTensorCpp& other);
+    double fidelity_python(const py::object& other);
     double purity();
     std::vector<double> probabilities() const;
     py::list probabilities_python() const;

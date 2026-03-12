@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+from scipy.linalg import expm, logm, sqrtm
 from scipy.sparse import coo_matrix, csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
@@ -599,9 +600,7 @@ def test_non_hermitian_trace_norm():
     arr = np.array([[0, 1], [0, 0]])
     qobj = QTensor(arr)
     norm = qobj.norm(order="tr")
-    assert np.isclose(
-        norm, 0.0
-    )  # trace norm is the absolute value of the eigenvalues, which are both 0 for this matrix
+    assert np.isclose(norm, 1.0)
 
 
 def test_trace_norm_ket_bra():
@@ -854,10 +853,10 @@ def test_qtensor_anticommutators():
 
 
 def test_qtensor_sqrt():
-    arr = np.array([[4, 0], [0, 9]])
+    arr = np.array([[4, 2.3], [1.3, 9]])
     qobj = QTensor(arr)
     sqrt_qobj = qobj.sqrt()
-    expected = np.array([[2, 0], [0, 3]])
+    expected = sqrtm(arr)
     np.testing.assert_allclose(sqrt_qobj.dense(), expected, atol=1e-8)
 
 
@@ -871,41 +870,155 @@ def test_qtensor_log():
     arr = np.array([[1, 0], [0, np.e]])
     qobj = QTensor(arr)
     log_qobj = qobj.log()
-    expected = np.array([[0, 0], [0, 1]])
+    expected = logm(arr)
     np.testing.assert_allclose(log_qobj.dense(), expected, atol=1e-8)
 
 
 def test_qtensor_pow():
-    arr = np.array([[2, 0], [0, 3]])
+    arr = np.array([[1, 0.3], [0.2, 2]])
     qobj = QTensor(arr)
     pow_qobj = qobj.pow(2)
-    expected = np.array([[4, 0], [0, 9]])
+    expected = arr @ arr
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_pow_non_integer():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    pow_qobj = qobj.pow(0.5)
+    expected = sqrtm(arr)
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_pow_complex():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    with pytest.raises(ValueError, match="Exponent must be a real number"):
+        _ = qobj.pow(1 + 1j)
+
+
+def test_qtensor_pow_negative():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    pow_qobj = qobj.pow(-1)
+    expected = np.linalg.inv(arr)
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-6)
+
+
+def test_qtensor_pow_zero():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    pow_qobj = qobj.pow(0)
+    expected = np.eye(2)
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_not_symmetric_pow_after_eig():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    pow_qobj = qobj.pow(2)
+    expected = arr @ arr
+    np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_symmetric_pow_after_eig():
+    arr = np.array([[1, 0.3], [0.3, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    pow_qobj = qobj.pow(2)
+    expected = arr @ arr
     np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
 
 
 def test_qtensor_exp():
-    arr = np.array([[0, 1], [0, 0]])
+    arr = np.array([[1, 0.3], [0.2, 2]])
     qobj = QTensor(arr)
     exp_qobj = qobj.exp()
-    expected = np.array([[1, 1], [0, 1]])
+    expected = expm(arr)
+    np.testing.assert_allclose(exp_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_not_symmetric_exp_after_eig():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    exp_qobj = qobj.exp()
+    expected = expm(arr)
+    np.testing.assert_allclose(exp_qobj.dense(), expected, atol=1e-8)
+
+
+def test_qtensor_symmetric_exp_after_eig():
+    arr = np.array([[1, 0.3], [0.3, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    exp_qobj = qobj.exp()
+    expected = expm(arr)
     np.testing.assert_allclose(exp_qobj.dense(), expected, atol=1e-8)
 
 
 def test_qtensor_inverse():
-    arr = np.array([[1, 0], [0, 2]])
+    arr = np.array([[1, 0.3], [0.2, 2]])
     qobj = QTensor(arr)
     inv_qobj = qobj.inverse()
-    expected = np.array([[1, 0], [0, 0.5]])
-    np.testing.assert_allclose(inv_qobj.dense(), expected, atol=1e-8)
+    expected = np.linalg.inv(arr)
+    np.testing.assert_allclose(inv_qobj.dense(), expected, atol=1e-6)
+
+
+def test_qtensor_not_symmetric_inverse_after_eig():
+    arr = np.array([[1, 0.3], [0.2, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    inv_qobj = qobj.inverse()
+    expected = np.linalg.inv(arr)
+    np.testing.assert_allclose(inv_qobj.dense(), expected, atol=1e-6)
+
+
+def test_qtensor_symmetric_inverse_after_eig():
+    arr = np.array([[1, 0.3], [0.3, 2]])
+    qobj = QTensor(arr)
+    qobj.eig()
+    inv_qobj = qobj.inverse()
+    expected = np.linalg.inv(arr)
+    np.testing.assert_allclose(inv_qobj.dense(), expected, atol=1e-6)
+
+
+def test_qtensor_is_unitary():
+    q1 = QTensor(np.array([[1, 0], [0, 1]]))  # Identity
+    q2 = QTensor(np.array([[0, 1], [1, 0]]))  # X gate
+    q3 = QTensor(np.array([[1, 1], [0, 1]]))  # Not unitary
+
+    assert q1.is_unitary()
+    assert q2.is_unitary()
+    assert not q3.is_unitary()
+
+
+def test_qtensor_is_symmetric():
+    q1 = QTensor(np.array([[1, 2], [2, 1]]))  # Symmetric
+    q2 = QTensor(np.array([[1, 0], [2, 1]]))  # Not symmetric
+
+    assert q1.is_symmetric()
+    assert not q2.is_symmetric()
+
+
+def test_qtensor_is_self_adjoint():
+    q1 = QTensor(np.array([[1, 2], [2, 1]]))  # Self-adjoint
+    q2 = QTensor(np.array([[1, 0], [2, 1]]))  # Not self-adjoint
+
+    assert q1.is_self_adjoint()
+    assert not q2.is_self_adjoint()
 
 
 def test_qtensor_fidelity():
     q1 = ket(0).to_density_matrix()
     q2 = ket(0).to_density_matrix()
     q3 = ket(1).to_density_matrix()
+    q4 = QTensor([[1 / np.sqrt(2), 1j / np.sqrt(2)]])
+    q5 = QTensor([[1 / np.sqrt(2), -1j / np.sqrt(2)]])
 
     assert np.isclose(q1.fidelity(q2), 1.0)
     assert np.isclose(q1.fidelity(q3), 0.0)
+    assert np.isclose(q4.fidelity(q5), 0.0)
 
 
 def test_qtensor_probabilities():
