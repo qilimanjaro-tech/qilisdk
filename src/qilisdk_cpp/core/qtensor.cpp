@@ -662,7 +662,7 @@ double QTensorCpp::norm(const std::string& norm_type) {
         return trace().real();
     } else if (norm_type == "nuclear") {
         DenseMatrix dense_data(_data);
-        Eigen::BDCSVD<DenseMatrix> svd(DenseMatrix(dense_data), Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Eigen::BDCSVD<DenseMatrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(dense_data);
         double sum_singular_values = svd.singularValues().array().abs().sum();
         return sum_singular_values;
     } else if (norm_type == "inf") {
