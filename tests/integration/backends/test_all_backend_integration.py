@@ -546,3 +546,32 @@ def test_execute_quantum_reservoir_qutip(monkeypatch):
     assert result.final_state is not None
     assert len(result.expected_values) == 2
     assert len(result.intermediate_states) == 2
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_cnot_on_one(backend):
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(CNOT(control=0, target=1))
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.samples == {"11": 10}
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_controlled_u3(backend):
+    circuit = Circuit(nqubits=2)
+    circuit.add(U3(1, theta=1.0, phi=0.5, gamma=0.25).controlled(0))
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.samples == {"00": 10}
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_swap(backend):
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(SWAP(0, 1))
+    result = backend.execute(Sampling(circuit=circuit, nshots=10))
+    assert isinstance(result, SamplingResult)
+    assert result.samples == {"01": 10}

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "matrix_free_operator.h"
+#include <sstream>
 
 const std::complex<double> imag(0.0, 1.0);
 const std::complex<double> imag_conj(0.0, -1.0);
@@ -485,6 +486,70 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         }
 
+        // If we have a SWAP between qubits i and j, we swap the amplitudes of all basis states where qubit i is 0 and qubit j is 1 with those where qubit i is 1 and qubit j is 0
+    } else if (name == "SWAP") {
+        long other_mask = 1L << (num_qubits - 1 - control_qubit);
+        long swap_mask = mask | other_mask;
+        if (output_state.cols() == 1) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long k = 0; k < half; ++k) {
+                long block = k / stride;
+                long offset = k % stride;
+                long base = block * (stride << 1);
+                long i = base + offset;
+                long j = i ^ swap_mask;
+                if (i < j) {
+                    std::swap(output_state(i), output_state(j));
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < long(dim); ++i) {
+                long j = i ^ swap_mask;
+                if (i < j) {
+                    output_state.row(i).swap(output_state.row(j));
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < dim; ++i) {
+                long j = i ^ swap_mask;
+                if (i < j) {
+                    output_state.col(i).swap(output_state.col(j));
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+            {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < long(dim); ++i) {
+                    long j = i ^ swap_mask;
+                    if (i < j) {
+                        output_state.row(i).swap(output_state.row(j));
+                    }
+                }
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < dim; ++i) {
+                    long j = i ^ swap_mask;
+                    if (i < j) {
+                        output_state.col(i).swap(output_state.col(j));
+                    }
+                }
+            }
+        }
+
         // If we have a CNOT with control qubit j and target qubit i, we swap the amplitudes of all basis states where qubit j is 1 and qubit i is 0 with those where qubit j is 1 and qubit i is 1
     } else if (name == "CNOT") {
         long control_mask = 1L << (num_qubits - 1 - control_qubit);
@@ -629,6 +694,84 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         }
 
+        // If we have a 2x2 base matrix and a control qubit
+    } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2 && control_qubit != -1) {
+        long control_mask = 1L << (num_qubits - 1 - control_qubit);
+        if (output_state.cols() == 1) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long k = 0; k < long(half); ++k) {
+                long block = k / stride;
+                long offset = k % stride;
+                long base = block * (stride << 1);
+                long i = base + offset;
+                if (i & control_mask) {
+                    long j = i ^ mask;
+                    std::complex<double> temp_i = output_state(i);
+                    std::complex<double> temp_j = output_state(j);
+                    output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
+                    output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Left) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < long(dim); ++i) {
+                if (i & control_mask) {
+                    long j = i ^ mask;
+                    Eigen::RowVectorXcd temp0 = output_state.row(i);
+                    Eigen::RowVectorXcd temp1 = output_state.row(j);
+                    output_state.row(i) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                    output_state.row(j) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+            for (long i = 0; i < long(dim); ++i) {
+                if (i & control_mask) {
+                    long j = i ^ mask;
+                    Eigen::VectorXcd temp0 = output_state.col(i);
+                    Eigen::VectorXcd temp1 = output_state.col(j);
+                    output_state.col(i) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                    output_state.col(j) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+            {
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < long(dim); ++i) {
+                    if (i & control_mask) {
+                        long j = i ^ mask;
+                        Eigen::RowVectorXcd temp0 = output_state.row(i);
+                        Eigen::RowVectorXcd temp1 = output_state.row(j);
+                        output_state.row(i) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                        output_state.row(j) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+                    }
+                }
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long i = 0; i < long(dim); ++i) {
+                    if (i & control_mask) {
+                        long j = i ^ mask;
+                        Eigen::VectorXcd temp0 = output_state.col(i);
+                        Eigen::VectorXcd temp1 = output_state.col(j);
+                        output_state.col(i) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
+                        output_state.col(j) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+                    }
+                }
+            }
+        }
+
         // If we have a 2x2 base matrix, we apply it by treating the target qubit as the least significant bit and iterating through pairs of basis states
     } else if (base_matrix.rows() == 2 && base_matrix.cols() == 2) {
         if (output_state.cols() == 1) {
@@ -712,8 +855,11 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 }
             }
         }
+
     } else {
-        throw std::runtime_error("Unknown operator: " + name);
+        std::stringstream ss;
+        ss << "Unknown operator: " << name << " with base matrix:\n" << base_matrix << "\n and control qubit: " << control_qubit;
+        throw std::invalid_argument(ss.str());
     }
 }
 
@@ -733,13 +879,16 @@ MatrixFreeOperator::MatrixFreeOperator(const Gate& gate) {
     if (gate.get_control_qubits().size() > 1) {
         throw std::invalid_argument("MatrixFreeOperator only supports gates with 1 or fewer total control qubits.");
     }
-    if (gate.get_target_qubits().size() != 1) {
+    if (gate.get_target_qubits().size() != 1 && gate.get_name() != "SWAP") {
         throw std::invalid_argument("MatrixFreeOperator requires a gate with exactly 1 target qubit.");
     }
     target_qubit = gate.get_target_qubits()[0];
     control_qubit = gate.get_control_qubits().empty() ? -1 : gate.get_control_qubits()[0];
     base_matrix = gate.get_base_matrix();
     name = gate.get_name();
+    if (name == "SWAP") {
+        control_qubit = gate.get_target_qubits()[1];
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {
