@@ -18,7 +18,7 @@
 #include <set>
 #include <vector>
 #include "../digital/gate.h"
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 enum class MatrixFreeApplicationType { Left, Right, LeftAndRight };
 

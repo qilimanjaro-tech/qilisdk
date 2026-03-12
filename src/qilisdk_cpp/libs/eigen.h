@@ -15,7 +15,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <unsupported/Eigen/src/KroneckerProduct/KroneckerTensorProduct.h>
+#include <unsupported/Eigen/KroneckerProduct>
 #include <unsupported/Eigen/MatrixFunctions>
 
 // Eigen specfic type defs
