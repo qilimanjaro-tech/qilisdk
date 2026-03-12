@@ -396,3 +396,6 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))
 
         return new_circuit
+
+    def __repr__(self) -> str:
+        return f"Circuit(nqubits={self.nqubits}, gates={self.gates})"

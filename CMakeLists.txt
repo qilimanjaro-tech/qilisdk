@@ -1,5 +1,9 @@
 # To enable debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=Debug
+# To run with clang-tidy:
+#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
+# To enable (very) verbose simulator output:
+#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -11,9 +15,6 @@ check_cxx_compiler_flag("" COMPILER_EXISTS)
 if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
     message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisdk=OFF to disable QiliSDK backend.")
 endif()
-
-message(STATUS "[QiliSDK C++] Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "[QiliSDK C++] Verbose: ${CMAKE_VERBOSE_MAKEFILE}")
 
 # pybind should already be installed via the dependencies
 find_package(pybind11 REQUIRED)
@@ -84,7 +85,7 @@ foreach(module ${MODULES_TO_BUILD})
     endif()
 
     # Enable if you want to run clang-tidy on the code
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_DEFINE_TIDY)
         message(STATUS "[QiliSDK C++] Enabling clang-tidy")
         set_target_properties(${module} PROPERTIES
             CXX_CLANG_TIDY

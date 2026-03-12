@@ -187,3 +187,6 @@ class Backend(ABC):
         optimal_results: TResult = self.execute(functional.functional)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}()"

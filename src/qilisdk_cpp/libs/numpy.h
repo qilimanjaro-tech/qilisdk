@@ -24,3 +24,4 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol);
 py::array_t<double> to_numpy(const std::vector<double>& vec);
 py::array_t<double> to_numpy(const std::vector<std::vector<double>>& vecs);
 py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix);
+py::array_t<std::complex<double>> to_numpy(const DenseMatrix& matrix);

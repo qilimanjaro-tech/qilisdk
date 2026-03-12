@@ -17,11 +17,15 @@
 #include "../../../libs/pybind.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
+#include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
+#include "../representations/matrix_free_hamiltonian.h"
 
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
+std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
+std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::object& observables);
 std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, const py::list& hamiltonians_keys, const py::object& steps);
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol);

@@ -26,22 +26,21 @@ class Gate {
     std::vector<int> control_qubits;
     std::vector<int> target_qubits;
     std::vector<std::pair<std::string, double>> parameters;
-
-    // gate.cpp
     int permute_bits(int index, const std::vector<int>& perm) const;
     Triplets tensor_product(Triplets& A, Triplets& B, int B_width) const;
     SparseMatrix base_to_full(const SparseMatrix& base_gate, int num_qubits, const std::vector<int>& control_qubits, const std::vector<int>& target_qubits) const;
 
    public:
     Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_), parameters(parameters_) {}
-
-    // gate.cpp
     int get_nqubits() const;
+    std::vector<int> get_qubits() const;
     std::vector<int> get_target_qubits() const;
     std::vector<int> get_control_qubits() const;
+    bool is_normalized() const;
     std::vector<std::pair<std::string, double>> get_parameters() const;
     std::string get_name() const;
     std::string get_id() const;
+    SparseMatrix get_base_matrix() const;
     SparseMatrix get_full_matrix(int num_qubits) const;
 };
 

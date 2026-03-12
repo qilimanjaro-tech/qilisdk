@@ -20,6 +20,7 @@
 #include "digital/gate.h"
 #include "digital/sampling.h"
 #include "noise/noise_model.h"
+#include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
 
 // The public execute_sampling
@@ -69,21 +70,31 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
-    // The initial state
-    long dim = 1L << n_qubits;
+    // If we have any exponential gates, we need to force renormalization
+    for (const auto& gate : gates) {
+        if (!gate.is_normalized()) {
+            config.set_normalize_after_gate(true);
+            break;
+        }
+    }
+
+    // Pass everything to the internal implementation
+    std::map<std::string, int> counts;
+    DenseMatrix state_dense;
     SparseMatrix initial_state_cpp;
     if (initial_state.is_none()) {
+        long dim = 1L << n_qubits;
         initial_state_cpp = SparseMatrix(dim, 1);
         initial_state_cpp.coeffRef(0, 0) = 1.0;
         initial_state_cpp.makeCompressed();
     } else {
         initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
     }
-
-    // Pass everything to the interal implementation
-    std::map<std::string, int> counts;
-    DenseMatrix state;
-    sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state, counts, config);
+    if (config.get_sampling_method() == "statevector_matrix_free") {
+        sampling_matrix_free(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
+    } else {
+        sampling(gates, qubits_to_measure, n_qubits, n_shots, initial_state_cpp, noise_model_cpp, state_dense, counts, config);
+    }
 
     // Convert counts to samples dict
     py::dict samples;
@@ -91,7 +102,11 @@ py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::
         samples[py::cast(pair.first)] = py::cast(pair.second);
     }
 
-    return SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
+    // Construct the result object
+    py::object result = SamplingResult("nshots"_a = n_shots, "samples"_a = samples);
+    py::array final_state_numpy = to_numpy(state_dense);
+
+    return result;
 }
 
 // The public execute_time_evolution
@@ -154,37 +169,54 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         config.set_store_intermediate_results(true);
     }
 
-    // Convert to C++ objects
-    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
-    if (hamiltonians.size() == 0) {
-        throw py::value_error("At least one Hamiltonian must be provided");
-    }
-    int nqubits = static_cast<int>(std::log2(hamiltonians[0].rows()));
-    std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
-    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
-    std::vector<double> step_list = parse_time_steps(steps);
+    // Common between methods
     SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+    int nqubits = static_cast<int>(std::log2(rho_0.rows()));
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
+    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+    std::vector<double> step_list = parse_time_steps(steps);
 
-    // Sanity checks
-    if (step_list.size() == 0) {
-        throw py::value_error("At least one time step must be provided");
-    }
-    if (hamiltonians.size() != parameters_list.size()) {
-        throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
-    }
-    for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-        if (parameters_list[h_ind].size() != step_list.size()) {
-            throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
-        }
-    }
-
-    // Call the internal implementation
-    std::vector<SparseMatrix> intermediate_rhos;
-    SparseMatrix rho_t;
+    // Depending on the method, call the internal implementation
+    std::vector<DenseMatrix> intermediate_rhos;
+    DenseMatrix rho_t;
     std::vector<double> expectation_values;
     std::vector<std::vector<double>> intermediate_expectation_values;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
+    if (config.get_time_evolution_method() == "integrate_matrix_free") {
+        // Parse the Hamiltonians
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+        if (hamiltonians.size() != parameters_list.size()) {
+            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+        }
+        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+            if (parameters_list[h_ind].size() != step_list.size()) {
+                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
+            }
+        }
+
+        // Parse the observables
+        std::vector<MatrixFreeHamiltonian> observable_matrices = parse_observables_matrix_free(observables);
+
+        // Call the implementation
+        time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
+
+    } else {
+        // Parse the Hamiltonians
+        std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+        if (hamiltonians.size() != parameters_list.size()) {
+            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+        }
+        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+            if (parameters_list[h_ind].size() != step_list.size()) {
+                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
+            }
+        }
+
+        // Parse the observables
+        std::vector<SparseMatrix> observable_matrices = parse_observables(observables, nqubits, config.get_atol());
+
+        // Call the implementation
+        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, observable_matrices, config, rho_t, intermediate_rhos, expectation_values, intermediate_expectation_values);
+    }
 
     // Convert things to numpy arrays
     py::array_t<std::complex<double>> rho_numpy = to_numpy(rho_t);

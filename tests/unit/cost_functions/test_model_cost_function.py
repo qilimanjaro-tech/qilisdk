@@ -173,3 +173,11 @@ def test_complex_return_values():
     time_evolution_result.final_state = rho
     cost = mcf._compute_cost_time_evolution(time_evolution_result)
     assert cost == return_val
+
+
+def test_repr():
+    model = Model("test")
+    mcf = ModelCostFunction(model)
+    repr_str = str(mcf)
+    assert "ModelCostFunction" in repr_str
+    assert "model=" in repr_str

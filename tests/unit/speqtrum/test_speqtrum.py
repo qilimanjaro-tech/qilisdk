@@ -976,3 +976,12 @@ def test_safe_b64_json_with_valid_base64_json():
     b64_str = base64.urlsafe_b64encode(json_str.encode("utf-8")).decode("utf-8").rstrip("=")
     result = speqtrum._safe_b64_json(b64_str, context="test context")
     assert result == original_data
+
+
+def test_repr(monkeypatch):
+    tok = SimpleNamespace(access_token="xyz")
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("alice", tok))
+    client = speqtrum.SpeQtrum()
+    repr_str = repr(client)
+    assert "SpeQtrum" in repr_str
+    assert "username" in repr_str

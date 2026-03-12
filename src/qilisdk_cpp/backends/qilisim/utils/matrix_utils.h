@@ -19,12 +19,17 @@
 #include "../config/qilisim_config.h"
 
 SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1);
+DenseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const DenseMatrix& e1);
 SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt);
 std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2);
 std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2);
+std::complex<double> trace(const DenseMatrix& matrix);
 std::complex<double> trace(const SparseMatrix& matrix);
 SparseMatrix vectorize(const SparseMatrix& matrix, double atol);
+DenseMatrix vectorize(const DenseMatrix& matrix);
 SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol);
+DenseMatrix devectorize(const DenseMatrix& vec_matrix);
 SparseMatrix expand_operator(int qubit, int nqubits, const SparseMatrix& op);
 SparseMatrix expand_operator(int nqubits, const SparseMatrix& op);
 SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits, const SparseMatrix& op);
+void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo);
