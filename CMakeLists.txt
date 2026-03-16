@@ -4,6 +4,8 @@
 #   uv pip install -v -e ./ -Ccmake.define.tidy=ON
 # To enable (very) verbose simulator output:
 #   uv pip install -v -e ./ -Ccmake.define.verbose=ON
+# To enable the test suite (and coverage):
+#   uv pip install -v -e ./ -Ccmake.define.tests=ON
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -95,28 +97,53 @@ foreach(module ${MODULES_TO_BUILD})
         )
     endif()
 
-    # If we should also build the test suite
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(STATUS "[QiliSim] Building test suite")
-        include(FetchContent)
-        FetchContent_Declare(
-            googletest
-            URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-        )
-        FetchContent_MakeAvailable(googletest)
-        enable_testing()
-        add_executable(
-            test_cpp
-            tests/unit_cpp/test_utils.cpp
-        )
-        target_compile_options(test_cpp PRIVATE --coverage -fprofile-arcs -ftest-coverage)
-        target_link_libraries(test_cpp PRIVATE --coverage GTest::gtest_main)
-        include(GoogleTest)
-        gtest_discover_tests(test_cpp)
-        set_target_properties(test_cpp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp)
-    endif()
-
     # Compile
     install(TARGETS ${module} DESTINATION .)
 
 endforeach()
+
+# If we should also build the test suite
+if (DEFINED tests AND tests STREQUAL "ON")
+    message(STATUS "[QiliSim] Building test suite")
+    
+    # Get googletest for C++ testing
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+    )
+    FetchContent_MakeAvailable(googletest)
+    enable_testing()
+
+    # Set up the test executable, compile options, and link libraries
+    add_executable(
+        test_cpp
+        tests/unit_cpp/test_cpp.cpp
+    )
+    file(GLOB TEST_SOURCES tests/unit_cpp/*.cpp)
+    list(APPEND TEST_SOURCES ${QILISIM_SOURCES})
+    target_sources(test_cpp PRIVATE ${TEST_SOURCES})
+    target_include_directories(test_cpp PRIVATE src/qilisdk_cpp/backends/qilisim)
+    target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})
+    target_compile_options(test_cpp PRIVATE --coverage)
+    target_link_options(test_cpp PRIVATE --coverage)
+    target_link_libraries(test_cpp PRIVATE gcov GTest::gtest_main Eigen3::Eigen)
+    # need to link with pybind
+    target_link_libraries(test_cpp PRIVATE qilisim_module)
+    
+    # Google test discovery
+    include(GoogleTest)
+    gtest_discover_tests(test_cpp)
+    set_target_properties(test_cpp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp)
+    
+    # Need to copy coverage files to a separate directory to avoid them being deleted by CMake's cleanup
+    set(COVERAGE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp/coverage)
+    file(MAKE_DIRECTORY ${COVERAGE_DIR})
+    add_custom_command(TARGET test_cpp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/CMakeFiles/test_cpp.dir
+            ${COVERAGE_DIR}
+        COMMENT "Copying .gcno files to coverage directory"
+    )
+
+endif()

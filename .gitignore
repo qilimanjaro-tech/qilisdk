@@ -10,6 +10,10 @@ wheels/
 *.so
 *.o
 test_cpp
+*.gcda
+*.gcno
+coverage/
+coverage*.info
 
 # Virtual environments
 .venv
