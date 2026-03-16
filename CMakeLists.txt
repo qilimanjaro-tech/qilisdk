@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 # Check to make sure we have a C++ compiler
@@ -86,6 +88,27 @@ if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
             CXX_CLANG_TIDY
             "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
         )
+    endif()
+
+    # If we should also build the test suite
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "[QiliSim] Building test suite")
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+        )
+        FetchContent_MakeAvailable(googletest)
+        enable_testing()
+        add_executable(
+            test_cpp
+            tests/unit_cpp/test_utils.cpp
+        )
+        target_compile_options(test_cpp PRIVATE --coverage -fprofile-arcs -ftest-coverage)
+        target_link_libraries(test_cpp PRIVATE --coverage GTest::gtest_main)
+        include(GoogleTest)
+        gtest_discover_tests(test_cpp)
+        set_target_properties(test_cpp PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp)
     endif()
 
     # Compile

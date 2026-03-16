@@ -9,6 +9,7 @@ wheels/
 # C++ stuff
 *.so
 *.o
+test_cpp
 
 # Virtual environments
 .venv
