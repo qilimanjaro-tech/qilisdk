@@ -1,0 +1,63 @@
+// Copyright 2025 Qilimanjaro Quantum Tech
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#include "pybind.h"
+
+py::object numpy_array;
+py::object numpy_array_type;
+py::object csrmatrix;
+py::object cscmatrix;
+py::object coomatrix;
+py::object sparray;
+py::dtype dtype;
+py::object py_complex;
+py::object Sampling;
+py::object TimeEvolution;
+py::object SamplingResult;
+py::object TimeEvolutionResult;
+py::object QTensor;
+py::object Hamiltonian;
+py::object PauliOperator;
+py::object NoiseModel;
+py::object SupportsStaticKraus;
+py::object SupportsStaticLindblad;
+py::object SupportsTimeDerivedKraus;
+py::object SupportsTimeDerivedLindblad;
+py::object ReadoutAssignment;
+py::object NoiseConfig;
+
+void initialize_pybind_types() {
+    Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
+    TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
+    SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
+    TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
+    QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
+    Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
+    PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
+    NoiseModel = py::module_::import("qilisdk.noise.noise_model").attr("NoiseModel");
+    SupportsStaticKraus = py::module_::import("qilisdk.noise.protocols").attr("SupportsStaticKraus");
+    SupportsStaticLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsStaticLindblad");
+    SupportsTimeDerivedKraus = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedKraus");
+    SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
+    ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
+    NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
+    numpy_array = py::module_::import("numpy").attr("array");
+    numpy_array_type = py::module_::import("numpy").attr("ndarray");
+    csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
+    cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
+    coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
+    sparray = py::module_::import("scipy.sparse").attr("sparray");
+    dtype = py::dtype("complex128");
+    py_complex = py::module_::import("builtins").attr("complex");
+}
+

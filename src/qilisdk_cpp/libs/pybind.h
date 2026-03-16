@@ -25,11 +25,37 @@ namespace py = pybind11;
 using namespace py::literals;
 
 // Non-QiliSDK types
-const py::object numpy_array = py::module_::import("numpy").attr("array");
-const py::object numpy_array_type = py::module_::import("numpy").attr("ndarray");
-const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
-const py::object cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
-const py::object coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
-const py::object sparray = py::module_::import("scipy.sparse").attr("sparray");
-const py::dtype dtype = py::dtype("complex128");
-const py::object py_complex = py::module_::import("builtins").attr("complex");
+// const py::object numpy_array = py::module_::import("numpy").attr("array");
+// const py::object numpy_array_type = py::module_::import("numpy").attr("ndarray");
+// const py::object csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
+// const py::object cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
+// const py::object coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
+// const py::object sparray = py::module_::import("scipy.sparse").attr("sparray");
+// const py::dtype dtype = py::dtype("complex128");
+// const py::object py_complex = py::module_::import("builtins").attr("complex");
+
+extern py::object numpy_array;
+extern py::object numpy_array_type;
+extern py::object csrmatrix;
+extern py::object cscmatrix;
+extern py::object coomatrix;
+extern py::object sparray;
+extern py::dtype dtype;
+extern py::object py_complex;
+extern py::object Sampling;
+extern py::object TimeEvolution;
+extern py::object SamplingResult;
+extern py::object TimeEvolutionResult;
+extern py::object QTensor;
+extern py::object Hamiltonian;
+extern py::object PauliOperator;
+extern py::object NoiseModel;
+extern py::object SupportsStaticKraus;
+extern py::object SupportsStaticLindblad;
+extern py::object SupportsTimeDerivedKraus;
+extern py::object SupportsTimeDerivedLindblad;
+extern py::object ReadoutAssignment;
+extern py::object NoiseConfig;
+
+void initialize_pybind_types();
+

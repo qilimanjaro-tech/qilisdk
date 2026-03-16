@@ -16,19 +16,7 @@
 
 #include "../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
 
-// Demonstrate some basic assertions.
-TEST(HelloTest2, BasicAssertions) {
-
-  // Expect two strings not to be equal.
-  EXPECT_STRNE("hello", "world");
-
-  // Expect equality.
-  EXPECT_EQ(7 * 6, 42);
-
-}
-
-// Test the dot product of two sparse matrices
-TEST(MatrixUtilsTest, DotProductSparse) {
+TEST(MatrixUtilsTest, DotProductKet) {
     SparseMatrix v1(3, 1);
     v1.insert(0, 0) = std::complex<double>(1.0, 2.0);
     v1.insert(1, 0) = std::complex<double>(3.0, 4.0);
@@ -38,8 +26,28 @@ TEST(MatrixUtilsTest, DotProductSparse) {
     v2.insert(1, 0) = std::complex<double>(9.0, 10.0);
     v2.insert(2, 0) = std::complex<double>(11.0, 12.0);
     std::complex<double> result = dot(v1, v2);
-    std::complex<double> expected = std::complex<double>(-70.0, 220.0);
+    std::complex<double> expected = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        expected += std::conj(v1.coeff(i, 0)) * v2.coeff(i, 0);
+    }
     EXPECT_NEAR(result.real(), expected.real(), 1e-6);
     EXPECT_NEAR(result.imag(), expected.imag(), 1e-6);
 }
 
+TEST(MatrixUtilsTest, DotProductBra) {
+    SparseMatrix v1(1, 3);
+    v1.insert(0, 0) = std::complex<double>(1.0, 2.0);
+    v1.insert(0, 1) = std::complex<double>(3.0, 4.0);
+    v1.insert(0, 2) = std::complex<double>(5.0, 6.0);
+    SparseMatrix v2(1, 3);
+    v2.insert(0, 0) = std::complex<double>(7.0, 8.0);
+    v2.insert(0, 1) = std::complex<double>(9.0, 10.0);
+    v2.insert(0, 2) = std::complex<double>(11.0, 12.0);
+    std::complex<double> result = dot(v1, v2);
+    std::complex<double> expected = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        expected += std::conj(v1.coeff(0, i)) * v2.coeff(0, i);
+    }
+    EXPECT_NEAR(result.real(), expected.real(), 1e-6);
+    EXPECT_NEAR(result.imag(), expected.imag(), 1e-6);
+}

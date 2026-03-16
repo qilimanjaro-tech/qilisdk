@@ -16,6 +16,7 @@
 #include "qtensor.h"
 
 PYBIND11_MODULE(qtensor_module, m) {
+    initialize_pybind_types();
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)
