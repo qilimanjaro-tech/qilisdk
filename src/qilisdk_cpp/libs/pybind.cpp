@@ -36,7 +36,7 @@ py::object SupportsTimeDerivedLindblad;
 py::object ReadoutAssignment;
 py::object NoiseConfig;
 
-void initialize_pybind_types() {
+void initialize_all_pybind_types() {
     Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
     TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
     SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
@@ -61,3 +61,13 @@ void initialize_pybind_types() {
     py_complex = py::module_::import("builtins").attr("complex");
 }
 
+void initialize_external_pybind_types() {
+    numpy_array = py::module_::import("numpy").attr("array");
+    numpy_array_type = py::module_::import("numpy").attr("ndarray");
+    csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
+    cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
+    coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
+    sparray = py::module_::import("scipy.sparse").attr("sparray");
+    dtype = py::dtype("complex128");
+    py_complex = py::module_::import("builtins").attr("complex");
+}

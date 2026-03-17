@@ -16,8 +16,8 @@
 #include <random>
 #include <sstream>
 
-#include "../digital/circuit_optimizations.h"
 #include "../../../libs/pybind.h"
+#include "../digital/circuit_optimizations.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"

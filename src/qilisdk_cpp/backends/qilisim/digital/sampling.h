@@ -19,7 +19,6 @@
 #include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
-#include "../../../libs/eigen.h"
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_operator.h"
 

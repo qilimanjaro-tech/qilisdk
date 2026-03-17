@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include <pybind11/embed.h>
+#include "gtest/gtest.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     pybind11::scoped_interpreter guard{};
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

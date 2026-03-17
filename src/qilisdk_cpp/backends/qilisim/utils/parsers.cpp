@@ -18,7 +18,6 @@
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
-#include "../../../libs/numpy.h"
 
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
     /*

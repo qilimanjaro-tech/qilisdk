@@ -275,7 +275,6 @@ bool QTensorCpp::is_symmetric(double atol) {
         return false;
     }
     return true;
-
 }
 
 bool QTensorCpp::is_self_adjoint(double atol) {
@@ -1878,7 +1877,7 @@ QTensorCpp QTensorCpp::inverse() {
     If the eigendecomposition of this QTensor has already been computed, the inverse
     is computed more efficiently using the eigenvalues and eigenvectors.
 
-    If the matrix is singular, this function will return a pseudo-inverse where the 
+    If the matrix is singular, this function will return a pseudo-inverse where the
     inverse of zero eigenvalues is treated as zero.
 
     Returns:

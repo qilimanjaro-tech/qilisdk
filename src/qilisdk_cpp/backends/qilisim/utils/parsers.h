@@ -17,7 +17,6 @@
 #include "../../../libs/pybind.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
-#include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_hamiltonian.h"
 

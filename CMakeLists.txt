@@ -4,8 +4,10 @@
 #   uv pip install -v -e ./ -Ccmake.define.tidy=ON
 # To enable (very) verbose simulator output:
 #   uv pip install -v -e ./ -Ccmake.define.verbose=ON
-# To enable the test suite (and coverage):
+# To enable the test suite:
 #   uv pip install -v -e ./ -Ccmake.define.tests=ON
+# To enable coverage flags:
+#   uv pip install -v -e ./ -Ccmake.define.coverage=ON
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -92,16 +94,16 @@ foreach(module ${MODULES_TO_BUILD})
     endif()
 
     # Enable if you want to run clang-tidy on the code
-    if (CMAKE_DEFINE_TIDY)
+    if (DEFINED tidy AND tidy STREQUAL "ON")
         message(STATUS "[QiliSDK C++] Enabling clang-tidy")
         set_target_properties(${module} PROPERTIES
             CXX_CLANG_TIDY
-            "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
+            "clang-tidy;--extra-arg=-Wno-ignored-optimization-argument"
         )
     endif()
 
-    # If running tests, also compile with coverage flags
-    if (DEFINED tests AND tests STREQUAL "ON")
+    # If told to build with coverage, add the appropriate flags to compile and link
+    if (DEFINED coverage AND coverage STREQUAL "ON")
         message(STATUS "[QiliSDK C++] Enabling coverage flags for module: ${module}")
         target_compile_options(${module} PRIVATE --coverage)
         target_link_options(${module} PRIVATE --coverage)
@@ -117,6 +119,18 @@ foreach(module ${MODULES_TO_BUILD})
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp/$<TARGET_FILE_NAME:${module}>
         COMMENT "Copying ${module} to test directory"
     )
+
+    # Need to copy coverage files to a separate directory to avoid them being deleted by CMake's cleanup
+    if (DEFINED coverage AND coverage STREQUAL "ON")
+        set(COVERAGE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_cpp/coverage)
+        file(MAKE_DIRECTORY ${COVERAGE_DIR})
+        add_custom_command(TARGET ${module} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_BINARY_DIR}/CMakeFiles/${module}.dir
+                ${COVERAGE_DIR}
+            COMMENT "Copying .gcno files to coverage directory for module: ${module}"
+        )
+    endif()
 
 endforeach()
 
@@ -148,8 +162,11 @@ if (DEFINED tests AND tests STREQUAL "ON")
     target_include_directories(test_cpp PRIVATE src/qilisdk_cpp/backends/qilisim)
     target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})
     target_include_directories(test_cpp PRIVATE ${Python_INCLUDE_DIRS})
-    target_compile_options(test_cpp PRIVATE --coverage)
-    target_link_options(test_cpp PRIVATE --coverage)
+    if (DEFINED coverage AND coverage STREQUAL "ON")
+        message(STATUS "[QiliSDK C++] Enabling coverage flags for test suite")
+        target_compile_options(test_cpp PRIVATE --coverage)
+        target_link_options(test_cpp PRIVATE --coverage)
+    endif()
     target_link_libraries(test_cpp PRIVATE gcov GTest::gtest Eigen3::Eigen)
     target_link_directories(test_cpp PRIVATE ${Python3_LIBRARY_DIRS})
     target_link_libraries(test_cpp PRIVATE pybind11::embed)
