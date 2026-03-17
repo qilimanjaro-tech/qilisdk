@@ -553,6 +553,18 @@ class CudaBackend(Backend):
         except ValueError as exc:
             raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
 
+    @staticmethod
+    def _qtensor_initial_state_to_cuda(initial_state: QTensor) -> State:
+        normalized_state = initial_state.unit()
+        if normalized_state.is_bra():
+            normalized_state = normalized_state.adjoint()
+
+        cuda_state_data = np.array(normalized_state.dense(), dtype=np.complex128)
+        if normalized_state.is_ket():
+            cuda_state_data = cuda_state_data.reshape(-1)
+
+        return State.from_data(cuda_state_data)
+
     def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
@@ -603,7 +615,7 @@ class CudaBackend(Backend):
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=State.from_data(np.array(functional.initial_state.unit().dense(), dtype=np.complex128)),
+            initial_state=self._qtensor_initial_state_to_cuda(functional.initial_state),
             observables=cuda_observables,
             collapse_operators=jump_operators,
             store_intermediate_results=functional.store_intermediate_results,
