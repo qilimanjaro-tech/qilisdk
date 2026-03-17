@@ -996,6 +996,12 @@ wheels = [
 ]
 
 [[package]]
+name = "gputil"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/0e/5c61eedde9f6c87713e89d794f01e378cfd9565847d4576fa627d758c554/GPUtil-1.4.0.tar.gz", hash = "sha256:099e52c65e512cdfa8c8763fca67f5a5c2afb63469602d5dcb4d296b3661efb9", size = 5545, upload-time = "2018-12-18T09:12:13.63Z" }
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2386,6 +2392,15 @@ wheels = [
 ]
 
 [[package]]
+name = "py-cpuinfo"
+version = "9.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/a8/d832f7293ebb21690860d2e01d8115e5ff6f2ae8bbdc953f0eb0fa4bd2c7/py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690", size = 104716, upload-time = "2022-10-25T20:38:06.303Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/a9/023730ba63db1e494a271cb018dcd361bd2c917ba7004c3e49d5daf795a2/py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5", size = 22335, upload-time = "2022-10-25T20:38:27.636Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.23"
 source = { registry = "https://pypi.org/simple" }
@@ -2748,16 +2763,19 @@ version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "dill" },
+    { name = "gputil" },
     { name = "loguru" },
     { name = "matplotlib" },
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.4.1", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "py-cpuinfo" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "ruamel-yaml" },
     { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "setuptools" },
 ]
 
 [package.optional-dependencies]
@@ -2841,6 +2859,7 @@ requires-dist = [
     { name = "cuda-quantum-cu12", marker = "extra == 'cuda12'", specifier = "==0.13.0" },
     { name = "cuda-quantum-cu13", marker = "extra == 'cuda13'", specifier = "==0.13.0" },
     { name = "dill", specifier = ">=0.4.1" },
+    { name = "gputil", specifier = ">=1.4.0" },
     { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
@@ -2850,6 +2869,7 @@ requires-dist = [
     { name = "numpy", marker = "sys_platform != 'darwin'", specifier = ">=2.4.1", index = "https://urob.github.io/numpy-mkl" },
     { name = "numpy", marker = "sys_platform == 'darwin'", specifier = ">=2.3,<2.4.1" },
     { name = "openfermion", marker = "extra == 'openfermion'", specifier = ">=1.7.1" },
+    { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.12.3" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all'" },
@@ -2870,6 +2890,7 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.18.16" },
     { name = "scipy", marker = "sys_platform != 'darwin'", specifier = ">=1.15,<1.16.3", index = "https://urob.github.io/numpy-mkl" },
     { name = "scipy", marker = "sys_platform == 'darwin'", specifier = ">=1.16.3" },
+    { name = "setuptools", specifier = ">=82.0.1" },
 ]
 provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "all", "all-cu12", "all-cu13"]
 
@@ -3249,6 +3270,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl", hash = "sha256:0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137", size = 15554, upload-time = "2025-11-23T19:02:51.545Z" },
+]
+
+[[package]]
+name = "setuptools"
+version = "82.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/db/cfac1baf10650ab4d1c111714410d2fbb77ac5a616db26775db562c8fab2/setuptools-82.0.1.tar.gz", hash = "sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9", size = 1152316, upload-time = "2026-03-09T12:47:17.221Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/76/f789f7a86709c6b087c5a2f52f911838cad707cc613162401badc665acfe/setuptools-82.0.1-py3-none-any.whl", hash = "sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb", size = 1006223, upload-time = "2026-03-09T12:47:15.026Z" },
 ]
 
 [[package]]
