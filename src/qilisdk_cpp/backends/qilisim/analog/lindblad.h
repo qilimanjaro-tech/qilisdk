@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
 SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators);

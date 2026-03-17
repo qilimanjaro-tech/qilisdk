@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "qilisim_config.h"
-#include "../libs/pybind.h"
+#include "../../../libs/pybind.h"
 
 void QiliSimConfig::validate() const {
     /*

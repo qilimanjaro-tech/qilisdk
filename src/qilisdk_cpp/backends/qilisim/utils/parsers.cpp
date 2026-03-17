@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include "parsers.h"
+#include "../../../libs/numpy.h"
+#include "../../../libs/pybind_types.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
-#include "numpy.h"
+#include "../../../libs/numpy.h"
 
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
     /*
