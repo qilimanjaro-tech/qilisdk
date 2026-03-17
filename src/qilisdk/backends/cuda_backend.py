@@ -153,7 +153,7 @@ class CudaBackend(Backend):
             U2: CudaBackend._handle_U2,
             U3: CudaBackend._handle_U3,
             SWAP: CudaBackend._handle_SWAP,
-        }
+        }  # ty:ignore[invalid-assignment]
         self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
             PauliX: CudaBackend._handle_PauliX,
             PauliY: CudaBackend._handle_PauliY,
@@ -614,7 +614,7 @@ class CudaBackend(Backend):
         final_expected_values = np.array(
             [
                 exp_val.expectation()
-                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[possibly-missing-attribute]
+                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[unresolved-attribute]
             ],
             dtype=_complex_dtype(),
         )
@@ -622,18 +622,18 @@ class CudaBackend(Backend):
             np.array(
                 [
                     [val.expectation() for val in exp_vals]
-                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[possibly-missing-attribute]
+                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[unresolved-attribute]
                 ],
                 dtype=_complex_dtype(),
             )
-            if evolution_result.expectation_values() is not None  # ty:ignore[possibly-missing-attribute]
+            if evolution_result.expectation_values() is not None  # ty:ignore[unresolved-attribute]
             and functional.store_intermediate_results
             else None
         )
 
-        if evolution_result.final_state() is not None:  # ty:ignore[possibly-missing-attribute]
+        if evolution_result.final_state() is not None:  # ty:ignore[unresolved-attribute]
             final_state = np.array(
-                evolution_result.final_state(),  # ty:ignore[possibly-missing-attribute]
+                evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
                 dtype=_complex_dtype(),
             )
             if len(final_state.shape) == 1:
@@ -644,11 +644,11 @@ class CudaBackend(Backend):
             final_state = None
 
         if (
-            evolution_result.intermediate_states() is not None  # ty:ignore[possibly-missing-attribute]
+            evolution_result.intermediate_states() is not None  # ty:ignore[unresolved-attribute]
             and functional.store_intermediate_results
         ):
             intermediate_states = []
-            for state in evolution_result.intermediate_states():  # ty:ignore[possibly-missing-attribute]
+            for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
                 _state = np.array(state, dtype=_complex_dtype())
                 if len(_state.shape) == 1:
                     _state = _state.reshape(-1, 1)

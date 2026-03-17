@@ -313,8 +313,8 @@ class QTensor:
 
         If the order is left as "auto", the method will choose an appropriate norm based on the type of QTensor
         (i.e., trace for operators, frobenius for state vectors).
-
         Integers can also be supplied, where 1 corresponds to the L1 norm and 2 corresponds to the L2 (Frobenius) norm etc.
+        Note that here "trace" refers to the trace of the matrix, whilst "nuclear" refers to the trace norm (sum of singular values).
 
         Args:
             order (Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"], optional): The order of the norm. Defaults to "auto".
@@ -565,6 +565,29 @@ class QTensor:
             QTensor: A new QTensor representing the GHZ state.
         """
         return QTensor(QTensorCpp.ghz(nqubits))
+
+    @classmethod
+    def basis_state(cls, n: int, N: int) -> QTensor:
+        r"""
+        Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
+
+        This function creates a column vector (ket) representing the Fock state \|n⟩ in a Hilbert space of dimension N.
+
+        Args:
+            n (int): The desired number state (from 0 to N-1).
+            N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
+
+        Raises:
+            ValueError: If n >= N.
+
+        Returns:
+            QTensor: A QTensor representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
+        """
+        if not (0 <= n < N):
+            raise ValueError(f"n must be in [0, {N - 1}]")
+        # one nonzero at (row=n, col=0), value=1.0
+        mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
+        return QTensor(mat)
 
     def reset_qubits(self, qubits: set[int]) -> QTensor:
         """
@@ -825,25 +848,16 @@ def zero(nqubits: int, qtensor_type: QTensorType = "operator") -> QTensor:
 
 def basis_state(n: int, N: int) -> QTensor:
     r"""
-    Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
-
-    This function creates a column vector (ket) representing the Fock state \|n⟩ in a Hilbert space of dimension N.
+    Wrapper for backwards compatibility: see QTensor.basis_state().
 
     Args:
         n (int): The desired number state (from 0 to N-1).
         N (int): The dimension of the Hilbert space, has a value 2**num_qubits.
 
-    Raises:
-        ValueError: If n >= N.
-
     Returns:
         QTensor: A QTensor representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
     """
-    if not (0 <= n < N):
-        raise ValueError(f"n must be in [0, {N - 1}]")
-    # one nonzero at (row=n, col=0), value=1.0
-    mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
-    return QTensor(mat)
+    return QTensor.basis_state(n, N)
 
 
 def identity(nqubits: int) -> QTensor:
