@@ -1019,3 +1019,20 @@ def test_complex_transform():
     assert abs(u3.theta) < 1e-5
     assert abs(u3.phi) < 1e-5
     assert abs(u3.gamma) < 1e-5
+
+
+def test_repr_basic_gate():
+    qubit = 0
+    gate = H(qubit)
+    repr_str = repr(gate)
+    assert "H" in repr_str
+    assert str(qubit) in repr_str
+
+
+def test_repr_parameterized_gate():
+    qubit = 0
+    gate = RX(qubit, theta=np.pi / 2)
+    repr_str = repr(gate)
+    assert "RX" in repr_str
+    assert "1.57" in repr_str
+    assert str(np.pi / 2) in repr_str

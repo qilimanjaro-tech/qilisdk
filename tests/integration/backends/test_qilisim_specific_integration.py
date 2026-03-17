@@ -19,31 +19,30 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
-from qilisdk.backends.backend_config import AnalogMethod, ExecutionConfig, MonteCarloConfig
+from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import ket
-from qilisdk.digital import Circuit, H, X
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, X, Y, Z
 from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
-simulation_types = ["direct", "arnoldi", "integrate"]
+analog_methods = [
+    AnalogMethod.direct(),
+    AnalogMethod.arnoldi(),
+    AnalogMethod.integrator(),
+    AnalogMethod.integrator(matrix_free=True),
+]
+digital_methods = [DigitalMethod.statevector(matrix_free=False), DigitalMethod.statevector(matrix_free=True)]
 
 _MONTE_CARLO_CONFIG = MonteCarloConfig(trajectories=100)
 
 
-def _analog_method(method: str) -> AnalogMethod:
-    if method == "direct":
-        return AnalogMethod.direct()
-    if method == "arnoldi":
-        return AnalogMethod.arnoldi()
-    return AnalogMethod.integrator()
-
-
-def test_seed_same():
-    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
-    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_same(method):
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
     result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
@@ -58,13 +57,14 @@ def test_no_seed():
     assert 0 <= seed < 2**15
 
 
-def test_monte_carlo_circuit():
+@pytest.mark.parametrize("method", digital_methods)
+def test_monte_carlo_circuit(method):
     p = 0.2
     initial_state_1 = ket(0).unit()
     initial_state_2 = ket(1).unit()
     initial_state = (initial_state_1.to_density_matrix() * (1 - p) + initial_state_2.to_density_matrix() * p).unit()
     backend = QiliSim(
-        analog_simulation_method=AnalogMethod.integrator(),
+        digital_simulation_method=method,
         execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=100)),
     )
     circuit = Circuit(nqubits=1)
@@ -76,9 +76,10 @@ def test_monte_carlo_circuit():
     assert "1" in samples
 
 
-def test_seed_different():
-    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
-    backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1))
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_different(method):
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
     result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
@@ -86,7 +87,7 @@ def test_seed_different():
     assert result1.samples != result2.samples
 
 
-@pytest.mark.parametrize("method", simulation_types)
+@pytest.mark.parametrize("method", analog_methods)
 def test_row_vec_ordering(method):
     dt = 0.5
     T = 100
@@ -107,7 +108,7 @@ def test_row_vec_ordering(method):
     ]
 
     backend = QiliSim(
-        analog_simulation_method=_analog_method(method),
+        analog_simulation_method=method,
         execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
     )
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
@@ -121,7 +122,7 @@ def test_row_vec_ordering(method):
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
-@pytest.mark.parametrize("method", simulation_types)
+@pytest.mark.parametrize("method", analog_methods)
 def test_monte_carlo_time_evolution(method):
     o = 1.0
     dt = 0.1
@@ -142,7 +143,7 @@ def test_monte_carlo_time_evolution(method):
     ]
 
     backend = QiliSim(
-        analog_simulation_method=_analog_method(method),
+        analog_simulation_method=method,
         execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
     )
     res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
@@ -154,8 +155,9 @@ def test_monte_carlo_time_evolution(method):
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
 
-def test_exponential_gates():
-    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+@pytest.mark.parametrize("method", digital_methods)
+def test_exponential_gates(method):
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(X(0).exponential())
     result = backend.execute(Sampling(circuit=circuit, nshots=100))
@@ -163,3 +165,72 @@ def test_exponential_gates():
     samples = result.samples
     assert "1" in samples
     assert "0" in samples
+
+
+def _counts_similar(counts1, counts2, total_shots, tol=0.1):
+    all_keys = set(counts1.keys()) | set(counts2.keys())
+    for key in all_keys:
+        c1 = counts1.get(key, 0)
+        c2 = counts2.get(key, 0)
+        if abs(c1 - c2) > tol * total_shots:
+            return False
+    return True
+
+
+def test_matrix_free_circuit_versus_normal():
+    nqubits = 3
+    c = Circuit.random(
+        nqubits=nqubits, ngates=1000, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_statevector = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=DigitalMethod.statevector()
+    )
+    backend_matrix_free = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True),
+    )
+    res_statevector = backend_statevector.execute(Sampling(circuit=c, nshots=1000))
+    res_matrix_free = backend_matrix_free.execute(Sampling(circuit=c, nshots=1000))
+    assert _counts_similar(res_statevector.samples, res_matrix_free.samples, total_shots=1000, tol=0.1)
+
+
+@pytest.mark.parametrize("matrix_free", [True, False])
+def test_combine_single_qubit_gates(matrix_free):
+    nqubits = 3
+    c = Circuit.random(
+        nqubits=nqubits, ngates=1000, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_combined = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=matrix_free, combine_single_qubit_gates=True),
+    )
+    backend_uncombined = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=matrix_free, combine_single_qubit_gates=False),
+    )
+    res_combined = backend_combined.execute(Sampling(circuit=c, nshots=1000))
+    res_uncombined = backend_uncombined.execute(Sampling(circuit=c, nshots=1000))
+    assert _counts_similar(res_combined.samples, res_uncombined.samples, total_shots=1000, tol=0.1)
+
+
+def test_matrix_free_time_evolution_versus_normal():
+    dt = 0.1
+    T = 10
+    hamiltonian = pauli_x(0) + pauli_z(0)
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": hamiltonian},
+        coefficients={"h1": {(0, T): 1}},
+    )
+    psi0 = (ket(0) - ket(1)).unit()
+    obs = [pauli_y(0)]
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1), analog_simulation_method=AnalogMethod.integrator()
+    )
+    backend_matrix_free = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+        analog_simulation_method=AnalogMethod.integrator(matrix_free=True),
+    )
+    res_normal = backend_normal.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res_matrix_free = backend_matrix_free.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    assert np.isclose(res_normal.final_expected_values[0], res_matrix_free.final_expected_values[0], rtol=0.01)

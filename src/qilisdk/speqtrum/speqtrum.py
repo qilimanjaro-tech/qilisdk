@@ -817,3 +817,6 @@ class SpeQtrum:
         if isinstance(inner, TimeEvolution):
             return JobHandle.variational_program(job.id, result_type=TimeEvolutionResult)
         return JobHandle.variational_program(job.id)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(username={self.username})"

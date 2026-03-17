@@ -17,15 +17,15 @@
 #include "iterations.h"
 #include "lindblad.h"
 
-void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<SparseMatrix>& V, SparseMatrix& H, double atol) {
+void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<DenseMatrix>& V, SparseMatrix& H, double atol) {
     /*
     Perform the Arnoldi iteration to build the basis.
 
     Args:
         L (SparseMatrix): The Lindblad superoperator.
-        v0 (SparseMatrix): The initial vectorized density matrix.
+        v0 (DenseMatrix): The initial vectorized density matrix.
         m (int): The dimension of the subspace.
-        V (SparseMatrix&): Output basis vectors.
+        V (std::vector<DenseMatrix>&): Output basis vectors.
         H (SparseMatrix&): Output upper Hessenberg matrix.
         atol (double): Absolute tolerance for numerical operations.
     */
@@ -35,7 +35,7 @@ void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<S
     H = SparseMatrix(m + 1, m);
 
     // Normalize the initial vector
-    SparseMatrix v = v0;
+    DenseMatrix v = v0;
     double beta = v.norm();
     v /= beta;
 
@@ -45,7 +45,7 @@ void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<S
     // For each Arnoldi iteration
     for (int j = 0; j < m; ++j) {
         // Apply the Lindbladian to the previous vector
-        SparseMatrix w = L * V[j];
+        DenseMatrix w = L * V[j];
 
         // Orthogonalize against previous vectors
         for (int i = 0; i <= j; ++i) {
@@ -67,16 +67,16 @@ void arnoldi(const SparseMatrix& L, const SparseMatrix& v0, int m, std::vector<S
     }
 }
 
-void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std::vector<SparseMatrix>& V, SparseMatrix& Hk, double atol) {
+void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::vector<DenseMatrix>& V, SparseMatrix& Hk, double atol) {
     /*
     Arnoldi iteration for the unitary Liouvillian:
         L(rho) = -i (H rho - rho H)
 
     Args:
         Hsys (SparseMatrix): Hamiltonian (dim x dim).
-        rho0 (SparseMatrix): Initial density matrix (dim x dim).
+        rho0 (DenseMatrix): Initial density matrix (dim x dim).
         m (int): Krylov dimension.
-        V (vector<SparseMatrix>): Orthonormal basis (output).
+        V (vector<DenseMatrix>): Orthonormal basis (output).
         Hk (SparseMatrix): Upper Hessenberg matrix (output).
         atol (double): Absolute tolerance for numerical operations.
     */
@@ -86,7 +86,7 @@ void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std:
     Hk = SparseMatrix(m + 1, m);
 
     // Normalize initial matrix (Frobenius norm)
-    SparseMatrix v = rho0;
+    DenseMatrix v = rho0;
     double beta = v.norm();
     if (beta < atol) {
         return;
@@ -96,7 +96,7 @@ void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std:
 
     for (int j = 0; j < m; ++j) {
         // Apply reduced Liouvillian: w = -i (H v - v H)
-        SparseMatrix w = -std::complex<double>(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
+        DenseMatrix w = -std::complex<double>(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
 
         // Modified Gram–Schmidt
         for (int i = 0; i <= j; ++i) {
@@ -118,12 +118,12 @@ void arnoldi_mat(const SparseMatrix& Hsys, const SparseMatrix& rho0, int m, std:
     }
 }
 
-SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol) {
+DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol) {
     /*
     Perform time evolution using the Arnoldi iteration.
 
     Args:
-        rho_0 (SparseMatrix): The initial density matrix.
+        rho_0 (DenseMatrix): The initial density matrix.
         dt (double): The total time step.
         currentH (SparseMatrix): The current Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
@@ -171,15 +171,15 @@ SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatr
     bool is_unitary = (jump_operators.size() == 0);
 
     // Need to vectorize the density matrix if we're going to use the superoperator
-    SparseMatrix rho_t;
+    DenseMatrix rho_t;
     if (!is_unitary && !is_unitary_on_statevector) {
-        rho_t = vectorize(rho_0, atol);
+        rho_t = vectorize(rho_0);
     } else {
         rho_t = rho_0;
     }
 
     // Vars for the Arnoldi iteration
-    std::vector<SparseMatrix> V;
+    std::vector<DenseMatrix> V;
     SparseMatrix A;
     int subspace_dim = 0;
 
@@ -219,7 +219,7 @@ SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatr
         SparseMatrix y = exp_mat_action(A, dt_sub, e1);
 
         // Reconstruct the final density matrix using the basis vectors
-        SparseMatrix rho_t_new(rho_t.rows(), rho_t.cols());
+        DenseMatrix rho_t_new(rho_t.rows(), rho_t.cols());
         for (int j = 0; j < int(V.size()); ++j) {
             rho_t_new += V[j] * y.coeff(j, 0);
         }
@@ -243,7 +243,7 @@ SparseMatrix iter_arnoldi(const SparseMatrix& rho_0, double dt, const SparseMatr
 
     // If we vectorized, need to devectorize before returning
     if (!is_unitary && !is_unitary_on_statevector) {
-        rho_t = devectorize(rho_t, atol);
+        rho_t = devectorize(rho_t);
     }
 
     return rho_t;

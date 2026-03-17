@@ -15,7 +15,7 @@
 import numpy as np
 
 from qilisdk.core import QTensor
-from qilisdk.noise import KrausChannel, LindbladGenerator
+from qilisdk.noise import AmplitudeDamping, Dephasing, KrausChannel, LindbladGenerator, Noise
 from qilisdk.noise.protocols import AttachmentScope
 
 
@@ -55,3 +55,42 @@ def test_lindblad_generator_properties():
     assert AttachmentScope.PER_QUBIT in scopes
     assert AttachmentScope.PER_GATE_TYPE not in scopes
     assert AttachmentScope.PER_GATE_TYPE_PER_QUBIT not in scopes
+
+
+def test_repr_lindblad():
+    operator = QTensor(np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex))
+    hamiltonian = QTensor(np.eye(2, dtype=complex))
+    gen = LindbladGenerator(jump_operators=[operator], rates=[0.1], hamiltonian=hamiltonian)
+    repr_str = str(gen)
+    assert "LindbladGenerator" in repr_str
+    assert "jump_operators=" in repr_str
+    assert "rates=" in repr_str
+    assert "hamiltonian=" in repr_str
+
+
+def test_repr_kraus():
+    operator = QTensor(np.eye(2, dtype=complex))
+    channel = KrausChannel(operators=[operator])
+    repr_str = str(channel)
+    assert "KrausChannel" in repr_str
+    assert "operators=" in repr_str
+
+
+def test_repr_amplitude_damping():
+    noise = AmplitudeDamping(t1=4.0)
+    repr_str = str(noise)
+    assert "AmplitudeDamping" in repr_str
+    assert "t1=4.0" in repr_str
+
+
+def test_repr_dephasing():
+    noise = Dephasing(t_phi=1.0)
+    repr_str = str(noise)
+    assert "Dephasing" in repr_str
+    assert "t_phi=1.0" in repr_str
+
+
+def test_repr_base_noise():
+    noise = Noise()
+    repr_str = str(noise)
+    assert "Noise" in repr_str

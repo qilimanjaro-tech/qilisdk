@@ -47,7 +47,7 @@ class QiliSim(Backend):
             dim=16,
             num_substeps=2
         ),
-        digital_simulation_method=DigitalMethod.state_vector(max_cache_size=2_000),
+        digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
         execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200),),
     )
     """
@@ -68,8 +68,7 @@ class QiliSim(Backend):
             analog_simulation_method: Analog simulation configuration. Available options: :meth:`AnalogMethod.integrator`,
                 :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`. Defaults to
                 :meth:`AnalogMethod.integrator`.
-            digital_simulation_method: Digital simulation configuration. Available options: :meth:`DigitalMethod.state_vector`. Defaults to
-                :meth:`DigitalMethod.state_vector`.
+            digital_simulation_method: Digital simulation configuration. Available options: :meth:`DigitalMethod.statevector`. Defaults to :meth:`DigitalMethod.statevector`.
             execution_config: Execution-level configuration for threading, random seed and monte-carlo executions.
                 Defaults to the default configuration in :class:`ExecutionConfig`.
 
@@ -83,7 +82,7 @@ class QiliSim(Backend):
         self._noise_model = noise_model
 
         analog_simulation_method: AnalogMethod = analog_simulation_method or AnalogMethod.integrator()
-        digital_simulation_method: DigitalMethod = digital_simulation_method or DigitalMethod.state_vector()
+        digital_simulation_method: DigitalMethod = digital_simulation_method or DigitalMethod.statevector()
         execution_config: ExecutionConfig = execution_config or ExecutionConfig()
 
         if not isinstance(analog_simulation_method, AnalogMethod):
@@ -150,3 +149,14 @@ class QiliSim(Backend):
 
         logger.success("TimeEvolution finished")
         return result
+
+    def __repr__(self) -> str:
+        lines = [
+            f"{type(self).__qualname__}(",
+            f"  noise_model={self._noise_model!r},",
+            "  solver_config={",
+            *(f"    {key}: {value!r}," for key, value in self._solver_config.items()),
+            "  }",
+            ")",
+        ]
+        return "\n".join(lines)

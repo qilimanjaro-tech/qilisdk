@@ -626,3 +626,15 @@ def test_bad_update_hamiltonian():
         sched.update_hamiltonian("H1", "bad hamiltonian")
     sched.update_hamiltonian("H1", H2)
     assert sched.hamiltonians["H1"] == H2
+
+
+def test_print_schedule():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    H2 = PauliX(1).to_hamiltonian()
+    hams = {"H1": H1, "H2": H2}
+    sch = {"H1": {0: 0.5}, "H2": {0: 0.0, 2: 1.0}}
+    sched = Schedule(dt=dt, hamiltonians=hams, coefficients=sch)
+    as_str = str(sched)
+    assert "Schedule" in as_str
+    assert "hamiltonians=" in as_str

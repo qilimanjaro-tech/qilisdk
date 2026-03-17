@@ -113,3 +113,6 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
                 AttachmentScope.PER_GATE_TYPE_PER_QUBIT,
             }
         )
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(pX={self._pX}, pY={self._pY}, pZ={self._pZ})"

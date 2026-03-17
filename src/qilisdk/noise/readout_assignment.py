@@ -58,3 +58,6 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
             The set of scopes where this perturbation can be attached.
         """
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(p01={self._p01}, p10={self._p10})"

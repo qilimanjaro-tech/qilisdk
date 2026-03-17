@@ -37,3 +37,6 @@ class OffsetPerturbation(ParameterPerturbation):
 
     def perturb(self, value: float) -> float:
         return value + self._offset
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}(offset={self._offset})"

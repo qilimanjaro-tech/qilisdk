@@ -119,3 +119,12 @@ def test_depolarizing_probability_distribution():
 
     with pytest.raises(ValueError):  # noqa: PT011
         Depolarizing(probability=-0.1)
+
+
+def test_repr():
+    noise = PauliChannel(pX=0.2, pY=0.1, pZ=0.15)
+    repr_str = str(noise)
+    assert "PauliChannel" in repr_str
+    assert "pX=0.2" in repr_str
+    assert "pY=0.1" in repr_str
+    assert "pZ=0.15" in repr_str

@@ -85,3 +85,18 @@ def test_time_evolution_parameter_sync_with_schedule_child():
     time_evolution.set_parameter_values([1.1], where=lambda param: param.is_trainable)
     assert _isclose(schedule.get_parameters()["theta"], 1.1)
     assert _isclose(schedule.get_parameters()["coeff"], 0.4)
+
+
+def test_repr():
+    param = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliZ(0),): param})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    initial_state = ket(0).unit()
+    observables = [PauliZ(0)]
+
+    time_evolution = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state)
+    repr_str = str(time_evolution)
+    assert "TimeEvolution" in repr_str
+    assert "schedule=" in repr_str
+    assert "initial_state=" in repr_str
+    assert "observables=" in repr_str

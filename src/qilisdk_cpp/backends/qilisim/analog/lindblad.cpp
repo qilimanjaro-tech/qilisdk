@@ -14,6 +14,8 @@
 
 #include "lindblad.h"
 
+const std::complex<double> imag(0.0, 1.0);
+
 SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) {
     /*
     Form the Lindblad superoperator for the given Hamiltonian and jump operators.
@@ -72,22 +74,50 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix&
         jumps (std::vector<SparseMatrix>): The list of jump operators.
         is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
     */
-    const std::complex<double> I(0.0, 1.0);
     if (is_unitary_on_statevector) {
         drho = H * rho;
-        drho *= -I;
+        drho *= -imag;
     } else {
-        SparseMatrix temp = (H * rho).sparseView();
-        drho = -I * temp;
-        temp = (rho * H).sparseView();
-        drho += I * temp;
+        DenseMatrix Hrho = H * rho;
+        drho = Hrho;
+        drho -= Hrho.adjoint();
+        drho *= -imag;
         for (const auto& J : jumps) {
             SparseMatrix Jdag = J.adjoint();
             SparseMatrix JdagJ = Jdag * J;
-            DenseMatrix JdagJ_rho = JdagJ * rho;
-            DenseMatrix rho_JdagJ = rho * JdagJ;
             drho += J * rho * Jdag;
-            drho -= 0.5 * (JdagJ_rho + rho_JdagJ);
+            drho -= 0.5 * (JdagJ * rho + rho * JdagJ);
+        }
+    }
+}
+
+void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHamiltonian& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) {
+    /*
+    Evaluate the right-hand side of the Lindblad master equation.
+
+    Args:
+        drho (DenseMatrix&): The output derivative of the density matrix.
+        rho (DenseMatrix): The current density matrix.
+        H (MatrixFreeHamiltonian): The Hamiltonian.
+        jumps (std::vector<SparseMatrix>): The list of jump operators.
+        is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
+    */
+    if (is_unitary_on_statevector) {
+        drho = rho;
+        drho.setZero();
+        H.apply(rho, MatrixFreeApplicationType::Left, drho);
+        drho *= -imag;
+    } else {
+        DenseMatrix Hrho = rho;
+        H.apply(Hrho, MatrixFreeApplicationType::Left);
+        drho = Hrho;
+        drho -= Hrho.adjoint();
+        drho *= -imag;
+        for (const auto& J : jumps) {
+            SparseMatrix Jdag = J.adjoint();
+            SparseMatrix JdagJ = Jdag * J;
+            drho += J * rho * Jdag;
+            drho -= 0.5 * (JdagJ * rho + rho * JdagJ);
         }
     }
 }

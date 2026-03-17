@@ -234,8 +234,11 @@ class Gate(Parameterizable, ABC):
         super().set_parameter_bounds(ranges=ranges)
 
     def __repr__(self) -> str:
-        qubits_str = f"({self.qubits[0]})" if self.nqubits == 1 else str(self.qubits)
-        return f"{self.name}{qubits_str}"
+        qubits_str = f"{self.qubits[0]}" if self.nqubits == 1 else str(self.qubits)
+        if self.is_parameterized:
+            param_str = ", ".join(f"{value}" for value in self.get_parameter_values())
+            return f"{self.name}({qubits_str}, {param_str})"
+        return f"{self.name}({qubits_str})"
 
 
 @yaml.register_class

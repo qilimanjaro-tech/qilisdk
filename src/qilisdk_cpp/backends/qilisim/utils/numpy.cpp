@@ -69,6 +69,29 @@ py::array_t<std::complex<double>> to_numpy(const SparseMatrix& matrix) {
     return np_array;
 }
 
+py::array_t<std::complex<double>> to_numpy(const DenseMatrix& matrix) {
+    /*
+    Convert a DenseMatrix to a NumPy array.
+
+    Args:
+        matrix (DenseMatrix): The input dense matrix.
+
+    Returns:
+        py::array_t<std::complex<double>>: The corresponding NumPy array.
+    */
+    int rows = int(matrix.rows());
+    int cols = int(matrix.cols());
+    py::array_t<std::complex<double>> np_array({rows, cols});
+    py::buffer_info buf = np_array.request();
+    auto ptr = static_cast<std::complex<double>*>(buf.ptr);
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            ptr[r * cols + c] = matrix(r, c);
+        }
+    }
+    return np_array;
+}
+
 py::array_t<double> to_numpy(const std::vector<double>& vec) {
     /*
     Convert a vector of complex numbers to a NumPy array.

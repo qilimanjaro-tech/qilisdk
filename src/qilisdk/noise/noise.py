@@ -18,3 +18,6 @@ from .noise_abc import NoiseABC
 
 class Noise(NoiseABC):
     """Base class for state noise sources that can be attached to a model."""
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}()"

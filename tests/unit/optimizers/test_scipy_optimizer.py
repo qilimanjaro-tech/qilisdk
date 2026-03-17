@@ -103,3 +103,11 @@ def test_optimize_with_intermediate_results():
         # call the callback to ensure it works without error
         callback = kwargs["callback"]
         callback(fake_result)
+
+
+def test_repr():
+    optimizer = SciPyOptimizer(method="BFGS", jac="dummy_jac")
+    repr_str = str(optimizer)
+    assert "SciPyOptimizer" in repr_str
+    assert "method='BFGS'" in repr_str
+    assert "jac='dummy_jac'" in repr_str

@@ -74,3 +74,15 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self.schedule
+
+    def __repr__(self) -> str:
+        lines = [
+            f"{type(self).__qualname__}(",
+            f"  schedule={self.schedule!r},",
+            f"  observables={self.observables!r},",
+            f"  initial_state={self.initial_state!r},",
+            f"  nshots={self.nshots!r},",
+            f"  store_intermediate_results={self.store_intermediate_results!r},",
+            ")",
+        ]
+        return "\n".join(lines)

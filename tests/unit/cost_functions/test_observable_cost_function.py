@@ -137,3 +137,11 @@ def test_imag_sampling_result():
     cost = ocf.compute_cost(te_results)
 
     assert cost == 1j
+
+
+def test_repr():
+    ob = QTensor(np.eye(4))
+    ocf = ObservableCostFunction(ob)
+    repr_str = str(ocf)
+    assert "ObservableCostFunction" in repr_str
+    assert "observable=" in repr_str

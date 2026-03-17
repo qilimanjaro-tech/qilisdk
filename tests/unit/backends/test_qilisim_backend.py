@@ -54,7 +54,7 @@ def test_qilisim_config_builders_and_validation():
         dim=16,
         num_substeps=3,
     )
-    digital = DigitalMethod.state_vector(max_cache_size=2048)
+    digital = DigitalMethod.statevector(max_cache_size=2048)
     execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
 
     backend = QiliSim(
@@ -208,3 +208,9 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     assert result.final_state is not None
     assert len(result.expected_values) == 2
     assert len(result.intermediate_states) == 2
+
+
+def test_qilisim_repr():
+    backend = QiliSim()
+    repr_str = str(backend)
+    assert "QiliSim" in repr_str

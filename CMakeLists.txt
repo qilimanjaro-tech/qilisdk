@@ -14,6 +14,10 @@ endif()
 #   uv pip install -v -e ./ -Ccmake.define.qilisim=OFF 
 # To enable debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=Debug
+# To run with clang-tidy:
+#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
+# To enable (very) verbose simulator output:
+#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
 if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     message(STATUS "[QiliSim] QiliSim backend enabled, preparing to build")
     message(STATUS "[QiliSim] Build type: ${CMAKE_BUILD_TYPE}")
@@ -52,22 +56,31 @@ if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
     target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 
     # Set compile options
-    set (CMAKE_CXX_STANDARD 14)
+    set (CMAKE_CXX_STANDARD 17)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
         target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(qilisim_module PRIVATE -std=c++17)
+    endif()
+
+    # If verbose is enabled, add a compile definition to enable verbose output in the code
+    if (DEFINED verbose AND verbose STREQUAL "ON")
+        message(STATUS "[QiliSim] Enabling verbose output in the simulator")
+        target_compile_definitions(qilisim_module PUBLIC VERBOSE)
     endif()
 
     # Link libraries and include directories
     target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
     target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
-    if (OpenMP_CXX_FOUND)
+
+    # Don't use openmp in debug mode
+    if (OpenMP_CXX_FOUND AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "[QiliSim] Using OpenMP")
         target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
     endif()
 
     # Enable if you want to run clang-tidy on the code
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (DEFINED tidy AND qilisim STREQUAL "ON")
         message(STATUS "[QiliSim] Enabling clang-tidy")
         set_target_properties(qilisim_module PROPERTIES
             CXX_CLANG_TIDY

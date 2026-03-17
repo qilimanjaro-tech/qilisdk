@@ -257,3 +257,34 @@ class NoiseModel:
             return
         self._check_scope_allowed(noise, AttachmentScope.PER_GATE_TYPE)
         self.per_gate_perturbations[gate, parameter].append(noise)
+
+    def __repr__(self) -> str:
+        SO_SONARQUBE_DOESNT_COMPLAIN = "  },"
+        lines = [
+            "NoiseModel(",
+            f"  noise_config={self.noise_config!r},",
+            f"  global_noise={self.global_noise!r},",
+            "  per_qubit_noise={",
+            *(f"    {qubit}: {noises!r}," for qubit, noises in self.per_qubit_noise.items()),
+            SO_SONARQUBE_DOESNT_COMPLAIN,
+            "  per_gate_noise={",
+            *(f"    {gate.__name__}: {noises!r}," for gate, noises in self.per_gate_noise.items()),
+            SO_SONARQUBE_DOESNT_COMPLAIN,
+            "  per_gate_per_qubit_noise={",
+            *(
+                f"    ({gate.__name__}, {qubit}): {noises!r},"
+                for (gate, qubit), noises in self.per_gate_per_qubit_noise.items()
+            ),
+            SO_SONARQUBE_DOESNT_COMPLAIN,
+            "  global_perturbations={",
+            *(f"    {param}: {perturbations!r}," for param, perturbations in self.global_perturbations.items()),
+            SO_SONARQUBE_DOESNT_COMPLAIN,
+            "  per_gate_perturbations={",
+            *(
+                f"    ({gate.__name__}, {param}): {perturbations!r},"
+                for (gate, param), perturbations in self.per_gate_perturbations.items()
+            ),
+            SO_SONARQUBE_DOESNT_COMPLAIN,
+            ")",
+        ]
+        return "\n".join(lines)

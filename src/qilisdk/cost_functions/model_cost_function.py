@@ -150,3 +150,6 @@ class ModelCostFunction(CostFunction):
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
+
+    def __repr__(self) -> str:
+        return f"ModelCostFunction(model={self.model})"

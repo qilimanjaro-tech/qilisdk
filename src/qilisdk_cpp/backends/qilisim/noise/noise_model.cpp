@@ -59,7 +59,6 @@ void NoiseModelCpp::add_kraus_operators_per_qubit(int qubit, const std::vector<S
     cached_kraus_operators_per_qubit[qubit].push_back(Ks);
 }
 
-
 void NoiseModelCpp::add_kraus_operators_per_gate(const std::string& gate_name, const std::vector<SparseMatrix>& Ks) {
     /*
     Add a Kraus operator for a specific gate to the cached map.
@@ -71,7 +70,6 @@ void NoiseModelCpp::add_kraus_operators_per_gate(const std::string& gate_name, c
     has_something = true;
     cached_kraus_operators_per_gate[gate_name].push_back(Ks);
 }
-
 
 void NoiseModelCpp::add_kraus_operators_per_gate_qubit(const std::string& gate_name, int qubit, const std::vector<SparseMatrix>& Ks) {
     /*
@@ -86,58 +84,57 @@ void NoiseModelCpp::add_kraus_operators_per_gate_qubit(const std::string& gate_n
     cached_kraus_operators_per_gate_qubit[std::make_pair(gate_name, qubit)].push_back(Ks);
 }
 
-
-std::vector<SparseMatrix>& NoiseModelCpp::get_jump_operators() {
+const std::vector<SparseMatrix>& NoiseModelCpp::get_jump_operators() const {
     /*
     Get the cached jump operators.
 
     Returns:
-        std::vector<SparseMatrix>&: The cached jump operators.
+        const std::vector<SparseMatrix>&: The cached jump operators.
     */
     return cached_jump_operators;
 }
 
-std::vector<std::vector<SparseMatrix>>& NoiseModelCpp::get_kraus_operators_global() {
+const std::vector<std::vector<SparseMatrix>>& NoiseModelCpp::get_kraus_operators_global() const {
     /*
     Get the cached global Kraus operators.
 
     Returns:
-        std::vector<std::vector<SparseMatrix>>&: The cached global Kraus operators.
+        const std::vector<std::vector<SparseMatrix>>&: The cached global Kraus operators.
     */
     return cached_kraus_operators_global;
 }
 
-std::map<int, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_qubit() {
+const std::map<int, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_qubit() const {
     /*
     Get the cached Kraus operators for a specific qubit.
 
     Returns:
-        std::map<int, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per qubit.
+        const std::map<int, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per qubit.
     */
     return cached_kraus_operators_per_qubit;
 }
 
-std::map<std::string, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_gate() {
+const std::map<std::string, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_gate() const {
     /*
     Get the cached Kraus operators for a specific gate.
 
     Returns:
-        std::map<std::string, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per gate.
+        const std::map<std::string, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per gate.
     */
     return cached_kraus_operators_per_gate;
 }
 
-std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_gate_qubit() {
+const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>& NoiseModelCpp::get_kraus_operators_per_gate_qubit() const {
     /*
     Get the cached Kraus operators for a specific gate on a specific qubit.
 
     Returns:
-        std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per gate and qubit.
+        const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>&: The cached Kraus operators per gate and qubit.
     */
     return cached_kraus_operators_per_gate_qubit;
 }
 
-std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) {
+std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) const {
     /*
     Get all relevant Kraus operators for a given gate and its target qubits.
 
@@ -160,7 +157,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
 
     // Add per-gate Kraus operators
     if (cached_kraus_operators_per_gate.find(gate_name) != cached_kraus_operators_per_gate.end()) {
-        for (const auto& operator_set : cached_kraus_operators_per_gate[gate_name]) {
+        for (const auto& operator_set : cached_kraus_operators_per_gate.at(gate_name)) {
             relevant_operators.push_back(operator_set);
         }
     }
@@ -168,7 +165,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     // Add per-qubit Kraus operators
     for (int qubit : target_qubits) {
         if (cached_kraus_operators_per_qubit.find(qubit) != cached_kraus_operators_per_qubit.end()) {
-            for (const auto& operator_set : cached_kraus_operators_per_qubit[qubit]) {
+            for (const auto& operator_set : cached_kraus_operators_per_qubit.at(qubit)) {
                 relevant_operators.push_back(operator_set);
             }
         }
@@ -178,7 +175,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     for (int qubit : target_qubits) {
         auto key = std::make_pair(gate_name, qubit);
         if (cached_kraus_operators_per_gate_qubit.find(key) != cached_kraus_operators_per_gate_qubit.end()) {
-            for (const auto& operator_set : cached_kraus_operators_per_gate_qubit[key]) {
+            for (const auto& operator_set : cached_kraus_operators_per_gate_qubit.at(key)) {
                 relevant_operators.push_back(operator_set);
             }
         }
@@ -220,7 +217,7 @@ void NoiseModelCpp::add_readout_error_per_qubit(int qubit, double p01, double p1
     readout_error_per_qubit[qubit] = std::make_pair(p01, p10);
 }
 
-std::pair<double, double> NoiseModelCpp::get_relevant_readout_error(int qubit) {
+std::pair<double, double> NoiseModelCpp::get_relevant_readout_error(int qubit) const {
     /*
     Get the relevant readout error probabilities for a given qubit.
 
@@ -233,8 +230,8 @@ std::pair<double, double> NoiseModelCpp::get_relevant_readout_error(int qubit) {
     double p01 = readout_error_global.first;
     double p10 = readout_error_global.second;
     if (readout_error_per_qubit.find(qubit) != readout_error_per_qubit.end()) {
-        p01 = std::max(p01, readout_error_per_qubit[qubit].first);
-        p10 = std::max(p10, readout_error_per_qubit[qubit].second);
+        p01 = std::max(p01, readout_error_per_qubit.at(qubit).first);
+        p10 = std::max(p10, readout_error_per_qubit.at(qubit).second);
     }
     return std::make_pair(p01, p10);
 }

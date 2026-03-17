@@ -50,3 +50,6 @@ class Sampling(PrimitiveFunctional[SamplingResult]):
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self.circuit
+
+    def __repr__(self) -> str:
+        return f"Sampling(circuit={self.circuit}, nshots={self.nshots})"

@@ -73,3 +73,15 @@ def test_sampling_parameter_sync_with_circuit_child():
     assert _isclose(circuit.get_parameter_bounds()["theta"][1], 2.0)
     assert _isclose(sampling.get_parameter_bounds(where=lambda param: not param.is_trainable)["phi_nt"][0], 0.3)
     assert _isclose(sampling.get_parameter_bounds(where=lambda param: not param.is_trainable)["phi_nt"][1], 0.3)
+
+
+def test_repr():
+    circuit = Circuit(2)
+    param = Parameter("theta", 0.5)
+    circuit.add(RZ(0, phi=param))
+    nshots = 1024
+    sampling = Sampling(circuit=circuit, nshots=nshots)
+    repr_str = str(sampling)
+    assert "Sampling" in repr_str
+    assert "circuit=" in repr_str
+    assert "nshots=1024" in repr_str

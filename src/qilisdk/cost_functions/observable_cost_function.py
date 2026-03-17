@@ -110,3 +110,6 @@ class ObservableCostFunction(CostFunction):
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
+
+    def __repr__(self) -> str:
+        return f"ObservableCostFunction(observable={self._observable})"

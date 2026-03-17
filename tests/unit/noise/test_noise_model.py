@@ -140,3 +140,20 @@ def test_noise_model_scope_validation():
 
     with pytest.raises(ValueError, match="per_gate_type_per_qubit"):
         noise_model.add(NoScopePauliChannel(), gate=X, qubits=[0])
+
+
+def test_repr():
+    noise_model = NoiseModel()
+    noise_model.add(Dephasing(t_phi=1.0))
+    noise_model.add(BitFlip(probability=0.1), gate=X)
+    noise_model.add(BitFlip(probability=0.1), qubits=[1])
+    noise_model.add(BitFlip(probability=0.1), qubits=[1], gate=X)
+    noise_model.add(OffsetPerturbation(offset=0.5), parameter="theta")
+    noise_model.add(OffsetPerturbation(offset=0.5), gate=X, parameter="theta")
+    repr_str = str(noise_model)
+    assert "NoiseModel" in repr_str
+    assert "global_noise" in repr_str
+    assert "per_qubit_noise" in repr_str
+    assert "per_gate_noise" in repr_str
+    assert "global_perturbations" in repr_str
+    assert "per_gate_perturbations" in repr_str

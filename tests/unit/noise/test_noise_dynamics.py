@@ -80,3 +80,12 @@ def test_lindblad_bad_rates():
     gen._rates = [0.1]
     with pytest.raises(ValueError, match=r"Length of rates must match"):
         gen.jump_operators_with_rates
+
+
+def test_lindblad_repr():
+    operator = QTensor(_sigma_plus())
+    gen = LindbladGenerator(jump_operators=[operator], rates=[0.1])
+    repr_str = str(gen)
+    assert "LindbladGenerator" in repr_str
+    assert "jump_operators=" in repr_str
+    assert "rates=" in repr_str
