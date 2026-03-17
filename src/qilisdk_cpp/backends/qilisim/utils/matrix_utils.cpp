@@ -189,7 +189,7 @@ SparseMatrix expand_operator(int nqubits, const SparseMatrix& op) {
 
 SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits, const SparseMatrix& op) {
     /*
-    Expand a multi-qubit operator to act on the full n-qubit system.
+    Expand a single-qubit operator to act on multiple qubits in the full n-qubit system.
 
     Args:
         target_qubits (std::vector<int>): The list of target qubit indices.

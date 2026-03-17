@@ -142,10 +142,7 @@ DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol
     // Extract the corresponding state vector
     DenseMatrix state_vec(rho_t.rows(), 1);
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t(r, non_zero_col);
-        if (std::abs(val) > atol) {
-            state_vec(r, 0) = val;
-        }
+        state_vec(r, 0) = rho_t(r, non_zero_col);
     }
     state_vec /= state_vec.norm();
 

@@ -20,8 +20,8 @@
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
-std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs);
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::object& observables);

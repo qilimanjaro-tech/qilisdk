@@ -19,6 +19,8 @@
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
 
+#pragma GCC visibility push(default)
+
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
     /*
     Extract Hamiltonian terms in matrix-free form from a list of objects.
@@ -358,7 +360,6 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
         } else if (py::isinstance(obs, PauliOperator)) {
             // Get the matrix
             py::buffer matrix = numpy_array(obs.attr("matrix"), py::dtype("complex128"));
-            py::buffer_info buf = matrix.request();
             SparseMatrix O = from_numpy(matrix, atol);
 
             // Expand to full qubit count
@@ -514,7 +515,6 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
 
         // Get the matrix
         py::buffer matrix = py_gate.attr("_generate_matrix")();
-        py::buffer_info buf = matrix.request();
         SparseMatrix base_matrix = from_numpy(matrix, atol);
 
         // Get the controls
@@ -643,3 +643,5 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     config.validate();
     return config;
 }
+
+#pragma GCC visibility pop
