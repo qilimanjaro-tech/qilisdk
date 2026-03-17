@@ -35,7 +35,7 @@ class ReadoutResult(Result):
     def readout(self) -> ReadoutMethod: ...
 
 
-class SamplingReadoutResults(ReadoutResult):
+class SamplingReadoutResult(ReadoutResult):
 
     @overload
     def __init__(
@@ -63,9 +63,9 @@ class SamplingReadoutResults(ReadoutResult):
         state: QTensor | None = None,
     ) -> None:
 
-        if samples or probabilities:
+        if samples is not None or probabilities is not None:
             self._init_from_samples(readout, samples, probabilities)
-        elif state:
+        elif state is not None:
             self._init_from_state(readout, state)
         else:
             raise ValueError("Can't construct the Sampling results if samples and state are not provided.")
@@ -142,7 +142,7 @@ class SamplingReadoutResults(ReadoutResult):
     __str__ = __repr__
 
 
-class ExpectationReadoutResults(ReadoutResult):
+class ExpectationReadoutResult(ReadoutResult):
 
     @overload
     def __init__(self, readout: ExpectationReadout, *, state: QTensor) -> None: ...
@@ -158,9 +158,9 @@ class ExpectationReadoutResults(ReadoutResult):
     def __init__(
         self, readout: ExpectationReadout, *, expected_values: list[Number] | None = None, state: QTensor | None = None
     ) -> None:
-        if expected_values:
+        if expected_values is not None:
             self._init_from_expected_values(readout, expected_values)
-        elif state:
+        elif state is not None:
             self._init_from_state(readout, state)
         else:
             raise ValueError(
@@ -201,7 +201,7 @@ class ExpectationReadoutResults(ReadoutResult):
     __str__ = __repr__
 
 
-class StateTomographyReadoutResults(ReadoutResult):
+class StateTomographyReadoutResult(ReadoutResult):
 
     def __init__(
         self,

@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 
 from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
-from .readout_resutl import (
-    ExpectationReadoutResults,
-    ReadoutResult,
-    SamplingReadoutResults,
-    StateTomographyReadoutResults,
-)
+from .readout_result import ExpectationReadoutResult, ReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
 
 __all__ = [
     "ExpectationReadout",

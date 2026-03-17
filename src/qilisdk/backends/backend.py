@@ -31,13 +31,13 @@ from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.readout import (
     ExpectationReadout,
-    ExpectationReadoutResults,
+    ExpectationReadoutResult,
     ReadoutMethod,
     ReadoutResult,
     SamplingReadout,
-    SamplingReadoutResults,
+    SamplingReadoutResult,
     StateTomographyReadout,
-    StateTomographyReadoutResults,
+    StateTomographyReadoutResult,
 )
 from qilisdk.settings import get_settings
 
@@ -222,20 +222,20 @@ class Backend(ABC):
     @classmethod
     def _construct_sampling_results(
         cls, final_state: QTensor, readout: SamplingReadout, seed: int | None = None, **kwarg: Any
-    ) -> SamplingReadoutResults:
-        return SamplingReadoutResults(readout=copy(readout), state=final_state)
+    ) -> SamplingReadoutResult:
+        return SamplingReadoutResult(readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_expectation_results(
         cls, final_state: QTensor, readout: ExpectationReadout, **kwarg: Any
-    ) -> ExpectationReadoutResults:
-        return ExpectationReadoutResults(readout=copy(readout), state=final_state)
+    ) -> ExpectationReadoutResult:
+        return ExpectationReadoutResult(readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_state_tomography_results(
         cls, final_state: QTensor, readout: StateTomographyReadout, **kwarg: Any
-    ) -> StateTomographyReadoutResults:
-        return StateTomographyReadoutResults(readout=copy(readout), final_state=final_state)
+    ) -> StateTomographyReadoutResult:
+        return StateTomographyReadoutResult(readout=copy(readout), final_state=final_state)
 
     @classmethod
     def _construct_results_list(
