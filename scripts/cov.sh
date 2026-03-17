@@ -7,6 +7,9 @@
 # Time esimate: 2-3 minutes
 # --------------------------------------------------------------------------
 
+# Stop if any command fails
+set -e
+
 # Keep a log file in same directory as this script
 LOG_FILE=$(dirname "$0")/cov.log
 > $LOG_FILE
@@ -19,12 +22,6 @@ mkdir -p coverage
 # Rebuild the C++ ensuring we build the test suite
 echo "Rebuilding C++ with tests enabled..." | tee -a $LOG_FILE
 uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1 | tee -a $LOG_FILE
-
-# Stop if had errors in compilation
-if [ $? -ne 0 ]; then
-    echo "Build failed. Exiting." | tee -a $LOG_FILE
-    exit 1
-fi
 
 # Run the C++ test suite
 echo "Running C++ tests..." | tee -a $LOG_FILE

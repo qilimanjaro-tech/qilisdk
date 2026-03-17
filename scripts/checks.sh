@@ -7,6 +7,9 @@
 # Time esimate: 3 minutes
 # --------------------------------------------------------------------------
 
+# Stop if any command fails
+set -e
+
 # Keep a log file in same directory as this script
 LOG_FILE=$(dirname "$0")/checks.log
 > $LOG_FILE
