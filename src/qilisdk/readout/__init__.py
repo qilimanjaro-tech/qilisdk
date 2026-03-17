@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,22 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import annotations
-
-from abc import ABC
-
-from qilisdk.core.parameterizable import Parameterizable
 
 
-class Functional(ABC):
-    """
-    Abstract interface for executable routines that return a :class:`FunctionalResult`.
+from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
-    Subclasses detail the concrete `result_type` they generate.
-    """
-
-
-class PrimitiveFunctional(Parameterizable, Functional, ABC):
-    """
-    Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
-    """
+__all__ = ["ExpectationReadout", "ReadoutMethod", "SamplingReadout", "StateTomographyReadout"]

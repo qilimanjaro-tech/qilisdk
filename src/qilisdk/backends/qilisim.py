@@ -21,6 +21,7 @@ from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_evolution import DigitalEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import ReadoutMethod
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -80,9 +81,8 @@ class QiliSim(Backend):
         """
 
         # Initialize the backend and the class vars
-        super().__init__()
+        super().__init__(noise_model=noise_model)
         self.qili_sim = QiliSimCpp()
-        self._noise_model = noise_model
 
         analog_simulation_method: AnalogMethod = analog_simulation_method or AnalogMethod.integrator()
         digital_simulation_method: DigitalMethod = digital_simulation_method or DigitalMethod.statevector()
@@ -117,7 +117,7 @@ class QiliSim(Backend):
         return dict(self._solver_config)
 
     def _execute_digital_evolution(
-        self, functional: DigitalEvolution, initial_state: QTensor | None = None
+        self, functional: DigitalEvolution, readout: list[ReadoutMethod], initial_state: QTensor | None = None
     ) -> FunctionalResult:
         """
         Execute a digital-circuit sampling functional and return measurement results.
@@ -131,13 +131,13 @@ class QiliSim(Backend):
 
         """
         result = self.qili_sim.execute_digital_evolution(
-            functional, self._noise_model, initial_state, self.solver_params
+            functional, readout, self._noise_model, initial_state, self.solver_params
         )
         logger.success("Sampling finished")
         return result
 
     def _execute_analog_evolution(
-        self, functional: AnalogEvolution, initial_state: QTensor | None = None
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod], initial_state: QTensor | None = None
     ) -> FunctionalResult:
         """
         Execute a quantum circuit and return the measurement results.
@@ -149,44 +149,44 @@ class QiliSim(Backend):
             SamplingResult: A result object containing the measurement samples and computed probabilities.
 
         """
-        result = self.qili_sim.execute_analog_evolution(functional, self._noise_model, self.solver_params)
+        result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, self.solver_params)
         logger.success("Sampling finished")
         return result
 
-    def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> FunctionalResult:
-        """
-        Execute a quantum circuit and return the measurement results.
+    # def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> FunctionalResult:
+    #     """
+    #     Execute a quantum circuit and return the measurement results.
 
-        Args:
-            functional (Sampling): The Sampling function to execute.
+    #     Args:
+    #         functional (Sampling): The Sampling function to execute.
 
-        Returns:
-            SamplingResult: A result object containing the measurement samples and computed probabilities.
+    #     Returns:
+    #         SamplingResult: A result object containing the measurement samples and computed probabilities.
 
-        """
-        logger.info("Executing Sampling with {} shots", functional.readout[0].nshots)
-        result = self.qili_sim.execute_digital_evolution(
-            functional, self._noise_model, initial_state, self.solver_params
-        )
-        logger.success("Sampling finished")
-        return result
+    #     """
+    #     logger.info("Executing Sampling with {} shots", functional.readout[0].nshots)
+    #     result = self.qili_sim.execute_digital_evolution(
+    #         functional, self._noise_model, initial_state, self.solver_params
+    #     )
+    #     logger.success("Sampling finished")
+    #     return result
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
-        """
-        Compute analog time evolution for the provided schedule and initial state.
+    # def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    #     """
+    #     Compute analog time evolution for the provided schedule and initial state.
 
-        Args:
-            functional: TimeEvolution functional to execute.
+    #     Args:
+    #         functional: TimeEvolution functional to execute.
 
-        Returns:
-            TimeEvolutionResult: Final state and requested observables.
-        """
+    #     Returns:
+    #         TimeEvolutionResult: Final state and requested observables.
+    #     """
 
-        # Get the time steps
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+    #     # Get the time steps
+    #     logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
 
-        # Execute the time evolution
-        result = self.qili_sim.execute_analog_evolution(functional, self._noise_model, self.solver_params)
+    #     # Execute the time evolution
+    #     result = self.qili_sim.execute_analog_evolution(functional, self._noise_model, self.solver_params)
 
-        logger.success("TimeEvolution finished")
-        return result
+    #     logger.success("TimeEvolution finished")
+    #     return result

@@ -21,21 +21,22 @@ from qilisdk.core import QTensor
 from qilisdk.core.qtensor import probabilities_from_state
 from qilisdk.core.result import Result
 from qilisdk.core.types import Number
+from qilisdk.readout import ExpectationReadout, StateTomographyReadout
 
-from .functional import ReadoutBase, ReadoutMethod, SamplingReadout
+from .functional import ReadoutMethod, SamplingReadout
 
 
 class ReadoutResult(Result):
     @property
     @abstractmethod
-    def readout(self) -> ReadoutBase: ...
+    def readout(self) -> ReadoutMethod: ...
 
 
 class SamplingReadoutResults(ReadoutResult):
     def __init__(
         self, readout: SamplingReadout, samples: dict[str, int], probabilities: dict[str, float] | None = None
     ) -> None:
-        self._readout = readout
+        self._readout: SamplingReadout = readout
         self._samples: dict[str, int] = samples
 
         if not probabilities:
@@ -53,7 +54,7 @@ class SamplingReadoutResults(ReadoutResult):
             self._probabilities = probabilities
 
     @property
-    def readout(self) -> ReadoutBase:
+    def readout(self) -> SamplingReadout:
         return self._readout
 
     @property
@@ -98,14 +99,14 @@ class ExpectationReadoutResults(ReadoutResult):
 
     def __init__(
         self,
-        readout: ReadoutMethod,
+        readout: ExpectationReadout,
         expected_values: list[Number],
     ) -> None:
-        self._readout = readout
+        self._readout: ExpectationReadout = readout
         self._expected_values = expected_values
 
     @property
-    def readout(self) -> ReadoutBase:
+    def readout(self) -> ExpectationReadout:
         return self._readout
 
     @property
@@ -127,15 +128,17 @@ class StateTomographyReadoutResults(ReadoutResult):
 
     def __init__(
         self,
-        readout: ReadoutMethod,
+        readout: StateTomographyReadout,
         final_state: QTensor,
     ) -> None:
-        self._readout = readout
-        self._final_state = final_state
-        self._probabilities = probabilities_from_state(self._final_state)
+        self._readout: StateTomographyReadout = readout
+        self._final_state: QTensor = final_state
+        self._probabilities: dict[str, float] | None = (
+            probabilities_from_state(self._final_state) if self._readout.compute_probabilities else None
+        )
 
     @property
-    def readout(self) -> ReadoutBase:
+    def readout(self) -> StateTomographyReadout:
         return self._readout
 
     @property
@@ -143,7 +146,7 @@ class StateTomographyReadoutResults(ReadoutResult):
         return self._final_state
 
     @property
-    def probabilities(self) -> dict[str, float]:
+    def probabilities(self) -> dict[str, float] | None:
         """
         Returns:
             dict[str,float]: a copy of the estimated probability distribution.
@@ -154,7 +157,14 @@ class StateTomographyReadoutResults(ReadoutResult):
         """
         Returns:
             float: the probability associated with ``bitstring`` (0.0 if unseen).
+
+        Raises:
+            ValueError: if the readout set `compute_probabilities` to False,
         """
+        if not self._probabilities:
+            raise ValueError(
+                "Probabilities where not computed because `compute_probabilities` was set to False in the readout."
+            )
         return self._probabilities.get(bitstring, 0.0)
 
     def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
@@ -164,7 +174,14 @@ class StateTomographyReadoutResults(ReadoutResult):
 
         Returns:
             list[tuple[str, float]]: the ``n`` most probable bitstrings in descending probability order.
+
+        Raises:
+            ValueError: if the readout set `compute_probabilities` to False,
         """
+        if not self._probabilities:
+            raise ValueError(
+                "Probabilities where not computed because `compute_probabilities` was set to False in the readout."
+            )
         if n is None:
             n = len(self._probabilities)
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
@@ -180,6 +197,11 @@ class FunctionalResult(Result):
     def __init__(
         self, readout_results: list[ReadoutResult], intermediate_results: list[list[ReadoutResult]] | None = None
     ) -> None:
+
+        if len({ro.__class__ for ro in readout_results}) != len(readout_results):
+            raise ValueError(
+                f"Each type of readout is allowed to be specified once.\nprovided a list with the following types {readout_results}"
+            )
         self._readout_results = readout_results
         self._intermediate_results = intermediate_results
 
@@ -193,35 +215,35 @@ class FunctionalResult(Result):
 
     @property
     def samples(self) -> list[dict[str, int]]:
-        samples_list: list[dict[str, int]] = []
-        for result in self:
-            if isinstance(result, SamplingReadoutResults):
-                samples_list.append(result.samples)
-        return samples_list
+        for ro in self._readout_results:
+            if isinstance(ro, SamplingReadoutResults):
+                return ro.samples()
+        raise ValueError("Can't find samples in results, because no Sampling readout was provided.")
 
     @property
     def probabilities(self) -> list[dict[str, float]]:
-        probabilities_list: list[dict[str, float]] = []
-        for result in self:
-            if isinstance(result, (StateTomographyReadoutResults, SamplingReadoutResults)):
-                probabilities_list.append(result.probabilities)
-        return probabilities_list
+        for ro in self._readout_results:
+            if isinstance(ro, SamplingReadoutResults):
+                return ro.probabilities()
+            if isinstance(ro, StateTomographyReadoutResults):
+                return ro.probabilities()
+        raise ValueError(
+            "Can't find probabilities in results, because no Sampling/State Tomography readout was provided."
+        )
 
     @property
     def final_states(self) -> list[QTensor]:
-        final_state_list: list[QTensor] = []
-        for result in self:
-            if isinstance(result, StateTomographyReadoutResults):
-                final_state_list.append(result.final_state)
-        return final_state_list
+        for ro in self._readout_results:
+            if isinstance(ro, StateTomographyReadoutResults):
+                return ro.final_state()
+        raise ValueError("Can't find samples in results, because no State Tomography readout was provided.")
 
     @property
     def expected_values(self) -> list[list[Number]]:
-        expected_values_list: list[list[Number]] = []
-        for result in self:
-            if isinstance(result, ExpectationReadoutResults):
-                expected_values_list.append(result.expected_values)
-        return expected_values_list
+        for ro in self._readout_results:
+            if isinstance(ro, ExpectationReadoutResults):
+                return ro.expected_values()
+        raise ValueError("Can't find samples in results, because no Expectation readout was provided.")
 
     def has_final_state(self) -> bool:
         return any(isinstance(res, StateTomographyReadoutResults) for res in self)

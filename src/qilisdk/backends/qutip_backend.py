@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
@@ -25,19 +24,20 @@ from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
+from qilisdk.core.exceptions import NotSupportedOperation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
-    from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals.analog_evolution import AnalogEvolution
     from qilisdk.functionals.digital_evolution import DigitalEvolution
-    from qilisdk.functionals.sampling import Sampling
+    from qilisdk.noise import NoiseModel
+    from qilisdk.readout import ReadoutMethod
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -83,12 +83,20 @@ class QutipBackend(Backend):
     ideal for local development, CI pipelines, and educational notebooks.
     """
 
-    def __init__(self, nsteps: int = 10_000) -> None:
+    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`.
         Args:
-            nsteps (int): The maximum number of internal steps for the ODE solver."""
-        self.nsteps = nsteps
+            nsteps (int): The maximum number of internal steps for the ODE solver.
 
+        Raises:
+            ValueError: If noise models are provided.
+            NotSupportedOperation: If a noise model is provided.
+        """
+        if noise_model:
+            raise NotSupportedOperation("Noise Models are not supported with QuTip Backend.")
+        self.nsteps = nsteps
+        if noise_model is not None:
+            raise ValueError("QuTip backend currently does not support noise models.")
         super().__init__()
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: QutipBackend._handle_I,
@@ -108,7 +116,9 @@ class QutipBackend(Backend):
         }
         logger.success("QutipBackend initialised")
 
-    def _execute_digital_evolution(self, functional: DigitalEvolution) -> FunctionalResult:
+    def _execute_digital_evolution(
+        self, functional: DigitalEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -145,16 +155,14 @@ class QutipBackend(Backend):
         if len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
-                    final_state=final_state.ptrace(measurements), readout_methods=functional.readout
+                    final_state=final_state.ptrace(measurements), readout_methods=readout
                 )
             )
         return FunctionalResult(
-            readout_results=QutipBackend._construct_results_list(
-                final_state=final_state, readout_methods=functional.readout
-            )
+            readout_results=QutipBackend._construct_results_list(final_state=final_state, readout_methods=readout)
         )
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution) -> FunctionalResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -224,37 +232,9 @@ class QutipBackend(Backend):
         logger.success("TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
-                final_state=QTensor(results.final_state.full()), readout_methods=functional.readout
+                final_state=QTensor(results.final_state.full()), readout_methods=readout
             )
         )
-
-    def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
-        """
-        Execute a quantum circuit and return the measurement results.
-
-        This method applies the selected simulation method, translates the circuit's gates into
-        QuTip operations via their respective handlers, runs the simulation, and returns the result
-        as a QutipDigitalResult.
-
-        Args:
-            functional (Sampling): The Sampling function to execute.
-
-        Returns:
-            DigitalResult: A result object containing the measurement samples and computed probabilities.
-
-        """
-        return self._execute_digital_evolution(functional=functional)
-
-    def _execute_time_evolution(self, functional: TimeEvolution) -> FunctionalResult:
-        """computes the time evolution under of an initial state under the given schedule.
-
-        Args:
-            functional (TimeEvolution): The TimeEvolution functional to execute.
-
-        Returns:
-            TimeEvolutionResult: The results of the evolution.
-        """
-        return self._execute_analog_evolution(functional=functional)
 
     @staticmethod
     def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:

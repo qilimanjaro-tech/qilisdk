@@ -50,6 +50,7 @@ from qilisdk.digital.gates import (
     Z,
 )
 from qilisdk.functionals import FunctionalResult
+from qilisdk.functionals.digital_evolution import DigitalEvolution
 from qilisdk.functionals.functional_result import ReadoutMethod, SamplingReadoutResults
 from qilisdk.noise import (
     BitFlip,
@@ -64,6 +65,7 @@ from qilisdk.noise import (
     SupportsTimeDerivedKraus,
     SupportsTimeDerivedLindblad,
 )
+from qilisdk.readout import SamplingReadout
 from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
@@ -137,7 +139,7 @@ class CudaBackend(Backend):
                 Options include STATE_VECTOR, TENSOR_NETWORK, or MATRIX_PRODUCT_STATE.
                 Defaults to STATE_VECTOR.
         """
-        super().__init__()
+        super().__init__(noise_model)
         cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: CudaBackend._handle_I,
@@ -162,7 +164,6 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
-        self._noise_model = noise_model
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     @property
@@ -175,17 +176,17 @@ class CudaBackend(Backend):
         """
         return self._sampling_method
 
-    def _execute_digital_evolution(self, functional: Sampling) -> FunctionalResult:
+    def _execute_digital_evolution(self, functional: DigitalEvolution, readout: ReadoutMethod) -> FunctionalResult:
         if self._noise_model:
-            if any(not ro.is_sample() for ro in functional.readout):
+            if any(not ro.is_sample() for ro in readout):
                 raise ValueError(
-                    "Currently only the sample readout method is supported with CUDA backend for digital simulation."
+                    "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
                 )
-            if len(functional.readout) > 1:
+            if len(readout) > 1:
                 raise ValueError(
-                    "Currently only a single sampling operation is supported with CUDA backend digital simulation."
+                    "Currently only a single sampling operation is supported with CUDA backend digital simulation with noise."
                 )
-        nshots = functional.readout[0].nshots
+        nshots = readout[0].nshots
         logger.info("Executing Sampling (shots={})", nshots)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
@@ -216,37 +217,14 @@ class CudaBackend(Backend):
 
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
-            cudaq.set_noise(cuda_noise_model)
-            # cudaq_result = cudaq.sample(kernel, shots_count=nshots, noise_model=cuda_noise_model)
-            cudaq_result = cudaq.sample(kernel, shots_count=nshots)
-            cudaq.set_target("density-matrix-cpu")
-            cudaq_state = cudaq.get_state(kernel)
-            cudaq.unset_noise()
+            cudaq_result = cudaq.sample(kernel, shots_count=nshots, noise_model=cuda_noise_model)
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             # cudaq.set_noise(cuda_noise_model)
             # cudaq.unset_noise()
-            # # cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             if og_param:
                 functional.set_parameters(og_param)
-            # final_state = np.array(
-            #     cudaq_state,
-            #     dtype=_complex_dtype(),
-            # )
-            # if len(final_state.shape) == 1:
-            #     final_state = final_state.reshape(-1, 1)
-            # final_state = QTensor(final_state)
-            # if len(measured_qubits) > 0:
-            #     final_state = final_state.ptrace(measured_qubits)
-
-            # return FunctionalResult(
-            #     readout_results=CudaBackend._construct_results_list(
-            #         final_state=final_state, readout_methods=functional.readout, noise_model=self._noise_model
-            #     )
-            # )
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
-            return FunctionalResult(
-                [SamplingReadoutResults(readout=functional.readout[0], samples=dict(cudaq_result.items()))]
-            )
+            return FunctionalResult([SamplingReadoutResults(readout=readout[0], samples=dict(cudaq_result.items()))])
 
         cudaq_state = cudaq.get_state(kernel)
         final_state = np.array(
@@ -262,11 +240,11 @@ class CudaBackend(Backend):
         return FunctionalResult(
             readout_results=CudaBackend._construct_results_list(
                 final_state=final_state,
-                readout_methods=functional.readout,
+                readout_methods=readout,
             )
         )
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution) -> FunctionalResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
         og_params = None
@@ -335,9 +313,7 @@ class CudaBackend(Backend):
             functional.set_parameters(og_params)
 
         return FunctionalResult(
-            readout_results=CudaBackend._construct_results_list(
-                final_state=final_state, readout_methods=functional.readout
-            )
+            readout_results=CudaBackend._construct_results_list(final_state=final_state, readout_methods=readout)
         )
 
     # def _execute_sampling(self, functional: Sampling) -> FunctionalResult:
@@ -379,8 +355,8 @@ class CudaBackend(Backend):
     #         functional.set_parameters(og_param)
     #     return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> FunctionalResult:
-        return self._execute_analog_evolution(functional=functional)
+    # def _execute_time_evolution(self, functional: TimeEvolution) -> FunctionalResult:
+    #     return self._execute_analog_evolution(functional=functional)
 
     def _apply_digital_simulation_method(self) -> None:
         """
@@ -407,14 +383,22 @@ class CudaBackend(Backend):
 
     @classmethod
     def _construct_sampling_results(
-        cls, final_state: QTensor, readout: ReadoutMethod, seed: int | None = None, **kwargs: Any
+        cls,
+        final_state: QTensor,
+        readout: SamplingReadout,
+        seed: int | None = None,
+        noise_model: NoiseModel | None = None,
+        **kwargs: Any,
     ) -> SamplingReadoutResults:
-        noise_model = kwargs.get("noise_model")
         probabilities = probabilities_from_state(final_state)
         samples = samples_from_probabilities(probabilities, nshots=readout.nshots, seed=seed)
         return SamplingReadoutResults(
-            readout=copy(readout.readout_method),
-            samples=cls._handle_readout_errors(samples, noise_model=noise_model, nqubits=final_state.nqubits),
+            readout=copy(readout),
+            samples=(
+                cls._handle_readout_errors(samples, noise_model=noise_model, nqubits=final_state.nqubits)
+                if noise_model
+                else samples
+            ),
             probabilities=probabilities,
         )
 
