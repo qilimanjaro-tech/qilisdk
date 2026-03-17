@@ -16,7 +16,6 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from qilisdk.analog.exceptions import InvalidHamiltonianOperation
 from qilisdk.analog.hamiltonian import (
@@ -609,11 +608,6 @@ def test_from_qtensor(monkeypatch):
     H = Hamiltonian.from_qtensor(tensor)
 
     assert tensor == H
-
-    bad_tensor = QTensor(np.array([[1, 0], [0, -1]], dtype=complex))
-    bad_tensor._data = csr_matrix(np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]], dtype=complex))
-    with pytest.raises(ValueError, match="not a power of two"):
-        Hamiltonian.from_qtensor(bad_tensor)
 
     non_hermitian_tensor = QTensor(np.array([[1, 1], [0, -1]], dtype=complex))
     with pytest.raises(ValueError, match="not Hermitian"):

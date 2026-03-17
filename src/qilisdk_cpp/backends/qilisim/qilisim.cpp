@@ -13,19 +13,15 @@
 // limitations under the License.
 
 #include "qilisim.h"
+#include "../../libs/numpy.h"
+#include "../../libs/pybind_types.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
 #include "digital/sampling.h"
 #include "noise/noise_model.h"
 #include "representations/matrix_free_hamiltonian.h"
-#include "utils/numpy.h"
 #include "utils/parsers.h"
-
-// Make the QiliSimCpp class available in Python, as well as the two main methods
-PYBIND11_MODULE(qilisim_module, m) {
-    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_sampling", &QiliSimCpp::execute_sampling).def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
-}
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {

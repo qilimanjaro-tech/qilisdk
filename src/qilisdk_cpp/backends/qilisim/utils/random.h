@@ -17,7 +17,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed);
 std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed);

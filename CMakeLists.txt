@@ -1,3 +1,10 @@
+# To enable debug build:
+#   uv pip install -v -e ./ -Ccmake.build-type=Debug
+# To run with clang-tidy:
+#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
+# To enable (very) verbose simulator output:
+#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
+
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -6,92 +13,87 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("" COMPILER_EXISTS)
 if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
-    message(FATAL_ERROR "[QiliSim] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisim=OFF to disable QiliSim backend.")
+    message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisdk=OFF to disable QiliSDK backend.")
 endif()
 
-# The CMake option to enable QiliSim backend
-# To disable QiliSim backend:
-#   uv pip install -v -e ./ -Ccmake.define.qilisim=OFF 
-# To enable debug build:
-#   uv pip install -v -e ./ -Ccmake.build-type=Debug
-# To run with clang-tidy:
-#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
-# To enable (very) verbose simulator output:
-#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
-if (NOT (DEFINED qilisim AND qilisim STREQUAL "OFF"))
-    message(STATUS "[QiliSim] QiliSim backend enabled, preparing to build")
-    message(STATUS "[QiliSim] Build type: ${CMAKE_BUILD_TYPE}")
-    message(STATUS "[QiliSim] Verbose: ${CMAKE_VERBOSE_MAKEFILE}")
+# pybind should already be installed via the dependencies
+find_package(pybind11 REQUIRED)
 
-    # pybind should already be installed via the dependencies
-    find_package(pybind11 REQUIRED)
+# This is optional, but should be available as part of most compilers
+find_package(OpenMP)
 
-    # This is optional, but should be available as part of most compilers
-    find_package(OpenMP)
+# Fetch Eigen if not found (it's a header only library)
+find_package(Eigen3 5 QUIET)
+if (NOT Eigen3_FOUND)
+    message(STATUS "[QiliSDK C++] Eigen3 not found, fetching...")
+    set(BUILD_TESTING OFF)
+    set(EIGEN_BUILD_TESTING OFF)
+    set(EIGEN_BUILD_PKGCONFIG OFF)
+    set(EIGEN_BUILD_DOC OFF)
+    include(FetchContent)
+    FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG 5.0.1
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(eigen)
+endif()
 
-    # Fetch Eigen if not found (it's a header only library)
-    find_package(Eigen3 QUIET)
-    if (NOT Eigen3_FOUND)
-        message(STATUS "[QiliSim] Eigen3 not found, fetching...")
-        set(BUILD_TESTING OFF)
-        set(EIGEN_BUILD_TESTING OFF)
-        set(EIGEN_BUILD_PKGCONFIG OFF)
-        set(EIGEN_BUILD_DOC OFF)
-        include(FetchContent)
-        FetchContent_Declare(
-            eigen
-            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-            GIT_TAG 3.4.0
-            GIT_SHALLOW TRUE
-        )
-        FetchContent_MakeAvailable(eigen)
-    endif()
+# Output the version of Eigen being used
+message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 
-    # Assuming we have the core dependencies, prep the C++ backend
-    message(STATUS "[QiliSim] All dependencies found, preparing QiliSim build files")
-    pybind11_add_module(qilisim_module src/qilisdk_cpp/backends/qilisim/qilisim.cpp)
-    file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
-    file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
-    list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
-    target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
+# Assuming we have the core dependencies, prep the C++ backend
+message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")
+
+# QTensor
+pybind11_add_module(qtensor_module src/qilisdk_cpp/core/qtensor_bindings.cpp)
+file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
+file(GLOB QTENSOR_SUBDIR_SOURCES src/qilisdk_cpp/libs/numpy.cpp)
+list(APPEND QTENSOR_SOURCES ${QTENSOR_SUBDIR_SOURCES})
+target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
+
+# QiliSim
+pybind11_add_module(qilisim_module src/qilisdk_cpp/backends/qilisim/qilisim_bindings.cpp)
+file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
+file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
+list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
+file(GLOB QILISIM_LIBS_SOURCES src/qilisdk_cpp/libs/numpy.cpp)
+list(APPEND QILISIM_SOURCES ${QILISIM_LIBS_SOURCES})
+target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
+
+# List of all modules to build
+set(MODULES_TO_BUILD qtensor_module qilisim_module)
+
+# For each module
+foreach(module ${MODULES_TO_BUILD})
+    message(STATUS "[QiliSDK C++] Configuring module: ${module}")
 
     # Set compile options
     set (CMAKE_CXX_STANDARD 17)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        message(STATUS "[QiliSim] Using GCC/Clang specific compile options")
-        target_compile_options(qilisim_module PRIVATE -Wall -Wextra -Wpedantic)
-        target_compile_options(qilisim_module PRIVATE -std=c++17)
-    endif()
-
-    # If verbose is enabled, add a compile definition to enable verbose output in the code
-    if (DEFINED verbose AND verbose STREQUAL "ON")
-        message(STATUS "[QiliSim] Enabling verbose output in the simulator")
-        target_compile_definitions(qilisim_module PUBLIC VERBOSE)
+        message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
+        target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     # Link libraries and include directories
-    target_link_libraries(qilisim_module PUBLIC Eigen3::Eigen)
-    target_include_directories(qilisim_module PRIVATE ${pybind11_INCLUDE_DIRS})
-
-    # Don't use openmp in debug mode
-    if (OpenMP_CXX_FOUND AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(STATUS "[QiliSim] Using OpenMP")
-        target_link_libraries(qilisim_module PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(${module} PUBLIC Eigen3::Eigen)
+    target_include_directories(${module} PRIVATE ${pybind11_INCLUDE_DIRS})
+    if (OpenMP_CXX_FOUND)
+        message(STATUS "[QiliSDK C++] Using OpenMP")
+        target_link_libraries(${module} PRIVATE OpenMP::OpenMP_CXX)
     endif()
 
     # Enable if you want to run clang-tidy on the code
-    if (DEFINED tidy AND qilisim STREQUAL "ON")
-        message(STATUS "[QiliSim] Enabling clang-tidy")
-        set_target_properties(qilisim_module PROPERTIES
+    if (CMAKE_DEFINE_TIDY)
+        message(STATUS "[QiliSDK C++] Enabling clang-tidy")
+        set_target_properties(${module} PROPERTIES
             CXX_CLANG_TIDY
             "clang-tidy;-header-filter=.;--extra-arg=-Wno-ignored-optimization-argument"
         )
     endif()
 
     # Compile
-    install(TARGETS qilisim_module DESTINATION .)
-        
-else()
-    message(STATUS "[QiliSim] QiliSim backend not enabled, skipping build")
+    install(TARGETS ${module} DESTINATION .)
 
-endif()
+endforeach()

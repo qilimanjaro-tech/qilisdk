@@ -1,4 +1,4 @@
-// Copyright 2025 Qilimanjaro Quantum Tech
+// Copyright 2026 Qilimanjaro Quantum Tech
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,13 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
 
 #include "../../libs/pybind.h"
+#include "qilisim.h"
 
-// The main QiliSim C++ class
-class QiliSimCpp {
-   public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
-};
+PYBIND11_MODULE(qilisim_module, m) {
+    // Make the QiliSimCpp class available in Python, as well as the two main methods
+    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_sampling", &QiliSimCpp::execute_sampling).def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
+}
