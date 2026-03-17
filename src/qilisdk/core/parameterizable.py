@@ -32,7 +32,7 @@ class Parameterizable(ABC):
     """
 
     def __init__(self) -> None:
-        super(Parameterizable, self).__init__()
+        super().__init__()
         self._parameters: dict[str, Parameter] = {}
         self._parameter_constraints: list[ComparisonTerm] = []
         self._prefix = ""
