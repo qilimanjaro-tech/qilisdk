@@ -32,6 +32,7 @@ from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.readout import ReadoutMethod
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
@@ -107,7 +108,7 @@ class QutipBackend(Backend):
         }  # ty:ignore[invalid-assignment]
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, readout: list[ReadoutMethod]) -> SamplingResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -164,45 +165,7 @@ class QutipBackend(Backend):
         logger.success("Sampling finished; {} distinct bitstrings", len(counts))
         return SamplingResult(nshots=functional.nshots, samples=dict(counts))
 
-    @staticmethod
-    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
-        """Convert a QiliSDK observable to a QuTiP Qobj.
-
-        Args:
-            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
-            nqubits (int): The total number of qubits in the system.
-
-        Returns:
-            Qobj: The corresponding QuTiP Qobj representation of the observable.
-
-        Raises:
-            ValueError: If the observable type is unsupported.
-        """
-        aux_obs = None
-        identity = QTensor(PauliI(0).matrix)
-        if isinstance(obs, PauliOperator):
-            for i in range(nqubits):
-                if aux_obs is None:
-                    aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
-                else:
-                    aux_obs = (
-                        tensor_prod([aux_obs, identity])
-                        if i != obs.qubit
-                        else tensor_prod([aux_obs, QTensor(obs.matrix)])
-                    )
-        elif isinstance(obs, Hamiltonian):
-            aux_obs = QTensor(obs.to_matrix())
-            if obs.nqubits < nqubits:
-                for _ in range(nqubits - obs.nqubits):
-                    aux_obs = tensor_prod([aux_obs, identity])
-        elif isinstance(obs, QTensor):
-            aux_obs = obs
-        if aux_obs is not None:
-            return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
-        logger.error("Unsupported observable type {}", obs.__class__.__name__)
-        raise ValueError(f"unsupported observable type of {obs.__class__}")
-
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -290,6 +253,44 @@ class QutipBackend(Backend):
                 else None
             ),
         )
+
+    @staticmethod
+    def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
+        """Convert a QiliSDK observable to a QuTiP Qobj.
+
+        Args:
+            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.
+            nqubits (int): The total number of qubits in the system.
+
+        Returns:
+            Qobj: The corresponding QuTiP Qobj representation of the observable.
+
+        Raises:
+            ValueError: If the observable type is unsupported.
+        """
+        aux_obs = None
+        identity = QTensor(PauliI(0).matrix)
+        if isinstance(obs, PauliOperator):
+            for i in range(nqubits):
+                if aux_obs is None:
+                    aux_obs = identity if i != obs.qubit else QTensor(obs.matrix)
+                else:
+                    aux_obs = (
+                        tensor_prod([aux_obs, identity])
+                        if i != obs.qubit
+                        else tensor_prod([aux_obs, QTensor(obs.matrix)])
+                    )
+        elif isinstance(obs, Hamiltonian):
+            aux_obs = QTensor(obs.to_matrix())
+            if obs.nqubits < nqubits:
+                for _ in range(nqubits - obs.nqubits):
+                    aux_obs = tensor_prod([aux_obs, identity])
+        elif isinstance(obs, QTensor):
+            aux_obs = obs
+        if aux_obs is not None:
+            return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
+        logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        raise ValueError(f"unsupported observable type of {obs.__class__}")
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
         """_summary_

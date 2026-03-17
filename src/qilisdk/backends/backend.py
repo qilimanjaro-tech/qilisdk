@@ -14,7 +14,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
+from copy import copy
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 import numpy as np
 
@@ -28,6 +29,16 @@ from qilisdk.functionals.sampling import Sampling
 from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.readout import (
+    ExpectationReadout,
+    ExpectationReadoutResults,
+    ReadoutMethod,
+    ReadoutResult,
+    SamplingReadout,
+    SamplingReadoutResults,
+    StateTomographyReadout,
+    StateTomographyReadoutResults,
+)
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
@@ -41,31 +52,39 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 
 class Backend(ABC):
     def __init__(self) -> None:
-        self._handlers: dict[type[Functional], Callable[[Functional], FunctionalResult]] = {
-            Sampling: lambda f: self._execute_sampling(cast("Sampling", f)),
-            TimeEvolution: lambda f: self._execute_time_evolution(cast("TimeEvolution", f)),
-            QuantumReservoir: lambda f: self._execute_quantum_reservoir(cast("QuantumReservoir", f)),
-            VariationalProgram: lambda f: self._execute_variational_program(cast("VariationalProgram", f)),
+        self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], FunctionalResult]] = {
+            Sampling: lambda f, readout: self._execute_sampling(cast("Sampling", f), readout),
+            TimeEvolution: lambda f, readout: self._execute_time_evolution(cast("TimeEvolution", f), readout),
+            QuantumReservoir: lambda f, readout: self._execute_quantum_reservoir(cast("QuantumReservoir", f), readout),
+            VariationalProgram: lambda f, readout: self._execute_variational_program(
+                cast("VariationalProgram", f), readout
+            ),
         }
 
     @overload
-    def execute(self, functional: Sampling) -> SamplingResult: ...
-
-    @overload
-    def execute(self, functional: TimeEvolution) -> TimeEvolutionResult: ...
-
-    @overload
-    def execute(self, functional: VariationalProgram[Sampling]) -> VariationalProgramResult[SamplingResult]: ...
+    def execute(self, functional: Sampling, readout: ReadoutMethod | list[ReadoutMethod]) -> SamplingResult: ...
 
     @overload
     def execute(
-        self, functional: VariationalProgram[TimeEvolution]
+        self, functional: TimeEvolution, readout: ReadoutMethod | list[ReadoutMethod]
+    ) -> TimeEvolutionResult: ...
+
+    @overload
+    def execute(
+        self, functional: VariationalProgram[Sampling], readout: ReadoutMethod | list[ReadoutMethod]
+    ) -> VariationalProgramResult[SamplingResult]: ...
+
+    @overload
+    def execute(
+        self, functional: VariationalProgram[TimeEvolution], readout: ReadoutMethod | list[ReadoutMethod]
     ) -> VariationalProgramResult[TimeEvolutionResult]: ...
 
     @overload
-    def execute(self, functional: PrimitiveFunctional[TResult]) -> TResult: ...
+    def execute(
+        self, functional: PrimitiveFunctional[TResult], readout: ReadoutMethod | list[ReadoutMethod]
+    ) -> TResult: ...
 
-    def execute(self, functional: Functional) -> FunctionalResult:
+    def execute(self, functional: Functional, readout: ReadoutMethod | list[ReadoutMethod]) -> FunctionalResult:
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -73,15 +92,24 @@ class Backend(ABC):
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
-        return handler(functional)
+        _readout = list(readout)
+        if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
+            raise ValueError(
+                f"One of the readout methods provided are not a valid readout method.\nProvided: {_readout}"
+            )
+        if len({ro.__class__ for ro in _readout}) != len(_readout):
+            raise ValueError(f"Each readout method can only passed once.\nProvided: {_readout}")
+        return handler(functional, _readout)
 
-    def _execute_sampling(self, functional: Sampling) -> SamplingResult:
+    def _execute_sampling(self, functional: Sampling, readout: list[ReadoutMethod]) -> SamplingResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
-    def _execute_quantum_reservoir(self, functional: QuantumReservoir) -> QuantumReservoirResult:
+    def _execute_quantum_reservoir(
+        self, functional: QuantumReservoir, readout: list[ReadoutMethod]
+    ) -> QuantumReservoirResult:
         state = functional.initial_state.to_density_matrix()
         expected_values: list[list[Number]] = []
         intermediate_states: list[QTensor] = []
@@ -99,7 +127,7 @@ class Backend(ABC):
                         U = cached[1]
                     state = U @ state @ U.adjoint()
                 elif isinstance(step, Schedule):
-                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots))
+                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots), readout)
                     if not res.final_state:
                         raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
                     state = res.final_state
@@ -131,7 +159,7 @@ class Backend(ABC):
         )
 
     def _execute_variational_program(
-        self, functional: VariationalProgram[PrimitiveFunctional[TResult]]
+        self, functional: VariationalProgram[PrimitiveFunctional[TResult]], readout: list[ReadoutMethod]
     ) -> VariationalProgramResult[TResult]:
         """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
 
@@ -158,7 +186,7 @@ class Backend(ABC):
             if err > 0:
                 return err
             functional.functional.set_parameters(new_param_dict)
-            results = self.execute(functional.functional)
+            results = self.execute(functional.functional, readout)
             final_results = functional.cost_function.compute_cost(results)
             if isinstance(final_results, float):
                 return final_results
@@ -184,9 +212,45 @@ class Backend(ABC):
                 "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
             )
         functional.functional.set_parameters(optimal_parameter_dict)
-        optimal_results: TResult = self.execute(functional.functional)
+        optimal_results: TResult = self.execute(functional.functional, readout)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}()"
+
+    @classmethod
+    def _construct_sampling_results(
+        cls, final_state: QTensor, readout: SamplingReadout, seed: int | None = None, **kwarg: Any
+    ) -> SamplingReadoutResults:
+        return SamplingReadoutResults(readout=copy(readout), state=final_state)
+
+    @classmethod
+    def _construct_expectation_results(
+        cls, final_state: QTensor, readout: ExpectationReadout, **kwarg: Any
+    ) -> ExpectationReadoutResults:
+        return ExpectationReadoutResults(readout=copy(readout), state=final_state)
+
+    @classmethod
+    def _construct_state_tomography_results(
+        cls, final_state: QTensor, readout: StateTomographyReadout, **kwarg: Any
+    ) -> StateTomographyReadoutResults:
+        return StateTomographyReadoutResults(readout=copy(readout), final_state=final_state)
+
+    @classmethod
+    def _construct_results_list(
+        cls, final_state: QTensor, readout: list[ReadoutMethod], seed: int | None = None, **kwarg: Any
+    ) -> list[ReadoutResult]:
+        results: list[ReadoutResult] = []
+        for ro in readout:
+            if isinstance(ro, StateTomographyReadout):
+                if ro.state_tomography_method != "exact":
+                    raise ValueError("State Tomography methods that are not exact are not supported yet.")
+                results.append(cls._construct_state_tomography_results(final_state=final_state, readout=ro, **kwarg))
+            elif isinstance(ro, ExpectationReadout):
+                results.append(cls._construct_expectation_results(final_state=final_state, readout=ro, **kwarg))
+            elif isinstance(ro, SamplingReadout):
+                results.append(cls._construct_sampling_results(final_state=final_state, readout=ro, seed=seed, **kwarg))
+            else:
+                raise ValueError(f"Unsupported Readout Method provided: {ro}")
+        return results

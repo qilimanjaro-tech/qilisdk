@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
+from qilisdk.readout import ReadoutMethod
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -113,7 +114,9 @@ class QiliSim(Backend):
         """Return the full flattened solver configuration used by the C++ backend."""
         return dict(self._solver_config)
 
-    def _execute_sampling(self, functional: Sampling, initial_state: QTensor | None = None) -> SamplingResult:
+    def _execute_sampling(
+        self, functional: Sampling, readout: list[ReadoutMethod], initial_state: QTensor | None = None
+    ) -> SamplingResult:
         """
         Execute a digital-circuit sampling functional and return measurement results.
 
@@ -130,7 +133,7 @@ class QiliSim(Backend):
         logger.success("Sampling finished")
         return result
 
-    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
         """
         Compute analog time evolution for the provided schedule and initial state.
 
