@@ -650,16 +650,32 @@ Examples of creating various quantum objects:
 Helper constructors
 ^^^^^^^^^^^^^^^^^^^
 
+There are also several constructors for common quantum objects:
+
+ - :func:`~qilisdk.core.qtensor.ket` for computational basis kets
+ - :func:`~qilisdk.core.qtensor.bra` for computational basis bras
+ - :func:`~qilisdk.core.qtensor.basis_state` for N-dimensional basis states with a single 1 at the specified index
+ - :func:`~qilisdk.core.qtensor.identity` for identity operators of specified dimension
+ - :func:`~qilisdk.core.qtensor.zero` for generating zero tensors of specified dimension
+ - :func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified number of qubits
+
 .. code-block:: python
 
-    from qilisdk.core.qtensor import ket, bra, basis_state
+    from qilisdk.core.qtensor import QTensor
 
     # Single‑qubit
-    print("ket(0):\n", ket(0).dense(), "\nis_ket?", ket(0).is_ket())
-    print("bra(1):\n", bra(1).dense(), "\nis_bra?", bra(1).is_bra())
+    print("ket(0):\n", QTensor.ket(0), "\nis_ket?", QTensor.ket(0).is_ket())
+    print("bra(1):\n", QTensor.bra(1), "\nis_bra?", QTensor.bra(1).is_bra())
 
     # Fock basis in N=4 Hilbert space
-    print("basis_state(2,4):\n", basis_state(2, 4).dense(), "\nshape:", basis_state(2, 4).shape)
+    print("basis_state(2,4):\n", QTensor.basis_state(2, 4), "\nshape:", QTensor.basis_state(2, 4).shape)
+    
+    # GHZ state for 2 qubits
+    print("GHZ state for 2 qubits:\n", QTensor.ghz(2))
+
+    # Identity and zero operators
+    print("Identity (4x4):\n", QTensor.identity(2))
+    print("Zero (2x2):\n", QTensor.zero(2))
 
 **Output**
 
@@ -684,16 +700,37 @@ Quantum Object Properties & Operations
 
 All data are stored sparsely, but you can retrieve dense or sparse views:
 
-- ``.data``: sparse :class:`scipy.sparse.csr_matrix`  
-- ``.dense()``: get a full NumPy array (note: could be expensive for large sparse objects)
+- :attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying sparse matrix (SciPy CSR format)
+- :meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense NumPy array (use with caution for large tensors)
+- or directly accessing elements by value with ``qtensor[i, j]``
 
-Key methods:
+Common matrix operations are also available:
 
 - :meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: conjugate transpose  
-- :meth:`.expm()<qilisdk.core.qtensor.QTensor.expm>`: matrix exponential
-- :meth:`.norm(order=1)<qilisdk.core.qtensor.QTensor.norm>`: vector or matrix norm
-- :meth:`.unit(order='tr')<qilisdk.core.qtensor.QTensor.unit>`: normalize to unit norm
-- :meth:`.ptrace(keep, dims=None)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
+- :meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: element-wise complex conjugate
+- :meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: matrix transpose
+- :meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential
+- :meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: matrix logarithm
+- :meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root
+- :meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: compute the rank of the operator
+- :meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power
+- :meth:`.norm(order="l2")<qilisdk.core.qtensor.QTensor.norm>`: vector or matrix norm
+- :meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`: normalize to unit norm
+- :meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: get the eigenvalues and eigenvectors
+- :meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: compute the trace of an operator
+- :meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius inner product with another QTensor
+
+As well as some quantum-specific transformations:
+
+- :meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`: compute the von Neumann entropy of a density matrix
+- :meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`: compute the Rényi entropy of a density matrix for a given order alpha
+- :meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: compute the commutator with another operator
+- :meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`: compute the anticommutator with another operator
+- :meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute the fidelity between two quantum states
+- :meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: compute the probability distribution of each state in the computational basis
+- :meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
+- :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to |0⟩
+- :meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint
 
 Examples:
 
@@ -710,14 +747,14 @@ Examples:
 
     # Matrix exponential of Pauli-X
     X = QTensor(np.array([[0, 1], [1, 0]]))
-    expX = X.expm()
+    expX = X.exp()
     print("exp(X):\n", np.round(expX.dense(), 3))
 
     # Norm of a ket and a density matrix
     ket0 = QTensor(np.array([[1], [0]]))
     dm = ket0.to_density_matrix()
     print("||ket0|| =", ket0.norm())
-    print("trace norm(dm) =", dm.norm(order='tr'))
+    print("trace norm(dm) =", dm.norm(order='l2'))
 
     # Partial trace of a Bell state
     from qilisdk.core.qtensor import ket, tensor_prod
