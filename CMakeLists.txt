@@ -62,6 +62,10 @@ pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.
 file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
 target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
 target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
+set_target_properties(qtensor_module PROPERTIES
+    BUILD_RPATH "$ORIGIN"
+    INSTALL_RPATH "$ORIGIN"
+)
 
 # QiliSim
 pybind11_add_module(qilisim_module SHARED src/qilisdk_cpp/backends/qilisim/qilisim_bindings.cpp)
@@ -70,6 +74,10 @@ file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
 list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
+set_target_properties(qilisim_module PROPERTIES
+    BUILD_RPATH "$ORIGIN"
+    INSTALL_RPATH "$ORIGIN"
+)
 
 # List of all modules to build
 set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)

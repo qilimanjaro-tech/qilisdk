@@ -775,8 +775,5 @@ bool MatrixFreeOperator::operator==(const MatrixFreeOperator& other) const {
     Returns:
         bool: True if the operators are equal, false otherwise.
     */
-    return name == other.name &&
-           target_qubit == other.target_qubit &&
-           control_qubit == other.control_qubit &&
-           base_matrix.isApprox(other.base_matrix);
+    return name == other.name && target_qubit == other.target_qubit && control_qubit == other.control_qubit && base_matrix.isApprox(other.base_matrix);
 }

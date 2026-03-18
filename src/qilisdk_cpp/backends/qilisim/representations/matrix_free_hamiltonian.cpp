@@ -14,8 +14,8 @@
 
 #include "matrix_free_hamiltonian.h"
 #include <unordered_map>
-#include "../utils/matrix_utils.h"
 #include "../../../libs/pybind.h"
+#include "../utils/matrix_utils.h"
 
 void MatrixFreeHamiltonian::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
@@ -238,12 +238,8 @@ bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const
         }
         return key;
     };
-    std::sort(sorted_this.operators.begin(), sorted_this.operators.end(), [&](const auto& a, const auto& b) {
-        return sort_key(a) < sort_key(b);
-    });
-    std::sort(sorted_other.operators.begin(), sorted_other.operators.end(), [&](const auto& a, const auto& b) {
-        return sort_key(a) < sort_key(b);
-    });
+    std::sort(sorted_this.operators.begin(), sorted_this.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
+    std::sort(sorted_other.operators.begin(), sorted_other.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
     for (size_t i = 0; i < sorted_this.operators.size(); ++i) {
         if (sorted_this.operators[i].first != sorted_other.operators[i].first) {
             return false;
