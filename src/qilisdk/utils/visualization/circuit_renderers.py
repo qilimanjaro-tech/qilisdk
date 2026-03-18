@@ -700,9 +700,9 @@ class MatplotlibCircuitRenderer:
         try:
             get_ipython()  # type: ignore
             size = max(self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding)
-            fig.set_size_inches(size, size, forward=True)  # ty:ignore[possibly-missing-attribute]
+            fig.set_size_inches(size, size, forward=True)  # ty:ignore[unresolved-attribute]
         except NameError:
-            fig.set_size_inches(  # ty:ignore[possibly-missing-attribute]
+            fig.set_size_inches(  # ty:ignore[unresolved-attribute]
                 self.axes.get_xlim()[1] - self.axes.get_xlim()[0], y_end + self.style.padding, forward=True
             )
 

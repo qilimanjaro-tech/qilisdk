@@ -104,7 +104,7 @@ class QutipBackend(Backend):
             U2: QutipBackend._handle_U2,
             U3: QutipBackend._handle_U3,
             SWAP: QutipBackend._handle_SWAP,
-        }
+        }  # ty:ignore[invalid-assignment]
         logger.success("QutipBackend initialised")
 
     def _execute_sampling(self, functional: Sampling) -> SamplingResult:

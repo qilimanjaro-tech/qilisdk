@@ -13,7 +13,7 @@
 // limitations under the License.
 #pragma once
 
-#include "libs/pybind.h"
+#include "../../libs/pybind.h"
 
 // The main QiliSim C++ class
 class QiliSimCpp {

@@ -15,7 +15,7 @@
 
 #include <map>
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 
 class NoiseModelCpp {
    private:

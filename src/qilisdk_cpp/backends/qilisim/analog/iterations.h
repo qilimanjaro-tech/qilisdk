@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include "../libs/eigen.h"
+#include "../../../libs/eigen.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
 void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<DenseMatrix>& V, SparseMatrix& H);

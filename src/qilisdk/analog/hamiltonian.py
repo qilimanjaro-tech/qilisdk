@@ -322,7 +322,7 @@ class Hamiltonian(Parameterizable):
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
         return {
             k: (
-                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[possibly-missing-attribute]
+                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[unresolved-attribute]
             )
             for k, v in self._elements.items()
         }
@@ -608,8 +608,6 @@ class Hamiltonian(Parameterizable):
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
-        if 2**n != dim:
-            raise ValueError(f"Matrix dimension {dim} is not a power of two.")
         if not tensor.is_hermitian():
             raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
 

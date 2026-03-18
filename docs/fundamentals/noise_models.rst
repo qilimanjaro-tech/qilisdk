@@ -89,7 +89,7 @@ Noise Config
 ----------------------
 
 By default, when converting between different noise representations (e.g. from Kraus operators to Lindblad generators),
-certain parameters are assumed, such as gate durations. 
+certain parameters are assumed, such as gate times. 
 These defaults can be modified using the :class:`~qilisdk.noise.noise_config.NoiseConfig` class:
 
 .. code-block:: python
@@ -97,9 +97,9 @@ These defaults can be modified using the :class:`~qilisdk.noise.noise_config.Noi
     from qilisdk.noise import NoiseModel, NoiseConfig
     from qilisdk.digital import X
 
-    # Create a noise configuration, setting the X gate duration to 20 ns
+    # Create a noise configuration, setting the X gate time to 20 ns
     conf = NoiseConfig()
-    conf.set_gate_duration[X] = 20e-9
+    conf.set_gate_time(X, 20e-9)
 
     # Define a simple noise model using this config
     nm = NoiseModel(noise_config=conf)
@@ -201,7 +201,7 @@ BitFlip
 ^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.bit_flip.BitFlip` represents a bit-flip error model where each qubit 
-has a certain probability of flipping its state from |0⟩ to |1⟩ or from |1⟩ to |0⟩.
+has a certain probability of flipping its state from :math:`|0⟩` to :math:`|1⟩` or from :math:`|1⟩` to :math:`|0⟩`.
 This corresponds to the following channel:
 
 .. math::
@@ -232,7 +232,7 @@ PhaseFlip
 ^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.phase_flip.PhaseFlip` represents a phase-flip error model where each qubit 
-has a certain probability of flipping its phase, changing the sign of the |1⟩ state.
+has a certain probability of flipping its phase, changing the sign of the :math:`|1⟩` state.
 This corresponds to the following channel:
 
 .. math::
@@ -294,7 +294,7 @@ AmplitudeDampingNoise
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` represents an amplitude damping error model 
-where each qubit has a certain probability of decaying from the excited state |1⟩ to the ground state |0⟩.
+where each qubit has a certain probability of decaying from the excited state :math:`|1⟩` to the ground state :math:`|0⟩`.
 This corresponds to the following channel:
 
 .. math::
@@ -332,7 +332,7 @@ Dephasing
 ^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.dephasing.Dephasing` represents a dephasing error model where each qubit has a 
-certain probability of losing coherence between its |0⟩ and |1⟩ states.
+certain probability of losing coherence between its :math:`|0⟩` and :math:`|1⟩` states.
 This corresponds to the following channel:
 
 .. math::  
@@ -403,7 +403,8 @@ ReadoutAssignment
 
 :class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` represents a readout error model that simulates
 imperfections in the measurement process of qubits. It is defined by two probabilities: 
-the probability of misreading a |0⟩ state as |1⟩ (:math:`p_{0 \to 1}`) and the probability of misreading a |1⟩ state as |0⟩ (:math:`p_{1 \to 0}`).
+the probability of misreading a :math:`|0⟩` state as :math:`|1⟩` (:math:`p_{0 \to 1}`) and 
+the probability of misreading a :math:`|1⟩` state as :math:`|0⟩` (:math:`p_{1 \to 0}`).
 
 .. code-block:: python
 
