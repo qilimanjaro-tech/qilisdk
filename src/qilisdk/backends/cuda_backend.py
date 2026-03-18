@@ -559,7 +559,7 @@ class CudaBackend(Backend):
         if normalized_state.is_bra():
             normalized_state = normalized_state.adjoint()
 
-        cuda_state_data = np.array(normalized_state.dense(), dtype=np.complex128)
+        cuda_state_data = np.array(normalized_state.dense(), dtype=_complex_dtype())
         if normalized_state.is_ket():
             cuda_state_data = cuda_state_data.reshape(-1)
 
