@@ -30,6 +30,8 @@ from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.sampling_result import SamplingResult
 from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 from qilisdk.readout import ReadoutMethod
@@ -108,7 +110,9 @@ class QutipBackend(Backend):
         }  # ty:ignore[invalid-assignment]
         logger.success("QutipBackend initialised")
 
-    def _execute_sampling(self, functional: Sampling, readout: list[ReadoutMethod]) -> SamplingResult:
+    def _execute_digital_propagation(
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
         """
         Execute a quantum circuit and return the measurement results.
 
@@ -123,7 +127,7 @@ class QutipBackend(Backend):
             DigitalResult: A result object containing the measurement samples and computed probabilities.
 
         """
-        logger.info("Executing Sampling (shots={})", functional.nshots)
+        logger.info("Executing Sampling")
 
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
@@ -138,34 +142,20 @@ class QutipBackend(Backend):
         sim = CircuitSimulator(qutip_circuit)
 
         res = sim.run_statistics(init_state)  # runs the full circuit for one shot
-        _bits = res.cbits  # classical measurement bits
-        bits = []
-        probs = res.probabilities
+        final_state = QTensor(sum(res.get_final_states()).unit()[:])
 
-        if sum(probs) != 1:
-            probs /= sum(probs)
+        logger.success("Sampling finished; ")
+        if len(measurements) != functional.circuit.nqubits:
+            return FunctionalResult(
+                readout_results=QutipBackend._construct_results_list(
+                    final_state=final_state.ptrace(measurements), readout=readout
+                )
+            )
+        return FunctionalResult(
+            readout_results=QutipBackend._construct_results_list(final_state=final_state, readout=readout)
+        )
 
-        if len(measurements) > 0:
-            for b in _bits:
-                aux = []
-                for i in measurements:
-                    aux.append(b[i])
-                bits.append(aux)
-        else:
-            bits = _bits
-
-        bits_list = ["".join(map(str, cb)) for cb in bits]
-
-        rng = np.random.default_rng(42)
-        samples = rng.choice(bits_list, size=functional.nshots, p=probs)
-        samples_py = map(str, samples)
-
-        counts = Counter(samples_py)
-
-        logger.success("Sampling finished; {} distinct bitstrings", len(counts))
-        return SamplingResult(nshots=functional.nshots, samples=dict(counts))
-
-    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         """computes the time evolution under of an initial state under the given schedule.
 
         Args:
@@ -214,8 +204,6 @@ class QutipBackend(Backend):
         qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
-        for obs in functional.observables:
-            qutip_obs.append(self._to_qubip_observables(obs, functional.schedule.nqubits))
 
         results = mesolve(
             H=h_t,
@@ -230,26 +218,16 @@ class QutipBackend(Backend):
         )
 
         logger.success("TimeEvolution finished")
-        return TimeEvolutionResult(
-            final_expected_values=np.array(
-                [results.expect[i][-1] for i in range(len(qutip_obs))],  # ty:ignore[not-subscriptable]
-                dtype=_complex_dtype(),
+        return FunctionalResult(
+            readout_results=QutipBackend._construct_results_list(
+                final_state=QTensor(results.final_state.full()), readout=readout
             ),
-            expected_values=(
-                np.array(
-                    [
-                        [results.expect[val][i] for val in range(len(results.expect))]  # ty:ignore[not-subscriptable]
-                        for i in range(len(results.expect[0]))  # ty:ignore[invalid-argument-type]
-                    ],
-                    dtype=_complex_dtype(),
-                )
-                if len(results.expect) > 0 and functional.store_intermediate_results
-                else None
-            ),
-            final_state=(QTensor(results.final_state.full()) if results.final_state is not None else None),
-            intermediate_states=(
-                [QTensor(state.full()) for state in results.states]
-                if len(results.states) > 1 and functional.store_intermediate_results
+            intermediate_results=(
+                [
+                    QutipBackend._construct_results_list(final_state=QTensor(state.full()), readout=readout)
+                    for state in results.states
+                ]
+                if functional.store_intermediate_results
                 else None
             ),
         )

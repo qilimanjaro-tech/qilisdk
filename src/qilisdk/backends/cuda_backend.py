@@ -266,22 +266,6 @@ class CudaBackend(Backend):
 
         cuda_observables = []
 
-        # for index, observable in enumerate(functional.observables):
-        #     if isinstance(observable, PauliOperator):
-        #         cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
-        #     elif isinstance(observable, Hamiltonian):
-        #         cuda_observables.append(self._hamiltonian_to_cuda(observable))
-        #     elif isinstance(observable, QTensor):
-        #         cuda_observables.append(
-        #             self._hamiltonian_to_cuda(
-        #                 self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
-        #             )
-        #         )
-        #     else:
-        #         logger.error("Unsupported observable type {}", observable.__class__.__name__)
-        #         raise ValueError(f"unsupported observable type of {observable.__class__}")
-        # logger.trace("Observables compiled for evolution")
-
         # Add noise
         jump_operators: list[OperatorSum] = []
         hamiltonian_deltas: list[OperatorSum] = []
@@ -316,8 +300,24 @@ class CudaBackend(Backend):
         if og_params:
             functional.set_parameters(og_params)
 
+        intermediate_states = []
+        if (
+            evolution_result.intermediate_states() is not None  # ty:ignore[unresolved-attribute]
+            and functional.store_intermediate_results
+        ):
+            for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
+                _state = np.array(state, dtype=_complex_dtype())
+                if len(_state.shape) == 1:
+                    _state = _state.reshape(-1, 1)
+                intermediate_states.append(QTensor(_state))
+
         return FunctionalResult(
-            readout_results=CudaBackend._construct_results_list(final_state=final_state, readout=readout)
+            readout_results=CudaBackend._construct_results_list(final_state=final_state, readout=readout),
+            intermediate_results=(
+                [CudaBackend._construct_results_list(state, readout=readout) for state in intermediate_states]
+                if functional.store_intermediate_results
+                else None
+            ),
         )
 
     @property
