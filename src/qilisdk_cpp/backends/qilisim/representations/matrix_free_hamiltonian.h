@@ -32,7 +32,9 @@ class MatrixFreeHamiltonian {
     MatrixFreeHamiltonian operator*(const std::complex<double>& scalar) const;
     MatrixFreeHamiltonian operator*(const double& scalar) const;
     MatrixFreeHamiltonian& operator+=(const MatrixFreeHamiltonian& other);
+    bool operator==(const MatrixFreeHamiltonian& other) const;
     void add(const std::complex<double>& coeff, const MatrixFreeOperator& op);
     void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& op);
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
+    std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> get_operators() const { return operators; }
 };

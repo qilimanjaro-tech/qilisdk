@@ -160,10 +160,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
 
             if (L_qubits == nqubits) {
                 noise_model_cpp.add_jump_operator(L);
-            } else if (L_qubits == 1) {
-                for (int q = 0; q < nqubits; ++q) {
-                    noise_model_cpp.add_jump_operator(expand_operator(q, nqubits, L));
-                }
             } else {
                 noise_model_cpp.add_jump_operator(expand_operator(nqubits, L));
             }
@@ -323,7 +319,8 @@ std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::objec
         } else if (py::isinstance(obs, QTensor)) {
             throw py::value_error("Matrix-free parsing of QTensor observables is not currently supported.");
         } else {
-            throw py::value_error("Observable type not recognized.");
+            std::string type_name = py::type::of(obs).attr("__name__").cast<std::string>();
+            throw py::value_error("Observable type not recognized: " + type_name);
         }
     }
     return observable_matrices;
@@ -383,7 +380,8 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
             observable_matrices.push_back(O);
 
         } else {
-            throw py::value_error("Observable type not recognized.");
+            std::string type_name = py::type::of(obs).attr("__name__").cast<std::string>();
+            throw py::value_error("Observable type not recognized: " + type_name);
         }
     }
     return observable_matrices;
@@ -483,7 +481,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             py::dict gate_parameters = py_gate.attr("get_parameters")();
             py::dict global_noise_map = noise_model.attr("global_perturbations");
             py::dict gate_noise_map = noise_model.attr("per_gate_perturbations");
-            py::object class_name = py_gate.attr("__class__");
+            py::object class_name = py::str(py_gate.attr("__class__").attr("__name__"));
 
             // For each parameter
             for (auto item : gate_parameters) {

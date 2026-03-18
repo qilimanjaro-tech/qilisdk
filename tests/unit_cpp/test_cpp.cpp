@@ -14,9 +14,15 @@
 
 #include <pybind11/embed.h>
 #include "gtest/gtest.h"
+#include "../../src/qilisdk_cpp/libs/pybind.h"
 
 int main(int argc, char** argv) {
     pybind11::scoped_interpreter guard{};
+    // initialize_all_pybind_types();
+    // if (dtype.ptr() == nullptr || SupportsStaticKraus.ptr() == nullptr) {
+    //     std::cerr << "Fatal: pybind globals were not initialized correctly.\n";
+    //     return 1;
+    // }
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

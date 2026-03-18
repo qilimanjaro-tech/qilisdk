@@ -486,7 +486,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         }
 
         // If we have a CNOT with control qubit j and target qubit i, we swap the amplitudes of all basis states where qubit j is 1 and qubit i is 0 with those where qubit j is 1 and qubit i is 1
-    } else if (name == "CNOT") {
+    } else if (name == "CNOT" || name == "CX") {
         long control_mask = 1L << (num_qubits - 1 - control_qubit);
         if (output_state.cols() == 1) {
 #if defined(_OPENMP)
@@ -662,6 +662,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
+            DenseMatrix base_matrix_conj = base_matrix.conjugate().transpose();
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
@@ -673,11 +674,11 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long c1 = c0 + stride;
                 Eigen::VectorXcd temp0 = output_state.col(c0);
                 Eigen::VectorXcd temp1 = output_state.col(c1);
-                output_state.col(c0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
-                output_state.col(c1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
+                output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(0, 1) * temp1;
+                output_state.col(c1) = base_matrix_conj(1, 0) * temp0 + base_matrix_conj(1, 1) * temp1;
             }
         } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
-            DenseMatrix base_matrix_conj = base_matrix.conjugate();
+            DenseMatrix base_matrix_conj = base_matrix.conjugate().transpose();
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -762,4 +763,20 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {
         os << "_c" << op.control_qubit;
     }
     return os;
+}
+
+bool MatrixFreeOperator::operator==(const MatrixFreeOperator& other) const {
+    /*
+    Check if this operator is equal to another operator by comparing their names, target qubits, control qubits, and base matrices.
+
+    Args:
+        other (const MatrixFreeOperator&): The operator to compare to.
+
+    Returns:
+        bool: True if the operators are equal, false otherwise.
+    */
+    return name == other.name &&
+           target_qubit == other.target_qubit &&
+           control_qubit == other.control_qubit &&
+           base_matrix.isApprox(other.base_matrix);
 }

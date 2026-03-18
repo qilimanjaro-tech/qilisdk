@@ -14,6 +14,8 @@
 
 #include "numpy.h"
 
+#pragma GCC visibility push(default)
+
 SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     /*
     Convert a numpy array buffer to a SparseMatrix.
@@ -146,7 +148,7 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     Returns:
         SparseMatrix: The converted sparse matrix.
     */
-    py::object matrix_typed = matrix.attr("astype")(dtype);
+    py::object matrix_typed = matrix.attr("astype")(py::object(dtype));
     py::object coo_matrix = matrix_typed.attr("tocoo")();
     py::array row = coo_matrix.attr("row").cast<py::array>();
     py::array col = coo_matrix.attr("col").cast<py::array>();
@@ -203,3 +205,5 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
     py::object spmat = csrmatrix(std::make_pair(data_array, std::make_pair(row_array, col_array)), std::make_pair(rows, cols));
     return spmat;
 }
+
+#pragma GCC visibility pop

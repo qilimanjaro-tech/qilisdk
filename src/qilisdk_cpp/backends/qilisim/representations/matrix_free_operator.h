@@ -32,8 +32,10 @@ class MatrixFreeOperator {
    public:
     MatrixFreeOperator(const Gate& gate);
     MatrixFreeOperator(const std::string& name, int target_qubit) : name(name), target_qubit(target_qubit) {}
+    MatrixFreeOperator(const std::string& name, int control_qubit, int target_qubit) : name(name), target_qubit(target_qubit), control_qubit(control_qubit) {}
     void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& mfo);
+    bool operator==(const MatrixFreeOperator& other) const;
     int get_target_qubit() const { return target_qubit; }
     int get_control_qubit() const { return control_qubit; }
     std::string get_name() const { return name; }

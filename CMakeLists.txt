@@ -52,24 +52,27 @@ message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 # Assuming we have the core dependencies, prep the C++ backend
 message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")
 
+# The common libs
+pybind11_add_module(qilisdk_libs SHARED)
+file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
+target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
+
 # QTensor
 pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
 file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
-file(GLOB QTENSOR_SUBDIR_SOURCES src/qilisdk_cpp/libs/*.cpp)
-list(APPEND QTENSOR_SOURCES ${QTENSOR_SUBDIR_SOURCES})
 target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
+target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
 
 # QiliSim
 pybind11_add_module(qilisim_module SHARED src/qilisdk_cpp/backends/qilisim/qilisim_bindings.cpp)
 file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
 file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
 list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
-file(GLOB QILISIM_LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
-list(APPEND QILISIM_SOURCES ${QILISIM_LIBS_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
+target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
 
 # List of all modules to build
-set(MODULES_TO_BUILD qtensor_module qilisim_module)
+set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
 
 # For each module
 foreach(module ${MODULES_TO_BUILD})

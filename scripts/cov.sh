@@ -16,7 +16,7 @@ LOG_FILE=$(dirname "$0")/cov.log
 
 # Clear any coverage caches
 echo "Clearing coverage caches..." | tee -a $LOG_FILE
-rm -rf .coverage coverage* tests/unit_cpp/coverage 2>&1 | tee -a $LOG_FILE
+rm -rf .coverage tests/unit_cpp/coverage 2>&1 | tee -a $LOG_FILE
 mkdir -p coverage
 
 # Rebuild the C++ ensuring we build the test suite

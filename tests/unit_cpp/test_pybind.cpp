@@ -12,13 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../libs/pybind.h"
-#include "qilisim.h"
+#include <gtest/gtest.h>
+#include "../../src/qilisdk_cpp/libs/numpy.h"
+#include <pybind11/embed.h>
 
-// GCOVR_EXCL_START
-PYBIND11_MODULE(qilisim_module, m) {
+namespace py = pybind11;
+
+TEST(PybindAllTypes, Initialization) {
     initialize_all_pybind_types();
-    // Make the QiliSimCpp class available in Python, as well as the two main methods
-    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_sampling", &QiliSimCpp::execute_sampling).def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
+    EXPECT_TRUE(dtype.ptr() != nullptr);
+    EXPECT_TRUE(SupportsStaticKraus.ptr() != nullptr);
 }
-// GCOVR_EXCL_STOP
+
+TEST(PybindAllTypes, Finalization) {
+    finalize_all_pybind_types();
+    EXPECT_TRUE(dtype.ptr() == nullptr);
+    EXPECT_TRUE(SupportsStaticKraus.ptr() == nullptr);
+}
+
+TEST(PybindExternalTypes, Initialization) {
+    initialize_external_pybind_types();
+    EXPECT_TRUE(numpy_array.ptr() != nullptr);
+    EXPECT_TRUE(csrmatrix.ptr() != nullptr);
+}
+
+
+
+

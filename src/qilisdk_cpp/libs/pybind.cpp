@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "pybind.h"
 
+#pragma GCC visibility push(default)
+
 py::object numpy_array;
 py::object numpy_array_type;
 py::object csrmatrix;
@@ -51,14 +53,7 @@ void initialize_all_pybind_types() {
     SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
     ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
     NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
-    numpy_array = py::module_::import("numpy").attr("array");
-    numpy_array_type = py::module_::import("numpy").attr("ndarray");
-    csrmatrix = py::module_::import("scipy.sparse").attr("csr_matrix");
-    cscmatrix = py::module_::import("scipy.sparse").attr("csc_matrix");
-    coomatrix = py::module_::import("scipy.sparse").attr("coo_matrix");
-    sparray = py::module_::import("scipy.sparse").attr("sparray");
-    dtype = py::dtype("complex128");
-    py_complex = py::module_::import("builtins").attr("complex");
+    initialize_external_pybind_types();
 }
 
 void initialize_external_pybind_types() {
@@ -71,3 +66,30 @@ void initialize_external_pybind_types() {
     dtype = py::dtype("complex128");
     py_complex = py::module_::import("builtins").attr("complex");
 }
+
+void finalize_all_pybind_types() {
+    Sampling = py::object();
+    TimeEvolution = py::object();
+    SamplingResult = py::object();
+    TimeEvolutionResult = py::object();
+    QTensor = py::object();
+    Hamiltonian = py::object();
+    PauliOperator = py::object();
+    NoiseModel = py::object();
+    SupportsStaticKraus = py::object();
+    SupportsStaticLindblad = py::object();
+    SupportsTimeDerivedKraus = py::object();
+    SupportsTimeDerivedLindblad = py::object();
+    ReadoutAssignment = py::object();
+    NoiseConfig = py::object();
+    numpy_array = py::object();
+    numpy_array_type = py::object();
+    csrmatrix = py::object();
+    cscmatrix = py::object();
+    coomatrix = py::object();
+    sparray = py::object();
+    dtype = py::object();
+    py_complex = py::object();
+}
+
+#pragma GCC visibility pop
